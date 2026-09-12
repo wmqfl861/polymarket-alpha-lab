@@ -11,16 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: e1386f84a00c07f119cd832de3da5c480a6a2ace
+          ref: 5a0745a80b530fc34012e9436605385cf160e75a
           persist-credentials: false
-      - name: Archive the pinned public tracked tree only
+      - name: Archive pinned public source only
         run: |
           git archive --format=tar HEAD > "$RUNNER_TEMP/source.tar"
           git rev-parse HEAD > "$RUNNER_TEMP/commit.txt"
           git rev-parse HEAD^{tree} > "$RUNNER_TEMP/tree.txt"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: engineering-source-e1386f8
+          name: engineering-source-5a0745a
           path: |
             ${{ runner.temp }}/source.tar
             ${{ runner.temp }}/commit.txt
