@@ -1,0 +1,36 @@
+name: Engineering public crypto probe
+on:
+  push:
+    branches: [engineering/crypto-candle-probe-20260912]
+permissions:
+  contents: read
+jobs:
+  public-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        team: [crypto_btc, crypto_eth]
+    steps:
+      - name: Check out exact reviewed candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 11bc881a579bbe35968d52c08ef7417a5b547ac5
+          persist-credentials: false
+      - name: One public candle GET without any model or database
+        env:
+          PYTHONPATH: src
+          PYTHONUTF8: '1'
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 scripts/probe_crypto_candles.py --allow-public-fetch --team '${{ matrix.team }}' | tee "$RUNNER_TEMP/probe-${{ matrix.team }}.json"
+      - name: Publish counts and hash receipts only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: public-crypto-probe-${{ matrix.team }}-11bc881
+          path: ${{ runner.temp }}/probe-${{ matrix.team }}.json
+          retention-days: 7
+          if-no-files-found: error
