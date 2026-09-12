@@ -1,0 +1,65 @@
+name: Engineering captured research proof
+on:
+  push:
+    branches: [engineering/research-execution-proof-20260912]
+permissions:
+  contents: read
+jobs:
+  prove:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: polymarket_research_capture_test
+        ports:
+          - 127.0.0.1:54322:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d polymarket_research_capture_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out pinned candidate only
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fa167805513be0d65d914a39127ea0ecc77da356
+          persist-credentials: false
+      - name: Verify exact source tree
+        run: |
+          test "$(git rev-parse HEAD^{tree})" = 8d1dc3a8cf0cc8bd21e19c5606a014035ec568e4
+          git rev-parse HEAD > "$RUNNER_TEMP/execution-commit.txt"
+          git rev-parse HEAD^{tree} > "$RUNNER_TEMP/execution-tree.txt"
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - name: Install locked test and PostgreSQL extras
+        run: uv sync --locked --extra dev --extra postgres --python 3.12
+      - name: Prove actual local DB concurrency and recovery
+        env:
+          POLYMARKET_ALPHA_LAB_RUN_RESEARCH_EXECUTION_DISPOSABLE_DB: '1'
+          POLYMARKET_ALPHA_LAB_RESEARCH_CAPTURE_DB_DSN: postgresql://postgres:postgres@127.0.0.1:54322/polymarket_research_capture_test
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        shell: bash
+        run: |
+          set -o pipefail
+          .venv/bin/python -m pytest -q -s tests/test_research_execution.py tests/test_research_execution_psycopg.py tests/test_research_execution_disposable.py --junitxml="$RUNNER_TEMP/execution-proof.xml" 2>&1 | tee "$RUNNER_TEMP/execution-proof.log"
+          git diff --check
+          git diff --exit-code
+      - name: Publish engineering proof logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: research-execution-proof-fa16780
+          path: |
+            ${{ runner.temp }}/execution-proof.log
+            ${{ runner.temp }}/execution-proof.xml
+            ${{ runner.temp }}/execution-commit.txt
+            ${{ runner.temp }}/execution-tree.txt
+          retention-days: 7
+          if-no-files-found: error
