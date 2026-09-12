@@ -1,0 +1,33 @@
+name: Engineering public cross-source probe
+on:
+  push:
+    branches: [engineering/crypto-cross-source-probe-20260912]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        team: [crypto_btc, crypto_eth]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 8170747f039c9691ff129b58cb8a72a773731f4d
+          persist-credentials: false
+      - name: One uncredentialed GET per venue; no model or database
+        shell: bash
+        env:
+          PYTHONPATH: src
+        run: |
+          set -o pipefail
+          python scripts/probe_crypto_cross_source.py --allow-public-fetch --team '${{ matrix.team }}' | tee "$RUNNER_TEMP/probe.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cross-source-probe-${{ matrix.team }}-8170747
+          path: ${{ runner.temp }}/probe.json
+          retention-days: 7
+          if-no-files-found: error
