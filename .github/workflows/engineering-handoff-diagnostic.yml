@@ -1,0 +1,44 @@
+name: Engineering PowerShell fixture diagnostic
+on:
+  push:
+    branches: [engineering/discovery-reliability-proof-20260913]
+    paths: ['.github/workflows/engineering-handoff-diagnostic.yml']
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ab7ec1d0fe9e6a4311e87070f10d2764404f4a7c
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - run: uv sync --locked --extra dev --python 3.12
+      - name: Show synthetic fixture error without masking assertions
+        shell: pwsh
+        run: |
+          @'
+          from pathlib import Path
+          p=Path('scripts/download_handoff.ps1')
+          s=p.read_text()
+          marker="    } catch {\n        return [pscustomobject]@{status='failed'"
+          replacement="    } catch {\n        Write-Output ('FIXTURE_DIAGNOSTIC_STAGE=' + $Stage)\n        Write-Output $_.Exception.GetType().FullName\n        Write-Output $_.Exception.Message\n        Write-Output $_.ScriptStackTrace\n        return [pscustomobject]@{status='failed'"
+          assert marker in s
+          p.write_text(s.replace(marker,replacement),encoding='ascii')
+          '@ | .\.venv\Scripts\python.exe -
+          $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
+          $env:PYTHONUTF8 = '1'
+          .\.venv\Scripts\python.exe -m pytest -q -s tests/test_handoff_download.py -k 'success and powershell.exe' 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/ps-fixture-diagnostic.log"
+          exit $LASTEXITCODE
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: ps-fixture-diagnostic
+          path: ${{ runner.temp }}/ps-fixture-diagnostic.log
+          retention-days: 7
+          if-no-files-found: error
