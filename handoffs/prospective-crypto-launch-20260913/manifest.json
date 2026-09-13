@@ -1,0 +1,23 @@
+{
+  "format": "github-local-handoff-v1",
+  "status": "IMPLEMENTATION_MERGED_LOCAL_PREVIEW_MODEL_READINESS_PENDING",
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "implementation_commit": "cb8b276858c0c1c68de782aa18b930c1ed812a31",
+  "implementation_tree": "981ccef702f78cffc3bc947509e3adca8d2abc5f",
+  "pull_request": 16,
+  "prompt_file": "LOCAL_AGENT_PROMPT.md",
+  "prompt_sha256": "f9645588a5fd832c6677fb9112c34723cff5cea1591bf83eb0b2d41bf00acc16",
+  "prompt_bytes": 10554,
+  "probe_file": "probe_local_preview.py",
+  "probe_sha256": "c4df826a9435c1221c774b52eb0c8bd8c4bd9e5141ce6b004b8416acebecc398",
+  "probe_bytes": 8522,
+  "patch_required": false,
+  "migration_required": false,
+  "existing_database_root_not_to_access": "C:\\Albert\\project\\polymarket-alpha-lab-kit-startup-4d63b08\\kit\\polymarket-alpha-lab",
+  "maximum_public_gets": 8,
+  "model_calls_authorized": false,
+  "credential_reads_authorized": false,
+  "business_writes_authorized": false,
+  "local_database_access_authorized": false,
+  "repo_public_proof_run": 34758465815
+}
