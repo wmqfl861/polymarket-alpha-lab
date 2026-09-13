@@ -1,0 +1,72 @@
+name: Engineering exact PR17 handoff
+on:
+  push:
+    branches: [engineering/pr17-handoff-check-20260914]
+permissions:
+  contents: read
+jobs:
+  exact-handoff:
+    runs-on: windows-2025
+    timeout-minutes: 5
+    env:
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: c7a6f19ed4ef5e9cbc0d838db3da6ff72f08c3cb
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - run: uv sync --locked --python 3.12
+      - name: Download exact reviewed handoff without executing it
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'PowerShell 5.1 required.' }
+          $Loader = Join-Path $env:GITHUB_WORKSPACE 'scripts\download_handoff.ps1'
+          $Hasher = [Security.Cryptography.SHA256]::Create()
+          try {
+              $Hash = [BitConverter]::ToString($Hasher.ComputeHash([IO.File]::ReadAllBytes($Loader))).Replace('-', '').ToLowerInvariant()
+          } finally { $Hasher.Dispose() }
+          if ($Hash -ne '81a2655968780f8df78d5f4ffacd5d11c1ffbc25f749b6a82a820833140ffb2c') { throw 'Loader hash mismatch.' }
+          $Raw = & $Loader -Repository 'wmqfl861/polymarket-alpha-lab' -Commit 'ca8944f0f2337d62c0a3ef852b8dd6554778fb89' -RelativeDirectory 'handoffs/public-discovery-20260914' -ExpectedManifestSha256 '796b7dabc1dfa073ef93f76edf2747c75273c951d2b0b984450b5bdfdf83269b' -OutputParent $env:RUNNER_TEMP
+          $Raw | Out-File -Encoding utf8 (Join-Path $env:RUNNER_TEMP 'handoff-download.log')
+          $Result = ($Raw -join "`n") | ConvertFrom-Json
+          if ($Result.status -ne 'verified' -or $Result.executed -ne $false -or $Result.files -ne 2) { throw 'Unverified handoff.' }
+          [IO.File]::WriteAllText((Join-Path $env:RUNNER_TEMP 'handoff-directory.txt'), $Result.directory)
+      - name: Run the exact reviewed one-shot public-only helper
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Drop = [IO.File]::ReadAllText((Join-Path $env:RUNNER_TEMP 'handoff-directory.txt'))
+          $Script = Join-Path $Drop 'LOCAL_CHECK.ps1'
+          $Hasher = [Security.Cryptography.SHA256]::Create()
+          try {
+              $Hash = [BitConverter]::ToString($Hasher.ComputeHash([IO.File]::ReadAllBytes($Script))).Replace('-', '').ToLowerInvariant()
+          } finally { $Hasher.Dispose() }
+          if ($Hash -ne 'f29852e134486f8610e7672e957690bf926a1f924fb8c99a677f8bbbaef4f6ce') { throw 'Helper hash mismatch.' }
+          & $Script -SourceRoot $env:GITHUB_WORKSPACE 2>&1 | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP 'handoff-check.log')
+          $Code = $LASTEXITCODE
+          exit $Code
+      - name: Preserve source and avoid database state
+        if: always()
+        shell: powershell
+        run: |
+          git diff --check
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          git diff --exit-code
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (Test-Path -LiteralPath '.local') { throw 'Unexpected database state.' }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: exact-pr17-handoff-proof
+          path: |
+            ${{ runner.temp }}/handoff-download.log
+            ${{ runner.temp }}/handoff-check.log
+          retention-days: 7
+          if-no-files-found: ignore
