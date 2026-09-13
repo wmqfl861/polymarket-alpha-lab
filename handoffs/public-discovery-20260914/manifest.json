@@ -1,0 +1,24 @@
+{
+  "format": "github-handoff-v2",
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "implementation_commit": "c7a6f19ed4ef5e9cbc0d838db3da6ff72f08c3cb",
+  "implementation_tree": "9b7e48d9e10bfbd242a6c875daf84f9538343837",
+  "pull_request": 17,
+  "patch_required": false,
+  "model_calls_authorized": false,
+  "business_writes_authorized": false,
+  "local_database_access_authorized": false,
+  "maximum_market_public_gets": 6,
+  "files": [
+    {
+      "name": "LOCAL_AGENT_PROMPT.md",
+      "bytes": 6800,
+      "sha256": "69694262d1026bd28116937cec06f30f294e34b16a5a1c73cfa4fddf5673b536"
+    },
+    {
+      "name": "LOCAL_CHECK.ps1",
+      "bytes": 3771,
+      "sha256": "f29852e134486f8610e7672e957690bf926a1f924fb8c99a677f8bbbaef4f6ce"
+    }
+  ]
+}
