@@ -1,0 +1,44 @@
+name: Engineering corrected handoff HTTPS
+on:
+  push:
+    branches: [engineering/pr17-loader-https-proof-20260913]
+permissions:
+  contents: read
+jobs:
+  windows-download:
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: c7a6f19ed4ef5e9cbc0d838db3da6ff72f08c3cb
+          persist-credentials: false
+      - name: Real public files, no script execution or database
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Rows = @()
+          foreach ($Shell in @('powershell.exe', 'pwsh.exe')) {
+            $Parent = Join-Path $env:RUNNER_TEMP ('handoff-https-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $Parent | Out-Null
+            $Program = (Get-Command $Shell -ErrorAction Stop).Source
+            $Raw = & $Program -NoProfile -NonInteractive -File scripts/download_handoff.ps1 -Repository wmqfl861/polymarket-alpha-lab -Commit bfb99440afaa21f74369f172c149ed58b3458a26 -RelativeDirectory handoffs/downloader-fixture-20260913 -ExpectedManifestSha256 bdf21b11ca907a686fbdedc03636d0246891cf6b5d2556d93a66c4ed1c90c04d -OutputParent $Parent
+            if ($LASTEXITCODE -ne 0) { throw 'Real downloader failed; no retry.' }
+            $Value = ($Raw -join "`n") | ConvertFrom-Json
+            if ($Value.status -ne 'verified' -or $Value.executed -ne $false -or $Value.files -ne 1) { throw 'Unexpected download report.' }
+            $File = Join-Path $Value.directory 'NOTICE.txt'
+            $Check = (Get-FileHash -LiteralPath $File -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($Check -ne 'd3bf7b784647045ad2488703c8f4492aabecd87261c4fb336f679f0f4bd2fdac') { throw 'Independent asset check failed.' }
+            $Rows += [pscustomobject]@{shell=$Shell; status=$Value.status; executed=$Value.executed; sha256=$Check; files=$Value.files}
+          }
+          $Text = [pscustomobject]@{implementation_commit='c7a6f19ed4ef5e9cbc0d838db3da6ff72f08c3cb'; fixture_commit='bfb99440afaa21f74369f172c149ed58b3458a26'; public_gets=4; model_called=$false; database_written=$false; results=$Rows} | ConvertTo-Json -Depth 6
+          [IO.File]::WriteAllText((Join-Path $env:RUNNER_TEMP 'loader-https-proof.json'), $Text, [Text.UTF8Encoding]::new($false))
+          Write-Output $Text
+      - run: git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: corrected-loader-https-proof
+          path: ${{ runner.temp }}/loader-https-proof.json
+          retention-days: 7
+          if-no-files-found: ignore
