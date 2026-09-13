@@ -11,46 +11,28 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ab7ec1d0fe9e6a4311e87070f10d2764404f4a7c
+          ref: c7a6f19ed4ef5e9cbc0d838db3da6ff72f08c3cb
           persist-credentials: false
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
         with:
           version: '0.10.0'
           enable-cache: false
       - run: uv sync --locked --extra dev --python 3.12
-      - name: Inspect synthetic-only caught error without changing production source
+      - name: Exact corrected loader in PS5.1 and PS7, synthetic transport only
         shell: pwsh
         run: |
-          @'
-          from pathlib import Path
-          import os, subprocess, json
-          import tests.test_handoff_download as t
-          root=Path(os.environ['RUNNER_TEMP'])/'ps51-fixture-diagnostic'
-          root.mkdir()
-          original=t.subprocess.run
-          def observed(args, **kwargs):
-              script=Path(args[-1])
-              text=script.read_text('ascii')
-              text="[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)\n"+text
-              text=text.replace('[pscustomobject]@{result=$Result;', '[pscustomobject]@{diagnostic_message=($Error[0].Exception.Message); diagnostic_stack=($Error[0].ScriptStackTrace); result=$Result;')
-              script.write_text(text,encoding='ascii')
-              result=original(args,**kwargs)
-              print(json.dumps(dict(stdout=result.stdout,stderr=result.stderr,exit=result.returncode),ensure_ascii=True))
-              return result
-          t.subprocess.run=observed
-          for shell in ('powershell.exe','pwsh'):
-              folder=root/shell.replace('.','-');folder.mkdir()
-              try:
-                  t.test_real_powershell_download_publication(folder,shell,'success')
-              except Exception as e:
-                  print('EXPECTED DIAGNOSTIC:',shell,type(e).__name__)
-          '@ | .\.venv\Scripts\python.exe - 2>&1 | Tee-Object "$env:RUNNER_TEMP/ps51-diagnostic.log"
+          $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
+          $env:PYTHONUTF8 = '1'
+          .\.venv\Scripts\python.exe -m pytest -q -ra tests/test_handoff_download.py --junitxml="$env:RUNNER_TEMP/ps51-fixed.xml" 2>&1 | Tee-Object "$env:RUNNER_TEMP/ps51-fixed.log"
           exit $LASTEXITCODE
-      - run: git diff --exit-code
+      - name: Confirm source unchanged
+        run: git diff --exit-code
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: ps51-fixture-diagnostic
-          path: ${{ runner.temp }}/ps51-diagnostic.log
+          name: ps51-fixed-proof
+          path: |
+            ${{ runner.temp }}/ps51-fixed.log
+            ${{ runner.temp }}/ps51-fixed.xml
           retention-days: 7
           if-no-files-found: error
