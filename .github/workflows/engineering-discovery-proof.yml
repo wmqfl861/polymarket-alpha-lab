@@ -1,0 +1,75 @@
+name: Engineering discovery and handoff proof
+on:
+  push:
+    branches: [engineering/discovery-reliability-proof-20260913]
+permissions:
+  contents: read
+jobs:
+  public-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ab7ec1d0fe9e6a4311e87070f10d2764404f4a7c
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - run: uv sync --locked --python 3.12
+      - name: Bounded real public discovery and input preview only
+        shell: bash
+        run: |
+          set -o pipefail
+          .venv/bin/python scripts/discover_crypto_research.py --team crypto_btc --team crypto_eth --preview --attempts 3 --allow-public-fetch 2>&1 | tee "$RUNNER_TEMP/public-discovery-proof.log"
+      - name: Confirm no source changes
+        if: always()
+        run: git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: public-discovery-ab7ec1d
+          path: ${{ runner.temp }}/public-discovery-proof.log
+          retention-days: 7
+          if-no-files-found: error
+  windows-downloader:
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ab7ec1d0fe9e6a4311e87070f10d2764404f4a7c
+          persist-credentials: false
+      - name: Actual Windows PowerShell 5.1 public file download
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSVersion.Major -ne 5) { throw 'Windows PowerShell 5 required' }
+          $Raw = & .\scripts\download_handoff.ps1 -Repository 'wmqfl861/polymarket-alpha-lab' -Commit 'e83dc6119f8f3110f14028aa63ba125965fd9f86' -RelativeDirectory 'handoffs/public-discovery-fixture-20260913' -ExpectedManifestSha256 '16ed4f70801b0cde17bad2c56bec1108bdc81e22246678bf2a7afda77c06b904' -OutputParent $env:RUNNER_TEMP
+          $Raw | Tee-Object -FilePath "$env:RUNNER_TEMP/handoff-ps51-proof.log"
+          $Result = ($Raw -join "`n") | ConvertFrom-Json
+          if ($Result.status -ne 'verified' -or $Result.executed -ne $false -or $Result.files -ne 1) { throw 'download not verified' }
+          $Hash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $Result.directory 'PROBE.txt')).Hash.ToLowerInvariant()
+          if ($Hash -ne '0d4c71d1475571062bb61817b0e1284875f3d477460d93307cae344b1ce30bb6') { throw 'fixture hash mismatch' }
+      - name: Actual PowerShell 7 public file download
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSVersion.Major -ne 7) { throw 'PowerShell 7 required' }
+          $Raw = & .\scripts\download_handoff.ps1 -Repository 'wmqfl861/polymarket-alpha-lab' -Commit 'e83dc6119f8f3110f14028aa63ba125965fd9f86' -RelativeDirectory 'handoffs/public-discovery-fixture-20260913' -ExpectedManifestSha256 '16ed4f70801b0cde17bad2c56bec1108bdc81e22246678bf2a7afda77c06b904' -OutputParent $env:RUNNER_TEMP
+          $Raw | Tee-Object -FilePath "$env:RUNNER_TEMP/handoff-ps7-proof.log"
+          $Result = ($Raw -join "`n") | ConvertFrom-Json
+          if ($Result.status -ne 'verified' -or $Result.executed -ne $false -or $Result.files -ne 1) { throw 'download not verified' }
+          $Hash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $Result.directory 'PROBE.txt')).Hash.ToLowerInvariant()
+          if ($Hash -ne '0d4c71d1475571062bb61817b0e1284875f3d477460d93307cae344b1ce30bb6') { throw 'fixture hash mismatch' }
+      - name: Confirm no source changes
+        if: always()
+        run: git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: windows-handoff-http-ab7ec1d
+          path: ${{ runner.temp }}/handoff-*-proof.log
+          retention-days: 7
+          if-no-files-found: ignore
