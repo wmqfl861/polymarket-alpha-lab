@@ -1,0 +1,107 @@
+name: Engineering public crypto preview
+on:
+  push:
+    branches: [engineering/crypto-preview-proof-20260913]
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 71c969db8898c547fe6f5a0953e3880176a5e486
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - run: uv sync --locked --python 3.12
+      - name: Two bounded public previews, no credentials or database
+        shell: bash
+        run: |
+          set -o pipefail
+          .venv/bin/python - <<'PY' 2>&1 | tee "$RUNNER_TEMP/public-preview.log"
+          from datetime import UTC, datetime, timedelta
+          from hashlib import sha256
+          import json
+          import re
+          from urllib.parse import urlencode
+          from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
+          from polymarket_alpha_lab.research_crypto_launch import CryptoResearchSpec, CryptoLaunchBlocked
+          from polymarket_alpha_lab.research_crypto_launch_service import fetch_crypto_research_preview
+          from polymarket_alpha_lab.team_research_agent_types import strict_json
+
+          class NoRedirect(HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+
+          records=[]
+          for team, term, pattern in [('crypto_btc','Bitcoin',r'\b(bitcoin|btc)\b'),
+                                      ('crypto_eth','Ethereum',r'\b(ethereum|eth)\b')]:
+              now=datetime.now(UTC)
+              item={'team_id':team,'observed_at':now.isoformat(),'model_called':False,'database_written':False}
+              url='https://gamma-api.polymarket.com/public-search?'+urlencode({
+                  'q':term,'events_status':'active','limit_per_type':10,'page':1,
+                  'keep_closed_markets':0,'search_profiles':'false','search_tags':'false'})
+              try:
+                  opener=build_opener(ProxyHandler({}),NoRedirect())
+                  req=Request(url,headers={'User-Agent':'polymarket-alpha-lab-readonly-probe/1'})
+                  with opener.open(req,timeout=20) as response:
+                      if response.geturl()!=url: raise ValueError('unexpected origin')
+                      raw=response.read(4194305)
+                  if len(raw)>4194304: raise ValueError('discovery too large')
+                  item['discovery_sha256']=sha256(raw).hexdigest()
+                  body=strict_json(raw.decode('utf-8'))
+                  candidates=[]
+                  for event in body.get('events') or []:
+                      for market in event.get('markets') or []:
+                          try:
+                              labels=market['outcomes']
+                              if type(labels) is str: labels=strict_json(labels)
+                              end=datetime.fromisoformat(market['endDate'].replace('Z','+00:00'))
+                              question=market['question']
+                              if (market.get('active') is not True or market.get('closed') is not False
+                                  or set(labels)!={'Yes','No'} or len(labels)!=2
+                                  or not re.search(pattern,question,re.I)
+                                  or not re.search(r'above|below|price|reach|hit|\$',question,re.I)
+                                  or not now+timedelta(hours=2)<end<now+timedelta(days=365)):
+                                  continue
+                              candidates.append((end,market['slug'],market['conditionId']))
+                          except (ValueError,KeyError,TypeError):
+                              continue
+                  item['eligible_in_discovery']=len(candidates)
+                  if not candidates:
+                      item.update(status='not_run',reason_code='no_supported_candidate_in_bounded_search')
+                  else:
+                      end,slug,cid=sorted(candidates)[0]
+                      spec=CryptoResearchSpec('engineering-preview-'+team,team,cid,slug,
+                          datetime.now(UTC)+timedelta(minutes=30),'operator-model-not-selected')
+                      item.update(condition_id=cid,market_slug=slug,forecast_cutoff_at=spec.forecast_cutoff_at.isoformat())
+                      try:
+                          result=fetch_crypto_research_preview(spec,allow_public_fetch=True).to_dict()
+                          item.update(status='prepared',preview=result)
+                      except CryptoLaunchBlocked as error:
+                          item.update(status='blocked',reason_code=str(error))
+                      except Exception as error:
+                          item.update(status='failed',reason_code='preview_unexpected_failure',error_type=type(error).__name__)
+              except Exception as error:
+                  item.update(status='failed',reason_code='public_discovery_failed',error_type=type(error).__name__)
+              records.append(item)
+          print(json.dumps({'tested_commit':'71c969db8898c547fe6f5a0953e3880176a5e486',
+              'tested_tree':'981ccef702f78cffc3bc947509e3adca8d2abc5f',
+              'synthetic_data':False,'model_called':False,'database_written':False,
+              'maximum_public_requests':8,'results':records},ensure_ascii=True,allow_nan=False,indent=2))
+          raise SystemExit(0 if all(item['status']=='prepared' for item in records) else 1)
+          PY
+      - name: Confirm no source changes
+        if: always()
+        run: git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: public-preview-71c969d
+          path: ${{ runner.temp }}/public-preview.log
+          retention-days: 7
+          if-no-files-found: error
