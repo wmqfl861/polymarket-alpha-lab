@@ -23,7 +23,7 @@ jobs:
         run: |
           @'
           from pathlib import Path
-          import os, subprocess, tempfile
+          import os, subprocess, json
           import tests.test_handoff_download as t
           root=Path(os.environ['RUNNER_TEMP'])/'ps51-fixture-diagnostic'
           root.mkdir()
@@ -31,11 +31,11 @@ jobs:
           def observed(args, **kwargs):
               script=Path(args[-1])
               text=script.read_text('ascii')
-              text=text.replace('[pscustomobject]@{result=$Result;', '[pscustomobject]@{diagnostic_type=($Error[0].Exception.GetType().FullName); diagnostic_message=($Error[0].Exception.Message); diagnostic_stack=($Error[0].ScriptStackTrace); result=$Result;')
+              text="[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)\n"+text
+              text=text.replace('[pscustomobject]@{result=$Result;', '[pscustomobject]@{diagnostic_message=($Error[0].Exception.Message); diagnostic_stack=($Error[0].ScriptStackTrace); result=$Result;')
               script.write_text(text,encoding='ascii')
               result=original(args,**kwargs)
-              print('SYNTHETIC FIXTURE OUTPUT:',result.stdout)
-              print('SYNTHETIC FIXTURE STDERR:',result.stderr)
+              print(json.dumps(dict(stdout=result.stdout,stderr=result.stderr,exit=result.returncode),ensure_ascii=True))
               return result
           t.subprocess.run=observed
           for shell in ('powershell.exe','pwsh'):
