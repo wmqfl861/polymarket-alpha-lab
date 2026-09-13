@@ -1,0 +1,709 @@
+diff --git a/.github/workflows/native-postgres.yml b/.github/workflows/native-postgres.yml
+index 4838f83..fd85f3f 100644
+--- a/.github/workflows/native-postgres.yml
++++ b/.github/workflows/native-postgres.yml
+@@ -41,7 +41,7 @@ jobs:
+           $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
+           $env:PYTHONUTF8 = '1'
+           Get-ChildItem Env: | Where-Object { $_.Name -like 'PG*' } | ForEach-Object { Remove-Item ('Env:' + $_.Name) }
+-          .\.venv\Scripts\python.exe -u -m pytest -q -s -o faulthandler_timeout=120 tests/test_project_postgres.py tests/test_project_postgres_platform.py tests/test_project_postgres_migration_compat.py tests/test_project_postgres_native.py tests/test_project_postgres_backup.py tests/test_project_postgres_backup_zip.py tests/test_project_postgres_backup_native.py tests/test_project_postgres_resolution_native.py tests/test_research_resolution.py tests/test_research_resolution_store.py tests/test_research_resolution_cli.py --junitxml="$env:RUNNER_TEMP/native-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-proof.log"
++          .\.venv\Scripts\python.exe -u -m pytest -q -s -o faulthandler_timeout=120 tests/test_project_postgres.py tests/test_project_postgres_platform.py tests/test_project_postgres_publication.py tests/test_project_postgres_publication_native.py tests/test_project_postgres_migration_compat.py tests/test_project_postgres_native.py tests/test_project_postgres_backup.py tests/test_project_postgres_backup_zip.py tests/test_project_postgres_backup_native.py tests/test_project_postgres_resolution_native.py tests/test_research_resolution.py tests/test_research_resolution_store.py tests/test_research_resolution_cli.py --junitxml="$env:RUNNER_TEMP/native-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-proof.log"
+           $code = $LASTEXITCODE
+           exit $code
+       - name: Verify tracked source unchanged
+diff --git a/database/README.md b/database/README.md
+index 066916a..994e84e 100644
+--- a/database/README.md
++++ b/database/README.md
+@@ -54,7 +54,7 @@ cluster, service configuration, account or credential.
+ .\.venv\Scripts\python.exe scripts/project_database.py down
+ ```
+ 
+-`init` creates a new cluster, installs all 62 locked historical migrations, then
++`init` creates a new cluster, installs all manifest-locked migrations, then
+ stops the server. Default port is 55432; choose `init --port N` once if necessary.
+ A busy port blocks; the project will not connect to whatever occupies that port.
+ A repeated init refuses an existing directory rather than resetting its data.
+@@ -77,6 +77,29 @@ metacharacters and quotes in the project path are rejected. The project path is
+ bound to its instance: copying/moving an initialized project is not an automatic
+ migration procedure. Existing external/Supabase data is NEVER adopted or copied.
+ 
++## Windows runtime publication contention
++
++Only the final `postgres.installing` -> `postgres` rename may be retried after a
++Windows access/share/lock error (codes 5, 32 or 33). There are at most seven
++attempts, with delays of 0.1, 0.2, 0.4, 0.8, 1.6 and 2.0 seconds. This caps the
++requested sleeps at 5.1 seconds, not total filesystem/validation elapsed time.
++The importer holds the same lifecycle lease throughout; it never repeats the
++copy, native version probes, database initialization or a research/model call.
++
++Before each attempt it checks directory identity, private permissions, absence
++of a destination, engine hashes, import receipt and retained notices. It checks
++again after publication. Changed content/identity, invalid permissions, a new
++destination or unrelated errors stop immediately. A persistent eligible denial
++returns `project_postgres_runtime_publish_blocked`; other publication I/O errors
++return `project_postgres_runtime_publish_failed`, without exposing raw paths.
++
++Access denied does not prove antivirus interference: genuine permission errors
++can produce the same code. No antivirus exclusion, ACL relaxation, administrator
++execution, process kill, overwrite, copy/move fallback or auto-cleanup is used.
++An exhausted/failed import keeps its private staging for diagnosis. A subsequent
++install refuses that incomplete state; do not delete it to make a test pass.
++No automatic recovery/resume command is provided in this change.
++
+ ## Application integration (no caller DSN)
+ 
+ ```python
+@@ -148,9 +171,10 @@ administrator. Stronger isolation needs a separate OS account/sandbox.
+ 
+ ## Migrations and failure handling
+ 
+-The 62 existing SQLs are retained byte-for-byte under their historical pathname;
+-none uses Supabase auth/storage/REST services. A checked-in manifest binds the
+-entire ordered set and records the two existing outer transaction wrappers.
++Migration SQLs are retained byte-for-byte under their historical pathname;
++none uses Supabase auth/storage/REST services. The current inventory is defined by
++`database/migrations.lock.json`, not a duplicated count in this runbook. A
++checked-in manifest binds the entire ordered set and records the two existing outer transaction wrappers.
+ A closed native bootstrap compatibility repair fixes the invalid historical
+ `type(@.reason_codes)` JSONPath syntax in migration 20260622000007 to the
+ PostgreSQL item method `@.reason_codes.type()`. Both the exact original and
+diff --git a/docs/windows-local-acceptance-2026-09-13.md b/docs/windows-local-acceptance-2026-09-13.md
+new file mode 100644
+index 0000000..2907d3d
+--- /dev/null
++++ b/docs/windows-local-acceptance-2026-09-13.md
+@@ -0,0 +1,62 @@
++# Windows acceptance follow-up, 2026-09-13
++
++## Evidence boundary
++
++The owner supplied a local-agent report for baseline
++`4d63b0877ba8a3c4d9aaca26bd2110770cf1ef3c`. The report says Windows
++10.0.26200.8894 x64, Python 3.12.10, uv 0.12.13 and PostgreSQL 17.11 were used.
++These are **operator-reported results**; the repository-side continuation has
++not read the local raw logs or accessed the machine. Do not replace the original
++report or turn a successful isolated rerun into a clean first-pass result.
++
++| Local selection | Reported result |
++| --- | --- |
++| Locked offline verification | 36,083 passed, 10 skipped, zero failures |
++| First native selection | 326 passed, one failed, two skipped |
++| Isolated rerun of failing lifecycle test | One passed |
++| Fresh-kit startup twice | Ready twice; same instance; stopped after each check |
++
++The two additional Windows offline skips explain the difference from hosted
++Linux's 36,085 passed / eight skipped. Counts represent different selections and
++must not be added. The report also describes separate successful disposable
++capture/execution/aggregation checks; it does not provide a combined new total.
++
++The first native failure occurred at `postgres.installing` -> `postgres` rename
++with Windows error 5. Directory copying and all five native version probes had
++completed. A subsequent isolated rerun succeeded. This supports investigating
++intermittent contention, **not proving antivirus/indexer involvement or proving
++the error harmless**. Permanent permission errors may use the same error code.
++
++## Repository-side response
++
++The import now retries only that final rename for Windows errors 5/32/33, with
++at most seven attempts and 5.1 seconds total requested sleep. It retains the
++lifecycle lease and checks directory identity, permissions, destination absence,
++engine bytes, manifest and retained notices before every attempt and afterward.
++Copying, native version probes, initialization, migrations and model calls are
++not retried. Other errors stop immediately. Permanent denial returns a fixed
++error code and leaves the owned incomplete staging intact; no cleanup/resume,
++ACL change, antivirus exclusion or administrator elevation is introduced.
++
++Offline regressions inject rename failures, file/identity changes and competing
++destinations. A separate Windows test holds an actual directory handle without
++`FILE_SHARE_DELETE`: one case releases it after the first denied rename; another
++keeps it open until the bounded attempts are exhausted. This verifies OS-level
++contention behavior; it is not a reproduction of the user's exact background
++process or a guarantee against all possible local contention.
++
++The current migration inventory is in `database/migrations.lock.json`; runbook
++text no longer repeats a stale number. Historical migration bytes are unchanged.
++Actual new revision, hosted results and local-test instructions are recorded in
++the PR. No user database, original staging, credential store, uv installation or
++antivirus configuration was accessed or changed by this continuation.
++
++## Remaining local acceptance
++
++After the repository fixes pass hosted verification, retest in fresh ordinary-
++user-owned temporary directories using the already approved local PostgreSQL
++prefix. Preserve the original acceptance and failed-install directories. Do not
++copy initialized data, update old kits by overlay extraction, or delete staging
++as a workaround. Reuse the accepted runtime assets, not another system service.
++Record the first-run failure count and isolated reruns separately. The final
++repo-side handoff will identify a concrete tested commit and exact commands.
+diff --git a/src/polymarket_alpha_lab/project_postgres/runtime.py b/src/polymarket_alpha_lab/project_postgres/runtime.py
+index ff803fc..d6cef0a 100644
+--- a/src/polymarket_alpha_lab/project_postgres/runtime.py
++++ b/src/polymarket_alpha_lab/project_postgres/runtime.py
+@@ -15,6 +15,10 @@ import zipfile
+ 
+ from .files import Layout, clean_environment, command, digest_file, fail, no_links, private_directory, read_private, write_private
+ 
++from .runtime_publish import publish_runtime
++
++_WINDOWS_PUBLICATION = os.name == 'nt'
++
+ PROGRAMS = ('postgres', 'initdb', 'pg_ctl', 'psql', 'pg_controldata')
+ SUPPORTED_MAJORS = (16, 17, 18)
+ MAX_RUNTIME_BYTES = 1073741824
+@@ -104,9 +108,23 @@ def _finish_import(layout: Layout, target: Path) -> str:
+     # Version probes execute ONLY after explicit directory trust or archive hash
+     # verification. No command from a model/provider payload reaches this path.
+     version = runtime_version(target)
+-    write_private(target / 'runtime.json', json.dumps({
+-        'format': 'native-postgres-v1', 'version': version, 'files': inventory(target)}, sort_keys=True))
+-    target.rename(layout.runtime)
++    expected_files = inventory(target)
++    record = json.dumps({'format': 'native-postgres-v1', 'version': version,
++                         'files': expected_files}, sort_keys=True)
++    notices = {name: digest_file(target / name) for name in
++               ('COPYRIGHT', 'LICENSE', 'LICENSE.txt', 'THIRDPARTYLICENSE.txt')
++               if (target / name).is_file()}
++    write_private(target / 'runtime.json', record)
++
++    def validate(prefix: Path) -> None:
++        if (read_private(prefix / 'runtime.json', limit=4000000) != record
++                or inventory(prefix) != expected_files):
++            fail('project_postgres_runtime_changed')
++        for name, digest in notices.items():
++            if digest_file(prefix / name) != digest:
++                fail('project_postgres_runtime_changed')
++
++    publish_runtime(layout, target, validate=validate, windows=_WINDOWS_PUBLICATION)
+     return version
+ 
+ 
+diff --git a/src/polymarket_alpha_lab/project_postgres/runtime_publish.py b/src/polymarket_alpha_lab/project_postgres/runtime_publish.py
+new file mode 100644
+index 0000000..81e8fe5
+--- /dev/null
++++ b/src/polymarket_alpha_lab/project_postgres/runtime_publish.py
+@@ -0,0 +1,81 @@
++"""Bounded publication of an already verified, project-owned engine directory.
++
++Only the final rename is retried. This does not retry copying, native version
++probes, database initialization or research. The caller holds Layout.lock().
++No ACL changes, process termination, antivirus exclusions or replacing moves.
++"""
++from __future__ import annotations
++
++from collections.abc import Callable
++from pathlib import Path
++import stat
++from time import sleep
++
++from .files import Layout, fail, no_links, private_directory
++
++# Error 5 may also be a permanent denial. Never infer its cause or wait forever.
++_RETRYABLE_WINERRORS = frozenset((5, 32, 33))
++RETRY_DELAYS = (0.1, 0.2, 0.4, 0.8, 1.6, 2.0)
++
++
++def _identity(path: Path) -> tuple[int, int]:
++    no_links(path)
++    info = path.lstat()
++    if not stat.S_ISDIR(info.st_mode):
++        fail('project_postgres_runtime_publish_changed')
++    return info.st_dev, info.st_ino
++
++
++def _absent(path: Path) -> None:
++    no_links(path)
++    try:
++        path.lstat()
++    except FileNotFoundError:
++        return
++    fail('project_postgres_runtime_already_installed')
++
++
++def publish_runtime(layout: Layout, staging: Path, *,
++                    validate: Callable[[Path], None], windows: bool) -> None:
++    """Rename with at most seven Windows attempts and 5.1s requested sleep.
++
++    Filesystem/validation work adds time: this is not a wall-clock deadline.
++    Recheck identity, permissions, destination absence and verified bytes before
++    every attempt. Non-Windows rename failures are never retried. Same-user/admin
++    mutation is outside the private-instance security boundary; the OS lease
++    excludes cooperating project managers. Windows rename itself never replaces
++    an existing destination. Failure leaves owned staging for diagnosis.
++    """
++    if staging != layout.runtime.with_name('postgres.installing'):
++        fail('project_postgres_runtime_publish_changed')
++    try:
++        parent_identity = _identity(staging.parent)
++        staging_identity = _identity(staging)
++        delays = RETRY_DELAYS if windows else ()
++        for attempt in range(len(delays) + 1):
++            if (_identity(staging.parent) != parent_identity
++                    or _identity(staging) != staging_identity):
++                fail('project_postgres_runtime_publish_changed')
++            private_directory(staging.parent)
++            private_directory(staging)
++            _absent(layout.runtime)
++            validate(staging)
++            # A second absence check catches a destination introduced during
++            # validation. Do not use replace(), shutil.move(), or delete first.
++            _absent(layout.runtime)
++            try:
++                staging.rename(layout.runtime)
++            except OSError as error:
++                if not windows or getattr(error, 'winerror', None) not in _RETRYABLE_WINERRORS:
++                    fail('project_postgres_runtime_publish_failed')
++                if attempt == len(delays):
++                    fail('project_postgres_runtime_publish_blocked')
++                sleep(delays[attempt])
++                continue
++            if _identity(layout.runtime) != staging_identity:
++                fail('project_postgres_runtime_publish_changed')
++            private_directory(layout.runtime)
++            validate(layout.runtime)
++            return
++    except OSError:
++        fail('project_postgres_runtime_publish_failed')
+diff --git a/tests/test_project_postgres_publication.py b/tests/test_project_postgres_publication.py
+new file mode 100644
+index 0000000..702a8fc
+--- /dev/null
++++ b/tests/test_project_postgres_publication.py
+@@ -0,0 +1,313 @@
++"""Runtime rename resilience only; no database, native executable or network."""
++import errno
++import json
++from pathlib import Path
++
++import pytest
++
++from polymarket_alpha_lab.project_postgres import files, runtime
++
++
++def denied(code=5):
++    error = PermissionError(errno.EACCES, 'private-path-or-loader-detail')
++    error.winerror = code
++    return error
++
++
++@pytest.fixture
++def staged(tmp_path, monkeypatch):
++    root = tmp_path / 'Project With Spaces'
++    root.mkdir()
++    (root / 'pyproject.toml').write_text('[project]\nname="polymarket-alpha-lab"\n')
++    (root / 'database').mkdir()
++    (root / 'database/migrations.lock.json').write_text('{}')
++    layout = files.Layout(root)
++    target = runtime._staging(layout)
++    for name in ('bin', 'lib', 'share'):
++        (target / name).mkdir()
++        (target / name / 'fixture').write_bytes(b'synthetic engine bytes')
++    probes = []
++    monkeypatch.setattr(runtime, 'runtime_version', lambda p: probes.append(p) or '17.11')
++    # Set on the old code too so the RED check reaches its real rename path.
++    monkeypatch.setattr(runtime, '_WINDOWS_PUBLICATION', True, raising=False)
++    return layout, target, probes
++
++
++@pytest.mark.parametrize('code', (5, 32, 33))
++def test_transient_rename_reuses_verified_staging_and_probes_only_once(staged, monkeypatch, code):
++    layout, target, probes = staged
++    calls = []
++    original = Path.rename
++
++    def rename(path, destination):
++        calls.append((path, destination))
++        if len(calls) <= 2:
++            raise denied(code)
++        return original(path, destination)
++
++    monkeypatch.setattr(Path, 'rename', rename)
++    assert runtime._finish_import(layout, target) == '17.11'
++    assert len(calls) == 3
++    assert probes == [target]
++    assert not target.exists()
++    assert json.loads((layout.runtime / 'runtime.json').read_text())['version'] == '17.11'
++    assert (layout.runtime / 'bin/fixture').read_bytes() == b'synthetic engine bytes'
++
++
++@pytest.fixture
++def pauses(monkeypatch):
++    from polymarket_alpha_lab.project_postgres import runtime_publish as p
++    calls = []
++    monkeypatch.setattr(p, 'sleep', calls.append)
++    return calls
++
++
++@pytest.mark.parametrize('code', (5, 32, 33))
++def test_permanent_denial_has_finite_budget_and_keeps_staging(staged, pauses, monkeypatch, code, capsys):
++    from polymarket_alpha_lab.project_postgres import runtime_publish as p
++    layout, target, probes = staged
++    attempts = []
++
++    def blocked(path, destination):
++        attempts.append(path)
++        raise denied(code)
++
++    monkeypatch.setattr(Path, 'rename', blocked)
++    with pytest.raises(files.ProjectDatabaseError, match='^project_postgres_runtime_publish_blocked$') as caught:
++        runtime._finish_import(layout, target)
++    assert len(attempts) == 7 and tuple(pauses) == p.RETRY_DELAYS
++    assert sum(pauses) == pytest.approx(5.1)
++    assert probes == [target] and target.is_dir() and not layout.runtime.exists()
++    assert (target / 'bin/fixture').read_bytes() == b'synthetic engine bytes'
++    assert 'private-path' not in repr(caught.value)
++    assert caught.value.__suppress_context__ is True and capsys.readouterr() == ('', '')
++    with pytest.raises(files.ProjectDatabaseError, match='incomplete_runtime_install'):
++        runtime._staging(layout)
++
++
++@pytest.mark.parametrize('windows,code', ((False, 5), (False, 32), (True, 2), (True, 3),
++    (True, 17), (True, 80), (True, 112), (True, 183), (True, None)))
++def test_other_errors_do_not_retry(staged, pauses, monkeypatch, windows, code):
++    layout, target, _ = staged
++    attempts = []
++    monkeypatch.setattr(runtime, '_WINDOWS_PUBLICATION', windows)
++
++    def fail_once(*_):
++        attempts.append(1)
++        raise denied(code)
++
++    monkeypatch.setattr(Path, 'rename', fail_once)
++    with pytest.raises(files.ProjectDatabaseError, match='^project_postgres_runtime_publish_failed$'):
++        runtime._finish_import(layout, target)
++    assert attempts == [1] and pauses == []
++    assert target.is_dir() and not layout.runtime.exists()
++
++
++@pytest.mark.parametrize('kind', ('empty-directory', 'file'))
++def test_competing_destination_after_denial_never_overwritten(staged, monkeypatch, kind):
++    from polymarket_alpha_lab.project_postgres import runtime_publish as p
++    layout, target, _ = staged
++    calls = []
++
++    def blocked(*_):
++        calls.append(1)
++        raise denied()
++
++    def during_pause(_):
++        if kind == 'file':
++            layout.runtime.write_bytes(b'foreign')
++        else:
++            layout.runtime.mkdir()
++
++    monkeypatch.setattr(Path, 'rename', blocked)
++    monkeypatch.setattr(p, 'sleep', during_pause)
++    with pytest.raises(files.ProjectDatabaseError, match='runtime_already_installed'):
++        runtime._finish_import(layout, target)
++    assert calls == [1] and target.exists()
++    if kind == 'file':
++        assert layout.runtime.read_bytes() == b'foreign'
++    else:
++        assert list(layout.runtime.iterdir()) == []
++
++
++@pytest.mark.parametrize('kind', ('engine', 'manifest', 'notice', 'new-engine-file', 'removed-engine-file'))
++def test_content_mutation_between_attempts_fails_without_another_rename(staged, monkeypatch, kind):
++    from polymarket_alpha_lab.project_postgres import runtime_publish as p
++    layout, target, probes = staged
++    (target / 'LICENSE').write_bytes(b'original notice')
++    calls = []
++
++    def blocked(*_):
++        calls.append(1)
++        raise denied()
++
++    def mutate(_):
++        if kind == 'removed-engine-file':
++            (target / 'bin/fixture').unlink()
++        else:
++            name = {'engine': 'bin/fixture', 'manifest': 'runtime.json',
++                    'notice': 'LICENSE', 'new-engine-file': 'bin/extra'}[kind]
++            (target / name).write_bytes(b'changed')
++
++    monkeypatch.setattr(Path, 'rename', blocked)
++    monkeypatch.setattr(p, 'sleep', mutate)
++    with pytest.raises(files.ProjectDatabaseError, match='runtime_changed'):
++        runtime._finish_import(layout, target)
++    assert calls == [1] and probes == [target] and not layout.runtime.exists()
++
++
++def test_staging_directory_replacement_detected(staged, monkeypatch):
++    from polymarket_alpha_lab.project_postgres import runtime_publish as p
++    import shutil
++    layout, target, _ = staged
++    original = Path.rename
++    calls = []
++
++    def blocked(*_):
++        calls.append(1)
++        raise denied()
++
++    def replace_staging(_):
++        preserved = target.with_name('preserved-original')
++        original(target, preserved)
++        shutil.copytree(preserved, target)
++
++    monkeypatch.setattr(Path, 'rename', blocked)
++    monkeypatch.setattr(p, 'sleep', replace_staging)
++    with pytest.raises(files.ProjectDatabaseError, match='runtime_publish_changed'):
++        runtime._finish_import(layout, target)
++    assert calls == [1] and not layout.runtime.exists()
++    assert target.with_name('preserved-original').is_dir()
++
++
++def test_permission_check_error_is_not_retried_or_repaired(staged, pauses, monkeypatch):
++    from polymarket_alpha_lab.project_postgres import runtime_publish as p
++    layout, target, _ = staged
++    seen = []
++
++    def bad_acl(path, *, create=False):
++        seen.append(create)
++        files.fail('project_postgres_private_permissions_required')
++
++    monkeypatch.setattr(p, 'private_directory', bad_acl)
++    monkeypatch.setattr(Path, 'rename', lambda *_: pytest.fail('unverified rename'))
++    with pytest.raises(files.ProjectDatabaseError, match='private_permissions_required'):
++        runtime._finish_import(layout, target)
++    assert seen == [False] and pauses == [] and target.exists()
++
++
++def test_error_during_integrity_check_is_not_treated_as_rename_denial(staged, pauses, monkeypatch):
++    from polymarket_alpha_lab.project_postgres import runtime_publish as p
++    layout, target, _ = staged
++    monkeypatch.setattr(Path, 'rename', lambda *_: pytest.fail('unverified rename'))
++    with pytest.raises(files.ProjectDatabaseError, match='runtime_publish_failed'):
++        p.publish_runtime(layout, target, validate=lambda _: (_ for _ in ()).throw(denied()), windows=True)
++    assert pauses == [] and target.is_dir()
++
++
++def test_already_present_destination_is_not_adopted(staged, pauses, monkeypatch):
++    layout, target, _ = staged
++    layout.runtime.mkdir()
++    monkeypatch.setattr(Path, 'rename', lambda *_: pytest.fail('would overwrite'))
++    with pytest.raises(files.ProjectDatabaseError, match='runtime_already_installed'):
++        runtime._finish_import(layout, target)
++    assert target.exists() and list(layout.runtime.iterdir()) == [] and pauses == []
++
++
++def test_unrelated_staging_path_is_refused(staged, pauses):
++    from polymarket_alpha_lab.project_postgres import runtime_publish as p
++    layout, target, _ = staged
++    with pytest.raises(files.ProjectDatabaseError, match='runtime_publish_changed'):
++        p.publish_runtime(layout, target.with_name('other'), validate=lambda _: None, windows=True)
++    assert pauses == []
++
++
++def test_post_rename_validation_cannot_return_false_success(staged, pauses, monkeypatch):
++    layout, target, _ = staged
++    original = Path.rename
++
++    def change_after_rename(path, destination):
++        result = original(path, destination)
++        (destination / 'bin/fixture').write_bytes(b'changed')
++        return result
++
++    monkeypatch.setattr(Path, 'rename', change_after_rename)
++    with pytest.raises(files.ProjectDatabaseError, match='runtime_changed'):
++        runtime._finish_import(layout, target)
++    assert layout.runtime.is_dir() and not target.exists() and pauses == []
++
++
++def test_keyboard_interrupt_is_not_swallowed(staged, pauses, monkeypatch):
++    layout, target, _ = staged
++    monkeypatch.setattr(Path, 'rename', lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
++    with pytest.raises(KeyboardInterrupt):
++        runtime._finish_import(layout, target)
++    assert pauses == [] and target.is_dir() and not layout.runtime.exists()
++
++
++@pytest.mark.parametrize('source_kind', ('directory', 'archive'))
++def test_public_import_holds_lease_and_never_repeats_copy_or_probes(tmp_path, monkeypatch, pauses, source_kind):
++    from hashlib import sha256
++    import zipfile
++    root = tmp_path / 'Root'
++    root.mkdir()
++    (root / 'pyproject.toml').write_text('[project]\nname="polymarket-alpha-lab"\n')
++    (root / 'database').mkdir()
++    (root / 'database/migrations.lock.json').write_text('{}')
++    source = tmp_path / 'trusted-source'
++    for name in ('bin', 'lib', 'share'):
++        (source / name).mkdir(parents=True)
++        (source / name / 'fixture').write_bytes(b'fixture')
++    archive = tmp_path / 'trusted.zip'
++    with zipfile.ZipFile(archive, 'w') as z:
++        for path in source.rglob('*'):
++            if path.is_file(): z.write(path, 'pgsql/' + path.relative_to(source).as_posix())
++    layout = files.Layout(root)
++    monkeypatch.setattr(runtime, '_WINDOWS_PUBLICATION', True)
++    versions = []
++    monkeypatch.setattr(runtime, 'runtime_version', lambda p: versions.append(p) or '17.11')
++    original = Path.rename
++    attempts = []
++
++    def rename(path, destination):
++        attempts.append(1)
++        with pytest.raises(files.ProjectDatabaseError, match='busy'):
++            with layout.lock(): pass
++        if len(attempts) == 1: raise denied()
++        return original(path, destination)
++
++    monkeypatch.setattr(Path, 'rename', rename)
++    if source_kind == 'directory':
++        version = runtime.import_runtime_directory(root, source)
++    else:
++        version = runtime.import_runtime_archive(root, archive, expected_sha256=sha256(archive.read_bytes()).hexdigest())
++    assert version == '17.11' and attempts == [1, 1] and len(versions) == 1
++    assert (layout.runtime / 'bin/fixture').read_bytes() == b'fixture'
++    assert not layout.home.exists()  # engine import never initializes a database
++
++
++def test_cli_returns_fixed_code_without_paths_or_traceback(tmp_path, monkeypatch, capsys):
++    from polymarket_alpha_lab.project_postgres import cli
++    monkeypatch.setattr(cli, 'import_runtime_directory', lambda *a: files.fail('project_postgres_runtime_publish_blocked'))
++    assert cli.main(['--root', str(tmp_path), 'install-runtime', '--from-directory', str(tmp_path)]) == 1
++    output = capsys.readouterr()
++    assert output.out == ''
++    assert json.loads(output.err) == {'status': 'blocked', 'reason_code': 'project_postgres_runtime_publish_blocked'}
++    assert str(tmp_path) not in output.err
++
++
++@pytest.mark.parametrize('failures', (0, 6))
++def test_first_and_last_allowed_success(staged, pauses, monkeypatch, failures):
++    layout, target, probes = staged
++    original = Path.rename
++    attempts = []
++
++    def rename(path, destination):
++        attempts.append(1)
++        if len(attempts) <= failures: raise denied()
++        return original(path, destination)
++
++    monkeypatch.setattr(Path, 'rename', rename)
++    assert runtime._finish_import(layout, target) == '17.11'
++    assert len(attempts) == failures + 1 and len(pauses) == failures
++    assert probes == [target]
+diff --git a/tests/test_project_postgres_publication_native.py b/tests/test_project_postgres_publication_native.py
+new file mode 100644
+index 0000000..b2be289
+--- /dev/null
++++ b/tests/test_project_postgres_publication_native.py
+@@ -0,0 +1,117 @@
++"""Actual Windows deny-delete directory handles against the real importer.
++
++No synthetic rename exceptions: CreateFileW holds a real handle without
++FILE_SHARE_DELETE. Uses only a fresh private test directory and trusted native
++binaries. Never touches user data, service configuration or antivirus settings.
++"""
++import ctypes
++from ctypes import wintypes
++import os
++from pathlib import Path
++import time
++import uuid
++
++import pytest
++
++from polymarket_alpha_lab.project_postgres import files, runtime, runtime_publish
++
++ENABLED = (os.name == 'nt' and
++           os.environ.get('POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES') == '1')
++
++
++def deny_directory_rename(path):
++    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
++    create = kernel.CreateFileW
++    create.argtypes = (wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
++                       wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE)
++    create.restype = wintypes.HANDLE
++    close = kernel.CloseHandle
++    close.argtypes = (wintypes.HANDLE,)
++    close.restype = wintypes.BOOL
++    # FILE_LIST_DIRECTORY; share READ|WRITE (not DELETE); OPEN_EXISTING;
++    # FILE_FLAG_BACKUP_SEMANTICS permits a directory handle.
++    handle = create(str(path), 1, 3, None, 3, 0x02000000, None)
++    if handle == ctypes.c_void_p(-1).value:
++        pytest.fail('test lock creation failed, Windows code ' + str(ctypes.get_last_error()))
++    return lambda: close(handle)
++
++
++@pytest.mark.skipif(not ENABLED, reason='explicit Windows native publication proof is opt-in')
++@pytest.mark.parametrize('release_after_denial', (True, False))
++def test_real_directory_handle_contention(tmp_path, monkeypatch, release_after_denial):
++    prefix = Path(os.environ['POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX'])
++    assert prefix.is_absolute() and (prefix / 'bin').is_dir()
++    proof_root = Path(os.environ['RUNNER_TEMP']) / ('pal-publish-' + uuid.uuid4().hex)
++    files.private_directory(proof_root, create=True)
++    root = proof_root / 'Project With Spaces'
++    root.mkdir()
++    (root / 'pyproject.toml').write_text('[project]\nname="polymarket-alpha-lab"\n')
++    (root / 'database').mkdir()
++    (root / 'database/migrations.lock.json').write_text('{}')
++    for key in tuple(os.environ):
++        if key.upper().startswith('PG'): monkeypatch.delenv(key)
++    layout = files.Layout(root)
++    attempts, errors, delays, versions = [], [], [], []
++    original_publish = runtime.publish_runtime
++    original_rename = Path.rename
++    original_version = runtime.runtime_version
++
++    def version(path):
++        versions.append(1)
++        return original_version(path)
++
++    def locked_publish(layout, staging, **options):
++        release = deny_directory_rename(staging)
++        open_handle = True
++
++        def rename(path, destination):
++            if path == staging:
++                attempts.append(1)
++            try:
++                return original_rename(path, destination)
++            except OSError as error:
++                if path == staging: errors.append(error.winerror)
++                raise
++
++        def pause(delay):
++            nonlocal open_handle
++            delays.append(delay)
++            if release_after_denial and open_handle:
++                assert release()
++                open_handle = False
++            time.sleep(delay)
++
++        try:
++            with monkeypatch.context() as scoped:
++                scoped.setattr(Path, 'rename', rename)
++                scoped.setattr(runtime_publish, 'sleep', pause)
++                original_publish(layout, staging, **options)
++        finally:
++            if open_handle: assert release()
++
++    monkeypatch.setattr(runtime, 'runtime_version', version)
++    monkeypatch.setattr(runtime, 'publish_runtime', locked_publish)
++    if release_after_denial:
++        result = runtime.import_runtime_directory(root, prefix)
++        assert result.startswith('17.')
++        assert versions == [1]  # retry does not re-execute the five probes
++        assert 2 <= len(attempts) <= 7
++        assert not layout.runtime.with_name('postgres.installing').exists()
++        assert runtime.verify_runtime(layout)['version'] == result
++        print('native publication: transient real handle released; validated runtime published')
++    else:
++        with pytest.raises(files.ProjectDatabaseError, match='^project_postgres_runtime_publish_blocked$'):
++            runtime.import_runtime_directory(root, prefix)
++        assert versions == [1] and len(attempts) == 7
++        assert tuple(delays) == runtime_publish.RETRY_DELAYS
++        assert not layout.runtime.exists()
++        staging = layout.runtime.with_name('postgres.installing')
++        assert (staging / 'runtime.json').is_file()
++        assert runtime.inventory(staging)
++        with pytest.raises(files.ProjectDatabaseError, match='incomplete_runtime_install'):
++            runtime.import_runtime_directory(root, prefix)
++        assert len(attempts) == 7 and versions == [1]
++        print('native publication: persistent real handle denied; staging retained, no false success')
++    assert errors and all(code in (5, 32, 33) for code in errors)
++    assert not layout.home.exists()  # no initdb, server or research execution
++    with layout.lock(): pass  # the lifecycle lease was released on either path

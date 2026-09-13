@@ -1,0 +1,26 @@
+{
+  "format": "github-patch-handoff-v1",
+  "status": "ARCHIVED_ALREADY_MERGED",
+  "patch_file": "polymarket-runtime-publication-fix.patch",
+  "patch_bytes": 34096,
+  "patch_sha256": "833be08c01d84729282a2826cfea486d3489ab878086526f81428e642945f6f8",
+  "patch_git_blob": "3ab12f488cbe52997bf7cbd4e4018b13f95bd9e3",
+  "base_commit": "4d63b0877ba8a3c4d9aaca26bd2110770cf1ef3c",
+  "base_tree": "5f2c56f6509a23e7d41afe4f205002161951b6b7",
+  "result_tree": "d6f6750b1068a3c75ab6249d5ca4f1ef7e010ee4",
+  "implementation_commit": "d4caa7c3bc4e48f37f195290f47928d3e2cc9034",
+  "merged_commit": "2b20002c83ee33acb95fb2ca3de841f3e883ebbf",
+  "pull_request": 14,
+  "release_tag": "v0.1.0-native-preview.1",
+  "release_zip_sha256": "c32647030e8d5cb2bab1ea3d6c93c6c253f80752390ea7240741f25b4022b705",
+  "application_policy": "Historical replay on the exact base only. Do not apply to merged main or recreate PR #14 or its existing release.",
+  "result_file_blobs": {
+    ".github/workflows/native-postgres.yml": "fd85f3f7222d98214af1e915e3e4f4f790a54603",
+    "database/README.md": "994e84e4077a10c64f436348d45c600192fb4225",
+    "docs/windows-local-acceptance-2026-09-13.md": "2907d3d735edc26060ac6e93cc130feec9c8a1dd",
+    "src/polymarket_alpha_lab/project_postgres/runtime.py": "d6cef0a034ca90cbf1301e34f9a77583b7dc7aed",
+    "src/polymarket_alpha_lab/project_postgres/runtime_publish.py": "81e8fe5d0e1e71f4eecae302a71c882897f98076",
+    "tests/test_project_postgres_publication.py": "702a8fcb443d65c35a423ad363f14faae5949a1a",
+    "tests/test_project_postgres_publication_native.py": "b2be2899bcdc7f4292d4af5e798bb2430984a3eb"
+  }
+}
