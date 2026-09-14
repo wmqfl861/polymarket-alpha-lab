@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: 4c2eea9e24ff0e9da19a9fa5aca7ce9857e5f13a
+          ref: 5ae094343516be21ae6dc63aa8c70c1309fb782d
           persist-credentials: false
       - name: Archive pinned public source only
         run: |
@@ -20,7 +20,7 @@ jobs:
           git rev-parse HEAD^{tree} > "$RUNNER_TEMP/tree.txt"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: engineering-source-4c2eea9
+          name: engineering-source-5ae0943
           path: |
             ${{ runner.temp }}/source.tar
             ${{ runner.temp }}/commit.txt
