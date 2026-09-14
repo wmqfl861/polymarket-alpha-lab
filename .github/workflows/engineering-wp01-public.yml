@@ -1,0 +1,55 @@
+name: Engineering WP01 public acceptance
+on:
+  push:
+    branches: [engineering/wp01-public-proof-20260914]
+permissions:
+  contents: read
+jobs:
+  public-selection:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: daa523b17111ff55f8048fd69fb6c6b4581426c9
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - run: uv sync --locked --python 3.12
+      - name: One bounded two-team selection, no outer retries
+        shell: bash
+        run: |
+          set -o pipefail
+          test "$(git rev-parse HEAD^{tree})" = d74116b5a84075d30ff27e74ddadef45b2b41eca
+          .venv/bin/python -I scripts/discover_crypto_research.py --team crypto_btc --team crypto_eth --select-supported --max-candidates 10 --attempts 3 --allow-public-fetch 2>&1 | tee "$RUNNER_TEMP/wp01-public-selection.log"
+      - name: Check actual result bounds and source unchanged
+        if: always()
+        shell: bash
+        run: |
+          git diff --check
+          git diff --exit-code
+          test ! -e .local
+          .venv/bin/python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads((Path(os.environ['RUNNER_TEMP'])/'wp01-public-selection.log').read_text())
+          assert r['model_called'] is False and r['database_written'] is False
+          assert r['selection_is_approval'] is False and r['configured_public_gets_ceiling']==32
+          assert r['public_gets_upper_bound']<=32 and len(r['results'])==2
+          for item in r['results']:
+              assert item['metadata_get_attempts']<=10 and item['preview_invocations']<=1
+              assert item['request_attempts']<=3 and item['model_called'] is False
+              if item['pending_spec'] is not None:
+                  assert item['pending_spec']['operator_approved'] is False
+                  assert item['preview']['forecast_start_status']=='requires_operator_approval'
+          print('Verified bounded public-only result; status remains whatever the actual selection returned.')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wp01-public-daa523b
+          path: ${{ runner.temp }}/wp01-public-selection.log
+          retention-days: 7
+          if-no-files-found: error
