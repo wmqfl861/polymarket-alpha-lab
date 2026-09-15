@@ -11,19 +11,19 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: 0147b5777be00296f9e981b956275b7b11b8e7f9
+          ref: f0ce4fa2be7d32874d88713a4c2248162b412d9d
           persist-credentials: false
       - name: Archive fixed tracked source only
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = 0147b5777be00296f9e981b956275b7b11b8e7f9
-          git archive --format=zip --output="$RUNNER_TEMP/review-source.zip" HEAD src tests scripts database supabase/migrations docs .github/workflows AGENTS.md DELIVERY_PLAN.md README.md pyproject.toml uv.lock .gitattributes .gitignore
+          test "$(git rev-parse HEAD)" = f0ce4fa2be7d32874d88713a4c2248162b412d9d
+          git archive --format=zip --output="$RUNNER_TEMP/review-source.zip" HEAD src tests scripts database supabase/migrations docs .github/workflows AGENTS.md DELIVERY_PLAN.md README.md pyproject.toml uv.lock .gitattributes .gitignore .env.example strategy.example.json strategy.example.phase1-screening.json
           sha256sum "$RUNNER_TEMP/review-source.zip" > "$RUNNER_TEMP/review-source.sha256"
           git ls-tree -r HEAD > "$RUNNER_TEMP/review-source-tree.txt"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: fixed-source-0147b577
+          name: fixed-source-f0ce4fa2
           path: |
             ${{ runner.temp }}/review-source.zip
             ${{ runner.temp }}/review-source.sha256
