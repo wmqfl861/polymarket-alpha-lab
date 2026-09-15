@@ -1,0 +1,75 @@
+name: Handoff cold-start evidence
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/download_handoff.ps1'
+      - 'tests/test_handoff_download.py'
+      - 'tests/handoff_probe.py'
+      - 'tests/test_handoff_probe*.py'
+      - 'docs/development/windows-handoff-cold-start.md'
+      - '.github/workflows/handoff-cold-start.yml'
+permissions:
+  contents: read
+concurrency:
+  group: handoff-cold-start-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  first-invocation:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        parent: [cmd, pwsh]
+    env:
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      PYTHONUTF8: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - name: Install without invoking a PowerShell host
+        shell: cmd
+        run: uv sync --locked --extra dev --python 3.12
+      - name: Require both shell executables without launching either
+        shell: cmd
+        run: .venv\Scripts\python.exe -c "import os,shutil; assert os.name == 'nt'; assert all(shutil.which(s) for s in ('powershell.exe','pwsh'))"
+      # Two different jobs/VMs, not an in-place retry. The FIRST explicit PS5.1
+      # invocation is still the original success case. No preliminary shell,
+      # module probe, cache purge or environment repair is permitted here.
+      - name: First invocation from cmd
+        if: matrix.parent == 'cmd'
+        shell: cmd
+        run: |
+          .venv\Scripts\python.exe -u -m pytest -v -s tests/test_handoff_download.py tests/test_handoff_probe.py tests/test_handoff_probe_review.py --junitxml="%RUNNER_TEMP%\handoff-proof.xml" > "%RUNNER_TEMP%\handoff-proof.log" 2>&1
+          set "TEST_EXIT=%ERRORLEVEL%"
+          type "%RUNNER_TEMP%\handoff-proof.log"
+          exit /b %TEST_EXIT%
+      - name: First invocation from the existing pwsh parent context
+        if: matrix.parent == 'pwsh'
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -u -m pytest -v -s tests/test_handoff_download.py tests/test_handoff_probe.py tests/test_handoff_probe_review.py --junitxml="$env:RUNNER_TEMP/handoff-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/handoff-proof.log"
+          exit $LASTEXITCODE
+      - name: Verify tracked source unchanged
+        shell: cmd
+        run: |
+          git diff --check
+          if errorlevel 1 exit /b %ERRORLEVEL%
+          git diff --exit-code
+          exit /b %ERRORLEVEL%
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: handoff-cold-${{ matrix.parent }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/handoff-proof.log
+            ${{ runner.temp }}/handoff-proof.xml
+          retention-days: 7
+          if-no-files-found: error

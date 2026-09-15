@@ -5,9 +5,10 @@ import json
 import os
 from pathlib import Path
 import shutil
-import subprocess
 
 import pytest
+
+from tests.handoff_probe import run_traced, trace_prelude
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'scripts/download_handoff.ps1'
 
@@ -46,17 +47,30 @@ def test_real_powershell_download_publication(tmp_path, shell, case):
     fixtures=tmp_path/'fixtures';fixtures.mkdir()
     (fixtures/'manifest.json').write_bytes(mbytes)
     (fixtures/'LOCAL_AGENT_PROMPT.md').write_bytes(payload if case!='file_hash' else b'x'*len(payload))
-    harness = f'''
+    trace = tmp_path/'stage-trace.txt'
+    harness = trace_prelude(trace) + f'''
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+Write-HandoffProbe 'encoding_ready'
 function Decode([string]$x) {{ [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($x)) }}
+Write-HandoffProbe 'source_begin'
 . (Decode '{encoded(SCRIPT)}')
+Write-HandoffProbe 'source_ready'
 $Global:Source = Decode '{encoded(fixtures)}'
 $Global:Case = '{case}'
 $Global:Calls = 0
 function Get-FileHash {{ throw 'Get-FileHash must not be required' }}
+$script:OriginalHandoffHash = ${{function:Get-HandoffSha256}}
+function Get-HandoffSha256 {{
+    param([string]$LiteralPath)
+    Write-HandoffProbe 'hash_begin'
+    $Value = & $script:OriginalHandoffHash $LiteralPath
+    Write-HandoffProbe 'hash_end'
+    return $Value
+}}
 function Receive-HandoffFile {{
     param([string]$Uri, [string]$Destination, [long]$Limit)
+    Write-HandoffProbe 'receive_begin'
     $Global:Calls++
     $Name = ([uri]$Uri).Segments[-1]
     $Bytes = [IO.File]::ReadAllBytes((Join-Path $Global:Source $Name))
@@ -65,13 +79,19 @@ function Receive-HandoffFile {{
         throw 'injected incomplete transfer'
     }}
     [IO.File]::WriteAllBytes($Destination, $Bytes)
+    Write-HandoffProbe 'receive_end'
 }}
+Write-HandoffProbe 'invoke_begin'
 $Result = Invoke-HandoffDownload 'wmqfl861/polymarket-alpha-lab' ('a'*40) 'handoffs/unit-test' '{expected}' (Decode '{encoded(parent)}')
+Write-HandoffProbe 'invoke_end'
+Write-HandoffProbe 'json_begin'
 [pscustomobject]@{{result=$Result; calls=$Global:Calls; major=$PSVersionTable.PSVersion.Major}} | ConvertTo-Json -Depth 8 -Compress
+Write-HandoffProbe 'harness_end'
 '''
     ps=tmp_path/'test.ps1';ps.write_bytes(harness.encode('ascii'))
-    run=subprocess.run([program,'-NoProfile','-NonInteractive','-File',str(ps)],capture_output=True,
-                       text=True,encoding='utf-8',errors='replace',timeout=30)
+    print('handoff_case ' + json.dumps(dict(shell=shell,case=case)),flush=True)
+    run, probe = run_traced([program,'-NoProfile','-NonInteractive','-File',str(ps)],trace,timeout=30)
+    assert probe['trace_state']=='complete' and probe['last_stage']=='harness_end'
     assert run.returncode==0, run.stdout+run.stderr
     result=json.loads(run.stdout.strip())
     assert result['major']==(5 if shell=='powershell.exe' else 7)
@@ -102,19 +122,35 @@ def test_dotnet_hash_is_exact_unicode_safe_and_releases_file(tmp_path, shell):
     item = tmp_path / 'hash \u6d4b\u8bd5.bin'
     item.write_bytes(payload)
     ps = tmp_path / 'hash.ps1'
-    ps.write_text(f"""
+    trace = tmp_path/'hash-trace.txt'
+    ps.write_text(trace_prelude(trace) + f"""
 $ErrorActionPreference = 'Stop'
 function Decode([string]$x) {{ [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($x)) }}
+Write-HandoffProbe 'source_begin'
 . (Decode '{encoded(SCRIPT)}')
+Write-HandoffProbe 'source_ready'
 function Get-FileHash {{ throw 'Get-FileHash must not be required' }}
+$script:OriginalHandoffHash = ${{function:Get-HandoffSha256}}
+function Get-HandoffSha256 {{
+    param([string]$LiteralPath)
+    Write-HandoffProbe 'hash_begin'
+    $Value = & $script:OriginalHandoffHash $LiteralPath
+    Write-HandoffProbe 'hash_end'
+    return $Value
+}}
 $Path = Decode '{encoded(item)}'
+Write-HandoffProbe 'invoke_begin'
 $Hash = Get-HandoffSha256 $Path
 $Check = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
 $Check.Dispose()
+Write-HandoffProbe 'invoke_end'
+Write-HandoffProbe 'json_begin'
 [pscustomobject]@{{sha256=$Hash; major=$PSVersionTable.PSVersion.Major}} | ConvertTo-Json -Compress
+Write-HandoffProbe 'harness_end'
 """, encoding='ascii')
-    run = subprocess.run([program, '-NoProfile', '-NonInteractive', '-File', str(ps)],
-                         capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=30)
+    print('handoff_case ' + json.dumps(dict(shell=shell,case='hash_binary_unicode')),flush=True)
+    run, probe = run_traced([program, '-NoProfile', '-NonInteractive', '-File', str(ps)],trace,timeout=30)
+    assert probe['trace_state']=='complete' and probe['last_stage']=='harness_end'
     assert run.returncode == 0, run.stdout + run.stderr
     value = json.loads(run.stdout)
     assert value['sha256'] == sha256(payload).hexdigest()
