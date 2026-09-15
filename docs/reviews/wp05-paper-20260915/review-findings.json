@@ -1,0 +1,35 @@
+{
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "pull_request": 36,
+  "base": "4a6e787e1b0a6fb93c0d36455987c66f0b043e7c",
+  "head": "710313dcd567e9eb06d4e0a1f55f56375d44c89c",
+  "tree": "27af9bd6cd4511688a6ad9c65dc30d3909c1c2e7",
+  "review_type": "separate same-assistant self-review, not external audit",
+  "initial_implementation": {"passed": 47},
+  "initial_review": {
+    "failed": 5, "passed": 3,
+    "one_failure_was_an_invalid_rounding_fixture": true,
+    "implementation_unchanged_before_corrected_fixture_rerun": true
+  },
+  "corrected_fixture_red": {"failed": 5, "passed": 3},
+  "resolved_findings": [
+    "Subthreshold net edge could be rounded into acceptance",
+    "Quadratic fee at worst ask was not a consumed-range upper bound",
+    "Original contract/observation eligibility not checked",
+    "Explicit market minimum quantity not checked",
+    "Malformed market/book JSON did not remain a rejected scenario"
+  ],
+  "final_local": {"passed": 84, "native_skipped": 1},
+  "final_detached_worktree_seconds": 1.39,
+  "native_execution_claimed_from_local_tests": false,
+  "local_environment": "Python 3.13.5 / preinstalled packages / verified shipped-source subset",
+  "full_locked_and_native_gates": "Use actual final-head CI artifacts, not local subset totals",
+  "additional_fraction_probe": {"cases": 240, "ready_bounds_checked": 223, "rejected": 17, "seed": 3415},
+  "additional_roster_probe": {"scenarios": 100, "ask_levels_per_scenario": 200, "all_ready": true},
+  "original_66_migrations_unchanged": true,
+  "old_kit_manifest_entries_verified": 2920,
+  "new_kit_manifest_entries_verified": 2923,
+  "paper_trades_created": 0,
+  "realized_pnl": null,
+  "G5_complete": false
+}

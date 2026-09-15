@@ -1,0 +1,38 @@
+{
+  "ci-offline": {
+    "offline-verification.log": {
+      "bytes": 44988,
+      "sha256": "ebfeeb9a11c97f246810b1a76ac9bac47f319e28881a3e38d4b62480debab748"
+    }
+  },
+  "ci-native": {
+    "native-proof.xml": {
+      "bytes": 251028,
+      "sha256": "564e467f597b26f2eddc87aac3c79061a73919020246eaaf6e662ad75e103207"
+    },
+    "native-proof.log": {
+      "bytes": 25929,
+      "sha256": "86e3a3a855a64b8232b936d9e9801d9cc6fe6b5bebedcd7c9424a686e37912b2"
+    }
+  },
+  "ci-paper": {
+    "research-paper.log": {
+      "bytes": 224,
+      "sha256": "a71914f1da7b557c7c1b5b42c712f7e69024dd88c84e63149d7eb5d8b39c7163"
+    },
+    "research-paper.xml": {
+      "bytes": 11490,
+      "sha256": "6ae0ccbc58025d7a5a0de67ba4561a0e732c7669411afca330205dc3f8140a2f"
+    }
+  },
+  "ci-distribution": {
+    "distribution-proof.xml": {
+      "bytes": 13596,
+      "sha256": "403f466fb4abe03fbed119efe2b2350b91aab1f8372892b6020bd63617492d49"
+    },
+    "distribution-proof.log": {
+      "bytes": 778,
+      "sha256": "bad8938fcf839389ac177d22e47c93c0afb03d15ce9aa44f7aa98f83181e12c4"
+    }
+  }
+}
