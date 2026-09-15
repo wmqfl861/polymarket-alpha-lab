@@ -1,0 +1,8 @@
+{
+  "final_head": "8ca3135c97c3267fbf10b2733787efc1a1bb4f7b",
+  "collected_cases": 120,
+  "longest_node_id_characters": 177,
+  "oversized_case_present": true,
+  "metadata_only_ast_equivalence": true,
+  "input_values_and_assertions_unchanged": true
+}

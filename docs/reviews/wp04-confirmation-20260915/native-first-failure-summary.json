@@ -1,0 +1,20 @@
+{
+  "head": "cffa8e27f92d1bce705f29ec731a4308b25e8f96",
+  "run_id": 34926855462,
+  "artifact_id": 10380540885,
+  "artifact_sha256": "4b54b0bc9e116e7b8147cf6eb008ce662323e679e0774c53e57425c2a2ee6636",
+  "unique_error_cases": 1,
+  "error_events": 2,
+  "pytest_summary": "1734 passed, 2 skipped, 2 errors in 1022.88s",
+  "classname": "tests.test_research_resolution_confirmation",
+  "case_prefix": "test_invalid_stdin_rejected[00000000000000000000000000000000000000000000000",
+  "case_name_characters": 65566,
+  "case_name_sha256": "fc866ae9ed74ae3f8c54d711a096e96677f16b58b682ebf9f7428d7adc9fbfe2",
+  "errors": [
+    "failed on setup with \"ValueError: the environment variable is longer than 32767 characters\"",
+    "failed on teardown with \"ValueError: the environment variable is longer than 32767 characters\""
+  ],
+  "test_body_executed": false,
+  "native_confirmation_scenario_passed": true,
+  "native_confirmation_seconds": 157.744
+}

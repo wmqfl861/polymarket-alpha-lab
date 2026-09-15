@@ -1,0 +1,82 @@
+FFF...........                                                           [100%]
+=================================== FAILURES ===================================
+_ test_cli_must_bind_result_to_instruction_not_only_review_id[foreign-record] __
+
+managed = {'calls': [{'allow_resolution_write': True, 'instruction': CryptoSettlementReview(review_id='confirmed-original', reco...4ea14d8776', paper_only=True, report_only=True, readonly=True), paper_only=True, report_only=True, readonly=True), ...}
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff6e7a4f0e0>
+fault = 'foreign-record'
+
+    @pytest.mark.parametrize('fault',['foreign-record','opposite-outcome','different-source'])
+    def test_cli_must_bind_result_to_instruction_not_only_review_id(managed,capsys,fault):
+        i,e,c=fixture()
+        if fault=='foreign-record':
+            other,ex,ca=fixture(record_id='foreign')
+            other=replace(other,review_id=i.review_id)
+            wrong=receipt(build(other,ex,ca),ex.request)
+        elif fault=='opposite-outcome':
+            other,ex,ca=fixture(yes=False)
+            wrong=receipt(build(other,ex,ca),ex.request)
+        else:
+            other=replace(i,confirmation=replace(i.confirmation,source_text='other independently reviewed source'))
+            wrong=receipt(build(other,e,c),e.request)
+        managed['receipt']=wrong
+        code,out=invoke(managed,capsys)
+>       assert code==1 and out['result'] is None
+E       assert (0 == 1)
+
+tests/test_research_resolution_confirmation_review.py:33: AssertionError
+_ test_cli_must_bind_result_to_instruction_not_only_review_id[opposite-outcome] _
+
+managed = {'calls': [{'allow_resolution_write': True, 'instruction': CryptoSettlementReview(review_id='confirmed-original', reco...eb670568b2', paper_only=True, report_only=True, readonly=True), paper_only=True, report_only=True, readonly=True), ...}
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff6e7a52710>
+fault = 'opposite-outcome'
+
+    @pytest.mark.parametrize('fault',['foreign-record','opposite-outcome','different-source'])
+    def test_cli_must_bind_result_to_instruction_not_only_review_id(managed,capsys,fault):
+        i,e,c=fixture()
+        if fault=='foreign-record':
+            other,ex,ca=fixture(record_id='foreign')
+            other=replace(other,review_id=i.review_id)
+            wrong=receipt(build(other,ex,ca),ex.request)
+        elif fault=='opposite-outcome':
+            other,ex,ca=fixture(yes=False)
+            wrong=receipt(build(other,ex,ca),ex.request)
+        else:
+            other=replace(i,confirmation=replace(i.confirmation,source_text='other independently reviewed source'))
+            wrong=receipt(build(other,e,c),e.request)
+        managed['receipt']=wrong
+        code,out=invoke(managed,capsys)
+>       assert code==1 and out['result'] is None
+E       assert (0 == 1)
+
+tests/test_research_resolution_confirmation_review.py:33: AssertionError
+_ test_cli_must_bind_result_to_instruction_not_only_review_id[different-source] _
+
+managed = {'calls': [{'allow_resolution_write': True, 'instruction': CryptoSettlementReview(review_id='confirmed-original', reco...31fd22408a', paper_only=True, report_only=True, readonly=True), paper_only=True, report_only=True, readonly=True), ...}
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff6e7a52ad0>
+fault = 'different-source'
+
+    @pytest.mark.parametrize('fault',['foreign-record','opposite-outcome','different-source'])
+    def test_cli_must_bind_result_to_instruction_not_only_review_id(managed,capsys,fault):
+        i,e,c=fixture()
+        if fault=='foreign-record':
+            other,ex,ca=fixture(record_id='foreign')
+            other=replace(other,review_id=i.review_id)
+            wrong=receipt(build(other,ex,ca),ex.request)
+        elif fault=='opposite-outcome':
+            other,ex,ca=fixture(yes=False)
+            wrong=receipt(build(other,ex,ca),ex.request)
+        else:
+            other=replace(i,confirmation=replace(i.confirmation,source_text='other independently reviewed source'))
+            wrong=receipt(build(other,e,c),e.request)
+        managed['receipt']=wrong
+        code,out=invoke(managed,capsys)
+>       assert code==1 and out['result'] is None
+E       assert (0 == 1)
+
+tests/test_research_resolution_confirmation_review.py:33: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_research_resolution_confirmation_review.py::test_cli_must_bind_result_to_instruction_not_only_review_id[foreign-record] - assert (0 == 1)
+FAILED tests/test_research_resolution_confirmation_review.py::test_cli_must_bind_result_to_instruction_not_only_review_id[opposite-outcome] - assert (0 == 1)
+FAILED tests/test_research_resolution_confirmation_review.py::test_cli_must_bind_result_to_instruction_not_only_review_id[different-source] - assert (0 == 1)
+3 failed, 11 passed in 0.55s

@@ -1,0 +1,66 @@
+{
+  "review-red.log": {
+    "bytes": 4892,
+    "sha256": "558fd0aca11cbe179b0c32451c2e9f20d18bfb99056086805cc862fa61d70d07"
+  },
+  "isolated-review.log": {
+    "bytes": 191,
+    "sha256": "8fd5932a6463e4ca0b8068a89de4b59db7abd47907ed28a1a05e078f6dbc6971"
+  },
+  "isolated-review-final.log": {
+    "bytes": 191,
+    "sha256": "adb31b2f39beb93660b488427454080b1d792f345e2d2a80ea5c48da3d7d79da"
+  },
+  "source-manifest-first.json": {
+    "bytes": 2397,
+    "sha256": "b6a8bff7f935067c32cb73e90eb5246773d97084c8d1d076b5eeb365161c0811"
+  },
+  "source-manifest-final.json": {
+    "bytes": 2397,
+    "sha256": "46df21e0a413a3a168c471e5be39ac8e37b46f9ce180d324f0124ec7e5e26f67"
+  },
+  "test-id-review.json": {
+    "bytes": 250,
+    "sha256": "9b10325839db8cb38f98bb72ea73a3cfa2d348657d6d7fc3f22043cb4eb65073"
+  },
+  "ci-first/distribution-proof.log": {
+    "bytes": 778,
+    "sha256": "d7e954bb9a9385ecb2a68ddb8eba22ed621a7588df59cae26306de08e6cf009f"
+  },
+  "ci-first/distribution-proof.xml": {
+    "bytes": 13596,
+    "sha256": "8ed11973641deed15941e4295e92a86b32fa9beeb095aa519bd49ba28306464e"
+  },
+  "ci-first/native-proof.log": {
+    "bytes": 294685,
+    "sha256": "93ee767d4aba2c712fa5be653da19fb694a3495400ecdcec3800513870ccf967"
+  },
+  "ci-first/native-proof.xml": {
+    "bytes": 322952,
+    "sha256": "f4227b0762a7ad7a036d5e487a52eb477d9fbcea9b9119f3013efe9171070f48"
+  },
+  "ci-first/offline-verification.log": {
+    "bytes": 44718,
+    "sha256": "8a60e79ea71dfb50bb1f96ddd7c1ced191d9bb7401523503ed4bf47c8722f705"
+  },
+  "ci-final/distribution-proof.log": {
+    "bytes": 778,
+    "sha256": "0cf24bb445b0602afe624418f21d72bade07f0b19fae67e17e8174a63f481ac2"
+  },
+  "ci-final/distribution-proof.xml": {
+    "bytes": 13596,
+    "sha256": "b2a86a0571fa56a99400ec54279f2a66158c00efc4f9100be7ee1932bdb317c1"
+  },
+  "ci-final/native-proof.log": {
+    "bytes": 32187,
+    "sha256": "ae3cedf62467d96704098a6350790ec89bd267c002990df7641d4169937599da"
+  },
+  "ci-final/native-proof.xml": {
+    "bytes": 251029,
+    "sha256": "c1a74e9a78108490aad86b3be8b80971045dd2653b7621c25696b206252f84a9"
+  },
+  "ci-final/offline-verification.log": {
+    "bytes": 44718,
+    "sha256": "f180953d7a15abfeca6e31c127a7cc5324db4393f97ad1c46baf09b678d9f8d3"
+  }
+}
