@@ -1,0 +1,46 @@
+{
+  "review-first.log": {
+    "bytes": 2578,
+    "sha256": "12efe53b2daff9ae3f565128c255ea4b65fb86c0b485c849ff794f10f5a848aa"
+  },
+  "review-final.log": {
+    "bytes": 110,
+    "sha256": "407a91abf6e861c059ebff36d94aeed85efe10cea7091e4d1eff84849a8fdfd5"
+  },
+  "review-final.xml": {
+    "bytes": 10170,
+    "sha256": "b3c7f6f32b3566bb147a296136cbf8613476779188f58cf25c811df7c2f93c13"
+  },
+  "full-final.log": {
+    "bytes": 45546,
+    "sha256": "d99dc7f3e3c106f2f58eb4f9b2711dd6e9cee5251c316a748bc67d34580c7b0c"
+  },
+  "ci-distribution/distribution-proof.log": {
+    "bytes": 7062,
+    "sha256": "0d5e06b5d7eb17102cf4a81e33338feacc0bee80f77f942bb28be00448ebf0ca"
+  },
+  "ci-distribution/distribution-proof.xml": {
+    "bytes": 13596,
+    "sha256": "7b4ce8977ad676f2c5dc94ccc505368debfb7da8899ad8b21397cf595178b8cb"
+  },
+  "ci-native/native-proof.log": {
+    "bytes": 32291,
+    "sha256": "14a5b1de60c0ade78610483d668581fc50c52fb509750749b03698c084d58acc"
+  },
+  "ci-native/native-proof.xml": {
+    "bytes": 253941,
+    "sha256": "1c711c5c075e78bb44e49e9772c5b03e80372e287d0c309554ab94a4f140dbab"
+  },
+  "ci-offline/offline-verification.log": {
+    "bytes": 45587,
+    "sha256": "13cdc1653f28833f23eb82e0d334568f8d5b9213ce93312eb14584244de40721"
+  },
+  "ci-paper/research-paper.log": {
+    "bytes": 9072,
+    "sha256": "2bbfe20fbe007f305d4c2e7b3199ea99c3f5a77cbc64dd14171643364c116785"
+  },
+  "ci-paper/research-paper.xml": {
+    "bytes": 47892,
+    "sha256": "55945cf16219c073b5513688687dd154e0f2f76826f62f44bec23c981b11b0a7"
+  }
+}

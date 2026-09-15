@@ -1,0 +1,42 @@
+{
+  ".github/workflows/research-paper.yml": {
+    "bytes": 2526,
+    "sha256": "09a8be2f92ec9d71d5e26a8ac089d547f9612150f7451089eba8d3e089e92a83",
+    "git_blob": "7edadbc37b2c2633e0e959ff51e9bb52f5708c71"
+  },
+  "DELIVERY_PLAN.md": {
+    "bytes": 46386,
+    "sha256": "4c12312c27c998b1991284e2a5cc7b6551598cdecf8a05176f4e2d76ddd04aac",
+    "git_blob": "e6e7c3be491dcd18e641faef0f655e4f28632d52"
+  },
+  "docs/research-paper.md": {
+    "bytes": 23312,
+    "sha256": "c370e49220b7a30aedc6a9d35a9a6953ee65a2b299d9983d4516fb77e8abb751",
+    "git_blob": "8dc5ff1a89ce719eba384ee36eb1c6a2d517d600"
+  },
+  "src/polymarket_alpha_lab/research_dispatch_cli.py": {
+    "bytes": 9352,
+    "sha256": "232a15e08fcf47f9f0eed42586aaf1702f9f9c45cb6c6dc6c89a14edea6b0493",
+    "git_blob": "8ff1420920eba757f17ed9e8fdb8825e38f0e9e4"
+  },
+  "src/polymarket_alpha_lab/research_paper_operator.py": {
+    "bytes": 6109,
+    "sha256": "694ff2ce146120bc4a3358b7fc6e6529202cafa2fc189cf17ff251da258aab8b",
+    "git_blob": "b780526d44fcb1c1014d737832762f0cc49eaf9c"
+  },
+  "tests/test_project_postgres_paper_operator_native.py": {
+    "bytes": 5649,
+    "sha256": "3e6123fa24d470b8db5492b564d2fb63b276bcb7ef084b1a110e957674698c12",
+    "git_blob": "83e0dd7ab0fd3d676df82c8cb272741ced071613"
+  },
+  "tests/test_research_paper_operator.py": {
+    "bytes": 9564,
+    "sha256": "707bbcf382d2deab4985418442bf48206a161db77d1035b984b8acd2ea58e43c",
+    "git_blob": "dad5c0265ce6a39afc6bd8ccc6d31b53d014cec1"
+  },
+  "tests/test_research_paper_operator_review.py": {
+    "bytes": 4659,
+    "sha256": "caf536e33f6ac7e1bbf8e70864287ae12ee5605f18d1ab4c8787a2f6e7a740e2",
+    "git_blob": "166a4b96c2602f44355bc03584c5923e4ce1fd4f"
+  }
+}

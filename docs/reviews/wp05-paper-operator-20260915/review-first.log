@@ -1,0 +1,51 @@
+F................                                                        [100%]
+=================================== FAILURES ===================================
+________ test_invalid_direct_operation_does_not_echo_untrusted_argument ________
+
+managed = {'calls': [], 'closed': False, 'receipt': StoredResearchPaper(request_sha256='b3ce6817f22b3b2402de9a6fc91e41fea84b351f...ecimal('0.1'), assumptions_id='synthetic-costs', max_age_seconds=60, paper_only=True, report_only=True, readonly=True)}
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff3c9017f0>
+
+    def test_invalid_direct_operation_does_not_echo_untrusted_argument(managed, capsys):
+        code = cli.operate_paper(root=ROOT, operation=PRIVATE, record_id='record-1')
+        output = capsys.readouterr()
+>       assert code == 2 and PRIVATE not in output.out + output.err
+E       assert (2 == 2 and 'synthetic-p...o-not-output' not in '{\n  "opera...nvalid"\n}\n'
+E         
+E         'synthetic-private-failure-do-not-output' is contained here:
+E           {
+E             "operation": "synthetic-private-failure-do-not-output",
+E             "result": null,
+E             "operation_entered": false,
+E             "business_writes_possible": false,
+E             "model_calls_possible": false,
+E             "public_network_called": false,
+E             "automatic_retry_permitted": false,
+E             "final_database_state_checked": false,
+E             "paper_only": true,
+E             "report_only": true,
+E             "readonly": true,
+E             "status": "invalid_input",
+E             "reason_code": "paper_operator_arguments_invalid"
+E           })
+
+tests/test_research_paper_operator_review.py:17: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_research_paper_operator_review.py::test_invalid_direct_operation_does_not_echo_untrusted_argument - assert (2 == 2 and 'synthetic-p...o-not-output' not in '{\n  "opera...nvalid"\n}\n'
+  
+  'synthetic-private-failure-do-not-output' is contained here:
+    {
+      "operation": "synthetic-private-failure-do-not-output",
+      "result": null,
+      "operation_entered": false,
+      "business_writes_possible": false,
+      "model_calls_possible": false,
+      "public_network_called": false,
+      "automatic_retry_permitted": false,
+      "final_database_state_checked": false,
+      "paper_only": true,
+      "report_only": true,
+      "readonly": true,
+      "status": "invalid_input",
+      "reason_code": "paper_operator_arguments_invalid"
+    })
+1 failed, 16 passed in 1.34s

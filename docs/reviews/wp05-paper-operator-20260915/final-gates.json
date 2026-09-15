@@ -1,0 +1,48 @@
+{
+  "head": "5f232e5d2b7beac220a11dc951dcc186917356a6",
+  "tree": "7da52033f4c6efd91efc3363a3d7f4a7169fef94",
+  "tested_merge": "2e8a1434cf917591759e72cc60557e0fe940831c",
+  "all_four_workflows_success": true,
+  "all_four_cleanliness_steps_success": true,
+  "offline": {
+    "run": 34984096819,
+    "job": 104431632134,
+    "passed": 37805,
+    "skipped": 40,
+    "seconds": 275.09,
+    "artifact": 10402816822
+  },
+  "native": {
+    "run": 34984096962,
+    "job": 104431643677,
+    "passed": 1756,
+    "skipped": 2,
+    "seconds": 1077.99,
+    "artifact": 10402604329
+  },
+  "paper": {
+    "run": 34984096893,
+    "job": 104431631941,
+    "passed": 339,
+    "skipped": 0,
+    "seconds": 432.53,
+    "artifact": 10403141639,
+    "new_native_seconds": 54.199,
+    "new_tests": 70
+  },
+  "distribution": {
+    "run": 34984096840,
+    "job": 104431631156,
+    "passed": 96,
+    "skipped": 0,
+    "seconds": 214.12,
+    "artifact": 10403166818,
+    "kit_artifact": 10402887533
+  },
+  "merged_main": "f331d71d76d116aabee3661e73a9621d52e3a1d6",
+  "actual_merge_tree_matches": true,
+  "reviews": [
+    5211675284,
+    5211876448
+  ]
+}
