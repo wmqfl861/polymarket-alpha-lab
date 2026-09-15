@@ -7,8 +7,10 @@ in one DB snapshot; this view never falls back to the weaker legacy loader.
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 from datetime import UTC, datetime
 import json
+import sys
 from pathlib import Path
 
 from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
@@ -64,6 +66,8 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
     parser.add_argument("--min-sample-count", type=int, default=30)
     parser.add_argument("--min-bin-count", type=int, default=5)
     parser.add_argument("--include-decisions", action="store_true", help="also show per-record IDs, reasons and probabilities")
+    parser.add_argument("--paper-scenarios", action="store_true",
+        help="Read bounded hypothetical book/cost scenarios from stdin; no paper records are written")
     args = parser.parse_args(argv)
     if not 1 <= args.max_records <= MAX_RECORDS:
         parser.error("max-records must be 1..10000")
@@ -71,13 +75,41 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
         ResearchProbabilityDiagnostics((), args.buckets, args.min_sample_count, args.min_bin_count)
     except ValueError:
         parser.error("sample and bin thresholds must be 1..10000")
+    scenarios = None
+    if args.paper_scenarios:
+        from polymarket_alpha_lab.research_paper_inputs import MAX_INPUT_BYTES, decode_scenarios
+        try:
+            scenarios = decode_scenarios(sys.stdin.buffer.read(MAX_INPUT_BYTES + 1))
+        except KeyboardInterrupt:
+            print(json.dumps(dict(status="interrupted", reason_code="paper_input_interrupted",
+                                  business_writes_performed=False)))
+            return 130
+        except (Exception, SystemExit):
+            print(json.dumps(dict(status="invalid_input", reason_code="paper_scenario_input_invalid",
+                                  business_writes_performed=False)))
+            return 2
     envelope = dict(public_network_called=False, live_model_called=False, business_writes_performed=False,
                     outcome_confirmation_performed=False, paper_only=True, report_only=True, readonly=True)
     try:
         with ProjectPostgres(args.root).session() as session:
-            report = session.evaluate(generated_at=args.as_of, max_records=args.max_records,
+            options = dict(generated_at=args.as_of, max_records=args.max_records,
                 bucket_count=args.buckets, min_sample_count=args.min_sample_count, min_bin_count=args.min_bin_count)
-            result = evaluation_summary(report, include_decisions=args.include_decisions)
+            if scenarios is None:
+                report = session.evaluate(**options)
+                result = evaluation_summary(report, include_decisions=args.include_decisions)
+            else:
+                from polymarket_alpha_lab.research_paper_evaluation import ResearchPaperReplay
+                replay = session.evaluate_paper(scenarios=scenarios, **options)
+                if type(replay) is not ResearchPaperReplay:
+                    raise ValueError("paper_receipt_invalid")
+                replay = replace(replay)
+                history = replay.history
+                if (replay.scenarios != scenarios or len(history.records) > args.max_records
+                        or (history.bucket_count, history.min_sample_count, history.min_bin_count)
+                            != (args.buckets, args.min_sample_count, args.min_bin_count)
+                        or (args.as_of is not None and history.generated_at != args.as_of)):
+                    raise ValueError("paper_receipt_mismatch")
+                result = replay.to_dict()
         # A session-exit error must not print an apparently successful report.
         envelope.update(status="evaluated", history_gate="complete_visible_execution_claims", evaluation=result)
         code = 0
@@ -86,6 +118,18 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
         known = reason in _BLOCKS
         envelope.update(status="blocked" if known else "failed", history_gate="not_established",
             reason_code=reason if known else "research_evaluation_operation_failed", evaluation=None)
+        code = 1
+    except KeyboardInterrupt:
+        if scenarios is None:
+            raise
+        envelope.update(status="interrupted", history_gate="not_established",
+            reason_code="research_evaluation_interrupted", evaluation=None)
+        code = 130
+    except SystemExit:
+        if scenarios is None:
+            raise
+        envelope.update(status="failed", history_gate="not_established",
+            reason_code="research_evaluation_operation_failed", evaluation=None)
         code = 1
     except Exception:
         envelope.update(status="failed", history_gate="not_established",
