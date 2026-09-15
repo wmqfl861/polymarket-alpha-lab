@@ -1,0 +1,18 @@
+F....................                                                    [100%]
+=================================== FAILURES ===================================
+______________ test_wrong_valid_review_cannot_certify_the_outcome ______________
+
+seam = {'c': StoredResolutionReview(recorded_at=datetime.datetime(2026, 9, 15, 10, 11, tzinfo=datetime.timezone.utc), outcome...rphan_outcome_count=0, selection_rule='first_recorded_attempt', paper_only=True, report_only=True, readonly=True), ...}
+
+    def test_wrong_valid_review_cannot_certify_the_outcome(seam):
+        # Same original condition and terms, opposite independently valid outcome.
+        _,_,wrong,_,_=case(actual=False)
+        seam['v']=wrong
+>       with pytest.raises(ValueError):core.evaluate_settled_paper_with_psycopg('synthetic')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_research_paper_settlement_review.py:18: Failed
+=========================== short test summary info ============================
+FAILED tests/test_research_paper_settlement_review.py::test_wrong_valid_review_cannot_certify_the_outcome - Failed: DID NOT RAISE <class 'ValueError'>
+1 failed, 20 passed in 3.20s

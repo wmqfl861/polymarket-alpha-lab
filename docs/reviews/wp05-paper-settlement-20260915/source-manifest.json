@@ -1,0 +1,55 @@
+{
+  "base": "a257a7f921e412e348d2a17efd2b53c4f7530918",
+  "base_tree": "3407dee7e5f25c46ab15e9e65eeee4d2e1002a83",
+  "expected_tree": "231b865836c651f39c942318bd95b39ed989ba6c",
+  "files": {
+    "docs/research-paper-settlement.md": {
+      "bytes": 8595,
+      "sha256": "d6ce2e994e3611ec59def1f71b8a9b4797628fb6552dec372946a2a812f57b8a",
+      "git_blob": "930f4dc283a3b52afbc2c2219b1af247565300de"
+    },
+    "src/polymarket_alpha_lab/research_paper_settlement.py": {
+      "bytes": 14696,
+      "sha256": "d880269cd8a09cb3ee47dc0c68f228aca80270133fc47a98ecc6bd68e221f9bf",
+      "git_blob": "d38793c8b0bc932a1a7745fe618be39c356260b9"
+    },
+    "tests/test_project_postgres_paper_settlement_native.py": {
+      "bytes": 11091,
+      "sha256": "c222279786c89e875164369f1d64c2dbbdd739e8a97925d115da9c6385697dcd",
+      "git_blob": "11991f1143af1a94b11472e7baf6e0978885f2b2"
+    },
+    "tests/test_research_paper_settlement.py": {
+      "bytes": 11916,
+      "sha256": "c8f1a2dc2821061216b47eda8c4d65683c6c56086fc74573421a38921ef22076",
+      "git_blob": "16029e3cda0a04fe3df6e1708f97d85c2fb760b4"
+    },
+    "tests/test_research_paper_settlement_review.py": {
+      "bytes": 5762,
+      "sha256": "7f79bb05d7c3a850ae83b55c54a165642930a6fe948bf4953ad5fe6a25c137aa",
+      "git_blob": "30870aded67c6f28c115a81a1e7ec9cd36bc6f89"
+    },
+    ".github/workflows/research-paper.yml": {
+      "bytes": 2205,
+      "sha256": "48b2f5986a1085e91aaa1525723bfde12c6de85be602fbc1541b2f6ecf5d789f",
+      "git_blob": "1e19a215b1a5f610d98aba89e096c43aed9d08f1"
+    },
+    "DELIVERY_PLAN.md": {
+      "bytes": 42894,
+      "sha256": "6e7dd401ad635b9184e523e799f53ca21d2790a0d56a8fb8bc3742fa2f6de204",
+      "git_blob": "42748bbd5967a912214a99796da4e3b23db3989a"
+    },
+    "src/polymarket_alpha_lab/project_postgres/research.py": {
+      "bytes": 7677,
+      "sha256": "10f924b62ddd2180e62f8de55b660cac2ef8bad42ee2f87811f47a39c2e1b644",
+      "git_blob": "b1f407cefd1935d901a4ebaf19b016ac1982a027"
+    },
+    "src/polymarket_alpha_lab/research_capture_psycopg.py": {
+      "bytes": 14271,
+      "sha256": "a7823dd53d58c5ab9e84a7e03183862c957f95e520ead4b6a9f8f5a8c7fdca44",
+      "git_blob": "de58d036c40e8f0e48bdab369a556a2e3cceaae5"
+    }
+  },
+  "evaluator_body_ast_unchanged": true,
+  "preflight_ast_unchanged": true,
+  "migrations_unchanged": 67
+}

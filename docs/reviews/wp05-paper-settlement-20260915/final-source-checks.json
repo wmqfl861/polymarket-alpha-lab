@@ -1,0 +1,15 @@
+{
+  "head": "9349b5acf2037ed699909237dc7b4df0f1e9d6c9",
+  "tree": "231b865836c651f39c942318bd95b39ed989ba6c",
+  "python": "3.13.5",
+  "query_body_ast_unchanged": true,
+  "public_preflight_ast_unchanged": true,
+  "compiled_changed_python": true,
+  "git_diff_check": true,
+  "both_worktrees_clean": true,
+  "migrations_unchanged": 67,
+  "dependencies_unchanged": true,
+  "local_full_exit": 0,
+  "local_full_summary": "37659 passed, 39 skipped in 558.34s",
+  "native_execution_local": false
+}
