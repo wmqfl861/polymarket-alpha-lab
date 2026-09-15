@@ -1,0 +1,57 @@
+name: Research paper replay
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/polymarket_alpha_lab/**'
+      - 'tests/test_research_paper*.py'
+      - 'tests/test_project_postgres_paper_native.py'
+      - 'scripts/evaluate_project_research.py'
+      - 'docs/research-evaluation-console.md'
+      - 'database/**'
+      - 'supabase/migrations/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/research-paper.yml'
+permissions:
+  contents: read
+concurrency:
+  group: research-paper-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows-paper:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - name: Install locked environment
+        run: uv sync --locked --extra dev --extra postgres --python 3.12
+      - name: Prove original research to hypothetical paper replay
+        shell: pwsh
+        run: |
+          $env:POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX = 'C:\Program Files\PostgreSQL\17'
+          $env:POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES = '1'
+          $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
+          $env:PYTHONUTF8 = '1'
+          Get-ChildItem Env: | Where-Object { $_.Name -like 'PG*' } | ForEach-Object { Remove-Item ('Env:' + $_.Name) }
+          .\.venv\Scripts\python.exe -u -m pytest -q -s -o faulthandler_timeout=180 tests/test_research_paper_evaluation.py tests/test_research_paper_review.py tests/test_project_postgres_paper_native.py --junitxml="$env:RUNNER_TEMP/paper-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/paper-proof.log"
+          exit $LASTEXITCODE
+      - name: Confirm tracked source unchanged
+        run: |
+          git diff --check
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: research-paper-proof-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/paper-proof.log
+            ${{ runner.temp }}/paper-proof.xml
+          retention-days: 7
+          if-no-files-found: ignore
