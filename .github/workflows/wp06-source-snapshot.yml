@@ -1,0 +1,32 @@
+name: WP06 fixed source snapshot
+on:
+  push:
+    branches: [review/wp06-source-20260916]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: f331d71d76d116aabee3661e73a9621d52e3a1d6
+          persist-credentials: false
+      - name: Archive fixed tracked source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = f331d71d76d116aabee3661e73a9621d52e3a1d6
+          git archive --format=zip --output="$RUNNER_TEMP/source.zip" HEAD src tests scripts database supabase/migrations docs .github/workflows AGENTS.md DELIVERY_PLAN.md README.md pyproject.toml uv.lock .gitattributes .gitignore .env.example strategy.example.json strategy.example.phase1-screening.json
+          sha256sum "$RUNNER_TEMP/source.zip" > "$RUNNER_TEMP/source.sha256"
+          git ls-tree -r HEAD > "$RUNNER_TEMP/source-tree.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: source-f331d71d
+          path: |
+            ${{ runner.temp }}/source.zip
+            ${{ runner.temp }}/source.sha256
+            ${{ runner.temp }}/source-tree.txt
+          retention-days: 7
+          if-no-files-found: error
