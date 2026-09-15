@@ -1,0 +1,57 @@
+FFF.............                                                         [100%]
+=================================== FAILURES ===================================
+_ test_insert_receipt_must_match_all_supplied_provenance[history_sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] _
+
+seam = {'calls': [('transaction', {'readonly': True}), ('evaluate', {'scenarios': (ResearchPaperScenario(record_id='record-1'...fo=datetime.timezone.utc), status='captured', paper_only=True, report_only=True, readonly=True), 'existing': None, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc7776e4e90>
+field = 'history_sha256'
+value = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+
+    @pytest.mark.parametrize('field,value', [('history_sha256','b'*64),('first_record_id','foreign'),
+                                           ('attempt_payload_sha256','b'*64)])
+    def test_insert_receipt_must_match_all_supplied_provenance(seam,monkeypatch,field,value):
+        wrong=replace(seam['r'],**{field:value})
+        monkeypatch.setattr(store,'_row',lambda *a:wrong)
+>       with pytest.raises(ValueError,match='insert_mismatch'):call(seam)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_research_paper_capture_review.py:19: Failed
+_ test_insert_receipt_must_match_all_supplied_provenance[first_record_id-foreign] _
+
+seam = {'calls': [('transaction', {'readonly': True}), ('evaluate', {'scenarios': (ResearchPaperScenario(record_id='record-1'...fo=datetime.timezone.utc), status='captured', paper_only=True, report_only=True, readonly=True), 'existing': None, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc7776e4fc0>
+field = 'first_record_id', value = 'foreign'
+
+    @pytest.mark.parametrize('field,value', [('history_sha256','b'*64),('first_record_id','foreign'),
+                                           ('attempt_payload_sha256','b'*64)])
+    def test_insert_receipt_must_match_all_supplied_provenance(seam,monkeypatch,field,value):
+        wrong=replace(seam['r'],**{field:value})
+        monkeypatch.setattr(store,'_row',lambda *a:wrong)
+>       with pytest.raises(ValueError,match='insert_mismatch'):call(seam)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_research_paper_capture_review.py:19: Failed
+_ test_insert_receipt_must_match_all_supplied_provenance[attempt_payload_sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] _
+
+seam = {'calls': [('transaction', {'readonly': True}), ('evaluate', {'scenarios': (ResearchPaperScenario(record_id='record-1'...fo=datetime.timezone.utc), status='captured', paper_only=True, report_only=True, readonly=True), 'existing': None, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc777708170>
+field = 'attempt_payload_sha256'
+value = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+
+    @pytest.mark.parametrize('field,value', [('history_sha256','b'*64),('first_record_id','foreign'),
+                                           ('attempt_payload_sha256','b'*64)])
+    def test_insert_receipt_must_match_all_supplied_provenance(seam,monkeypatch,field,value):
+        wrong=replace(seam['r'],**{field:value})
+        monkeypatch.setattr(store,'_row',lambda *a:wrong)
+>       with pytest.raises(ValueError,match='insert_mismatch'):call(seam)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_research_paper_capture_review.py:19: Failed
+=========================== short test summary info ============================
+FAILED tests/test_research_paper_capture_review.py::test_insert_receipt_must_match_all_supplied_provenance[history_sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] - Failed: DID NOT RAISE <class 'ValueError'>
+FAILED tests/test_research_paper_capture_review.py::test_insert_receipt_must_match_all_supplied_provenance[first_record_id-foreign] - Failed: DID NOT RAISE <class 'ValueError'>
+FAILED tests/test_research_paper_capture_review.py::test_insert_receipt_must_match_all_supplied_provenance[attempt_payload_sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb] - Failed: DID NOT RAISE <class 'ValueError'>
+3 failed, 13 passed in 1.52s
