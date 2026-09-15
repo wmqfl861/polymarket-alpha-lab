@@ -287,8 +287,10 @@ selected favorable scenarios into a performance claim.
 Managed session cleanup must complete before success is printed. Invalid stdin
 exits2 before project access; incomplete-history and operation/cleanup failures
 exit1 without a successful result; keyboard interruption exits130. Errors are
-sanitized, including SystemExit. Read operations may start/stop the project's
-private engine but do not mutate its business records. Four old opt-in database
+sanitized, including SystemExit, in the opt-in paper mode. Without `--paper-stdin`,
+the pre-existing KeyboardInterrupt/SystemExit propagation contract is preserved;
+no paper stdin is consumed and no success is printed on those exits.
+Read operations may start/stop the project's private engine but do not mutate its business records. Four old opt-in database
 checks, when not run, remain explicitly unexecuted rather than treated as passes.
 
 Offline tests are `tests/test_research_paper.py` and separately designed

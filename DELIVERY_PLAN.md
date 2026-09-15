@@ -410,6 +410,9 @@ WP-06 的 PR #30 PowerShell 5.1 首跑超时根因仍未关闭。没有真实模
   `tests/test_research_paper_review.py` 含独立 Fraction 金额对照。
   扩展原生 `tests/test_project_postgres_confirmation_native.py`，复用已有真实时钟与
   临时数据库，检查未决／已结算成本、真实控制台、重启保全和真实 incomplete 拒绝。
+- 首轮完整回归发现新模式的中断处理改变了原入口契约；保留旧测试并补六项兼容反例，
+  将 KeyboardInterrupt／SystemExit 的新处理仅限显式 paper 模式，非 paper 仍原样传播。
+  不改旧断言或跳过失败；首轮 CI 失败与最终修复版证据分别保留。
 - 精确最终 head／tree、专项／全量离线／Windows／分发结果及首败证据固定在本变更 PR。
   无迁移、依赖变化、用户业务库访问、真实行情／模型调用或旧 kit 覆盖。
 

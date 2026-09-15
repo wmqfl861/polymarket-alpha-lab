@@ -113,10 +113,14 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
             reason_code=reason if known else "research_evaluation_operation_failed", evaluation=None)
         code = 1
     except KeyboardInterrupt:
+        if scenarios is None:
+            raise  # Preserve the original non-paper CLI interruption contract.
         envelope.update(status="interrupted", history_gate="not_established",
             reason_code="research_evaluation_interrupted", evaluation=None)
         code = 130
-    except (Exception, SystemExit):
+    except (Exception, SystemExit) as error:
+        if scenarios is None and isinstance(error, SystemExit):
+            raise  # Only the opt-in paper mode adds this sanitized boundary.
         envelope.update(status="failed", history_gate="not_established",
             reason_code="research_evaluation_operation_failed", evaluation=None)
         code = 1

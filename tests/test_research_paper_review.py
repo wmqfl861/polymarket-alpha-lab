@@ -88,3 +88,40 @@ def test_mutated_source_limits_fail_without_mutating_original_record():
     object.__setattr__(s.costs,'fee',D('-1'))
     with pytest.raises(ValueError):composed(s,ex,r)
     assert ex.record.content_sha256==before
+
+
+@pytest.mark.parametrize('where', ['operation', 'cleanup'])
+@pytest.mark.parametrize('error', [KeyboardInterrupt(), SystemExit(0), SystemExit('synthetic-private-exit')])
+def test_default_evaluation_preserves_existing_base_exception_contract(monkeypatch, capsys, where, error):
+    from contextlib import contextmanager
+    from pathlib import Path
+    from polymarket_alpha_lab import research_evaluation_cli as cli
+    _, _, report = fixture()
+    state = dict(closed=False)
+    class Session:
+        def evaluate(self, **kwargs):
+            if where == 'operation':
+                raise error
+            return report
+    class Database:
+        def __init__(self, root):
+            pass
+        @contextmanager
+        def session(self):
+            try:
+                yield Session()
+            finally:
+                state['closed'] = True
+                if where == 'cleanup':
+                    raise error
+    class ForbiddenInput:
+        @property
+        def buffer(self):
+            pytest.fail('default evaluation must not consume paper stdin')
+    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+    monkeypatch.setattr(cli.sys, 'stdin', ForbiddenInput())
+    with pytest.raises(type(error)) as caught:
+        cli.main([], default_root=Path('/unused/source'))
+    assert caught.value is error and state['closed']
+    captured = capsys.readouterr()
+    assert captured.out == captured.err == ''
