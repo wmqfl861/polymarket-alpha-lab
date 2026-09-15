@@ -1,0 +1,16 @@
+{
+  "initial_head": "f3537b27c8e1e9515ba4656c44825f05bf4f3a52",
+  "final_head": "15c920a394e8462b19abe8bf143a149dfb81b24a",
+  "final_tree": "bc475318487da14d25a289130bca97f7f0e1743a",
+  "changed_paths": [
+    ".github/workflows/native-postgres.yml",
+    "docs/handoff-first-run.md"
+  ],
+  "only_native_argument_added": "-o junit_family=legacy",
+  "all_test_bytes_unchanged": true,
+  "all_runtime_bytes_unchanged": true,
+  "warning_filters_added": false,
+  "assertions_or_timeouts_reduced": false,
+  "initial_native_result": "1756 passed, 2 skipped, 18 compatibility warnings in 1132.65s",
+  "detached_final_result": "25 passed, 19 skipped in 1.82s"
+}

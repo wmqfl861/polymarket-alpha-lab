@@ -1,0 +1,66 @@
+{
+  "ci-final-first-1/handoff-first.log": {
+    "bytes": 2465,
+    "sha256": "0a8c172bd24501cdf0dbd91f8086e2e381be1feaf26ebb4e57ac70fb9e90f173"
+  },
+  "ci-final-first-1/handoff-first.xml": {
+    "bytes": 7410,
+    "sha256": "ee16bce9199cb04b3586700319ced114a0aac8cd56bd28f07a02d0439a8ec4a8"
+  },
+  "ci-final-first-2/handoff-first.log": {
+    "bytes": 2465,
+    "sha256": "90eeaa48e35d23114feeeca74879cee044ce5bd33c7f596041f1b0f85ca04b9e"
+  },
+  "ci-final-first-2/handoff-first.xml": {
+    "bytes": 7410,
+    "sha256": "fa135c05a18a7282ac862534c7c62df421db0576e3b14f4d9cbd1e0d6f0c6b79"
+  },
+  "ci-final-first-3/handoff-first.log": {
+    "bytes": 2459,
+    "sha256": "84abbbdf43f3e119240a5411a8e5789d8e159316296d8137433912b569de4bbf"
+  },
+  "ci-final-first-3/handoff-first.xml": {
+    "bytes": 7403,
+    "sha256": "b08328081c36c8c26da3db7654477fd61cdbbc8315c77e50371073755e68b231"
+  },
+  "ci-final-native/native-proof.log": {
+    "bytes": 40054,
+    "sha256": "ba75ac515c2c1c641cd7683642e3f0bd2695845f3821fc195f985afd83795e31"
+  },
+  "ci-final-native/native-proof.xml": {
+    "bytes": 374577,
+    "sha256": "7eca05fa19ce6e7d26a3c8fd9e04c0b651932641c09089b68e429b30523ce3ba"
+  },
+  "ci-final-offline/offline-verification.log": {
+    "bytes": 45690,
+    "sha256": "db0fd5ff027f2d7f18d4d862036fb932cddcf83c8a1cff5aecbdc22c90158389"
+  },
+  "ci-final-paper/research-paper.log": {
+    "bytes": 9072,
+    "sha256": "7d69b5075f75ee94e2b5cfb19d55ebd831a62ee3ae6bf036dad815e807c29991"
+  },
+  "ci-final-paper/research-paper.xml": {
+    "bytes": 47892,
+    "sha256": "367fdf418de6825bcbd6ecf277b5463234b5b3393a31ecafc07d389b38a42a57"
+  },
+  "ci-native/native-proof.log": {
+    "bytes": 46985,
+    "sha256": "9d9532a1b88dc1031f7a295578f9fae7e9a8d13e30275bbfbdb765c1824e23fc"
+  },
+  "ci-native/native-proof.xml": {
+    "bytes": 275205,
+    "sha256": "b4083ef05b421b43057cff30fddcfe225ae40e1d57df537bd669e5e183beeb44"
+  },
+  "full-v2.log": {
+    "bytes": 45649,
+    "sha256": "21166a8dbe931b4b35e203107040b7e53e67761e9962a7a4b5bbbd01e91347d4"
+  },
+  "review-red.log": {
+    "bytes": 5259,
+    "sha256": "730d6786906eecd34ff6958af8344968048c5d15b68d59e164b7a327e9bd08b8"
+  },
+  "review-v2.log": {
+    "bytes": 111,
+    "sha256": "2d474627a02d970f99b698da0807ac1de6759c4c616bf3d8ebf435bd79dfe881"
+  }
+}

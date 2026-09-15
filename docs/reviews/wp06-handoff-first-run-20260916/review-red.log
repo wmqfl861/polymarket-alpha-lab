@@ -1,0 +1,90 @@
+FF...                                                                    [100%]
+=================================== FAILURES ===================================
+_______ test_diagnostic_failure_must_not_replace_original_timeout[junit] _______
+
+args = (['powershell.exe', '-NoProfile', '-NonInteractive', '-File', 'fixture.ps1'],)
+kwargs = {'capture_output': True, 'encoding': 'utf-8', 'errors': 'replace', 'text': True, ...}
+
+>   def launch(*args, **kwargs): calls.append(1); raise original
+                                                  ^^^^^^^^^^^^^^
+E   subprocess.TimeoutExpired: Command 'fixture' timed out after 30 seconds
+
+tests/test_handoff_process_probe_review.py:14: TimeoutExpired
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f49d22cd480>
+sink = 'junit'
+
+    @pytest.mark.parametrize('sink', ['junit', 'stdout'])
+    def test_diagnostic_failure_must_not_replace_original_timeout(monkeypatch, sink):
+        original = subprocess.TimeoutExpired('fixture', 30, stderr=b'PAL_HANDOFF_STAGE|script_entered|0\n')
+        calls = []
+        def launch(*args, **kwargs): calls.append(1); raise original
+        def broken(*args, **kwargs): raise OSError('private diagnostic failure')
+        monkeypatch.setattr(probe.subprocess, 'run', launch)
+        record = broken if sink == 'junit' else lambda *args: None
+        if sink == 'stdout': monkeypatch.setattr(probe, 'print', broken, raising=False)
+        with pytest.raises(subprocess.TimeoutExpired) as caught:
+>           probe.run_fixture('powershell.exe', 'fixture.ps1', record_property=record)
+
+tests/test_handoff_process_probe_review.py:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/handoff_process_probe.py:80: in run_fixture
+    record_property('handoff_process', json.dumps(evidence, sort_keys=True))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = ('handoff_process', '{"elapsed_seconds": 0.0, "last_observed_stage": "script_entered", "malformed_marker_seen": false,... "root_cause_established": false, "stages": [{"elapsed_ms": 0, "stage": "script_entered"}], "trace_truncated": false}')
+kwargs = {}
+
+>   def broken(*args, **kwargs): raise OSError('private diagnostic failure')
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   OSError: private diagnostic failure
+
+tests/test_handoff_process_probe_review.py:15: OSError
+______ test_diagnostic_failure_must_not_replace_original_timeout[stdout] _______
+
+args = (['powershell.exe', '-NoProfile', '-NonInteractive', '-File', 'fixture.ps1'],)
+kwargs = {'capture_output': True, 'encoding': 'utf-8', 'errors': 'replace', 'text': True, ...}
+
+>   def launch(*args, **kwargs): calls.append(1); raise original
+                                                  ^^^^^^^^^^^^^^
+E   subprocess.TimeoutExpired: Command 'fixture' timed out after 30 seconds
+
+tests/test_handoff_process_probe_review.py:14: TimeoutExpired
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f49d22cda70>
+sink = 'stdout'
+
+    @pytest.mark.parametrize('sink', ['junit', 'stdout'])
+    def test_diagnostic_failure_must_not_replace_original_timeout(monkeypatch, sink):
+        original = subprocess.TimeoutExpired('fixture', 30, stderr=b'PAL_HANDOFF_STAGE|script_entered|0\n')
+        calls = []
+        def launch(*args, **kwargs): calls.append(1); raise original
+        def broken(*args, **kwargs): raise OSError('private diagnostic failure')
+        monkeypatch.setattr(probe.subprocess, 'run', launch)
+        record = broken if sink == 'junit' else lambda *args: None
+        if sink == 'stdout': monkeypatch.setattr(probe, 'print', broken, raising=False)
+        with pytest.raises(subprocess.TimeoutExpired) as caught:
+>           probe.run_fixture('powershell.exe', 'fixture.ps1', record_property=record)
+
+tests/test_handoff_process_probe_review.py:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/handoff_process_probe.py:81: in run_fixture
+    print('HANDOFF_PROCESS ' + json.dumps(evidence, sort_keys=True), flush=True)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = ('HANDOFF_PROCESS {"elapsed_seconds": 0.0, "last_observed_stage": "script_entered", "malformed_marker_seen": false, "o..."root_cause_established": false, "stages": [{"elapsed_ms": 0, "stage": "script_entered"}], "trace_truncated": false}',)
+kwargs = {'flush': True}
+
+>   def broken(*args, **kwargs): raise OSError('private diagnostic failure')
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   OSError: private diagnostic failure
+
+tests/test_handoff_process_probe_review.py:15: OSError
+=========================== short test summary info ============================
+FAILED tests/test_handoff_process_probe_review.py::test_diagnostic_failure_must_not_replace_original_timeout[junit] - OSError: private diagnostic failure
+FAILED tests/test_handoff_process_probe_review.py::test_diagnostic_failure_must_not_replace_original_timeout[stdout] - OSError: private diagnostic failure
+2 failed, 3 passed in 0.10s

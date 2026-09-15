@@ -1,0 +1,81 @@
+{
+  "head": "f3537b27c8e1e9515ba4656c44825f05bf4f3a52",
+  "run_id": 34996563447,
+  "tested_tree": "a060e780015992c6f5a5e5ab8caa696bc63ad7c8",
+  "root_cause_established": false,
+  "interpretation": "First test-controlled PS5.1 invocation in each separate job; not a guarantee about runner provisioning. Controlled timeout follows the first case and is not an intermittent-fault reproduction.",
+  "trials": [
+    {
+      "trial": 1,
+      "job_id": 104474165835,
+      "artifact_id": 10407867499,
+      "artifact_sha256": "d7260f25b1feb4144f66cecd2681e94d8bb830e9b66a6685372fe25cd60613b5",
+      "passed": 26,
+      "skipped": 0,
+      "first_process_seconds": 6.063,
+      "stage_elapsed_ms": {
+        "script_entered": 10,
+        "encoding_ready": 480,
+        "helper_loaded": 506,
+        "invoke_entered": 506,
+        "manifest_entered": 898,
+        "manifest_returned": 902,
+        "payload_entered": 2195,
+        "payload_returned": 2198,
+        "invoke_returned": 2212,
+        "serialization_entered": 2212,
+        "serialization_returned": 2265
+      },
+      "controlled_timeout_seconds": 30.015,
+      "controlled_timeout_last_stage": "script_entered"
+    },
+    {
+      "trial": 2,
+      "job_id": 104474166053,
+      "artifact_id": 10407408923,
+      "artifact_sha256": "8822711fd9155f25b819a77f2a69465ffe2dee0cf86a850846b83f39327f5f6e",
+      "passed": 26,
+      "skipped": 0,
+      "first_process_seconds": 3.797,
+      "stage_elapsed_ms": {
+        "script_entered": 11,
+        "encoding_ready": 471,
+        "helper_loaded": 493,
+        "invoke_entered": 493,
+        "manifest_entered": 716,
+        "manifest_returned": 720,
+        "payload_entered": 1631,
+        "payload_returned": 1633,
+        "invoke_returned": 1646,
+        "serialization_entered": 1646,
+        "serialization_returned": 1686
+      },
+      "controlled_timeout_seconds": 30.015,
+      "controlled_timeout_last_stage": "script_entered"
+    },
+    {
+      "trial": 3,
+      "job_id": 104474165973,
+      "artifact_id": 10408022143,
+      "artifact_sha256": "d65632956ee048ee4064674b03ae291e63310869c77cc8c50753841d9ed1190c",
+      "passed": 26,
+      "skipped": 0,
+      "first_process_seconds": 19.391,
+      "stage_elapsed_ms": {
+        "script_entered": 139,
+        "encoding_ready": 2987,
+        "helper_loaded": 3133,
+        "invoke_entered": 3133,
+        "manifest_entered": 4753,
+        "manifest_returned": 4758,
+        "payload_entered": 9126,
+        "payload_returned": 9135,
+        "invoke_returned": 9158,
+        "serialization_entered": 9158,
+        "serialization_returned": 9410
+      },
+      "controlled_timeout_seconds": 30.016,
+      "controlled_timeout_last_stage": "script_entered"
+    }
+  ]
+}

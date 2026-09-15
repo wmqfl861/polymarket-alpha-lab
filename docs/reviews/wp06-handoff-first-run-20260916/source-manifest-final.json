@@ -1,0 +1,47 @@
+{
+  ".github/workflows/handoff-first-run.yml": {
+    "bytes": 2221,
+    "sha256": "d78003170f83a3c546e04e3acd43e668c1981323eb6fa1466122d1d19d9a92a7",
+    "blob_sha": "53953a5aeda885b61612b8867493d641a558d0a5"
+  },
+  ".github/workflows/native-postgres.yml": {
+    "bytes": 7893,
+    "sha256": "c121f257910a13dd2ff4e6648228c963049287cfbfafb68b444b26c2e5619d53",
+    "blob_sha": "3b5524aacdc442c10de3d6426813cd2ad5fc3d3e"
+  },
+  "DELIVERY_PLAN.md": {
+    "bytes": 47783,
+    "sha256": "466123273761eeef5ab21e8a729d10dbbe2e1b5e52dc99d78c581d810af5a273",
+    "blob_sha": "2defc2c7392b28ad1e163e90c18ad4a09cc2aed7"
+  },
+  "docs/handoff-first-run.md": {
+    "bytes": 6713,
+    "sha256": "a4c15d81b0ce7cf50138bc380fca85f41f286be56d956897f6f7ba1b8312f354",
+    "blob_sha": "d435413685ecb5c7e12a2394f2a49e316f6bac22"
+  },
+  "tests/handoff_process_probe.py": {
+    "bytes": 4380,
+    "sha256": "38ff239013eeb3912809cac2b0f5ef1aff99128b47249c9ec6d395e38c37db0d",
+    "blob_sha": "d615c9c60a91a5e805148e384bd7d74564d1db4b"
+  },
+  "tests/test_handoff_download.py": {
+    "bytes": 7904,
+    "sha256": "9b52ee1a7375a4ec8c6752aeb8a247e05959612d4e5025f76aa32eb350371a4a",
+    "blob_sha": "313be5ea6354502ecd7b6824bcc293bd4a3c729f"
+  },
+  "tests/test_handoff_process_probe.py": {
+    "bytes": 5581,
+    "sha256": "bea5a49aa45198c1f1110ff1251f87efc4bc9a43527e4563345bc1285abdc831",
+    "blob_sha": "644b8da6fe423d5f771a6273614770524d383f2c"
+  },
+  "tests/test_handoff_process_probe_review.py": {
+    "bytes": 2184,
+    "sha256": "c13b8b182a0216c7ce91a5e574d56be14690eda62b0efed78c9ed0cb0dbb01cd",
+    "blob_sha": "2bdb3e7c721f3ec92018f831eb003b14c937cb60"
+  },
+  "tests/test_handoff_process_probe_windows.py": {
+    "bytes": 1426,
+    "sha256": "5c2ff5186aa1841ac08aa6edb0b58b32fe2e1469fb38776f2d5d652d4123904f",
+    "blob_sha": "5fb0b7c1c92231dc334660fdb501a453f6f33922"
+  }
+}
