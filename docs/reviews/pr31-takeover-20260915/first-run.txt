@@ -1,0 +1,30 @@
+F................................................                        [100%]
+=================================== FAILURES ===================================
+_______________ test_integer_accounting_exhaustive_small_domain ________________
+
+    def test_integer_accounting_exhaustive_small_domain():
+        checked = 0
+        base = policy()
+        for total, charge, cap in product((1, 2, 3, 7, 19, 101), (1, 2, 3, 7), (1, 2, 5, 17)):
+            if charge > total:
+                continue
+            p = replace(base, total_micros=total, per_call_micros=charge, max_calls=cap)
+            stored = StoredModelBudget(p, AT)
+            for used in range(min(cap, total//charge)+1):
+                for expired in (False, True):
+                    now = p.expires_at if expired else AT+timedelta(seconds=1)
+                    result = ModelBudgetSnapshot(stored, now, used, used*charge).to_dict()
+                    expected = 0 if expired else min(cap-used, (total-used*charge)//charge)
+                    assert result['available_call_reservations'] == expected
+                    assert result['unreserved_micros'] == total-used*charge
+                    assert result['actual_provider_calls'] is None
+                    assert result['actual_billed_micros'] is None
+                    assert result['provider_charge_bound_verified'] is False
+                    checked += 1
+>       assert checked == 890
+E       assert 598 == 890
+
+mnt/data/pr31-independent-review/test_pr31_independent_review.py:74: AssertionError
+=========================== short test summary info ============================
+FAILED mnt/data/pr31-independent-review/test_pr31_independent_review.py::test_integer_accounting_exhaustive_small_domain - assert 598 == 890
+1 failed, 48 passed in 4.60s
