@@ -121,3 +121,7 @@ class ProjectResearchSession:
     def evaluate(self, **configuration):
         from polymarket_alpha_lab.research_execution_psycopg import load_captured_research_evaluation_with_psycopg
         return self._call(load_captured_research_evaluation_with_psycopg, **configuration)
+
+    def evaluate_paper(self, *, scenarios, **configuration):
+        from polymarket_alpha_lab.research_paper_service import evaluate_research_paper_with_psycopg
+        return self._call(evaluate_research_paper_with_psycopg, scenarios=scenarios, **configuration)

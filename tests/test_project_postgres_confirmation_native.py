@@ -6,6 +6,7 @@ for that minute to finish. No mocked database clock or backdated capture.
 """
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from hashlib import sha256
 import json
 import os
@@ -28,6 +29,8 @@ from polymarket_alpha_lab.research_resolution_confirmation import CryptoSettleme
 from polymarket_alpha_lab.team_research_agent_types import ResearchModelReply, ResearchToolCall
 from polymarket_alpha_lab.team_research_intake import GammaMarketSnapshot
 from tests.test_research_resolution_confirmation import request, input_bytes
+from tests.test_research_paper import scenario, input_bytes as paper_input, prepared
+from polymarket_alpha_lab.research_capture_psycopg import ResearchCaptureConflict
 
 ROOT=Path(__file__).resolve().parents[1]
 ENABLED=os.environ.get('POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES')=='1'
@@ -72,6 +75,12 @@ def test_original_forecasts_manual_confirmation_replay_restart_and_preservation(
                 assert execution.record.run.research.status=='completed'
                 assert execution.record.recorded_at < req.forecast_cutoff_at < opening
                 rows.append((req,raw,execution.record))
+            paper_scenarios = tuple(replace(scenario(req, dict(raw, acceptingOrders=True,
+                clobTokenIds=['yes-'+req.record_id, 'no-'+req.record_id]), at=datetime.now(UTC)),
+                min_confidence=Decimal('0.5')) for req,raw,_ in rows)
+            pending = session.evaluate_paper(scenarios=paper_scenarios).to_dict()
+            assert pending['simulated_count'] == 2
+            assert all(x['accounting']['modeled_settled_net'] is None for x in pending['rows'])
             # Wait for the actual minute to finish. Do not alter clocks/cutoffs
             # or relabel future observations to reduce the wait.
             time.sleep(max(0,(opening+timedelta(minutes=1)-datetime.now(UTC)).total_seconds())+0.05)
@@ -119,6 +128,15 @@ def test_original_forecasts_manual_confirmation_replay_restart_and_preservation(
             evaluation=session.evaluate()
             assert len(evaluation.records)==2 and len(evaluation.outcomes)==2
             assert all(row.reason_code=='scored' for row in evaluation.decisions)
+        # Test the exact read-only console AFTER releasing the lifecycle lease.
+        child = subprocess.run([sys.executable, '-I', str(ROOT/'scripts/evaluate_project_research.py'),
+            '--root', str(root), '--paper-stdin'], input=paper_input(paper_scenarios),
+            capture_output=True, env=files.clean_environment(), timeout=120)
+        assert child.returncode == 0, (child.stdout, child.stderr)
+        paper_result = json.loads(child.stdout)['evaluation']
+        assert paper_result['simulated_count'] == 2
+        assert [Decimal(x['accounting']['modeled_settled_net']) for x in paper_result['rows']] == [Decimal('1.61'), Decimal('-1.39')]
+        assert paper_result['forward_test_provenance_established'] is False
         db.down()
         with db.session() as session:
             for instruction,candidate,confirmed,record in reviewed:
@@ -128,6 +146,20 @@ def test_original_forecasts_manual_confirmation_replay_restart_and_preservation(
             assert db._psql(identity,'SELECT count(*) FROM research_capture.resolution_reviews;')=='4'
             assert db._psql(identity,'SELECT count(*) FROM research_capture.outcomes;')=='2'
             assert db._psql(identity,'SELECT count(*) FROM project_private.migrations;')=='66'
+            repeated = session.evaluate_paper(scenarios=paper_scenarios).to_dict()
+            assert repeated['rows'] == paper_result['rows']
+            # A real extra incomplete claim must block ALL strict evaluation,
+            # even when the supplied scenarios refer only to completed records.
+            now = datetime.now(UTC)
+            unfinished, _ = prepared(2199, at=now, opening=now+timedelta(minutes=10))
+            def interrupt(_): raise KeyboardInterrupt('synthetic interruption')
+            with pytest.raises(KeyboardInterrupt):
+                session.run_research(request=unfinished, model_factory=interrupt)
+            with pytest.raises(ResearchCaptureConflict, match='history_incomplete'):
+                session.evaluate_paper(scenarios=paper_scenarios)
+            for instruction,_,_,record in reviewed:
+                assert session.inspect(record_id=instruction.record_id).record == record
+            print('native research paper: PASS; pending/settled costs, console, restart, global incomplete denial')
         assert db.status()['instance_id']==identity['instance_id']
         print('native forecast confirmation: PASS; prospective BTC/ETH, original candidate, manual outcome, replay/restart, no replacement')
     finally:
