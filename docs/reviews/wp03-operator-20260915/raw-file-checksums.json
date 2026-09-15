@@ -1,0 +1,9 @@
+{
+  "review-red.log": {"bytes": 17946, "sha256": "ac485bb704b9cd703d33ca2ea89311508cd2631af48a06c1678824402b745064"},
+  "isolated-review-v2.log": {"bytes": 179, "sha256": "700a490b185af9120300cf2b141a856b27fd59d48d52716c885ff8c949c6986a"},
+  "source-manifest-final.json": {"bytes": 2241, "sha256": "dfa06a5279815575b5d046f863491297acab26b3e809aa735a7d5606de256bb9"},
+  "offline-verification.log": {"bytes": 44508, "sha256": "da4015afbf9658033e1d28a91ae2789b1e2272f3432feed41e0ddfad1bd84d1b"},
+  "distribution-proof.log": {"bytes": 778, "sha256": "03a6d604de9a00d7a6102d0a3afcfa1a3c85c737162d41520232610aacf567da"},
+  "native-proof.log": {"bytes": 24222, "sha256": "5504062ca3c22b40e1c024eea2ca9143ec1316ada5d0c4748c449bf7937ba3cf"},
+  "native-proof.xml": {"bytes": 233532, "sha256": "d3d12521dcc3c674c81fd0c0b50088b5c86bf8c64171cb5830e630415c478be8"}
+}
