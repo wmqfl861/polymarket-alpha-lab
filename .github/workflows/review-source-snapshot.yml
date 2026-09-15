@@ -1,0 +1,32 @@
+name: Fixed source review snapshot
+on:
+  push:
+    branches: [review/source-snapshot-747faeaa-20260915]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 747faeaa8a5d60776261d80941e061b80af0f9b4
+          persist-credentials: false
+      - name: Archive fixed tracked source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 747faeaa8a5d60776261d80941e061b80af0f9b4
+          git archive --format=zip --output="$RUNNER_TEMP/review-source.zip" HEAD src tests scripts database supabase/migrations docs .github/workflows AGENTS.md DELIVERY_PLAN.md README.md pyproject.toml uv.lock .gitattributes .gitignore .env.example strategy.example.json strategy.example.phase1-screening.json
+          sha256sum "$RUNNER_TEMP/review-source.zip" > "$RUNNER_TEMP/review-source.sha256"
+          git ls-tree -r HEAD > "$RUNNER_TEMP/review-source-tree.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fixed-source-747faeaa
+          path: |
+            ${{ runner.temp }}/review-source.zip
+            ${{ runner.temp }}/review-source.sha256
+            ${{ runner.temp }}/review-source-tree.txt
+          retention-days: 7
+          if-no-files-found: error
