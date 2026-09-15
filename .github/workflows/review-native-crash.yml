@@ -1,0 +1,28 @@
+name: PR39 isolated interpreter diagnosis
+on:
+  push:
+    branches: [review/pr39-native-crash-20260915]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Run bounded stdlib-only paired diagnosis
+        shell: pwsh
+        run: |
+          $python = 'C:\hostedtoolcache\windows\Python\3.12.10\x64\python.exe'
+          if (!(Test-Path -LiteralPath $python)) { throw 'Expected original interpreter unavailable' }
+          & $python -I docs/reviews/pr39-native-crash-20260915/faulthandler_probe.py "$env:RUNNER_TEMP/interpreter-diagnosis"
+          exit $LASTEXITCODE
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: interpreter-diagnosis-${{ github.sha }}
+          path: ${{ runner.temp }}/interpreter-diagnosis/*
+          retention-days: 7
+          if-no-files-found: error
