@@ -1,0 +1,68 @@
+FF....                                                                   [100%]
+=================================== FAILURES ===================================
+________ test_constructor_failure_must_not_leak_a_duplicated_descriptor ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f28e0a5f360>
+
+    def test_constructor_failure_must_not_leak_a_duplicated_descriptor(monkeypatch):
+        duplicated = []; original_dup = os.dup
+        def dup(fd):
+            value = original_dup(fd); duplicated.append(value); return value
+        def broken_thread(**kw): raise RuntimeError('thread constructor failed')
+        monkeypatch.setattr(diagnostic.os, 'dup', dup)
+        monkeypatch.setattr(diagnostic, 'Thread', broken_thread)
+        with tempfile.TemporaryFile() as output:
+            with pytest.raises(RuntimeError): diagnostic.Watchdog(120, output.fileno())
+            fd = duplicated[0]
+            try:
+>               with pytest.raises(OSError): os.fstat(fd)
+                     ^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE <class 'OSError'>
+
+tests/test_ci_thread_dump_review.py:25: Failed
+________ test_worker_close_failure_cannot_be_only_an_unhandled_warning _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f28e0a5f490>
+
+    def test_worker_close_failure_cannot_be_only_an_unhandled_warning(monkeypatch):
+        closed = Event(); original_close = os.close
+        def close_then_fail(fd):
+            original_close(fd); closed.set(); raise OSError('private close error')
+        with tempfile.TemporaryFile() as output:
+            # Only the explicit diagnostic module uses the fake OS object.
+            monkeypatch.setattr(diagnostic, 'os', SimpleNamespace(dup=os.dup, write=os.write, close=close_then_fail))
+            watcher = diagnostic.Watchdog(120, output.fileno())
+            try:
+>               with pytest.raises(RuntimeError, match='^ci_traceback_diagnostic_failed$'): watcher.stop()
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE <class 'RuntimeError'>
+
+tests/test_ci_thread_dump_review.py:40: Failed
+=============================== warnings summary ===============================
+tests/test_ci_thread_dump_review.py::test_worker_close_failure_cannot_be_only_an_unhandled_warning
+  /opt/pyvenv/lib/python3.13/site-packages/_pytest/threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread ci-traceback-diagnostic
+  
+  Traceback (most recent call last):
+    File "/usr/lib/python3.13/threading.py", line 1043, in _bootstrap_inner
+      self.run()
+      ~~~~~~~~^^
+    File "/usr/lib/python3.13/threading.py", line 994, in run
+      self._target(*self._args, **self._kwargs)
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/mnt/data/pal39/tests/ci_thread_dump.py", line 45, in _run
+      os.close(self.fd)
+      ~~~~~~~~^^^^^^^^^
+    File "/mnt/data/pal39/tests/test_ci_thread_dump_review.py", line 34, in close_then_fail
+      original_close(fd); closed.set(); raise OSError('private close error')
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  OSError: private close error
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_ci_thread_dump_review.py::test_constructor_failure_must_not_leak_a_duplicated_descriptor - Failed: DID NOT RAISE <class 'OSError'>
+FAILED tests/test_ci_thread_dump_review.py::test_worker_close_failure_cannot_be_only_an_unhandled_warning - Failed: DID NOT RAISE <class 'RuntimeError'>
+2 failed, 4 passed, 1 warning in 2.62s

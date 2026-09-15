@@ -1,0 +1,65 @@
+{
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-2025Server-10.0.26100-SP0",
+  "cases": [
+    {
+      "mode": "c-watchdog",
+      "index": 0,
+      "returncode": 3221225477,
+      "timed_out": false,
+      "output": ""
+    },
+    {
+      "mode": "c-watchdog",
+      "index": 1,
+      "returncode": 3221225477,
+      "timed_out": false,
+      "output": ""
+    },
+    {
+      "mode": "c-watchdog",
+      "index": 2,
+      "returncode": 3221225477,
+      "timed_out": false,
+      "output": ""
+    },
+    {
+      "mode": "c-watchdog",
+      "index": 3,
+      "returncode": 3221225477,
+      "timed_out": false,
+      "output": ""
+    },
+    {
+      "mode": "gil-thread",
+      "index": 0,
+      "returncode": 0,
+      "timed_out": false,
+      "output": "{\"mode\": \"gil-thread\", \"iterations\": 436944, \"completed\": true}\r\n"
+    },
+    {
+      "mode": "gil-thread",
+      "index": 1,
+      "returncode": 0,
+      "timed_out": false,
+      "output": "{\"mode\": \"gil-thread\", \"iterations\": 423252, \"completed\": true}\r\n"
+    },
+    {
+      "mode": "gil-thread",
+      "index": 2,
+      "returncode": 0,
+      "timed_out": false,
+      "output": "{\"mode\": \"gil-thread\", \"iterations\": 397262, \"completed\": true}\r\n"
+    },
+    {
+      "mode": "gil-thread",
+      "index": 3,
+      "returncode": 0,
+      "timed_out": false,
+      "output": "{\"mode\": \"gil-thread\", \"iterations\": 427258, \"completed\": true}\r\n"
+    }
+  ],
+  "release_acceptance": false,
+  "application_tests_executed": false,
+  "repeat_is_fixed_diagnostic_sample_not_acceptance_retry": true
+}

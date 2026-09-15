@@ -1,0 +1,72 @@
+{
+  ".github/workflows/native-distribution.yml": {
+    "bytes": 5216,
+    "sha256": "65c6e522344209fef13d81f36fd0b154c1b4bff05786a5f72831e40c7af74ec9",
+    "git_blob": "2f9cbf873b09cfa0721222ee365cab6518fea5b8"
+  },
+  ".github/workflows/native-postgres.yml": {
+    "bytes": 7734,
+    "sha256": "f1c927dcd95ddf502c3b6464245e30c6542807791206d04fa1bd4a0d9695de53",
+    "git_blob": "573f86f850a525e8a609599bcbe485fcb9b60e2e"
+  },
+  ".github/workflows/research-paper.yml": {
+    "bytes": 2390,
+    "sha256": "abb63bb1195c31997211f00638aae19f51d6ca552edae6e6bbf2fc7e653d8b21",
+    "git_blob": "6caf531cd8df28582541bc3dc2744a65cfdfcd4e"
+  },
+  "DELIVERY_PLAN.md": {
+    "bytes": 44568,
+    "sha256": "2b544823a2bb7aa23f6cd933abcd8d9881766895fde7c22923678bec54817c39",
+    "git_blob": "fa5c3647953d916f6e210461b0c9d0341ee9ba0c"
+  },
+  "docs/ci-thread-diagnostics.md": {
+    "bytes": 4343,
+    "sha256": "8daae75523160b8ace341b5ca6d21314b379b1f5195b75896d4773aa8d7cf824",
+    "git_blob": "dc6bfb6d6ba4f7a4693ff270f8b785f1e1511e0e"
+  },
+  "docs/research-evaluation-console.md": {
+    "bytes": 11608,
+    "sha256": "3f4b1bee2a841677baf0ab07b262dbf600554031a99dafe5c4abca9884fa7f79",
+    "git_blob": "48e2d608b971422bd2debdb86b17c7a56ff9d7a6"
+  },
+  "src/polymarket_alpha_lab/research_evaluation_cli.py": {
+    "bytes": 12433,
+    "sha256": "ce2db52198acf017feb640daf885d0d4e029133907869563cb35426d0a6b846e",
+    "git_blob": "6079d93b6f16b4cc7151f3d34d6f71ea5de977f9"
+  },
+  "tests/ci_thread_dump.py": {
+    "bytes": 4707,
+    "sha256": "0c60223b29ad079a26c5eb27464afdcd91228ca2786458d232825e5c474e67f6",
+    "git_blob": "dd32fe12d72199b30bb23ab7be30d934b2999f5f"
+  },
+  "tests/test_ci_thread_dump.py": {
+    "bytes": 5250,
+    "sha256": "4ef6c107f7c32ff8f7096e217eb6b89b5126a3719199578fc8ce0f28d1070203",
+    "git_blob": "8fb763ff182fc918ebf38ae314efdc2abe112c4b"
+  },
+  "tests/test_ci_thread_dump_review.py": {
+    "bytes": 4140,
+    "sha256": "2a679834af7c5e3f5f14f5a5bd43fba47024077c8edaee97318cabf864fc6b4d",
+    "git_blob": "0338e219cdce77383654b0f510e09193e5a1f580"
+  },
+  "tests/test_project_postgres_distribution_native.py": {
+    "bytes": 21079,
+    "sha256": "e46fd5a00815040037c3c9615fc3f51870e562fe1777a01d8c6626f5988383a9",
+    "git_blob": "9887e5fa71e03eda0dfaaa945f68705b482d893a"
+  },
+  "tests/test_project_postgres_paper_settlement_native.py": {
+    "bytes": 13338,
+    "sha256": "dd0e167cb28a47aa092bda141f7bee0487eabd66207cafbde24701a4b2564651",
+    "git_blob": "baf29328059112055dfbc7c27bada947b824ee6a"
+  },
+  "tests/test_research_settled_cli.py": {
+    "bytes": 7397,
+    "sha256": "a2df2c4bd7260d01883990f2a8b094f64ed05288ff07cd5f2992a24dab89028e",
+    "git_blob": "2a719a3a818fe73b69d3e45fcb50c22f611b082c"
+  },
+  "tests/test_research_settled_cli_review.py": {
+    "bytes": 4601,
+    "sha256": "ff00ddc8865d57cd75e3102f1632ccb8c5d334d0dcb33035e695b13e1f513899",
+    "git_blob": "074563e2a2e6eb190e66b5e73d6efa479416a32f"
+  }
+}

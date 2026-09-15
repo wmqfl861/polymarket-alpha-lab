@@ -1,0 +1,87 @@
+FFFFFF................                                                   [100%]
+=================================== FAILURES ===================================
+____ test_different_valid_historical_window_cannot_satisfy_requested_cutoff ____
+
+managed = {'cleanup_error': None, 'error': None, 'events': [('root', PosixPath('/unused/project')), ('enter',), ('settled', {'bu...d3b7e7a85e5a6d687092c83cc99d2c2663c70', 'model_id': 'synthetic-model', ...}], 'business_writes_performed': False, ...}}
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb7617c3a10>
+
+    def test_different_valid_historical_window_cannot_satisfy_requested_cutoff(managed, capsys):
+        at = case()[0].generated_at - timedelta(seconds=1)
+        code, out = invoke(capsys, '--as-of', at.isoformat())
+>       assert code == 1 and out['evaluation'] is None
+E       assert (0 == 1)
+
+tests/test_research_settled_cli_review.py:19: AssertionError
+________ test_valid_report_over_requested_record_limit_is_not_accepted _________
+
+managed = {'cleanup_error': None, 'error': None, 'events': [('root', PosixPath('/unused/project')), ('enter',), ('settled', {'bu...000000002', 'cost_policy_sha256': None, 'model_id': 'synthetic-model', ...}], 'business_writes_performed': False, ...}}
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb761803110>
+
+    def test_valid_report_over_requested_record_limit_is_not_accepted(managed, capsys):
+        a, b = case(), case(2)
+        h = ResearchEvaluationReport((a[0].records[0], b[0].records[0]), (), a[0].generated_at)
+        managed['report'] = assemble(h, {}, {})
+        code, out = invoke(capsys, '--max-records', '1')
+>       assert code == 1 and out['evaluation'] is None
+E       assert (0 == 1)
+
+tests/test_research_settled_cli_review.py:27: AssertionError
+_ test_valid_report_with_different_diagnostic_options_is_not_accepted[--buckets-5] _
+
+managed = {'cleanup_error': None, 'error': None, 'events': [('root', PosixPath('/unused/project')), ('enter',), ('settled', {'bu...d3b7e7a85e5a6d687092c83cc99d2c2663c70', 'model_id': 'synthetic-model', ...}], 'business_writes_performed': False, ...}}
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb761803c50>
+option = '--buckets', value = '5'
+
+    @pytest.mark.parametrize('option,value', [('--buckets', '5'), ('--min-sample-count', '31'), ('--min-bin-count', '6')])
+    def test_valid_report_with_different_diagnostic_options_is_not_accepted(managed, capsys, option, value):
+        code, out = invoke(capsys, option, value)
+>       assert code == 1 and out['evaluation'] is None
+E       assert (0 == 1)
+
+tests/test_research_settled_cli_review.py:33: AssertionError
+_ test_valid_report_with_different_diagnostic_options_is_not_accepted[--min-sample-count-31] _
+
+managed = {'cleanup_error': None, 'error': None, 'events': [('root', PosixPath('/unused/project')), ('enter',), ('settled', {'bu...d3b7e7a85e5a6d687092c83cc99d2c2663c70', 'model_id': 'synthetic-model', ...}], 'business_writes_performed': False, ...}}
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb7648ea8b0>
+option = '--min-sample-count', value = '31'
+
+    @pytest.mark.parametrize('option,value', [('--buckets', '5'), ('--min-sample-count', '31'), ('--min-bin-count', '6')])
+    def test_valid_report_with_different_diagnostic_options_is_not_accepted(managed, capsys, option, value):
+        code, out = invoke(capsys, option, value)
+>       assert code == 1 and out['evaluation'] is None
+E       assert (0 == 1)
+
+tests/test_research_settled_cli_review.py:33: AssertionError
+_ test_valid_report_with_different_diagnostic_options_is_not_accepted[--min-bin-count-6] _
+
+managed = {'cleanup_error': None, 'error': None, 'events': [('root', PosixPath('/unused/project')), ('enter',), ('settled', {'bu...d3b7e7a85e5a6d687092c83cc99d2c2663c70', 'model_id': 'synthetic-model', ...}], 'business_writes_performed': False, ...}}
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb7648eb360>
+option = '--min-bin-count', value = '6'
+
+    @pytest.mark.parametrize('option,value', [('--buckets', '5'), ('--min-sample-count', '31'), ('--min-bin-count', '6')])
+    def test_valid_report_with_different_diagnostic_options_is_not_accepted(managed, capsys, option, value):
+        code, out = invoke(capsys, option, value)
+>       assert code == 1 and out['evaluation'] is None
+E       assert (0 == 1)
+
+tests/test_research_settled_cli_review.py:33: AssertionError
+________________ test_contradictory_nested_history_flags_reject ________________
+
+managed = {'cleanup_error': None, 'error': None, 'events': [('root', PosixPath('/unused/project')), ('enter',), ('settled', {'bu...d3b7e7a85e5a6d687092c83cc99d2c2663c70', 'model_id': 'synthetic-model', ...}], 'business_writes_performed': False, ...}}
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb76187fd10>
+
+    def test_contradictory_nested_history_flags_reject(managed, capsys):
+        managed['report']['history']['readonly'] = False
+        code, out = invoke(capsys)
+>       assert code == 1 and out['evaluation'] is None
+E       assert (0 == 1)
+
+tests/test_research_settled_cli_review.py:39: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_research_settled_cli_review.py::test_different_valid_historical_window_cannot_satisfy_requested_cutoff - assert (0 == 1)
+FAILED tests/test_research_settled_cli_review.py::test_valid_report_over_requested_record_limit_is_not_accepted - assert (0 == 1)
+FAILED tests/test_research_settled_cli_review.py::test_valid_report_with_different_diagnostic_options_is_not_accepted[--buckets-5] - assert (0 == 1)
+FAILED tests/test_research_settled_cli_review.py::test_valid_report_with_different_diagnostic_options_is_not_accepted[--min-sample-count-31] - assert (0 == 1)
+FAILED tests/test_research_settled_cli_review.py::test_valid_report_with_different_diagnostic_options_is_not_accepted[--min-bin-count-6] - assert (0 == 1)
+FAILED tests/test_research_settled_cli_review.py::test_contradictory_nested_history_flags_reject - assert (0 == 1)
+6 failed, 16 passed in 1.28s
