@@ -1,0 +1,157 @@
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -677,3 +677,21 @@
+ **WP-03／WP-06 仍 PARTIAL，G3／G6 未关闭，V1 仍 1／6。** PR #49 的 PS5.1 首次调用
+ 失败、被拦截的 CAPI2 试验及 D1—D3／真实业务验收均未绕过或宣称解决。无用户业务库、
+ 密钥、真实模型／行情、旧安装覆盖或实盘操作；完成本项不授权部署到用户旧实例。
++
++
++## 27. WP-03／WP-06：会话排空与任务回执的主线整合（PR #50）
++
++整合基线 `839d4039406d1113676e0b474680e6d4061f289b`（已合并 PR #51）；保留
++原 PR #50 `668c8eea2c6f740561afdfdd5368849ee58b4624` 的实现和历史，不重写分支。
++原两份文档的追加内容均保留。PR #51 的输出／共享停止修复不回退；PR #49 不并入。
++
++- 新增十二个组合反例：拥有／借用引擎、关闭中断／零退出、正常／短写／中断输出，
++  均用真实会话与线程验证先排空、再释放锁、最后发布回执；原操作只执行一次。
++- 这些新反例在未含排空修复的 PR #51 主线十二项全败，在整合实现中通过。只模拟
++  原生引擎调用和检查载荷，不冒充真实数据库或操作系统信号验证；原整包测试另行执行。
++- 不改两项已审阅的生产实现、原测试断言、67 份迁移、依赖、工作流权限或原超时。
++  最终整合树的本地全量、Windows 分区／整包、独立复审和首败证据记录于本 PR，
++  原 PR #50 或 PR #51 的旧树成功结果不得替代本轮最终门禁。
++
++**WP-03／WP-06 仍 PARTIAL，G3／G6 未关闭。** 不关闭 PR #49 的失败、被拦截诊断、
++D1—D3、真实输入／费率及完整业务验收，也不授权用户数据库操作或旧安装覆盖。
+--- a/docs/research-dispatch.md
++++ b/docs/research-dispatch.md
+@@ -464,3 +464,21 @@
+ Reference: Python's `threading.Condition` and `signal` documentation describe the
+ wait/reacquire contract and arbitrary exception delivery; neither supplies an
+ uninterruptible application cleanup guarantee.
++
++
++### Combined close and receipt behavior
++
++The task command's checked output path is reached only after its managed session
++finishes closing. With the lifecycle-drain fix, a close interruption cannot cause
++a failure envelope to be published while the original admitted work still needs
++the lease. After draining, the existing CLI maps KeyboardInterrupt to130 and
++requests the original shared stop token; an internal SystemExit maps to failure.
++A later short output remains failure and does not undo an already requested stop.
++An output interruption still requests that same token. None of these outcomes
++re-executes the original operation, refunds its reservation or proves rollback.
++
++The combined regression uses real threads and the actual session/CLI/emitter,
++with synthetic engine calls and inspection data. The existing packaged drain
++recipe provides separate real-engine and OS-lease coverage, not OS-signal coverage.
++Python Condition wait/reacquire contract consulted for the integration review:
++https://docs.python.org/3.12/library/threading.html#condition-objects
+--- a/tests/test_project_postgres_session_drain_review.py
++++ b/tests/test_project_postgres_session_drain_review.py
+@@ -131,3 +131,106 @@
+     compile(RECIPE, '<packaged session drain>', 'exec')
+     command = ['C:/'+('p'*180)+'/python.exe', '-I', '-c', RECIPE, 'C:/'+('k'*180)]
+     assert len(subprocess.list2cmdline(command).encode('utf-16-le')) // 2 + 1 < 32767
++
++
++@pytest.mark.parametrize('started', [False, True])
++@pytest.mark.parametrize('interruption_kind', ['interrupt', 'exit-zero'])
++@pytest.mark.parametrize('output_fault', ['none', 'short', 'interrupt'])
++def test_integrated_task_cli_drains_before_output_and_preserves_shared_stop(
++        managed, monkeypatch, started, interruption_kind, output_fault):
++    """PR50 close and PR51 output controls in one real threaded session.
++
++    Native engine calls and the inspection payload are fixtures; admitted work,
++    Condition.wait, the session context, CLI catch path and emitter are real.
++    """
++    from contextlib import redirect_stdout
++    from threading import Thread
++    import json
++    from polymarket_alpha_lab import research_dispatch_cli as cli
++    from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
++
++    state = managed
++    state['started'] = started
++    control = ResearchDispatchStop()
++    interruption = KeyboardInterrupt('close-only fixture') if interruption_kind == 'interrupt' else SystemExit(0)
++    output, flushes, emitted_codes = [], [], []
++    original_emit = cli._emit
++    monkeypatch.setattr(cli, 'ProjectPostgres', lambda root: state['db'])
++
++    def work():
++        try:
++            def admitted(dsn):
++                state['operation_calls'] += 1
++                state['operation_entered'].set()
++                assert state['operation_release'].wait(5), 'admitted operation was not released'
++                return 'original result'
++            state['result'] = state['session']._call(admitted)
++        except BaseException as error:
++            state['failures'].append(error)
++
++    def inspect(session, args):
++        state['session'] = session
++        original_wait = session._condition.wait
++        waits = []
++        def wait(timeout=None):
++            waits.append(1)
++            if len(waits) == 1:
++                raise interruption
++            state['release_checkpoint'].set()
++            return original_wait(timeout)
++        session._condition.wait = wait
++        state['worker'] = Thread(target=work)
++        state['worker'].start()
++        assert state['operation_entered'].wait(5), 'worker not admitted'
++        return None
++    monkeypatch.setattr(cli, '_inspect', inspect)
++
++    class Output:
++        def write(self, text):
++            assert state['lease'] is False and state['in_flight_at_unlock'] == [0]
++            output.append(text)
++            if output_fault == 'interrupt':
++                raise KeyboardInterrupt('output-only fixture')
++            return len(text) - int(output_fault == 'short')
++        def flush(self):
++            flushes.append(1)
++
++    def emit(envelope, code):
++        emitted_codes.append(code)
++        with redirect_stdout(Output()):
++            return original_emit(envelope, code)
++    monkeypatch.setattr(cli, '_emit', emit)
++
++    def owner():
++        try:
++            state['code'] = cli.main(['inspect-budget', '--budget-id', 'synthetic'],
++                default_root=state['db'].layout.root, stop=control)
++        except BaseException as error:
++            state['owner_error'] = error
++    thread = Thread(target=owner)
++    thread.start()
++    try:
++        assert state['release_checkpoint'].wait(5), 'close neither waited nor unlocked'
++        assert state['lease'] is True and state['session']._in_flight == 1
++        assert output == emitted_codes == []
++        with pytest.raises(files.ProjectDatabaseError, match='session_closed'):
++            state['session']._call(lambda _: pytest.fail('closed session admitted work'))
++    finally:
++        state['operation_release'].set()
++        thread.join(5)
++        if 'worker' in state:
++            state['worker'].join(5)
++    assert not thread.is_alive() and not state['worker'].is_alive()
++    assert 'owner_error' not in state and state['failures'] == []
++    assert state['operation_calls'] == 1 and state['result'] == 'original result'
++    assert state['in_flight_at_unlock'] == [0]
++    assert state['events'].count('stop') == int(started)
++    assert emitted_codes == [130 if interruption_kind == 'interrupt' else 1]
++    expected_code = 130 if output_fault == 'interrupt' else 1 if output_fault == 'short' else emitted_codes[0]
++    assert state['code'] == expected_code
++    assert control.is_stopped() is (interruption_kind == 'interrupt' or output_fault == 'interrupt')
++    assert len(output) == 1 and len(flushes) == int(output_fault == 'none')
++    body = json.loads(output[0])
++    assert body['status'] == ('interrupted' if interruption_kind == 'interrupt' else 'failed')
++    assert body['result'] is None and body['automatic_retry_permitted'] is False
++    assert 'close-only fixture' not in output[0] and 'output-only fixture' not in output[0]
