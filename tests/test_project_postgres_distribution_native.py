@@ -356,6 +356,26 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
         assert composed['confirmation_output_failures'] == 1
         assert composed['same_confirmation_replayed'] is True
         print('packaged research composition: ' + json.dumps(composed, sort_keys=True), flush=True)
+        # Extend this same disposable kit's completed business fixture through
+        # its existing cold-backup/restore commands. Originals remain private.
+        from tests.packaged_recovery_flow import run_recovery_recipe
+        recovery = run_recovery_recipe(second, second / '.venv/Scripts/python.exe', proof,
+            historical_at=composed['historical_at'], expected_instance=composed['instance_id'])
+        assert recovery.returncode == 0, (recovery.stdout, recovery.stderr)
+        assert recovery.stderr == ''
+        recovered = json.loads(recovery.stdout)
+        assert recovered['status'] == 'packaged_cold_recovery_verified'
+        assert recovered['source_tree'] == receipt['source_tree']
+        assert recovered['source_commit'] == receipt['source_commit']
+        assert recovered['instance_id'] == other['instance_id']
+        assert (recovered['captured_attempts'], recovered['simulations'], recovered['settlements'],
+                recovered['reserved_calls'], recovered['incomplete_claims']) == (4, 4, 2, 8, 1)
+        assert recovered['physical_bytes_preserved'] is recovered['originals_retained'] is True
+        assert recovered['history_equal'] is recovered['replay_without_model'] is True
+        assert recovered['current_history_blocked'] is recovered['stopped'] is True
+        assert recovered['archive_uploaded'] is False and recovered['synthetic_inputs'] is True
+        assert recovered['project_modules_checked'] > 0
+        print('packaged cold recovery: ' + json.dumps(recovered, sort_keys=True), flush=True)
         # A changed immutable package blocks without modifying stored research.
         target = first / 'src/polymarket_alpha_lab/local_postgres_dsn.py'
         original = target.read_bytes()

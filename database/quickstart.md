@@ -414,3 +414,44 @@ reads back the committed review/outcome and explicitly replays the SAME input.
 The original receipt and timestamps must match. No database/transaction mock is
 used for this step; no new model call, alternate review ID or automatic retry is
 permitted. It verifies this simulated failure, not real source/human acceptance.
+
+
+## Maintainer acceptance: recover the complete packaged evidence
+
+The same disposable second kit now also passes through its EXISTING `backup`,
+`verify-backup` and `restore` commands in a separate test-only process. Before
+backup it has four captured attempts, four simulation receipts, two settlements,
+two batches/two turns, eight nonrefundable reservations and one incomplete claim.
+The test requires a stopped instance, the known fixture identity and the complete
+expected roster before the simulated recovery. It is not a general operator tool.
+
+The proof checks the actual archive checksum, refusal to overwrite existing data,
+and refusal of a bad checksum before staging. It then makes the original fixture
+files unavailable by retaining them in another private directory, NEVER deleting
+them. Restore goes to the SAME original physical project path and uses the SAME
+runtime and migration catalog. Before restart, every restored byte is compared
+with the cold source inventory, including the generated test credentials, WAL
+and transaction state. The preserved original must also remain byte-identical.
+
+After restart, the original requests/results, accepted/rejected simulations,
+unconfirmed candidates/confirmed reviews, batches/turns, stored budget policies
+and reserved amounts, and the explicitly fixed historical evaluation must match.
+Only newly generated budget observation times are excluded from that comparison.
+Explicit original-request and original-simulation replays must make no model call,
+refund no reservation and change no history. Strict current evaluation must still
+refuse the incomplete claim. The recovered instance is left stopped.
+
+This adds a separate 180-second test child and leaves all previous test/process/job
+limits unchanged. The backup and preserved cluster contain PRIVATE synthetic
+credentials and stay inside the disposable runner directory; they are not uploaded
+with logs, source, or the kit. Only fixed engineering outcomes are emitted.
+
+This is same-version, same-path cold recovery of synthetic data, not a version
+upgrade, rollback, cross-machine/path adoption, real disaster recovery or actual
+human/market acceptance. Existing cold-backup implementation and its component
+regressions are unchanged. No recipe or recovery archive is shipped in the kit.
+G2-G6, D1-D3, release-specific upgrade decisions and the PS5.1 issue remain open.
+
+PostgreSQL's file-system backup restrictions are documented at
+https://www.postgresql.org/docs/17/backup-file.html (checked 2026-09-16): this test
+uses a cleanly stopped WHOLE cluster, not isolated table copies or a live tar.
