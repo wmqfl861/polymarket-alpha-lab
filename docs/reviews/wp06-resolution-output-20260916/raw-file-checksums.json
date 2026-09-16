@@ -1,0 +1,50 @@
+{
+  "implementation-red.log": {
+    "bytes": 19096,
+    "sha256": "5e6982573b28889a3dbe9ba1f39e66c8b01409e34f2e55734e422935d892a3d2"
+  },
+  "implementation-red-complete.log": {
+    "bytes": 62120,
+    "sha256": "16dee5ceb9b4ee3a18d44e1bf2da23862063e0c437cb4d73e33d25175f908405"
+  },
+  "review-red.log": {
+    "bytes": 5608,
+    "sha256": "0044cf4c9db567fc390a712d12128d307341281f83e026534c09e25b763125ac"
+  },
+  "detached-final.log": {
+    "bytes": 99,
+    "sha256": "9bdb01114eafcc611cdb1ec3a483f7bd1e99538a0851a1eadeba4160d02a4ce0"
+  },
+  "full-final.log": {
+    "bytes": 45812,
+    "sha256": "dac4f82204ec8a08acf5992febfb92540bf29a169f5b4dc901cfaaf9a7dd2e51"
+  },
+  "ci-distribution/distribution-proof.log": {
+    "bytes": 806,
+    "sha256": "88bfbd3031023e222e756a50f0524249d0caeb63180676c7c8bb29f1326d3fc4"
+  },
+  "ci-distribution/distribution-proof.xml": {
+    "bytes": 18666,
+    "sha256": "b183cd65b3a41d604c0cbf8de62575aed1a3a4da214b6fafa786a2e8152c57e7"
+  },
+  "ci-native/native-proof.log": {
+    "bytes": 40107,
+    "sha256": "8bc39ace03dcd42b316b25a5204dc42945c4bc9013f93cc70c8d7d795115a5bf"
+  },
+  "ci-native/native-proof.xml": {
+    "bytes": 387928,
+    "sha256": "ae8fd8c036208290bf38f857dc2b98860d0f7cb2525722224bae7ec8de5f4d3b"
+  },
+  "ci-offline/offline-verification.log": {
+    "bytes": 45850,
+    "sha256": "0fd7bbc6163772981557ccd0def59ddc8470a2183d7762eb3015c5a77fd17f71"
+  },
+  "ci-paper/research-paper.log": {
+    "bytes": 9072,
+    "sha256": "fb4fab4b1a610a002d38f02a76de9aba79d7cc8eb85269f465dd8f4426f85075"
+  },
+  "ci-paper/research-paper.xml": {
+    "bytes": 47892,
+    "sha256": "a657dfff8a5daa79195812757fc295ec13b79739cb18339161fd415adbbb4cba"
+  }
+}

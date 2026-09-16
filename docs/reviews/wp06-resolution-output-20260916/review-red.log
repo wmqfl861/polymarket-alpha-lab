@@ -1,0 +1,94 @@
+FFF...........                                                           [100%]
+=================================== FAILURES ===================================
+_ test_default_binary_input_access_cannot_escape_confirmation_guard[exit-zero] _
+
+cli = <module 'queue_cli_test' from '/mnt/data/pal-current/scripts/review_resolution_queue.py'>
+managed = {'calls': [], 'instruction': CryptoSettlementReview(review_id='confirmed-original', record_id='original', request_sha2...50fb179214866eb', paper_only=True, report_only=True, readonly=True), paper_only=True, report_only=True, readonly=True)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe2595eb6f0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe25955fb60>
+kind = 'exit-zero'
+
+    @pytest.mark.parametrize('kind', ['exit-zero', 'read-error', 'interrupt'])
+    def test_default_binary_input_access_cannot_escape_confirmation_guard(cli, managed, monkeypatch, capsys, kind):
+        error = {'exit-zero': SystemExit(0), 'read-error': OSError(PRIVATE),
+                 'interrupt': KeyboardInterrupt(PRIVATE)}[kind]
+    
+        class Input:
+            @property
+            def buffer(self):
+                raise error
+    
+        with monkeypatch.context() as patch:
+            patch.setattr(cli.sys, 'stdin', Input())
+            try:
+                code = cli.main(['--confirm', '--allow-resolution-write'])
+            except (Exception, SystemExit, KeyboardInterrupt) as escaped:
+                code = ('escaped', type(escaped).__name__)
+        output = capsys.readouterr()
+>       assert code == (130 if kind == 'interrupt' else 2)
+E       AssertionError: assert ('escaped', 'SystemExit') == 2
+
+tests/test_research_resolution_output_review.py:32: AssertionError
+_ test_default_binary_input_access_cannot_escape_confirmation_guard[read-error] _
+
+cli = <module 'queue_cli_test' from '/mnt/data/pal-current/scripts/review_resolution_queue.py'>
+managed = {'calls': [], 'instruction': CryptoSettlementReview(review_id='confirmed-original', record_id='original', request_sha2...50fb179214866eb', paper_only=True, report_only=True, readonly=True), paper_only=True, report_only=True, readonly=True)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe2594516d0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe25b5347d0>
+kind = 'read-error'
+
+    @pytest.mark.parametrize('kind', ['exit-zero', 'read-error', 'interrupt'])
+    def test_default_binary_input_access_cannot_escape_confirmation_guard(cli, managed, monkeypatch, capsys, kind):
+        error = {'exit-zero': SystemExit(0), 'read-error': OSError(PRIVATE),
+                 'interrupt': KeyboardInterrupt(PRIVATE)}[kind]
+    
+        class Input:
+            @property
+            def buffer(self):
+                raise error
+    
+        with monkeypatch.context() as patch:
+            patch.setattr(cli.sys, 'stdin', Input())
+            try:
+                code = cli.main(['--confirm', '--allow-resolution-write'])
+            except (Exception, SystemExit, KeyboardInterrupt) as escaped:
+                code = ('escaped', type(escaped).__name__)
+        output = capsys.readouterr()
+>       assert code == (130 if kind == 'interrupt' else 2)
+E       AssertionError: assert ('escaped', 'OSError') == 2
+
+tests/test_research_resolution_output_review.py:32: AssertionError
+_ test_default_binary_input_access_cannot_escape_confirmation_guard[interrupt] _
+
+cli = <module 'queue_cli_test' from '/mnt/data/pal-current/scripts/review_resolution_queue.py'>
+managed = {'calls': [], 'instruction': CryptoSettlementReview(review_id='confirmed-original', record_id='original', request_sha2...50fb179214866eb', paper_only=True, report_only=True, readonly=True), paper_only=True, report_only=True, readonly=True)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe259587570>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe25955b750>
+kind = 'interrupt'
+
+    @pytest.mark.parametrize('kind', ['exit-zero', 'read-error', 'interrupt'])
+    def test_default_binary_input_access_cannot_escape_confirmation_guard(cli, managed, monkeypatch, capsys, kind):
+        error = {'exit-zero': SystemExit(0), 'read-error': OSError(PRIVATE),
+                 'interrupt': KeyboardInterrupt(PRIVATE)}[kind]
+    
+        class Input:
+            @property
+            def buffer(self):
+                raise error
+    
+        with monkeypatch.context() as patch:
+            patch.setattr(cli.sys, 'stdin', Input())
+            try:
+                code = cli.main(['--confirm', '--allow-resolution-write'])
+            except (Exception, SystemExit, KeyboardInterrupt) as escaped:
+                code = ('escaped', type(escaped).__name__)
+        output = capsys.readouterr()
+>       assert code == (130 if kind == 'interrupt' else 2)
+E       AssertionError: assert ('escaped', 'KeyboardInterrupt') == 130
+
+tests/test_research_resolution_output_review.py:32: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_research_resolution_output_review.py::test_default_binary_input_access_cannot_escape_confirmation_guard[exit-zero] - AssertionError: assert ('escaped', 'SystemExit') == 2
+FAILED tests/test_research_resolution_output_review.py::test_default_binary_input_access_cannot_escape_confirmation_guard[read-error] - AssertionError: assert ('escaped', 'OSError') == 2
+FAILED tests/test_research_resolution_output_review.py::test_default_binary_input_access_cannot_escape_confirmation_guard[interrupt] - AssertionError: assert ('escaped', 'KeyboardInterrupt') == 130
+3 failed, 11 passed in 0.71s

@@ -1,0 +1,45 @@
+{
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "pr": 45,
+  "base": "1ac3ec6b1ec0de18faa1e0227076b14075525ec7",
+  "head": "f04f0b8cd9131e6cff0bf2ff2213020dc25f1b79",
+  "tree": "d6b1de4eda456393294549e5580db6c731d0d201",
+  "review_type": "separate same-assistant phase and detached worktree; not third-party or fresh-agent audit",
+  "original_failures": {
+    "initial_partial_run_failed": 10,
+    "initial_run_interrupted_by_test_KeyboardInterrupt": true,
+    "harness_only_correction": true,
+    "complete_red_failed": 35,
+    "complete_red_passed": 3
+  },
+  "separate_review_red": {
+    "failed": 3,
+    "passed": 11,
+    "finding": "default binary stdin accessor outside guarded input phase"
+  },
+  "fixed": [
+    "internal SystemExit(0) escaping operation or cleanup",
+    "unchecked short output and unguarded write/flush failures",
+    "default binary stdin accessor outside input guard"
+  ],
+  "new_cases": 60,
+  "new_fresh_interpreter_cases": 6,
+  "new_database_fault_injection_claimed": false,
+  "detached_local": {
+    "passed": 60,
+    "skipped": 0,
+    "seconds": 4.64
+  },
+  "local_full": {
+    "passed": 37916,
+    "skipped": 41,
+    "seconds": 313.05
+  },
+  "local_environment": "Linux Python3.13.5 / preinstalled container packages; not hosted locked Windows acceptance",
+  "all_67_migrations_unchanged": true,
+  "original_managed_blocks_ast_unchanged": true,
+  "success_json_unchanged": true,
+  "automatic_retry_added": false,
+  "G6_complete": false,
+  "source_delivery_not_applied_to_user_machine": true
+}
