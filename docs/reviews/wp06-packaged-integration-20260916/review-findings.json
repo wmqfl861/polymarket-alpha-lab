@@ -1,0 +1,43 @@
+{
+  "base": "fff21287c0e3bfab2d679d7ac47bd8044f808ea9",
+  "original_pr44": "3ecf4098f1a8cbf8f1fa078794887ae6bae59f41",
+  "head": "1290d79935f2a5f343d217017bee2bc261efd47f",
+  "tree": "401f5a691e6898c670e446d142340d396862dae9",
+  "review_type": "separate same-assistant phase and detached worktree; not third-party/fresh-agent audit",
+  "finding": "Injected short text output expanded LF to CRLF under modeled Windows newlines",
+  "initial_review": {
+    "failed": 1,
+    "passed": 13
+  },
+  "fix": "Test sink now emits ten ASCII bytes through existing binary stdout buffer; original assertion retained",
+  "production_defect": false,
+  "native_windows_failure_reproduced_locally": false,
+  "final_detached": {
+    "passed": 82,
+    "skipped": 0,
+    "flow_cases": 22,
+    "unchanged_pr45_cases": 60,
+    "seconds": 4.24
+  },
+  "local_full": {
+    "passed": 37938,
+    "skipped": 41,
+    "seconds": 307.91
+  },
+  "local_environment": "Linux Python3.13.5/preinstalled container packages, not hosted locked/Windows",
+  "protected_payloads_unchanged": 2922,
+  "sql_migrations_unchanged": 67,
+  "original_main_assertions": 72,
+  "original_pr44_assertions": 82,
+  "final_assertions": 84,
+  "no_previous_assertions_removed": true,
+  "source_paths": 7,
+  "additional_fault": "Actual packaged confirmation after prior absence; only stdout sink altered; successful-status prefix and nonzero process exit; real durable readback and explicit SAME-input replay equality",
+  "database_mocked_for_new_fault": false,
+  "source_bytes_rechecked": true,
+  "main_review_worktrees_clean": true,
+  "codegraph_executable_available": false,
+  "codegraph_run_claimed": false,
+  "G6_complete": false,
+  "D1_D3_changed": false
+}

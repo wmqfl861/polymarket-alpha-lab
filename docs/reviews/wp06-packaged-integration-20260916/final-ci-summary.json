@@ -1,0 +1,58 @@
+{
+  "head": "1290d79935f2a5f343d217017bee2bc261efd47f",
+  "tree": "401f5a691e6898c670e446d142340d396862dae9",
+  "tested_merge": "bd039161c8466bda80b64f2a8740587f3739aead",
+  "runs": [
+    {
+      "name": "offline",
+      "run": 35052796019,
+      "job": 104656606466,
+      "passed": 37938,
+      "skipped": 41,
+      "seconds": 350.98,
+      "artifact": 10429896137
+    },
+    {
+      "name": "native",
+      "run": 35052796040,
+      "job": 104656606520,
+      "passed": 1816,
+      "skipped": 2,
+      "seconds": 889.77,
+      "artifact": 10430325219
+    },
+    {
+      "name": "paper",
+      "run": 35052796048,
+      "job": 104656606560,
+      "passed": 339,
+      "skipped": 0,
+      "seconds": 420.26,
+      "artifact": 10429652875
+    },
+    {
+      "name": "kit",
+      "run": 35052796113,
+      "job": 104656606755,
+      "passed": 145,
+      "skipped": 0,
+      "seconds": 402.03,
+      "artifact": 10429995814
+    }
+  ],
+  "all_workflows_success": true,
+  "all_source_cleanliness_steps_success": true,
+  "all_new_flow_cases_ran_on_windows": 22,
+  "unchanged_case_id_sets": {
+    "native": 1818,
+    "paper": 339
+  },
+  "kit_old_main_cases_retained": 123,
+  "kit_old_pr44_cases_retained": 137,
+  "dedicated_pr42_windows_timeout_executed": false,
+  "older_optional_db_tests_executed": false,
+  "native_optins_executed": 18,
+  "raw_logs_and_junit_verified": true,
+  "retry_to_green": false,
+  "production_source_changes": false
+}

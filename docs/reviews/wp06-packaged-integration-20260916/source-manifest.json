@@ -1,0 +1,37 @@
+{
+  ".github/workflows/native-distribution.yml": {
+    "bytes": 5671,
+    "sha256": "d4e8a3bf422d2c76afa8a96df086ea62b5a452883492e74bf956769d95a00b42",
+    "blob_sha": "6b6a4d2e047891cf16f2a47aab89ce4f584aea6a"
+  },
+  "DELIVERY_PLAN.md": {
+    "bytes": 53709,
+    "sha256": "dc19e3af70510e41de055563054a5ba4cabb52444ec2896c022fc2dec66201b8",
+    "blob_sha": "34680edae667b6f5af5016b2b4a1dd4236ca4796"
+  },
+  "database/quickstart.md": {
+    "bytes": 24730,
+    "sha256": "a7574316c514fc6ed2c3f21c042637bca2f26f9862f086aeeaef47a21fdf5878",
+    "blob_sha": "de105402d9d7ff6d5210d68c385b69e183ba12af"
+  },
+  "tests/packaged_research_flow.py": {
+    "bytes": 23360,
+    "sha256": "218a5c8c397882061c90dbe6cc50e3b87f068d23d547f110c77bed7d216e005e",
+    "blob_sha": "f3993abcb5b5049b7415458432dd723ee8e15440"
+  },
+  "tests/test_packaged_research_flow.py": {
+    "bytes": 4014,
+    "sha256": "39264b181c4b2cd2a8441fb078b9c83bea3ff155cf8c4e9d9d280d67c3605a08",
+    "blob_sha": "e7b9f49ba3b8058ca16d0560dd21336d3d165cdf"
+  },
+  "tests/test_packaged_research_flow_review.py": {
+    "bytes": 6273,
+    "sha256": "9544f41829296bd395aaddbf8e3e142d1bcb408690487038187f051282e9f37b",
+    "blob_sha": "bec7171a1824788badc6bd43aaa6a8eacfa4dc48"
+  },
+  "tests/test_project_postgres_distribution_native.py": {
+    "bytes": 23194,
+    "sha256": "1e7dd0f0bddd924340b98aa1c2068699211aee86c3751187ac85fe032378209c",
+    "blob_sha": "afebc912715b099ff7028e1b423a1696a70beeaa"
+  }
+}

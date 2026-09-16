@@ -1,0 +1,74 @@
+{
+  "ci-final-kit/distribution-proof.log": {
+    "bytes": 7393,
+    "sha256": "d928e55843f905012f41f6c220b42f6fbcb03bed3e60fdf83db4c3e2ee568308"
+  },
+  "ci-final-kit/distribution-proof.xml": {
+    "bytes": 21924,
+    "sha256": "115534654de6a6d6ffae4b83b76fcb3ad69625c2ce64c1b066684f46b8cd7902"
+  },
+  "ci-final-native/native-proof.log": {
+    "bytes": 41483,
+    "sha256": "660a842625478dbe48e3db9503d9bad0dad6c99d073f19fa78856b2e6ebf486f"
+  },
+  "ci-final-native/native-proof.xml": {
+    "bytes": 387927,
+    "sha256": "05fde387e67cd82c519187fa6de2335790d888bb724c860645f79071931eaea5"
+  },
+  "ci-final-offline/offline-verification.log": {
+    "bytes": 45850,
+    "sha256": "61553437da4268c54fd023976e04ac1599cc35c6f357c0f27b0412989ebb1136"
+  },
+  "ci-final-paper/research-paper.log": {
+    "bytes": 9072,
+    "sha256": "42ea265f55cbb7d92eb842dcae8ab1236e14f5aea5893f06eb1498bc04d84c4d"
+  },
+  "ci-final-paper/research-paper.xml": {
+    "bytes": 47892,
+    "sha256": "be1849d26187712d3584bdbe96512261ff7d02394f2e298fc3065554d6eebdda"
+  },
+  "ci-initial-kit/distribution-proof.log": {
+    "bytes": 7314,
+    "sha256": "84050df01283c1436e2740b399da64906ad5493e533600e6c5c8052cf90ad8f1"
+  },
+  "ci-initial-kit/distribution-proof.xml": {
+    "bytes": 20719,
+    "sha256": "145a2f0c38257ec053d63291d704987d6408aa1d5da41e34f289fe215eae645a"
+  },
+  "detached-final.log": {
+    "bytes": 247,
+    "sha256": "4d416f0063c6c82f54113bb87fcd0624a8195cb76eb691718a23fa9f54ccd016"
+  },
+  "detached-final.xml": {
+    "bytes": 13206,
+    "sha256": "8e7ef3b4b5204b9b494f7753e64b0cb89fa54fe0f643600e780265c395638a09"
+  },
+  "focused-green.log": {
+    "bytes": 261,
+    "sha256": "da4f8ce921be62f559d3551f0effa7858bb975537fc8b0ad9399c190e7cbf337"
+  },
+  "full-final.log": {
+    "bytes": 45822,
+    "sha256": "7d46f4d91e09230730042c0d2aadf4f379d2af4baf012dccb2a6a3b5ff04dc90"
+  },
+  "install-fixed.log": {
+    "bytes": 1264,
+    "sha256": "ac5681268d948dd29c5f5ca7ca605923ddb5a314beca4682b421271e6b2573a7"
+  },
+  "install.log": {
+    "bytes": 5469,
+    "sha256": "5036a9a81ce29b13b31dd58c3c6176dd1cad08f844cf60fcd774ef85a2d230fd"
+  },
+  "integrated-fault-baseline.log": {
+    "bytes": 99,
+    "sha256": "618c358f1c1b30f19456feeaa6e7bf1d3a92d3654539b95923f677d14b9259c0"
+  },
+  "integration-baseline-tests.log": {
+    "bytes": 99,
+    "sha256": "cbe8023ab1fcb072452a62b2ec782ea4cd9de93c1c4475286c346d38f242fbb1"
+  },
+  "integration-review-red.log": {
+    "bytes": 2681,
+    "sha256": "cf9564069010c836f4113d2f5c57f6d1d3b4e248f75ec68327881b361690d856"
+  }
+}
