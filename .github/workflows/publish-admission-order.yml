@@ -1,0 +1,60 @@
+name: Publish reviewed admission test ordering
+on:
+  push:
+    branches: [review/wp03-admission-order-publication-20260916]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Publish exactly the reviewed test and plan delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=0d668d81e5f2e33d0c0f5d7f52f106886cd3b07a
+          REF=refs/heads/review/wp03-admission-order-objects-20260916
+          PATCH="$RUNNER_TEMP/resequence.patch"
+          cp docs/reviews/admission-order-publication/resequence.patch "$PATCH"
+          echo "5a3d9421f6a0b3798d5cbe658e8cde629190aaeb768298f4adb78a08c07dfb7c  $PATCH" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          test "$(git rev-parse HEAD^{tree})" = 99cb2fa27b8565a02e8ea02ca9ffb2ef0c4b85ee
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- src scripts .github supabase/migrations database pyproject.toml uv.lock
+          python3 - <<'PY'
+          import subprocess
+          names=set(subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines())
+          assert names=={'DELIVERY_PLAN.md','tests/packaged_research_flow.py','tests/test_project_postgres_distribution_native.py'}
+          PY
+          TREE=$(git write-tree)
+          test "$TREE" = 5516290d1b69c5d212d779f34ce78bb60d53ed27
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport reviewed admission test ordering; final gates remain required')
+          git push origin "$COMMIT:$REF"
+          export COMMIT TREE
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          Path(os.environ['RUNNER_TEMP'],'publication.json').write_text(json.dumps(dict(
+              commit=os.environ['COMMIT'],tree=os.environ['TREE'],
+              patch_sha256='5a3d9421f6a0b3798d5cbe658e8cde629190aaeb768298f4adb78a08c07dfb7c',
+              main_updated=False,feature_updated=False,production_changed=False,
+              application_code_executed=False),indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: admission-order-publication
+          path: ${{ runner.temp }}/publication.json
+          retention-days: 7
+          if-no-files-found: error
