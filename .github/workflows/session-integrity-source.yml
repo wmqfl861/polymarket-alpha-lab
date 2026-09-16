@@ -1,0 +1,34 @@
+name: Managed session pinned source
+on:
+  push:
+    branches: [review/wp06-session-integrity-source-20260916]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 3a987bc6c1a5df608ff8f0668b866aaf87842c04
+          persist-credentials: false
+      - name: Archive fixed committed source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 3a987bc6c1a5df608ff8f0668b866aaf87842c04
+          git archive --format=zip --output="$RUNNER_TEMP/source.zip" HEAD
+          git ls-tree -r HEAD > "$RUNNER_TEMP/source-tree.txt"
+          git cat-file commit HEAD > "$RUNNER_TEMP/source-commit.txt"
+          sha256sum "$RUNNER_TEMP/source.zip" > "$RUNNER_TEMP/source.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: source-3a987bc6
+          path: |
+            ${{ runner.temp }}/source.zip
+            ${{ runner.temp }}/source-tree.txt
+            ${{ runner.temp }}/source-commit.txt
+            ${{ runner.temp }}/source.sha256
+          retention-days: 7
+          if-no-files-found: error
