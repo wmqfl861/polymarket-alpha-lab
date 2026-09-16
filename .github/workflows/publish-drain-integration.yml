@@ -1,0 +1,71 @@
+name: Publish reviewed drain integration objects
+on:
+  push:
+    branches: [review/wp03-drain-integration-publish-20260917]
+permissions:
+  contents: write
+concurrency:
+  group: pr50-reviewed-integration-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Reconstruct fixed source without executing application code
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=839d4039406d1113676e0b474680e6d4061f289b
+          OLD=668c8eea2c6f740561afdfdd5368849ee58b4624
+          COMMON=3a987bc6c1a5df608ff8f0668b866aaf87842c04
+          REF=refs/heads/review/wp03-drain-integrated-objects-20260917
+          PATCH="$RUNNER_TEMP/integration.patch"
+          cp docs/reviews/pr50-integration-publication/integration.patch "$PATCH"
+          echo "db03f5bdbd0ecd26e11ad09ca9ad5ba4df27006885193d8d3082b901df6019ea  $PATCH" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE" "$OLD" "$COMMON"
+          git checkout --detach "$BASE"
+          git restore --source="$OLD" --staged --worktree -- .github/workflows/native-distribution.yml src/polymarket_alpha_lab/project_postgres/server.py tests/packaged_session_drain.py tests/test_project_postgres_distribution_native.py tests/test_project_postgres_session_drain.py tests/test_project_postgres_session_drain_review.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          base='839d4039406d1113676e0b474680e6d4061f289b'
+          old='668c8eea2c6f740561afdfdd5368849ee58b4624'
+          common='3a987bc6c1a5df608ff8f0668b866aaf87842c04'
+          for path in ('DELIVERY_PLAN.md','docs/research-dispatch.md'):
+              def read(revision): return subprocess.check_output(['git','show',revision+':'+path])
+              prefix=read(common)
+              original=read(old)
+              current=read(base)
+              assert original.startswith(prefix) and current.startswith(prefix)
+              Path(path).write_bytes(current+original[len(prefix):])
+          PY
+          git add DELIVERY_PLAN.md docs/research-dispatch.md
+          test "$(git write-tree)" = 76e10423b1397c4dd56bc869376406b3467129ff
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 8
+          git diff --cached --exit-code "$BASE" -- scripts supabase/migrations pyproject.toml uv.lock database
+          test "$(git diff --cached --name-only "$BASE" -- src)" = src/polymarket_alpha_lab/project_postgres/server.py
+          test "$(git rev-parse :src/polymarket_alpha_lab/project_postgres/server.py)" = "$(git rev-parse "$OLD:src/polymarket_alpha_lab/project_postgres/server.py")"
+          TREE=$(git write-tree)
+          test "$TREE" = ee504d7967f56c5ae6411333ab8d46247e613357
+          EXISTING=$(git ls-remote --heads origin "$REF")
+          test -z "$EXISTING"
+          export GIT_AUTHOR_NAME='Project reviewed-source transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Retain exact reviewed PR50-PR51 integration objects; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr50-reviewed-source-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
