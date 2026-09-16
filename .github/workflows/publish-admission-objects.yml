@@ -1,0 +1,68 @@
+name: Publish reviewed admission objects
+on:
+  push:
+    branches: [review/wp03-admission-publication-20260916]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-admission-object-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Apply only the fixed reviewed delta, create a NEW transport ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4df08873f4b9b8f1378913c0d00ca6bb183e51e2
+          REF=refs/heads/review/wp03-admission-objects-20260916
+          PATCH="$RUNNER_TEMP/admission.patch"
+          git show 54b4a26d7c6be019be8adc99d85be69ddf119d79:docs/reviews/admission-publication/admission.patch > "$PATCH"
+          echo "a1eb351613e2dd58fac4ba1339f8e532ea3c677781b3ce1c46a8fa88954a5c55  $PATCH" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          test "$(git rev-parse HEAD^{tree})" = 401f5a691e6898c670e446d142340d396862dae9
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json
+          python3 - <<'PY'
+          import subprocess
+          actual=set(subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines())
+          expected={'DELIVERY_PLAN.md','database/quickstart.md','docs/research-dispatch.md',
+              'src/polymarket_alpha_lab/research_dispatch_cli.py','tests/packaged_research_flow.py',
+              'tests/test_project_postgres_distribution_native.py',
+              'tests/test_research_dispatch_cli_admission.py','tests/test_research_dispatch_cli_admission_review.py'}
+          assert actual == expected
+          PY
+          TREE=$(git write-tree)
+          test "$TREE" = a733e752a27abc4a3fee45bb5ea32d65dd805c22
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport reviewed admission objects, not final test acceptance')
+          git push origin "$COMMIT:$REF"
+          export COMMIT TREE
+          python3 - <<'PY'
+          import os,json
+          from pathlib import Path
+          value=dict(commit=os.environ['COMMIT'],tree=os.environ['TREE'],
+              final_expected_tree='99cb2fa27b8565a02e8ea02ca9ffb2ef0c4b85ee',
+              patch_sha256='a1eb351613e2dd58fac4ba1339f8e532ea3c677781b3ce1c46a8fa88954a5c55',
+              main_updated=False,feature_updated=False,workflow_files_changed=False,
+              application_code_executed=False)
+          Path(os.environ['RUNNER_TEMP'],'publication.json').write_text(json.dumps(value,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: admission-publication-receipt
+          path: ${{ runner.temp }}/publication.json
+          retention-days: 7
+          if-no-files-found: error
