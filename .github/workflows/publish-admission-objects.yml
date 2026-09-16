@@ -22,7 +22,7 @@ jobs:
           BASE=4df08873f4b9b8f1378913c0d00ca6bb183e51e2
           REF=refs/heads/review/wp03-admission-objects-20260916
           PATCH="$RUNNER_TEMP/admission.patch"
-          git show 54b4a26d7c6be019be8adc99d85be69ddf119d79:docs/reviews/admission-publication/admission.patch > "$PATCH"
+          cp docs/reviews/admission-publication/admission.patch "$PATCH"
           echo "a1eb351613e2dd58fac4ba1339f8e532ea3c677781b3ce1c46a8fa88954a5c55  $PATCH" | sha256sum --check
           git fetch --no-tags --depth=1 origin "$BASE"
           git checkout --detach "$BASE"
