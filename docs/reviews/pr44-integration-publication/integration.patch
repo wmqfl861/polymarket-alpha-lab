@@ -1,0 +1,250 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 8f1dd2f..34680ed 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -70,7 +70,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺获准提供商／收费上界验证及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02／D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+-| WP-06 操作与发布收尾 | **PARTIAL** | 已补统一操作说明、两条入口自身源码隔离及解压包验证；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
++| WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算组合及提交后输出故障核验；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
+ 
+ **当前完整验收：1／6（仅 WP-01／G1）。** 这是六个端到端工作包的状态，不表示现有代码完成量为零。
+ 每项达到 DONE 必须填入确切 PR、head／merge／tree、执行命令、结果、适用平台和未执行项；
+@@ -584,3 +584,12 @@ D1—D3、原统计晋级门槛和 WP-06 首次启动可靠性问题不变。没
+ **WP-06 仍 PARTIAL，G6 未关闭，V1 仍 1／6。** 这是安装包内组合工程证据，不是实际模型、
+ 真实来源／费率或人工核验，亦非旧库升级、PS5.1 根因修复或 Release。D1—D3 和真实业务
+ 验收仍待办；不访问用户机器／业务库、不读取密钥、不覆盖旧安装或提交真实订单。
++
++### PR #44 合并衔接与真实提交后输出故障证明
++
++整合基线为 `fff21287c0e3bfab2d679d7ac47bd8044f808ea9`（PR #45）；保留上面的
++结算命令修复，原 PR #44 整包场景的旧测试结果不替代整合版本验收。原两分支提交不重写。
++新增一个实际安装包内的人工确认输出短写：先查无记录，真实提交后的成功回执写不完整而
++非零退出，再按原编号查询并明确原样重放；原回执与时间戳必须不变。只注入输出故障，
++不模拟数据库／事务，不新造审核编号或重试模型。最终复审和适用 CI 以本轮固定树为准。
++本项仍为合成工程验收，不关闭 G2—G6、D1—D3、真实输入／费率或原 PS5.1 问题。
+diff --git a/database/quickstart.md b/database/quickstart.md
+index 7d716d2..de10540 100644
+--- a/database/quickstart.md
++++ b/database/quickstart.md
+@@ -406,3 +406,11 @@ human review, real model use or account P&L. It does not close G2-G6, D1-D3, the
+ old PS5.1 issue or release-specific upgrade acceptance. Existing component tests
+ remain in place. The new recipe has its own bounded child execution; no existing
+ process/job timeout, assertion, provider permission or user data is changed.
++
++The combined PR44/PR45 proof also creates one real synthetic confirmation through
++that kit's command with a deliberately short output sink. It first proves the
++review is absent, requires a success-status output prefix and nonzero exit, then
++reads back the committed review/outcome and explicitly replays the SAME input.
++The original receipt and timestamps must match. No database/transaction mock is
++used for this step; no new model call, alternate review ID or automatic retry is
++permitted. It verifies this simulated failure, not real source/human acceptance.
+diff --git a/tests/packaged_research_flow.py b/tests/packaged_research_flow.py
+index 694c2ac..f3993ab 100644
+--- a/tests/packaged_research_flow.py
++++ b/tests/packaged_research_flow.py
+@@ -107,6 +107,47 @@ def assert_origins(root):
+     return len(modules)
+ 
+ 
++# The only injected fault is the operator output stream, not its database or
++# confirmation handler. A success-status witness precedes the short write; the
++# parent separately checks durable readback and exact original-input replay.
++_CONFIRM_SHORT_OUTPUT = r'''
++import json, runpy, sys
++from pathlib import Path
++root = Path(sys.argv[1]).resolve()
++assert (root / 'src/polymarket_alpha_lab/__init__.py').is_file()
++sys.path.insert(0, str(root / 'src'))
++original = sys.stdout
++class ShortOutput:
++    def write(self, text):
++        assert json.loads(text)['status'] == 'recorded_operator_confirmation'
++        # Emit ten ASCII bytes regardless of the host's text newline policy.
++        # The injected text sink still reports ten characters to the real CLI.
++        return original.buffer.write(text[:10].encode('ascii'))
++    def flush(self):
++        original.flush()
++sys.stdout = ShortOutput()
++script = root / 'scripts/review_resolution_queue.py'
++sys.argv = [str(script), '--root', str(root), '--confirm', '--allow-resolution-write']
++runpy.run_path(str(script), run_name='__main__')
++'''
++
++
++def run_confirmation_output_failure(root, payload):
++    """One actual kit command with a test-only short sink, never a retry loop.
++
++    This validates process/output behavior only. run_packaged_flow must also
++    prove prior absence, saved review/outcome and immutable explicit replay.
++    """
++    root = Path(root)
++    result = subprocess.run([sys.executable, '-I', '-c', _CONFIRM_SHORT_OUTPUT, str(root)],
++        input=payload, cwd=root.parent, env=files.clean_environment(),
++        capture_output=True, timeout=60, check=False, shell=False)
++    assert result.returncode == 1, 'short output was not reported as failure'
++    assert result.stdout == b'{\n  "opera', 'successful confirmation output was not witnessed'
++    assert result.stderr == b'', 'unexpected confirmation child stderr'
++    return result
++
++
+ def run_packaged_flow(root):
+     root = Path(root).resolve()
+     manifest = distribution.verify_distribution(root)
+@@ -223,6 +264,7 @@ def run_packaged_flow(root):
+                     request.content_sha256, candidate.submission.review_id,
+                     sha256(encode_resolution(candidate.submission).encode()).hexdigest(), proof,
+                     'binance', 'BTCUSDT' if request.intake.team_id == 'crypto_btc' else 'ETHUSDT', '1m', 'close', opening))
++        output_failed_reviews = []
+         for instruction in instructions:
+             value = asdict(instruction)
+             for flag in ('paper_only', 'report_only', 'readonly'):
+@@ -230,9 +272,27 @@ def run_packaged_flow(root):
+             for clock in ('resolved_at', 'confirmed_at'):
+                 value['confirmation'][clock] = value['confirmation'][clock].isoformat()
+             value['source_candle_open_at'] = value['source_candle_open_at'].isoformat()
+-            confirmed = command('review_resolution_queue.py', ['--confirm', '--allow-resolution-write'],
+-                                json.dumps(value).encode())
++            payload = json.dumps(value).encode()
++            original_receipt = None
++            if not output_failed_reviews:
++                # A real database COMMIT precedes the injected short output.
++                # A generic pre-operation failure must not satisfy this proof.
++                absent = command('inspect_project_resolution.py',
++                    ['--review-id', instruction.review_id], expected=3)
++                assert absent['inspection'] is None
++                run_confirmation_output_failure(root, payload)
++                original_receipt = command('inspect_project_resolution.py',
++                    ['--review-id', instruction.review_id])['inspection']
++                assert original_receipt['inspection_status'] == 'recorded_operator_confirmed'
++                assert original_receipt['linked_outcome']['actual_yes'] is True
++                output_failed_reviews.append(instruction.review_id)
++            # Explicit SAME-input replay, not automatic recovery with a new ID.
++            confirmed = command('review_resolution_queue.py', ['--confirm', '--allow-resolution-write'], payload)
+             assert confirmed['result']['linked_outcome']['actual_yes'] is True
++            if original_receipt is not None:
++                assert confirmed['result'] == original_receipt
++                assert command('inspect_project_resolution.py',
++                    ['--review-id', instruction.review_id])['inspection'] == original_receipt
+         with db.session() as s:
+             after = s.evaluate_settled_paper_research()
+             assert after['status_counts'] == dict(paper_evidence_missing=0, research_not_selected=1,
+@@ -307,7 +367,9 @@ raise SystemExit(99)
+             source_tree=manifest['source_tree'], instance_id=identity['instance_id'],
+             attempts=4, simulations=4, settlements=2, reserved_calls=7,
+             incomplete_claims=1, interrupted_reserved_calls=1, project_modules_checked=count,
+-            actual_account_pnl=None, synthetic_inputs=True)
++            actual_account_pnl=None, synthetic_inputs=True,
++            confirmation_output_failures=len(output_failed_reviews),
++            same_confirmation_replayed=True)
+     finally:
+         # This recipe runs only on the test's fresh second extraction.
+         if db.status()['status'] != 'stopped':
+diff --git a/tests/test_packaged_research_flow_review.py b/tests/test_packaged_research_flow_review.py
+index c9eb90e..bec7171 100644
+--- a/tests/test_packaged_research_flow_review.py
++++ b/tests/test_packaged_research_flow_review.py
+@@ -49,3 +49,89 @@ def test_read_failure_does_not_launch_an_empty_recipe(monkeypatch, tmp_path):
+     monkeypatch.setattr(flow.subprocess, 'run', lambda *a, **k: pytest.fail('empty recipe launched'))
+     with pytest.raises(OSError, match='synthetic fixture unavailable'):
+         flow.run_packaged_recipe(tmp_path, sys.executable, tmp_path)
++
++
++def test_short_confirmation_sink_is_byte_exact_under_windows_text_translation(monkeypatch, tmp_path):
++    """Model Windows text newlines without pretending to run Windows here."""
++    import io
++    import json
++    import runpy
++
++    root = tmp_path / 'kit'
++    package = root / 'src/polymarket_alpha_lab'
++    package.mkdir(parents=True)
++    (package / '__init__.py').write_bytes(b'')
++    class WindowsOutput:
++        def __init__(self): self.buffer = io.BytesIO()
++        def write(self, text):
++            self.buffer.write(text.replace('\n', '\r\n').encode('utf-8'))
++            return len(text)
++        def flush(self): self.buffer.flush()
++    output = WindowsOutput()
++    body = json.dumps(dict(operation='confirm_crypto_resolution',
++                           status='recorded_operator_confirmation'), indent=2) + '\n'
++    def execute(script, *, run_name):
++        assert Path(script) == root / 'scripts/review_resolution_queue.py'
++        assert run_name == '__main__'
++        assert sys.stdout.write(body) == 10
++        raise SystemExit(1)
++    with monkeypatch.context() as patch:
++        patch.setattr(sys, 'stdout', output)
++        patch.setattr(sys, 'argv', ['fixture', str(root)])
++        patch.setattr(sys, 'path', list(sys.path))
++        patch.setattr(runpy, 'run_path', execute)
++        with pytest.raises(SystemExit) as exit:
++            exec(flow._CONFIRM_SHORT_OUTPUT, {})
++        assert exit.value.code == 1
++    assert output.buffer.getvalue() == b'{\n  "opera'
++
++
++@pytest.mark.parametrize('result', [
++    subprocess.CompletedProcess([], 0, b'{\n  "opera', b''),
++    subprocess.CompletedProcess([], 1, b'', b''),
++    subprocess.CompletedProcess([], 1, b'{\n  "opera', b'error'),
++    subprocess.CompletedProcess([], 1, b'{\n  "statu', b''),
++], ids=['zero-exit', 'no-success-witness', 'stderr', 'wrong-prefix'])
++def test_short_confirmation_refuses_false_process_witness(monkeypatch, tmp_path, result):
++    calls = []
++    def run(*args, **kwargs): calls.append(1); return result
++    monkeypatch.setattr(flow.subprocess, 'run', run)
++    with pytest.raises(AssertionError):
++        flow.run_confirmation_output_failure(tmp_path, b'synthetic')
++    assert calls == [1]
++
++
++def test_confirmation_failure_probe_uses_one_kit_process_and_original_bytes(monkeypatch, tmp_path):
++    calls = []
++    result = subprocess.CompletedProcess([], 1, b'{\n  "opera', b'')
++    payload = b'{"synthetic":"unchanged"}'
++    def run(*args, **kwargs): calls.append((args, kwargs)); return result
++    monkeypatch.setattr(flow.subprocess, 'run', run)
++    assert flow.run_confirmation_output_failure(tmp_path, payload) is result
++    args, kwargs = calls[0]
++    assert args[0] == [sys.executable, '-I', '-c', flow._CONFIRM_SHORT_OUTPUT, str(tmp_path)]
++    assert kwargs['input'] is payload and kwargs['timeout'] == 60
++    assert kwargs['cwd'] == tmp_path.parent and kwargs['shell'] is False
++    assert kwargs['check'] is False and kwargs['capture_output'] is True
++    assert len(calls) == 1
++
++
++def test_confirmation_failure_probe_does_not_retry_timeout(monkeypatch, tmp_path):
++    original = subprocess.TimeoutExpired('synthetic', 60)
++    calls = []
++    def run(*args, **kwargs): calls.append(1); raise original
++    monkeypatch.setattr(flow.subprocess, 'run', run)
++    with pytest.raises(subprocess.TimeoutExpired) as caught:
++        flow.run_confirmation_output_failure(tmp_path, b'synthetic')
++    assert caught.value is original and calls == [1]
++
++
++def test_injected_recipe_fits_windows_process_command_line(monkeypatch, tmp_path):
++    commands = []
++    monkeypatch.setattr(flow.subprocess, 'run', lambda args, **kw: commands.append(args))
++    root = tmp_path / ('k'*160)
++    flow.run_packaged_recipe(root, root / '.venv/Scripts/python.exe', tmp_path)
++    # CreateProcessW includes the terminating NUL in its 32767-character limit.
++    # This is a bounded representative path probe, not an arbitrary-path guarantee.
++    units = len(subprocess.list2cmdline(commands[0]).encode('utf-16-le')) // 2 + 1
++    assert units < 32767
+diff --git a/tests/test_project_postgres_distribution_native.py b/tests/test_project_postgres_distribution_native.py
+index 964d0f5..afebc91 100644
+--- a/tests/test_project_postgres_distribution_native.py
++++ b/tests/test_project_postgres_distribution_native.py
+@@ -353,6 +353,8 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
+         assert composed['project_modules_checked'] > 0 and composed['synthetic_inputs'] is True
+         assert composed['actual_account_pnl'] is None
+         assert composed['incomplete_claims'] == composed['interrupted_reserved_calls'] == 1
++        assert composed['confirmation_output_failures'] == 1
++        assert composed['same_confirmation_replayed'] is True
+         print('packaged research composition: ' + json.dumps(composed, sort_keys=True), flush=True)
+         # A changed immutable package blocks without modifying stored research.
+         target = first / 'src/polymarket_alpha_lab/local_postgres_dsn.py'
