@@ -1,0 +1,403 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index dd60557..e5e675b 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -638,3 +638,21 @@ D1—D3、原统计晋级门槛和 WP-06 首次启动可靠性问题不变。没
+ 
+ 这是 CI 调度修复，不是底层 PS5.1 间歇问题的根因修复或完整发布验收；
+ WP-06/G6、D1—D3、真实来源／费率及用户数据升级限制不变。
++
++
++## 26. WP-06 本次推进：托管研究会话复用安装包完整性校验（G6 尚未关闭）
++
++基线 `3a987bc6c1a5df608ff8f0668b866aaf87842c04`（PR #48）。修复只经启动入口
++校验安装包、直接研究命令却可漏检的问题；复用现有 verifier，不新建安全／诊断系统。
++
++- 每次进入托管会话，先核对实际源码目录及数据根目录中的 kit；任一清单或引擎种子
++  标志存在就必须完整校验。缺件、改写、额外源码／SQL、链接及不可读取标志均阻断，
++  在私有状态、生命周期锁和引擎访问之前结束；同一路径去重，不缓存跨会话成功结果。
++- 无标志的 SOURCE 安装保留原行为；不认证恶意代码或删除全部标志，不承诺文件系统
++  原子快照或会话期间监控。显式 status/down、原权限和持有／借用引擎清理规则不变。
++- 单独自审复现不可读标志的系统异常外泄，改为固定错误；首败及原断言保留。实际
++  Windows kit 验证直接命令、不同数据根、停止与已运行引擎拒绝及历史保全；最终固定
++  树、测试结果和未执行项记录于本 PR。原 67 份迁移、依赖及业务算法不改。
++
++**WP-06 仍 PARTIAL，G6 未关闭，V1 仍 1／6。** 此项不部署用户安装、自动修复文件、
++配置模型或关闭原 PS5.1、D1—D3、真实输入／费率及业务验收；无用户数据操作。
+diff --git a/database/quickstart.md b/database/quickstart.md
+index 5714f6a..2879ce1 100644
+--- a/database/quickstart.md
++++ b/database/quickstart.md
+@@ -428,3 +428,30 @@ the snapshot's applied ledger; managed sessions still refuse pending migrations.
+ See [the backup contract](README.md#explicit-backupcatalog-extension-compatibility-not-an-upgrade)
+ for the separate permissions and private recovery procedure. This is not an
+ instruction to modify a user's existing installation or delete its original data.
++
++
++### Managed research also checks declared kit integrity
++
++Every new `ProjectPostgres(root).session()` reuses the existing bundle verifier
++BEFORE taking the lifecycle lease, reading private state, or starting/borrowing
++an engine. It checks both the source/kit directory containing the imported server
++module and the selected data root (once if they are the same). Either
++`PROJECT-BUNDLE.json` or `database/postgres-runtime.zip` identifies a declared kit;
++a missing companion, changed payload, extra selected code/SQL, reparse point or
++unreadable marker refuses entry. There is no cached success between sessions.
++This covers existing managed research, task, simulation and confirmation paths,
++not only `start_project.py`. Console commands retain their existing fixed failure
++responses and must not be retried against another root to bypass the rejection.
++
++This is an entry-time integrity check, NOT source authentication, an atomic
++filesystem snapshot or a sandbox against Python code already imported/executed.
++Both markers absent remains the explicit SOURCE-installation path; removing both
++markers maliciously is not detected as a previously installed kit. Check the
++trusted outer archive before execution. Mid-session file changes are not monitored;
++admitted work still uses its original cleanup, and the next entry rechecks bytes.
++No new schema/version compatibility is inferred when code and data roots differ.
++
++The separate `status`/`down` infrastructure controls are unchanged, so a rejected
++research entry does not itself stop a borrowed running engine or block an operator
++from its existing safe-stop procedure. This does not authorize an old-kit overlay,
++file repair, deletion of state/markers, user database migration or real model call.
+diff --git a/src/polymarket_alpha_lab/project_postgres/server.py b/src/polymarket_alpha_lab/project_postgres/server.py
+index 14dfb4b..1d31351 100644
+--- a/src/polymarket_alpha_lab/project_postgres/server.py
++++ b/src/polymarket_alpha_lab/project_postgres/server.py
+@@ -280,6 +280,25 @@ class ProjectPostgres:
+                 if started:
+                     self._stop(info)
+ 
++    def _verify_session_bundles(self):
++        """Reuse kit verification at entry, before any private lifecycle access.
++
++        Source and data roots may differ. Check both when either kit marker is
++        present; a source checkout with neither marker keeps its existing path.
++        This is byte integrity, not authentication or a hostile-Python sandbox.
++        """
++        from .distribution import ENGINE, MANIFEST, verify_distribution
++        source_root = Path(__file__).absolute().parents[3]
++        for root in dict.fromkeys((source_root, self.layout.root)):
++            seed, manifest = root / ENGINE, root / MANIFEST
++            try:
++                no_links(seed)
++                no_links(manifest)
++                if seed.exists() or manifest.exists():
++                    verify_distribution(root)
++            except OSError:
++                fail('project_bundle_invalid_or_changed')
++
+     @contextmanager
+     def session(self):
+         """Own lifecycle while any number of in-process research tasks execute.
+@@ -287,6 +306,7 @@ class ProjectPostgres:
+         Other processes cannot stop/migrate the cluster while this lease is
+         held. If it was already explicitly up, this session leaves it up.
+         """
++        self._verify_session_bundles()
+         from .research import ProjectResearchSession
+         with self.layout.lock():
+             runtime = verify_runtime(self.layout)
+diff --git a/tests/test_project_postgres_distribution_native.py b/tests/test_project_postgres_distribution_native.py
+index afebc91..1bb9223 100644
+--- a/tests/test_project_postgres_distribution_native.py
++++ b/tests/test_project_postgres_distribution_native.py
+@@ -363,11 +363,58 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
+         try:
+             blocked = start(first, expected=1)
+             assert blocked['reason_code'] == 'project_bundle_invalid_or_changed'
++            before_log = sha256((db.layout.home / 'server.log').read_bytes()).hexdigest()
++            # The real operator command must not bypass startup's kit check.
++            denied = subprocess.run([str(first / '.venv/Scripts/python.exe'), '-I',
++                str(first / 'scripts/evaluate_project_research.py'), '--root', str(first)],
++                cwd=proof, env=clean_environment(), stdin=subprocess.DEVNULL,
++                capture_output=True, text=True, encoding='utf-8', timeout=60)
++            assert denied.returncode == 1 and denied.stderr == ''
++            assert json.loads(denied.stdout)['reason_code'] == 'research_evaluation_operation_failed'
++            # Use the changed SOURCE kit with both same and different data roots.
++            # Real verifier/lifecycle, no patched DB, runtime or imported module.
++            probe = (
++                'import sys; from pathlib import Path; '
++                'from polymarket_alpha_lab.project_postgres.server import ProjectPostgres; '
++                'from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError\n'
++                'try:\n'
++                '    with ProjectPostgres(Path(sys.argv[1])).session():\n'
++                '        raise AssertionError("invalid kit admitted")\n'
++                'except ProjectDatabaseError as error:\n'
++                '    assert str(error) == "project_bundle_invalid_or_changed"\n'
++                '    print("bundle session blocked before research")\n'
++            )
++            for data_root in (first, second):
++                denied = subprocess.run([str(first / '.venv/Scripts/python.exe'), '-I', '-c',
++                    probe, str(data_root)], cwd=proof, env=clean_environment(),
++                    stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding='utf-8', timeout=60)
++                assert denied.returncode == 0 and denied.stderr == ''
++                assert denied.stdout.strip() == 'bundle session blocked before research'
++            assert sha256((db.layout.home / 'server.log').read_bytes()).hexdigest() == before_log
++            assert db.status()['status'] == 'stopped'
++            assert other_db.status()['status'] == 'stopped'
+         finally:
+             target.write_bytes(original)
+         with db.session() as research:
+             assert research.inspect(record_id='kit-record').record == captured.record
+         assert start(first)['recorded_attempts'] == 1
++        # External SOURCE code selecting a changed DATA kit must also refuse,
++        # without stopping an explicitly-running borrowed engine.
++        assert db.up()['status'] == 'running'
++        target.write_bytes(original + b'\n# harmless integrity mismatch\n')
++        try:
++            from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
++            with pytest.raises(ProjectDatabaseError, match='project_bundle_invalid_or_changed'):
++                with db.session():
++                    pytest.fail('changed data kit reached borrowed engine')
++            assert db.status()['status'] == 'running'
++        finally:
++            target.write_bytes(original)
++            db.down()
++        with db.session() as research:
++            assert research.inspect(record_id='kit-record').record == captured.record
++        assert db.status()['status'] == 'stopped'
++        print('native kit session integrity: PASS; code/data roots, no new start, borrowed engine preserved', flush=True)
+     finally:
+         db.down()
+     print('native distribution: PASS; two fresh instances, restart retention, no models or Docker', flush=True)
+diff --git a/tests/test_project_postgres_session_bundle.py b/tests/test_project_postgres_session_bundle.py
+new file mode 100644
+index 0000000..ec50530
+--- /dev/null
++++ b/tests/test_project_postgres_session_bundle.py
+@@ -0,0 +1,150 @@
++"""Managed research must not bypass existing bundle integrity; no real engine."""
++from contextlib import contextmanager
++from hashlib import sha256
++import json
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++from polymarket_alpha_lab.project_postgres import distribution, files, research, server
++
++
++def project(root, *, bundled=False):
++    root.mkdir()
++    payloads = {name: b'# synthetic fixture\n' for name in distribution.FIXED}
++    payloads.update({'pyproject.toml': b'[project]\nname="polymarket-alpha-lab"\n',
++        'database/migrations.lock.json': b'{}',
++        'src/polymarket_alpha_lab/__init__.py': b'# inert fixture\n',
++        'supabase/migrations/20200101000000_fixture.sql': b'SELECT 1;\n'})
++    for name, raw in payloads.items():
++        target = root / name
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.write_bytes(raw)
++    if bundled:
++        (root / distribution.ENGINE).write_bytes(b'synthetic seed; never executed')
++        payloads[distribution.ENGINE] = (root / distribution.ENGINE).read_bytes()
++        manifest = dict(format=distribution.FORMAT, source_commit='a'*40, source_tree='b'*40,
++            target='windows-x86_64', postgres_version='17.11', python_requires='>=3.11',
++            files={name: sha256(raw).hexdigest() for name, raw in payloads.items()})
++        (root / distribution.MANIFEST).write_text(json.dumps(manifest), encoding='utf-8')
++        distribution.verify_distribution(root)
++    return root
++
++
++@pytest.fixture
++def boundary(monkeypatch):
++    def prepare(source, target):
++        events = []
++        state = SimpleNamespace(events=events, started=True, pending=(), roots=[])
++        monkeypatch.setattr(server, '__file__', str(source / 'src/polymarket_alpha_lab/project_postgres/server.py'))
++        db = server.ProjectPostgres(target)
++        @contextmanager
++        def lock(layout):
++            events.append('lock')
++            try:
++                yield
++            finally:
++                events.append('unlock')
++        monkeypatch.setattr(files.Layout, 'lock', lock)
++        def runtime(layout):
++            events.append('runtime')
++            return {'version': '17.11'}
++        monkeypatch.setattr(server, 'verify_runtime', runtime)
++        def info():
++            events.append('state')
++            return {'version': '17.11'}
++        monkeypatch.setattr(db, '_state', info)
++        def start(info):
++            events.append('start')
++            return state.started
++        monkeypatch.setattr(db, '_start', start)
++        monkeypatch.setattr(db, '_pending', lambda info: state.pending)
++        monkeypatch.setattr(db, '_stop', lambda info: events.append('stop'))
++        session = SimpleNamespace(close=lambda: events.append('close'))
++        monkeypatch.setattr(research, 'ProjectResearchSession', lambda *args: session)
++        original = distribution.verify_distribution
++        def verify(root):
++            state.roots.append(root)
++            assert events == [], 'bundle verification after private lifecycle access'
++            return original(root)
++        monkeypatch.setattr(distribution, 'verify_distribution', verify)
++        state.db, state.session = db, session
++        return state
++    return prepare
++
++
++def damage(root, kind):
++    if kind in ('manifest-missing', 'seed-missing'):
++        (root / (distribution.MANIFEST if kind == 'manifest-missing' else distribution.ENGINE)).unlink()
++    elif kind == 'manifest-json':
++        (root / distribution.MANIFEST).write_bytes(b'{broken')
++    elif kind == 'unlisted-code':
++        (root / 'src/polymarket_alpha_lab/extra.py').write_bytes(b'# inert\n')
++    elif kind == 'unlisted-sql':
++        (root / 'supabase/migrations/20990101000000_extra.sql').write_bytes(b'SELECT 2;\n')
++    else:
++        path = {'source': 'src/polymarket_alpha_lab/__init__.py', 'seed': distribution.ENGINE,
++                'script': 'scripts/project_database.py', 'catalog': 'database/migrations.lock.json'}[kind]
++        with (root / path).open('ab') as stream:
++            stream.write(b'\n# changed fixture\n')
++
++
++@pytest.mark.parametrize('location', ['source', 'data'])
++@pytest.mark.parametrize('kind', ['manifest-missing', 'seed-missing', 'manifest-json',
++    'unlisted-code', 'unlisted-sql', 'source', 'seed', 'script', 'catalog'])
++def test_invalid_bundle_blocks_before_private_lifecycle(tmp_path, boundary, location, kind):
++    source = project(tmp_path / 'Chosen Source', bundled=location == 'source')
++    target = project(tmp_path / 'Data Root', bundled=location == 'data')
++    state = boundary(source, target)
++    damage(source if location == 'source' else target, kind)
++    with pytest.raises(files.ProjectDatabaseError, match='project_bundle_invalid_or_changed'):
++        with state.db.session():
++            pytest.fail('invalid bundle reached research')
++    assert state.events == []
++    assert not (source / '.local').exists() and not (target / '.local').exists()
++
++
++@pytest.mark.parametrize('source_bundle,data_bundle', [(False, False), (True, False), (False, True), (True, True)])
++def test_source_and_data_root_are_checked_independently(tmp_path, boundary, source_bundle, data_bundle):
++    source = project(tmp_path / 'Source', bundled=source_bundle)
++    target = project(tmp_path / 'Data', bundled=data_bundle)
++    state = boundary(source, target)
++    with state.db.session() as session:
++        assert session is state.session
++    assert state.roots == ([source] if source_bundle else []) + ([target] if data_bundle else [])
++    assert state.events == ['lock', 'runtime', 'state', 'start', 'close', 'stop', 'unlock']
++
++
++def test_same_code_data_bundle_is_verified_once_per_entry_not_cached(tmp_path, boundary):
++    root = project(tmp_path / 'Same Root', bundled=True)
++    state = boundary(root, root)
++    with state.db.session():
++        pass
++    assert state.roots == [root]
++    state.events.clear()
++    damage(root, 'source')
++    with pytest.raises(files.ProjectDatabaseError, match='project_bundle_invalid_or_changed'):
++        with state.db.session():
++            pytest.fail('previous verification was reused after bytes changed')
++    assert state.roots == [root, root] and state.events == []
++
++
++@pytest.mark.parametrize('started', [False, True])
++@pytest.mark.parametrize('failure', ['none', 'pending', 'body'])
++def test_valid_bundle_preserves_borrowed_engine_and_cleanup(tmp_path, boundary, started, failure):
++    root = project(tmp_path / 'Kit', bundled=True)
++    state = boundary(root, root)
++    state.started = started
++    state.pending = ('pending',) if failure == 'pending' else ()
++    def operation():
++        with state.db.session() as session:
++            assert session is state.session
++            if failure == 'body':
++                raise ValueError('synthetic body failure')
++    if failure == 'none':
++        operation()
++    else:
++        with pytest.raises(files.ProjectDatabaseError if failure == 'pending' else ValueError):
++            operation()
++    assert state.events == ['lock', 'runtime', 'state', 'start', 'close'] + (['stop'] if started else []) + ['unlock']
+diff --git a/tests/test_project_postgres_session_bundle_review.py b/tests/test_project_postgres_session_bundle_review.py
+new file mode 100644
+index 0000000..52576a4
+--- /dev/null
++++ b/tests/test_project_postgres_session_bundle_review.py
+@@ -0,0 +1,79 @@
++"""Separate same-assistant review of the managed bundle-entry boundary."""
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++from polymarket_alpha_lab.project_postgres import distribution, files
++from tests.test_project_postgres_session_bundle import boundary, project
++
++
++@pytest.mark.parametrize('location', ['source', 'data'])
++def test_unreadable_bundle_marker_has_fixed_error_before_private_access(tmp_path, boundary, monkeypatch, location):
++    source = project(tmp_path / 'Source')
++    target = project(tmp_path / 'Data')
++    state = boundary(source, target)
++    marker = (source if location == 'source' else target) / distribution.MANIFEST
++    original = Path.lstat
++    def denied(path, *args, **kwargs):
++        if path == marker:
++            raise PermissionError('synthetic-private-path-detail')
++        return original(path, *args, **kwargs)
++    monkeypatch.setattr(Path, 'lstat', denied)
++    with pytest.raises(files.ProjectDatabaseError, match='^project_bundle_invalid_or_changed$'):
++        with state.db.session():
++            pytest.fail('unreadable marker treated as source checkout')
++    assert state.events == []
++
++
++@pytest.mark.parametrize('marker', [distribution.MANIFEST, distribution.ENGINE])
++def test_windows_reparse_marker_is_rejected_before_verifier_or_private_access(tmp_path, boundary, monkeypatch, marker):
++    root = project(tmp_path / 'Root')
++    state = boundary(root, root)
++    original = Path.lstat
++    def reparse(path, *args, **kwargs):
++        if path == root / marker:
++            return SimpleNamespace(st_mode=0o100644, st_file_attributes=0x400)
++        return original(path, *args, **kwargs)
++    monkeypatch.setattr(Path, 'lstat', reparse)
++    with pytest.raises(files.ProjectDatabaseError, match='^project_postgres_link_rejected$'):
++        with state.db.session():
++            pytest.fail('reparse marker followed')
++    assert state.events == state.roots == []
++
++
++@pytest.mark.parametrize('marker', [distribution.MANIFEST, distribution.ENGINE])
++def test_directory_is_not_an_absent_kit_marker(tmp_path, boundary, marker):
++    root = project(tmp_path / 'Root', bundled=True)
++    state = boundary(root, root)
++    (root / marker).unlink()
++    (root / marker).mkdir()
++    with pytest.raises(files.ProjectDatabaseError, match='project_bundle_invalid_or_changed'):
++        with state.db.session():
++            pytest.fail('directory marker treated as source')
++    assert state.events == []
++
++
++def test_invalid_source_does_not_touch_even_a_valid_different_data_bundle(tmp_path, boundary):
++    source = project(tmp_path / 'Source', bundled=True)
++    target = project(tmp_path / 'Data', bundled=True)
++    state = boundary(source, target)
++    (source / distribution.MANIFEST).write_text('{}')
++    with pytest.raises(files.ProjectDatabaseError, match='project_bundle_invalid_or_changed'):
++        with state.db.session():
++            pytest.fail('valid data bundle excused an invalid code bundle')
++    assert state.roots == [source] and state.events == []
++
++
++def test_entry_check_is_not_a_continuous_immutable_filesystem_claim(tmp_path, boundary):
++    root = project(tmp_path / 'Root', bundled=True)
++    state = boundary(root, root)
++    with state.db.session():
++        (root / distribution.MANIFEST).write_text('{}')
++    # No attempt is made to repair files or to interrupt already-admitted work.
++    assert state.events[-3:] == ['close', 'stop', 'unlock']
++    state.events.clear()
++    with pytest.raises(files.ProjectDatabaseError, match='project_bundle_invalid_or_changed'):
++        with state.db.session():
++            pytest.fail('later entry accepted changed bundle')
++    assert state.events == []
