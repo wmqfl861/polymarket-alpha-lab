@@ -300,6 +300,25 @@ class ProjectPostgres:
                     fail('project_postgres_migrations_pending')
                 yield session
             finally:
-                session.close()
-                if started:
-                    self._stop(info)
+                # close is idempotent: seal admissions, then wait for work that
+                # already entered. An interruption of that wait must not drop
+                # the lifecycle lease while those operations still need it.
+                interruption = None
+                while True:
+                    try:
+                        session.close()
+                        break
+                    except (KeyboardInterrupt, SystemExit) as error:
+                        if interruption is None:
+                            interruption = error
+                try:
+                    if started:
+                        self._stop(info)
+                except BaseException as error:
+                    # A stop failure remains authoritative; retain the delayed
+                    # interruption as its cause, without retrying the engine.
+                    if interruption is not None and error is not interruption:
+                        raise error from interruption
+                    raise
+                if interruption is not None:
+                    raise interruption

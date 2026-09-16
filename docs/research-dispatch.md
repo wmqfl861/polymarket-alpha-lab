@@ -400,3 +400,33 @@ and unchanged old records. Native inputs/clients/charges are synthetic.
 Final-revision commands, exact counts, first failures, CI identifiers and skipped
 or unexecuted checks belong to the implementation PR and DELIVERY_PLAN.md. No
 local user's database, installed kit, credentials or real provider is exercised.
+
+## Interrupted managed-session close (WP-03 / WP-06)
+
+The enclosing `ProjectPostgres(root).session()` owns the private lifecycle lease
+until admitted work finishes. If `ProjectResearchSession.close()` raises
+`KeyboardInterrupt` or `SystemExit` while sealing admissions or waiting for that
+work, the owner retains the first such exception and resumes the SAME idempotent
+close. It does not rerun any research, model call, claim, reservation, SQL
+operation or engine command. New operations remain refused after admissions are
+sealed. Once close completes, an engine started by this session is stopped once;
+a previously running borrowed engine is left running. The retained interruption
+then propagates to the caller. A stop failure remains the primary error, with the
+retained interruption chained as its cause rather than silently discarded.
+
+This is cooperative draining, not cancellation of an in-flight model or database
+request. A client that does not return can still delay closing; its original I/O
+bounds remain required. No forced thread/process kill, signal handler, OS-policy
+change, new timeout or refund is introduced. Unexpected non-interruption errors
+from close are not retried or declared safely drained. Hard termination and
+arbitrary signal delivery outside the guarded close call are not covered by this
+contract. Inspect original IDs after an uncertain stop; never restart a task or
+release a reservation merely because the caller was interrupted.
+
+Tests inject Python exceptions at the close boundary while real admitted threads
+are held at a deterministic checkpoint. The package proof also checks the real
+OS lifecycle lock and an existing PostgreSQL record under owned/borrowed engines.
+It does not send Ctrl+C to Windows or certify all OS-console signal behavior.
+Reference: Python's `threading.Condition` and `signal` documentation describe the
+wait/reacquire contract and arbitrary exception delivery; neither supplies an
+uninterruptible application cleanup guarantee.
