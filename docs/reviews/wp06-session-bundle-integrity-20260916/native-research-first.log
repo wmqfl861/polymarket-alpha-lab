@@ -1,0 +1,437 @@
+
+CI diagnostic after 120s (Python watchdog):
+Current thread 0x00001678 (most recent call first):
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\tests\ci_thread_dump.py", line 39 in _run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1012 in run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1075 in _bootstrap_inner
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1032 in _bootstrap
+
+Thread 0x0000201c (most recent call first):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\pathlib.py", line 840 in stat
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\pathlib.py", line 847 in lstat
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\src\polymarket_alpha_lab\project_postgres\files.py", line 27 in no_links
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\src\polymarket_alpha_lab\project_postgres\files.py", line 159 in digest_file
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\src\polymarket_alpha_lab\project_postgres\runtime.py", line 89 in inventory
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\src\polymarket_alpha_lab\project_postgres\runtime.py", line 98 in verify_runtime
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\src\polymarket_alpha_lab\project_postgres\server.py", line 312 in session
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\contextlib.py", line 137 in __enter__
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\tests\test_project_postgres_resolution_native.py", line 207 in test_native_resolution_review_promotes_atomically_and_preserves_evidence
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\python.py", line 167 in pytest_pyfunc_call
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\python.py", line 1707 in runtest
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\runner.py", line 184 in pytest_runtest_call
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\runner.py", line 250 in <lambda>
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\runner.py", line 361 in from_call
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\runner.py", line 249 in call_and_report
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\runner.py", line 139 in runtestprotocol
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\runner.py", line 118 in pytest_runtest_protocol
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\main.py", line 408 in pytest_runtestloop
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\main.py", line 384 in _main
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\main.py", line 330 in wrap_session
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\main.py", line 377 in pytest_cmdline_main
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\config\__init__.py", line 229 in _main
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\_pytest\config\__init__.py", line 253 in _console_main
+  File "D:\a\polymarket-alpha-lab\polymarket-alpha-lab\.venv\Lib\site-packages\pytest\__main__.py", line 9 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+native console: PASS; empty, pending, scored, future and incomplete states; no writes
+native resolution inspection: PASS; exact stored candidate/confirmed metadata, no promotion or writes
+native resolution: PASS; raw evidence and outcome atomic; no public/model calls
+usage: __main__.py [-h] --condition-id CONDITION_ID --market-slug MARKET_SLUG
+                   [--allow-public-fetch]
+__main__.py: error: --allow-public-fetch is required; this command reads public data only
+usage: __main__.py [-h] --condition-id CONDITION_ID --market-slug MARKET_SLUG
+                   [--allow-public-fetch]
+__main__.py: error: a canonical condition ID and market slug are required
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: the following arguments are required: --review-id
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: argument --review-id: review-id must be a valid project review identifier
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: argument --review-id: review-id must be a valid project review identifier
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: argument --review-id: review-id must be a valid project review identifier
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: argument --review-id: review-id must be a valid project review identifier
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: the following arguments are required: --review-id
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: unrecognized arguments: --confirm
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: unrecognized arguments: --raw
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: unrecognized arguments: --as-of 2026-09-14
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: unrecognized arguments: --dsn none
+usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+__main__.py: error: unrecognized arguments: --allow-public-fetch
+.........................................................................................................................................................................................usage: __main__.py [-h] [--root ROOT] --review-id REVIEW_ID
+
+Inspect one retained resolution review without confirming or rescoring it. The
+existing managed lookup rechecks canonical evidence and an optional linked
+outcome. Export metadata, not raw bodies or operator identity/source text. The
+assessment is evaluated at the stored check time, not refreshed at lookup
+time.
+
+options:
+  -h, --help            show this help message and exit
+  --root ROOT
+  --review-id REVIEW_ID
+usage: __main__.py [-h] [--root ROOT] [--confirm] [--allow-resolution-write]
+                   [--collect] [--allow-public-fetch]
+                   [--max-requests MAX_REQUESTS] [--max-markets MAX_MARKETS]
+                   [--recheck-after-seconds RECHECK_AFTER_SECONDS]
+__main__.py: error: --collect and --allow-public-fetch must be provided together
+usage: __main__.py [-h] [--root ROOT] [--confirm] [--allow-resolution-write]
+                   [--collect] [--allow-public-fetch]
+                   [--max-requests MAX_REQUESTS] [--max-markets MAX_MARKETS]
+                   [--recheck-after-seconds RECHECK_AFTER_SECONDS]
+__main__.py: error: --collect and --allow-public-fetch must be provided together
+usage: __main__.py [-h] [--root ROOT] [--confirm] [--allow-resolution-write]
+                   [--collect] [--allow-public-fetch]
+                   [--max-requests MAX_REQUESTS] [--max-markets MAX_MARKETS]
+                   [--recheck-after-seconds RECHECK_AFTER_SECONDS]
+__main__.py: error: max-requests must be 1..20 and max-markets must be 1..1000
+usage: __main__.py [-h] [--root ROOT] [--confirm] [--allow-resolution-write]
+                   [--collect] [--allow-public-fetch]
+                   [--max-requests MAX_REQUESTS] [--max-markets MAX_MARKETS]
+                   [--recheck-after-seconds RECHECK_AFTER_SECONDS]
+__main__.py: error: max-requests must be 1..20 and max-markets must be 1..1000
+usage: __main__.py [-h] [--root ROOT] [--confirm] [--allow-resolution-write]
+                   [--collect] [--allow-public-fetch]
+                   [--max-requests MAX_REQUESTS] [--max-markets MAX_MARKETS]
+                   [--recheck-after-seconds RECHECK_AFTER_SECONDS]
+__main__.py: error: recheck-after-seconds must be 60..86400
+...........................................................................................native resolution queue: PASS; bounded synthetic fetch, real append-only evidence, no automatic outcomes
+usage: __main__.py [-h] --record-id RECORD_ID --team {crypto_btc,crypto_eth}
+                   --condition-id CONDITION_ID --market-slug MARKET_SLUG
+                   --forecast-cutoff FORECAST_CUTOFF --model MODEL
+                   [--lookback-hours LOOKBACK_HOURS] [--allow-public-fetch]
+__main__.py: error: invalid research specification; timestamps must include an explicit timezone
+..........................................................................................................................................................................................................................................................................................................................................................................................native execution inspection: PASS; missing/completed/failed/incomplete, original receipts and strict history retained
+native crypto launch: PASS; empty DB to prospective capture, exact replay, stable cohort, incomplete guard
+usage: __main__.py [-h] --team {crypto_btc,crypto_eth} [--attempts {1,2,3}]
+                   [--preview | --select-supported]
+                   [--max-candidates {1,2,3,4,5,6,7,8,9,10}]
+                   [--cutoff-lead-minutes {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60}]
+                   [--allow-public-fetch]
+__main__.py: error: argument --select-supported: not allowed with argument --preview
+usage: __main__.py [-h] --team {crypto_btc,crypto_eth} [--attempts {1,2,3}]
+                   [--preview | --select-supported]
+                   [--max-candidates {1,2,3,4,5,6,7,8,9,10}]
+                   [--cutoff-lead-minutes {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60}]
+                   [--allow-public-fetch]
+__main__.py: error: selection options require --select-supported
+usage: __main__.py [-h] --team {crypto_btc,crypto_eth} [--attempts {1,2,3}]
+                   [--preview | --select-supported]
+                   [--max-candidates {1,2,3,4,5,6,7,8,9,10}]
+                   [--cutoff-lead-minutes {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60}]
+                   [--allow-public-fetch]
+__main__.py: error: selection options require --select-supported
+usage: __main__.py [-h] --team {crypto_btc,crypto_eth} [--attempts {1,2,3}]
+                   [--preview | --select-supported]
+                   [--max-candidates {1,2,3,4,5,6,7,8,9,10}]
+                   [--cutoff-lead-minutes {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60}]
+                   [--allow-public-fetch]
+__main__.py: error: argument --max-candidates: invalid choice: '11' (choose from 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+......................................................................................................................................HANDOFF_PROCESS {"elapsed_seconds": 30.422, "last_observed_stage": "manifest_returned", "malformed_marker_seen": false, "outcome": "timeout", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 523, "stage": "script_entered"}, {"elapsed_ms": 18397, "stage": "encoding_ready"}, {"elapsed_ms": 18435, "stage": "helper_loaded"}, {"elapsed_ms": 18435, "stage": "invoke_entered"}, {"elapsed_ms": 26871, "stage": "manifest_entered"}, {"elapsed_ms": 26874, "stage": "manifest_returned"}], "trace_truncated": false}
+FHANDOFF_PROCESS {"elapsed_seconds": 2.672, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 6, "stage": "script_entered"}, {"elapsed_ms": 58, "stage": "encoding_ready"}, {"elapsed_ms": 1588, "stage": "helper_loaded"}, {"elapsed_ms": 1588, "stage": "invoke_entered"}, {"elapsed_ms": 1660, "stage": "manifest_entered"}, {"elapsed_ms": 1664, "stage": "manifest_returned"}, {"elapsed_ms": 2354, "stage": "payload_entered"}, {"elapsed_ms": 2380, "stage": "payload_returned"}, {"elapsed_ms": 2389, "stage": "invoke_returned"}, {"elapsed_ms": 2389, "stage": "serialization_entered"}, {"elapsed_ms": 2402, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 20.156, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 155, "stage": "encoding_ready"}, {"elapsed_ms": 175, "stage": "helper_loaded"}, {"elapsed_ms": 175, "stage": "invoke_entered"}, {"elapsed_ms": 235, "stage": "manifest_entered"}, {"elapsed_ms": 239, "stage": "manifest_returned"}, {"elapsed_ms": 4980, "stage": "invoke_returned"}, {"elapsed_ms": 4980, "stage": "serialization_entered"}, {"elapsed_ms": 19980, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.453, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 63, "stage": "encoding_ready"}, {"elapsed_ms": 78, "stage": "helper_loaded"}, {"elapsed_ms": 78, "stage": "invoke_entered"}, {"elapsed_ms": 138, "stage": "manifest_entered"}, {"elapsed_ms": 141, "stage": "manifest_returned"}, {"elapsed_ms": 191, "stage": "invoke_returned"}, {"elapsed_ms": 191, "stage": "serialization_entered"}, {"elapsed_ms": 199, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.687, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 59, "stage": "encoding_ready"}, {"elapsed_ms": 76, "stage": "helper_loaded"}, {"elapsed_ms": 76, "stage": "invoke_entered"}, {"elapsed_ms": 126, "stage": "manifest_entered"}, {"elapsed_ms": 129, "stage": "manifest_returned"}, {"elapsed_ms": 515, "stage": "payload_entered"}, {"elapsed_ms": 516, "stage": "payload_returned"}, {"elapsed_ms": 523, "stage": "invoke_returned"}, {"elapsed_ms": 523, "stage": "serialization_entered"}, {"elapsed_ms": 529, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.453, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 6, "stage": "script_entered"}, {"elapsed_ms": 62, "stage": "encoding_ready"}, {"elapsed_ms": 78, "stage": "helper_loaded"}, {"elapsed_ms": 79, "stage": "invoke_entered"}, {"elapsed_ms": 136, "stage": "manifest_entered"}, {"elapsed_ms": 139, "stage": "manifest_returned"}, {"elapsed_ms": 172, "stage": "payload_entered"}, {"elapsed_ms": 174, "stage": "payload_returned"}, {"elapsed_ms": 180, "stage": "invoke_returned"}, {"elapsed_ms": 180, "stage": "serialization_entered"}, {"elapsed_ms": 189, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.391, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 63, "stage": "encoding_ready"}, {"elapsed_ms": 81, "stage": "helper_loaded"}, {"elapsed_ms": 81, "stage": "invoke_entered"}, {"elapsed_ms": 132, "stage": "manifest_entered"}, {"elapsed_ms": 135, "stage": "manifest_returned"}, {"elapsed_ms": 183, "stage": "payload_entered"}, {"elapsed_ms": 190, "stage": "partial_expected"}, {"elapsed_ms": 233, "stage": "invoke_returned"}, {"elapsed_ms": 233, "stage": "serialization_entered"}, {"elapsed_ms": 240, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.438, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 6, "stage": "script_entered"}, {"elapsed_ms": 61, "stage": "encoding_ready"}, {"elapsed_ms": 76, "stage": "helper_loaded"}, {"elapsed_ms": 76, "stage": "invoke_entered"}, {"elapsed_ms": 133, "stage": "manifest_entered"}, {"elapsed_ms": 136, "stage": "manifest_returned"}, {"elapsed_ms": 163, "stage": "payload_entered"}, {"elapsed_ms": 168, "stage": "partial_expected"}, {"elapsed_ms": 177, "stage": "invoke_returned"}, {"elapsed_ms": 177, "stage": "serialization_entered"}, {"elapsed_ms": 185, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.391, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 61, "stage": "encoding_ready"}, {"elapsed_ms": 79, "stage": "helper_loaded"}, {"elapsed_ms": 79, "stage": "invoke_entered"}, {"elapsed_ms": 194, "stage": "manifest_entered"}, {"elapsed_ms": 197, "stage": "manifest_returned"}, {"elapsed_ms": 238, "stage": "invoke_returned"}, {"elapsed_ms": 238, "stage": "serialization_entered"}, {"elapsed_ms": 245, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.437, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 7, "stage": "script_entered"}, {"elapsed_ms": 62, "stage": "encoding_ready"}, {"elapsed_ms": 77, "stage": "helper_loaded"}, {"elapsed_ms": 77, "stage": "invoke_entered"}, {"elapsed_ms": 134, "stage": "manifest_entered"}, {"elapsed_ms": 137, "stage": "manifest_returned"}, {"elapsed_ms": 161, "stage": "invoke_returned"}, {"elapsed_ms": 161, "stage": "serialization_entered"}, {"elapsed_ms": 169, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.343, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 62, "stage": "encoding_ready"}, {"elapsed_ms": 81, "stage": "helper_loaded"}, {"elapsed_ms": 81, "stage": "invoke_entered"}, {"elapsed_ms": 133, "stage": "manifest_entered"}, {"elapsed_ms": 136, "stage": "manifest_returned"}, {"elapsed_ms": 183, "stage": "invoke_returned"}, {"elapsed_ms": 183, "stage": "serialization_entered"}, {"elapsed_ms": 190, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.453, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 7, "stage": "script_entered"}, {"elapsed_ms": 68, "stage": "encoding_ready"}, {"elapsed_ms": 85, "stage": "helper_loaded"}, {"elapsed_ms": 85, "stage": "invoke_entered"}, {"elapsed_ms": 143, "stage": "manifest_entered"}, {"elapsed_ms": 146, "stage": "manifest_returned"}, {"elapsed_ms": 177, "stage": "invoke_returned"}, {"elapsed_ms": 177, "stage": "serialization_entered"}, {"elapsed_ms": 186, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.344, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 70, "stage": "encoding_ready"}, {"elapsed_ms": 89, "stage": "helper_loaded"}, {"elapsed_ms": 89, "stage": "invoke_entered"}, {"elapsed_ms": 143, "stage": "manifest_entered"}, {"elapsed_ms": 146, "stage": "manifest_returned"}, {"elapsed_ms": 190, "stage": "invoke_returned"}, {"elapsed_ms": 190, "stage": "serialization_entered"}, {"elapsed_ms": 196, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.468, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 7, "stage": "script_entered"}, {"elapsed_ms": 65, "stage": "encoding_ready"}, {"elapsed_ms": 82, "stage": "helper_loaded"}, {"elapsed_ms": 82, "stage": "invoke_entered"}, {"elapsed_ms": 144, "stage": "manifest_entered"}, {"elapsed_ms": 147, "stage": "manifest_returned"}, {"elapsed_ms": 177, "stage": "invoke_returned"}, {"elapsed_ms": 177, "stage": "serialization_entered"}, {"elapsed_ms": 186, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.344, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 65, "stage": "encoding_ready"}, {"elapsed_ms": 83, "stage": "helper_loaded"}, {"elapsed_ms": 84, "stage": "invoke_entered"}, {"elapsed_ms": 138, "stage": "manifest_entered"}, {"elapsed_ms": 141, "stage": "manifest_returned"}, {"elapsed_ms": 185, "stage": "invoke_returned"}, {"elapsed_ms": 185, "stage": "serialization_entered"}, {"elapsed_ms": 192, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.422, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 6, "stage": "script_entered"}, {"elapsed_ms": 65, "stage": "encoding_ready"}, {"elapsed_ms": 80, "stage": "helper_loaded"}, {"elapsed_ms": 80, "stage": "invoke_entered"}, {"elapsed_ms": 137, "stage": "manifest_entered"}, {"elapsed_ms": 141, "stage": "manifest_returned"}, {"elapsed_ms": 168, "stage": "invoke_returned"}, {"elapsed_ms": 168, "stage": "serialization_entered"}, {"elapsed_ms": 177, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.297, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 5, "stage": "script_entered"}, {"elapsed_ms": 28, "stage": "helper_loaded"}, {"elapsed_ms": 28, "stage": "hash_entered"}, {"elapsed_ms": 40, "stage": "hash_returned"}, {"elapsed_ms": 44, "stage": "serialization_entered"}, {"elapsed_ms": 131, "stage": "serialization_returned"}], "trace_truncated": false}
+.HANDOFF_PROCESS {"elapsed_seconds": 0.359, "last_observed_stage": "serialization_returned", "malformed_marker_seen": false, "outcome": "returned", "process_limit_seconds": 30, "retry_count": 0, "root_cause_established": false, "stages": [{"elapsed_ms": 6, "stage": "script_entered"}, {"elapsed_ms": 37, "stage": "helper_loaded"}, {"elapsed_ms": 38, "stage": "hash_entered"}, {"elapsed_ms": 51, "stage": "hash_returned"}, {"elapsed_ms": 53, "stage": "serialization_entered"}, {"elapsed_ms": 103, "stage": "serialization_returned"}], "trace_truncated": false}
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: argument --as-of: as-of must be an ISO timestamp with an explicit timezone
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: argument --as-of: as-of must be an ISO timestamp with an explicit timezone
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: argument --as-of: as-of must be an ISO timestamp with an explicit timezone
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: max-records must be 1..10000
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: max-records must be 1..10000
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: argument --max-records: invalid int value: 'oops'
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: argument --buckets: invalid choice: '3' (choose from 2, 5, 10, 20)
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: sample and bin thresholds must be 1..10000
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: sample and bin thresholds must be 1..10000
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: unrecognized arguments: --dsn not-supported
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: unrecognized arguments: --allow-public-fetch
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: unrecognized arguments: --collect
+usage: __main__.py [-h] [--root ROOT] [--as-of AS_OF]
+                   [--max-records MAX_RECORDS] [--buckets {2,5,10,20}]
+                   [--min-sample-count MIN_SAMPLE_COUNT]
+                   [--min-bin-count MIN_BIN_COUNT] [--include-decisions]
+                   [--settled-paper]
+__main__.py: error: unrecognized arguments: --skip-incomplete
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: the following arguments are required: --record-id
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: argument --record-id: record-id must be a valid project record identifier
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: argument --record-id: record-id must be a valid project record identifier
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: argument --record-id: record-id must be a valid project record identifier
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: argument --record-id: record-id must be a valid project record identifier
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: the following arguments are required: --record-id
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: unrecognized arguments: --as-of 2026-09-14
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: unrecognized arguments: --retry
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: unrecognized arguments: --dsn unused
+usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+__main__.py: error: unrecognized arguments: --allow-public-fetch
+............................................................................................................................usage: __main__.py [-h] [--root ROOT] --record-id RECORD_ID
+
+Inspect one recorded execution claim without retrying or scoring research. The
+managed existing lookup revalidates stored request/result bindings in one
+read-only transaction. No raw evidence, model output, credentials or repair is
+exported. A missing result says nothing about whether a worker is still alive.
+
+options:
+  -h, --help            show this help message and exit
+  --root ROOT
+  --record-id RECORD_ID
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: max-records must be 1..1000; no truncated inventory is returned
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: max-records must be 1..1000; no truncated inventory is returned
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: argument --max-records: invalid int value: 'x'
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: unrecognized arguments: --max-r 1
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: unrecognized arguments: --incomplete-only
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: unrecognized arguments: --retry
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: unrecognized arguments: --dsn x
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: unrecognized arguments: --as-of 2026-09-14
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: unrecognized arguments: --record-id r1
+usage: __main__.py [-h] [--root ROOT] [--max-records MAX_RECORDS]
+__main__.py: error: unrecognized arguments: --allow-public-fetch
+.................................................................................................................................native execution inventory: PASS; one snapshot across concurrent commit, bounded reads and unchanged records
+.
+================================== FAILURES ===================================
+______ test_real_powershell_download_publication[success-powershell.exe] ______
+
+tmp_path = WindowsPath('C:/Users/runneradmin/AppData/Local/Temp/pytest-of-runneradmin/pytest-0/test_real_powershell_download_0')
+shell = 'powershell.exe', case = 'success'
+record_property = <function record_property.<locals>.append_property at 0x0000024D8510C2C0>
+
+    @pytest.mark.parametrize('shell', ['powershell.exe', 'pwsh'])
+    @pytest.mark.parametrize('case', ['success', 'manifest_hash', 'file_hash', 'partial', 'path', 'duplicate', 'oversize', 'false_size'])
+    def test_real_powershell_download_publication(tmp_path, shell, case, record_property):
+        program = shutil.which(shell)
+        if os.name == 'nt' and not program and os.environ.get('PAL_REQUIRE_HANDOFF_SHELLS') == '1':
+            pytest.fail('required Windows handoff shell is missing')
+        if not program or os.name != 'nt':
+            pytest.skip('real Windows PowerShell 5.1 / PowerShell 7 integration')
+        parent=tmp_path/'Download space \u6d4b\u8bd5'
+        parent.mkdir()
+        (parent/'protected.txt').write_bytes(b'previous evidence')
+        payload=b'# synthetic fixture only\n'
+        entry=dict(name='LOCAL_AGENT_PROMPT.md',bytes=len(payload),sha256=sha256(payload).hexdigest())
+        manifest=dict(format='github-handoff-v2', files=[entry])
+        if case=='path':entry['name']='../escape.ps1'
+        if case=='duplicate':manifest['files'].append(dict(entry))
+        if case=='oversize':entry['bytes']=1048577
+        if case=='false_size':entry['bytes']=True
+        mbytes=json.dumps(manifest).encode()
+        expected='0'*64 if case=='manifest_hash' else sha256(mbytes).hexdigest()
+        fixtures=tmp_path/'fixtures';fixtures.mkdir()
+        (fixtures/'manifest.json').write_bytes(mbytes)
+        (fixtures/'LOCAL_AGENT_PROMPT.md').write_bytes(payload if case!='file_hash' else b'x'*len(payload))
+        harness = POWERSHELL_PROBE + f'''
+    $ErrorActionPreference = 'Stop'
+    [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+    Write-HandoffProbe 'encoding_ready'
+    function Decode([string]$x) {{ [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($x)) }}
+    . (Decode '{encoded(SCRIPT)}')
+    Write-HandoffProbe 'helper_loaded'
+    $Global:Source = Decode '{encoded(fixtures)}'
+    $Global:Case = '{case}'
+    $Global:Calls = 0
+    function Get-FileHash {{ throw 'Get-FileHash must not be required' }}
+    function Receive-HandoffFile {{
+        param([string]$Uri, [string]$Destination, [long]$Limit)
+        $Global:Calls++
+        $Name = ([uri]$Uri).Segments[-1]
+        if ($Name -eq 'manifest.json') {{ Write-HandoffProbe 'manifest_entered' }}
+        else {{ Write-HandoffProbe 'payload_entered' }}
+        $Bytes = [IO.File]::ReadAllBytes((Join-Path $Global:Source $Name))
+        if ($Global:Case -eq 'partial' -and $Name -ne 'manifest.json') {{
+            [IO.File]::WriteAllBytes($Destination, $Bytes[0..3])
+            Write-HandoffProbe 'partial_expected'
+            throw 'injected incomplete transfer'
+        }}
+        [IO.File]::WriteAllBytes($Destination, $Bytes)
+        if ($Name -eq 'manifest.json') {{ Write-HandoffProbe 'manifest_returned' }}
+        else {{ Write-HandoffProbe 'payload_returned' }}
+    }}
+    Write-HandoffProbe 'invoke_entered'
+    $Result = Invoke-HandoffDownload 'wmqfl861/polymarket-alpha-lab' ('a'*40) 'handoffs/unit-test' '{expected}' (Decode '{encoded(parent)}')
+    Write-HandoffProbe 'invoke_returned'
+    Write-HandoffProbe 'serialization_entered'
+    [pscustomobject]@{{result=$Result; calls=$Global:Calls; major=$PSVersionTable.PSVersion.Major}} | ConvertTo-Json -Depth 8 -Compress
+    Write-HandoffProbe 'serialization_returned'
+    '''
+        ps=tmp_path/'test.ps1';ps.write_bytes(harness.encode('ascii'))
+>       run, trace = run_fixture(program, ps, record_property=record_property)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_handoff_download.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\handoff_process_probe.py:73: in run_fixture
+    result = subprocess.run([program, '-NoProfile', '-NonInteractive', '-File', str(script)],
+C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['C:\\Windows\\System32\\WindowsPowerShell\\v1.0...>
+input = None, endtime = 727.421, orig_timeout = 30
+
+    def _communicate(self, input, endtime, orig_timeout):
+        # Start reader threads feeding into a list hanging off of this
+        # object, unless they've already been started.
+        if self.stdout and not hasattr(self, "_stdout_buff"):
+            self._stdout_buff = []
+            self.stdout_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stdout, self._stdout_buff))
+            self.stdout_thread.daemon = True
+            self.stdout_thread.start()
+        if self.stderr and not hasattr(self, "_stderr_buff"):
+            self._stderr_buff = []
+            self.stderr_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stderr, self._stderr_buff))
+            self.stderr_thread.daemon = True
+            self.stderr_thread.start()
+    
+        if self.stdin:
+            self._stdin_write(input)
+    
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe', '-NoProfile', '-NonInteractive', '-File', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\pytest-of-runneradmin\\pytest-0\\test_real_powershell_download_0\\test.ps1']' timed out after 30 seconds
+
+C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\subprocess.py:1630: TimeoutExpired
+============================ slowest 20 durations =============================
+123.92s call     tests/test_project_postgres_resolution_native.py::test_native_resolution_review_promotes_atomically_and_preserves_evidence
+52.17s call     tests/test_project_postgres_resolution_queue_native.py::test_native_queue_selects_collects_and_retains_unconfirmed_evidence
+50.58s call     tests/test_project_postgres_crypto_launch_native.py::test_native_empty_database_to_captured_research_and_worklist
+35.38s call     tests/test_project_postgres_inventory_native.py::test_native_inventory_snapshot_limits_legacy_and_incomplete_visibility
+30.46s call     tests/test_handoff_download.py::test_real_powershell_download_publication[success-powershell.exe]
+20.16s call     tests/test_handoff_download.py::test_real_powershell_download_publication[manifest_hash-powershell.exe]
+2.68s call     tests/test_handoff_download.py::test_real_powershell_download_publication[success-pwsh]
+0.70s call     tests/test_handoff_download.py::test_real_powershell_download_publication[file_hash-powershell.exe]
+0.59s call     tests/test_research_resolution_inspection_cli.py::test_actual_installed_script_help
+0.58s call     tests/test_research_evaluation_cli.py::test_actual_script_help_has_no_database_initialization
+0.58s call     tests/test_research_execution_cli.py::test_actual_script_help_from_installed_package
+0.56s call     tests/test_research_inventory_cli.py::test_actual_installed_script_help_is_offline
+0.47s call     tests/test_handoff_download.py::test_real_powershell_download_publication[oversize-pwsh]
+0.46s call     tests/test_handoff_download.py::test_real_powershell_download_publication[duplicate-pwsh]
+0.46s call     tests/test_handoff_download.py::test_real_powershell_download_publication[file_hash-pwsh]
+0.46s call     tests/test_handoff_download.py::test_real_powershell_download_publication[manifest_hash-pwsh]
+0.45s call     tests/test_handoff_download.py::test_real_powershell_download_publication[partial-pwsh]
+0.44s call     tests/test_handoff_download.py::test_real_powershell_download_publication[path-pwsh]
+0.44s call     tests/test_handoff_download.py::test_real_powershell_download_publication[false_size-pwsh]
+0.41s call     tests/test_handoff_download.py::test_real_powershell_download_publication[path-powershell.exe]
+=========================== short test summary info ===========================
+FAILED tests/test_handoff_download.py::test_real_powershell_download_publication[success-powershell.exe] - subprocess.TimeoutExpired: Command '['C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe', '-NoProfile', '-NonInteractive', '-File', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\pytest-of-runneradmin\\pytest-0\\test_real_powershell_download_0\\test.ps1']' timed out after 30 seconds
+1 failed, 1058 passed in 344.56s (0:05:44)
