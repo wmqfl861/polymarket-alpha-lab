@@ -1,0 +1,46 @@
+name: Publish reviewed session drain objects
+on:
+  push:
+    branches: [review/wp03-session-drain-publication-20260917]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Apply only the fixed reviewed delta without executing project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=3a987bc6c1a5df608ff8f0668b866aaf87842c04
+          REF=refs/heads/review/wp03-session-drain-objects-20260917
+          PATCH="$RUNNER_TEMP/core.patch"
+          cp docs/reviews/session-drain-publication/core.patch "$PATCH"
+          echo "48671023ccae19c353378aecd1bb278f232a6c076d293efac297e773e2c9d9c4  $PATCH" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 4
+          TREE=$(git write-tree)
+          test "$TREE" = 604c3ca6e4a0f74f677412a8001a2306f4a9ceb6
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport reviewed session-drain objects only; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-session-drain-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
