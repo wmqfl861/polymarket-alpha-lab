@@ -434,3 +434,51 @@ choices are unchanged.
 Python stream/exit contracts consulted 2026-09-17:
 https://docs.python.org/3/library/io.html#io.TextIOBase.write
 https://docs.python.org/3/library/sys.html#sys.exit
+
+## Interrupted managed-session close (WP-03 / WP-06)
+
+The enclosing `ProjectPostgres(root).session()` owns the private lifecycle lease
+until admitted work finishes. If `ProjectResearchSession.close()` raises
+`KeyboardInterrupt` or `SystemExit` while sealing admissions or waiting for that
+work, the owner retains the first such exception and resumes the SAME idempotent
+close. It does not rerun any research, model call, claim, reservation, SQL
+operation or engine command. New operations remain refused after admissions are
+sealed. Once close completes, an engine started by this session is stopped once;
+a previously running borrowed engine is left running. The retained interruption
+then propagates to the caller. A stop failure remains the primary error, with the
+retained interruption chained as its cause rather than silently discarded.
+
+This is cooperative draining, not cancellation of an in-flight model or database
+request. A client that does not return can still delay closing; its original I/O
+bounds remain required. No forced thread/process kill, signal handler, OS-policy
+change, new timeout or refund is introduced. Unexpected non-interruption errors
+from close are not retried or declared safely drained. Hard termination and
+arbitrary signal delivery outside the guarded close call are not covered by this
+contract. Inspect original IDs after an uncertain stop; never restart a task or
+release a reservation merely because the caller was interrupted.
+
+Tests inject Python exceptions at the close boundary while real admitted threads
+are held at a deterministic checkpoint. The package proof also checks the real
+OS lifecycle lock and an existing PostgreSQL record under owned/borrowed engines.
+It does not send Ctrl+C to Windows or certify all OS-console signal behavior.
+Reference: Python's `threading.Condition` and `signal` documentation describe the
+wait/reacquire contract and arbitrary exception delivery; neither supplies an
+uninterruptible application cleanup guarantee.
+
+
+### Combined close and receipt behavior
+
+The task command's checked output path is reached only after its managed session
+finishes closing. With the lifecycle-drain fix, a close interruption cannot cause
+a failure envelope to be published while the original admitted work still needs
+the lease. After draining, the existing CLI maps KeyboardInterrupt to130 and
+requests the original shared stop token; an internal SystemExit maps to failure.
+A later short output remains failure and does not undo an already requested stop.
+An output interruption still requests that same token. None of these outcomes
+re-executes the original operation, refunds its reservation or proves rollback.
+
+The combined regression uses real threads and the actual session/CLI/emitter,
+with synthetic engine calls and inspection data. The existing packaged drain
+recipe provides separate real-engine and OS-lease coverage, not OS-signal coverage.
+Python Condition wait/reacquire contract consulted for the integration review:
+https://docs.python.org/3.12/library/threading.html#condition-objects

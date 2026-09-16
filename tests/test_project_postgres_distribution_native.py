@@ -356,6 +356,18 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
         assert composed['confirmation_output_failures'] == 1
         assert composed['same_confirmation_replayed'] is True
         print('packaged research composition: ' + json.dumps(composed, sort_keys=True), flush=True)
+        # Only the test's existing first kit: actual lock, PostgreSQL and
+        # packaged source; inject a Python close exception, not an OS signal.
+        from tests.packaged_session_drain import run_packaged_session_drain
+        drained = run_packaged_session_drain(first, first / '.venv/Scripts/python.exe', proof)
+        assert drained.returncode == 0, (drained.stdout, drained.stderr)
+        assert drained.stderr == ''
+        drain_proof = json.loads(drained.stdout)
+        assert drain_proof['status'] == 'packaged_session_drain_verified'
+        assert drain_proof['cases'] == [dict(borrowed=value, admitted_reads=1,
+            original_record_preserved=True) for value in (False, True)]
+        assert drain_proof['database_mocked'] is drain_proof['os_signal_sent'] is drain_proof['model_called'] is False
+        print('packaged session drain: ' + json.dumps(drain_proof, sort_keys=True), flush=True)
         # A changed immutable package blocks without modifying stored research.
         target = first / 'src/polymarket_alpha_lab/local_postgres_dsn.py'
         original = target.read_bytes()

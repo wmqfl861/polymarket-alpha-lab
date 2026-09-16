@@ -9,6 +9,7 @@ on:
       - 'tests/test_research_paper*.py'
       - 'docs/research-paper.md'
       - 'docs/research-paper-settlement.md'
+      - 'tests/packaged_session_drain.py'
       - 'tests/packaged_research_flow.py'
       - 'tests/test_packaged_research_flow*.py'
       - 'tests/project_entry_root_probe.py'
@@ -91,7 +92,7 @@ jobs:
           $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
           $env:PYTHONUTF8 = '1'
           Get-ChildItem Env: | Where-Object { $_.Name -like 'PG*' } | ForEach-Object { Remove-Item ('Env:' + $_.Name) }
-          .\.venv\Scripts\python.exe -u -m pytest -p no:faulthandler -p tests.ci_thread_dump -q -s -o faulthandler_timeout=180 tests/test_project_postgres_distribution.py tests/test_project_postgres_bootstrap.py tests/test_project_postgres_native_spawn.py tests/test_project_postgres_distribution_native.py tests/test_project_entry_roots.py tests/test_project_entry_roots_review.py tests/test_project_quickstart.py tests/test_packaged_research_flow.py tests/test_packaged_research_flow_review.py --junitxml="$env:RUNNER_TEMP/distribution-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/distribution-proof.log"
+          .\.venv\Scripts\python.exe -u -m pytest -p no:faulthandler -p tests.ci_thread_dump -q -s -o faulthandler_timeout=180 tests/test_project_postgres_distribution.py tests/test_project_postgres_bootstrap.py tests/test_project_postgres_native_spawn.py tests/test_project_postgres_distribution_native.py tests/test_project_entry_roots.py tests/test_project_entry_roots_review.py tests/test_project_quickstart.py tests/test_packaged_research_flow.py tests/test_packaged_research_flow_review.py tests/test_project_postgres_session_drain.py tests/test_project_postgres_session_drain_review.py --junitxml="$env:RUNNER_TEMP/distribution-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/distribution-proof.log"
           exit $LASTEXITCODE
       - name: Confirm tracked source unchanged
         run: |
