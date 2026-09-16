@@ -1,0 +1,69 @@
+{
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "head": "673c022fd715b845c7a5c4ce054ff3e612df93f5",
+  "tree": "c8fcf787fed251375add47da3cbda54b4738eab8",
+  "review_type": "separate same-assistant phase and detached worktree; not external/fresh-agent audit",
+  "findings": [
+    {
+      "description": "Two scripts could select an unrelated editable installation",
+      "original_valid_fixture_failed": 4,
+      "fixed": true
+    },
+    {
+      "description": "Path-only fix fell back when the selected package was missing or namespace-only",
+      "review_failed": 4,
+      "review_passed": 2,
+      "fixed": true
+    },
+    {
+      "description": "Settlement runbook linked from guide was missing from kit selection",
+      "guide_failed": 1,
+      "guide_passed": 16,
+      "fixed": true
+    }
+  ],
+  "fixture_issue": "One intermediate entry test omitted required data-root layout files; fixed separately and original scripts restored for a valid-fixture RED rerun",
+  "new_cases": 27,
+  "real_guide_actions_executed_by_parser_tests": false,
+  "local_full": {
+    "passed": 37856,
+    "skipped": 41,
+    "seconds": 391.52
+  },
+  "local_environment": "Python3.13.5/preinstalled container packages, not locked Windows",
+  "new_source_selection_not_a_security_sandbox": true,
+  "general_old_kit_upgrade_delivered": false,
+  "D1_D3_changed": false,
+  "G6_complete": false,
+  "PS51_root_cause_fixed": false,
+  "raw_local_evidence": {
+    "entry-red.log": {
+      "bytes": 12181,
+      "sha256": "2f5d3d11c155076344bc7e9ca2cc067b7c3e2701cc0df5426969d2e193f43839"
+    },
+    "entry-fixed.log": {
+      "bytes": 1929,
+      "sha256": "8361376b53517e87a648c13206801164421200cda2d831b3c224bc56860c570c"
+    },
+    "entry-red-valid-fixture.log": {
+      "bytes": 12366,
+      "sha256": "7fe39995ddb6ab97ac0c579e95589acea6afb1aa36a521a5a042bebccfdfbaea"
+    },
+    "review-red.log": {
+      "bytes": 16334,
+      "sha256": "01d42b30d55d88e79738c73a8615211fdfcc80813c176e4222c028525a8a0457"
+    },
+    "guide-red.log": {
+      "bytes": 1295,
+      "sha256": "73c424e78effd942eb34988ab61f83623afb5d54a00514cf7d2e8949f1ff75e6"
+    },
+    "detached-final.log": {
+      "bytes": 100,
+      "sha256": "6c7f5b3fc041a063675ca7630f391ced7c30947a72c458704290c92c320484f0"
+    },
+    "full-final.log": {
+      "bytes": 45738,
+      "sha256": "69497128f5233789565334688312b7b63b8db3da317c0c22d8853b1626cf6829"
+    }
+  }
+}
