@@ -1,0 +1,32 @@
+name: Pinned drain integration source
+on:
+  push:
+    branches: [review/wp03-drain-integration-source-20260917]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 668c8eea2c6f740561afdfdd5368849ee58b4624
+          persist-credentials: false
+      - name: Retain only fixed tracked integration inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 668c8eea2c6f740561afdfdd5368849ee58b4624
+          git archive --format=zip --output="$RUNNER_TEMP/source.zip" HEAD .github/workflows/native-distribution.yml DELIVERY_PLAN.md docs/research-dispatch.md src/polymarket_alpha_lab/project_postgres/server.py tests/packaged_session_drain.py tests/test_project_postgres_distribution_native.py tests/test_project_postgres_session_drain.py tests/test_project_postgres_session_drain_review.py
+          git ls-tree -r HEAD > "$RUNNER_TEMP/source-tree.txt"
+          sha256sum "$RUNNER_TEMP/source.zip" > "$RUNNER_TEMP/source.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr50-fixed-inputs
+          path: |
+            ${{ runner.temp }}/source.zip
+            ${{ runner.temp }}/source-tree.txt
+            ${{ runner.temp }}/source.sha256
+          retention-days: 7
+          if-no-files-found: error
