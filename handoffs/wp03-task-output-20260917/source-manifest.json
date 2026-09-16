@@ -1,0 +1,32 @@
+{
+  "DELIVERY_PLAN.md": {
+    "bytes": 58817,
+    "sha256": "e7ef8b9a140b4c50a365cf2464f54f70ef47edb5e5613233316b6a78671c4fe3",
+    "git_blob": "01791e8b9627a120dee450b403a0a67ca0abba36"
+  },
+  "docs/research-dispatch.md": {
+    "bytes": 26690,
+    "sha256": "f21065ac5881a0121f11dc58e86e7ab221644b610a3fee3e4496f3a6f0468a90",
+    "git_blob": "318df0851c63d6356a17d00b6ca66ef48408e3de"
+  },
+  "src/polymarket_alpha_lab/research_dispatch_cli.py": {
+    "bytes": 9728,
+    "sha256": "7de9f16a556c20a3a9b5174eb0af4c6b9f65c9b53228b69847d4e9fc88be593b",
+    "git_blob": "886df7a0781cb7fa3b7c467115f220252232300a"
+  },
+  "tests/test_project_postgres_dispatch_cli_native.py": {
+    "bytes": 12831,
+    "sha256": "b2d0f0ed3c99a33ea9db5e21900dc4c99d429c07d475e62fbaac237e8a05d6ca",
+    "git_blob": "686cc9926df925f961f1b72401adec2f4b1fd07f"
+  },
+  "tests/test_research_dispatch_cli.py": {
+    "bytes": 16991,
+    "sha256": "8cc443aed4d88dcdc88bb8062b9d5b695610a0e5a434a9032bd25f869ed9b996",
+    "git_blob": "6db602338d5bef203721d37f27b99c9bfe921d3e"
+  },
+  "tests/test_research_dispatch_cli_review.py": {
+    "bytes": 11047,
+    "sha256": "569a57b1fccd2e11e31dcce71325c1ba3af214f399f58c4835619f13cc0279cf",
+    "git_blob": "7b1e9fe65e4ea48226da844d9bfba3d616e63e24"
+  }
+}

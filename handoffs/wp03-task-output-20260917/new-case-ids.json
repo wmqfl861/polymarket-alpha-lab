@@ -1,0 +1,154 @@
+[
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-budget]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-run]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-blocked]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-budget]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-run]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-blocked]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-budget]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-run]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-blocked]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-budget]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-run]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-blocked]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-budget]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-run]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-blocked]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_receipt_is_written_once_then_flushed_after_cleanup[budget-0]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_receipt_is_written_once_then_flushed_after_cleanup[missing-3]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_receipt_is_written_once_then_flushed_after_cleanup[run-0]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli",
+    "name": "test_task_receipt_is_written_once_then_flushed_after_cleanup[blocked-2]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_output_interrupt_requests_shared_stop_after_cleanup[write-read]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_output_interrupt_requests_shared_stop_after_cleanup[write-run]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_output_interrupt_requests_shared_stop_after_cleanup[write-blocked]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_output_interrupt_requests_shared_stop_after_cleanup[flush-read]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_output_interrupt_requests_shared_stop_after_cleanup[flush-run]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_output_interrupt_requests_shared_stop_after_cleanup[flush-blocked]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_noninterrupt_output_failure_does_not_cancel_unrelated_work[short]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_noninterrupt_output_failure_does_not_cancel_unrelated_work[exit-zero]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_invalid_task_output_count_never_claims_a_complete_receipt[none]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_invalid_task_output_count_never_claims_a_complete_receipt[bool]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_invalid_task_output_count_never_claims_a_complete_receipt[negative]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_invalid_task_output_count_never_claims_a_complete_receipt[float]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_task_envelope_serialization_failure_has_no_partial_output[value-error]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_task_envelope_serialization_failure_has_no_partial_output[exit-zero]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_task_envelope_serialization_failure_has_no_partial_output[interrupt]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_actual_task_interpreter_does_not_exit_zero_after_output_failure[short-read]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_actual_task_interpreter_does_not_exit_zero_after_output_failure[short-blocked]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_actual_task_interpreter_does_not_exit_zero_after_output_failure[exit-zero-read]"
+  },
+  {
+    "class": "tests.test_research_dispatch_cli_review",
+    "name": "test_actual_task_interpreter_does_not_exit_zero_after_output_failure[exit-zero-blocked]"
+  }
+]

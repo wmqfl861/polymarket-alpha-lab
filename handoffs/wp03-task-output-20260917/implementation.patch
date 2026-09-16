@@ -1,0 +1,412 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index dd60557dd0bd57c61c2e8f93050296809aed16db..01791e8b9627a120dee450b403a0a67ca0abba36 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -638,3 +638,22 @@ D1—D3、原统计晋级门槛和 WP-06 首次启动可靠性问题不变。没
+ 
+ 这是 CI 调度修复，不是底层 PS5.1 间歇问题的根因修复或完整发布验收；
+ WP-06/G6、D1—D3、真实来源／费率及用户数据升级限制不变。
++
++
++## 26. WP-03／WP-06 候选：任务命令完整输出与共享停止（待 Windows 验收）
++
++基线 `3a987bc6c1a5df608ff8f0668b866aaf87842c04`（PR #48）。本项独立于仍为
++草稿的 PR #49；不携带其安装包检查改动，也不重启被拦截的 CAPI2 诊断试验。
++
++- 任务清单／轮次／预算查询与预算轮次执行复用已有受控输出函数，完整序列化后一次写入
++  并核对字符数和刷新。短写、写入／刷新／序列化异常返回非零，不补发第二份输出或重跑业务。
++- 单独自审复现输出阶段中断丢失共享停止信号的问题并修复；收到该中断时返回 130 并请求
++  原停止令牌，普通输出失败不停止其他关联运行。已准入任务仍自然收尾，不推断数据库回滚。
++- 正常 JSON、原状态与费用预留／任务身份／权限／输入校验保持不变；不新增输出模块、
++  模型客户端、持久化或工作流。四个真实子进程反例使用合成会话，不冒充数据库原生验证。
++- 已有原生场景新增真实空轮次提交后输出短写、原编号查询与明确原样重放；应证明回执和
++  预算额度保持不变。该场景仅在 CI 私有测试实例执行，最终提交的全量／Windows／kit 门禁
++  和原始首败证据须齐备后才能验收，不以本地测试代替。
++
++**本项仍待发布与原生验收，WP-03／WP-06 PARTIAL，G3／G6 未关闭，V1 仍 1／6。**
++不覆盖 PR #49 失败结论；原 PS5.1 问题、D1—D3、真实输入／费率及用户数据升级限制不变。
+diff --git a/docs/research-dispatch.md b/docs/research-dispatch.md
+index cd98e644fdd325785d3f401966e9b0aae2fdf20f..318df0851c63d6356a17d00b6ca66ef48408e3de 100644
+--- a/docs/research-dispatch.md
++++ b/docs/research-dispatch.md
+@@ -400,3 +400,37 @@ and unchanged old records. Native inputs/clients/charges are synthetic.
+ Final-revision commands, exact counts, first failures, CI identifiers and skipped
+ or unexecuted checks belong to the implementation PR and DELIVERY_PLAN.md. No
+ local user's database, installed kit, credentials or real provider is exercised.
++
++
++## Task-command output completion and shared stop
++
++The batch/turn/budget inspections and the budgeted `run-turn` entry now reuse the
++existing checked resolution-result emitter. Successful JSON is unchanged: the
++complete envelope and one newline are serialized first, written exactly once,
++and explicitly flushed only after a complete character-count result. Serialization,
++short-write, write or flush failure returns a nonzero handler result; no second
++error envelope is written into a possibly damaged stream and no task is repeated.
++The paper subcommands keep their existing separate operator behavior.
++
++A `KeyboardInterrupt` during task-envelope publication returns 130 and requests
++any supplied `ResearchDispatchStop`, just as interruption during the managed
++operation does. This remains cooperative: it blocks subsequent admissions, not
++already-admitted work. An ordinary output error does not cancel other invocations
++sharing that stop token. An output prefix can already contain the earlier result;
++check the process exit and inspect the ORIGINAL turn and budget before any explicit
++same-input replay. Neither failure nor shared stop rolls back committed selections,
++claims, results or call reservations. Successful write/flush is not proof that a
++receiver consumed the envelope. Python may replace a requested exit with another
++nonzero status if interpreter shutdown itself cannot flush a stream.
++
++The enhanced existing native test uses a new empty turn after all its six synthetic
++tasks finish: it first proves absence, commits the real selection, injects only a
++short output sink, then verifies real lookup and exact same-turn replay. It asserts
++no new client call and no additional budget reservation. This is not a new paid
++provider run or a claim to reproduce PR49's separate PowerShell timing failure.
++User databases, original migrations, model authorization and the pending D1-D3
++choices are unchanged.
++
++Python stream/exit contracts consulted 2026-09-17:
++https://docs.python.org/3/library/io.html#io.TextIOBase.write
++https://docs.python.org/3/library/sys.html#sys.exit
+diff --git a/src/polymarket_alpha_lab/research_dispatch_cli.py b/src/polymarket_alpha_lab/research_dispatch_cli.py
+index 8ff1420920eba757f17ed9e8fdb8825e38f0e9e4..886df7a0781cb7fa3b7c467115f220252232300a 100644
+--- a/src/polymarket_alpha_lab/research_dispatch_cli.py
++++ b/src/polymarket_alpha_lab/research_dispatch_cli.py
+@@ -16,6 +16,7 @@ from polymarket_alpha_lab.research_dispatch_rotation import StoredResearchRotati
+ from polymarket_alpha_lab.research_dispatch_rotation_runner import ResearchRotationReport
+ from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
+ from polymarket_alpha_lab.research_model_budget import ModelBudgetSnapshot
++from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
+ from polymarket_alpha_lab.team_research_agent_types import identifier
+ 
+ 
+@@ -119,6 +120,18 @@ def _run(session, args, model_factory, stop):
+     return body, 0
+ 
+ 
++def _publish(envelope, code, stop):
++    """Use the existing checked emitter without losing cooperative interruption.
++
++    Cleanup precedes publication. A short write may leave a prefix; neither a
++    failed output nor a stopped token rolls back previously admitted work.
++    """
++    result = _emit(envelope, code)
++    if result == 130 and stop is not None:
++        stop.request_stop()
++    return result
++
++
+ def main(argv: list[str] | None = None, *, default_root: Path,
+          model_factory=None, stop: ResearchDispatchStop | None = None) -> int:
+     """Emit existing metadata receipts only, after managed-session cleanup.
+@@ -154,8 +167,7 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+                   else 'research_dispatch_approved_client_required')
+         envelope.update(status='blocked', reason_code=reason,
+             operation_entered=False, model_calls_possible=False, business_writes_possible=False)
+-        print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
+-        return 2
++        return _publish(envelope, 2, stop)
+     # Conservatively report possible effects once the managed operation is
+     # entered, including unknown COMMIT/cleanup acknowledgement. Never infer
+     # absence of writes from an exception. No success is printed before cleanup.
+@@ -178,8 +190,7 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+     except (Exception, SystemExit):
+         envelope.update(status='failed', reason_code='research_dispatch_operation_failed')
+         code = 1
+-    print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
+-    return code
++    return _publish(envelope, code, control)
+ 
+ 
+ __all__ = ('main',)
+diff --git a/tests/test_project_postgres_dispatch_cli_native.py b/tests/test_project_postgres_dispatch_cli_native.py
+index f58f40f6115364b5d98cbdc8ed6e99f754ec0c91..686cc9926df925f961f1b72401adec2f4b1fd07f 100644
+--- a/tests/test_project_postgres_dispatch_cli_native.py
++++ b/tests/test_project_postgres_dispatch_cli_native.py
+@@ -150,6 +150,39 @@ def test_operator_rounds_stop_restart_failures_and_process_loss(tmp_path, monkey
+             assert code == 0 and found['result']['state_counts'] == dict(pending=0, expired=0, incomplete=0, captured=3)
+         code, budget = invoke(root, ['inspect-budget', '--budget-id', 'operator-budget'])
+         assert code == 0 and budget['result']['reserved_calls'] == 16  # 5*3 + one failed factory.
++        # A new empty turn still writes an immutable selection receipt. Fail
++        # ONLY the output after that real commit; never call a synthetic model
++        # again or change the original turn ID to manufacture a successful run.
++        output_turn = 'output-failure-proof'
++        code, absent = invoke(root, ['inspect-turn', '--rotation-id', 'operator', '--turn-id', output_turn])
++        assert code == 3 and absent['result'] is None
++        witnessed, short_writes = [], []
++        class ShortOutput:
++            def write(self, text):
++                witnessed.append(json.loads(text))
++                assert db.status()['status'] == 'stopped'
++                short_writes.append(len(text) - 1)
++                return short_writes[-1]
++            def flush(self):
++                pytest.fail('incomplete output must not be flushed as a full receipt')
++        with redirect_stdout(ShortOutput()):
++            output_code = cli.main(run_args(output_turn), default_root=root, model_factory=forbidden)
++        assert output_code == 1 and len(witnessed) == len(short_writes) == 1
++        assert witnessed[0]['status'] == 'dispatched'
++        assert witnessed[0]['result']['execution_invocations'] == 0
++        assert witnessed[0]['business_writes_possible'] is True
++        code, saved_turn = invoke(root, ['inspect-turn', '--rotation-id', 'operator', '--turn-id', output_turn])
++        assert code == 0 and saved_turn['result'] == witnessed[0]['result']['turn']
++        code, same_turn = invoke(root, run_args(output_turn), model_factory=forbidden)
++        assert code == 0 and same_turn['result']['status'] == 'turn_already_reserved'
++        assert same_turn['result']['turn'] == saved_turn['result']
++        assert same_turn['result']['execution_invocations'] == 0
++        code, retained_budget = invoke(root, ['inspect-budget', '--budget-id', 'operator-budget'])
++        assert code == 0 and retained_budget['result']['reserved_calls'] == 16
++        assert retained_budget['result']['reserved_micros'] == budget['result']['reserved_micros']
++        assert retained_budget['result']['policy_sha256'] == budget['result']['policy_sha256']
++        assert len(made) == 5 and len(failures) == 1
++        print('native task output: PASS; new empty turn committed, short output failed, exact replay, no new calls')
+         with db.session() as session:
+             old_record = session.inspect(record_id=requests[0].record_id).record
+             crashed = (prepared(1200), prepared(1201, 'crypto_btc'))
+diff --git a/tests/test_research_dispatch_cli.py b/tests/test_research_dispatch_cli.py
+index 09d89bb3c6ff49d5337d5ef99c713d90e193af3e..6db602338d5bef203721d37f27b99c9bfe921d3e 100644
+--- a/tests/test_research_dispatch_cli.py
++++ b/tests/test_research_dispatch_cli.py
+@@ -257,3 +257,75 @@ def test_new_script_is_packaged_without_changing_old_kit_requirements():
+     assert selected_source('scripts/manage_research_tasks.py')
+     assert selected_source('src/polymarket_alpha_lab/research_dispatch_cli.py')
+     assert 'scripts/manage_research_tasks.py' not in FIXED
++
++
++@pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
++@pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
++def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
++    """Even after a returned budgeted turn, an incomplete receipt is not success."""
++    managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
++                        ResearchRotationReport('turn_already_reserved', stored_turn()))
++    writes, flushes = [], []
++
++    class Output:
++        def write(self, text):
++            if mode == 'blocked':
++                assert 'entered' not in managed
++            else:
++                assert managed['closed']
++            writes.append(text)
++            if fault == 'exit-zero':
++                raise SystemExit(0)
++            if fault == 'interrupt':
++                raise KeyboardInterrupt(PRIVATE)
++            if fault == 'write-error':
++                raise OSError(PRIVATE)
++            return len(text) - 1 if fault == 'short' else len(text)
++
++        def flush(self):
++            flushes.append(1)
++            if fault == 'flush':
++                raise OSError(PRIVATE)
++
++    argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
++    options = {'model_factory': lambda _: None} if mode == 'run' else {}
++    with monkeypatch.context() as patch:
++        patch.setattr(sys, 'stdout', Output())
++        try:
++            code = cli.main(argv, default_root=ROOT, **options)
++        except (Exception, SystemExit, KeyboardInterrupt) as error:
++            code = ('escaped', type(error).__name__)
++    assert code == (130 if fault == 'interrupt' else 1)
++    assert len(writes) == 1
++    assert len(flushes) == (1 if fault == 'flush' else 0)
++    assert len(managed['calls']) == (0 if mode == 'blocked' else 1)
++    assert all(PRIVATE not in text for text in writes)
++
++
++@pytest.mark.parametrize('mode,expected_code', [('budget', 0), ('missing', 3), ('run', 0), ('blocked', 2)])
++def test_task_receipt_is_written_once_then_flushed_after_cleanup(managed, monkeypatch, mode, expected_code):
++    managed['value'] = (None if mode == 'missing' else read_value('inspect-budget') if mode == 'budget' else
++                        ResearchRotationReport('turn_already_reserved', stored_turn()))
++    actions = []
++
++    class Output:
++        def write(self, text):
++            assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
++            actions.append(('write', text))
++            return len(text)
++
++        def flush(self):
++            actions.append(('flush', None))
++
++    argv = ['inspect-budget', '--budget-id', 'budget'] if mode in ('budget', 'missing') else RUN
++    options = {'model_factory': lambda _: None} if mode == 'run' else {}
++    with monkeypatch.context() as patch:
++        patch.setattr(sys, 'stdout', Output())
++        code = cli.main(argv, default_root=ROOT, **options)
++    assert code == expected_code
++    assert [name for name, _ in actions] == ['write', 'flush']
++    body = json.loads(actions[0][1])
++    assert actions[0][1] == json.dumps(body, ensure_ascii=True, allow_nan=False, indent=2) + '\n'
++    assert body['automatic_retry_permitted'] is False
++    assert body['business_writes_possible'] is (mode == 'run')
++    assert len(managed['calls']) == (0 if mode == 'blocked' else 1)
+diff --git a/tests/test_research_dispatch_cli_review.py b/tests/test_research_dispatch_cli_review.py
+index f169847c3ee3a59415725dbb3fdb02281e07a6fc..7b1e9fe65e4ea48226da844d9bfba3d616e63e24 100644
+--- a/tests/test_research_dispatch_cli_review.py
++++ b/tests/test_research_dispatch_cli_review.py
+@@ -86,3 +86,163 @@ def test_stopped_before_reservation_never_reaches_store_or_client(managed, capsy
+     code, out = invoke(capsys, RUN, model_factory=forbidden, stop=control)
+     assert code == 130 and out['result']['status'] == 'stopped_before_reservation'
+     assert out['result']['cursor_written_here'] is False
++
++
++@pytest.mark.parametrize('mode', ['read', 'run', 'blocked'])
++@pytest.mark.parametrize('phase', ['write', 'flush'])
++def test_output_interrupt_requests_shared_stop_after_cleanup(managed, monkeypatch, mode, phase):
++    """Returning exit130 must retain the shared cooperative-stop semantics."""
++    import sys
++    control = ResearchDispatchStop()
++    managed['value'] = (read_value('inspect-budget') if mode == 'read' else
++                        ResearchRotationReport('turn_already_reserved', stored_turn()))
++    writes = []
++
++    class Output:
++        def write(self, text):
++            assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
++            writes.append(text)
++            if phase == 'write':
++                raise KeyboardInterrupt(PRIVATE)
++            return len(text)
++
++        def flush(self):
++            raise KeyboardInterrupt(PRIVATE)
++
++    argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'read' else RUN
++    options = {'model_factory': lambda _: None} if mode == 'run' else {}
++    with monkeypatch.context() as patch:
++        patch.setattr(sys, 'stdout', Output())
++        code = cli.main(argv, default_root=ROOT, stop=control, **options)
++    assert code == 130
++    assert control.is_stopped(), 'output interruption lost the caller shared stop request'
++    assert len(writes) == 1
++    assert len(managed['calls']) == (0 if mode == 'blocked' else 1)
++
++
++@pytest.mark.parametrize('fault', ['short', 'exit-zero'])
++def test_noninterrupt_output_failure_does_not_cancel_unrelated_work(managed, monkeypatch, fault):
++    import sys
++    control = ResearchDispatchStop()
++    managed['value'] = ResearchRotationReport('turn_already_reserved', stored_turn())
++    writes = []
++
++    class Output:
++        def write(self, text):
++            writes.append(text)
++            if fault == 'exit-zero':
++                raise SystemExit(0)
++            return 0
++
++        def flush(self):
++            pytest.fail('failed write was flushed')
++
++    with monkeypatch.context() as patch:
++        patch.setattr(sys, 'stdout', Output())
++        code = cli.main(RUN, default_root=ROOT, model_factory=lambda _: None, stop=control)
++    assert code == 1 and not control.is_stopped()
++    assert managed['closed'] and len(managed['calls']) == len(writes) == 1
++
++
++@pytest.mark.parametrize('kind', ['none', 'bool', 'negative', 'float'])
++def test_invalid_task_output_count_never_claims_a_complete_receipt(managed, monkeypatch, kind):
++    import sys
++    writes = []
++    managed['value'] = read_value('inspect-budget')
++
++    class Output:
++        def write(self, text):
++            writes.append(text)
++            return {'none': None, 'bool': True, 'negative': -1, 'float': float(len(text))}[kind]
++
++        def flush(self):
++            pytest.fail('invalid write count was accepted')
++
++    with monkeypatch.context() as patch:
++        patch.setattr(sys, 'stdout', Output())
++        code = cli.main(['inspect-budget', '--budget-id', 'budget'], default_root=ROOT)
++    assert code == 1 and len(writes) == len(managed['calls']) == 1
++    assert managed['closed']
++
++
++@pytest.mark.parametrize('kind', ['value-error', 'exit-zero', 'interrupt'])
++def test_task_envelope_serialization_failure_has_no_partial_output(managed, monkeypatch, kind):
++    import sys
++    control = ResearchDispatchStop()
++    managed['value'] = read_value('inspect-budget')
++    original = cli.json.dumps
++    writes = []
++    error = {'value-error': ValueError(PRIVATE), 'exit-zero': SystemExit(0),
++             'interrupt': KeyboardInterrupt(PRIVATE)}[kind]
++
++    def serialize(value, *args, **kwargs):
++        if type(value) is dict and 'operation' in value:
++            assert managed['closed']
++            raise error
++        return original(value, *args, **kwargs)
++
++    class Output:
++        def write(self, text):
++            writes.append(text)
++            return len(text)
++
++        def flush(self):
++            pytest.fail('no serialized output exists')
++
++    with monkeypatch.context() as patch:
++        patch.setattr(cli.json, 'dumps', serialize)
++        patch.setattr(sys, 'stdout', Output())
++        code = cli.main(['inspect-budget', '--budget-id', 'budget'], default_root=ROOT, stop=control)
++    assert code == (130 if kind == 'interrupt' else 1)
++    assert control.is_stopped() is (kind == 'interrupt')
++    assert writes == [] and len(managed['calls']) == 1
++
++
++_TASK_OUTPUT_CHILD = r'''
++from contextlib import contextmanager
++from pathlib import Path
++import json, runpy, sys
++root, mode, fault = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
++sys.path.insert(0, str(root / 'src'))
++from polymarket_alpha_lab import research_dispatch_cli as cli
++class Session:
++    def inspect_model_budget(self, **kwargs):
++        return None
++class Database:
++    def __init__(self, root): pass
++    @contextmanager
++    def session(self):
++        yield Session()
++cli.ProjectPostgres = Database
++original = sys.stdout
++class Output:
++    def write(self, text):
++        # A real complete envelope must reach this point; the session is synthetic.
++        assert json.loads(text)['status'] == ('blocked' if mode == 'blocked' else 'not_found')
++        if fault == 'exit-zero': raise SystemExit(0)
++        return original.buffer.write(text[:10].encode('ascii'))
++    def flush(self): original.flush()
++sys.stdout = Output()
++script = root / 'scripts/manage_research_tasks.py'
++args = ['inspect-budget', '--budget-id', 'synthetic-budget'] if mode == 'read' else [
++    'run-turn', '--rotation-id', 'synthetic-roster', '--turn-id', 'synthetic-turn',
++    '--batch-id', 'synthetic-batch', '--budget-id', 'synthetic-budget', '--allow-model-calls']
++sys.argv = [str(script), *args]
++runpy.run_path(str(script), run_name='__main__')
++'''
++
++
++@pytest.mark.parametrize('mode', ['read', 'blocked'])
++@pytest.mark.parametrize('fault', ['short', 'exit-zero'])
++def test_actual_task_interpreter_does_not_exit_zero_after_output_failure(tmp_path, mode, fault):
++    import subprocess
++    import sys
++    from polymarket_alpha_lab.project_postgres.files import clean_environment
++
++    result = subprocess.run([sys.executable, '-I', '-c', _TASK_OUTPUT_CHILD, str(ROOT), mode, fault],
++        cwd=tmp_path, env=clean_environment(), stdin=subprocess.DEVNULL,
++        capture_output=True, timeout=30, check=False, shell=False)
++    assert result.returncode == 1, (result.stdout, result.stderr)
++    assert result.stderr == b''
++    assert result.stdout == (b'{\n  "opera' if fault == 'short' else b'')
++    assert not list(tmp_path.iterdir())

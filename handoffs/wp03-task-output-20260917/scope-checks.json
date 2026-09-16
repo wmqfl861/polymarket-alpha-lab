@@ -1,0 +1,30 @@
+{
+  "base": "3a987bc6c1a5df608ff8f0668b866aaf87842c04",
+  "changed_files": [
+    "DELIVERY_PLAN.md",
+    "docs/research-dispatch.md",
+    "src/polymarket_alpha_lab/research_dispatch_cli.py",
+    "tests/test_project_postgres_dispatch_cli_native.py",
+    "tests/test_research_dispatch_cli.py",
+    "tests/test_research_dispatch_cli_review.py"
+  ],
+  "protected_payloads": 2921,
+  "migrations_unchanged": 67,
+  "existing_dispatch_functions_ast_unchanged": true,
+  "assertions": {
+    "tests/test_research_dispatch_cli.py": {
+      "old_assertions": 40,
+      "new_assertions": 54
+    },
+    "tests/test_research_dispatch_cli_review.py": {
+      "old_assertions": 11,
+      "new_assertions": 28
+    },
+    "tests/test_project_postgres_dispatch_cli_native.py": {
+      "old_assertions": 32,
+      "new_assertions": 46
+    }
+  },
+  "docs_append_only": true,
+  "workflow_files_unchanged": true
+}

@@ -1,0 +1,65 @@
+{
+  "candidate_tree": "b5734a05cc60ff37bcbf226bedb8586eefc9112a",
+  "implementation_red": {
+    "failed": 19,
+    "deselected": 64,
+    "seconds": 1.21,
+    "production_was_base": true
+  },
+  "initial_fix": {
+    "passed": 95,
+    "seconds": 1.58
+  },
+  "separate_review_red": {
+    "failed": 6,
+    "deselected": 12,
+    "seconds": 0.66,
+    "finding": "output interruption lost the supplied shared stop token"
+  },
+  "task_modules": {
+    "passed": 114,
+    "new_cases": 38,
+    "seconds": 3.56
+  },
+  "focused": {
+    "passed": 256,
+    "skipped": 1,
+    "seconds": 9.06,
+    "native_case_executed": false
+  },
+  "detached": {
+    "passed": 243,
+    "skipped": 0,
+    "seconds": 8.39,
+    "source_and_shared_emitter_origins_verified": true
+  },
+  "full_local": {
+    "passed": 38024,
+    "skipped": 42,
+    "seconds": 334.23,
+    "exit": 0,
+    "complete_verifier_pass": true
+  },
+  "local_environment": {
+    "os": "Linux",
+    "python": "3.13.5",
+    "pytest": "9.0.2",
+    "tzdata": "2026.2",
+    "dependencies": "preinstalled container tooling plus local editable install; not hosted locked acceptance"
+  },
+  "all_original_assertions_preserved": true,
+  "protected_payloads_unchanged": 2921,
+  "migrations_unchanged": 67,
+  "workflow_files_unchanged": true,
+  "production_shared_emitter_unchanged": true,
+  "native_scenario": "existing operator rounds test extended with new empty-turn real commit, injected short output, durable lookup and same-turn replay; no extra model calls or reservations",
+  "windows_or_hosted_ci_executed_this_turn": false,
+  "upstream_published": false,
+  "pr_created": false,
+  "merged": false,
+  "git_apply_clean_base_result": "b5734a05cc60ff37bcbf226bedb8586eefc9112a",
+  "publication_limit": "Current GitHub connection exposes reads only; direct container git failed DNS. No safety denial occurred for this distinct candidate and no denied CAPI objects were reused.",
+  "previous_PR49": "Unchanged draft at 061a55703197cc526f3d707d9da58b971c582e0b; its failed gate remains unresolved.",
+  "review_kind": "Separate same-assistant review and detached-worktree retest, not fresh-agent or third-party audit",
+  "known_scope_limit": "Does not prove receiver delivery, roll back prior work, change parser/help or paper-subcommand behavior, or fix PS5.1 timing; no user database/provider use."
+}

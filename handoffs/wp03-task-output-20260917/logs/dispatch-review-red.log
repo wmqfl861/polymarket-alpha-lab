@@ -1,0 +1,268 @@
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+_____ test_output_interrupt_requests_shared_stop_after_cleanup[write-read] _____
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe6afef56e0>
+mode = 'read', phase = 'write'
+
+    @pytest.mark.parametrize('mode', ['read', 'run', 'blocked'])
+    @pytest.mark.parametrize('phase', ['write', 'flush'])
+    def test_output_interrupt_requests_shared_stop_after_cleanup(managed, monkeypatch, mode, phase):
+        """Returning exit130 must retain the shared cooperative-stop semantics."""
+        import sys
+        control = ResearchDispatchStop()
+        managed['value'] = (read_value('inspect-budget') if mode == 'read' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                writes.append(text)
+                if phase == 'write':
+                    raise KeyboardInterrupt(PRIVATE)
+                return len(text)
+    
+            def flush(self):
+                raise KeyboardInterrupt(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'read' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, stop=control, **options)
+        assert code == 130
+>       assert control.is_stopped(), 'output interruption lost the caller shared stop request'
+E       AssertionError: output interruption lost the caller shared stop request
+E       assert False
+E        +  where False = is_stopped()
+E        +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd39660>.is_stopped
+
+tests/test_research_dispatch_cli_review.py:118: AssertionError
+_____ test_output_interrupt_requests_shared_stop_after_cleanup[write-run] ______
+
+managed = {'calls': [('run_research_rotation', {'allow_model_calls': True, 'batch_ids_to_run': ('batch',), 'max_tasks': 1, 'max_workers': 1, ...})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe6afef9910>
+mode = 'run', phase = 'write'
+
+    @pytest.mark.parametrize('mode', ['read', 'run', 'blocked'])
+    @pytest.mark.parametrize('phase', ['write', 'flush'])
+    def test_output_interrupt_requests_shared_stop_after_cleanup(managed, monkeypatch, mode, phase):
+        """Returning exit130 must retain the shared cooperative-stop semantics."""
+        import sys
+        control = ResearchDispatchStop()
+        managed['value'] = (read_value('inspect-budget') if mode == 'read' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                writes.append(text)
+                if phase == 'write':
+                    raise KeyboardInterrupt(PRIVATE)
+                return len(text)
+    
+            def flush(self):
+                raise KeyboardInterrupt(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'read' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, stop=control, **options)
+        assert code == 130
+>       assert control.is_stopped(), 'output interruption lost the caller shared stop request'
+E       AssertionError: output interruption lost the caller shared stop request
+E       assert False
+E        +  where False = is_stopped()
+E        +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd3afb0>.is_stopped
+
+tests/test_research_dispatch_cli_review.py:118: AssertionError
+___ test_output_interrupt_requests_shared_stop_after_cleanup[write-blocked] ____
+
+managed = {'calls': [], 'cleanup_error': None, 'error': None, 'value': ResearchRotationReport(status='turn_already_reserved', stop_requested=False)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe6afd2cd10>
+mode = 'blocked', phase = 'write'
+
+    @pytest.mark.parametrize('mode', ['read', 'run', 'blocked'])
+    @pytest.mark.parametrize('phase', ['write', 'flush'])
+    def test_output_interrupt_requests_shared_stop_after_cleanup(managed, monkeypatch, mode, phase):
+        """Returning exit130 must retain the shared cooperative-stop semantics."""
+        import sys
+        control = ResearchDispatchStop()
+        managed['value'] = (read_value('inspect-budget') if mode == 'read' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                writes.append(text)
+                if phase == 'write':
+                    raise KeyboardInterrupt(PRIVATE)
+                return len(text)
+    
+            def flush(self):
+                raise KeyboardInterrupt(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'read' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, stop=control, **options)
+        assert code == 130
+>       assert control.is_stopped(), 'output interruption lost the caller shared stop request'
+E       AssertionError: output interruption lost the caller shared stop request
+E       assert False
+E        +  where False = is_stopped()
+E        +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd3a110>.is_stopped
+
+tests/test_research_dispatch_cli_review.py:118: AssertionError
+_____ test_output_interrupt_requests_shared_stop_after_cleanup[flush-read] _____
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe6afd90550>
+mode = 'read', phase = 'flush'
+
+    @pytest.mark.parametrize('mode', ['read', 'run', 'blocked'])
+    @pytest.mark.parametrize('phase', ['write', 'flush'])
+    def test_output_interrupt_requests_shared_stop_after_cleanup(managed, monkeypatch, mode, phase):
+        """Returning exit130 must retain the shared cooperative-stop semantics."""
+        import sys
+        control = ResearchDispatchStop()
+        managed['value'] = (read_value('inspect-budget') if mode == 'read' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                writes.append(text)
+                if phase == 'write':
+                    raise KeyboardInterrupt(PRIVATE)
+                return len(text)
+    
+            def flush(self):
+                raise KeyboardInterrupt(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'read' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, stop=control, **options)
+        assert code == 130
+>       assert control.is_stopped(), 'output interruption lost the caller shared stop request'
+E       AssertionError: output interruption lost the caller shared stop request
+E       assert False
+E        +  where False = is_stopped()
+E        +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd3b2e0>.is_stopped
+
+tests/test_research_dispatch_cli_review.py:118: AssertionError
+_____ test_output_interrupt_requests_shared_stop_after_cleanup[flush-run] ______
+
+managed = {'calls': [('run_research_rotation', {'allow_model_calls': True, 'batch_ids_to_run': ('batch',), 'max_tasks': 1, 'max_workers': 1, ...})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe6afd3df40>
+mode = 'run', phase = 'flush'
+
+    @pytest.mark.parametrize('mode', ['read', 'run', 'blocked'])
+    @pytest.mark.parametrize('phase', ['write', 'flush'])
+    def test_output_interrupt_requests_shared_stop_after_cleanup(managed, monkeypatch, mode, phase):
+        """Returning exit130 must retain the shared cooperative-stop semantics."""
+        import sys
+        control = ResearchDispatchStop()
+        managed['value'] = (read_value('inspect-budget') if mode == 'read' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                writes.append(text)
+                if phase == 'write':
+                    raise KeyboardInterrupt(PRIVATE)
+                return len(text)
+    
+            def flush(self):
+                raise KeyboardInterrupt(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'read' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, stop=control, **options)
+        assert code == 130
+>       assert control.is_stopped(), 'output interruption lost the caller shared stop request'
+E       AssertionError: output interruption lost the caller shared stop request
+E       assert False
+E        +  where False = is_stopped()
+E        +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd3bb50>.is_stopped
+
+tests/test_research_dispatch_cli_review.py:118: AssertionError
+___ test_output_interrupt_requests_shared_stop_after_cleanup[flush-blocked] ____
+
+managed = {'calls': [], 'cleanup_error': None, 'error': None, 'value': ResearchRotationReport(status='turn_already_reserved', stop_requested=False)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fe6afdc92b0>
+mode = 'blocked', phase = 'flush'
+
+    @pytest.mark.parametrize('mode', ['read', 'run', 'blocked'])
+    @pytest.mark.parametrize('phase', ['write', 'flush'])
+    def test_output_interrupt_requests_shared_stop_after_cleanup(managed, monkeypatch, mode, phase):
+        """Returning exit130 must retain the shared cooperative-stop semantics."""
+        import sys
+        control = ResearchDispatchStop()
+        managed['value'] = (read_value('inspect-budget') if mode == 'read' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                writes.append(text)
+                if phase == 'write':
+                    raise KeyboardInterrupt(PRIVATE)
+                return len(text)
+    
+            def flush(self):
+                raise KeyboardInterrupt(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'read' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, stop=control, **options)
+        assert code == 130
+>       assert control.is_stopped(), 'output interruption lost the caller shared stop request'
+E       AssertionError: output interruption lost the caller shared stop request
+E       assert False
+E        +  where False = is_stopped()
+E        +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd87070>.is_stopped
+
+tests/test_research_dispatch_cli_review.py:118: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_research_dispatch_cli_review.py::test_output_interrupt_requests_shared_stop_after_cleanup[write-read] - AssertionError: output interruption lost the caller shared stop request
+assert False
+ +  where False = is_stopped()
+ +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd39660>.is_stopped
+FAILED tests/test_research_dispatch_cli_review.py::test_output_interrupt_requests_shared_stop_after_cleanup[write-run] - AssertionError: output interruption lost the caller shared stop request
+assert False
+ +  where False = is_stopped()
+ +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd3afb0>.is_stopped
+FAILED tests/test_research_dispatch_cli_review.py::test_output_interrupt_requests_shared_stop_after_cleanup[write-blocked] - AssertionError: output interruption lost the caller shared stop request
+assert False
+ +  where False = is_stopped()
+ +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd3a110>.is_stopped
+FAILED tests/test_research_dispatch_cli_review.py::test_output_interrupt_requests_shared_stop_after_cleanup[flush-read] - AssertionError: output interruption lost the caller shared stop request
+assert False
+ +  where False = is_stopped()
+ +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd3b2e0>.is_stopped
+FAILED tests/test_research_dispatch_cli_review.py::test_output_interrupt_requests_shared_stop_after_cleanup[flush-run] - AssertionError: output interruption lost the caller shared stop request
+assert False
+ +  where False = is_stopped()
+ +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd3bb50>.is_stopped
+FAILED tests/test_research_dispatch_cli_review.py::test_output_interrupt_requests_shared_stop_after_cleanup[flush-blocked] - AssertionError: output interruption lost the caller shared stop request
+assert False
+ +  where False = is_stopped()
+ +    where is_stopped = <polymarket_alpha_lab.research_dispatch_runner.ResearchDispatchStop object at 0x7fe6afd87070>.is_stopped
+6 failed, 12 deselected in 0.66s

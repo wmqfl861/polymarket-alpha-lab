@@ -1,0 +1,117 @@
+{
+  "format": "reviewed-task-output-candidate-v1",
+  "files": {
+    "README.md": {
+      "bytes": 4477,
+      "sha256": "2abfe9a50a32944a0ca49ee44716fbe040ff050c36662e66348942cd295a9adf"
+    },
+    "REVIEW.md": {
+      "bytes": 3035,
+      "sha256": "e24595a71d5a037d4451a674a2ba6ba01920655a5640ce5bb6524aa21fdef311"
+    },
+    "candidate-identity.json": {
+      "bytes": 338,
+      "sha256": "339ae49488ea78bd379632fe4dacd310d0aa4806c2bbc150deec494ef2f89b93"
+    },
+    "files/DELIVERY_PLAN.md": {
+      "bytes": 58817,
+      "sha256": "e7ef8b9a140b4c50a365cf2464f54f70ef47edb5e5613233316b6a78671c4fe3"
+    },
+    "files/docs/research-dispatch.md": {
+      "bytes": 26690,
+      "sha256": "f21065ac5881a0121f11dc58e86e7ab221644b610a3fee3e4496f3a6f0468a90"
+    },
+    "files/src/polymarket_alpha_lab/research_dispatch_cli.py": {
+      "bytes": 9728,
+      "sha256": "7de9f16a556c20a3a9b5174eb0af4c6b9f65c9b53228b69847d4e9fc88be593b"
+    },
+    "files/tests/test_project_postgres_dispatch_cli_native.py": {
+      "bytes": 12831,
+      "sha256": "b2d0f0ed3c99a33ea9db5e21900dc4c99d429c07d475e62fbaac237e8a05d6ca"
+    },
+    "files/tests/test_research_dispatch_cli.py": {
+      "bytes": 16991,
+      "sha256": "8cc443aed4d88dcdc88bb8062b9d5b695610a0e5a434a9032bd25f869ed9b996"
+    },
+    "files/tests/test_research_dispatch_cli_review.py": {
+      "bytes": 11047,
+      "sha256": "569a57b1fccd2e11e31dcce71325c1ba3af214f399f58c4835619f13cc0279cf"
+    },
+    "implementation.patch": {
+      "bytes": 21900,
+      "sha256": "ec2a87383827a9f1180e2d07e887f4521290404d219ca9dc29e79350cb99c8be"
+    },
+    "logs/detached-final.log": {
+      "bytes": 450,
+      "sha256": "0bdc21412441c7d6a0995fa1288b6cc16342448cc830862fa06be0c5731ebfe9"
+    },
+    "logs/detached-final.xml": {
+      "bytes": 36599,
+      "sha256": "af9d3f3224f46ce8f9cf33dfef335f58308e5d7d6da711de5af2a92d5fb899aa"
+    },
+    "logs/dispatch-first-green.log": {
+      "bytes": 179,
+      "sha256": "f92fa69eaabb3e436f05f9fb964ffa210f15cf0a81a60f6e0c51d59573fc2630"
+    },
+    "logs/dispatch-focused-green.log": {
+      "bytes": 340,
+      "sha256": "2849f8c35d487e6d992ce46eed55361b579d0c45667a7cbb776d96f6800c250a"
+    },
+    "logs/dispatch-output-red.log": {
+      "bytes": 46016,
+      "sha256": "95067136d76dc7663826f9e41de22c96b2b5e2684fa75527369e5f90d98fcc4d"
+    },
+    "logs/dispatch-review-red.log": {
+      "bytes": 15177,
+      "sha256": "3912cbcfbcc9015de28c113b97d7ebd6a6a54f47bff9a6e623ecc751846892cd"
+    },
+    "logs/focused-final.log": {
+      "bytes": 351,
+      "sha256": "a7a6c86590a121f553e3813342ab4bc4661cf6718a7a8ecb971f7066627b1e2e"
+    },
+    "logs/full-final.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "logs/full-final.log": {
+      "bytes": 46012,
+      "sha256": "9cc9535f056e8d1a992f7313fc0d758eee604d26971988c5be25975536e0ddd2"
+    },
+    "logs/install-fixed.log": {
+      "bytes": 1265,
+      "sha256": "d66ac1c9b81530b83f12dda02db2e31b5e9960e7cab7dc920f3910850b5bdc32"
+    },
+    "logs/install.log": {
+      "bytes": 5489,
+      "sha256": "f49b0d26b8584df97db851742e83826d98ffa8d0fbc6712b511e7bf311fb9d12"
+    },
+    "logs/review-install.log": {
+      "bytes": 1267,
+      "sha256": "8c5b615c91e344f94947e6d941e44ea02bd3504d51bff0c908db785443b683ae"
+    },
+    "logs/task-final.log": {
+      "bytes": 180,
+      "sha256": "f611844363b5fcca3e134d5b0e1e1cb11b26fc8c46e8c1ce6b0099297d245615"
+    },
+    "logs/task-final.xml": {
+      "bytes": 17352,
+      "sha256": "9bf8d8d9479ee7f49d4edc14c4fa90479b860a002b69d613e732f89361ae0ef2"
+    },
+    "new-case-ids.json": {
+      "bytes": 5719,
+      "sha256": "17b7dcbc3e84b6a8a67c302ca43b614d631d0ff61769b6262f21b982854605af"
+    },
+    "scope-checks.json": {
+      "bytes": 889,
+      "sha256": "28643e957d4269924c89e71b4b74932ab60ed6eeb46cdc7eef67352c6d4fac64"
+    },
+    "source-manifest.json": {
+      "bytes": 1263,
+      "sha256": "d28500a0256a4456bb4d7d7cff86e3a4f2009e3a9b23c7e12fa041497cb83309"
+    },
+    "validation-summary.json": {
+      "bytes": 2328,
+      "sha256": "04453a43e0ba110e746b2c349073d38dfe74c50f33f9691c89619d81a4a24479"
+    }
+  }
+}

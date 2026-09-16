@@ -1,0 +1,8 @@
+{
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "base": "3a987bc6c1a5df608ff8f0668b866aaf87842c04",
+  "base_tree": "81a82964c103cf0f7cfa21f0bb3cad182a90e186",
+  "local_candidate_commit": "b1290f41825eeb1d73d60d2b0e31fcc27fe1eb44",
+  "expected_result_tree": "b5734a05cc60ff37bcbf226bedb8586eefc9112a",
+  "upstream_published": false
+}

@@ -1,0 +1,909 @@
+FFFFFFFFFFFFFFFFFFF                                                      [100%]
+=================================== FAILURES ===================================
+__ test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-budget] __
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e4a5fa80>
+mode = 'budget', fault = 'short'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       assert 0 == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+___ test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-run] ____
+
+managed = {'calls': [('run_research_rotation', {'allow_model_calls': True, 'batch_ids_to_run': ('batch',), 'max_tasks': 1, 'max_workers': 1, ...})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e4ab2330>
+mode = 'run', fault = 'short'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       assert 0 == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-blocked] __
+
+managed = {'calls': [], 'cleanup_error': None, 'error': None, 'value': ResearchRotationReport(status='turn_already_reserved', stop_requested=False)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e4a98d10>
+mode = 'blocked', fault = 'short'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       assert 2 == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+__ test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-budget] __
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e4a4aa50>
+mode = 'budget', fault = 'flush'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       assert 0 == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+___ test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-run] ____
+
+managed = {'calls': [('run_research_rotation', {'allow_model_calls': True, 'batch_ids_to_run': ('batch',), 'max_tasks': 1, 'max_workers': 1, ...})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e48d9130>
+mode = 'run', fault = 'flush'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       assert 0 == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-blocked] __
+
+managed = {'calls': [], 'cleanup_error': None, 'error': None, 'value': ResearchRotationReport(status='turn_already_reserved', stop_requested=False)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e493def0>
+mode = 'blocked', fault = 'flush'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       assert 2 == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-budget] _
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e4a907d0>
+mode = 'budget', fault = 'exit-zero'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'SystemExit') == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-run] __
+
+managed = {'calls': [('run_research_rotation', {'allow_model_calls': True, 'batch_ids_to_run': ('batch',), 'max_tasks': 1, 'max_workers': 1, ...})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e48e6830>
+mode = 'run', fault = 'exit-zero'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'SystemExit') == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-blocked] _
+
+managed = {'calls': [], 'cleanup_error': None, 'error': None, 'value': ResearchRotationReport(status='turn_already_reserved', stop_requested=False)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e491e710>
+mode = 'blocked', fault = 'exit-zero'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'SystemExit') == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-budget] _
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e48ea690>
+mode = 'budget', fault = 'interrupt'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'KeyboardInterrupt') == 130
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-run] __
+
+managed = {'calls': [('run_research_rotation', {'allow_model_calls': True, 'batch_ids_to_run': ('batch',), 'max_tasks': 1, 'max_workers': 1, ...})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e48ef350>
+mode = 'run', fault = 'interrupt'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'KeyboardInterrupt') == 130
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-blocked] _
+
+managed = {'calls': [], 'cleanup_error': None, 'error': None, 'value': ResearchRotationReport(status='turn_already_reserved', stop_requested=False)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e490f5b0>
+mode = 'blocked', fault = 'interrupt'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'KeyboardInterrupt') == 130
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-budget] _
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e490fa80>
+mode = 'budget', fault = 'write-error'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'OSError') == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-run] _
+
+managed = {'calls': [('run_research_rotation', {'allow_model_calls': True, 'batch_ids_to_run': ('batch',), 'max_tasks': 1, 'max_workers': 1, ...})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e48c2660>
+mode = 'run', fault = 'write-error'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'OSError') == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+_ test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-blocked] _
+
+managed = {'calls': [], 'cleanup_error': None, 'error': None, 'value': ResearchRotationReport(status='turn_already_reserved', stop_requested=False)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e48c2900>
+mode = 'blocked', fault = 'write-error'
+
+    @pytest.mark.parametrize('mode', ['budget', 'run', 'blocked'])
+    @pytest.mark.parametrize('fault', ['short', 'flush', 'exit-zero', 'interrupt', 'write-error'])
+    def test_task_output_failure_is_nonzero_and_does_not_repeat_work(managed, monkeypatch, mode, fault):
+        """Even after a returned budgeted turn, an incomplete receipt is not success."""
+        managed['value'] = (read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        writes, flushes = [], []
+    
+        class Output:
+            def write(self, text):
+                if mode == 'blocked':
+                    assert 'entered' not in managed
+                else:
+                    assert managed['closed']
+                writes.append(text)
+                if fault == 'exit-zero':
+                    raise SystemExit(0)
+                if fault == 'interrupt':
+                    raise KeyboardInterrupt(PRIVATE)
+                if fault == 'write-error':
+                    raise OSError(PRIVATE)
+                return len(text) - 1 if fault == 'short' else len(text)
+    
+            def flush(self):
+                flushes.append(1)
+                if fault == 'flush':
+                    raise OSError(PRIVATE)
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode == 'budget' else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            try:
+                code = cli.main(argv, default_root=ROOT, **options)
+            except (Exception, SystemExit, KeyboardInterrupt) as error:
+                code = ('escaped', type(error).__name__)
+>       assert code == (130 if fault == 'interrupt' else 1)
+E       AssertionError: assert ('escaped', 'OSError') == 1
+
+tests/test_research_dispatch_cli.py:298: AssertionError
+____ test_task_receipt_is_written_once_then_flushed_after_cleanup[budget-0] ____
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e48c29e0>
+mode = 'budget', expected_code = 0
+
+    @pytest.mark.parametrize('mode,expected_code', [('budget', 0), ('missing', 3), ('run', 0), ('blocked', 2)])
+    def test_task_receipt_is_written_once_then_flushed_after_cleanup(managed, monkeypatch, mode, expected_code):
+        managed['value'] = (None if mode == 'missing' else read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        actions = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                actions.append(('write', text))
+                return len(text)
+    
+            def flush(self):
+                actions.append(('flush', None))
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode in ('budget', 'missing') else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, **options)
+        assert code == expected_code
+>       assert [name for name, _ in actions] == ['write', 'flush']
+E       AssertionError: assert ['write', 'write'] == ['write', 'flush']
+E         
+E         At index 1 diff: 'write' != 'flush'
+E         
+E         Full diff:
+E           [
+E               'write',
+E         -     'flush',
+E         +     'write',
+E           ]
+
+tests/test_research_dispatch_cli.py:326: AssertionError
+___ test_task_receipt_is_written_once_then_flushed_after_cleanup[missing-3] ____
+
+managed = {'calls': [('inspect_model_budget', {'budget_id': 'budget'})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e4aaa5f0>
+mode = 'missing', expected_code = 3
+
+    @pytest.mark.parametrize('mode,expected_code', [('budget', 0), ('missing', 3), ('run', 0), ('blocked', 2)])
+    def test_task_receipt_is_written_once_then_flushed_after_cleanup(managed, monkeypatch, mode, expected_code):
+        managed['value'] = (None if mode == 'missing' else read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        actions = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                actions.append(('write', text))
+                return len(text)
+    
+            def flush(self):
+                actions.append(('flush', None))
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode in ('budget', 'missing') else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, **options)
+        assert code == expected_code
+>       assert [name for name, _ in actions] == ['write', 'flush']
+E       AssertionError: assert ['write', 'write'] == ['write', 'flush']
+E         
+E         At index 1 diff: 'write' != 'flush'
+E         
+E         Full diff:
+E           [
+E               'write',
+E         -     'flush',
+E         +     'write',
+E           ]
+
+tests/test_research_dispatch_cli.py:326: AssertionError
+_____ test_task_receipt_is_written_once_then_flushed_after_cleanup[run-0] ______
+
+managed = {'calls': [('run_research_rotation', {'allow_model_calls': True, 'batch_ids_to_run': ('batch',), 'max_tasks': 1, 'max_workers': 1, ...})], 'cleanup_error': None, 'closed': True, 'entered': True, ...}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e4aa8130>
+mode = 'run', expected_code = 0
+
+    @pytest.mark.parametrize('mode,expected_code', [('budget', 0), ('missing', 3), ('run', 0), ('blocked', 2)])
+    def test_task_receipt_is_written_once_then_flushed_after_cleanup(managed, monkeypatch, mode, expected_code):
+        managed['value'] = (None if mode == 'missing' else read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        actions = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                actions.append(('write', text))
+                return len(text)
+    
+            def flush(self):
+                actions.append(('flush', None))
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode in ('budget', 'missing') else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, **options)
+        assert code == expected_code
+>       assert [name for name, _ in actions] == ['write', 'flush']
+E       AssertionError: assert ['write', 'write'] == ['write', 'flush']
+E         
+E         At index 1 diff: 'write' != 'flush'
+E         
+E         Full diff:
+E           [
+E               'write',
+E         -     'flush',
+E         +     'write',
+E           ]
+
+tests/test_research_dispatch_cli.py:326: AssertionError
+___ test_task_receipt_is_written_once_then_flushed_after_cleanup[blocked-2] ____
+
+managed = {'calls': [], 'cleanup_error': None, 'error': None, 'value': ResearchRotationReport(status='turn_already_reserved', stop_requested=False)}
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f01e48c14e0>
+mode = 'blocked', expected_code = 2
+
+    @pytest.mark.parametrize('mode,expected_code', [('budget', 0), ('missing', 3), ('run', 0), ('blocked', 2)])
+    def test_task_receipt_is_written_once_then_flushed_after_cleanup(managed, monkeypatch, mode, expected_code):
+        managed['value'] = (None if mode == 'missing' else read_value('inspect-budget') if mode == 'budget' else
+                            ResearchRotationReport('turn_already_reserved', stored_turn()))
+        actions = []
+    
+        class Output:
+            def write(self, text):
+                assert ('entered' not in managed) if mode == 'blocked' else managed['closed']
+                actions.append(('write', text))
+                return len(text)
+    
+            def flush(self):
+                actions.append(('flush', None))
+    
+        argv = ['inspect-budget', '--budget-id', 'budget'] if mode in ('budget', 'missing') else RUN
+        options = {'model_factory': lambda _: None} if mode == 'run' else {}
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, 'stdout', Output())
+            code = cli.main(argv, default_root=ROOT, **options)
+        assert code == expected_code
+>       assert [name for name, _ in actions] == ['write', 'flush']
+E       AssertionError: assert ['write', 'write'] == ['write', 'flush']
+E         
+E         At index 1 diff: 'write' != 'flush'
+E         
+E         Full diff:
+E           [
+E               'write',
+E         -     'flush',
+E         +     'write',
+E           ]
+
+tests/test_research_dispatch_cli.py:326: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-budget] - assert 0 == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-run] - assert 0 == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[short-blocked] - assert 2 == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-budget] - assert 0 == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-run] - assert 0 == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[flush-blocked] - assert 2 == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-budget] - AssertionError: assert ('escaped', 'SystemExit') == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-run] - AssertionError: assert ('escaped', 'SystemExit') == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[exit-zero-blocked] - AssertionError: assert ('escaped', 'SystemExit') == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-budget] - AssertionError: assert ('escaped', 'KeyboardInterrupt') == 130
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-run] - AssertionError: assert ('escaped', 'KeyboardInterrupt') == 130
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[interrupt-blocked] - AssertionError: assert ('escaped', 'KeyboardInterrupt') == 130
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-budget] - AssertionError: assert ('escaped', 'OSError') == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-run] - AssertionError: assert ('escaped', 'OSError') == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_output_failure_is_nonzero_and_does_not_repeat_work[write-error-blocked] - AssertionError: assert ('escaped', 'OSError') == 1
+FAILED tests/test_research_dispatch_cli.py::test_task_receipt_is_written_once_then_flushed_after_cleanup[budget-0] - AssertionError: assert ['write', 'write'] == ['write', 'flush']
+  
+  At index 1 diff: 'write' != 'flush'
+  
+  Full diff:
+    [
+        'write',
+  -     'flush',
+  +     'write',
+    ]
+FAILED tests/test_research_dispatch_cli.py::test_task_receipt_is_written_once_then_flushed_after_cleanup[missing-3] - AssertionError: assert ['write', 'write'] == ['write', 'flush']
+  
+  At index 1 diff: 'write' != 'flush'
+  
+  Full diff:
+    [
+        'write',
+  -     'flush',
+  +     'write',
+    ]
+FAILED tests/test_research_dispatch_cli.py::test_task_receipt_is_written_once_then_flushed_after_cleanup[run-0] - AssertionError: assert ['write', 'write'] == ['write', 'flush']
+  
+  At index 1 diff: 'write' != 'flush'
+  
+  Full diff:
+    [
+        'write',
+  -     'flush',
+  +     'write',
+    ]
+FAILED tests/test_research_dispatch_cli.py::test_task_receipt_is_written_once_then_flushed_after_cleanup[blocked-2] - AssertionError: assert ['write', 'write'] == ['write', 'flush']
+  
+  At index 1 diff: 'write' != 'flush'
+  
+  Full diff:
+    [
+        'write',
+  -     'flush',
+  +     'write',
+    ]
+19 failed, 64 deselected in 1.21s
