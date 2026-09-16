@@ -378,3 +378,39 @@ are still required before deploying a changed version to an existing user's data
 This guide authorizes none of those user-machine writes. The known intermittent
 PS5.1 first-invocation problem is still open; its test observations do not prove a
 runtime fix. WP-06/G6 and D1-D3 remain open, as do real forecast/input/fee acceptance.
+
+## Maintainer acceptance: one packaged research-to-settlement route
+
+The native distribution test now continues inside its fresh second extraction,
+using that kit's Python and project modules, not checkout application code. A
+reviewed test-only recipe supplies synthetic BTC/ETH requests and clients; it is
+NOT shipped as an application, a model adapter or an operator command.
+
+The proof creates a seven-call allowance, executes two bounded turns separated
+by a database restart, and checks that replay consumes no extra allowance. It
+saves two ready simulations, one rejected simulation and one failed research
+result through the actual task command. After the declared UTC minute really
+closes, the confirmation command stores synthetic independently-reviewed YES
+outcomes; the actual evaluation command must reproduce the original cost-bound
+results (BTC 2.971 and ETH -3.029 payout units) and retain both excluded attempts.
+Historical and current exports must agree with the same packaged API after restart.
+
+A separate synthetic child then exits abruptly after committing its claim and
+one call reservation. The saved claim stays incomplete, its allowance is not
+refunded, replay never constructs another client, and current strict evaluation
+blocks while a pre-interruption historical view remains unchanged. The recipe
+also checks all loaded project modules and the unchanged kit manifest.
+
+This is isolated engineering evidence, not real source/fee verification, actual
+human review, real model use or account P&L. It does not close G2-G6, D1-D3, the
+old PS5.1 issue or release-specific upgrade acceptance. Existing component tests
+remain in place. The new recipe has its own bounded child execution; no existing
+process/job timeout, assertion, provider permission or user data is changed.
+
+The combined PR44/PR45 proof also creates one real synthetic confirmation through
+that kit's command with a deliberately short output sink. It first proves the
+review is absent, requires a success-status output prefix and nonzero exit, then
+reads back the committed review/outcome and explicitly replays the SAME input.
+The original receipt and timestamps must match. No database/transaction mock is
+used for this step; no new model call, alternate review ID or automatic retry is
+permitted. It verifies this simulated failure, not real source/human acceptance.

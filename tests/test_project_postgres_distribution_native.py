@@ -335,6 +335,27 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
             assert view['evaluation']['groups']==[] and view['evaluation']['actual_account_pnl'] is None
             assert 'attempts' not in view['evaluation'] and 'decisions' not in view['evaluation']['history']
             assert ProjectPostgres(kit_root).status()['status']=='stopped'
+        # Compose the budgeted research -> retained simulation -> reviewed
+        # settlement route inside the EMPTY second kit, with its own interpreter.
+        # This reviewed recipe is test code only; application imports may NOT
+        # come from this checkout. It waits for a real UTC observation close.
+        from tests.packaged_research_flow import run_packaged_recipe
+        completed = run_packaged_recipe(second, second / '.venv/Scripts/python.exe', proof)
+        assert completed.returncode == 0, (completed.stdout, completed.stderr)
+        assert completed.stderr == ''
+        composed = json.loads(completed.stdout)
+        assert composed['status'] == 'packaged_flow_verified'
+        assert composed['source_commit'] == receipt['source_commit']
+        assert composed['source_tree'] == receipt['source_tree']
+        assert composed['instance_id'] == other['instance_id']
+        assert (composed['attempts'], composed['simulations'], composed['settlements'],
+                composed['reserved_calls']) == (4, 4, 2, 7)
+        assert composed['project_modules_checked'] > 0 and composed['synthetic_inputs'] is True
+        assert composed['actual_account_pnl'] is None
+        assert composed['incomplete_claims'] == composed['interrupted_reserved_calls'] == 1
+        assert composed['confirmation_output_failures'] == 1
+        assert composed['same_confirmation_replayed'] is True
+        print('packaged research composition: ' + json.dumps(composed, sort_keys=True), flush=True)
         # A changed immutable package blocks without modifying stored research.
         target = first / 'src/polymarket_alpha_lab/local_postgres_dsn.py'
         original = target.read_bytes()
