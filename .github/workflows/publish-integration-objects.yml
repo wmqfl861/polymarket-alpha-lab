@@ -1,0 +1,77 @@
+name: Publish fixed integration objects
+on:
+  push:
+    branches: [review/wp06-integrated-publication-20260916]
+permissions:
+  contents: write
+concurrency:
+  group: pr44-reviewed-object-publication
+  cancel-in-progress: false
+jobs:
+  publish-objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Reconstruct only the reviewed tree and create a new transport ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=fff21287c0e3bfab2d679d7ac47bd8044f808ea9
+          OLD=3ecf4098f1a8cbf8f1fa078794887ae6bae59f41
+          COMMON=1ac3ec6b1ec0de18faa1e0227076b14075525ec7
+          REF=refs/heads/review/wp06-integrated-objects-20260916
+          PATCH="$RUNNER_TEMP/integration.patch"
+          cp docs/reviews/pr44-integration-publication/integration.patch "$PATCH"
+          echo "9f43b384fea2f0586704551b161f28683cce25249cf2c6829b5e9938204012f0  $PATCH" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE" "$OLD" "$COMMON"
+          git checkout --detach "$BASE"
+          # No application code is executed and no workflow file is published by this job.
+          git restore --source="$OLD" --staged --worktree -- database/quickstart.md tests/packaged_research_flow.py tests/test_packaged_research_flow.py tests/test_packaged_research_flow_review.py tests/test_project_postgres_distribution_native.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          def show(revision):
+              return subprocess.check_output(['git','show',revision+':DELIVERY_PLAN.md'])
+          common=show('1ac3ec6b1ec0de18faa1e0227076b14075525ec7')
+          old=show('3ecf4098f1a8cbf8f1fa078794887ae6bae59f41')
+          current=show('fff21287c0e3bfab2d679d7ac47bd8044f808ea9')
+          assert old.startswith(common) and current.startswith(common)
+          Path('DELIVERY_PLAN.md').write_bytes(current+old[len(common):].replace(b'## 23.',b'## 24.',1))
+          PY
+          git add DELIVERY_PLAN.md
+          test "$(git write-tree)" = 22b50bbae32c7ccc758adae44f04593e1955d28c
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- src scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json .github
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 6
+          TREE=$(git write-tree)
+          test "$TREE" = b91fabdeb88093896fa283178c56c42e36501415
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git -c core.hooksPath=/dev/null commit-tree "$TREE" -p "$BASE" -m 'Transport reviewed PR44 test/doc objects; not acceptance or production merge')
+          git push origin "$COMMIT:$REF"
+          export COMMIT TREE
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          value=dict(commit=os.environ['COMMIT'],tree=os.environ['TREE'],
+              expected_final_tree='401f5a691e6898c670e446d142340d396862dae9',
+              patch_sha256='9f43b384fea2f0586704551b161f28683cce25249cf2c6829b5e9938204012f0',
+              destination='review/wp06-integrated-objects-20260916',
+              main_updated=False,feature_branch_updated=False,application_code_executed=False,
+              workflow_files_changed=False)
+          Path(os.environ['RUNNER_TEMP'],'publication.json').write_text(json.dumps(value,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-integration-publication
+          path: ${{ runner.temp }}/publication.json
+          retention-days: 7
+          if-no-files-found: error
