@@ -1,0 +1,688 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 34680ed..08e7e2f 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -593,3 +593,25 @@ D1—D3、原统计晋级门槛和 WP-06 首次启动可靠性问题不变。没
+ 非零退出，再按原编号查询并明确原样重放；原回执与时间戳必须不变。只注入输出故障，
+ 不模拟数据库／事务，不新造审核编号或重试模型。最终复审和适用 CI 以本轮固定树为准。
+ 本项仍为合成工程验收，不关闭 G2—G6、D1—D3、真实输入／费率或原 PS5.1 问题。
++
++
++## 25. WP-02／WP-03 本次推进：已审阅批次与预算的显式命令入库（G2／G3 尚未关闭）
++
++基线 `4df08873f4b9b8f1378913c0d00ca6bb183e51e2`（PR #44）。在既有任务命令增加
++`enqueue-batch`／`create-budget`，直接复用原规范载荷、不可变存储和托管会话，补齐
++批准输入的命令行入库步骤；不选择提供商、不调用模型、不新增文件队列或持久化层。
++
++- 两个操作分别要求原编号、已审阅输入 SHA256 和各自明确写入许可；二进制 stdin 有界，
++  只接受原规范输入及至多一个行结束符。不通过重新序列化、更新时间或默认参数补造许可。
++- 回执只含原不可变元数据，不宣称新创建、当前队列状态或未使用预算；两次入库不是同一
++  原子事务。重复原输入保留原时间，改内容冲突，失败后只能查询并明确原样重放，不自动重试。
++- 单独反例自审复现返回值与入参共享可变引用时可绕过完整载荷比较的问题；固定调用前的
++  原始规范载荷后校验，保留原断言和首败。任务控制台输出沿用单次完整写入／刷新检查，
++  不把短写或输出失败视为成功，不从错误推断没有提交。
++- 实际解压包组合场景改用这两条真实子进程命令入库，再验证没有任务领取或调用预留，
++  并继续原有预算、研究、模拟、结算和重启流程；已使用预算重放不退额，变更额度冲突。
++  精确最终代码树、单独工作副本复测、全量及适用 Windows CI 和未执行项记录在本 PR。
++
++**WP-02 仍 AWAITING_OWNER，WP-03 仍 PARTIAL，V1 仍 1／6。** 哈希绑定不是输入批准或
++费率认证，独立 `run-turn` 仍不装配真实客户端。D1—D3、真实预测／输入／费率验收、
++安全版本切换和原 PS5.1 问题仍待办。无迁移／依赖变更、用户数据访问、密钥或实盘操作。
+diff --git a/database/quickstart.md b/database/quickstart.md
+index de10540..381effd 100644
+--- a/database/quickstart.md
++++ b/database/quickstart.md
+@@ -170,14 +170,18 @@ new loader is provided here. Stop here until D1-D3 and the adapter are approved.
+ 
+ ### 3. Admit a budgeted batch, run one turn, then inspect
+ 
+-The approved application first calls the existing
+-`enqueue_research_batch(..., allow_queue_write=True)` and
+-`create_model_budget(..., allow_budget_write=True)` with reviewed typed inputs,
+-matching request hashes and an independently checked per-call charge bound.
+-Use the [task guide](../docs/research-dispatch.md) and
+-[budget contract](../docs/research-model-budget.md). Do not use the older
+-unbudgeted API default for the real V1 workflow or count response token totals as
+-a hard monetary ceiling. No batch or allowance is created by an inspection command.
++Admit the reviewed batch and budget through the existing task command's
++`enqueue-batch --allow-queue-write` and `create-budget --allow-budget-write`, or
++through the original typed session APIs. Each command also requires its original
++ID, `--input-sha256` and canonical binary stdin; it never runs research or reserves
++a model call. Use the [task guide](../docs/research-dispatch.md) for the exact input
++transport and the [budget contract](../docs/research-model-budget.md) for reviewed
++request hashes and an independently checked per-call charge bound. These are two
++separate explicit writes, not an atomic pair: inspect the original IDs after any
++failure, and only explicitly replay the same approved input. Creation does not
++reset a used budget. Do not use the older unbudgeted API default for the real V1
++workflow or count response token totals as a hard monetary ceiling. An inspection
++command creates neither a batch nor an allowance.
+ 
+ The standalone `run-turn` script intentionally has **no model factory**. Even with
+ `--allow-model-calls`, it returns exit 2 before opening a managed session. These
+diff --git a/docs/research-dispatch.md b/docs/research-dispatch.md
+index cd98e64..7fddeee 100644
+--- a/docs/research-dispatch.md
++++ b/docs/research-dispatch.md
+@@ -400,3 +400,91 @@ and unchanged old records. Native inputs/clients/charges are synthetic.
+ Final-revision commands, exact counts, first failures, CI identifiers and skipped
+ or unexecuted checks belong to the implementation PR and DELIVERY_PLAN.md. No
+ local user's database, installed kit, credentials or real provider is exercised.
++
++## Admit reviewed batches and budgets through the existing task command
++
++`manage_research_tasks.py` now exposes the original immutable creation APIs as
++`enqueue-batch` and `create-budget`. This fills the command-line admission step;
++it does NOT select a provider, approve research inputs, start research, reserve
++model calls, verify a tariff or load a model factory. D1-D3 and the reviewed
++application/client boundary still apply. Preparing a valid canonical request is
++not a substitute for reviewing its actual market rules and evidence.
++
++Each operation requires its existing identifier, `--input-sha256`, its OWN explicit
++write flag, and one original canonical payload on binary stdin:
++
++| Operation | ID argument | Required write flag | Original payload / bound |
++| --- | --- | --- | --- |
++| `enqueue-batch` | `--batch-id` | `--allow-queue-write` | `ResearchBatch.payload`, at most 8 MiB |
++| `create-budget` | `--budget-id` | `--allow-budget-write` | `ModelCallBudget.payload`, at most 32 KiB |
++
++The digest must be the SHA256 of the reviewed canonical UTF-8 payload, without
++transport framing. One optional trailing LF or CRLF is accepted, not arbitrary
++whitespace, another JSON object or a changed serialization. Original codecs check
++closed schemas, exact request hashes, immutable flags and bounds. Invalid input
++or a missing write flag stops before any managed database access; missing permission
++also prevents reading stdin. No times, IDs, costs or approval hashes are generated
++by the console. There is no `--file` loader or new business journal.
++
++An already-authorized application may send its reviewed IN-MEMORY values directly.
++The following variables are supplied reviewed values, not filenames, credentials
++or default authorizations:
++
++```python
++from pathlib import Path
++import subprocess
++
++project = Path(actual_project_root)
++python = project / '.venv/Scripts/python.exe'
++script = project / 'scripts/manage_research_tasks.py'
++
++# This example performs ONLY the explicitly approved batch write.
++# reviewed_batch is the original ResearchBatch, not discovery-console JSON.
++result = subprocess.run([
++    str(python), '-I', str(script), '--root', str(project),
++    'enqueue-batch', '--batch-id', reviewed_batch.batch_id,
++    '--input-sha256', reviewed_batch.content_sha256, '--allow-queue-write',
++], input=reviewed_batch.payload.encode('utf-8'), capture_output=True,
++   shell=False, check=False)
++# Check returncode AND the returned status; do not automatically repeat it.
++```
++
++Budget creation follows the SAME byte transport with `create-budget`,
++`--budget-id reviewed_policy.budget_id`, the reviewed policy's digest and
++`--allow-budget-write`. Do not pipeline through PowerShell `Get-Content`, reformat
++JSON, discover a credential, or interpret an example amount as an approved budget.
++The producer must close stdin. The input byte bound does not promise a wall-clock
++deadline against a producer that never finishes; the caller owns transport/I/O
++cancellation. Cancellation does not imply rollback of a possibly completed write.
++
++A successful result has `status=admission_receipt_returned` and ONLY immutable
++metadata: ID, complete payload hash, original admission/creation time and request
++count (budget also includes its expiry). No original evidence, transcript, current
++queue state or remaining allowance is exported in this receipt. It may be the
++first creation OR an exact replay, so it deliberately does not say "newly created"
++or claim zero reservations on a reused budget. Use existing `inspect-batch` /
++`inspect-budget` for the current database view.
++
++Same-ID, identical-input replay preserves the original receipt even after later
++use; changing any payload byte conflicts under the original store. Creation never
++tops up/refunds an existing policy, resets tasks, refreshes a cutoff or admits
++another model call. Input permission is not permission to call a provider.
++
++Batch and budget creation are TWO independent explicit operations, NOT one atomic
++pair. A successful batch write can remain when the budget write is blocked or
++fails. An error, cleanup failure or lost/partial output can follow a COMMIT. Inspect
++the SAME identifier first; only explicitly replay the SAME reviewed payload.
++Never create a replacement ID, repeat model calls or assume that an error undid a
++write. The task console now checks its single output write and flush on admission,
++inspection and turn results; no second result is appended to a damaged stream.
++A completed flush is not proof that a consumer received the message.
++
++The existing `run-turn` standalone script still has **no model factory** and refuses
++real execution without the approved application. These commands do not complete
++G2/G3 or validate real input/fee evidence. The composed Windows kit test admits
++both batches and the policy through actual child commands, proves no claims/call
++reservations exist at that point, and then runs the existing synthetic flow.
++
++Stream references checked 2026-09-16:
++https://docs.python.org/3.13/library/io.html
++https://docs.python.org/3.13/library/sys.html#sys.stdin
+diff --git a/src/polymarket_alpha_lab/research_dispatch_cli.py b/src/polymarket_alpha_lab/research_dispatch_cli.py
+index 8ff1420..15665f6 100644
+--- a/src/polymarket_alpha_lab/research_dispatch_cli.py
++++ b/src/polymarket_alpha_lab/research_dispatch_cli.py
+@@ -1,21 +1,28 @@
+ """Operate existing durable research tasks; never discover clients or credentials.
+ 
+-Inspect one batch, turn or allowance, or explicitly run one budgeted turn through
+-an application's supplied client. No file queue, scheduler, migration or retry.
++Admit one reviewed batch/allowance, inspect existing state, or explicitly run one
++budgeted turn through an application's supplied client. No file queue, scheduler,
++migration, provider discovery or retry.
+ """
+ from __future__ import annotations
+ 
+ import argparse
+ from dataclasses import replace
+ import json
++import sys
+ from pathlib import Path
+ 
+ from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+-from polymarket_alpha_lab.research_dispatch import ResearchBatchSnapshot
++from polymarket_alpha_lab.research_dispatch import (
++    MAX_BATCH_BYTES, ResearchBatchSnapshot, StoredResearchBatch, decode_batch,
++)
+ from polymarket_alpha_lab.research_dispatch_rotation import StoredResearchRotationTurn, batch_ids
+ from polymarket_alpha_lab.research_dispatch_rotation_runner import ResearchRotationReport
+ from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
+-from polymarket_alpha_lab.research_model_budget import ModelBudgetSnapshot
++from polymarket_alpha_lab.research_model_budget import (
++    MAX_POLICY_BYTES, ModelBudgetSnapshot, StoredModelBudget, decode_budget,
++)
++from polymarket_alpha_lab.research_resolution import digest
+ from polymarket_alpha_lab.team_research_agent_types import identifier
+ 
+ 
+@@ -63,6 +70,14 @@ def _parser(default_root):
+     capture.add_argument('--record-id', type=_identifier, required=True)
+     capture.add_argument('--input-sha256', required=True)
+     capture.add_argument('--allow-paper-write', action='store_true')
++    for operation, key, permission in (
++            ('enqueue-batch', 'batch-id', 'allow-queue-write'),
++            ('create-budget', 'budget-id', 'allow-budget-write')):
++        admission = commands.add_parser(operation, allow_abbrev=False,
++            help='store one reviewed canonical stdin value; never run research')
++        admission.add_argument('--' + key, type=_identifier, required=True)
++        admission.add_argument('--input-sha256', required=True)
++        admission.add_argument('--' + permission, action='store_true')
+     return parser
+ 
+ 
+@@ -119,6 +134,80 @@ def _run(session, args, model_factory, stop):
+     return body, 0
+ 
+ 
++
++def _emit(envelope, code):
++    """One checked write after cleanup; a failed stream cannot receive a retry."""
++    try:
++        rendered = json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2) + '\n'
++        count = sys.stdout.write(rendered)
++        if type(count) is not int or count != len(rendered):
++            return 1
++        sys.stdout.flush()
++    except KeyboardInterrupt:
++        return 130
++    except (Exception, SystemExit):
++        return 1
++    return code
++
++
++def _read_admission(args):
++    """Original canonical codec, with at most one optional LF/CRLF frame.
++
++    Bound total bytes before decoding. Short reads are not EOF. The producer
++    must close stdin; this byte limit is not a wall-clock timeout for a pipe.
++    No supplied approval digest, timestamp or source bytes are replaced.
++    """
++    digest(args.input_sha256)
++    batching = args.operation == 'enqueue-batch'
++    maximum = (MAX_BATCH_BYTES if batching else MAX_POLICY_BYTES) + 2
++    source = sys.stdin.buffer
++    data = bytearray()
++    while True:
++        limit = min(65536, maximum + 1 - len(data))
++        part = source.read(limit)
++        if type(part) is not bytes or len(part) > limit:
++            raise ValueError('research_dispatch_input_invalid')
++        if not part:
++            break
++        data.extend(part)
++        if len(data) > maximum:
++            raise ValueError('research_dispatch_input_limit')
++    raw = bytes(data)
++    if raw.endswith(b'\r\n'):
++        raw = raw[:-2]
++    elif raw.endswith(b'\n'):
++        raw = raw[:-1]
++    value = (decode_batch if batching else decode_budget)(raw.decode('utf-8'), args.input_sha256)
++    expected_id = args.batch_id if batching else args.budget_id
++    if (value.batch_id if batching else value.budget_id) != expected_id:
++        raise ValueError('research_dispatch_input_identity_mismatch')
++    return value
++
++
++def _admit(session, args, value):
++    """Only immutable metadata, not a fresh snapshot or proof of new creation."""
++    # Preserve the reviewed value even if a faulty collaborator mutates the
++    # supplied object before returning a receipt that aliases that same object.
++    expected_payload = value.payload
++    if args.operation == 'enqueue-batch':
++        stored = session.enqueue_research_batch(batch=value, allow_queue_write=True)
++        if type(stored) is not StoredResearchBatch:
++            raise ValueError('research_dispatch_receipt_invalid')
++        stored = replace(stored)
++        if stored.batch.payload != expected_payload:
++            raise ValueError('research_dispatch_receipt_mismatch')
++        return dict(batch_id=stored.batch.batch_id, batch_sha256=stored.batch.content_sha256,
++            request_count=len(stored.batch.requests), enqueued_at=stored.enqueued_at.isoformat())
++    stored = session.create_model_budget(policy=value, allow_budget_write=True)
++    if type(stored) is not StoredModelBudget:
++        raise ValueError('research_dispatch_receipt_invalid')
++    stored = replace(stored)
++    if stored.policy.payload != expected_payload:
++        raise ValueError('research_dispatch_receipt_mismatch')
++    return dict(budget_id=stored.policy.budget_id, policy_sha256=stored.policy.content_sha256,
++        created_at=stored.created_at.isoformat(), expires_at=stored.policy.expires_at.isoformat(),
++        request_count=len(stored.policy.request_keys))
++
+ def main(argv: list[str] | None = None, *, default_root: Path,
+          model_factory=None, stop: ResearchDispatchStop | None = None) -> int:
+     """Emit existing metadata receipts only, after managed-session cleanup.
+@@ -135,6 +224,7 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+         return operate_paper(root=args.root, operation=args.operation, record_id=args.record_id,
+             input_sha256=getattr(args, 'input_sha256', None),
+             allow_paper_write=getattr(args, 'allow_paper_write', False))
++    admitting = args.operation in ('enqueue-batch', 'create-budget')
+     running = args.operation == 'run-turn'
+     if running:
+         try:
+@@ -154,17 +244,36 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+                   else 'research_dispatch_approved_client_required')
+         envelope.update(status='blocked', reason_code=reason,
+             operation_entered=False, model_calls_possible=False, business_writes_possible=False)
+-        print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
+-        return 2
++        return _emit(envelope, 2)
++    admission = None
++    if admitting:
++        envelope.update(operation_entered=False, model_calls_possible=False,
++                        business_writes_possible=False, public_network_called=False)
++        allowed = (args.allow_queue_write if args.operation == 'enqueue-batch'
++                   else args.allow_budget_write)
++        if allowed is not True:
++            return _emit(dict(envelope, status='blocked',
++                reason_code='research_dispatch_admission_opt_in_required'), 2)
++        try:
++            admission = _read_admission(args)
++        except KeyboardInterrupt:
++            return _emit(dict(envelope, status='interrupted',
++                reason_code='research_dispatch_input_interrupted'), 130)
++        except (Exception, SystemExit):
++            return _emit(dict(envelope, status='invalid_input',
++                reason_code='research_dispatch_input_invalid'), 2)
+     # Conservatively report possible effects once the managed operation is
+     # entered, including unknown COMMIT/cleanup acknowledgement. Never infer
+     # absence of writes from an exception. No success is printed before cleanup.
+     envelope.update(operation_entered=True, model_calls_possible=running,
+-                    business_writes_possible=running)
++                    business_writes_possible=running or admitting)
+     control = ResearchDispatchStop() if stop is None else stop
+     try:
+         with ProjectPostgres(args.root).session() as session:
+-            if running:
++            if admitting:
++                body = _admit(session, args, admission)
++                code, status = 0, 'admission_receipt_returned'
++            elif running:
+                 body, code = _run(session, args, model_factory, control)
+                 status = body['status']
+             else:
+@@ -178,8 +287,7 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+     except (Exception, SystemExit):
+         envelope.update(status='failed', reason_code='research_dispatch_operation_failed')
+         code = 1
+-    print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
+-    return code
++    return _emit(envelope, code)
+ 
+ 
+ __all__ = ('main',)
+diff --git a/tests/packaged_research_flow.py b/tests/packaged_research_flow.py
+index f3993ab..fe76677 100644
+--- a/tests/packaged_research_flow.py
++++ b/tests/packaged_research_flow.py
+@@ -206,9 +206,27 @@ def run_packaged_flow(root):
+             return json.loads(output.getvalue())['result']
+         with db.session() as s:
+             assert s.execution_inventory().to_dict()['claim_count'] == 0
+-            for name, batch in zip(BATCHES, (requests[::2], requests[1::2]), strict=True):
+-                s.enqueue_research_batch(batch=ResearchBatch(name, batch), allow_queue_write=True)
+-            s.create_model_budget(policy=policy, allow_budget_write=True)
++        # Admit through actual KIT commands, not parent-side persistence calls.
++        # These operations are independent; neither starts research or reserves a call.
++        admitted = []
++        for item, operation, key, permission, inspect in (
++                (ResearchBatch(BATCHES[0], requests[::2]), 'enqueue-batch', '--batch-id', '--allow-queue-write', 'inspect-batch'),
++                (ResearchBatch(BATCHES[1], requests[1::2]), 'enqueue-batch', '--batch-id', '--allow-queue-write', 'inspect-batch'),
++                (policy, 'create-budget', '--budget-id', '--allow-budget-write', 'inspect-budget')):
++            identity_key = item.batch_id if operation == 'enqueue-batch' else item.budget_id
++            args = [operation, key, identity_key, '--input-sha256', item.content_sha256]
++            payload = item.payload.encode()
++            denied = command('manage_research_tasks.py', args, payload, expected=2)
++            assert denied['operation_entered'] is denied['business_writes_possible'] is False
++            assert command('manage_research_tasks.py', [inspect, key, identity_key], expected=3)['result'] is None
++            receipt = command('manage_research_tasks.py', [*args, permission], payload)
++            assert receipt['status'] == 'admission_receipt_returned'
++            assert receipt['model_calls_possible'] is receipt['public_network_called'] is False
++            assert command('manage_research_tasks.py', [*args, permission], payload) == receipt
++            admitted.append(receipt['result'])
++        with db.session() as s:
++            assert s.execution_inventory().to_dict()['claim_count'] == 0
++            assert s.inspect_model_budget(budget_id='kit-budget').reserved_calls == 0
+         first = dispatch('one', factory)
+         assert first['execution_invocations'] == 2
+         assert all(a['execution']['research_status'] == 'completed' for a in first['attempts'])
+@@ -223,6 +241,12 @@ def run_packaged_flow(root):
+         second = dispatch('two', factory, expected=1)
+         assert [a['execution']['research_status'] for a in second['attempts']] == ['completed', 'failed']
+         assert [m.calls for m in models] == [2, 2, 2, 1]
++        budget_args = ['create-budget', '--budget-id', policy.budget_id, '--input-sha256',
++                       policy.content_sha256, '--allow-budget-write']
++        assert command('manage_research_tasks.py', budget_args, policy.payload.encode())['result'] == admitted[-1]
++        changed_policy = replace(policy, total_micros=701)
++        changed_args = [*budget_args]; changed_args[-2] = changed_policy.content_sha256
++        assert command('manage_research_tasks.py', changed_args, changed_policy.payload.encode(), expected=1)['result'] is None
+         with db.session() as s:
+             assert s.inspect_model_budget(budget_id='kit-budget').reserved_calls == 7
+             for number, (request, raw) in enumerate(rows):
+@@ -369,7 +393,7 @@ raise SystemExit(99)
+             incomplete_claims=1, interrupted_reserved_calls=1, project_modules_checked=count,
+             actual_account_pnl=None, synthetic_inputs=True,
+             confirmation_output_failures=len(output_failed_reviews),
+-            same_confirmation_replayed=True)
++            same_confirmation_replayed=True, admission_receipts=len(admitted))
+     finally:
+         # This recipe runs only on the test's fresh second extraction.
+         if db.status()['status'] != 'stopped':
+diff --git a/tests/test_project_postgres_distribution_native.py b/tests/test_project_postgres_distribution_native.py
+index afebc91..144cacd 100644
+--- a/tests/test_project_postgres_distribution_native.py
++++ b/tests/test_project_postgres_distribution_native.py
+@@ -355,6 +355,7 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
+         assert composed['incomplete_claims'] == composed['interrupted_reserved_calls'] == 1
+         assert composed['confirmation_output_failures'] == 1
+         assert composed['same_confirmation_replayed'] is True
++        assert composed['admission_receipts'] == 3
+         print('packaged research composition: ' + json.dumps(composed, sort_keys=True), flush=True)
+         # A changed immutable package blocks without modifying stored research.
+         target = first / 'src/polymarket_alpha_lab/local_postgres_dsn.py'
+diff --git a/tests/test_research_dispatch_cli_admission.py b/tests/test_research_dispatch_cli_admission.py
+new file mode 100644
+index 0000000..16d0964
+--- /dev/null
++++ b/tests/test_research_dispatch_cli_admission.py
+@@ -0,0 +1,134 @@
++"""Reviewed task/budget admission via existing codecs; synthetic sessions only."""
++from dataclasses import replace
++from hashlib import sha256
++from types import SimpleNamespace
++import io
++import json
++
++import pytest
++
++from polymarket_alpha_lab import research_dispatch_cli as cli
++from polymarket_alpha_lab.research_dispatch import ResearchBatch, StoredResearchBatch
++from tests.test_research_dispatch_cli import ROOT, NOW, PRIVATE, managed, request as sample_request, snapshot
++
++
++@pytest.fixture(params=['batch', 'budget'])
++def admission(request):
++    kind = request.param
++    if kind == 'batch':
++        value = ResearchBatch('batch', (sample_request(),))
++        stored = StoredResearchBatch(value, NOW)
++    else:
++        stored = snapshot().stored
++        value = stored.policy
++    operation, key, permission = (('enqueue-batch', '--batch-id', '--allow-queue-write')
++                                  if kind == 'batch' else
++                                  ('create-budget', '--budget-id', '--allow-budget-write'))
++    return SimpleNamespace(kind=kind, value=value, stored=stored, permission=permission,
++        arguments=[operation, key, kind, '--input-sha256', value.content_sha256],
++        method='enqueue_research_batch' if kind == 'batch' else 'create_model_budget')
++
++
++def invoke(admission, managed, monkeypatch, capsys, *, raw=None, allowed=True, source=None):
++    managed['value'] = admission.stored
++    if source is None:
++        source = io.BytesIO(admission.value.payload.encode() if raw is None else raw)
++    monkeypatch.setattr(cli.sys, 'stdin', SimpleNamespace(buffer=source))
++    code = cli.main(admission.arguments + ([admission.permission] if allowed else []), default_root=ROOT,
++                    model_factory=lambda _: pytest.fail('admission called a model factory'))
++    output = capsys.readouterr()
++    assert PRIVATE not in output.out + output.err
++    assert output.err == ''
++    return code, json.loads(output.out)
++
++
++@pytest.mark.parametrize('frame', [b'', b'\n', b'\r\n'])
++def test_admit_exact_original_value_once_and_return_only_metadata(admission, managed, monkeypatch, capsys, frame):
++    code, out = invoke(admission, managed, monkeypatch, capsys, raw=admission.value.payload.encode()+frame)
++    assert code == 0 and out['status'] == 'admission_receipt_returned'
++    assert out['business_writes_possible'] and out['operation_entered'] and managed['closed']
++    assert out['model_calls_possible'] is out['public_network_called'] is False
++    assert out['provider_charge_bound_verified'] is out['automatic_retry_permitted'] is False
++    method, configuration = managed['calls'][0]
++    assert len(managed['calls']) == 1 and method == admission.method
++    key = 'batch' if admission.kind == 'batch' else 'policy'
++    assert configuration[key].payload == admission.value.payload
++    assert configuration['allow_queue_write' if key == 'batch' else 'allow_budget_write'] is True
++    body = out['result']
++    assert body['request_count'] == 1
++    assert body['batch_sha256' if key == 'batch' else 'policy_sha256'] == admission.value.content_sha256
++    assert body['enqueued_at' if key == 'batch' else 'created_at'] == NOW.isoformat()
++    assert 'requests' not in body and 'remaining_calls' not in body and 'reserved_calls' not in body
++
++
++def test_absent_permission_never_resolves_stdin_or_database(admission, managed, monkeypatch, capsys):
++    class Input:
++        @property
++        def buffer(self): pytest.fail('unapproved input access')
++    monkeypatch.setattr(cli.sys, 'stdin', Input())
++    assert cli.main(admission.arguments, default_root=ROOT) == 2
++    body = json.loads(capsys.readouterr().out)
++    assert body['status'] == 'blocked' and body['business_writes_possible'] is False
++    assert not managed['calls'] and 'root' not in managed
++
++
++@pytest.mark.parametrize('suffix', [b' ', b'\n\n', b'\r', b'\x00', b'{}'])
++def test_extra_or_noncanonical_transport_rejected_before_database(admission, managed, monkeypatch, capsys, suffix):
++    code, out = invoke(admission, managed, monkeypatch, capsys, raw=admission.value.payload.encode()+suffix)
++    assert code == 2 and out['result'] is None and out['operation_entered'] is False
++    assert not managed['calls'] and 'root' not in managed
++
++
++@pytest.mark.parametrize('bad', [b'', b'\xff', b'{bad', b'[]', b'null'])
++def test_invalid_payload_never_opens_database(admission, managed, monkeypatch, capsys, bad):
++    code, out = invoke(admission, managed, monkeypatch, capsys, raw=bad)
++    assert code == 2 and out['status'] == 'invalid_input'
++    assert 'root' not in managed
++
++
++@pytest.mark.parametrize('defect', ['hash', 'id', 'extra-field', 'unsafe-flag'])
++def test_digest_identity_and_original_closed_schema_preserved(admission, managed, monkeypatch, capsys, defect):
++    raw = admission.value.payload.encode()
++    if defect == 'hash':
++        admission.arguments[-1] = 'a'*64
++    elif defect == 'id':
++        admission.arguments[2] = 'other'
++    else:
++        body = json.loads(raw)
++        body['unrecognized' if defect == 'extra-field' else 'readonly'] = False
++        raw = json.dumps(body, sort_keys=True, separators=(',', ':')).encode()
++        admission.arguments[-1] = sha256(raw).hexdigest()
++    code, out = invoke(admission, managed, monkeypatch, capsys, raw=raw)
++    assert code == 2 and out['operation_entered'] is False and 'root' not in managed
++
++
++def test_small_reads_continue_until_eof(admission, managed, monkeypatch, capsys):
++    raw = io.BytesIO(admission.value.payload.encode()+b'\r\n')
++    class Chunked:
++        def read(self, size): return raw.read(min(size, 3))
++    code, out = invoke(admission, managed, monkeypatch, capsys, source=Chunked())
++    assert code == 0 and out['result']['request_count'] == 1
++
++
++@pytest.mark.parametrize('phase', ['error', 'cleanup_error'])
++@pytest.mark.parametrize('kind', ['error', 'exit-zero', 'interrupt'])
++def test_uncertain_operation_or_cleanup_is_not_retried(admission, managed, monkeypatch, capsys, phase, kind):
++    managed[phase] = {'error': RuntimeError(PRIVATE), 'exit-zero': SystemExit(0),
++                      'interrupt': KeyboardInterrupt(PRIVATE)}[kind]
++    code, out = invoke(admission, managed, monkeypatch, capsys)
++    assert code == (130 if kind == 'interrupt' else 1)
++    assert out['result'] is None and out['business_writes_possible'] is True
++    assert out['model_calls_possible'] is False and len(managed['calls']) == 1
++
++
++@pytest.mark.parametrize('fault', ['none', 'wrong-kind', 'changed-payload'])
++def test_receipt_requires_exact_type_and_entire_input(admission, managed, monkeypatch, capsys, fault):
++    if fault == 'none': admission.stored = None
++    elif fault == 'wrong-kind': admission.stored = object()
++    elif admission.kind == 'batch':
++        changed = replace(admission.value, requests=(replace(admission.value.requests[0], model_id='other'),))
++        admission.stored = StoredResearchBatch(changed, NOW)
++    else:
++        admission.stored = replace(admission.stored, policy=replace(admission.value, total_micros=200))
++    code, out = invoke(admission, managed, monkeypatch, capsys)
++    assert code == 1 and out['result'] is None and managed['closed']
+diff --git a/tests/test_research_dispatch_cli_admission_review.py b/tests/test_research_dispatch_cli_admission_review.py
+new file mode 100644
+index 0000000..f18d757
+--- /dev/null
++++ b/tests/test_research_dispatch_cli_admission_review.py
+@@ -0,0 +1,124 @@
++"""Separate self-review of canonical admission and unknown-commit boundaries."""
++from contextlib import contextmanager
++from dataclasses import replace
++from types import SimpleNamespace
++import io
++import json
++
++import pytest
++
++from polymarket_alpha_lab import research_dispatch_cli as cli
++from polymarket_alpha_lab.research_dispatch import StoredResearchBatch
++from polymarket_alpha_lab.research_model_budget import StoredModelBudget
++from tests.test_research_dispatch_cli import ROOT, NOW, PRIVATE, managed, READS, read_value, RUN
++from tests.test_research_dispatch_cli_admission import admission, invoke
++
++
++def test_returning_mutated_input_alias_cannot_replace_reviewed_payload(admission, monkeypatch, capsys):
++    calls = []
++    class Session:
++        def enqueue_research_batch(self, *, batch, allow_queue_write):
++            calls.append(1)
++            object.__setattr__(batch, 'batch_id', 'changed-after-review')
++            return StoredResearchBatch(batch, NOW)
++        def create_model_budget(self, *, policy, allow_budget_write):
++            calls.append(1)
++            object.__setattr__(policy, 'budget_id', 'changed-after-review')
++            return StoredModelBudget(policy, NOW)
++    class Database:
++        def __init__(self, root): pass
++        @contextmanager
++        def session(self): yield Session()
++    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
++    monkeypatch.setattr(cli.sys, 'stdin', SimpleNamespace(buffer=io.BytesIO(admission.value.payload.encode())))
++    code = cli.main(admission.arguments+[admission.permission], default_root=ROOT)
++    out = json.loads(capsys.readouterr().out)
++    assert code == 1 and out['result'] is None
++    assert out['business_writes_possible'] and calls == [1]
++
++
++@pytest.mark.parametrize('kind', ['invalid-hash', 'no-permission'])
++def test_preflight_never_accesses_default_stream(admission, managed, monkeypatch, capsys, kind):
++    class Input:
++        @property
++        def buffer(self): pytest.fail('premature stdin access')
++    monkeypatch.setattr(cli.sys, 'stdin', Input())
++    args = list(admission.arguments)
++    if kind == 'invalid-hash': args[-1] = 'not-a-digest'; args += [admission.permission]
++    assert cli.main(args, default_root=ROOT) == 2
++    assert json.loads(capsys.readouterr().out)['operation_entered'] is False
++    assert 'root' not in managed
++
++
++@pytest.mark.parametrize('error,code', [(OSError(PRIVATE), 2), (SystemExit(0), 2), (KeyboardInterrupt(PRIVATE), 130)])
++def test_default_stream_lookup_fails_with_fixed_safe_error(admission, managed, monkeypatch, capsys, error, code):
++    class Input:
++        @property
++        def buffer(self): raise error
++    monkeypatch.setattr(cli.sys, 'stdin', Input())
++    assert cli.main(admission.arguments+[admission.permission], default_root=ROOT) == code
++    output = capsys.readouterr()
++    assert PRIVATE not in output.out+output.err and 'root' not in managed
++    assert json.loads(output.out)['result'] is None
++
++
++@pytest.mark.parametrize('returned', [None, 'text', bytearray(b'bytes'), b'x'*40])
++def test_invalid_or_oversized_chunk_fails_before_decode(admission, managed, monkeypatch, capsys, returned):
++    calls = []
++    monkeypatch.setattr(cli, 'MAX_BATCH_BYTES', 8)
++    monkeypatch.setattr(cli, 'MAX_POLICY_BYTES', 8)
++    def read(size): calls.append(size); return returned
++    monkeypatch.setattr(cli, 'decode_batch', lambda *a: pytest.fail('decoded unbounded input'))
++    monkeypatch.setattr(cli, 'decode_budget', lambda *a: pytest.fail('decoded unbounded input'))
++    code, out = invoke(admission, managed, monkeypatch, capsys, source=SimpleNamespace(read=read))
++    assert code == 2 and calls == [11] and 'root' not in managed
++
++
++@pytest.mark.parametrize('frame', [b'', b'\n', b'\r\n'])
++def test_exact_byte_cap_succeeds_without_larger_read(admission, managed, monkeypatch, capsys, frame):
++    raw = admission.value.payload.encode()
++    monkeypatch.setattr(cli, 'MAX_BATCH_BYTES' if admission.kind == 'batch' else 'MAX_POLICY_BYTES', len(raw))
++    source = io.BytesIO(raw+frame)
++    counts = []
++    def read(size): counts.append(size); return source.read(size)
++    code, out = invoke(admission, managed, monkeypatch, capsys, source=SimpleNamespace(read=read))
++    assert code == 0 and counts[-1] <= 3
++
++
++@pytest.mark.parametrize('operation', ['batch', 'budget', 'read', 'blocked-run'])
++@pytest.mark.parametrize('fault', ['short', 'flush', 'zero-exit', 'interrupt', 'bool-count'])
++def test_output_failure_is_nonzero_and_never_second_write(managed, monkeypatch, operation, fault):
++    from tests.test_research_dispatch_cli import request, snapshot
++    from polymarket_alpha_lab.research_dispatch import ResearchBatch
++    if operation == 'batch':
++        value = ResearchBatch('batch', (request(),))
++        managed['value'] = StoredResearchBatch(value, NOW)
++        args = ['enqueue-batch','--batch-id','batch','--input-sha256',value.content_sha256,'--allow-queue-write']
++    elif operation == 'budget':
++        managed['value'] = snapshot().stored; value = managed['value'].policy
++        args = ['create-budget','--budget-id','budget','--input-sha256',value.content_sha256,'--allow-budget-write']
++    else:
++        value = None
++        args = ['inspect-budget','--budget-id','budget'] if operation == 'read' else RUN
++        managed['value'] = read_value('inspect-budget')
++    writes, flushes, closed_at_write = [], [], []
++    class Output:
++        def write(self, text):
++            writes.append(text)
++            closed_at_write.append(managed.get('closed', False))
++            assert operation == 'blocked-run' or managed['closed']
++            if fault == 'zero-exit': raise SystemExit(0)
++            if fault == 'interrupt': raise KeyboardInterrupt(PRIVATE)
++            if fault == 'bool-count': return True
++            return len(text)-1 if fault == 'short' else len(text)
++        def flush(self):
++            flushes.append(1)
++            if fault == 'flush': raise OSError(PRIVATE)
++    with monkeypatch.context() as patch:
++        patch.setattr(cli.sys, 'stdout', Output())
++        patch.setattr(cli.sys, 'stdin', SimpleNamespace(buffer=io.BytesIO(value.payload.encode() if value else b'')))
++        code = cli.main(args, default_root=ROOT)
++    assert code == (130 if fault == 'interrupt' else 1)
++    assert len(writes) == 1 and len(flushes) == (1 if fault == 'flush' else 0)
++    assert closed_at_write == [operation != 'blocked-run']
++    assert len(managed['calls']) == (0 if operation == 'blocked-run' else 1)
