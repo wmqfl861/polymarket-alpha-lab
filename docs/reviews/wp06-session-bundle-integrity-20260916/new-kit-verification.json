@@ -1,0 +1,16 @@
+{
+  "artifact_id": 10455331533,
+  "wrapper_bytes": 66792126,
+  "wrapper_sha256": "b8e09e6641bf949cf3cac34d7d2b2d9ad9f86339300d20d1533d667b5ccd46c5",
+  "inner_bytes": 66791954,
+  "inner_sha256": "d528fabfdcfe3c2ef72b27b81b81ce251e2c7e983be6b901781034e6aa1b355a",
+  "manifest_files": 2929,
+  "source_files": 2928,
+  "source_commit": "f9b68a2b4125356d69bad16f1b7f9a6cfe21e0cb",
+  "source_tree": "6c2dfac8bfd63a12191eaf026f33392bfeb238e6",
+  "postgres_version": "17.11",
+  "seed_entries": 1753,
+  "all_manifest_hashes_match": true,
+  "all_source_payloads_match": true,
+  "engine_executed_in_container": false
+}

@@ -1,0 +1,49 @@
+{
+  "head": "061a55703197cc526f3d707d9da58b971c582e0b",
+  "tree": "6c2dfac8bfd63a12191eaf026f33392bfeb238e6",
+  "run": 35114517410,
+  "job": 104856403479,
+  "artifact": 10454376988,
+  "case_id": "tests.test_handoff_download::test_real_powershell_download_publication[success-powershell.exe]",
+  "junit_case_seconds": 30.465,
+  "trace": {
+    "elapsed_seconds": 30.422,
+    "last_observed_stage": "manifest_returned",
+    "malformed_marker_seen": false,
+    "outcome": "timeout",
+    "process_limit_seconds": 30,
+    "retry_count": 0,
+    "root_cause_established": false,
+    "stages": [
+      {
+        "elapsed_ms": 523,
+        "stage": "script_entered"
+      },
+      {
+        "elapsed_ms": 18397,
+        "stage": "encoding_ready"
+      },
+      {
+        "elapsed_ms": 18435,
+        "stage": "helper_loaded"
+      },
+      {
+        "elapsed_ms": 18435,
+        "stage": "invoke_entered"
+      },
+      {
+        "elapsed_ms": 26871,
+        "stage": "manifest_entered"
+      },
+      {
+        "elapsed_ms": 26874,
+        "stage": "manifest_returned"
+      }
+    ],
+    "trace_truncated": false
+  },
+  "production_handoff_and_test_unchanged": true,
+  "root_cause_established": false,
+  "ci_failure_waived": false,
+  "automatic_rerun_performed": false
+}

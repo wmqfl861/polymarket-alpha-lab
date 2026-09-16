@@ -1,0 +1,95 @@
+{
+  "head": "061a55703197cc526f3d707d9da58b971c582e0b",
+  "tree": "6c2dfac8bfd63a12191eaf026f33392bfeb238e6",
+  "tested_merge": "f9b68a2b4125356d69bad16f1b7f9a6cfe21e0cb",
+  "merged": false,
+  "draft": true,
+  "all_required_gates_passed": false,
+  "runs": [
+    {
+      "name": "offline",
+      "run": 35114517483,
+      "job": 104856403609,
+      "passed": 38023,
+      "skipped": 42,
+      "failed": 0,
+      "seconds": 436.95,
+      "conclusion": "success",
+      "source_cleanliness": "success",
+      "artifact": 10455391135
+    },
+    {
+      "name": "native-storage",
+      "run": 35114517410,
+      "job": 104856403684,
+      "passed": 290,
+      "skipped": 2,
+      "failed": 0,
+      "seconds": 375.89,
+      "conclusion": "success",
+      "source_cleanliness": "success",
+      "artifact": 10454656846
+    },
+    {
+      "name": "native-research",
+      "run": 35114517410,
+      "job": 104856403479,
+      "passed": 1058,
+      "skipped": 0,
+      "failed": 1,
+      "seconds": 344.56,
+      "conclusion": "failure",
+      "source_cleanliness": "skipped",
+      "artifact": 10454376988
+    },
+    {
+      "name": "native-dispatch",
+      "run": 35114517410,
+      "job": 104856403247,
+      "passed": 516,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 409.85,
+      "conclusion": "success",
+      "source_cleanliness": "success",
+      "artifact": 10455545919
+    },
+    {
+      "name": "native-aggregate",
+      "run": 35114517410,
+      "job": 104859297315,
+      "conclusion": "failure"
+    },
+    {
+      "name": "paper",
+      "run": 35114517340,
+      "job": 104856402624,
+      "passed": 339,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 426.37,
+      "conclusion": "success",
+      "source_cleanliness": "success",
+      "artifact": 10455720929
+    },
+    {
+      "name": "kit",
+      "run": 35114517472,
+      "job": 104856402814,
+      "passed": 182,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 538.76,
+      "conclusion": "success",
+      "source_cleanliness": "success",
+      "artifact": 10455066586
+    }
+  ],
+  "new37cases_executed_on_Windows": true,
+  "augmented_native_kit_case_passed": true,
+  "native_case_ids_unchanged": 1867,
+  "kit_case_ids_equal_baseline145_plus_new37": true,
+  "paper_case_ids_unchanged": 339,
+  "optional_checks_not_executed": 5,
+  "manual_rerun": false
+}

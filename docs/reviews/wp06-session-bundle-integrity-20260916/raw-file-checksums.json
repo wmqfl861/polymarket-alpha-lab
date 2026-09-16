@@ -1,0 +1,66 @@
+{
+  "ci-kit/distribution-proof.log": {
+    "bytes": 7524,
+    "sha256": "f37ed9fc6d20668bb516126bef4c805d8fbe4dcfbd18709971a77f922a089a8f"
+  },
+  "ci-kit/distribution-proof.xml": {
+    "bytes": 27811,
+    "sha256": "de683d40c01371be1a84a227e2916d6f99c084060eefc7606546f95b7d9ac179"
+  },
+  "ci-native-dispatch/native-proof.log": {
+    "bytes": 10367,
+    "sha256": "0053a0fe793e00a72f4be37051cc486049c22caa9f1fc9bafdc7779bd63c759d"
+  },
+  "ci-native-dispatch/native-proof.xml": {
+    "bytes": 101606,
+    "sha256": "84257e9efba8a9352a067634685c0a163e3095a4d908688ff8fa9d4ba780dafa"
+  },
+  "ci-native-research/native-proof.log": {
+    "bytes": 44527,
+    "sha256": "f3b6db366d28ce9a4cb54158c19af683f32467d35babd999da22588f398e5d68"
+  },
+  "ci-native-research/native-proof.xml": {
+    "bytes": 247780,
+    "sha256": "3edbadb998244f94db0791517513101f0a06117ea4bf369a17e3a5f9bda80ba1"
+  },
+  "ci-native-storage/native-proof.log": {
+    "bytes": 5625,
+    "sha256": "80581ec8ca1c5abc8dce60f3559a07cc9fe7e1a43726e98534d936921464a03f"
+  },
+  "ci-native-storage/native-proof.xml": {
+    "bytes": 56492,
+    "sha256": "2724b343f024085752e48c19b57546c6f8b068076ba31411761850516a24a0a0"
+  },
+  "ci-offline/offline-verification.log": {
+    "bytes": 46039,
+    "sha256": "87b6e19188a0f1c9fd0d55dc91c921a424284b1912089ae96fd5b74a6e2b7868"
+  },
+  "ci-paper/research-paper.log": {
+    "bytes": 9072,
+    "sha256": "42c8f8499b573d7705a94d654bb3df01b319be728bac38f8736ce71da75de6f5"
+  },
+  "ci-paper/research-paper.xml": {
+    "bytes": 47892,
+    "sha256": "0cdde5c45d5a0ea3706953d3624a0518566e20b0eab336ac42dc0b13cde42745"
+  },
+  "implementation-red.log": {
+    "bytes": 31363,
+    "sha256": "65b84971eb231d89bd94cd4ab843e067b4519c07a99dab689d809b4e98aff7b4"
+  },
+  "review-red.log": {
+    "bytes": 5086,
+    "sha256": "8973495132520bc1217191395b0ae28926064c433267cf5e4a0507d64b7169d1"
+  },
+  "detached-final.log": {
+    "bytes": 341,
+    "sha256": "798ff352509a4159c15800d03d009e6cfecac43a7851aea82dbb7b870acfdd67"
+  },
+  "detached-origins.log": {
+    "bytes": 214,
+    "sha256": "69d03f331952fe70183eb82d77fc5d606091377d9c0f07c06ff3d02abcf4a022"
+  },
+  "full-final.log": {
+    "bytes": 46016,
+    "sha256": "af957f89636bd7e49b1639fb5412c081cc1e87a3027c659069a257a412b95ba5"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "base": "3a987bc6c1a5df608ff8f0668b866aaf87842c04",
+  "head": "061a55703197cc526f3d707d9da58b971c582e0b",
+  "tree": "6c2dfac8bfd63a12191eaf026f33392bfeb238e6",
+  "review_type": "separate same-assistant phase/worktree; not third-party or fresh-agent audit",
+  "initial_red": {
+    "failed": 22,
+    "passed": 7
+  },
+  "separate_review_red": {
+    "failed": 2,
+    "passed": 6,
+    "finding": "marker lstat PermissionError escaped instead of a fixed bundle error"
+  },
+  "fix": "Map marker OSError to existing bundle error before private lifecycle access; assertions retained",
+  "new_cases": 37,
+  "detached": {
+    "passed": 224,
+    "skipped": 0,
+    "seconds": 33.53
+  },
+  "origin_checked_new_only": {
+    "passed": 37,
+    "seconds": 2.05
+  },
+  "local_full": {
+    "passed": 38023,
+    "skipped": 42,
+    "seconds": 560.41
+  },
+  "local_environment": "Linux Python3.13.5/preinstalled packages, not hosted locked Windows",
+  "old_kit_assertions": 84,
+  "final_kit_assertions": 95,
+  "protected_unchanged_payloads": 2921,
+  "migrations_unchanged": 67,
+  "limitations": [
+    "entry-time integrity only",
+    "no publisher or source authentication",
+    "not a hostile/preloaded interpreter sandbox",
+    "both markers absent remains SOURCE mode",
+    "not a filesystem snapshot or mid-session monitor",
+    "cross-root integrity does not certify schema compatibility"
+  ],
+  "G6_complete": false,
+  "D1_D3_changed": false
+}
