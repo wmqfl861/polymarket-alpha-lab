@@ -162,7 +162,10 @@ def run_packaged_flow(root):
         result = subprocess.run([sys.executable, '-I', str(root/'scripts'/script),
             '--root', str(root), *arguments], input=payload, cwd=root.parent,
             env=files.clean_environment(), capture_output=True, timeout=60, check=False)
-        assert result.returncode == expected, (script, result.returncode, result.stdout, result.stderr)
+        assert result.returncode == expected, (script, result.returncode,
+            {'observed_at': datetime.now(UTC).isoformat(),
+             'forecast_cutoff_at': requests[0].forecast_cutoff_at.isoformat(),
+             'paper_receipts_already_returned': len(saved)}, result.stdout, result.stderr)
         assert result.stderr == b'', result.stderr
         assert PRIVATE.encode() not in result.stdout and b'raw_base64' not in result.stdout
         return json.loads(result.stdout)
@@ -209,6 +212,7 @@ def run_packaged_flow(root):
         # Admit through actual KIT commands, not parent-side persistence calls.
         # These operations are independent; neither starts research or reserves a call.
         admitted = []
+        deferred_replays = []
         for item, operation, key, permission, inspect in (
                 (ResearchBatch(BATCHES[0], requests[::2]), 'enqueue-batch', '--batch-id', '--allow-queue-write', 'inspect-batch'),
                 (ResearchBatch(BATCHES[1], requests[1::2]), 'enqueue-batch', '--batch-id', '--allow-queue-write', 'inspect-batch'),
@@ -222,7 +226,7 @@ def run_packaged_flow(root):
             receipt = command('manage_research_tasks.py', [*args, permission], payload)
             assert receipt['status'] == 'admission_receipt_returned'
             assert receipt['model_calls_possible'] is receipt['public_network_called'] is False
-            assert command('manage_research_tasks.py', [*args, permission], payload) == receipt
+            deferred_replays.append(([*args, permission], payload, receipt))
             admitted.append(receipt['result'])
         with db.session() as s:
             assert s.execution_inventory().to_dict()['claim_count'] == 0
@@ -241,12 +245,6 @@ def run_packaged_flow(root):
         second = dispatch('two', factory, expected=1)
         assert [a['execution']['research_status'] for a in second['attempts']] == ['completed', 'failed']
         assert [m.calls for m in models] == [2, 2, 2, 1]
-        budget_args = ['create-budget', '--budget-id', policy.budget_id, '--input-sha256',
-                       policy.content_sha256, '--allow-budget-write']
-        assert command('manage_research_tasks.py', budget_args, policy.payload.encode())['result'] == admitted[-1]
-        changed_policy = replace(policy, total_micros=701)
-        changed_args = [*budget_args]; changed_args[-2] = changed_policy.content_sha256
-        assert command('manage_research_tasks.py', changed_args, changed_policy.payload.encode(), expected=1)['result'] is None
         with db.session() as s:
             assert s.inspect_model_budget(budget_id='kit-budget').reserved_calls == 7
             for number, (request, raw) in enumerate(rows):
@@ -261,6 +259,19 @@ def run_packaged_flow(root):
             saved.append(capture(value)['result'])
         assert [r['result']['status'] for r in saved] == [
             'paper_scenario_ready', 'paper_scenario_ready', 'paper_scenario_rejected', 'not_simulated']
+        # Verification-only replay/conflict checks are not prerequisites for
+        # research or prospective capture. Do them AFTER all original inputs
+        # have been captured, preserving the original cutoff and every check.
+        for args, payload, receipt in deferred_replays:
+            assert command('manage_research_tasks.py', args, payload) == receipt
+        budget_args = ['create-budget', '--budget-id', policy.budget_id, '--input-sha256',
+                       policy.content_sha256, '--allow-budget-write']
+        assert command('manage_research_tasks.py', budget_args, policy.payload.encode())['result'] == admitted[-1]
+        changed_policy = replace(policy, total_micros=701)
+        changed_args = [*budget_args]; changed_args[-2] = changed_policy.content_sha256
+        assert command('manage_research_tasks.py', changed_args, changed_policy.payload.encode(), expected=1)['result'] is None
+        with db.session() as s:
+            assert s.inspect_model_budget(budget_id='kit-budget').reserved_calls == 7
         assert capture(specifications[0])['result'] == saved[0]
         conflict = capture(replace(specifications[0], requested_size=D('6')), expected=1)
         assert conflict['result'] is None and conflict['business_writes_possible'] is True

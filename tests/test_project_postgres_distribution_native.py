@@ -341,6 +341,11 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
         # come from this checkout. It waits for a real UTC observation close.
         from tests.packaged_research_flow import run_packaged_recipe
         completed = run_packaged_recipe(second, second / '.venv/Scripts/python.exe', proof)
+        if completed.returncode != 0:
+            # Keep the small synthetic child's actual diagnostic text readable;
+            # pytest's tuple repr can truncate the nested failure and its clock.
+            pytest.fail(f'packaged recipe exit={completed.returncode}; '
+                        f'stdout={completed.stdout}; stderr={completed.stderr}')
         assert completed.returncode == 0, (completed.stdout, completed.stderr)
         assert completed.stderr == ''
         composed = json.loads(completed.stdout)
