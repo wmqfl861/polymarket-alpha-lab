@@ -206,9 +206,27 @@ def run_packaged_flow(root):
             return json.loads(output.getvalue())['result']
         with db.session() as s:
             assert s.execution_inventory().to_dict()['claim_count'] == 0
-            for name, batch in zip(BATCHES, (requests[::2], requests[1::2]), strict=True):
-                s.enqueue_research_batch(batch=ResearchBatch(name, batch), allow_queue_write=True)
-            s.create_model_budget(policy=policy, allow_budget_write=True)
+        # Admit through actual KIT commands, not parent-side persistence calls.
+        # These operations are independent; neither starts research or reserves a call.
+        admitted = []
+        for item, operation, key, permission, inspect in (
+                (ResearchBatch(BATCHES[0], requests[::2]), 'enqueue-batch', '--batch-id', '--allow-queue-write', 'inspect-batch'),
+                (ResearchBatch(BATCHES[1], requests[1::2]), 'enqueue-batch', '--batch-id', '--allow-queue-write', 'inspect-batch'),
+                (policy, 'create-budget', '--budget-id', '--allow-budget-write', 'inspect-budget')):
+            identity_key = item.batch_id if operation == 'enqueue-batch' else item.budget_id
+            args = [operation, key, identity_key, '--input-sha256', item.content_sha256]
+            payload = item.payload.encode()
+            denied = command('manage_research_tasks.py', args, payload, expected=2)
+            assert denied['operation_entered'] is denied['business_writes_possible'] is False
+            assert command('manage_research_tasks.py', [inspect, key, identity_key], expected=3)['result'] is None
+            receipt = command('manage_research_tasks.py', [*args, permission], payload)
+            assert receipt['status'] == 'admission_receipt_returned'
+            assert receipt['model_calls_possible'] is receipt['public_network_called'] is False
+            assert command('manage_research_tasks.py', [*args, permission], payload) == receipt
+            admitted.append(receipt['result'])
+        with db.session() as s:
+            assert s.execution_inventory().to_dict()['claim_count'] == 0
+            assert s.inspect_model_budget(budget_id='kit-budget').reserved_calls == 0
         first = dispatch('one', factory)
         assert first['execution_invocations'] == 2
         assert all(a['execution']['research_status'] == 'completed' for a in first['attempts'])
@@ -223,6 +241,12 @@ def run_packaged_flow(root):
         second = dispatch('two', factory, expected=1)
         assert [a['execution']['research_status'] for a in second['attempts']] == ['completed', 'failed']
         assert [m.calls for m in models] == [2, 2, 2, 1]
+        budget_args = ['create-budget', '--budget-id', policy.budget_id, '--input-sha256',
+                       policy.content_sha256, '--allow-budget-write']
+        assert command('manage_research_tasks.py', budget_args, policy.payload.encode())['result'] == admitted[-1]
+        changed_policy = replace(policy, total_micros=701)
+        changed_args = [*budget_args]; changed_args[-2] = changed_policy.content_sha256
+        assert command('manage_research_tasks.py', changed_args, changed_policy.payload.encode(), expected=1)['result'] is None
         with db.session() as s:
             assert s.inspect_model_budget(budget_id='kit-budget').reserved_calls == 7
             for number, (request, raw) in enumerate(rows):
@@ -369,7 +393,7 @@ raise SystemExit(99)
             incomplete_claims=1, interrupted_reserved_calls=1, project_modules_checked=count,
             actual_account_pnl=None, synthetic_inputs=True,
             confirmation_output_failures=len(output_failed_reviews),
-            same_confirmation_replayed=True)
+            same_confirmation_replayed=True, admission_receipts=len(admitted))
     finally:
         # This recipe runs only on the test's fresh second extraction.
         if db.status()['status'] != 'stopped':

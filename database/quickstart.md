@@ -170,14 +170,18 @@ new loader is provided here. Stop here until D1-D3 and the adapter are approved.
 
 ### 3. Admit a budgeted batch, run one turn, then inspect
 
-The approved application first calls the existing
-`enqueue_research_batch(..., allow_queue_write=True)` and
-`create_model_budget(..., allow_budget_write=True)` with reviewed typed inputs,
-matching request hashes and an independently checked per-call charge bound.
-Use the [task guide](../docs/research-dispatch.md) and
-[budget contract](../docs/research-model-budget.md). Do not use the older
-unbudgeted API default for the real V1 workflow or count response token totals as
-a hard monetary ceiling. No batch or allowance is created by an inspection command.
+Admit the reviewed batch and budget through the existing task command's
+`enqueue-batch --allow-queue-write` and `create-budget --allow-budget-write`, or
+through the original typed session APIs. Each command also requires its original
+ID, `--input-sha256` and canonical binary stdin; it never runs research or reserves
+a model call. Use the [task guide](../docs/research-dispatch.md) for the exact input
+transport and the [budget contract](../docs/research-model-budget.md) for reviewed
+request hashes and an independently checked per-call charge bound. These are two
+separate explicit writes, not an atomic pair: inspect the original IDs after any
+failure, and only explicitly replay the same approved input. Creation does not
+reset a used budget. Do not use the older unbudgeted API default for the real V1
+workflow or count response token totals as a hard monetary ceiling. An inspection
+command creates neither a batch nor an allowance.
 
 The standalone `run-turn` script intentionally has **no model factory**. Even with
 `--allow-model-calls`, it returns exit 2 before opening a managed session. These
