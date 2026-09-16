@@ -1,0 +1,37 @@
+name: Pinned integration sources
+on:
+  push:
+    branches: [review/wp06-integrated-source-20260916]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fff21287c0e3bfab2d679d7ac47bd8044f808ea9
+          persist-credentials: false
+      - name: Archive immutable inputs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = fff21287c0e3bfab2d679d7ac47bd8044f808ea9
+          git fetch --no-tags --depth=1 origin 3ecf4098f1a8cbf8f1fa078794887ae6bae59f41
+          for revision in fff21287c0e3bfab2d679d7ac47bd8044f808ea9 3ecf4098f1a8cbf8f1fa078794887ae6bae59f41; do
+            git archive --format=zip --output="$RUNNER_TEMP/$revision.zip" "$revision"
+            git ls-tree -r "$revision" > "$RUNNER_TEMP/$revision.tree.txt"
+            git cat-file commit "$revision" > "$RUNNER_TEMP/$revision.commit.txt"
+            sha256sum "$RUNNER_TEMP/$revision.zip" > "$RUNNER_TEMP/$revision.sha256"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pinned-pr44-and-main
+          path: |
+            ${{ runner.temp }}/*.zip
+            ${{ runner.temp }}/*.tree.txt
+            ${{ runner.temp }}/*.commit.txt
+            ${{ runner.temp }}/*.sha256
+          retention-days: 7
+          if-no-files-found: error
