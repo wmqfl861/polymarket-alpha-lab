@@ -1,0 +1,41 @@
+name: PR48 fixed scheduling objects
+on:
+  push:
+    branches: [review/pr48-native-scheduling-publication-20260916]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Publish only exact reviewed test and plan objects to a new ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=e1e1df52314b4570bd75635fd1d173823f83e29d
+          REF=refs/heads/review/pr48-native-scheduling-objects-20260916
+          PATCH="$RUNNER_TEMP/change.patch"
+          cp docs/reviews/pr48-native-scheduling-publication/change.patch "$PATCH"
+          echo "7983afd267d5aaefc4f135e815a29b231e9cdbc420c77d0fc019987f64b3e55b  $PATCH" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git diff --cached --exit-code "$BASE" -- src scripts database supabase .github pyproject.toml uv.lock
+          TREE=$(git write-tree)
+          test "$TREE" = a7ed0669769dad9223ac1dde69e9d112ae2a4e06
+          EXISTING=$(git ls-remote --heads origin "$REF")
+          test -z "$EXISTING"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport reviewed PR48 test/plan objects; not CI acceptance')
+          git push origin "$COMMIT:$REF"
+          printf 'transport_commit=%s\ntransport_tree=%s\n' "$COMMIT" "$TREE"
