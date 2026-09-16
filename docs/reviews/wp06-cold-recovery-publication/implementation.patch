@@ -1,0 +1,509 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 34680ed..9d452ed 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -70,7 +70,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺获准提供商／收费上界验证及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02／D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+-| WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算组合及提交后输出故障核验；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
++| WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算、提交后输出故障及同版本冷恢复核验；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
+ 
+ **当前完整验收：1／6（仅 WP-01／G1）。** 这是六个端到端工作包的状态，不表示现有代码完成量为零。
+ 每项达到 DONE 必须填入确切 PR、head／merge／tree、执行命令、结果、适用平台和未执行项；
+@@ -593,3 +593,24 @@ D1—D3、原统计晋级门槛和 WP-06 首次启动可靠性问题不变。没
+ 非零退出，再按原编号查询并明确原样重放；原回执与时间戳必须不变。只注入输出故障，
+ 不模拟数据库／事务，不新造审核编号或重试模型。最终复审和适用 CI 以本轮固定树为准。
+ 本项仍为合成工程验收，不关闭 G2—G6、D1—D3、真实输入／费率或原 PS5.1 问题。
++
++
++## 25. WP-06 本次推进：整包业务历史的冷备份恢复验收（G6 尚未关闭）
++
++基线 `4df08873f4b9b8f1378913c0d00ca6bb183e51e2`（PR #44）。在既有整包组合完成后，
++继续使用其第二个隔离安装包的 Python／源码及原生数据库，串联原 backup／verify-backup／
++restore 命令。不增加生产恢复接口、业务文件账本或自动升级器，不操作用户实例。
++
++- 先核对预期实例和完整合成名册，停止后备份全部物理文件；校验实际归档哈希，验证已有
++  数据禁止覆盖、错误校验和在创建恢复暂存前拒绝。模拟原文件不可用时保留完整私有副本，
++  不删除原数据、不复制整个 .local、不改原物理根或迁移目录。
++- 恢复后启动前逐文件核对物理字节，含原测试凭据及事务状态；启动后原预测、四份模拟、
++  候选／确认、两批次／两轮次、八次预留和历史评估必须不变。显式原样重放不调用模型，
++  incomplete 仍阻断当前严格评估，不因恢复而隐去失败、退还额度或重跑研究。
++- 审核与单元反例、最终全量／Windows／实际 kit 证据在本变更 PR 留存。新增恢复子进程
++  单独限时 180 秒，原测试／作业超时和所有原断言不放宽；原 67 份迁移、依赖及生产算法不变。
++  备份和原集群包含私有测试凭据，只留隔离 runner，禁止上传到仓库或工程产物。
++
++**WP-06 仍 PARTIAL，G6 未关闭，V1 仍 1／6。** 同版本同物理路径恢复不等于跨版本升级、
++回滚或跨机器迁移；真实数据／费率／模型验收、D1—D3 与原 PS5.1 间歇问题仍待办。
++没有用户本机任务、密钥发现、真实行情／模型请求、旧包覆盖或实盘操作。
+diff --git a/database/quickstart.md b/database/quickstart.md
+index de10540..de76de5 100644
+--- a/database/quickstart.md
++++ b/database/quickstart.md
+@@ -414,3 +414,44 @@ reads back the committed review/outcome and explicitly replays the SAME input.
+ The original receipt and timestamps must match. No database/transaction mock is
+ used for this step; no new model call, alternate review ID or automatic retry is
+ permitted. It verifies this simulated failure, not real source/human acceptance.
++
++
++## Maintainer acceptance: recover the complete packaged evidence
++
++The same disposable second kit now also passes through its EXISTING `backup`,
++`verify-backup` and `restore` commands in a separate test-only process. Before
++backup it has four captured attempts, four simulation receipts, two settlements,
++two batches/two turns, eight nonrefundable reservations and one incomplete claim.
++The test requires a stopped instance, the known fixture identity and the complete
++expected roster before the simulated recovery. It is not a general operator tool.
++
++The proof checks the actual archive checksum, refusal to overwrite existing data,
++and refusal of a bad checksum before staging. It then makes the original fixture
++files unavailable by retaining them in another private directory, NEVER deleting
++them. Restore goes to the SAME original physical project path and uses the SAME
++runtime and migration catalog. Before restart, every restored byte is compared
++with the cold source inventory, including the generated test credentials, WAL
++and transaction state. The preserved original must also remain byte-identical.
++
++After restart, the original requests/results, accepted/rejected simulations,
++unconfirmed candidates/confirmed reviews, batches/turns, stored budget policies
++and reserved amounts, and the explicitly fixed historical evaluation must match.
++Only newly generated budget observation times are excluded from that comparison.
++Explicit original-request and original-simulation replays must make no model call,
++refund no reservation and change no history. Strict current evaluation must still
++refuse the incomplete claim. The recovered instance is left stopped.
++
++This adds a separate 180-second test child and leaves all previous test/process/job
++limits unchanged. The backup and preserved cluster contain PRIVATE synthetic
++credentials and stay inside the disposable runner directory; they are not uploaded
++with logs, source, or the kit. Only fixed engineering outcomes are emitted.
++
++This is same-version, same-path cold recovery of synthetic data, not a version
++upgrade, rollback, cross-machine/path adoption, real disaster recovery or actual
++human/market acceptance. Existing cold-backup implementation and its component
++regressions are unchanged. No recipe or recovery archive is shipped in the kit.
++G2-G6, D1-D3, release-specific upgrade decisions and the PS5.1 issue remain open.
++
++PostgreSQL's file-system backup restrictions are documented at
++https://www.postgresql.org/docs/17/backup-file.html (checked 2026-09-16): this test
++uses a cleanly stopped WHOLE cluster, not isolated table copies or a live tar.
+diff --git a/tests/packaged_recovery_flow.py b/tests/packaged_recovery_flow.py
+new file mode 100644
+index 0000000..fa4c35a
+--- /dev/null
++++ b/tests/packaged_recovery_flow.py
+@@ -0,0 +1,171 @@
++"""Test-only cold recovery of the completed packaged BTC/ETH fixture.
++
++Injected into the extracted kit's own interpreter; never shipped or called on a
++user project. The archive includes synthetic database credentials and stays in
++the private disposable runner directory, never an uploaded artifact.
++"""
++from datetime import datetime
++import json
++from pathlib import Path
++import subprocess
++import sys
++
++from polymarket_alpha_lab.project_postgres import backup_format, distribution, files
++from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
++from polymarket_alpha_lab.research_capture_psycopg import ResearchCaptureConflict
++
++RECORDS = tuple('packaged-' + str(n) for n in range(4))
++BUDGETS = (('kit-budget', 7, 700), ('interrupted-budget', 1, 100))
++
++
++def assert_origins(root):
++    modules = [module for name, module in sys.modules.items()
++               if name == 'polymarket_alpha_lab' or name.startswith('polymarket_alpha_lab.')]
++    assert modules, 'no packaged project modules loaded'
++    for module in modules:
++        assert Path(module.__file__).resolve().is_relative_to(root / 'src'), 'non-kit source loaded'
++    return len(modules)
++
++
++def database_command(root, arguments, *, reason=None):
++    """One real packaged database CLI process; negative receipts use stderr."""
++    result = subprocess.run([sys.executable, '-I', str(root / 'scripts/project_database.py'),
++        '--root', str(root), *arguments], cwd=root.parent, env=files.clean_environment(),
++        stdin=subprocess.DEVNULL, capture_output=True, timeout=60, check=False, shell=False)
++    assert result.returncode == (1 if reason else 0), 'unexpected database command exit'
++    assert (result.stdout if reason else result.stderr) == b'', 'unexpected output channel'
++    body = json.loads((result.stderr if reason else result.stdout).decode('utf-8'))
++    if reason:
++        assert body == dict(status='blocked', reason_code=reason), 'unexpected refusal reason'
++    return body
++
++
++def saved_state(db, historical_at):
++    """Keep exact original objects in memory; do not export evidence or secrets."""
++    with db.session() as session:
++        inventory = session.execution_inventory().to_dict()
++        assert (inventory['claim_count'], inventory['captured_result_count'],
++                inventory['incomplete_claim_count']) == (5, 4, 1), 'unexpected fixture roster'
++        executions = tuple(session.inspect(record_id=rid) for rid in (*RECORDS, 'interrupted-0'))
++        assert all(value is not None for value in executions), 'missing original execution'
++        assert all(value.record is not None for value in executions[:4]), 'missing captured result'
++        assert executions[-1].status == 'incomplete' and executions[-1].record is None
++        papers = tuple(session.inspect_paper_research(record_id=rid) for rid in RECORDS)
++        assert all(value is not None for value in papers), 'missing original simulation'
++        assert [value.to_dict()['result']['status'] for value in papers] == [
++            'paper_scenario_ready', 'paper_scenario_ready', 'paper_scenario_rejected', 'not_simulated']
++        reviews = tuple(session.inspect_resolution(review_id=prefix + rid)
++            for rid in RECORDS[:2] for prefix in ('candidate-', 'confirmed-'))
++        assert all(value is not None for value in reviews), 'missing candidate or confirmation'
++        batches = tuple(session.inspect_research_batch(batch_id=bid) for bid in ('kit-btc', 'kit-eth'))
++        turns = tuple(session.inspect_research_turn(rotation_id='kit-rotation', turn_id=tid)
++                      for tid in ('one', 'two'))
++        assert all(value is not None for value in (*batches, *turns)), 'missing task history'
++        budgets = []
++        for bid, calls, micros in BUDGETS:
++            value = session.inspect_model_budget(budget_id=bid)
++            assert value is not None and (value.reserved_calls, value.reserved_micros) == (calls, micros)
++            # Only the new observation timestamp is excluded. Stored policy,
++            # creation timestamp and exact reserved accounting must match.
++            budgets.append((value.stored, value.reserved_calls, value.reserved_micros))
++        history = session.evaluate_settled_paper_research(generated_at=historical_at)
++        assert history['attempt_count'] == 4 and history['status_counts']['settled_simulation'] == 2
++        assert history['actual_account_pnl'] is None
++        try:
++            session.evaluate_settled_paper_research()
++        except ResearchCaptureConflict as error:
++            assert str(error) == 'research_execution_history_incomplete'
++        else:
++            raise AssertionError('current incomplete history was not blocked')
++    return dict(executions=executions, papers=papers, reviews=reviews, batches=batches,
++                turns=turns, budgets=tuple(budgets), history=history)
++
++
++def run_recovery(root, historical_at, expected_instance):
++    """Only the fresh second fixture kit is eligible; never delete original data."""
++    root = Path(root).resolve()
++    historical_at = datetime.fromisoformat(historical_at)
++    assert historical_at.tzinfo is not None, 'historical cutoff must be explicit'
++    manifest = distribution.verify_distribution(root)
++    assert_origins(root)
++    db = ProjectPostgres(root)
++    assert db.status()['status'] == 'stopped', 'recovery fixture must begin stopped'
++    identity = db._state()
++    assert identity['instance_id'] == expected_instance, 'wrong fixture instance'
++    destination = root.parent / 'Packaged Private Cold Backup'
++    preserved = root.parent / 'Packaged Original Preserved'
++    for path in (destination, preserved):
++        files.no_links(path)
++        assert not path.exists(), 'recovery fixture destination already exists'
++    before = saved_state(db, historical_at)
++    assert db.status()['status'] == 'stopped'
++    original_inventory = backup_format.inventory(db.layout.home)
++    copied = database_command(root, ['backup', '--destination', str(destination)])
++    assert copied['status'] == 'backup_created' and copied['source_stopped'] is True
++    assert copied['contains_credentials'] is True and copied['encrypted'] is False
++    archive = destination / 'snapshot.palpg.zip'
++    checksum = files.digest_file(archive)
++    assert copied['sha256'] == checksum, 'backup receipt does not match actual bytes'
++    unchanged = backup_format.inventory(db.layout.home) == original_inventory
++    assert unchanged, 'cold backup changed original files'
++    arguments = ['--archive', str(archive), '--sha256', checksum, '--trusted-backup']
++    verified = database_command(root, ['verify-backup', *arguments])
++    assert verified['status'] == 'backup_verified' and verified['database_started'] is False
++    database_command(root, ['restore', *arguments], reason='project_postgres_restore_existing_data_refused')
++    assert backup_format.inventory(db.layout.home) == original_inventory
++    assert not (db.layout.private / 'postgres.restoring').exists()
++    # Simulate unavailable files in this DISPOSABLE fixture only. Retain the
++    # complete original privately; no deletion, copy of .local, or path adoption.
++    with db.layout.lock():
++        db.layout.home.rename(preserved)
++    assert not db.layout.home.exists()
++    wrong = ['--archive', str(archive), '--sha256', '0' * 64, '--trusted-backup']
++    database_command(root, ['restore', *wrong], reason='project_postgres_backup_checksum_mismatch')
++    assert not db.layout.home.exists() and not (db.layout.private / 'postgres.restoring').exists()
++    restored = database_command(root, ['restore', *arguments])
++    assert restored == dict(status='restored_stopped', sha256=checksum,
++                            existing_data_overwritten=False, database_started=False)
++    assert db.status()['status'] == 'stopped' and db._state() == identity
++    exact_copy = backup_format.inventory(db.layout.home) == original_inventory
++    original_kept = backup_format.inventory(preserved) == original_inventory
++    assert exact_copy and original_kept, 'recovered or preserved physical bytes differ'
++    after = saved_state(db, historical_at)
++    assert before == after, 'recovered business history differs'
++    def forbidden(_):
++        raise AssertionError('recovered replay must not construct a model')
++    with db.session() as session:
++        for original in before['executions']:
++            bid = 'interrupted-budget' if original.status == 'incomplete' else 'kit-budget'
++            replay = session.run_budgeted_research(request=original.request, budget_id=bid,
++                model_factory=forbidden, allow_model_calls=True)
++            assert replay.record == original.record and replay.claimed_at == original.claimed_at
++            if original.status == 'incomplete':
++                assert replay == original
++        for paper in before['papers']:
++            assert session.capture_paper_research(scenario=paper.scenario, allow_paper_write=True) == paper
++    assert saved_state(db, historical_at) == before, 'replay changed recovered evidence or budget'
++    assert db.status()['status'] == 'stopped' and db._state() == identity
++    assert files.digest_file(archive) == checksum, 'backup archive changed'
++    assert backup_format.inventory(preserved) == original_inventory, 'original copy changed'
++    assert distribution.verify_distribution(root) == manifest
++    count = assert_origins(root)
++    return dict(status='packaged_cold_recovery_verified', source_commit=manifest['source_commit'],
++        source_tree=manifest['source_tree'], instance_id=identity['instance_id'],
++        physical_bytes_preserved=True, originals_retained=True, stopped=True,
++        captured_attempts=4, simulations=4, resolution_reviews=4, settlements=2,
++        batches=2, turns=2, reserved_calls=8, incomplete_claims=1,
++        history_equal=True, replay_without_model=True, current_history_blocked=True,
++        archive_uploaded=False, synthetic_inputs=True, project_modules_checked=count)
++
++
++def run_recovery_recipe(root, python, cwd, *, historical_at, expected_instance):
++    """Inject this fixed TEST recipe, with a separate bounded child, no retry."""
++    prefix = ('import sys\nfrom pathlib import Path\nroot=Path(sys.argv[1]).resolve()\n'
++        "assert (root/'src/polymarket_alpha_lab/__init__.py').is_file(), 'kit source missing'\n"
++        "sys.path.insert(0,str(root/'src'))\n")
++    recipe = Path(__file__).read_text(encoding='utf-8')
++    return subprocess.run([str(python), '-I', '-c', prefix + recipe +
++        '\nprint(json.dumps(run_recovery(root, sys.argv[2], sys.argv[3]),sort_keys=True))\n',
++        str(root), historical_at, expected_instance], cwd=cwd, env=files.clean_environment(),
++        stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding='utf-8',
++        timeout=180, check=False, shell=False)
+diff --git a/tests/packaged_research_flow.py b/tests/packaged_research_flow.py
+index f3993ab..6a0e334 100644
+--- a/tests/packaged_research_flow.py
++++ b/tests/packaged_research_flow.py
+@@ -369,7 +369,8 @@ raise SystemExit(99)
+             incomplete_claims=1, interrupted_reserved_calls=1, project_modules_checked=count,
+             actual_account_pnl=None, synthetic_inputs=True,
+             confirmation_output_failures=len(output_failed_reviews),
+-            same_confirmation_replayed=True)
++            same_confirmation_replayed=True,
++            historical_at=after['history']['generated_at'])
+     finally:
+         # This recipe runs only on the test's fresh second extraction.
+         if db.status()['status'] != 'stopped':
+diff --git a/tests/test_packaged_recovery_flow.py b/tests/test_packaged_recovery_flow.py
+new file mode 100644
+index 0000000..5558568
+--- /dev/null
++++ b/tests/test_packaged_recovery_flow.py
+@@ -0,0 +1,113 @@
++"""Offline fixture contracts, not native recovery or access to private backups."""
++from contextlib import contextmanager
++from datetime import UTC, datetime
++import json
++from pathlib import Path
++import subprocess
++import sys
++from types import SimpleNamespace
++
++import pytest
++
++from tests import packaged_recovery_flow as flow
++
++
++@pytest.fixture
++def state():
++    at = datetime(2026, 9, 16, tzinfo=UTC)
++    executions = {rid: SimpleNamespace(record=object(), status='already_captured') for rid in flow.RECORDS}
++    executions['interrupted-0'] = SimpleNamespace(record=None, status='incomplete')
++    statuses = ('paper_scenario_ready', 'paper_scenario_ready', 'paper_scenario_rejected', 'not_simulated')
++    papers = {rid: SimpleNamespace(to_dict=lambda status=status: {'result': {'status': status}})
++              for rid, status in zip(flow.RECORDS, statuses, strict=True)}
++    reviews = {prefix + rid: object() for rid in flow.RECORDS[:2] for prefix in ('candidate-', 'confirmed-')}
++    budgets = {bid: SimpleNamespace(stored=object(), observed_at=at, reserved_calls=calls, reserved_micros=micros)
++               for bid, calls, micros in flow.BUDGETS}
++    inventory = dict(claim_count=5, captured_result_count=4, incomplete_claim_count=1)
++    history = dict(attempt_count=4, status_counts={'settled_simulation': 2}, actual_account_pnl=None)
++    batches = {'kit-btc': object(), 'kit-eth': object()}
++    turns = {'one': object(), 'two': object()}
++    reads = []
++    class Session:
++        def execution_inventory(self): return SimpleNamespace(to_dict=lambda: inventory)
++        def inspect(self, *, record_id): reads.append(record_id); return executions[record_id]
++        def inspect_paper_research(self, *, record_id): return papers[record_id]
++        def inspect_resolution(self, *, review_id): return reviews[review_id]
++        def inspect_research_batch(self, *, batch_id): return batches[batch_id]
++        def inspect_research_turn(self, *, rotation_id, turn_id):
++            assert rotation_id == 'kit-rotation'
++            return turns[turn_id]
++        def inspect_model_budget(self, *, budget_id): return budgets[budget_id]
++        def evaluate_settled_paper_research(self, **kwargs):
++            if not kwargs: raise flow.ResearchCaptureConflict('research_execution_history_incomplete')
++            assert kwargs == dict(generated_at=at)
++            return history
++    @contextmanager
++    def session(): yield Session()
++    return SimpleNamespace(db=SimpleNamespace(session=session), executions=executions, papers=papers,
++        reviews=reviews, budgets=budgets, inventory=inventory, history=history, batches=batches,
++        turns=turns, at=at, reads=reads)
++
++
++def test_complete_fixture_snapshot_retains_every_category_and_original_objects(state):
++    actual = flow.saved_state(state.db, state.at)
++    assert state.reads == [*flow.RECORDS, 'interrupted-0']
++    assert actual['executions'] == tuple(state.executions.values())
++    assert actual['papers'] == tuple(state.papers.values())
++    assert actual['reviews'] == tuple(state.reviews.values())
++    assert actual['batches'] == tuple(state.batches.values()) and actual['turns'] == tuple(state.turns.values())
++    assert actual['budgets'] == tuple((v.stored, v.reserved_calls, v.reserved_micros) for v in state.budgets.values())
++    assert actual['history'] is state.history
++
++
++@pytest.mark.parametrize('category,key', [('executions', 'packaged-0'), ('papers', 'packaged-1'),
++    ('reviews', 'confirmed-packaged-0'), ('batches', 'kit-btc'), ('turns', 'one'), ('budgets', 'kit-budget')])
++def test_missing_fixture_evidence_does_not_make_an_empty_recovery_pass(state, category, key):
++    getattr(state, category)[key] = None
++    with pytest.raises(AssertionError): flow.saved_state(state.db, state.at)
++
++
++def test_no_matching_fixture_roster_is_not_permission_to_recover_another_project(state):
++    state.inventory['claim_count'] = 6
++    with pytest.raises(AssertionError, match='fixture roster'): flow.saved_state(state.db, state.at)
++
++
++@pytest.mark.parametrize('reason', [None, 'project_postgres_restore_existing_data_refused'])
++def test_database_command_checks_exact_exit_channel_and_one_invocation(monkeypatch, tmp_path, reason):
++    body = dict(status='blocked', reason_code=reason) if reason else dict(status='restored_stopped')
++    raw = json.dumps(body).encode()
++    done = subprocess.CompletedProcess([], 1 if reason else 0, b'' if reason else raw, raw if reason else b'')
++    calls = []
++    monkeypatch.setattr(flow.subprocess, 'run', lambda *args, **kw: calls.append((args, kw)) or done)
++    assert flow.database_command(tmp_path, ['restore', 'synthetic-arguments'], reason=reason) == body
++    assert len(calls) == 1
++    args, options = calls[0]
++    assert args[0] == [sys.executable, '-I', str(tmp_path / 'scripts/project_database.py'),
++                       '--root', str(tmp_path), 'restore', 'synthetic-arguments']
++    assert options['stdin'] == subprocess.DEVNULL and options['timeout'] == 60
++    assert options['shell'] is options['check'] is False
++    assert options['cwd'] == tmp_path.parent
++
++
++def test_recovery_recipe_uses_own_python_explicit_identity_and_bounded_process(monkeypatch, tmp_path):
++    calls = []
++    done = subprocess.CompletedProcess([], 13, '', 'synthetic failure')
++    monkeypatch.setattr(flow.subprocess, 'run', lambda *args, **kw: calls.append((args, kw)) or done)
++    python = tmp_path / '.venv/Scripts/python.exe'
++    at, identity = '2026-09-16T00:00:00+00:00', 'a' * 32
++    assert flow.run_recovery_recipe(tmp_path, python, tmp_path.parent, historical_at=at, expected_instance=identity) is done
++    args, options = calls[0]
++    assert args[0][:3] == [str(python), '-I', '-c']
++    assert args[0][-3:] == [str(tmp_path), at, identity]
++    assert str(Path(flow.__file__).parent) not in args[0][3]
++    assert options['timeout'] == 180 and options['stdin'] == subprocess.DEVNULL
++    assert options['shell'] is options['check'] is False
++    assert len(calls) == 1
++
++
++def test_missing_kit_stops_before_any_recovery_file_is_created(tmp_path):
++    root = tmp_path / 'missing-kit'; root.mkdir()
++    done = flow.run_recovery_recipe(root, sys.executable, tmp_path,
++        historical_at='2026-09-16T00:00:00+00:00', expected_instance='a' * 32)
++    assert done.returncode != 0 and 'kit source missing' in done.stderr
++    assert done.stdout == '' and list(tmp_path.iterdir()) == [root] and list(root.iterdir()) == []
+diff --git a/tests/test_packaged_recovery_flow_review.py b/tests/test_packaged_recovery_flow_review.py
+new file mode 100644
+index 0000000..6b1f0fe
+--- /dev/null
++++ b/tests/test_packaged_recovery_flow_review.py
+@@ -0,0 +1,75 @@
++"""Separate adversarial review of the test-only packaged recovery proof."""
++from datetime import timedelta
++from pathlib import Path
++import subprocess
++import sys
++from types import SimpleNamespace
++
++import pytest
++
++from tests import packaged_recovery_flow as flow
++from tests.test_packaged_recovery_flow import state
++
++
++@pytest.mark.parametrize('done,reason', [
++    (subprocess.CompletedProcess([], 0, b'{"status":"blocked"}', b''), 'refused'),
++    (subprocess.CompletedProcess([], 1, b'ignored', b'{"status":"blocked","reason_code":"refused"}'), 'refused'),
++    (subprocess.CompletedProcess([], 1, b'', b'{"status":"blocked","reason_code":"wrong"}'), 'refused'),
++    (subprocess.CompletedProcess([], 0, b'{}', b'private-detail'), None),
++])
++def test_false_process_witness_cannot_certify_recovery(monkeypatch, tmp_path, done, reason):
++    calls = []
++    monkeypatch.setattr(flow.subprocess, 'run', lambda *a, **k: calls.append(1) or done)
++    with pytest.raises(AssertionError): flow.database_command(tmp_path, ['restore'], reason=reason)
++    assert calls == [1]
++
++
++@pytest.mark.parametrize('operation', ['database', 'recipe'])
++def test_timeout_is_preserved_not_retried_or_interpreted_as_restored(monkeypatch, tmp_path, operation):
++    original = subprocess.TimeoutExpired('synthetic recovery', 60 if operation == 'database' else 180)
++    calls = []
++    def fail(*args, **kwargs): calls.append(1); raise original
++    monkeypatch.setattr(flow.subprocess, 'run', fail)
++    with pytest.raises(subprocess.TimeoutExpired) as caught:
++        if operation == 'database': flow.database_command(tmp_path, ['restore'])
++        else: flow.run_recovery_recipe(tmp_path, sys.executable, tmp_path,
++                    historical_at='2026-09-16T00:00:00+00:00', expected_instance='a' * 32)
++    assert caught.value is original and calls == [1]
++
++
++@pytest.mark.parametrize('case', ['no-modules', 'foreign-module'])
++def test_source_origin_checks_cannot_pass_on_empty_or_foreign_package(monkeypatch, tmp_path, case):
++    modules = {} if case == 'no-modules' else {
++        'polymarket_alpha_lab': SimpleNamespace(__file__=str(tmp_path.parent / 'foreign/__init__.py'))}
++    monkeypatch.setattr(flow, 'sys', SimpleNamespace(modules=modules))
++    with pytest.raises(AssertionError): flow.assert_origins(tmp_path)
++
++
++def test_command_line_remains_bounded_for_representative_windows_paths(monkeypatch, tmp_path):
++    captured = []
++    monkeypatch.setattr(flow.subprocess, 'run', lambda args, **kw: captured.append(args))
++    root = tmp_path / ('k' * 160)
++    flow.run_recovery_recipe(root, root / '.venv/Scripts/python.exe', tmp_path,
++        historical_at='2026-09-16T00:00:00+00:00', expected_instance='a' * 32)
++    units = len(subprocess.list2cmdline(captured[0]).encode('utf-16-le')) // 2 + 1
++    assert units < 32767
++
++
++def test_snapshot_ignores_only_budget_observation_time_not_original_policy(state):
++    before = flow.saved_state(state.db, state.at)
++    for value in state.budgets.values(): value.observed_at += timedelta(hours=1)
++    assert flow.saved_state(state.db, state.at) == before
++    state.budgets['kit-budget'].stored = object()
++    assert flow.saved_state(state.db, state.at) != before
++
++
++@pytest.mark.parametrize('calls,micros', [(6, 600), (7, 600), (8, 800)])
++def test_budget_refund_or_duplicate_reservation_is_not_a_recovery_success(state, calls, micros):
++    state.budgets['kit-budget'].reserved_calls = calls
++    state.budgets['kit-budget'].reserved_micros = micros
++    with pytest.raises(AssertionError): flow.saved_state(state.db, state.at)
++
++
++def test_recovery_recipe_is_not_shipped_as_application_code():
++    from polymarket_alpha_lab.project_postgres.distribution import selected_source
++    assert not selected_source('tests/packaged_recovery_flow.py')
+diff --git a/tests/test_project_postgres_distribution_native.py b/tests/test_project_postgres_distribution_native.py
+index afebc91..53390a8 100644
+--- a/tests/test_project_postgres_distribution_native.py
++++ b/tests/test_project_postgres_distribution_native.py
+@@ -356,6 +356,26 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
+         assert composed['confirmation_output_failures'] == 1
+         assert composed['same_confirmation_replayed'] is True
+         print('packaged research composition: ' + json.dumps(composed, sort_keys=True), flush=True)
++        # Extend this same disposable kit's completed business fixture through
++        # its existing cold-backup/restore commands. Originals remain private.
++        from tests.packaged_recovery_flow import run_recovery_recipe
++        recovery = run_recovery_recipe(second, second / '.venv/Scripts/python.exe', proof,
++            historical_at=composed['historical_at'], expected_instance=composed['instance_id'])
++        assert recovery.returncode == 0, (recovery.stdout, recovery.stderr)
++        assert recovery.stderr == ''
++        recovered = json.loads(recovery.stdout)
++        assert recovered['status'] == 'packaged_cold_recovery_verified'
++        assert recovered['source_tree'] == receipt['source_tree']
++        assert recovered['source_commit'] == receipt['source_commit']
++        assert recovered['instance_id'] == other['instance_id']
++        assert (recovered['captured_attempts'], recovered['simulations'], recovered['settlements'],
++                recovered['reserved_calls'], recovered['incomplete_claims']) == (4, 4, 2, 8, 1)
++        assert recovered['physical_bytes_preserved'] is recovered['originals_retained'] is True
++        assert recovered['history_equal'] is recovered['replay_without_model'] is True
++        assert recovered['current_history_blocked'] is recovered['stopped'] is True
++        assert recovered['archive_uploaded'] is False and recovered['synthetic_inputs'] is True
++        assert recovered['project_modules_checked'] > 0
++        print('packaged cold recovery: ' + json.dumps(recovered, sort_keys=True), flush=True)
+         # A changed immutable package blocks without modifying stored research.
+         target = first / 'src/polymarket_alpha_lab/local_postgres_dsn.py'
+         original = target.read_bytes()
