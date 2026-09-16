@@ -1,0 +1,122 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index dd60557..7040d72 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -638,3 +638,23 @@ D1—D3、原统计晋级门槛和 WP-06 首次启动可靠性问题不变。没
+ 
+ 这是 CI 调度修复，不是底层 PS5.1 间歇问题的根因修复或完整发布验收；
+ WP-06/G6、D1—D3、真实来源／费率及用户数据升级限制不变。
++
++
++## WP-03／WP-06 本次推进：中断后的会话排空与生命周期锁（2026-09-17）
++
++基线 `3a987bc6c1a5df608ff8f0668b866aaf87842c04`（PR #48）。本项独立修复托管会话
++退出时中断等待、导致仍有在途工作却释放生命周期锁的问题，不改 PR #49 或其失败状态。
++
++- 先在原实现上复现六项反例；关闭过程中发生 KeyboardInterrupt／SystemExit 时，保留
++  首个异常并继续同一关闭等待。不是重新执行模型、领取、额度预留、SQL 或停机命令。
++- 在途工作结束后，才按原所有权规则停止本会话启动的引擎；借用引擎不停止。随后原
++  中断继续传播；停机本身失败仍为主错误，并保留中断异常链。未重新开放任务准入。
++- 单独复审覆盖重复中断、借用引擎、业务异常及停机失败；整包证明验证真实锁与原
++  数据库记录，故障仅为测试注入的 Python 异常，不发送系统信号或修改 Windows 策略。
++- 原 67 份迁移、依赖、预算、选择／存储／结算算法和已有 CI 超时不变；最终源码树、
++  测试结果、首败及未执行项记录于本次 PR。异常客户端仍须自身有界 I/O，不能保证
++  硬终止、任意字节码处信号或所有非中断关闭错误的恢复。
++
++**WP-03／WP-06 仍 PARTIAL，G3／G6 未关闭，V1 仍 1／6。** PR #49 的 PS5.1 首次调用
++失败、被拦截的 CAPI2 试验及 D1—D3／真实业务验收均未绕过或宣称解决。无用户业务库、
++密钥、真实模型／行情、旧安装覆盖或实盘操作；完成本项不授权部署到用户旧实例。
+diff --git a/docs/research-dispatch.md b/docs/research-dispatch.md
+index cd98e64..ab555bb 100644
+--- a/docs/research-dispatch.md
++++ b/docs/research-dispatch.md
+@@ -400,3 +400,33 @@ and unchanged old records. Native inputs/clients/charges are synthetic.
+ Final-revision commands, exact counts, first failures, CI identifiers and skipped
+ or unexecuted checks belong to the implementation PR and DELIVERY_PLAN.md. No
+ local user's database, installed kit, credentials or real provider is exercised.
++
++## Interrupted managed-session close (WP-03 / WP-06)
++
++The enclosing `ProjectPostgres(root).session()` owns the private lifecycle lease
++until admitted work finishes. If `ProjectResearchSession.close()` raises
++`KeyboardInterrupt` or `SystemExit` while sealing admissions or waiting for that
++work, the owner retains the first such exception and resumes the SAME idempotent
++close. It does not rerun any research, model call, claim, reservation, SQL
++operation or engine command. New operations remain refused after admissions are
++sealed. Once close completes, an engine started by this session is stopped once;
++a previously running borrowed engine is left running. The retained interruption
++then propagates to the caller. A stop failure remains the primary error, with the
++retained interruption chained as its cause rather than silently discarded.
++
++This is cooperative draining, not cancellation of an in-flight model or database
++request. A client that does not return can still delay closing; its original I/O
++bounds remain required. No forced thread/process kill, signal handler, OS-policy
++change, new timeout or refund is introduced. Unexpected non-interruption errors
++from close are not retried or declared safely drained. Hard termination and
++arbitrary signal delivery outside the guarded close call are not covered by this
++contract. Inspect original IDs after an uncertain stop; never restart a task or
++release a reservation merely because the caller was interrupted.
++
++Tests inject Python exceptions at the close boundary while real admitted threads
++are held at a deterministic checkpoint. The package proof also checks the real
++OS lifecycle lock and an existing PostgreSQL record under owned/borrowed engines.
++It does not send Ctrl+C to Windows or certify all OS-console signal behavior.
++Reference: Python's `threading.Condition` and `signal` documentation describe the
++wait/reacquire contract and arbitrary exception delivery; neither supplies an
++uninterruptible application cleanup guarantee.
+diff --git a/src/polymarket_alpha_lab/project_postgres/server.py b/src/polymarket_alpha_lab/project_postgres/server.py
+index 14dfb4b..4e7ec5f 100644
+--- a/src/polymarket_alpha_lab/project_postgres/server.py
++++ b/src/polymarket_alpha_lab/project_postgres/server.py
+@@ -300,6 +300,25 @@ class ProjectPostgres:
+                     fail('project_postgres_migrations_pending')
+                 yield session
+             finally:
+-                session.close()
+-                if started:
+-                    self._stop(info)
++                # close is idempotent: seal admissions, then wait for work that
++                # already entered. An interruption of that wait must not drop
++                # the lifecycle lease while those operations still need it.
++                interruption = None
++                while True:
++                    try:
++                        session.close()
++                        break
++                    except (KeyboardInterrupt, SystemExit) as error:
++                        if interruption is None:
++                            interruption = error
++                try:
++                    if started:
++                        self._stop(info)
++                except BaseException as error:
++                    # A stop failure remains authoritative; retain the delayed
++                    # interruption as its cause, without retrying the engine.
++                    if interruption is not None and error is not interruption:
++                        raise error from interruption
++                    raise
++                if interruption is not None:
++                    raise interruption
+diff --git a/tests/test_project_postgres_distribution_native.py b/tests/test_project_postgres_distribution_native.py
+index afebc91..8e12de5 100644
+--- a/tests/test_project_postgres_distribution_native.py
++++ b/tests/test_project_postgres_distribution_native.py
+@@ -356,6 +356,18 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
+         assert composed['confirmation_output_failures'] == 1
+         assert composed['same_confirmation_replayed'] is True
+         print('packaged research composition: ' + json.dumps(composed, sort_keys=True), flush=True)
++        # Only the test's existing first kit: actual lock, PostgreSQL and
++        # packaged source; inject a Python close exception, not an OS signal.
++        from tests.packaged_session_drain import run_packaged_session_drain
++        drained = run_packaged_session_drain(first, first / '.venv/Scripts/python.exe', proof)
++        assert drained.returncode == 0, (drained.stdout, drained.stderr)
++        assert drained.stderr == ''
++        drain_proof = json.loads(drained.stdout)
++        assert drain_proof['status'] == 'packaged_session_drain_verified'
++        assert drain_proof['cases'] == [dict(borrowed=value, admitted_reads=1,
++            original_record_preserved=True) for value in (False, True)]
++        assert drain_proof['database_mocked'] is drain_proof['os_signal_sent'] is drain_proof['model_called'] is False
++        print('packaged session drain: ' + json.dumps(drain_proof, sort_keys=True), flush=True)
+         # A changed immutable package blocks without modifying stored research.
+         target = first / 'src/polymarket_alpha_lab/local_postgres_dsn.py'
+         original = target.read_bytes()
