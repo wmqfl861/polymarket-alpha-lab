@@ -280,6 +280,25 @@ class ProjectPostgres:
                 if started:
                     self._stop(info)
 
+    def _verify_session_bundles(self):
+        """Reuse kit verification at entry, before any private lifecycle access.
+
+        Source and data roots may differ. Check both when either kit marker is
+        present; a source checkout with neither marker keeps its existing path.
+        This is byte integrity, not authentication or a hostile-Python sandbox.
+        """
+        from .distribution import ENGINE, MANIFEST, verify_distribution
+        source_root = Path(__file__).absolute().parents[3]
+        for root in dict.fromkeys((source_root, self.layout.root)):
+            seed, manifest = root / ENGINE, root / MANIFEST
+            try:
+                no_links(seed)
+                no_links(manifest)
+                if seed.exists() or manifest.exists():
+                    verify_distribution(root)
+            except OSError:
+                fail('project_bundle_invalid_or_changed')
+
     @contextmanager
     def session(self):
         """Own lifecycle while any number of in-process research tasks execute.
@@ -287,6 +306,7 @@ class ProjectPostgres:
         Other processes cannot stop/migrate the cluster while this lease is
         held. If it was already explicitly up, this session leaves it up.
         """
+        self._verify_session_bundles()
         from .research import ProjectResearchSession
         with self.layout.lock():
             runtime = verify_runtime(self.layout)

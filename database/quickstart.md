@@ -428,3 +428,30 @@ the snapshot's applied ledger; managed sessions still refuse pending migrations.
 See [the backup contract](README.md#explicit-backupcatalog-extension-compatibility-not-an-upgrade)
 for the separate permissions and private recovery procedure. This is not an
 instruction to modify a user's existing installation or delete its original data.
+
+
+### Managed research also checks declared kit integrity
+
+Every new `ProjectPostgres(root).session()` reuses the existing bundle verifier
+BEFORE taking the lifecycle lease, reading private state, or starting/borrowing
+an engine. It checks both the source/kit directory containing the imported server
+module and the selected data root (once if they are the same). Either
+`PROJECT-BUNDLE.json` or `database/postgres-runtime.zip` identifies a declared kit;
+a missing companion, changed payload, extra selected code/SQL, reparse point or
+unreadable marker refuses entry. There is no cached success between sessions.
+This covers existing managed research, task, simulation and confirmation paths,
+not only `start_project.py`. Console commands retain their existing fixed failure
+responses and must not be retried against another root to bypass the rejection.
+
+This is an entry-time integrity check, NOT source authentication, an atomic
+filesystem snapshot or a sandbox against Python code already imported/executed.
+Both markers absent remains the explicit SOURCE-installation path; removing both
+markers maliciously is not detected as a previously installed kit. Check the
+trusted outer archive before execution. Mid-session file changes are not monitored;
+admitted work still uses its original cleanup, and the next entry rechecks bytes.
+No new schema/version compatibility is inferred when code and data roots differ.
+
+The separate `status`/`down` infrastructure controls are unchanged, so a rejected
+research entry does not itself stop a borrowed running engine or block an operator
+from its existing safe-stop procedure. This does not authorize an old-kit overlay,
+file repair, deletion of state/markers, user database migration or real model call.

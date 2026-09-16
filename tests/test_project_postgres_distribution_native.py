@@ -363,11 +363,58 @@ def test_build_and_run_actual_relocatable_kit(monkeypatch):
         try:
             blocked = start(first, expected=1)
             assert blocked['reason_code'] == 'project_bundle_invalid_or_changed'
+            before_log = sha256((db.layout.home / 'server.log').read_bytes()).hexdigest()
+            # The real operator command must not bypass startup's kit check.
+            denied = subprocess.run([str(first / '.venv/Scripts/python.exe'), '-I',
+                str(first / 'scripts/evaluate_project_research.py'), '--root', str(first)],
+                cwd=proof, env=clean_environment(), stdin=subprocess.DEVNULL,
+                capture_output=True, text=True, encoding='utf-8', timeout=60)
+            assert denied.returncode == 1 and denied.stderr == ''
+            assert json.loads(denied.stdout)['reason_code'] == 'research_evaluation_operation_failed'
+            # Use the changed SOURCE kit with both same and different data roots.
+            # Real verifier/lifecycle, no patched DB, runtime or imported module.
+            probe = (
+                'import sys; from pathlib import Path; '
+                'from polymarket_alpha_lab.project_postgres.server import ProjectPostgres; '
+                'from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError\n'
+                'try:\n'
+                '    with ProjectPostgres(Path(sys.argv[1])).session():\n'
+                '        raise AssertionError("invalid kit admitted")\n'
+                'except ProjectDatabaseError as error:\n'
+                '    assert str(error) == "project_bundle_invalid_or_changed"\n'
+                '    print("bundle session blocked before research")\n'
+            )
+            for data_root in (first, second):
+                denied = subprocess.run([str(first / '.venv/Scripts/python.exe'), '-I', '-c',
+                    probe, str(data_root)], cwd=proof, env=clean_environment(),
+                    stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding='utf-8', timeout=60)
+                assert denied.returncode == 0 and denied.stderr == ''
+                assert denied.stdout.strip() == 'bundle session blocked before research'
+            assert sha256((db.layout.home / 'server.log').read_bytes()).hexdigest() == before_log
+            assert db.status()['status'] == 'stopped'
+            assert other_db.status()['status'] == 'stopped'
         finally:
             target.write_bytes(original)
         with db.session() as research:
             assert research.inspect(record_id='kit-record').record == captured.record
         assert start(first)['recorded_attempts'] == 1
+        # External SOURCE code selecting a changed DATA kit must also refuse,
+        # without stopping an explicitly-running borrowed engine.
+        assert db.up()['status'] == 'running'
+        target.write_bytes(original + b'\n# harmless integrity mismatch\n')
+        try:
+            from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
+            with pytest.raises(ProjectDatabaseError, match='project_bundle_invalid_or_changed'):
+                with db.session():
+                    pytest.fail('changed data kit reached borrowed engine')
+            assert db.status()['status'] == 'running'
+        finally:
+            target.write_bytes(original)
+            db.down()
+        with db.session() as research:
+            assert research.inspect(record_id='kit-record').record == captured.record
+        assert db.status()['status'] == 'stopped'
+        print('native kit session integrity: PASS; code/data roots, no new start, borrowed engine preserved', flush=True)
     finally:
         db.down()
     print('native distribution: PASS; two fresh instances, restart retention, no models or Docker', flush=True)
