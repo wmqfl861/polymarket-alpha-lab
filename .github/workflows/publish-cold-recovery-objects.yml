@@ -1,0 +1,60 @@
+name: Publish fixed cold recovery objects
+on:
+  push:
+    branches: [review/wp06-cold-recovery-publication-20260916]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-cold-recovery-object-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Create a new transport ref from the fixed reviewed delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=4df08873f4b9b8f1378913c0d00ca6bb183e51e2
+          REF=refs/heads/review/wp06-cold-recovery-objects-20260916
+          PATCH="$RUNNER_TEMP/cold-recovery.patch"
+          cp docs/reviews/wp06-cold-recovery-publication/implementation.patch "$PATCH"
+          echo "88136134ac5db5386cd13a25675d7970ac308a6aeba8cf396953ad823a7294a3  $PATCH" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          test "$(git rev-parse HEAD^{tree})" = 401f5a691e6898c670e446d142340d396862dae9
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- src scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json .github
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 7
+          TREE=$(git write-tree)
+          test "$TREE" = d24b94c45dba9096d2316ab6ee05ce0cb1fe5052
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport exact reviewed cold recovery tests/docs; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          export COMMIT TREE
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          result=dict(commit=os.environ['COMMIT'],tree=os.environ['TREE'],
+              final_reviewed_tree='0c0aaf629410d3695029332ceb73b4af652a4c16',
+              patch_sha256='88136134ac5db5386cd13a25675d7970ac308a6aeba8cf396953ad823a7294a3',
+              main_updated=False,feature_branch_updated=False,application_code_executed=False,
+              workflow_files_changed=False)
+          Path(os.environ['RUNNER_TEMP'],'publication.json').write_text(json.dumps(result,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cold-recovery-object-publication
+          path: ${{ runner.temp }}/publication.json
+          retention-days: 7
+          if-no-files-found: error
