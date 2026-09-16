@@ -1,0 +1,25 @@
+F............                                                            [100%]
+=================================== FAILURES ===================================
+______ test_changed_tail_with_same_length_during_restore_is_not_published ______
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-2/test_changed_tail_with_same_le0/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': 'bdbbb7b71d7d339e17fe30af123eaa47eaeba4dcc9489090815956c8e85bdee9', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f09191d8770>
+
+    def test_changed_tail_with_same_length_during_restore_is_not_published(extended, monkeypatch):
+        (root, layout, data, dest), args = extended
+        rows = list(CATALOG)
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: tuple(rows))
+        def change_while_checking_staging(*_):
+            rows[-1] = (rows[-1][0], 'e'*64, 'SELECT 2;')
+        monkeypatch.setattr(b, '_shutdown', change_while_checking_staging)
+        kept = layout.private / 'original-kept'
+        layout.home.rename(kept)
+        before = fmt.inventory(kept)
+>       with pytest.raises(ProjectDatabaseError, match='catalog_changed'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError'>
+
+tests/test_project_postgres_backup_catalog_review.py:24: Failed
+=========================== short test summary info ============================
+FAILED tests/test_project_postgres_backup_catalog_review.py::test_changed_tail_with_same_length_during_restore_is_not_published - Failed: DID NOT RAISE <class 'polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError'>
+1 failed, 12 passed in 0.78s

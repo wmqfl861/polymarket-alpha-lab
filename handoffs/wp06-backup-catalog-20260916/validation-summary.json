@@ -1,0 +1,30 @@
+{
+  "local_full": {
+    "passed": 37973,
+    "skipped": 42,
+    "pytest_seconds": 319.7,
+    "verifier_final_status": "PASS",
+    "platform": "Linux Python 3.13.5, preinstalled dependencies, not locked CI"
+  },
+  "focused": {
+    "passed": 244,
+    "skipped": 2,
+    "seconds": 13.14
+  },
+  "separate_review": {
+    "passed": 130,
+    "skipped": 0,
+    "seconds": 2.25,
+    "new_unit_review_cases": 35
+  },
+  "new_native_cases": 1,
+  "new_native_executed": false,
+  "github_published": false,
+  "pr_created": false,
+  "merged": false,
+  "windows_ci_executed": false,
+  "known_unresolved_failure_in_executed_tests": false,
+  "candidate_tree": "87486a77918a1eef57e19b7960032211a8578ab9",
+  "worktrees_clean": true,
+  "all_nine_payloads_rechecked": true
+}

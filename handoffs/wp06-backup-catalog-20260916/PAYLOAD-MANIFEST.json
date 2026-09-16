@@ -1,0 +1,122 @@
+{
+  "PUBLISH_HANDOFF.md": {
+    "bytes": 7500,
+    "sha256": "9fc05edebc4a584d2932d3dcd829d4d553a49ada65715b7065b599562fd28737"
+  },
+  "README.md": {
+    "bytes": 1165,
+    "sha256": "1005bbfb3f56d35eff10e9a47f31daa5ef2c6014ae94498edbb3f0e8c6e9b0f7"
+  },
+  "REVIEW.md": {
+    "bytes": 6081,
+    "sha256": "812991709916dab7bcc0dc0e3bc54a06325b028479f87bb433358544874fade5"
+  },
+  "candidate-identity.json": {
+    "bytes": 933,
+    "sha256": "aeb167e6f017ad8a8893672c5d40811a002924cc09421be0f9a879a6a32b298d"
+  },
+  "detached-final.log": {
+    "bytes": 180,
+    "sha256": "be1cf59ddb0609df277a0607752a5b6e19a5c597d87efdd100784b8c5e21a4b4"
+  },
+  "detached-final.xml": {
+    "bytes": 17671,
+    "sha256": "f2ea9dcd5078a8df08253ddcfef4ca98d7cfe2c9f2b81557e8da7268dc75a4e0"
+  },
+  "feature-green.log": {
+    "bytes": 180,
+    "sha256": "962b43b526ae4d940c1ccd7a0d1f9377339564e9fed9d31dc771aeba2432b1c4"
+  },
+  "feature-red.log": {
+    "bytes": 62587,
+    "sha256": "0ced884e351fae8698193fdc7ea5cebf99460e12e3a1eed6afd60320463cd24b"
+  },
+  "finite-probe.json": {
+    "bytes": 228,
+    "sha256": "13d1ec7e7d5e5daaae49d70b65950e546094e6c1443a79e88c1bbb76fddac642"
+  },
+  "focused-final.log": {
+    "bytes": 352,
+    "sha256": "29b67bd847ec37b6ec572d9a0431ccb449faca26b36dd6f47847a2199be0bdd4"
+  },
+  "full-final.log": {
+    "bytes": 45925,
+    "sha256": "d79047bd41fb7e95c40197ddc9766535db84973684753b3a76a268f638f06701"
+  },
+  "implementation.patch": {
+    "bytes": 46577,
+    "sha256": "f87ca9e56929d0716e11fe0873cfc671001a82ff7bd64ee7f977ceedd0d81830"
+  },
+  "install.log": {
+    "bytes": 1258,
+    "sha256": "e8e45f321ae2bb755b7740133cc98c52887b9f8279f9368198e574c4dda4c494"
+  },
+  "patch-verification.json": {
+    "bytes": 171,
+    "sha256": "bf2b646de240e472e0c5ac666c9fbfa6cef9e8484dbe1b0a4c35ecac7a5d5b71"
+  },
+  "related-green.log": {
+    "bytes": 351,
+    "sha256": "2733c493a1d421f4452e9774b9fc71d86d135046f176252fe59deb4135f71d48"
+  },
+  "review-green.log": {
+    "bytes": 180,
+    "sha256": "7f7a6225d0ec8fbac7ca251eed35ac6790a264311dab792dcd74eca5dce9735c"
+  },
+  "review-red.log": {
+    "bytes": 1782,
+    "sha256": "2f927eaed815b389fd4c5f8240fb27d3149d952ebd420203dcbe0b1f151e73f7"
+  },
+  "setup.json": {
+    "bytes": 217,
+    "sha256": "eacf562696e39e4c572f28c50d0ab786dc0a1877518d4b642915898d4cc2e361"
+  },
+  "source-manifest.json": {
+    "bytes": 1898,
+    "sha256": "624a959c34cda976511dc1c93017bb9f4858fe4f0ecad38389e96b53e1fe354e"
+  },
+  "sources/.github/workflows/native-postgres.yml": {
+    "bytes": 8081,
+    "sha256": "20c6855eaae1cc5e9e2cfcf12aec8fc6363b43548487111fb50572e4adcddfb6"
+  },
+  "sources/DELIVERY_PLAN.md": {
+    "bytes": 55707,
+    "sha256": "750022aed29b848ff2e4e99136f4e01ab6eb50f7eb6dd2fb1572c0ada1e92e7e"
+  },
+  "sources/database/README.md": {
+    "bytes": 23917,
+    "sha256": "cf99468f4e861878a395d383cd712e898a4701012dfeac22e4d678a52e0118b7"
+  },
+  "sources/database/quickstart.md": {
+    "bytes": 25618,
+    "sha256": "60937ec8410a16d86d9e329f0a1dd90f34e015e1199d2300cf25193d7b2b052f"
+  },
+  "sources/src/polymarket_alpha_lab/project_postgres/backup.py": {
+    "bytes": 13129,
+    "sha256": "0d084a38b7db1f60829e793a7e9ec82d895350af17cf76ed4f328defd8b0809c"
+  },
+  "sources/src/polymarket_alpha_lab/project_postgres/cli.py": {
+    "bytes": 4045,
+    "sha256": "5b9eede797a4cbf53c4ed1695353ef8f8a9613770db18ca6773c9f4a129cafd4"
+  },
+  "sources/tests/test_project_postgres_backup_catalog.py": {
+    "bytes": 5944,
+    "sha256": "61ee7036a994f2e351236ab658b0f564638d4acc4509c6773e46969e39c4f9a5"
+  },
+  "sources/tests/test_project_postgres_backup_catalog_review.py": {
+    "bytes": 5075,
+    "sha256": "c36c6c4c930e9e7f95af7ca78c60068acb9e154e0b8ecb22fb32522931646cb4"
+  },
+  "sources/tests/test_project_postgres_backup_native.py": {
+    "bytes": 14434,
+    "sha256": "4801c2e03123700b66f5d34a42aed93a43fc8a24059e66759eed4d4d772d49ed"
+  },
+  "static-review.json": {
+    "bytes": 454,
+    "sha256": "a9ffe56d0f046a73c36c4b3bdddec19583757dd00c63f68a44e7b55bd65fe892"
+  },
+  "validation-summary.json": {
+    "bytes": 753,
+    "sha256": "98df8aaa13b08fec910ef49371c0338428ee0c6f7726fb3fbcbddf8a6dc5ec06"
+  }
+}

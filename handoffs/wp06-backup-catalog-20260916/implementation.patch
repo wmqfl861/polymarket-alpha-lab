@@ -1,0 +1,662 @@
+diff --git a/.github/workflows/native-postgres.yml b/.github/workflows/native-postgres.yml
+index 511f2ba56be6def33970231c9492bbe1e2baac3b..aa968284094c06ec4e4f9d10351145a8c11f2529 100644
+--- a/.github/workflows/native-postgres.yml
++++ b/.github/workflows/native-postgres.yml
+@@ -109,7 +109,7 @@ jobs:
+           $env:PYTHONUTF8 = '1'
+           $env:PAL_REQUIRE_HANDOFF_SHELLS = '1'
+           Get-ChildItem Env: | Where-Object { $_.Name -like 'PG*' } | ForEach-Object { Remove-Item ('Env:' + $_.Name) }
+-          .\.venv\Scripts\python.exe -u -m pytest -p no:faulthandler -p tests.ci_thread_dump -q -s -o junit_family=legacy -o faulthandler_timeout=120 tests/test_project_postgres.py tests/test_project_postgres_platform.py tests/test_project_postgres_publication.py tests/test_project_postgres_publication_native.py tests/test_project_postgres_migration_compat.py tests/test_project_postgres_native.py tests/test_project_postgres_backup.py tests/test_project_postgres_backup_zip.py tests/test_project_postgres_backup_native.py tests/test_project_postgres_resolution_native.py tests/test_research_resolution.py tests/test_research_resolution_store.py tests/test_research_resolution_cli.py tests/test_research_resolution_inspection_cli.py tests/test_research_resolution_queue.py tests/test_research_resolution_poll.py tests/test_project_postgres_resolution_queue_native.py tests/test_research_crypto_launch.py tests/test_crypto_contract_scope.py tests/test_crypto_observation_time.py tests/test_research_evidence_timezones.py tests/test_research_scope_instants.py tests/test_research_record_timezone_codec.py tests/test_project_postgres_crypto_launch_native.py tests/test_public_http.py tests/test_research_crypto_discovery.py tests/test_crypto_supported_selection.py tests/test_handoff_download.py tests/test_research_evaluation_cli.py tests/test_research_execution_cli.py tests/test_research_execution_inventory.py tests/test_research_inventory_cli.py tests/test_project_postgres_inventory_native.py tests/test_research_dispatch.py tests/test_project_postgres_dispatch_native.py tests/test_research_dispatch_rotation.py tests/test_project_postgres_rotation_native.py tests/test_research_model_budget.py tests/test_project_postgres_budget_native.py tests/test_research_dispatch_cli.py tests/test_research_dispatch_cli_review.py tests/test_project_postgres_dispatch_cli_native.py tests/test_research_resolution_confirmation.py tests/test_research_resolution_confirmation_review.py tests/test_project_postgres_confirmation_native.py tests/test_ci_thread_dump.py tests/test_ci_thread_dump_review.py tests/test_research_resolution_output.py tests/test_research_resolution_output_review.py --junitxml="$env:RUNNER_TEMP/native-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-proof.log"
++          .\.venv\Scripts\python.exe -u -m pytest -p no:faulthandler -p tests.ci_thread_dump -q -s -o junit_family=legacy -o faulthandler_timeout=120 tests/test_project_postgres.py tests/test_project_postgres_platform.py tests/test_project_postgres_publication.py tests/test_project_postgres_publication_native.py tests/test_project_postgres_migration_compat.py tests/test_project_postgres_native.py tests/test_project_postgres_backup.py tests/test_project_postgres_backup_zip.py tests/test_project_postgres_backup_native.py tests/test_project_postgres_resolution_native.py tests/test_research_resolution.py tests/test_research_resolution_store.py tests/test_research_resolution_cli.py tests/test_research_resolution_inspection_cli.py tests/test_research_resolution_queue.py tests/test_research_resolution_poll.py tests/test_project_postgres_resolution_queue_native.py tests/test_research_crypto_launch.py tests/test_crypto_contract_scope.py tests/test_crypto_observation_time.py tests/test_research_evidence_timezones.py tests/test_research_scope_instants.py tests/test_research_record_timezone_codec.py tests/test_project_postgres_crypto_launch_native.py tests/test_public_http.py tests/test_research_crypto_discovery.py tests/test_crypto_supported_selection.py tests/test_handoff_download.py tests/test_research_evaluation_cli.py tests/test_research_execution_cli.py tests/test_research_execution_inventory.py tests/test_research_inventory_cli.py tests/test_project_postgres_inventory_native.py tests/test_research_dispatch.py tests/test_project_postgres_dispatch_native.py tests/test_research_dispatch_rotation.py tests/test_project_postgres_rotation_native.py tests/test_research_model_budget.py tests/test_project_postgres_budget_native.py tests/test_research_dispatch_cli.py tests/test_research_dispatch_cli_review.py tests/test_project_postgres_dispatch_cli_native.py tests/test_research_resolution_confirmation.py tests/test_research_resolution_confirmation_review.py tests/test_project_postgres_confirmation_native.py tests/test_ci_thread_dump.py tests/test_ci_thread_dump_review.py tests/test_research_resolution_output.py tests/test_research_resolution_output_review.py tests/test_project_postgres_backup_catalog.py tests/test_project_postgres_backup_catalog_review.py --junitxml="$env:RUNNER_TEMP/native-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-proof.log"
+           $code = $LASTEXITCODE
+           exit $code
+       - name: Verify tracked source unchanged
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 34680edae667b6f5af5016b2b4a1dd4236ca4796..5a1dd93a9be93d78081649409414f4d00a3726ee 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -70,7 +70,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺获准提供商／收费上界验证及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02／D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+-| WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算组合及提交后输出故障核验；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
++| WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算组合、提交后输出故障及旧冷备份目录前缀兼容；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
+ 
+ **当前完整验收：1／6（仅 WP-01／G1）。** 这是六个端到端工作包的状态，不表示现有代码完成量为零。
+ 每项达到 DONE 必须填入确切 PR、head／merge／tree、执行命令、结果、适用平台和未执行项；
+@@ -593,3 +593,26 @@ D1—D3、原统计晋级门槛和 WP-06 首次启动可靠性问题不变。没
+ 非零退出，再按原编号查询并明确原样重放；原回执与时间戳必须不变。只注入输出故障，
+ 不模拟数据库／事务，不新造审核编号或重试模型。最终复审和适用 CI 以本轮固定树为准。
+ 本项仍为合成工程验收，不关闭 G2—G6、D1—D3、真实输入／费率或原 PS5.1 问题。
++
++
++## 25. WP-06 本次推进：旧冷备份的显式迁移目录前缀兼容（G6 尚未关闭）
++
++基线 `4df08873f4b9b8f1378913c0d00ca6bb183e51e2`（PR #44）。复用原冷备份格式、
++校验、恢复和迁移入口，只为已审阅 SOURCE 安装增加 `--allow-catalog-extension`。
++默认仍要求完整目录一致；没有通用升级器、旧 kit 覆盖、业务文件存储或新数据库后端。
++
++- 显式许可只接受旧备份指纹是当前完整已校验迁移目录的非空精确前缀。旧文件删除、
++  改名、改写、排序变化、非法新增尾部、较新快照配较短目录均拒绝；根路径、引擎、
++  信任／校验值和目标必须不存在的要求不变。恢复不启动数据库，也不执行迁移 SQL。
++- 新回执明确目录数量不等于实际数据库账本；研究会话仍检查实际账本并阻断待迁移。
++  独立自审复现“恢复期间尾部被改写但数量不变”仍通过的问题，补完整目录指纹比对；
++  首败保留、原反例断言不削弱，失败只保留私有 staging，不覆盖原数据。
++- 隔离原生证明以真实 66 迁移备份配当前 67 迁移目录，验证默认拒绝、显式校验、
++  原位缺失目标恢复、实际待迁移阻断、显式一次迁移和成功／失败研究记录保全。
++  固定最终树、单独工作副本复审、完整离线和适用 Windows／kit 结果记录在本 PR。
++- 原 67 份迁移、依赖、权限、业务算法和备份格式不变；仅新增许可路径，不把恢复
++  成功冒充来源真实性、当前账本已检查、消费者已收到输出或完整灾备／升级验收。
++
++**WP-06 仍 PARTIAL，G6 未关闭，V1 仍 1／6。** 真实模型／输入／费率与 D1—D3、
++具体版本的安全数据切换和原 PS5.1 间歇问题仍待办。不操作用户机器或业务库，不取密钥，
++不上传含凭据的备份，不覆盖旧 kit，不运行真实模型／行情或实盘订单。
+diff --git a/database/README.md b/database/README.md
+index ef61ccf31f808be8ead540ccf71b40cf9f7bc8c6..673a26d725e60d02d198dd33a6a837387e878e51 100644
+--- a/database/README.md
++++ b/database/README.md
+@@ -270,7 +270,9 @@ can affect native server behavior on a later explicit start.
+ ```
+ 
+ Recovery is intentionally limited to the SAME project location with identical
+-native runtime and migration inventory, and an ABSENT `.local/postgres` directory.
++native runtime and, by default, identical migration inventory, and an ABSENT
++`.local/postgres` directory. The explicit catalog-extension exception below does
++not relax the original path, engine, trust, checksum or absent-target requirements.
+ It is NOT an in-place rollback or a way to copy/move a working project. The manager
+ will not rename, delete or overwrite existing data, even an empty/partial target.
+ Keep an existing damaged/original directory safely preserved through a separately
+@@ -290,7 +292,8 @@ claims remain incomplete and can STILL block strict evaluation. Backup is not
+ model replay, failed-job recovery or evidence of good forecasting performance.
+ Only data included in the snapshot can be recovered; later changes are not in it.
+ 
+-Both operations hold the existing OS lifecycle lock. A live PID, unclean control
++Backup creation and restore hold the existing OS lifecycle lock; verification
++does not start the engine or take that lease. A live PID, unclean control
+ state, recovery markers, tablespaces, symlinks/reparse points, hard-linked files,
+ path collisions, occupied port, changed runtime/migrations or existing restore
+ staging block. Current bounds: 50,000 filesystem entries and 8 GiB uncompressed
+@@ -324,3 +327,68 @@ The native catalog now includes the append-only research dispatch batch tail
+ unchanged. Batch admission/run requires this schema; it never migrates implicitly.
+ See [batch operation and safe upgrade limits](../docs/research-dispatch.md).
+ Do not overlay or edit an old immutable kit to obtain this table.
++
++
++## Explicit backup/catalog extension compatibility (not an upgrade)
++
++A previously created v1 cold backup remains immutable. When a reviewed SOURCE
++installation has only appended migrations, `verify-backup` and `restore` can now
++accept its older catalog with the separate `--allow-catalog-extension` flag.
++WITHOUT that flag, the original exact-catalog match is still required. API callers
++must supply the actual boolean `allow_catalog_extension=True`, not a truthy value.
++The backup format, original archive bytes and stored fingerprint are unchanged.
++
++The current catalog is fully validated first, including the added tail's file
++hashes and inventory. The backup fingerprint must equal a NONEMPTY exact prefix
++of the ordered effective migration names/hashes. This reuses the existing native
++migration compatibility transform. Deleted, renamed, reordered or modified old
++migrations, missing/unlisted files, a newer backup with a shorter current catalog,
++and even an invalid new tail are refused. The flag cannot override platform,
++physical root, runtime version/inventory, archive trust/checksum or existing-data
++checks. It does not authenticate an untrusted backup or approve unknown new SQL.
++
++On this opt-in path the existing receipt adds `migration_catalog`: `match`,
++`backup_entries`, `current_entries`, `additional_entries`, `current_sha256`,
++`database_ledger_checked=false` and `migrations_applied=0`. Counts describe the
++CATALOG captured with the backup, not the database's applied migration ledger.
++A snapshot could have been made with pending migrations. The full current
++fingerprint, not just counts, is rechecked before an opted-in restore publishes;
++a changed catalog/runtime leaves private staging rather than reporting success.
++This is bounded integrity checking under the existing trusted-owner assumption,
++not synchronization with out-of-band file edits by that owner.
++
++For an explicitly reviewed source installation at the ORIGINAL physical root,
++a private original backup and its independently retained checksum:
++
++```powershell
++.\.venv\Scripts\python.exe scripts/project_database.py verify-backup --archive "D:\Backups\Original\snapshot.palpg.zip" --sha256 YOUR_RETAINED_SHA256 --trusted-backup --allow-catalog-extension
++# Restore only under an approved recovery procedure with originals preserved and target ABSENT:
++.\.venv\Scripts\python.exe scripts/project_database.py restore --archive "D:\Backups\Original\snapshot.palpg.zip" --sha256 YOUR_RETAINED_SHA256 --trusted-backup --allow-catalog-extension
++```
++
++Check each command's exit status and original JSON; do not chain blindly after a
++failed verification. The backup still contains private credentials and must not
++be uploaded. Restore leaves the database STOPPED and performs no SQL migration.
++The next managed session still validates the actual ledger and refuses pending
++migrations. Only a separate reviewed `migrate` operation applies the pending tail;
++it is not authorized by verifying or restoring a backup. Do not call old code
++against newer schemas as a rollback strategy. A shorter catalog cannot make a
++newer snapshot compatible.
++
++This does NOT permit an immutable old kit overlay, altered bundle manifest,
++engine change, root relocation, in-place restore or automatic schema rollback.
++Keep the existing root/engine/source versions and private originals under the
++release-specific recovery plan. This addition removes only the strict catalog
++fingerprint mismatch for an expressly approved append-only extension.
++
++The isolated native test creates a real 66-migration database, retains completed
++and failed synthetic research, takes a cold backup, and installs the unchanged
++existing 67th migration in its SOURCE catalog. It checks default refusal, opt-in
++verification, existing-target refusal, restore into the same absent path, live
++pending-ledger refusal, then an explicit one-migration upgrade and unchanged
++original records/identity. No user's files or backups are used. Final-head test
++results and limitations belong in the implementation PR; this is not G6 closure.
++
++PostgreSQL's filesystem backup requirements remain applicable: use the whole
++cluster and a clean shutdown, not selective table files. Primary reference:
++https://www.postgresql.org/docs/17/backup-file.html (checked 2026-09-16).
+diff --git a/database/quickstart.md b/database/quickstart.md
+index de105402d9d7ff6d5210d68c385b69e183ba12af..5714f6af805482e2f2100ec8e227d69c83b31d70 100644
+--- a/database/quickstart.md
++++ b/database/quickstart.md
+@@ -414,3 +414,17 @@ reads back the committed review/outcome and explicitly replays the SAME input.
+ The original receipt and timestamps must match. No database/transaction mock is
+ used for this step; no new model call, alternate review ID or automatic retry is
+ permitted. It verifies this simulated failure, not real source/human acceptance.
++
++
++### Cold backup across an appended migration catalog
++
++The existing backup verifier/restorer offers an explicit `--allow-catalog-extension`
++for reviewed SOURCE installations at the original physical root. Default behavior
++still requires identical catalogs. The option accepts only the backup's unchanged
++nonempty historical prefix of the fully validated current catalog, keeps exact
++engine/root/trust/hash checks and NEVER overwrites an existing database or applies
++SQL. It does not upgrade an immutable old kit. Its reported catalog counts are NOT
++the snapshot's applied ledger; managed sessions still refuse pending migrations.
++See [the backup contract](README.md#explicit-backupcatalog-extension-compatibility-not-an-upgrade)
++for the separate permissions and private recovery procedure. This is not an
++instruction to modify a user's existing installation or delete its original data.
+diff --git a/src/polymarket_alpha_lab/project_postgres/backup.py b/src/polymarket_alpha_lab/project_postgres/backup.py
+index c967d85f03c126ef26e0b49d0bf0bd79cf363028..868f742af9e4c0fe5f252035e245da1b1b9c722c 100644
+--- a/src/polymarket_alpha_lab/project_postgres/backup.py
++++ b/src/polymarket_alpha_lab/project_postgres/backup.py
+@@ -38,14 +38,40 @@ def _shutdown(db: ProjectPostgres, info: dict) -> None:
+         fail('project_postgres_backup_requires_clean_shutdown')
+ 
+ 
+-def _bindings(layout: Layout, data: dict) -> None:
++def _catalog_binding(layout: Layout, expected: str) -> dict:
++    """Match a nonempty EXACT prefix of the fully validated effective catalog.
++
++    Old v1 backups retain a catalog fingerprint, not the live database ledger.
++    Matching a prefix does not prove how many migrations the snapshot applied.
++    """
++    catalog = [(name, digest) for name, digest, _ in sql.migration_catalog(layout)]
++    for length in range(len(catalog), 0, -1):
++        if fmt.fingerprint(catalog[:length]) == expected:
++            return dict(migration_catalog=dict(
++                match='identical' if length == len(catalog) else 'append_only_extension',
++                backup_entries=length, current_entries=len(catalog),
++                current_sha256=fmt.fingerprint(catalog),
++                additional_entries=len(catalog)-length, database_ledger_checked=False,
++                migrations_applied=0))
++    fail('project_postgres_backup_migrations_mismatch')
++
++
++def _catalog_opt_in(value: bool) -> None:
++    if type(value) is not bool:
++        fail('project_postgres_backup_catalog_opt_in_invalid')
++
++
++def _bindings(layout: Layout, data: dict, *, allow_catalog_extension: bool = False) -> dict:
+     if data['platform'] != fmt.platform_id() or data['instance']['root_sha256'] != layout.root_hash:
+         fail('project_postgres_backup_wrong_project_or_platform')
+     runtime = verify_runtime(layout)
+     if runtime['version'] != data['instance']['version'] or fmt.fingerprint(runtime) != data['runtime_sha256']:
+         fail('project_postgres_backup_runtime_mismatch')
++    if allow_catalog_extension:
++        return _catalog_binding(layout, data['migrations_sha256'])
+     if _migrations(layout) != data['migrations_sha256']:
+         fail('project_postgres_backup_migrations_mismatch')
++    return {}
+ 
+ 
+ @contextmanager
+@@ -153,13 +179,18 @@ def create_cold_backup(root: Path, *, destination: Path) -> dict:
+ 
+ @_public_errors
+ def verify_cold_backup(root: Path, *, archive: Path, expected_sha256: str,
+-                       trusted_backup: bool = False) -> dict:
+-    """Full archive hash/content/current-runtime check. Does not start a server."""
++                       trusted_backup: bool = False, allow_catalog_extension: bool = False) -> dict:
++    """Verify without starting PostgreSQL; catalog extensions require opt-in.
++
++    This checks an immutable catalog prefix, NOT the snapshot's applied ledger.
++    Runtime/platform/root checks remain exact and no migration is performed.
++    """
++    _catalog_opt_in(allow_catalog_extension)
+     layout = Layout(root)
+     with _approved_archive(archive, expected_sha256, trusted_backup) as (_, data):
+-        _bindings(layout, data)
++        binding = _bindings(layout, data, allow_catalog_extension=allow_catalog_extension)
+     return {'status': 'backup_verified', 'sha256': expected_sha256, 'contains_credentials': True,
+-            'encrypted': False, 'database_started': False}
++            'encrypted': False, 'database_started': False, **binding}
+ 
+ 
+ class _StagingLayout(Layout):
+@@ -170,20 +201,23 @@ class _StagingLayout(Layout):
+ 
+ @_public_errors
+ def restore_cold_backup(root: Path, *, archive: Path, expected_sha256: str,
+-                        trusted_backup: bool = False) -> dict:
++                        trusted_backup: bool = False, allow_catalog_extension: bool = False) -> dict:
+     """Restore ONLY an absent .local/postgres at the original project path.
+ 
+     Verifies the entire trusted archive before staging; hashes extracted files
+     again, checks native clean shutdown/config/identity, then publishes once.
+     Never deletes/renames an existing cluster. Failures retain private staging
+     for explicit operator diagnosis. Success leaves the recovered DB STOPPED.
++    An opted-in catalog extension NEVER applies SQL. A managed session still
++    checks the live ledger and blocks pending migrations until explicit migrate.
+     """
++    _catalog_opt_in(allow_catalog_extension)
+     db = ProjectPostgres(root)
+     layout = db.layout
+     if layout.home.exists():
+         fail('project_postgres_restore_existing_data_refused')
+     with _approved_archive(archive, expected_sha256, trusted_backup) as (source, data):
+-        _bindings(layout, data)
++        binding = _bindings(layout, data, allow_catalog_extension=allow_catalog_extension)
+         with layout.lock():
+             staged = ProjectPostgres(root)
+             staged.layout = _StagingLayout(layout.root)
+@@ -217,6 +251,12 @@ def restore_cold_backup(root: Path, *, archive: Path, expected_sha256: str,
+             if staged._state() != data['instance']:
+                 fmt.invalid()
+             _shutdown(staged, data['instance'])
++            if allow_catalog_extension:
++                # Do not publish a receipt based on a catalog/runtime that
++                # changed while extracting. External owner changes remain
++                # outside the lifecycle lock's coordination boundary.
++                if _bindings(layout, data, allow_catalog_extension=True) != binding:
++                    fail('project_postgres_backup_catalog_changed')
+             # Final recheck while retaining the lifecycle lease and archive FD.
+             source.fp.seek(0)
+             if file_digest(source.fp, 'sha256').hexdigest() != expected_sha256:
+@@ -225,4 +265,4 @@ def restore_cold_backup(root: Path, *, archive: Path, expected_sha256: str,
+                 fail('project_postgres_restore_existing_data_refused')
+             staged.layout.home.rename(layout.home)
+     return {'status': 'restored_stopped', 'sha256': expected_sha256,
+-            'existing_data_overwritten': False, 'database_started': False}
++            'existing_data_overwritten': False, 'database_started': False, **binding}
+diff --git a/src/polymarket_alpha_lab/project_postgres/cli.py b/src/polymarket_alpha_lab/project_postgres/cli.py
+index 13b831d94b511fb149795a713aa8be5dd688c704..8a6c788474bab1c1158e69da0d67cb8656c9170e 100644
+--- a/src/polymarket_alpha_lab/project_postgres/cli.py
++++ b/src/polymarket_alpha_lab/project_postgres/cli.py
+@@ -30,6 +30,8 @@ def main(argv: list[str] | None = None) -> int:
+         recovery = sub.add_parser(name, help='verify trusted backup; restore refuses any existing database')
+         recovery.add_argument('--archive', type=Path, required=True)
+         recovery.add_argument('--sha256', required=True, help='independently retained backup checksum')
++        recovery.add_argument('--allow-catalog-extension', action='store_true',
++                              help='allow only an unchanged historical catalog prefix; never applies migrations')
+         recovery.add_argument('--trusted-backup', action='store_true', required=True,
+                               help='approve a private backup from your own trusted database')
+     args = parser.parse_args(argv)
+@@ -43,7 +45,8 @@ def main(argv: list[str] | None = None) -> int:
+             from .backup import verify_cold_backup, restore_cold_backup
+             operation = verify_cold_backup if args.action == 'verify-backup' else restore_cold_backup
+             result = operation(args.root, archive=args.archive, expected_sha256=args.sha256,
+-                               trusted_backup=args.trusted_backup)
++                               trusted_backup=args.trusted_backup,
++                               allow_catalog_extension=args.allow_catalog_extension)
+         elif args.action == 'install-runtime':
+             if args.archive:
+                 version = import_runtime_archive(args.root, args.archive, expected_sha256=args.sha256)
+diff --git a/tests/test_project_postgres_backup_catalog.py b/tests/test_project_postgres_backup_catalog.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..263964cca57464f95f342f0280af40f6a8d8887e
+--- /dev/null
++++ b/tests/test_project_postgres_backup_catalog.py
+@@ -0,0 +1,115 @@
++"""Explicit archive/catalog compatibility; no engine or user backups are opened."""
++from copy import deepcopy
++import json
++
++import pytest
++
++from polymarket_alpha_lab.project_postgres import backup as b, backup_format as fmt
++from polymarket_alpha_lab.project_postgres.cli import main
++from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
++from tests.test_project_postgres_backup import state, make
++
++CATALOG = tuple((f'2026091600000{i}_fixture.sql', str(i)*64, 'SELECT 1;') for i in range(1, 4))
++
++
++def fingerprint(rows):
++    return fmt.fingerprint([(name, digest) for name, digest, _ in rows])
++
++
++@pytest.fixture
++def extended(state, monkeypatch):
++    # Create an unchanged v1 archive with its original TWO-entry fingerprint.
++    monkeypatch.setattr(b, '_migrations', lambda _: fingerprint(CATALOG[:2]))
++    path, digest = make(state)
++    monkeypatch.setattr(b, '_migrations', lambda _: fingerprint(CATALOG))
++    monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: CATALOG)
++    return state, dict(archive=path, expected_sha256=digest, trusted_backup=True)
++
++
++def test_default_still_refuses_extended_catalog_before_restore_staging(extended):
++    (root, layout, data, dest), args = extended
++    with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
++        b.verify_cold_backup(root, **args)
++    layout.home.rename(layout.private / 'original-kept')
++    with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
++        b.restore_cold_backup(root, **args)
++    assert not layout.home.exists() and not (layout.private / 'postgres.restoring').exists()
++
++
++def test_explicit_prefix_verification_does_not_change_archive_or_data(extended):
++    (root, layout, data, dest), args = extended
++    before = fmt.inventory(layout.home)
++    archive_before = args['archive'].read_bytes()
++    result = b.verify_cold_backup(root, **args, allow_catalog_extension=True)
++    assert result['status'] == 'backup_verified' and result['database_started'] is False
++    assert result['migration_catalog'] == dict(match='append_only_extension', backup_entries=2,
++        current_entries=3, current_sha256=fingerprint(CATALOG), additional_entries=1,
++        database_ledger_checked=False, migrations_applied=0)
++    assert fmt.inventory(layout.home) == before and args['archive'].read_bytes() == archive_before
++
++
++def test_explicit_prefix_restore_keeps_every_old_byte_and_never_migrates(extended, monkeypatch):
++    (root, layout, data, dest), args = extended
++    before = fmt.inventory(layout.home)
++    kept = layout.private / 'original-kept'
++    layout.home.rename(kept)
++    monkeypatch.setattr(b.ProjectPostgres, 'migrate', lambda *_: pytest.fail('implicit migration'))
++    monkeypatch.setattr(b.ProjectPostgres, 'up', lambda *_: pytest.fail('implicit engine start'))
++    result = b.restore_cold_backup(root, **args, allow_catalog_extension=True)
++    assert result['status'] == 'restored_stopped' and result['existing_data_overwritten'] is False
++    assert result['migration_catalog']['additional_entries'] == 1
++    assert result['migration_catalog']['migrations_applied'] == 0
++    assert fmt.inventory(layout.home) == before == fmt.inventory(kept)
++
++
++@pytest.mark.parametrize('rows', [
++    CATALOG[:1],
++    CATALOG[1:],
++    (CATALOG[1], CATALOG[0], CATALOG[2]),
++    ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
++    ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
++    (CATALOG[0], CATALOG[2]),
++], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
++def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
++    (root, layout, data, dest), args = extended
++    monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
++    layout.home.rename(layout.private / 'original-kept')
++    with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
++        b.restore_cold_backup(root, **args, allow_catalog_extension=True)
++    assert not layout.home.exists() and not (layout.private / 'postgres.restoring').exists()
++
++
++def test_equal_catalog_is_explicitly_identical_not_reported_as_extension(extended, monkeypatch):
++    (root, layout, data, dest), args = extended
++    monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: CATALOG[:2])
++    report = b.verify_cold_backup(root, **args, allow_catalog_extension=True)['migration_catalog']
++    assert report == dict(match='identical', backup_entries=2, current_entries=2,
++        current_sha256=fingerprint(CATALOG[:2]), additional_entries=0,
++        database_ledger_checked=False, migrations_applied=0)
++
++
++@pytest.mark.parametrize('value', [1, 'true', None, [], {}])
++@pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
++def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
++    monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
++    with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
++        operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
++                  allow_catalog_extension=value)
++
++
++@pytest.mark.parametrize('operation', ['verify-backup', 'restore'])
++def test_cli_only_forwards_explicit_catalog_extension_permission(monkeypatch, capsys, operation):
++    calls = []
++    def verify(root, **kw):
++        calls.append(kw)
++        return dict(status='fixture_no_io')
++    monkeypatch.setattr(b, 'verify_cold_backup', verify)
++    monkeypatch.setattr(b, 'restore_cold_backup', verify)
++    args = ['--root', 'fixture', operation, '--archive', 'fixture.zip',
++            '--sha256', 'a'*64, '--trusted-backup']
++    assert main(args) == 0
++    assert calls[-1].get('allow_catalog_extension', False) is False
++    assert main([*args, '--allow-catalog-extension']) == 0
++    assert calls[-1]['allow_catalog_extension'] is True
++    assert len(calls) == 2
++    assert 'fixture_no_io' in capsys.readouterr().out
+diff --git a/tests/test_project_postgres_backup_catalog_review.py b/tests/test_project_postgres_backup_catalog_review.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..91fee968448e0ddd7c931428673c44d316dd7184
+--- /dev/null
++++ b/tests/test_project_postgres_backup_catalog_review.py
+@@ -0,0 +1,100 @@
++"""Separate self-review: retain exact catalog provenance and strict old guards."""
++from hashlib import sha256
++import json
++from pathlib import Path
++
++import pytest
++
++from polymarket_alpha_lab.project_postgres import backup as b, backup_format as fmt, sql
++from polymarket_alpha_lab.project_postgres.files import Layout, ProjectDatabaseError
++from tests.test_project_postgres_backup_catalog import CATALOG, extended, fingerprint
++from tests.test_project_postgres_backup import state
++
++
++def test_changed_tail_with_same_length_during_restore_is_not_published(extended, monkeypatch):
++    (root, layout, data, dest), args = extended
++    rows = list(CATALOG)
++    monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: tuple(rows))
++    def change_while_checking_staging(*_):
++        rows[-1] = (rows[-1][0], 'e'*64, 'SELECT 2;')
++    monkeypatch.setattr(b, '_shutdown', change_while_checking_staging)
++    kept = layout.private / 'original-kept'
++    layout.home.rename(kept)
++    before = fmt.inventory(kept)
++    with pytest.raises(ProjectDatabaseError, match='catalog_changed'):
++        b.restore_cold_backup(root, **args, allow_catalog_extension=True)
++    assert not layout.home.exists()
++    assert (layout.private / 'postgres.restoring').exists()
++    assert fmt.inventory(kept) == before
++
++
++@pytest.mark.parametrize('reason', ['trust', 'checksum', 'runtime', 'root', 'platform', 'existing'])
++def test_extension_permission_does_not_bypass_old_recovery_guards(extended, monkeypatch, reason):
++    (root, layout, data, dest), args = extended
++    args = dict(args, allow_catalog_extension=True)
++    if reason != 'existing':
++        layout.home.rename(layout.private / 'original-kept')
++    if reason == 'trust': args['trusted_backup'] = False
++    elif reason == 'checksum': args['expected_sha256'] = 'f'*64
++    elif reason == 'runtime': monkeypatch.setattr(b, 'verify_runtime', lambda _: dict(version='17.99'))
++    elif reason == 'root': monkeypatch.setattr(Layout, 'root_hash', property(lambda _: 'a'*64))
++    elif reason == 'platform': monkeypatch.setattr(fmt, 'platform_id', lambda: 'foreign')
++    with pytest.raises(ProjectDatabaseError):
++        b.restore_cold_backup(root, **args)
++    assert not (layout.private / 'postgres.restoring').exists()
++    assert layout.home.exists() is (reason == 'existing')
++
++
++def local_catalog(tmp_path):
++    (tmp_path / 'pyproject.toml').write_text('[project]\nname="polymarket-alpha-lab"\n')
++    (tmp_path / 'database').mkdir()
++    folder = tmp_path / 'supabase/migrations'; folder.mkdir(parents=True)
++    entries = []
++    for i in range(1, 4):
++        name = f'2026091600000{i}_fixture.sql'
++        body = f'SELECT {i};\n'.encode()
++        (folder / name).write_bytes(body)
++        entries.append(dict(name=name, sha256=sha256(body).hexdigest(), transaction_wrapper=False))
++    manifest = dict(format='native-postgres-migrations-v1', migrations=entries)
++    path = tmp_path / 'database/migrations.lock.json'
++    path.write_text(json.dumps(manifest))
++    layout = Layout(tmp_path)
++    expected = fingerprint(sql.migration_catalog(layout)[:2])
++    return layout, manifest, path, folder, expected
++
++
++@pytest.mark.parametrize('change', ['tail-bytes', 'prefix-bytes-and-lock', 'extra-file', 'delete-prefix', 'reorder-lock'])
++def test_entire_real_catalog_is_validated_before_matching_a_prefix(tmp_path, change):
++    layout, manifest, path, folder, expected = local_catalog(tmp_path)
++    entries = manifest['migrations']
++    if change == 'tail-bytes':
++        (folder / entries[-1]['name']).write_bytes(b'SELECT 999;\n')
++    elif change == 'prefix-bytes-and-lock':
++        value = b'SELECT 999;\n'
++        (folder / entries[0]['name']).write_bytes(value)
++        entries[0]['sha256'] = sha256(value).hexdigest()
++    elif change == 'extra-file':
++        (folder / '20260916000004_unlisted.sql').write_bytes(b'SELECT 4;\n')
++    elif change == 'delete-prefix':
++        (folder / entries[0]['name']).unlink()
++        del entries[0]
++    elif change == 'reorder-lock':
++        entries[0], entries[1] = entries[1], entries[0]
++    path.write_text(json.dumps(manifest))
++    with pytest.raises(ProjectDatabaseError):
++        b._catalog_binding(layout, expected)
++
++
++def test_effective_native_prefix_fingerprint_matches_existing_backup_format():
++    root = Path(__file__).resolve().parents[1]
++    rows = sql.migration_catalog(Layout(root))
++    report = b._catalog_binding(Layout(root), fingerprint(rows[:-1]))['migration_catalog']
++    assert report['backup_entries'] == len(rows)-1
++    assert report['additional_entries'] == 1 and report['database_ledger_checked'] is False
++    # The legacy migration codec has a reviewed effective digest. Never use a
++    # fingerprint of the raw lock file as if it were the archive's fingerprint.
++    source = json.loads((root / 'database/migrations.lock.json').read_text())
++    raw_hash = fmt.fingerprint([(r['name'], r['sha256']) for r in source['migrations'][:-1]])
++    assert raw_hash != fingerprint(rows[:-1])
++    with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
++        b._catalog_binding(Layout(root), raw_hash)
+diff --git a/tests/test_project_postgres_backup_native.py b/tests/test_project_postgres_backup_native.py
+index 3f9a4bf4d1c3b2e9c77bcb12cf5ea6c00f776fc7..f4ce1bd441718f5abb100d1fac2bdab72cf010ee 100644
+--- a/tests/test_project_postgres_backup_native.py
++++ b/tests/test_project_postgres_backup_native.py
+@@ -126,3 +126,124 @@ def test_native_cold_backup_recovery_preserves_prospective_history(tmp_path, mon
+     finally:
+         if db.layout.home.exists():
+             db.down()
++
++
++@pytest.mark.skipif(not ENABLED, reason='explicit private native backup proof is opt-in')
++def test_native_old_backup_restore_requires_explicit_catalog_extension_and_migration(tmp_path, monkeypatch):
++    """Real 66-entry snapshot -> 67-entry catalog; SQL still requires migrate.
++
++    The original synthetic cluster is preserved, not deleted to force recovery.
++    No backup archive, credential or user record is published as CI evidence.
++    """
++    import json
++    import subprocess
++    import sys
++    from polymarket_alpha_lab.project_postgres.files import clean_environment
++
++    prefix = Path(os.environ['POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX'])
++    for key in tuple(os.environ):
++        if key.upper().startswith('PG'):
++            monkeypatch.delenv(key)
++    if os.name == 'nt':
++        base = Path(os.environ['RUNNER_TEMP']) / ('pal-backup-catalog-' + uuid.uuid4().hex)
++        private_directory(base, create=True)
++    else:
++        base = tmp_path
++    root = base / 'Original Project With Spaces'
++    root.mkdir()
++    (root / 'pyproject.toml').write_text('[project]\nname="polymarket-alpha-lab"\n')
++    shutil.copytree(ROOT / 'database', root / 'database')
++    shutil.copytree(ROOT / 'supabase/migrations', root / 'supabase/migrations')
++    manifest_file = root / 'database/migrations.lock.json'
++    manifest_bytes = manifest_file.read_bytes()
++    manifest = json.loads(manifest_bytes)
++    tail = '20260915020000_research_paper_simulations.sql'
++    assert len(manifest['migrations']) == 67 and manifest['migrations'][-1]['name'] == tail
++    (root / 'supabase/migrations' / tail).unlink()
++    manifest_file.write_text(json.dumps(dict(manifest, migrations=manifest['migrations'][:-1])))
++    with socket.socket() as sock:
++        sock.bind(('127.0.0.1', 0))
++        port = sock.getsockname()[1]
++    import_runtime_directory(root, prefix)
++    db = ProjectPostgres(root)
++    try:
++        assert db.initialize(port=port)['migrations_applied'] == 66
++        first, second = request(1801), request(1802)
++        with db.session() as session:
++            completed = session.run_research(request=first, model_factory=lambda _: Model())
++            def fail(_):
++                raise RuntimeError('synthetic original failed research')
++            failed = session.run_research(request=second, model_factory=fail)
++            assert completed.record.run.research.status == 'completed'
++            assert failed.record.run.research.status == 'failed'
++            before = session.evaluate().to_dict()
++        identity = db._state()
++        original_credentials = tuple(digest_file(db.layout.home / n) for n in ('owner.pgpass', 'app.pgpass'))
++        destination = base / 'Private Original Backup'
++        receipt = create_cold_backup(root, destination=destination)
++        archive = destination / 'snapshot.palpg.zip'
++        args = dict(archive=archive, expected_sha256=receipt['sha256'], trusted_backup=True)
++        assert verify_cold_backup(root, **args)['status'] == 'backup_verified'
++        # Add the REAL existing 67th migration; no fabricated DDL or timestamp.
++        shutil.copyfile(ROOT / 'supabase/migrations' / tail, root / 'supabase/migrations' / tail)
++        manifest_file.write_bytes(manifest_bytes)
++
++        def command(action, *, allow=False, expected=0):
++            argv = [sys.executable, '-I', str(ROOT / 'scripts/project_database.py'),
++                '--root', str(root), action, '--archive', str(archive),
++                '--sha256', receipt['sha256'], '--trusted-backup']
++            if allow:
++                argv.append('--allow-catalog-extension')
++            result = subprocess.run(argv, env=clean_environment(), cwd=base,
++                stdin=subprocess.DEVNULL, capture_output=True, text=True,
++                encoding='utf-8', timeout=90, check=False, shell=False)
++            assert result.returncode == expected, (result.stdout, result.stderr)
++            assert not (result.stderr if expected == 0 else result.stdout)
++            return json.loads(result.stdout if expected == 0 else result.stderr)
++
++        assert command('verify-backup', expected=1)['reason_code'] == 'project_postgres_backup_migrations_mismatch'
++        verified = command('verify-backup', allow=True)
++        assert verified['migration_catalog']['backup_entries'] == 66
++        assert verified['migration_catalog']['current_entries'] == 67
++        assert verified['migration_catalog']['additional_entries'] == 1
++        assert verified['database_started'] is False
++        assert db.status()['status'] == 'stopped'
++        assert command('restore', allow=True, expected=1)['reason_code'] == 'project_postgres_restore_existing_data_refused'
++        # Simulate unavailable originals only within our disposable test root.
++        kept = base / 'Original Synthetic Data Preserved'
++        db.layout.home.rename(kept)
++        assert command('restore', expected=1)['reason_code'] == 'project_postgres_backup_migrations_mismatch'
++        assert not db.layout.home.exists() and not (db.layout.private / 'postgres.restoring').exists()
++        restored = command('restore', allow=True)
++        assert restored['status'] == 'restored_stopped' and restored['database_started'] is False
++        assert restored['migration_catalog'] == verified['migration_catalog']
++        assert db._state() == identity and kept.is_dir()
++        unchanged = tuple(digest_file(db.layout.home / n) for n in ('owner.pgpass', 'app.pgpass')) == original_credentials
++        assert unchanged  # Never render credential contents or their hashes.
++        # Prefix compatibility is NOT evidence that DDL was already applied.
++        with pytest.raises(ProjectDatabaseError, match='migrations_pending'):
++            with db.session():
++                pytest.fail('research session admitted without explicit migration')
++        assert db.status()['status'] == 'stopped'
++        pending = db.up()
++        assert pending['status'] == 'migrations_pending' and pending['pending_migrations'] == 1
++        assert db._psql(identity, 'SELECT count(*) FROM project_private.migrations;') == '66'
++        assert db._psql(identity, "SELECT to_regclass('research_capture.paper_simulations') IS NULL;") == 't'
++        db.down()
++        assert db.migrate()['migrations_applied'] == 1
++        assert db.migrate()['migrations_applied'] == 0
++        with db.session() as session:
++            assert session.inspect(record_id=first.record_id).record == completed.record
++            assert session.inspect(record_id=second.record_id).record == failed.record
++            assert session.evaluate(generated_at=datetime.fromisoformat(before['generated_at'])).to_dict() == before
++            def forbidden(_):
++                pytest.fail('restored original task retried model')
++            assert session.run_research(request=first, model_factory=forbidden).record == completed.record
++            assert db._psql(identity, 'SELECT count(*) FROM project_private.migrations;') == '67'
++            assert db._psql(identity, "SELECT to_regclass('research_capture.paper_simulations') IS NOT NULL;") == 't'
++        assert db.status()['status'] == 'stopped' and db._state() == identity
++        assert digest_file(archive) == receipt['sha256']
++        print('native backup catalog: PASS;66->67,explicit trust/prefix,absent-target restore,explicit migration,history retained')
++    finally:
++        if db.layout.home.exists():
++            db.down()

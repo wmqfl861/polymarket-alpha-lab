@@ -1,0 +1,1021 @@
+.FFFFFFFFFFFFFFFFFFFFF                                                   [100%]
+=================================== FAILURES ===================================
+______ test_explicit_prefix_verification_does_not_change_archive_or_data _______
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_explicit_prefix_verificat0/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '887eaae009dbfcbe59ae957550e313341d3b9df7d0407a0d4d2e660b8be6dc08', 'trusted_backup': True})
+
+    def test_explicit_prefix_verification_does_not_change_archive_or_data(extended):
+        (root, layout, data, dest), args = extended
+        before = fmt.inventory(layout.home)
+        archive_before = args['archive'].read_bytes()
+>       result = b.verify_cold_backup(root, **args, allow_catalog_extension=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_project_postgres_backup_catalog.py:43: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+_____ test_explicit_prefix_restore_keeps_every_old_byte_and_never_migrates _____
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_explicit_prefix_restore_k0/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '19c7661e15b13076076a71afc0b0a40f5923738492ea9f31c8f5015ae426a631', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a65deb0>
+
+    def test_explicit_prefix_restore_keeps_every_old_byte_and_never_migrates(extended, monkeypatch):
+        (root, layout, data, dest), args = extended
+        before = fmt.inventory(layout.home)
+        kept = layout.private / 'original-kept'
+        layout.home.rename(kept)
+        monkeypatch.setattr(b.ProjectPostgres, 'migrate', lambda *_: pytest.fail('implicit migration'))
+        monkeypatch.setattr(b.ProjectPostgres, 'up', lambda *_: pytest.fail('implicit engine start'))
+>       result = b.restore_cold_backup(root, **args, allow_catalog_extension=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_project_postgres_backup_catalog.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+_____________ test_opt_in_never_accepts_nonprefix_history[shorter] _____________
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp0/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '889cf5269d3d38c54c5a137bfd6c97c80f45bc0fbc17a8dcee0cbbe2ee5d29d3', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a68a9c0>
+rows = (('20260916000001_fixture.sql', '1111111111111111111111111111111111111111111111111111111111111111', 'SELECT 1;'),)
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+        with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+>           b.restore_cold_backup(root, **args, allow_catalog_extension=True)
+
+tests/test_project_postgres_backup_catalog.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp0/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '889cf5269d3d38c54c5a137bfd6c97c80f45bc0fbc17a8dcee0cbbe2ee5d29d3', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a68a9c0>
+rows = (('20260916000001_fixture.sql', '1111111111111111111111111111111111111111111111111111111111111111', 'SELECT 1;'),)
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+>       with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'migrations_mismatch'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:76: AssertionError
+__________ test_opt_in_never_accepts_nonprefix_history[missing-first] __________
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp1/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '85b107c7dd3ec3e1620cf4fea8fdd02c997368f5bf9758b93825d40117252a41', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a68b130>
+rows = (('20260916000002_fixture.sql', '2222222222222222222222222222222222222222222222222222222222222222', 'SELECT 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+        with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+>           b.restore_cold_backup(root, **args, allow_catalog_extension=True)
+
+tests/test_project_postgres_backup_catalog.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp1/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '85b107c7dd3ec3e1620cf4fea8fdd02c997368f5bf9758b93825d40117252a41', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a68b130>
+rows = (('20260916000002_fixture.sql', '2222222222222222222222222222222222222222222222222222222222222222', 'SELECT 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+>       with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'migrations_mismatch'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:76: AssertionError
+____________ test_opt_in_never_accepts_nonprefix_history[reordered] ____________
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp2/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '8c950ffa011f34ffa47973849f4db58132dd81bb7e799e7401fa5792e54d3e60', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a558a50>
+rows = (('20260916000002_fixture.sql', '2222222222222222222222222222222222222222222222222222222222222222', 'SELECT 1;'), ('20... 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+        with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+>           b.restore_cold_backup(root, **args, allow_catalog_extension=True)
+
+tests/test_project_postgres_backup_catalog.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp2/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '8c950ffa011f34ffa47973849f4db58132dd81bb7e799e7401fa5792e54d3e60', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a558a50>
+rows = (('20260916000002_fixture.sql', '2222222222222222222222222222222222222222222222222222222222222222', 'SELECT 1;'), ('20... 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+>       with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'migrations_mismatch'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:76: AssertionError
+__________ test_opt_in_never_accepts_nonprefix_history[changed-hash] ___________
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp3/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '6f2902fb8f807ac4aab189be5735583912bfe2ec9ead36c79cacb52cd51dba2d', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a558e50>
+rows = (('20260916000001_fixture.sql', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 'SELECT 1;'), ('20... 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+        with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+>           b.restore_cold_backup(root, **args, allow_catalog_extension=True)
+
+tests/test_project_postgres_backup_catalog.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp3/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '6f2902fb8f807ac4aab189be5735583912bfe2ec9ead36c79cacb52cd51dba2d', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a558e50>
+rows = (('20260916000001_fixture.sql', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 'SELECT 1;'), ('20... 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+>       with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'migrations_mismatch'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:76: AssertionError
+_____________ test_opt_in_never_accepts_nonprefix_history[renamed] _____________
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp4/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': 'ab4ab2ca9230c7cad4bd47379d9912943abf24d41cdf3a4ae1df77aa759bd9ac', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a56d4f0>
+rows = (('20260916000001_renamed.sql', '1111111111111111111111111111111111111111111111111111111111111111', 'SELECT 1;'), ('20... 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+        with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+>           b.restore_cold_backup(root, **args, allow_catalog_extension=True)
+
+tests/test_project_postgres_backup_catalog.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp4/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': 'ab4ab2ca9230c7cad4bd47379d9912943abf24d41cdf3a4ae1df77aa759bd9ac', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a56d4f0>
+rows = (('20260916000001_renamed.sql', '1111111111111111111111111111111111111111111111111111111111111111', 'SELECT 1;'), ('20... 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+>       with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'migrations_mismatch'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:76: AssertionError
+_________ test_opt_in_never_accepts_nonprefix_history[missing-middle] __________
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp5/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '54a39e7a657680ec01505e0c214445337cbc4ffd31c21d120f8e459bf9a5e099', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a6af6b0>
+rows = (('20260916000001_fixture.sql', '1111111111111111111111111111111111111111111111111111111111111111', 'SELECT 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+        with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+>           b.restore_cold_backup(root, **args, allow_catalog_extension=True)
+
+tests/test_project_postgres_backup_catalog.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_opt_in_never_accepts_nonp5/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': '54a39e7a657680ec01505e0c214445337cbc4ffd31c21d120f8e459bf9a5e099', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a6af6b0>
+rows = (('20260916000001_fixture.sql', '1111111111111111111111111111111111111111111111111111111111111111', 'SELECT 1;'), ('20260916000003_fixture.sql', '3333333333333333333333333333333333333333333333333333333333333333', 'SELECT 1;'))
+
+    @pytest.mark.parametrize('rows', [
+        CATALOG[:1],
+        CATALOG[1:],
+        (CATALOG[1], CATALOG[0], CATALOG[2]),
+        ((CATALOG[0][0], 'e'*64, CATALOG[0][2]), *CATALOG[1:]),
+        ((CATALOG[0][0].replace('fixture', 'renamed'), CATALOG[0][1], CATALOG[0][2]), *CATALOG[1:]),
+        (CATALOG[0], CATALOG[2]),
+    ], ids=['shorter', 'missing-first', 'reordered', 'changed-hash', 'renamed', 'missing-middle'])
+    def test_opt_in_never_accepts_nonprefix_history(extended, monkeypatch, rows):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: rows)
+        layout.home.rename(layout.private / 'original-kept')
+>       with pytest.raises(ProjectDatabaseError, match='migrations_mismatch'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'migrations_mismatch'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:76: AssertionError
+_____ test_equal_catalog_is_explicitly_identical_not_reported_as_extension _____
+
+extended = ((PosixPath('/tmp/pytest-of-root/pytest-0/test_equal_catalog_is_explicit0/Project'), Layout(root=PosixPath('/tmp/pytes....zip'), 'expected_sha256': 'c08d6ee649fee51b417fb23f5fe1684c98941346361e9c4d82bc4609c136a18a', 'trusted_backup': True})
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a4dab30>
+
+    def test_equal_catalog_is_explicitly_identical_not_reported_as_extension(extended, monkeypatch):
+        (root, layout, data, dest), args = extended
+        monkeypatch.setattr(b.sql, 'migration_catalog', lambda _: CATALOG[:2])
+>       report = b.verify_cold_backup(root, **args, allow_catalog_extension=True)['migration_catalog']
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_project_postgres_backup_catalog.py:84: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a4d9d30>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = 1
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a4d9d30>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = 1
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-true] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7d731230>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = 'true'
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7d731230>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = 'true'
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-None] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a57c950>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = None
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a57c950>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = None
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-value3] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a57cc50>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = []
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a57cc50>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = []
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-value4] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a511440>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = {}
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a511440>
+operation = <function verify_cold_backup at 0x7fcc7a4ccea0>, value = {}
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a5114f0>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = 1
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a5114f0>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = 1
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-true] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a518370>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = 'true'
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a518370>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = 'true'
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-None] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a5187d0>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = None
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a5187d0>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = None
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-value3] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a50e7b0>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = []
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a50e7b0>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = []
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-value4] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a5a8fd0>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = {}
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+        with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+>           operation(None, archive=None, expected_sha256='a'*64, trusted_backup=True,
+                      allow_catalog_extension=value)
+
+tests/test_project_postgres_backup_catalog.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/backup.py:89: in run
+    fail('project_postgres_backup_operation_failed')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 'project_postgres_backup_operation_failed'
+
+    def fail(code: str):
+>       raise ProjectDatabaseError(code) from None
+E       polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+
+src/polymarket_alpha_lab/project_postgres/files.py:20: ProjectDatabaseError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a5a8fd0>
+operation = <function restore_cold_backup at 0x7fcc7a4cd120>, value = {}
+
+    @pytest.mark.parametrize('value', [1, 'true', None, [], {}])
+    @pytest.mark.parametrize('operation', [b.verify_cold_backup, b.restore_cold_backup])
+    def test_opt_in_requires_actual_boolean_before_opening_any_backup(monkeypatch, operation, value):
+        monkeypatch.setattr(b, '_approved_archive', lambda *_: pytest.fail('opened backup'))
+>       with pytest.raises(ProjectDatabaseError, match='catalog_opt_in_invalid'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'catalog_opt_in_invalid'
+E         Actual message: 'project_postgres_backup_operation_failed'
+
+tests/test_project_postgres_backup_catalog.py:93: AssertionError
+_ test_cli_only_forwards_explicit_catalog_extension_permission[verify-backup] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7d71f0d0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fcc7a609e80>
+operation = 'verify-backup'
+
+    @pytest.mark.parametrize('operation', ['verify-backup', 'restore'])
+    def test_cli_only_forwards_explicit_catalog_extension_permission(monkeypatch, capsys, operation):
+        calls = []
+        def verify(root, **kw):
+            calls.append(kw)
+            return dict(status='fixture_no_io')
+        monkeypatch.setattr(b, 'verify_cold_backup', verify)
+        monkeypatch.setattr(b, 'restore_cold_backup', verify)
+        args = ['--root', 'fixture', operation, '--archive', 'fixture.zip',
+                '--sha256', 'a'*64, '--trusted-backup']
+        assert main(args) == 0
+        assert calls[-1].get('allow_catalog_extension', False) is False
+>       assert main([*args, '--allow-catalog-extension']) == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_project_postgres_backup_catalog.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/cli.py:35: in main
+    args = parser.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1916: in parse_args
+    self.error(msg)
+/usr/lib/python3.13/argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='Native project-private PostgreSQL management; never prints a DSN or password.', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = '__main__.py: error: unrecognized arguments: --allow-catalog-extension\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2659: SystemExit
+----------------------------- Captured stdout call -----------------------------
+{"status": "fixture_no_io"}
+----------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] --root ROOT
+                   {install-runtime,init,up,down,status,migrate,backup,verify-backup,restore} ...
+__main__.py: error: unrecognized arguments: --allow-catalog-extension
+____ test_cli_only_forwards_explicit_catalog_extension_permission[restore] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcc7a5b00c0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fcc7a62b9d0>
+operation = 'restore'
+
+    @pytest.mark.parametrize('operation', ['verify-backup', 'restore'])
+    def test_cli_only_forwards_explicit_catalog_extension_permission(monkeypatch, capsys, operation):
+        calls = []
+        def verify(root, **kw):
+            calls.append(kw)
+            return dict(status='fixture_no_io')
+        monkeypatch.setattr(b, 'verify_cold_backup', verify)
+        monkeypatch.setattr(b, 'restore_cold_backup', verify)
+        args = ['--root', 'fixture', operation, '--archive', 'fixture.zip',
+                '--sha256', 'a'*64, '--trusted-backup']
+        assert main(args) == 0
+        assert calls[-1].get('allow_catalog_extension', False) is False
+>       assert main([*args, '--allow-catalog-extension']) == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_project_postgres_backup_catalog.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/project_postgres/cli.py:35: in main
+    args = parser.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1916: in parse_args
+    self.error(msg)
+/usr/lib/python3.13/argparse.py:2672: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='__main__.py', usage=None, description='Native project-private PostgreSQL management; never prints a DSN or password.', formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = '__main__.py: error: unrecognized arguments: --allow-catalog-extension\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2659: SystemExit
+----------------------------- Captured stdout call -----------------------------
+{"status": "fixture_no_io"}
+----------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] --root ROOT
+                   {install-runtime,init,up,down,status,migrate,backup,verify-backup,restore} ...
+__main__.py: error: unrecognized arguments: --allow-catalog-extension
+=========================== short test summary info ============================
+FAILED tests/test_project_postgres_backup_catalog.py::test_explicit_prefix_verification_does_not_change_archive_or_data - polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+FAILED tests/test_project_postgres_backup_catalog.py::test_explicit_prefix_restore_keeps_every_old_byte_and_never_migrates - polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_never_accepts_nonprefix_history[shorter] - AssertionError: Regex pattern did not match.
+  Expected regex: 'migrations_mismatch'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_never_accepts_nonprefix_history[missing-first] - AssertionError: Regex pattern did not match.
+  Expected regex: 'migrations_mismatch'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_never_accepts_nonprefix_history[reordered] - AssertionError: Regex pattern did not match.
+  Expected regex: 'migrations_mismatch'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_never_accepts_nonprefix_history[changed-hash] - AssertionError: Regex pattern did not match.
+  Expected regex: 'migrations_mismatch'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_never_accepts_nonprefix_history[renamed] - AssertionError: Regex pattern did not match.
+  Expected regex: 'migrations_mismatch'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_never_accepts_nonprefix_history[missing-middle] - AssertionError: Regex pattern did not match.
+  Expected regex: 'migrations_mismatch'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_equal_catalog_is_explicitly_identical_not_reported_as_extension - polymarket_alpha_lab.project_postgres.files.ProjectDatabaseError: project_postgres_backup_operation_failed
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-1] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-true] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-None] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-value3] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[verify_cold_backup-value4] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-1] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-true] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-None] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-value3] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_opt_in_requires_actual_boolean_before_opening_any_backup[restore_cold_backup-value4] - AssertionError: Regex pattern did not match.
+  Expected regex: 'catalog_opt_in_invalid'
+  Actual message: 'project_postgres_backup_operation_failed'
+FAILED tests/test_project_postgres_backup_catalog.py::test_cli_only_forwards_explicit_catalog_extension_permission[verify-backup] - SystemExit: 2
+FAILED tests/test_project_postgres_backup_catalog.py::test_cli_only_forwards_explicit_catalog_extension_permission[restore] - SystemExit: 2
+21 failed, 1 passed in 1.45s

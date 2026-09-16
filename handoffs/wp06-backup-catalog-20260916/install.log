@@ -1,0 +1,14 @@
+WARNING: The directory '/home/oai/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+Obtaining file:///mnt/data/polymarket-work
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: polymarket-alpha-lab
+  Building editable for polymarket-alpha-lab (pyproject.toml): started
+  Building editable for polymarket-alpha-lab (pyproject.toml): finished with status 'done'
+  Created wheel for polymarket-alpha-lab: filename=polymarket_alpha_lab-0.1.0-0.editable-py3-none-any.whl size=1778 sha256=1da9f46b6d4643b37305fd4b75b618e486d7ac47d877927124cbcd19a93f1272
+  Stored in directory: /tmp/pip-ephem-wheel-cache-rtaxt6rz/wheels/5f/c8/a0/5e02543644a25b6781097efbc93bce3b6fa69ed0e35ddac72a
+Successfully built polymarket-alpha-lab
+Installing collected packages: polymarket-alpha-lab
+Successfully installed polymarket-alpha-lab-0.1.0

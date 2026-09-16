@@ -1,0 +1,8 @@
+{
+  "valid_prefixes": 99,
+  "nonprefix_checks": 14,
+  "maximum_catalog_entries": 1000,
+  "worst_prefix_probe_seconds": 0.162,
+  "database_started": false,
+  "kind": "finite extra in-memory probe; not pytest/native acceptance"
+}

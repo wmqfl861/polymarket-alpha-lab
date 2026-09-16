@@ -1,0 +1,127 @@
+name: Native project PostgreSQL
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/ci_thread_dump.py'
+      - 'tests/test_ci_thread_dump*.py'
+      - 'src/polymarket_alpha_lab/research_model_budget*.py'
+      - 'tests/test_research_model_budget.py'
+      - 'tests/test_project_postgres_budget_native.py'
+      - 'docs/research-model-budget.md'
+      - 'src/polymarket_alpha_lab/research_dispatch*.py'
+      - 'tests/test_research_dispatch.py'
+      - 'tests/test_research_dispatch_rotation.py'
+      - 'tests/test_research_dispatch_cli*.py'
+      - 'scripts/manage_research_tasks.py'
+      - 'docs/research-dispatch.md'
+      - 'src/polymarket_alpha_lab/research_crypto_selection.py'
+      - 'tests/test_crypto_supported_selection.py'
+      - 'scripts/discover_crypto_research.py'
+      - 'docs/research-crypto-discovery.md'
+      - 'src/polymarket_alpha_lab/research_resolution_inspection_cli.py'
+      - 'scripts/inspect_project_resolution.py'
+      - 'tests/test_research_resolution_inspection_cli.py'
+      - 'docs/research-resolution-inspection.md'
+      - 'src/polymarket_alpha_lab/project_postgres/**'
+      - 'src/polymarket_alpha_lab/research_execution_inventory.py'
+      - 'src/polymarket_alpha_lab/research_inventory_cli.py'
+      - 'scripts/list_project_research.py'
+      - 'tests/test_research_execution_inventory.py'
+      - 'tests/test_research_inventory_cli.py'
+      - 'docs/research-execution-inventory.md'
+      - 'src/polymarket_alpha_lab/research_execution_cli.py'
+      - 'scripts/inspect_project_research.py'
+      - 'tests/test_research_execution_cli.py'
+      - 'docs/research-execution-inspection.md'
+      - 'src/polymarket_alpha_lab/research_evaluation_cli.py'
+      - 'scripts/evaluate_project_research.py'
+      - 'tests/test_research_evaluation_cli.py'
+      - 'docs/research-evaluation-console.md'
+      - 'src/polymarket_alpha_lab/research_capture_psycopg.py'
+      - 'src/polymarket_alpha_lab/local_postgres_dsn.py'
+      - 'src/polymarket_alpha_lab/research_resolution*.py'
+      - 'tests/test_research_resolution*'
+      - 'scripts/review_resolution_queue.py'
+      - 'docs/research-resolution-queue.md'
+      - 'src/polymarket_alpha_lab/research_crypto_launch*.py'
+      - 'src/polymarket_alpha_lab/research_crypto_contract_scope.py'
+      - 'src/polymarket_alpha_lab/research_crypto_observation.py'
+      - 'tests/test_crypto_observation_time.py'
+      - 'src/polymarket_alpha_lab/team_research_intake.py'
+      - 'src/polymarket_alpha_lab/team_research_market_pipeline.py'
+      - 'src/polymarket_alpha_lab/team_research_agent.py'
+      - 'tests/test_research_evidence_timezones.py'
+      - 'tests/test_research_scope_instants.py'
+      - 'src/polymarket_alpha_lab/research_record_values.py'
+      - 'src/polymarket_alpha_lab/research_capture_codec.py'
+      - 'src/polymarket_alpha_lab/research_execution.py'
+      - 'src/polymarket_alpha_lab/team_research_evaluation.py'
+      - 'tests/test_research_record_timezone_codec.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'tests/test_crypto_contract_scope.py'
+      - 'tests/test_research_crypto_launch.py'
+      - 'scripts/preview_crypto_research.py'
+      - 'src/polymarket_alpha_lab/public_http.py'
+      - 'src/polymarket_alpha_lab/research_crypto_discovery.py'
+      - 'src/polymarket_alpha_lab/team_research_gamma.py'
+      - 'src/polymarket_alpha_lab/team_research_coinbase.py'
+      - 'src/polymarket_alpha_lab/team_research_kraken.py'
+      - 'scripts/discover_crypto_research.py'
+      - 'scripts/download_handoff.ps1'
+      - 'tests/test_public_http.py'
+      - 'tests/test_research_crypto_discovery.py'
+      - 'tests/test_handoff_download.py'
+      - 'tests/handoff_process_probe.py'
+      - 'tests/test_handoff_process_probe*.py'
+      - 'tests/test_project_postgres*'
+      - 'database/**'
+      - 'supabase/migrations/**'
+      - '.github/workflows/native-postgres.yml'
+permissions:
+  contents: read
+concurrency:
+  group: native-project-postgres-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows-native:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - name: Install locked Python environment
+        run: uv sync --locked --extra dev --extra postgres --python 3.12
+      - name: Prove private native Windows lifecycle without a service or Docker
+        shell: pwsh
+        run: |
+          # This path supplies binaries ONLY. No installed data/role/password is used.
+          $env:POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX = 'C:\Program Files\PostgreSQL\17'
+          $env:POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES = '1'
+          $env:POLYMARKET_ALPHA_LAB_RUN_NATIVE_BACKUP = '1'
+          $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
+          $env:PYTHONUTF8 = '1'
+          $env:PAL_REQUIRE_HANDOFF_SHELLS = '1'
+          Get-ChildItem Env: | Where-Object { $_.Name -like 'PG*' } | ForEach-Object { Remove-Item ('Env:' + $_.Name) }
+          .\.venv\Scripts\python.exe -u -m pytest -p no:faulthandler -p tests.ci_thread_dump -q -s -o junit_family=legacy -o faulthandler_timeout=120 tests/test_project_postgres.py tests/test_project_postgres_platform.py tests/test_project_postgres_publication.py tests/test_project_postgres_publication_native.py tests/test_project_postgres_migration_compat.py tests/test_project_postgres_native.py tests/test_project_postgres_backup.py tests/test_project_postgres_backup_zip.py tests/test_project_postgres_backup_native.py tests/test_project_postgres_resolution_native.py tests/test_research_resolution.py tests/test_research_resolution_store.py tests/test_research_resolution_cli.py tests/test_research_resolution_inspection_cli.py tests/test_research_resolution_queue.py tests/test_research_resolution_poll.py tests/test_project_postgres_resolution_queue_native.py tests/test_research_crypto_launch.py tests/test_crypto_contract_scope.py tests/test_crypto_observation_time.py tests/test_research_evidence_timezones.py tests/test_research_scope_instants.py tests/test_research_record_timezone_codec.py tests/test_project_postgres_crypto_launch_native.py tests/test_public_http.py tests/test_research_crypto_discovery.py tests/test_crypto_supported_selection.py tests/test_handoff_download.py tests/test_research_evaluation_cli.py tests/test_research_execution_cli.py tests/test_research_execution_inventory.py tests/test_research_inventory_cli.py tests/test_project_postgres_inventory_native.py tests/test_research_dispatch.py tests/test_project_postgres_dispatch_native.py tests/test_research_dispatch_rotation.py tests/test_project_postgres_rotation_native.py tests/test_research_model_budget.py tests/test_project_postgres_budget_native.py tests/test_research_dispatch_cli.py tests/test_research_dispatch_cli_review.py tests/test_project_postgres_dispatch_cli_native.py tests/test_research_resolution_confirmation.py tests/test_research_resolution_confirmation_review.py tests/test_project_postgres_confirmation_native.py tests/test_ci_thread_dump.py tests/test_ci_thread_dump_review.py tests/test_research_resolution_output.py tests/test_research_resolution_output_review.py tests/test_project_postgres_backup_catalog.py tests/test_project_postgres_backup_catalog_review.py --junitxml="$env:RUNNER_TEMP/native-proof.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/native-proof.log"
+          $code = $LASTEXITCODE
+          exit $code
+      - name: Verify tracked source unchanged
+        run: |
+          git diff --check
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-postgres-proof-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/native-proof.log
+            ${{ runner.temp }}/native-proof.xml
+          retention-days: 7
+          if-no-files-found: ignore

@@ -1,0 +1,23 @@
+{
+  "base": "4df08873f4b9b8f1378913c0d00ca6bb183e51e2",
+  "base_tree": "401f5a691e6898c670e446d142340d396862dae9",
+  "candidate_tree": "87486a77918a1eef57e19b7960032211a8578ab9",
+  "local_commit": "3ba76b6c09eafe254ad4f29f1a02a672af99d641",
+  "paths": [
+    ".github/workflows/native-postgres.yml",
+    "DELIVERY_PLAN.md",
+    "database/README.md",
+    "database/quickstart.md",
+    "src/polymarket_alpha_lab/project_postgres/backup.py",
+    "src/polymarket_alpha_lab/project_postgres/cli.py",
+    "tests/test_project_postgres_backup_catalog.py",
+    "tests/test_project_postgres_backup_catalog_review.py",
+    "tests/test_project_postgres_backup_native.py"
+  ],
+  "patch_bytes": 46577,
+  "patch_sha256": "f87ca9e56929d0716e11fe0873cfc671001a82ff7bd64ee7f977ceedd0d81830",
+  "publication_status": "CANDIDATE_NOT_PUBLISHED",
+  "pr_number": null,
+  "windows_native_executed": false,
+  "source_commit_is_local_bookkeeping_only": true
+}

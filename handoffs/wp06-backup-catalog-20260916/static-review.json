@@ -1,0 +1,17 @@
+{
+  "unchanged_protected_payloads": 2920,
+  "original_native_assertions": 18,
+  "final_native_assertions": 52,
+  "all_prior_assertions_preserved": true,
+  "native_workflow_only_two_appended_paths": true,
+  "unchanged_backup_components": [
+    "creation",
+    "archive_approval",
+    "effective_fingerprint",
+    "shutdown",
+    "staging_layout",
+    "error_wrapper"
+  ],
+  "compiled_changed_python": true,
+  "authored_finite_secret_scan_no_hits": true
+}
