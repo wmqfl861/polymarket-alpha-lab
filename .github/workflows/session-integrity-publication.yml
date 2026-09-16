@@ -1,0 +1,49 @@
+name: Publish reviewed session integrity objects
+on:
+  push:
+    branches: [review/wp06-session-integrity-publication-20260916]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-session-integrity-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Apply only the fixed reviewed delta and publish a new object ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=3a987bc6c1a5df608ff8f0668b866aaf87842c04
+          REF=refs/heads/review/wp06-session-integrity-objects-20260916
+          PATCH="$RUNNER_TEMP/implementation.patch"
+          cp docs/reviews/session-integrity-publication/implementation.patch "$PATCH"
+          echo "623102e7293f4ca1ffa1d9f08020557416db8d395ab8cdb003a1b8d18708f5b6  $PATCH" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 6
+          TREE=$(git write-tree)
+          test "$TREE" = 8ae3322ca025db747e70d19fd86d0192b3a3a885
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport exact reviewed session-integrity objects; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-session-integrity-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
