@@ -93,13 +93,13 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
         # No apparent success (including not-found) before successful cleanup.
         envelope.update(status="review_not_found" if result is None else "inspected", inspection=result)
         code = 3 if result is None else 0
-        encoded = json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2)
-    except Exception:
+    except (Exception, SystemExit):
         envelope.update(status="failed", reason_code="research_resolution_inspection_failed", inspection=None)
-        encoded = json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2)
         code = 1
-    print(encoded)
-    return code
+    # Confirmation imports the pure summary above; defer this reverse import
+    # until both modules are initialized. Reuse the existing checked writer.
+    from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
+    return _emit(envelope, code)
 
 
 __all__ = ("resolution_review_summary", "main")

@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 
 from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
 from polymarket_alpha_lab.research_capture_psycopg import ResearchCaptureConflict
 from polymarket_alpha_lab.research_probability_scores import BUCKET_COUNTS, ResearchProbabilityDiagnostics
 from polymarket_alpha_lab.team_research_evaluation import MAX_RECORDS, REASONS, ResearchEvaluationReport
@@ -88,17 +89,16 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
         envelope.update(status="evaluated", history_gate="complete_visible_execution_claims", evaluation=result)
         code = 0
     except ResearchCaptureConflict as error:
-        reason = str(error)
+        reason = error.args[0] if len(error.args) == 1 and type(error.args[0]) is str else None
         known = reason in _BLOCKS
         envelope.update(status="blocked" if known else "failed", history_gate="not_established",
             reason_code=reason if known else "research_evaluation_operation_failed", evaluation=None)
         code = 1
-    except Exception:
+    except (Exception, SystemExit):
         envelope.update(status="failed", history_gate="not_established",
             reason_code="research_evaluation_operation_failed", evaluation=None)
         code = 1
-    print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
-    return code
+    return _emit(envelope, code)
 
 
 def _settled_paper_summary(report: dict, *, include_decisions: bool) -> dict:
@@ -181,11 +181,9 @@ def _run_settled_paper(args) -> int:
                             (("bucket_count", args.buckets), ("min_sample_count", args.min_sample_count),
                              ("min_bin_count", args.min_bin_count)))):
                     raise ValueError("settled_paper_request_mismatch")
-        # Serialize only after cleanup. If serialization fails, discard the whole
-        # success envelope rather than printing partial apparently complete data.
-        rendered = json.dumps(dict(envelope, status="evaluated",
-            history_gate="complete_visible_execution_claims", evaluation=result),
-            ensure_ascii=True, allow_nan=False, indent=2)
+        # The shared emitter serializes only after successful managed cleanup.
+        envelope.update(status="evaluated",
+            history_gate="complete_visible_execution_claims", evaluation=result)
         code = 0
     except KeyboardInterrupt:
         envelope.update(status="interrupted", reason_code="research_paper_evaluation_interrupted")
@@ -199,17 +197,8 @@ def _run_settled_paper(args) -> int:
         envelope.update(status="failed", reason_code=reason)
         code = 1
     if code:
-        rendered = json.dumps(dict(envelope, history_gate="not_established", evaluation=None),
-                              ensure_ascii=True, allow_nan=False, indent=2)
-    try:
-        print(rendered)
-    except KeyboardInterrupt:
-        return 130
-    except (Exception, SystemExit):
-        # A broken output stream cannot deliver an error envelope reliably.
-        # Return failure without another write or exposing exception details.
-        return 1
-    return code
+        envelope.update(history_gate="not_established", evaluation=None)
+    return _emit(envelope, code)
 
 
 __all__ = ("evaluation_summary", "main")
