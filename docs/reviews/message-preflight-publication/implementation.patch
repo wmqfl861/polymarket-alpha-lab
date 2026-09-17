@@ -1,0 +1,455 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 9f732da..003988a 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -805,3 +805,22 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ **WP-02 AWAITING_OWNER，WP-03 PARTIAL，G2／G3／G6 和 V1 未关闭。** 只关闭
+ 不可兼容输出配置的提前拒绝子项；不认证提供商、费率或真实预算，不绕过 PR #49
+ 及受阻诊断；D1—D3、真实输入／费用／业务验收和用户数据操作授权均未改变。
++
++
++## 31. WP-02／WP-03：首次消息字节超限在任务领取前拒绝
++
++基线 `a1284c41db411281b666211c6a9ce4b6930ca8ec`（PR #52）。补齐与固定输出
++额度预检相邻的消息大小缺口：已知首次实际消息超过预算限制时，不先消耗不可重跑的任务。
++
++- 原实现反例复现领取后保存为 `model_failed`、但客户端零调用；现在复用原 Agent
++  初始上下文构造并按 UTF-8 字节检查，返回固定配置错误，不截断原请求或自动换预算。
++- 原空／过期预算与输出额度错误优先级保留；不需要模型的 intake／证据／上下文阻断
++  仍走原保存路径。已有完成／incomplete 原样重放，历史查询异常不进入新领取。
++- 首条刚好达到上限可以调用；后续消息仍受原逐次事务预留约束，不能据此保证整轮费用。
++  现有原生预算用例追加两团队零领取／零预留、明确匹配预算及中断历史重放证明。
++- 原消息内容／顺序／模型循环、67 份迁移、依赖和工作流不改；最终固定树的独立阶段
++  自审、原始首败、全量与 Windows／kit 证据在本 PR 留存，未执行项不冒充通过。
++
++**WP-02 AWAITING_OWNER，WP-03 PARTIAL，G2／G3／G6／V1 不因此完成。**
++不认证提供商、实际费率或完整请求传输大小；D1—D3、PR #49 及受阻诊断限制不变。
++不访问用户数据库或凭据，不调用真实模型／行情，不授权部署或覆盖旧安装。
+diff --git a/docs/research-model-budget.md b/docs/research-model-budget.md
+index c157509..707f1ff 100644
+--- a/docs/research-model-budget.md
++++ b/docs/research-model-budget.md
+@@ -195,3 +195,33 @@ per-call transaction still validates message bytes, output cap, expiry and share
+ reservations before entering the supplied client. Later exhaustion, provider
+ errors, uncertain commits and no-refund behavior are unchanged. No real provider,
+ fee verification, credential access or automatic user-database operation is added.
++
++
++## First-message byte compatibility before claiming (WP-02 / WP-03)
++
++A prepared request whose actual first `messages_json` exceeds the selected
++budget's `max_message_bytes` is now rejected with
++`research_budget_initial_message_incompatible` before a new immutable claim.
++The preflight reuses the agent's original eligible-catalog and initial-message
++construction; it does not approximate message size from the stored request,
++truncate rules or evidence, or change canonical inputs. The allowance measures
++UTF-8 bytes, while the agent's existing context gate measures characters.
++Equality at the byte ceiling remains permitted.
++
++No-model paths (blocked intake, no eligible evidence or an initial context-limit
++rejection) retain their original captured results. Empty/expired allowance and
++the existing output-token incompatibility keep their earlier priority. An already
++visible completed or incomplete execution is revalidated and returned unchanged;
++an incomplete claim is not reclaimed. A history-read failure does not fall through
++to creating a new claim. No automatic budget adjustment or retry is introduced.
++
++An explicitly reviewed compatible budget may later be supplied for the SAME
++unclaimed input. A compatible first message does not mean that later tool messages
++fit: the original per-call transaction still checks each actual message, output
++cap, shared balance and expiry. Later denial/failure capture and no-refund rules
++are unchanged. This internal message-size check is not a provider tokenizer,
++HTTP-envelope size calculation, tariff verification or proof that an entire loop
++fits the monetary budget. D1-D3 and real-provider validation remain required.
++
++Python JSON serialization returns text, not encoded bytes; encoding is explicit.
++Reference checked 2026-09-17: https://docs.python.org/3.12/library/json.html
+diff --git a/src/polymarket_alpha_lab/research_model_budget_runner.py b/src/polymarket_alpha_lab/research_model_budget_runner.py
+index d929b40..f13f348 100644
+--- a/src/polymarket_alpha_lab/research_model_budget_runner.py
++++ b/src/polymarket_alpha_lab/research_model_budget_runner.py
+@@ -8,6 +8,7 @@ from dataclasses import replace
+ from threading import Lock
+ 
+ from polymarket_alpha_lab import research_execution_psycopg as execution
++from polymarket_alpha_lab import team_research_agent as agent
+ from polymarket_alpha_lab.research_execution import copy_request
+ from polymarket_alpha_lab.research_model_budget import ModelBudgetSnapshot, copy_budget
+ from polymarket_alpha_lab.research_model_budget_store import _reserve_call, load_model_budget_with_psycopg
+@@ -59,6 +60,24 @@ class _BudgetedModel:
+                 raise ValueError('research_budget_call_blocked_or_failed') from None
+ 
+ 
++def _initial_message_incompatible(request, policy):
++    """Reject only a first call the existing agent would actually attempt.
++
++    Keep no-eligible-evidence/context-limit captures on their original path.
++    The allowance counts UTF-8 bytes, unlike the agent's character context cap.
++    Later tool transcripts still use the original per-call reservation guard.
++    """
++    if request.intake.status != 'prepared':
++        return False
++    catalog, messages = agent._initial_context(request.intake.task, request.limits,
++                                               request.required_source_ids)
++    if not catalog:
++        return False
++    transcript = agent._dump(messages)
++    return (len(transcript) <= request.limits.max_context_chars
++            and len(transcript.encode('utf-8')) > policy.max_message_bytes)
++
++
+ def run_budgeted_research_with_psycopg(dsn, *, request, budget_id, model_factory, allow_model_calls=False):
+     """Bind explicit policy to a request, then reuse original immutable claims.
+ 
+@@ -90,6 +109,8 @@ def run_budgeted_research_with_psycopg(dsn, *, request, budget_id, model_factory
+         # Do not consume an immutable claim for a known-incompatible allowance,
+         # or silently clamp the reviewed request to make that call admissible.
+         blocked_reason = 'research_budget_output_limit_incompatible'
++    elif _initial_message_incompatible(request, policy):
++        blocked_reason = 'research_budget_initial_message_incompatible'
+     if blocked_reason is not None:
+         # Existing claims/results remain readable even if this allowance cannot
+         # admit NEW work. No new claim, call permit or client is created here.
+diff --git a/src/polymarket_alpha_lab/team_research_agent.py b/src/polymarket_alpha_lab/team_research_agent.py
+index bc58e85..02b57e3 100644
+--- a/src/polymarket_alpha_lab/team_research_agent.py
++++ b/src/polymarket_alpha_lab/team_research_agent.py
+@@ -112,29 +112,19 @@ def _actions(reply: ResearchModelReply, seen_ids: set[str]) -> tuple[tuple[objec
+     return tuple(actions)
+ 
+ 
+-def _run(task: TeamResearchTask, model: ResearchModel, limits: ResearchAgentLimits,
+-         required_source_ids: tuple[str, ...] = ()) -> TeamResearchResult:
+-    model_calls = tool_calls = tokens = 0
+-    trace: list[str] = []
+-    read_ids: set[str] = set()
+-    seen_ids: set[str] = set()
+-
+-    def result(status: str, reason: str, **values) -> TeamResearchResult:
+-        return TeamResearchResult(
+-            task_id=task.task_id, team_id=task.team_id, condition_id=task.condition_id,
+-            market_slug=task.market_slug, as_of=task.as_of, status=status, reason_code=reason,
+-            model_calls=model_calls, tool_calls=tool_calls, total_tokens=tokens,
+-            tool_trace=tuple(trace), **values,
+-        )
++def _initial_context(task: TeamResearchTask, limits: ResearchAgentLimits,
++                     required_source_ids: tuple[str, ...] = ()):
++    """Original eligible catalog and first messages, shared with budget preflight.
+ 
++    Callers supply validated immutable task/limits. No model, I/O or mutation.
++    The agent remains responsible for its original eligibility/context gates.
++    """
+     # Use elapsed UTC instants: subtraction in one DST zone otherwise ignores
+     # offset changes/fold. Direct agent callers must get the same gate as intake.
+     as_of_utc = task.as_of.astimezone(UTC)
+     catalog = {item.source_id: item for item in task.evidence
+                if timedelta(0) <= as_of_utc - item.observed_at.astimezone(UTC)
+                <= timedelta(seconds=limits.max_evidence_age_seconds)}
+-    if not catalog:
+-        return result("blocked", "no_eligible_evidence")
+     messages = [
+         {"role": "system", "content": _SYSTEM},
+         {"role": "user", "content": _dump({
+@@ -145,6 +135,27 @@ def _run(task: TeamResearchTask, model: ResearchModel, limits: ResearchAgentLimi
+             "required_source_ids": required_source_ids,
+         })},
+     ]
++    return catalog, messages
++
++
++def _run(task: TeamResearchTask, model: ResearchModel, limits: ResearchAgentLimits,
++         required_source_ids: tuple[str, ...] = ()) -> TeamResearchResult:
++    model_calls = tool_calls = tokens = 0
++    trace: list[str] = []
++    read_ids: set[str] = set()
++    seen_ids: set[str] = set()
++
++    def result(status: str, reason: str, **values) -> TeamResearchResult:
++        return TeamResearchResult(
++            task_id=task.task_id, team_id=task.team_id, condition_id=task.condition_id,
++            market_slug=task.market_slug, as_of=task.as_of, status=status, reason_code=reason,
++            model_calls=model_calls, tool_calls=tool_calls, total_tokens=tokens,
++            tool_trace=tuple(trace), **values,
++        )
++
++    catalog, messages = _initial_context(task, limits, required_source_ids)
++    if not catalog:
++        return result("blocked", "no_eligible_evidence")
+     for _ in range(limits.max_model_calls):
+         if tool_calls >= limits.max_tool_calls:
+             return result("blocked", "tool_call_limit")
+diff --git a/tests/test_project_postgres_budget_native.py b/tests/test_project_postgres_budget_native.py
+index 570164d..779701d 100644
+--- a/tests/test_project_postgres_budget_native.py
++++ b/tests/test_project_postgres_budget_native.py
+@@ -218,6 +218,40 @@ def test_budget_upgrade_shared_cap_replay_and_lost_process(tmp_path,monkeypatch)
+             assert replay.record == completed.record
+             assert s.inspect_model_budget(budget_id=reviewed.budget_id).reserved_calls == 3
+             print('native budget output preflight: PASS; no claim or permit on mismatch, compatible peer, same-request explicit budget, immutable replay')
++            # Known oversized FIRST messages must not consume either team's
++            # immutable task, even though the same input may later be admitted
++            # under an explicitly reviewed compatible allowance.
++            for number, team in ((860, 'crypto_btc'), (861, 'crypto_eth')):
++                message_request = prepared(number, team)
++                payload_before = message_request.payload
++                tiny = policy('message-limit-'+str(number), (message_request,), max_message_bytes=1)
++                tiny_saved = s.create_model_budget(policy=tiny, allow_budget_write=True)
++                assert s.inspect(record_id=message_request.record_id) is None
++                with pytest.raises(ValueError, match='^research_budget_initial_message_incompatible$'):
++                    s.run_budgeted_research(request=message_request, budget_id=tiny.budget_id,
++                        model_factory=forbidden, allow_model_calls=True)
++                assert s.inspect(record_id=message_request.record_id) is None
++                untouched = s.inspect_model_budget(budget_id=tiny.budget_id)
++                assert untouched.stored == tiny_saved
++                assert (untouched.reserved_calls, untouched.reserved_micros) == (0, 0)
++                wide = replace(tiny, budget_id='message-compatible-'+str(number), max_message_bytes=100000)
++                s.create_model_budget(policy=wide, allow_budget_write=True)
++                clients = []
++                def message_factory(selected_team):
++                    clients.append(selected_team)
++                    return Model()
++                done = s.run_budgeted_research(request=message_request, budget_id=wide.budget_id,
++                    model_factory=message_factory, allow_model_calls=True)
++                assert done.record.run.research.status == 'completed' and clients == [team]
++                assert message_request.payload == payload_before
++                admitted = s.inspect_model_budget(budget_id=wide.budget_id)
++                assert (admitted.reserved_calls, admitted.reserved_micros) == (3, 300)
++                assert s.run_budgeted_research(request=message_request, budget_id=tiny.budget_id,
++                    model_factory=forbidden, allow_model_calls=True).record == done.record
++                replayed = s.inspect_model_budget(budget_id=tiny.budget_id)
++                assert replayed.stored == tiny_saved
++                assert (replayed.reserved_calls, replayplayed.reserved_micros) == (0, 0)
++            print('native initial message preflight: PASS; BTC/ETH no claim or permit, same input with explicit matching budget, immutable replay')
+             crash_requests=(prepared(840),prepared(841,'crypto_btc'))
+             crash_policy=policy('crash-budget',crash_requests,total_micros=400,max_calls=4)
+             s.create_model_budget(policy=crash_policy,allow_budget_write=True)
+@@ -236,6 +270,11 @@ def test_budget_upgrade_shared_cap_replay_and_lost_process(tmp_path,monkeypatch)
+             assert s.run_budgeted_research(request=crash_requests[0], budget_id=narrow.budget_id,
+                 model_factory=forbidden, allow_model_calls=True) == original_claim
+             assert s.inspect_model_budget(budget_id=narrow.budget_id).reserved_calls == 0
++            message_narrow = policy('incomplete-message-preflight', (crash_requests[0],), max_message_bytes=1)
++            s.create_model_budget(policy=message_narrow, allow_budget_write=True)
++            assert s.run_budgeted_research(request=crash_requests[0], budget_id=message_narrow.budget_id,
++                model_factory=forbidden, allow_model_calls=True) == original_claim
++            assert s.inspect_model_budget(budget_id=message_narrow.budget_id).reserved_calls == 0
+             replay=s.run_budgeted_research(request=crash_requests[0],budget_id='crash-budget',
+                 model_factory=forbidden,allow_model_calls=True)
+             reread=s.inspect_model_budget(budget_id='crash-budget')
+diff --git a/tests/test_research_model_budget.py b/tests/test_research_model_budget.py
+index d59aef7..a6917bf 100644
+--- a/tests/test_research_model_budget.py
++++ b/tests/test_research_model_budget.py
+@@ -540,3 +540,214 @@ def test_preflight_review_never_clamps_request_or_policy(monkeypatch):
+     runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=good.budget_id,
+         model_factory=lambda _: None, allow_model_calls=True)
+     assert seen == [originals[0]] and (r.payload, bad.payload, good.payload) == originals
++
++
++# Initial UTF-8 message compatibility uses the actual existing agent transcript.
++def first_budget_transcript(r):
++    from polymarket_alpha_lab.team_research_agent import run_team_research_agent
++    seen = []
++    class FirstCall(BaseException):
++        pass
++    class Probe:
++        def complete(self, **kw):
++            seen.append(kw['messages_json'])
++            raise FirstCall()
++    with pytest.raises(FirstCall):
++        run_team_research_agent(r.intake.task, model=Probe(), limits=r.limits,
++                                required_source_ids=r.required_source_ids)
++    assert len(seen) == 1
++    return seen[0]
++
++
++def message_request(number=0, question='Synthetic?'):
++    r = req(number)
++    return replace(r, intake=replace(r.intake, task=replace(r.intake.task, question=question)),
++                   required_source_ids=('s',))
++
++
++def message_execution(monkeypatch, p):
++    events = []
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snapshot(p))
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: None)
++    def claim(dsn, request):
++        events.append('claim')
++        return True, state(request)
++    def capture(dsn, st, run):
++        events.append('capture')
++        return replace(st, status='captured', record=record_for(st.request, run))
++    # Keep the real permit input validation; only the transaction is synthetic.
++    def tx(dsn, operation, **kw):
++        events.append('permit')
++        return True
++    monkeypatch.setattr(runner.execution, '_claim', claim)
++    monkeypatch.setattr(runner.execution, '_capture', capture)
++    monkeypatch.setattr(store.db, '_local_transaction', tx)
++    class Client(Model):
++        def complete(self, **kw):
++            events.append('complete')
++            return super().complete(**kw)
++    def factory(team):
++        events.append('factory')
++        return Client()
++    return events, factory
++
++
++@pytest.mark.parametrize('number', [0, 1])
++@pytest.mark.parametrize('question', ['Synthetic?', '合成问题？', 'Synthetic 🌕?', 'Quoted "\\\n?'])
++def test_first_message_incompatible_budget_never_claims(monkeypatch, number, question):
++    r = message_request(number, question)
++    transcript = first_budget_transcript(r)
++    p = policy((r,), max_message_bytes=len(transcript.encode('utf-8')) - 1)
++    original = r.payload, p.payload
++    events, factory = message_execution(monkeypatch, p)
++    with pytest.raises(ValueError, match='^research_budget_initial_message_incompatible$'):
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++            model_factory=factory, allow_model_calls=True)
++    assert events == [] and (r.payload, p.payload) == original
++
++
++@pytest.mark.parametrize('question', ['Synthetic?', '合成🌕问题？'])
++@pytest.mark.parametrize('extra', [0, 1, 10000])
++def test_first_message_exact_byte_boundary_keeps_real_call_guard(monkeypatch, question, extra):
++    r = message_request(question=question)
++    initial = first_budget_transcript(r)
++    p = policy((r,), max_message_bytes=len(initial.encode('utf-8')) + extra)
++    events, factory = message_execution(monkeypatch, p)
++    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++        model_factory=factory, allow_model_calls=True)
++    assert events[:3] == ['claim', 'permit', 'factory'] and events[-1] == 'capture'
++    if extra < 2:
++        # The later transcript is larger: original per-call denial still applies.
++        assert events.count('permit') == events.count('complete') == 1
++        assert out.record.run.research.reason_code == 'model_failed'
++    else:
++        assert out.record.run.research.status == 'completed'
++        assert events.count('permit') == events.count('complete') == 2
++
++
++@pytest.mark.parametrize('number', [0, 1])
++@pytest.mark.parametrize('existing', ['incomplete', 'captured'])
++def test_initial_message_preflight_replays_without_new_claim(monkeypatch, number, existing):
++    r = req(number)
++    p = policy((r,), max_message_bytes=1)
++    original = state(r)
++    if existing == 'captured':
++        original = replace(original, status='captured', record=record_for(r, make_run(
++            condition=r.intake.condition_id, task=r.intake.task_id, team=r.intake.team_id)))
++    events, factory = message_execution(monkeypatch, p)
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: original)
++    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++        model_factory=factory, allow_model_calls=True)
++    assert out == original and events == []
++
++
++# Separate same-assistant adversarial review of first-message preflight.
++@pytest.mark.parametrize('gate', ['intake', 'context', 'evidence'])
++def test_message_review_preserves_no_model_capture_paths(monkeypatch, gate):
++    if gate == 'intake':
++        r = request(record_id='message-blocked', intake=make_run(status='intake_blocked').intake)
++        expected = None
++    else:
++        r = req()
++        if gate == 'context':
++            r = replace(r, limits=replace(r.limits, max_context_chars=1))
++            expected = 'context_limit'
++        else:
++            from polymarket_alpha_lab.team_research_intake import _receipt
++            evidence = tuple(replace(e, observed_at=e.observed_at-timedelta(seconds=1))
++                             for e in r.intake.task.evidence)
++            intake = replace(r.intake, task=replace(r.intake.task, evidence=evidence),
++                             source_receipts=tuple(_receipt(e) for e in evidence))
++            r = replace(r, intake=intake, limits=replace(r.limits, max_evidence_age_seconds=0))
++            expected = 'no_eligible_evidence'
++    p = policy((r,), max_message_bytes=1)
++    events, factory = message_execution(monkeypatch, p)
++    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++        model_factory=factory, allow_model_calls=True)
++    assert events == ['claim', 'capture']
++    result = out.record.run.research
++    if expected is None:
++        assert result is None
++    else:
++        assert result.reason_code == expected and result.model_calls == 0
++
++
++def test_message_review_byte_limit_does_not_use_character_count(monkeypatch):
++    r = message_request(question='合成🌕问题？')
++    initial = first_budget_transcript(r)
++    r = replace(r, limits=replace(r.limits, max_context_chars=len(initial)))
++    assert len(initial.encode('utf-8')) > len(initial)
++    p = policy((r,), max_message_bytes=len(initial))
++    events, factory = message_execution(monkeypatch, p)
++    with pytest.raises(ValueError, match='^research_budget_initial_message_incompatible$'):
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++            model_factory=factory, allow_model_calls=True)
++    assert events == []
++
++
++@pytest.mark.parametrize('gate', ['exhausted', 'expired', 'output'])
++def test_message_review_prior_gate_does_not_build_a_transcript(monkeypatch, gate):
++    r = req()
++    p = policy((r,), max_message_bytes=1, max_output_tokens=1 if gate == 'output' else 1024)
++    events, factory = message_execution(monkeypatch, p)
++    snap = snapshot(p, 3 if gate == 'exhausted' else 0)
++    if gate == 'expired':
++        snap = replace(snap, observed_at=p.expires_at)
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snap)
++    monkeypatch.setattr(runner.agent, '_initial_context', lambda *a, **k: pytest.fail('priority changed'))
++    reason = 'output_limit_incompatible' if gate == 'output' else 'not_available'
++    with pytest.raises(ValueError, match=reason):
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++            model_factory=factory, allow_model_calls=True)
++    assert events == []
++
++
++@pytest.mark.parametrize('defect', ['mismatch', 'mutated', 'type'])
++def test_message_review_existing_receipt_is_revalidated(monkeypatch, defect):
++    r = req()
++    p = policy((r,), max_message_bytes=1)
++    events, factory = message_execution(monkeypatch, p)
++    prior = state(replace(r, protocol_version='other') if defect == 'mismatch' else r)
++    if defect == 'mutated':
++        object.__setattr__(prior, 'readonly', False)
++    if defect == 'type':
++        prior = object()
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: prior)
++    with pytest.raises((ValueError, TypeError)):
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++            model_factory=factory, allow_model_calls=True)
++    assert events == []
++
++
++@pytest.mark.parametrize('error', [OSError('synthetic message history failure'), KeyboardInterrupt(), SystemExit(0)])
++def test_message_review_history_error_never_falls_through_to_claim(monkeypatch, error):
++    r = req()
++    p = policy((r,), max_message_bytes=1)
++    events, factory = message_execution(monkeypatch, p)
++    def inspect(*a, **k):
++        raise error
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', inspect)
++    with pytest.raises(type(error)) as caught:
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++            model_factory=factory, allow_model_calls=True)
++    assert caught.value is error and events == []
++
++
++def test_message_review_explicit_matching_budget_keeps_same_input(monkeypatch):
++    r = message_request(question='合成预算审核?')
++    bad = policy((r,), max_message_bytes=1)
++    good = replace(bad, budget_id='explicit-message-budget', max_message_bytes=100000)
++    originals = r.payload, bad.payload, good.payload
++    events, factory = message_execution(monkeypatch, bad)
++    policies = {p.budget_id: p for p in (bad, good)}
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda dsn, budget_id: snapshot(policies[budget_id]))
++    with pytest.raises(ValueError, match='initial_message_incompatible'):
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=bad.budget_id,
++            model_factory=factory, allow_model_calls=True)
++    assert events == []
++    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=good.budget_id,
++        model_factory=factory, allow_model_calls=True)
++    assert out.record.run.research.status == 'completed'
++    assert events.count('claim') == events.count('capture') == 1
++    assert events.count('permit') == events.count('complete') == 2
++    assert (r.payload, bad.payload, good.payload) == originals
