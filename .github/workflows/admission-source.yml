@@ -1,0 +1,37 @@
+name: Original admission integration sources
+on:
+  push:
+    branches: [review/wp03-admission-source-20260917]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: f1d9f68d08fdb8a0453319e885c3827296d8d694
+          persist-credentials: false
+      - name: Archive fixed inputs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = f1d9f68d08fdb8a0453319e885c3827296d8d694
+          git fetch --no-tags --depth=1 origin 4df08873f4b9b8f1378913c0d00ca6bb183e51e2
+          for revision in f1d9f68d08fdb8a0453319e885c3827296d8d694 4df08873f4b9b8f1378913c0d00ca6bb183e51e2; do
+            git archive --format=zip --output="$RUNNER_TEMP/$revision.zip" "$revision"
+            git ls-tree -r "$revision" > "$RUNNER_TEMP/$revision.tree.txt"
+            git cat-file commit "$revision" > "$RUNNER_TEMP/$revision.commit.txt"
+            sha256sum "$RUNNER_TEMP/$revision.zip" > "$RUNNER_TEMP/$revision.sha256"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: original-pr47-and-common
+          path: |
+            ${{ runner.temp }}/*.zip
+            ${{ runner.temp }}/*.tree.txt
+            ${{ runner.temp }}/*.commit.txt
+            ${{ runner.temp }}/*.sha256
+          retention-days: 7
+          if-no-files-found: error
