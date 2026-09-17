@@ -217,7 +217,7 @@ index 570164d..779701d 100644
 +                    model_factory=forbidden, allow_model_calls=True).record == done.record
 +                replayed = s.inspect_model_budget(budget_id=tiny.budget_id)
 +                assert replayed.stored == tiny_saved
-+                assert (replayed.reserved_calls, replayplayed.reserved_micros) == (0, 0)
++                assert (replayed.reserved_calls, replayed.reserved_micros) == (0, 0)
 +            print('native initial message preflight: PASS; BTC/ETH no claim or permit, same input with explicit matching budget, immutable replay')
              crash_requests=(prepared(840),prepared(841,'crypto_btc'))
              crash_policy=policy('crash-budget',crash_requests,total_micros=400,max_calls=4)
