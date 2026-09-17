@@ -1,0 +1,309 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 5c1380e5..5b6ae097 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -67,7 +67,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | --- | --- | --- | --- | --- |
+ | WP-01 候选到研究入口 | **DONE（G1）** | 有界发现、最新规则／观察时刻、一次完整预览和待审规格已接通；本项不包含模型授权或来源真伪认证 | 现有公开输入、PR #19／#20 门禁 | [PR #28](https://github.com/wmqfl861/polymarket-alpha-lab/pull/28)：52 项反例测试、三条 CI、真实 BTC／ETH 待审样例；详见第 10 节 |
+ | WP-02 真实模型与预算 | **AWAITING_OWNER** | 已实现同库共享调用额度预留和惰性客户端接线；仍需提供商／实际收费上界验证／数据授权／预算决定及真实研究收录 | D1—D3；可先离线开发，不需要先拿密钥；真实验收依赖 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
+-| WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺获准提供商／收费上界验证及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02／D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
++| WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，审核后显式入库批次／预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺获准提供商／收费上界验证及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02／D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+ | WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算组合、提交后输出故障及旧冷备份目录前缀兼容；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
+@@ -723,3 +723,23 @@ D1—D3、真实输入／费率及完整业务验收，也不授权用户数据
+ 已使用预算复核移至全部原输入保存之后，保留原截止、时刻、业务调用和断言，不延长窗口。
+ 测试失败时另保留有限的合成时钟观察，避免嵌套异常显示截断；整包及所有最终版本门禁
+ 仍须重新实际通过，此处不以离线测试代替原生结果。
++
++
++### PR #47 与 PR #48／#50／#51 的主线整合（2026-09-17）
++
++整合基线 `2a0e881a2057ce6cba33c1a6885dcd099d4a5b52`；保留原 PR #47
++`f1d9f68d08fdb8a0453319e885c3827296d8d694` 的历史与首败。复用主线已有输出
++函数和共享停止处理，不恢复旧的重复输出实现，不回退会话排空或原生三分区门禁。
++
++- 合流反例先复现入库前输出中断不请求原停止令牌，再修复；单独自审进一步复现
++  输入中断后错误回执也输出失败时停止信号丢失。先请求原令牌再发布错误回执，
++  两份首败和原断言保留。普通输出错误仍不取消关联工作，已提交数据不回滚或重试。
++- 只将两份入库测试模块显式追加到 dispatch 分区及整包验证；原 51 文件清单、
++  自检模块、三个分区、汇总拒绝逻辑和全部原有测试／超时／权限保持。
++- 整包仍走原审核输入、真实入库子进程、零领取／预留校验、已用预算重放、
++  模拟／人工合成结算及中断保全；不刷新截止或更换输入凑通过。
++- 最终固定树的自审、全量、原生／整包实际结果及未执行项记录在本 PR；旧树
++  的成功不能替代整合验收。无新迁移、依赖、提供商、文件业务账本或用户数据操作。
++
++**本项只推进审核入库操作接线，G2／G3／G6 和 V1 均不因此完成。** PR #49、
++被拦截的诊断试验、D1—D3 与真实模型／来源／费率验收仍保留原限制。
+diff --git a/docs/research-dispatch.md b/docs/research-dispatch.md
+index b4b912f3..a07d8694 100644
+--- a/docs/research-dispatch.md
++++ b/docs/research-dispatch.md
+@@ -570,3 +570,23 @@ reservations exist at that point, and then runs the existing synthetic flow.
+ Stream references checked 2026-09-16:
+ https://docs.python.org/3.13/library/io.html
+ https://docs.python.org/3.13/library/sys.html#sys.stdin
++
++
++### Admission with the existing shared-stop and session-drain contracts
++
++Admission now reuses the already-merged checked emitter and shared-stop wrapper;
++there is no second implementation of JSON output. An interruption while reading
++reviewed stdin requests the original supplied stop token BEFORE attempting the
++error receipt. If that receipt itself short-writes or fails, the handler returns
++failure but the stop request remains. Output interruptions on permission-denied,
++invalid-input or stored-admission paths also reach that same token. Ordinary
++output errors alone do not stop other associated task invocations. None of these
++paths replays a store, invokes a model or assumes a COMMIT was rolled back.
++
++Managed admission keeps the current session draining and engine-ownership rules.
++Canonical input codecs, per-command write permissions and original payload/hash
++comparisons remain unchanged. The provider/model, input-send permission and real
++charge limits still require D1-D3; queue/budget admission is not model approval.
++Integration references: Python3.12 text-stream write/flush and Condition contracts
++were checked on2026-09-17; they do not guarantee consumer receipt or an
++uninterruptible filesystem/database operation.
+diff --git a/src/polymarket_alpha_lab/research_dispatch_cli.py b/src/polymarket_alpha_lab/research_dispatch_cli.py
+index 15665f61..86e618c5 100644
+--- a/src/polymarket_alpha_lab/research_dispatch_cli.py
++++ b/src/polymarket_alpha_lab/research_dispatch_cli.py
+@@ -23,6 +23,7 @@ from polymarket_alpha_lab.research_model_budget import (
+     MAX_POLICY_BYTES, ModelBudgetSnapshot, StoredModelBudget, decode_budget,
+ )
+ from polymarket_alpha_lab.research_resolution import digest
++from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
+ from polymarket_alpha_lab.team_research_agent_types import identifier
+ 
+ 
+@@ -135,19 +136,17 @@ def _run(session, args, model_factory, stop):
+ 
+ 
+ 
+-def _emit(envelope, code):
+-    """One checked write after cleanup; a failed stream cannot receive a retry."""
+-    try:
+-        rendered = json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2) + '\n'
+-        count = sys.stdout.write(rendered)
+-        if type(count) is not int or count != len(rendered):
+-            return 1
+-        sys.stdout.flush()
+-    except KeyboardInterrupt:
+-        return 130
+-    except (Exception, SystemExit):
+-        return 1
+-    return code
++def _publish(envelope, code, stop):
++    """Use the existing checked emitter without losing cooperative interruption.
++
++    Cleanup precedes publication. A short write may leave a prefix; neither a
++    failed output nor a stopped token rolls back previously admitted work.
++    """
++    result = _emit(envelope, code)
++    if result == 130 and stop is not None:
++        stop.request_stop()
++    return result
++
+ 
+ 
+ def _read_admission(args):
+@@ -244,7 +243,7 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+                   else 'research_dispatch_approved_client_required')
+         envelope.update(status='blocked', reason_code=reason,
+             operation_entered=False, model_calls_possible=False, business_writes_possible=False)
+-        return _emit(envelope, 2)
++        return _publish(envelope, 2, stop)
+     admission = None
+     if admitting:
+         envelope.update(operation_entered=False, model_calls_possible=False,
+@@ -252,16 +251,20 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+         allowed = (args.allow_queue_write if args.operation == 'enqueue-batch'
+                    else args.allow_budget_write)
+         if allowed is not True:
+-            return _emit(dict(envelope, status='blocked',
+-                reason_code='research_dispatch_admission_opt_in_required'), 2)
++            return _publish(dict(envelope, status='blocked',
++                reason_code='research_dispatch_admission_opt_in_required'), 2, stop)
+         try:
+             admission = _read_admission(args)
+         except KeyboardInterrupt:
+-            return _emit(dict(envelope, status='interrupted',
+-                reason_code='research_dispatch_input_interrupted'), 130)
++            # Preserve the INPUT interruption even if publishing its receipt
++            # also fails. Output status alone cannot carry this shared signal.
++            if stop is not None:
++                stop.request_stop()
++            return _publish(dict(envelope, status='interrupted',
++                reason_code='research_dispatch_input_interrupted'), 130, stop)
+         except (Exception, SystemExit):
+-            return _emit(dict(envelope, status='invalid_input',
+-                reason_code='research_dispatch_input_invalid'), 2)
++            return _publish(dict(envelope, status='invalid_input',
++                reason_code='research_dispatch_input_invalid'), 2, stop)
+     # Conservatively report possible effects once the managed operation is
+     # entered, including unknown COMMIT/cleanup acknowledgement. Never infer
+     # absence of writes from an exception. No success is printed before cleanup.
+@@ -287,7 +290,7 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+     except (Exception, SystemExit):
+         envelope.update(status='failed', reason_code='research_dispatch_operation_failed')
+         code = 1
+-    return _emit(envelope, code)
++    return _publish(envelope, code, control)
+ 
+ 
+ __all__ = ('main',)
+diff --git a/tests/test_native_postgres_workflow.py b/tests/test_native_postgres_workflow.py
+index 934c6b0c..8db1b2e3 100644
+--- a/tests/test_native_postgres_workflow.py
++++ b/tests/test_native_postgres_workflow.py
+@@ -67,6 +67,11 @@ tests/test_research_resolution_output_review.py
+ tests/test_project_postgres_backup_catalog.py
+ tests/test_project_postgres_backup_catalog_review.py""".splitlines()
+ SELF = 'tests/test_native_postgres_workflow.py'
++# PR47 adds two explicit modules; preserve ORIGINAL_FILES as the pinned baseline.
++ADMISSION_FILES = (
++    'tests/test_research_dispatch_cli_admission.py',
++    'tests/test_research_dispatch_cli_admission_review.py',
++)
+ 
+ 
+ def matrix(source):
+@@ -79,13 +84,14 @@ def matrix(source):
+         assert type(partition['files']) is list and partition['files']
+         assert all(type(f) is str and re.fullmatch(r'tests/test_[a-z0-9_]+[.]py', f)
+                    for f in partition['files'])
+-    assert Counter(f for p in value for f in p['files']) == Counter([*ORIGINAL_FILES, SELF])
++    assert Counter(f for p in value for f in p['files']) == Counter([*ORIGINAL_FILES, SELF, *ADMISSION_FILES])
+     return value
+ 
+ 
+ def test_native_partitions_preserve_exact_original_inventory():
+     parts = matrix(WORKFLOW.read_text())
+     assert len(ORIGINAL_FILES) == len(set(ORIGINAL_FILES)) == 51
++    assert set(ADMISSION_FILES) <= set(parts[2]['files'])
+     for part in parts:
+         assert all((ROOT / path).is_file() for path in part['files'])
+     # Both new unit modules and the REAL backup proof stay together on Windows.
+diff --git a/tests/test_research_dispatch_cli_admission.py b/tests/test_research_dispatch_cli_admission.py
+index 16d09648..fcbeb54c 100644
+--- a/tests/test_research_dispatch_cli_admission.py
++++ b/tests/test_research_dispatch_cli_admission.py
+@@ -132,3 +132,40 @@ def test_receipt_requires_exact_type_and_entire_input(admission, managed, monkey
+         admission.stored = replace(admission.stored, policy=replace(admission.value, total_micros=200))
+     code, out = invoke(admission, managed, monkeypatch, capsys)
+     assert code == 1 and out['result'] is None and managed['closed']
++
++
++@pytest.mark.parametrize('stage', ['blocked', 'invalid', 'stored'])
++@pytest.mark.parametrize('phase', ['write', 'flush'])
++def test_admission_output_interrupt_preserves_original_shared_stop(
++        admission, managed, monkeypatch, stage, phase):
++    """The added admission exits must retain the merged PR51 stop contract."""
++    from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
++    control = ResearchDispatchStop()
++    managed['value'] = admission.stored
++    writes, flushes = [], []
++    raw = b'invalid' if stage == 'invalid' else admission.value.payload.encode()
++
++    class Output:
++        def write(self, text):
++            if stage == 'stored':
++                assert managed['closed']
++            else:
++                assert 'root' not in managed
++            writes.append(text)
++            if phase == 'write':
++                raise KeyboardInterrupt(PRIVATE)
++            return len(text)
++
++        def flush(self):
++            flushes.append(1)
++            raise KeyboardInterrupt(PRIVATE)
++
++    with monkeypatch.context() as patch:
++        patch.setattr(cli.sys, 'stdin', SimpleNamespace(buffer=io.BytesIO(raw)))
++        patch.setattr(cli.sys, 'stdout', Output())
++        code = cli.main(admission.arguments + ([] if stage == 'blocked' else [admission.permission]),
++                        default_root=ROOT, stop=control)
++    assert code == 130 and control.is_stopped()
++    assert len(writes) == 1 and len(flushes) == int(phase == 'flush')
++    assert len(managed['calls']) == int(stage == 'stored')
++    assert all(PRIVATE not in text for text in writes)
+diff --git a/tests/test_research_dispatch_cli_admission_review.py b/tests/test_research_dispatch_cli_admission_review.py
+index f18d7574..e8eb2fa5 100644
+--- a/tests/test_research_dispatch_cli_admission_review.py
++++ b/tests/test_research_dispatch_cli_admission_review.py
+@@ -122,3 +122,74 @@ def test_output_failure_is_nonzero_and_never_second_write(managed, monkeypatch,
+     assert len(writes) == 1 and len(flushes) == (1 if fault == 'flush' else 0)
+     assert closed_at_write == [operation != 'blocked-run']
+     assert len(managed['calls']) == (0 if operation == 'blocked-run' else 1)
++
++
++@pytest.mark.parametrize('phase', ['buffer', 'read'])
++@pytest.mark.parametrize('output_fault', ['none', 'short', 'write-error'])
++def test_input_interrupt_preserves_shared_stop_even_when_error_output_fails(
++        admission, managed, monkeypatch, phase, output_fault):
++    """Set stop for the INPUT interruption before attempting its error receipt."""
++    from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
++    control = ResearchDispatchStop()
++    reads, writes, flushes = [], [], []
++
++    class Input:
++        @property
++        def buffer(self):
++            if phase == 'buffer':
++                raise KeyboardInterrupt(PRIVATE)
++            return self
++
++        def read(self, count):
++            reads.append(count)
++            raise KeyboardInterrupt(PRIVATE)
++
++    class Output:
++        def write(self, text):
++            writes.append(text)
++            if output_fault == 'write-error':
++                raise OSError(PRIVATE)
++            return len(text) - int(output_fault == 'short')
++
++        def flush(self):
++            flushes.append(1)
++
++    with monkeypatch.context() as patch:
++        patch.setattr(cli.sys, 'stdin', Input())
++        patch.setattr(cli.sys, 'stdout', Output())
++        code = cli.main(admission.arguments + [admission.permission], default_root=ROOT, stop=control)
++    assert code == (130 if output_fault == 'none' else 1)
++    assert control.is_stopped()
++    assert 'root' not in managed and not managed['calls']
++    assert len(reads) == int(phase == 'read')
++    assert len(writes) == 1 and len(flushes) == int(output_fault == 'none')
++    assert PRIVATE not in writes[0]
++
++
++@pytest.mark.parametrize('stage', ['blocked', 'invalid', 'stored'])
++@pytest.mark.parametrize('fault', ['short', 'flush'])
++def test_ordinary_admission_output_failure_does_not_cancel_shared_work(
++        admission, managed, monkeypatch, stage, fault):
++    from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
++    control = ResearchDispatchStop()
++    managed['value'] = admission.stored
++    raw = b'invalid' if stage == 'invalid' else admission.value.payload.encode()
++    writes = []
++
++    class Output:
++        def write(self, text):
++            writes.append(text)
++            return len(text) - int(fault == 'short')
++
++        def flush(self):
++            raise OSError(PRIVATE)
++
++    with monkeypatch.context() as patch:
++        patch.setattr(cli.sys, 'stdin', SimpleNamespace(buffer=io.BytesIO(raw)))
++        patch.setattr(cli.sys, 'stdout', Output())
++        code = cli.main(admission.arguments + ([] if stage == 'blocked' else [admission.permission]),
++                        default_root=ROOT, stop=control)
++    assert code == 1 and not control.is_stopped()
++    assert len(writes) == 1 and PRIVATE not in writes[0]
++    assert len(managed['calls']) == int(stage == 'stored')
++    assert managed.get('closed', False) is (stage == 'stored')
