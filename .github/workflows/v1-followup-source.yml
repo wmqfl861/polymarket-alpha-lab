@@ -1,0 +1,34 @@
+name: Pinned V1 follow-up source
+on:
+  push:
+    branches: [review/v1-followup-source-20260917]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: a71ae4d716e8a73bd3614f080f42e5a6968d76f8
+          persist-credentials: false
+      - name: Archive fixed tracked source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = a71ae4d716e8a73bd3614f080f42e5a6968d76f8
+          git archive --format=zip --output="$RUNNER_TEMP/source.zip" HEAD
+          git ls-tree -r HEAD > "$RUNNER_TEMP/source-tree.txt"
+          git cat-file commit HEAD > "$RUNNER_TEMP/source-commit.txt"
+          sha256sum "$RUNNER_TEMP/source.zip" > "$RUNNER_TEMP/source.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: source-a71ae4d7
+          path: |
+            ${{ runner.temp }}/source.zip
+            ${{ runner.temp }}/source-tree.txt
+            ${{ runner.temp }}/source-commit.txt
+            ${{ runner.temp }}/source.sha256
+          retention-days: 7
+          if-no-files-found: error
