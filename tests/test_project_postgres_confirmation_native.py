@@ -128,6 +128,59 @@ def test_original_forecasts_manual_confirmation_replay_restart_and_preservation(
             assert db._psql(identity,'SELECT count(*) FROM research_capture.resolution_reviews;')=='4'
             assert db._psql(identity,'SELECT count(*) FROM research_capture.outcomes;')=='2'
             assert db._psql(identity,'SELECT count(*) FROM project_private.migrations;')=='67'
+        # Recovery lookups use real isolated storage; inject ONLY a short stdout
+        # sink in actual command processes after all prospective captures finish.
+        probe = r"""
+import json, runpy, sys
+from pathlib import Path
+source, root, script, flag, identifier = sys.argv[1:]
+original = sys.stdout
+class ShortOutput:
+    def write(self, text):
+        value = json.loads(text)
+        assert value['status'] == 'inspected' and value['inspection'] is not None
+        assert value['business_writes_performed'] is False
+        return original.buffer.write(text[:10].encode('ascii'))
+    def flush(self): original.flush()
+path = Path(source) / 'scripts' / script
+sys.argv = [str(path), '--root', root, flag, identifier]
+sys.stdout = ShortOutput()
+try:
+    runpy.run_path(str(path), run_name='__main__')
+finally:
+    sys.stdout = original
+"""
+        instruction, candidate, confirmed, record = reviewed[0]
+        for script, flag, identifier in (
+            ('inspect_project_research.py', '--record-id', instruction.record_id),
+            ('inspect_project_resolution.py', '--review-id', instruction.review_id),
+        ):
+            argv = [sys.executable, '-I', str(ROOT/'scripts'/script),
+                    '--root', str(root), flag, identifier]
+            before = subprocess.run(argv, capture_output=True,
+                env=files.clean_environment(), timeout=120, check=False)
+            assert before.returncode == 0 and before.stderr == b''
+            original_lookup = json.loads(before.stdout)
+            assert original_lookup['status'] == 'inspected'
+            failed = subprocess.run([sys.executable, '-I', '-c', probe,
+                str(ROOT), str(root), script, flag, identifier],
+                capture_output=True, env=files.clean_environment(), timeout=120, check=False)
+            assert failed.returncode == 1 and failed.stderr == b''
+            assert failed.stdout == (json.dumps(original_lookup, ensure_ascii=True,
+                                    allow_nan=False, indent=2)+'\n').encode('ascii')[:10]
+            assert db.status()['status'] == 'stopped'
+            after = subprocess.run(argv, capture_output=True,
+                env=files.clean_environment(), timeout=120, check=False)
+            assert after.returncode == 0 and after.stderr == b''
+            assert after.stdout == before.stdout
+        with db.session() as session:
+            assert session.inspect(record_id=instruction.record_id).record == record
+            assert session.inspect_resolution(review_id=instruction.review_id) == confirmed
+            assert session.inspect_resolution(review_id=instruction.candidate_review_id) == candidate
+            assert db._psql(identity,'SELECT count(*) FROM research_capture.resolution_reviews;') == '4'
+            assert db._psql(identity,'SELECT count(*) FROM research_capture.outcomes;') == '2'
+        assert db.status()['status'] == 'stopped'
+        print('native recovery lookup output: PASS; execution/review short writes fail, identical rereads, original records retained')
         assert db.status()['instance_id']==identity['instance_id']
         print('native forecast confirmation: PASS; prospective BTC/ETH, original candidate, manual outcome, replay/restart, no replacement')
     finally:

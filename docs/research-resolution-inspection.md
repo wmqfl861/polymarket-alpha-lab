@@ -112,3 +112,15 @@ and row counts, and verifies inspection does not unblock incomplete-history scor
 The actual extracted kit checks help without initialization and a missing review
 with its own installed environment. Native business data/models are synthetic,
 not the user's instance or provider credentials. Measured results belong in the PR.
+
+
+## Recovery output failures (WP-04 / WP-06)
+
+This command follows the same [checked single-record output contract](research-execution-inspection.md#checked-single-record-recovery-output-wp-03--wp-04--wp-06)
+as execution inspection. Existing inspected/not-found/error JSON and completed
+lookup statuses are unchanged. Internal zero exits, short output and failed flush
+are not successful lookup delivery; no second envelope, confirmation, fetch or
+retry is performed. Serialization failure returns nonzero without fallback JSON.
+A failure is not evidence of absence or rollback. Original operation interruption
+continues to propagate without a result. The existing human assertion and linked
+outcome are neither promoted nor refreshed by this output reliability repair.

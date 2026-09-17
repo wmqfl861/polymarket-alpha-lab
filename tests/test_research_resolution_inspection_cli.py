@@ -302,3 +302,179 @@ def test_output_confirmation_mutation_does_not_modify_original_proof():
     report["submitted_confirmation"]["source_content_sha256"] = "0"*64
     assert encode_resolution(receipt.submission) == before
     assert summary(receipt)["submitted_confirmation"]["asserted_yes"] is True
+
+
+# Single-ID recovery lookups must not report success after internal/output failure.
+@pytest.mark.parametrize('stage', ['read', 'close', 'missing-close', 'summary', 'construct', 'enter'])
+@pytest.mark.parametrize('exit_code', [0, 7])
+def test_internal_exit_is_a_failed_lookup_not_process_success(managed, capsys, monkeypatch, stage, exit_code):
+    values, events = managed
+    error = SystemExit(exit_code)
+    def fail(*a, **k):
+        raise error
+    if stage == 'read':
+        values['error'] = error
+    elif stage in ('close', 'missing-close'):
+        values['exit_error'] = error
+        if stage == 'missing-close':
+            values['review'] = None
+    elif stage == 'summary':
+        monkeypatch.setattr(cli, 'resolution_review_summary', fail)
+    elif stage == 'construct':
+        monkeypatch.setattr(cli, 'ProjectPostgres', fail)
+    else:
+        class Database:
+            def __init__(self, root): pass
+            def session(self): raise error
+        monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+    try:
+        code = invoke()
+    except SystemExit as escaped:
+        code = ('escaped', escaped.code)
+    assert code == 1
+    output = capsys.readouterr()
+    envelope = json.loads(output.out)
+    assert envelope['status'] == 'failed' and envelope['inspection'] is None
+    assert envelope['reason_code'] == 'research_resolution_inspection_failed'
+    assert envelope['business_writes_performed'] is envelope['live_model_called'] is False
+    assert output.err == ''
+    assert sum(e[0] == 'inspect' for e in events) <= 1
+
+
+@pytest.mark.parametrize('outcome', ['found', 'missing', 'failed'])
+@pytest.mark.parametrize('fault', ['short', 'write-exit', 'flush-error', 'flush-exit',
+                                  'write-interrupt', 'flush-interrupt'])
+def test_lookup_output_failure_is_nonzero_one_write_after_close(
+        managed, monkeypatch, outcome, fault):
+    values, events = managed
+    if outcome == 'missing': values['review'] = None
+    if outcome == 'failed': values['error'] = ValueError('PRIVATE-LOOKUP-ERROR')
+    writes, flushes = [], []
+    class Output:
+        def write(self, text):
+            assert events[-1] == ('exit',)
+            writes.append(text)
+            if fault == 'write-exit': raise SystemExit(0)
+            if fault == 'write-interrupt': raise KeyboardInterrupt('PRIVATE-OUTPUT')
+            return len(text) - int(fault == 'short')
+        def flush(self):
+            flushes.append(1)
+            if fault == 'flush-error': raise OSError('PRIVATE-OUTPUT')
+            if fault == 'flush-exit': raise SystemExit(0)
+            if fault == 'flush-interrupt': raise KeyboardInterrupt('PRIVATE-OUTPUT')
+    with monkeypatch.context() as patch:
+        patch.setattr(sys, 'stdout', Output())
+        try:
+            code = invoke()
+        except (Exception, SystemExit, KeyboardInterrupt) as escaped:
+            code = ('escaped', type(escaped).__name__)
+    assert code == (130 if fault.endswith('interrupt') else 1)
+    assert len(writes) == 1 and len(flushes) == int(fault.startswith('flush'))
+    assert writes[0].endswith('\n')
+    assert 'PRIVATE' not in writes[0]
+    assert sum(e[0] == 'inspect' for e in events) == 1
+
+
+@pytest.mark.parametrize('outcome', ['found', 'missing', 'failed'])
+def test_lookup_success_envelope_keeps_exact_json_and_one_checked_flush(
+        managed, monkeypatch, capsys, outcome):
+    values, events = managed
+    if outcome == 'missing': values['review'] = None
+    if outcome == 'failed': values['error'] = OSError('PRIVATE-LOOKUP-ERROR')
+    # Capture the original contract payload; actual metadata validation is unchanged.
+    expected_code = invoke()
+    expected = capsys.readouterr().out
+    events.clear()
+    writes, flushed = [], []
+    class Output:
+        def write(self, text):
+            assert events[-1] == ('exit',)
+            writes.append(text)
+            return len(text)
+        def flush(self): flushed.append(1)
+    with monkeypatch.context() as patch:
+        patch.setattr(sys, 'stdout', Output())
+        assert invoke() == expected_code
+    assert writes == [expected] and flushed == [1]
+    assert expected_code == {'found': 0, 'missing': 3, 'failed': 1}[outcome]
+
+
+# Separate review: output serialization and real interpreter/import ordering.
+@pytest.mark.parametrize('error', [ValueError('PRIVATE-SERIALIZE'), OSError('PRIVATE-SERIALIZE'),
+                                 SystemExit(0), KeyboardInterrupt('PRIVATE-SERIALIZE')])
+def test_lookup_review_serialization_failure_never_writes_a_fallback(managed, monkeypatch, error):
+    from polymarket_alpha_lab import research_resolution_confirmation_cli as output
+    original = output.json.dumps
+    writes = []
+    def dumps(value, *args, **kwargs):
+        if type(value) is dict and 'lookup_scope' in value:
+            assert managed[1][-1] == ('exit',)
+            raise error
+        return original(value, *args, **kwargs)
+    class Stream:
+        def write(self, text): writes.append(text); return len(text)
+        def flush(self): pytest.fail('flush without serialization')
+    with monkeypatch.context() as patch:
+        patch.setattr(output.json, 'dumps', dumps)
+        patch.setattr(sys, 'stdout', Stream())
+        assert invoke() == (130 if isinstance(error, KeyboardInterrupt) else 1)
+    assert writes == []
+    assert sum(e[0] == 'inspect' for e in managed[1]) == 1
+
+
+@pytest.mark.parametrize('order', ['confirmation-first', 'inspection-first'])
+@pytest.mark.parametrize('fault', ['exit', 'short', 'flush'])
+def test_lookup_review_fresh_interpreter_reports_nonzero(monkeypatch, order, fault):
+    from polymarket_alpha_lab.project_postgres.files import clean_environment
+    body = r"""
+import importlib, json, runpy, sys
+from pathlib import Path
+from contextlib import contextmanager
+root, order, fault = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
+name = 'polymarket_alpha_lab.research_resolution_inspection_cli'
+confirmation = 'polymarket_alpha_lab.research_resolution_confirmation_cli'
+for item in ((confirmation, name) if order == 'confirmation-first' else (name, confirmation)):
+    importlib.import_module(item)
+module = importlib.import_module(name)
+calls = []
+class Session:
+    def inspect(self, **kwargs):
+        calls.append(kwargs)
+        if fault == 'exit': raise SystemExit(0)
+        return None
+    inspect_resolution = inspect
+class Database:
+    def __init__(self, root): pass
+    @contextmanager
+    def session(self): yield Session()
+module.ProjectPostgres = Database
+original = sys.stdout
+class Stream:
+    def write(self, text):
+        if fault == 'short': return 0
+        return original.write(text)
+    def flush(self):
+        if fault == 'flush': raise SystemExit(0)
+        original.flush()
+sys.stdout = Stream()
+path = root / 'scripts/inspect_project_resolution.py'
+sys.argv = [str(path), '--review-id', 'review-1']
+try:
+    runpy.run_path(str(path), run_name='__main__')
+except SystemExit as result:
+    code = result.code
+finally:
+    sys.stdout = original
+assert len(calls) == 1
+raise SystemExit(code)
+"""
+    result = subprocess.run([sys.executable, '-I', '-c', body, str(ROOT), order, fault],
+        capture_output=True, env=clean_environment(), timeout=30, check=False)
+    assert result.returncode == 1, (result.stdout, result.stderr)
+    assert result.stderr == b''
+    if fault == 'short':
+        assert result.stdout == b''
+    else:
+        envelope = json.loads(result.stdout)
+        assert envelope['inspection'] is None and envelope['business_writes_performed'] is False
+        assert envelope['status'] == ('failed' if fault == 'exit' else 'review_not_found')

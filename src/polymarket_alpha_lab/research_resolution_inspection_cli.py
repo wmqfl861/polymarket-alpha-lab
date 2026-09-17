@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 from dataclasses import replace
 from hashlib import sha256
-import json
 from pathlib import Path
 
 from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
@@ -83,6 +82,9 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
     parser.add_argument("--root", type=Path, default=default_root)
     parser.add_argument("--review-id", type=_review_id, required=True)
     args = parser.parse_args(argv)
+    # Import at invocation, not module initialization: confirmation already
+    # imports the resolution summary. Reuse its checked emitter without a cycle.
+    from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
     envelope = dict(review_id=args.review_id, lookup_scope="resolution_review_and_its_linked_outcome",
         public_network_called=False, live_model_called=False, business_writes_performed=False,
         outcome_confirmation_performed=False, paper_only=True, report_only=True, readonly=True)
@@ -93,13 +95,10 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
         # No apparent success (including not-found) before successful cleanup.
         envelope.update(status="review_not_found" if result is None else "inspected", inspection=result)
         code = 3 if result is None else 0
-        encoded = json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2)
-    except Exception:
+    except (Exception, SystemExit):
         envelope.update(status="failed", reason_code="research_resolution_inspection_failed", inspection=None)
-        encoded = json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2)
         code = 1
-    print(encoded)
-    return code
+    return _emit(envelope, code)
 
 
 __all__ = ("resolution_review_summary", "main")

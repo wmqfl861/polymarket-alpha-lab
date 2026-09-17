@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict, replace
-import json
 from pathlib import Path
 
 from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
@@ -62,6 +61,9 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
     parser.add_argument("--root", type=Path, default=default_root)
     parser.add_argument("--record-id", type=_record_id, required=True)
     args = parser.parse_args(argv)
+    # Import at invocation, not module initialization: confirmation already
+    # imports the resolution summary. Reuse its checked emitter without a cycle.
+    from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
     envelope = dict(record_id=args.record_id, lookup_scope="execution_claim_and_matching_attempt",
         public_network_called=False, live_model_called=False, business_writes_performed=False,
         paper_only=True, report_only=True, readonly=True)
@@ -72,11 +74,10 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
         # Publish only after successful cleanup, including the not-found case.
         envelope.update(status="claim_not_found" if result is None else "inspected", inspection=result)
         code = 3 if result is None else 0
-    except Exception:
+    except (Exception, SystemExit):
         envelope.update(status="failed", reason_code="research_execution_inspection_failed", inspection=None)
         code = 1
-    print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
-    return code
+    return _emit(envelope, code)
 
 
 __all__ = ("execution_summary", "main")

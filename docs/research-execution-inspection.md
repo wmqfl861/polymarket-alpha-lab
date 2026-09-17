@@ -104,3 +104,36 @@ a real provider call, process-liveness detection or a general security guarantee
 The read-only [execution inventory](research-execution-inventory.md) lists all
 visible claims under a strict count/payload cap. It includes incomplete tasks
 without requiring a record ID and does not retry or score them.
+
+
+## Checked single-record recovery output (WP-03 / WP-04 / WP-06)
+
+The execution and resolution-review lookup commands now reuse the existing
+checked JSON emitter after the managed session has closed. A complete successful
+lookup keeps its original JSON and exit code: 0 for an inspected record, 3 for a
+completed lookup that found no matching record, and 1 for a managed lookup error.
+Internal SystemExit, including SystemExit(0), during construction, lookup,
+metadata validation or cleanup is a failed lookup, not process success.
+
+Serialization, short-write, write and flush failure return nonzero. A broken
+stream is never given a second envelope and no lookup, confirmation or model
+operation is automatically repeated. Serialization failure can leave no output;
+write/flush failure can leave a prefix or even complete-looking JSON. Callers must
+check the process status AND complete JSON, not infer success from a prefix. A
+failure does not mean the requested record is absent, nor that an earlier write
+was rolled back. Query only the original identity; no substitute record or retry
+of business work is authorized.
+
+Original KeyboardInterrupt during lookup/cleanup still propagates without a
+fabricated result. Output-stage interruption follows the shared emitter's 130
+return; interpreter shutdown can subsequently impose its own nonzero status.
+Parser/help behavior, read-only metadata, record validation and unknown-liveness
+semantics remain unchanged. This is not a receiver-acknowledgment protocol,
+filesystem snapshot or protection against arbitrary preloaded Python code.
+
+The emitter is imported when the command is invoked, not while modules initialize;
+this preserves both import orders with the existing confirmation module, which
+already imports the resolution summary. No new output subsystem is introduced.
+Python reference checked 2026-09-17:
+https://docs.python.org/3.12/library/io.html
+https://docs.python.org/3.12/library/exceptions.html#SystemExit
