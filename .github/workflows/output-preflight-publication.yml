@@ -1,0 +1,50 @@
+name: Publish reviewed output preflight objects
+on:
+  push:
+    branches: [review/wp02-output-preflight-publication-20260917]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-output-preflight-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Apply only the reviewed fixed delta without running application code
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=34e9f3bf7d08650714754c757a9e4a9dff16be92
+          REF=refs/heads/review/wp02-output-preflight-objects-20260917
+          PATCH="$RUNNER_TEMP/implementation.patch"
+          cp docs/reviews/budget-preflight-publication/implementation.patch "$PATCH"
+          echo "08c2d52910481831ebb58f0d271ebc8ecdb615deaf979315606d3f076a618f7c  $PATCH" | sha256sum --check
+          test "$(wc -c < "$PATCH")" -eq 20888
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 5
+          TREE=$(git write-tree)
+          test "$TREE" = 7a5fb2239c7cd0a82509e1506ab2f1fb10c37330
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport reviewed fixed-output preflight objects; not test acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-output-preflight-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
