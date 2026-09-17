@@ -1,0 +1,61 @@
+name: Publish reviewed read-only output objects
+on:
+  push:
+    branches: [review/wp05-readonly-output-publication-20260917]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Correct pinned index metadata then apply exact reviewed patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a71ae4d716e8a73bd3614f080f42e5a6968d76f8
+          REF=refs/heads/review/wp05-readonly-output-objects-20260917
+          PATCH="$RUNNER_TEMP/implementation.patch"
+          export PATCH
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, os
+          raw=Path('docs/reviews/readonly-output-publication/implementation.patch').read_bytes()
+          assert len(raw)==25180
+          assert hashlib.sha256(raw).hexdigest()=='e07a4b19c422c123e7c057324cc766cf47fc4811ac215c1d9b84c27c952c5564'
+          # Readback found only this diff-index transcription mismatch. No
+          # content hunk is edited, and the corrected patch must equal local bytes.
+          old=b'index 6397d71..9980c5a 100644'
+          assert raw.count(old)==1
+          raw=raw.replace(old,b'index 395e60e..44de520 100644')
+          assert hashlib.sha256(raw).hexdigest()=='03ada979a3a08d8a0a2f8b91aaee5d57b755f224eea775baad54430cb277d01b'
+          Path(os.environ['PATCH']).write_bytes(raw)
+          PY
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 9
+          TREE=$(git write-tree)
+          test "$TREE" = a0c1752d2cc5a4bc48170ed9896fcefbf348d121
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport exact reviewed readonly output source; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-readonly-publication
+          path: |
+            ${{ runner.temp }}/publication.txt
+            ${{ runner.temp }}/implementation.patch
+          retention-days: 7
+          if-no-files-found: error
