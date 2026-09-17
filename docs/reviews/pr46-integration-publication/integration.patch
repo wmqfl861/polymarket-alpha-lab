@@ -1,0 +1,256 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 4aa2b40..279c11c 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -70,7 +70,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，审核后显式入库批次／预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺获准提供商／收费上界验证及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02／D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+-| WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算组合、提交后输出故障及旧冷备份目录前缀兼容；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
++| WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算组合、提交后输出故障及旧冷备份目录前缀兼容；同版本整包冷恢复候选待最终验收；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
+ 
+ **当前完整验收：1／6（仅 WP-01／G1）。** 这是六个端到端工作包的状态，不表示现有代码完成量为零。
+ 每项达到 DONE 必须填入确切 PR、head／merge／tree、执行命令、结果、适用平台和未执行项；
+@@ -764,3 +764,24 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ **WP-06 仍 PARTIAL，G6 未关闭，V1 仍 1／6。** 同版本同物理路径恢复不等于跨版本升级、
+ 回滚或跨机器迁移；真实数据／费率／模型验收、D1—D3 与原 PS5.1 间歇问题仍待办。
+ 没有用户本机任务、密钥发现、真实行情／模型请求、旧包覆盖或实盘操作。
++
++
++### PR #46 与最新主线的冷恢复整合（2026-09-17）
++
++整合基线 `41cc131d154a8a134d46608f5c5da1ca1e4ddaa6`；保留原 PR #46
++`14c1bea70cfce3f3ae2dff40f93f5868f439933c` 的历史及首次 Windows 失败证据。
++主线的审核入库、输出／共享停止、会话排空和备份目录前缀逻辑均不回退。
++
++- 原 Windows 用例在恢复后的业务比较失败，原始日志／JUnit 保留。独立两次读取的
++  反例复现了批次 `generated_at` 查询时间被误当持久化历史的问题；只排除该查询
++  时间，原批次全部载荷／入库时间和完整领取／结果仍逐项比较，非删除批次检查。
++- 使用真实批次快照类型复核；先经原构造器校验并复制，再比较持久字段。固定字段
++  清单保证未来新增字段不能静默漏检；非法查询时钟、原时间／结果变化仍拒绝或不等。
++- 仅整合测试和说明，不修改生产备份／恢复／研究算法、67 份迁移、依赖或原有
++  工作流权限、选择与时限。恢复测试只使用既有第二个私有合成实例及实际命令。
++- 原生整包必须同时证明启动前物理文件一致、启动后业务历史一致、已用预算不返还、
++  incomplete 不消失及原样重放不调用模型。最终固定树自审和 CI 证据保存在本 PR；
++  原候选或其他 PR 的绿标不能替代本次验收。
++
++**WP-06 仍 PARTIAL，G6／V1 未关闭。** 不宣称跨版本／跨机器升级或真实灾难恢复，
++不绕过 PR #49／受阻诊断，D1—D3 与真实模型／来源／费率验收仍待办。
+diff --git a/database/quickstart.md b/database/quickstart.md
+index e60bb81..3150b6b 100644
+--- a/database/quickstart.md
++++ b/database/quickstart.md
+@@ -454,7 +454,9 @@ and transaction state. The preserved original must also remain byte-identical.
+ After restart, the original requests/results, accepted/rejected simulations,
+ unconfirmed candidates/confirmed reviews, batches/turns, stored budget policies
+ and reserved amounts, and the explicitly fixed historical evaluation must match.
+-Only newly generated budget observation times are excluded from that comparison.
++Only fresh budget observation times and batch `generated_at` query times are
++excluded. Every original batch payload/enqueue time and execution claim/result is
++compared; each batch snapshot is revalidated before projecting those stored fields.
+ Explicit original-request and original-simulation replays must make no model call,
+ refund no reservation and change no history. Strict current evaluation must still
+ refuse the incomplete claim. The recovered instance is left stopped.
+@@ -473,3 +475,13 @@ G2-G6, D1-D3, release-specific upgrade decisions and the PS5.1 issue remain open
+ PostgreSQL's file-system backup restrictions are documented at
+ https://www.postgresql.org/docs/17/backup-file.html (checked 2026-09-16): this test
+ uses a cleanly stopped WHOLE cluster, not isolated table copies or a live tar.
++
++
++The integrated recovery comparison explicitly checks the current batch-snapshot
++field inventory: a future additional field requires review rather than silently
++being omitted. An invalid observation clock is still rejected by the original
++snapshot constructor. This fixes the old test's comparison of two different
++query times, not a change to the database backup format or stored timestamps.
++The original failed Windows proof is preserved; a controlled reproduction proves
++this comparison defect but does not identify every possible cause of that older
++generic mismatch. The final combined-tree CI result is recorded in PR #46.
+diff --git a/tests/packaged_recovery_flow.py b/tests/packaged_recovery_flow.py
+index fa4c35a..ee6338b 100644
+--- a/tests/packaged_recovery_flow.py
++++ b/tests/packaged_recovery_flow.py
+@@ -4,6 +4,7 @@ Injected into the extracted kit's own interpreter; never shipped or called on a
+ user project. The archive includes synthetic database credentials and stays in
+ the private disposable runner directory, never an uploaded artifact.
+ """
++from dataclasses import fields, replace
+ from datetime import datetime
+ import json
+ from pathlib import Path
+@@ -13,6 +14,7 @@ import sys
+ from polymarket_alpha_lab.project_postgres import backup_format, distribution, files
+ from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+ from polymarket_alpha_lab.research_capture_psycopg import ResearchCaptureConflict
++from polymarket_alpha_lab.research_dispatch import ResearchBatchSnapshot
+ 
+ RECORDS = tuple('packaged-' + str(n) for n in range(4))
+ BUDGETS = (('kit-budget', 7, 700), ('interrupted-budget', 1, 100))
+@@ -40,6 +42,19 @@ def database_command(root, arguments, *, reason=None):
+     return body
+ 
+ 
++def batch_history(snapshot):
++    """Compare all durable batch evidence, not a fresh SELECT's observation clock.
++
++    Revalidate/copy the real snapshot and pin its field inventory so a newly
++    added field cannot silently disappear from recovery comparisons.
++    """
++    assert type(snapshot) is ResearchBatchSnapshot, 'invalid batch snapshot type'
++    assert {field.name for field in fields(snapshot)} == {
++        'stored', 'generated_at', 'executions'}, 'batch snapshot schema changed'
++    checked = replace(snapshot)
++    return checked.stored, checked.executions
++
++
+ def saved_state(db, historical_at):
+     """Keep exact original objects in memory; do not export evidence or secrets."""
+     with db.session() as session:
+@@ -77,7 +92,8 @@ def saved_state(db, historical_at):
+             assert str(error) == 'research_execution_history_incomplete'
+         else:
+             raise AssertionError('current incomplete history was not blocked')
+-    return dict(executions=executions, papers=papers, reviews=reviews, batches=batches,
++    return dict(executions=executions, papers=papers, reviews=reviews,
++                batches=tuple(batch_history(value) for value in batches),
+                 turns=turns, budgets=tuple(budgets), history=history)
+ 
+ 
+ diff --git a/tests/test_packaged_recovery_flow.py b/tests/test_packaged_recovery_flow.py
+index 5558568..ac8fadf 100644
+--- a/tests/test_packaged_recovery_flow.py
++++ b/tests/test_packaged_recovery_flow.py
+@@ -1,6 +1,7 @@
+ """Offline fixture contracts, not native recovery or access to private backups."""
+ from contextlib import contextmanager
+-from datetime import UTC, datetime
++from datetime import UTC, datetime, timedelta
++from dataclasses import replace
+ import json
+ from pathlib import Path
+ import subprocess
+@@ -25,7 +26,15 @@ def state():
+                for bid, calls, micros in flow.BUDGETS}
+     inventory = dict(claim_count=5, captured_result_count=4, incomplete_claim_count=1)
+     history = dict(attempt_count=4, status_counts={'settled_simulation': 2}, actual_account_pnl=None)
+-    batches = {'kit-btc': object(), 'kit-eth': object()}
++    # Use the real snapshot class so observation clocks are not hidden by mocks.
++    from tests.test_research_dispatch import batch, receipt, NOW
++    from polymarket_alpha_lab.research_dispatch import ResearchBatchSnapshot, StoredResearchBatch
++    batches = {}
++    for bid in ('kit-btc', 'kit-eth'):
++        b = replace(batch(2), batch_id=bid)
++        batches[bid] = ResearchBatchSnapshot(StoredResearchBatch(b, NOW),
++            NOW + timedelta(seconds=3),
++            tuple(replace(receipt(r), status='already_captured') for r in b.requests))
+     turns = {'one': object(), 'two': object()}
+     reads = []
+     class Session:
+@@ -55,7 +64,8 @@ def test_complete_fixture_snapshot_retains_every_category_and_original_objects(s
+     assert actual['executions'] == tuple(state.executions.values())
+     assert actual['papers'] == tuple(state.papers.values())
+     assert actual['reviews'] == tuple(state.reviews.values())
+-    assert actual['batches'] == tuple(state.batches.values()) and actual['turns'] == tuple(state.turns.values())
++    assert actual['batches'] == tuple((value.stored, value.executions) for value in state.batches.values())
++    assert actual['turns'] == tuple(state.turns.values())
+     assert actual['budgets'] == tuple((v.stored, v.reserved_calls, v.reserved_micros) for v in state.budgets.values())
+     assert actual['history'] is state.history
+ 
+ diff --git a/tests/test_packaged_recovery_flow_review.py b/tests/test_packaged_recovery_flow_review.py
+index 6b1f0fe..f9d8184 100644
+--- a/tests/test_packaged_recovery_flow_review.py
++++ b/tests/test_packaged_recovery_flow_review.py
+@@ -73,3 +73,94 @@ def test_budget_refund_or_duplicate_reservation_is_not_a_recovery_success(state,
+ def test_recovery_recipe_is_not_shipped_as_application_code():
+     from polymarket_alpha_lab.project_postgres.distribution import selected_source
+     assert not selected_source('tests/packaged_recovery_flow.py')
++
++
++@pytest.mark.parametrize('batch_id', ['kit-btc', 'kit-eth'])
++def test_fresh_batch_observation_does_not_change_durable_recovery_evidence(state, batch_id):
++    """Two real snapshot instances of identical stored rows differ only in read time."""
++    from dataclasses import replace
++    before = flow.saved_state(state.db, state.at)
++    old = state.batches[batch_id]
++    state.batches[batch_id] = replace(old, generated_at=old.generated_at + timedelta(seconds=1))
++    assert old != state.batches[batch_id]
++    assert flow.saved_state(state.db, state.at) == before
++
++
++@pytest.mark.parametrize('batch_id', ['kit-btc', 'kit-eth'])
++@pytest.mark.parametrize('change', ['batch-id', 'enqueued-at', 'claimed-at', 'recorded-at', 'missing-result'])
++def test_batch_comparison_keeps_every_durable_field(state, batch_id, change):
++    from dataclasses import replace
++    before = flow.saved_state(state.db, state.at)
++    value = state.batches[batch_id]
++    if change == 'batch-id':
++        changed = replace(value, stored=replace(value.stored,
++            batch=replace(value.stored.batch, batch_id='different-batch')))
++    elif change == 'enqueued-at':
++        changed = replace(value, stored=replace(value.stored,
++            enqueued_at=value.stored.enqueued_at + timedelta(microseconds=1)))
++    else:
++        execution = value.executions[0]
++        if change == 'claimed-at':
++            replacement = replace(execution, claimed_at=execution.claimed_at + timedelta(microseconds=1))
++        elif change == 'recorded-at':
++            replacement = replace(execution, record=replace(execution.record,
++                recorded_at=execution.record.recorded_at + timedelta(microseconds=1)))
++        else:
++            replacement = replace(execution, status='incomplete', record=None)
++        changed = replace(value, executions=(replacement, *value.executions[1:]))
++    state.batches[batch_id] = changed
++    assert flow.saved_state(state.db, state.at) != before
++
++
++@pytest.mark.parametrize('value', [None, object(), SimpleNamespace(stored=1, executions=(), generated_at=1)])
++def test_batch_projection_does_not_accept_a_shape_only_imitation(value):
++    with pytest.raises(AssertionError, match='invalid batch snapshot type'):
++        flow.batch_history(value)
++
++
++def test_invalid_observation_clock_is_not_ignored_by_projection(state):
++    value = state.batches['kit-btc']
++    object.__setattr__(value, 'generated_at', value.stored.enqueued_at - timedelta(seconds=1))
++    with pytest.raises(ValueError, match='clock_regression'):
++        flow.batch_history(value)
++
++
++def test_new_snapshot_field_requires_explicit_recovery_review(state, monkeypatch):
++    original = flow.fields
++    monkeypatch.setattr(flow, 'fields', lambda value: (*original(value), SimpleNamespace(name='new_durable_field')))
++    with pytest.raises(AssertionError, match='batch snapshot schema changed'):
++        flow.batch_history(state.batches['kit-btc'])
++
++
++@pytest.mark.parametrize('batch_id', ['kit-btc', 'kit-eth'])
++def test_elapsed_time_does_not_hide_an_entire_lost_claim(state, batch_id):
++    from dataclasses import replace
++    before = flow.saved_state(state.db, state.at)
++    value = state.batches[batch_id]
++    state.batches[batch_id] = replace(value, generated_at=value.generated_at + timedelta(days=1),
++                                    executions=(None, *value.executions[1:]))
++    assert flow.saved_state(state.db, state.at) != before
++
++
++@pytest.mark.parametrize('field', ['recorded_at', 'claimed_at'])
++def test_previous_batch_evidence_is_not_aliased_to_a_later_snapshot_mutation(state, field):
++    before = flow.saved_state(state.db, state.at)
++    execution = state.batches['kit-btc'].executions[0]
++    target = execution.record if field == 'recorded_at' else execution
++    object.__setattr__(target, field, getattr(target, field) + timedelta(microseconds=1))
++    assert flow.saved_state(state.db, state.at) != before
++
++
++def test_mutated_bound_request_is_rejected_not_normalized_into_equal_history(state):
++    value = state.batches['kit-btc']
++    object.__setattr__(value.stored.batch.requests[0], 'protocol_version', 'mutated-protocol')
++    with pytest.raises(ValueError, match='execution_mismatch'):
++        flow.batch_history(value)
++
++
++def test_partial_cold_inventory_is_not_the_recovery_comparison_contract():
++    from dataclasses import fields
++    from polymarket_alpha_lab.research_dispatch import ResearchBatchSnapshot
++    # This pins the complete current shape, not a count or selected row digest.
++    assert {field.name for field in fields(ResearchBatchSnapshot)} == {
++        'stored', 'generated_at', 'executions'}
