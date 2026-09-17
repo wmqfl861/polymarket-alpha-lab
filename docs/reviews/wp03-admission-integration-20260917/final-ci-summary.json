@@ -1,0 +1,111 @@
+{
+  "head": "11f7540bfe556c6243b03e64d7246c3c1312576b",
+  "tree": "f6d283f47ed2174bbf0d5567361c7c0e6e55d7e6",
+  "actual_merge": "41cc131d154a8a134d46608f5c5da1ca1e4ddaa6",
+  "tested_merge": "75800a0811fadbfd02be95cf9fbd52298e214678",
+  "jobs": [
+    {
+      "name": "offline",
+      "run": 35168861072,
+      "job": 105035943744,
+      "passed": 38198,
+      "skipped": 42,
+      "failed": 0,
+      "seconds": 424.95,
+      "artifact": 10476072983,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    {
+      "name": "native-storage",
+      "run": 35168861115,
+      "job": 105035944109,
+      "passed": 290,
+      "skipped": 2,
+      "failed": 0,
+      "seconds": 367.94,
+      "artifact": 10475718245,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    {
+      "name": "native-research",
+      "run": 35168861115,
+      "job": 105035943780,
+      "passed": 1059,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 362.68,
+      "artifact": 10475429045,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    {
+      "name": "native-dispatch",
+      "run": 35168861115,
+      "job": 105035944102,
+      "passed": 692,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 440.94,
+      "artifact": 10476083106,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    {
+      "name": "paper",
+      "run": 35168861080,
+      "job": 105035943833,
+      "passed": 339,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 389.09,
+      "artifact": 10475454160,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    {
+      "name": "kit",
+      "run": 35168861081,
+      "job": 105035943758,
+      "passed": 319,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 490.11,
+      "artifact": 10476521933,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    }
+  ],
+  "native_aggregate": {
+    "run": 35168861115,
+    "job": 105037545935,
+    "conclusion": "success"
+  },
+  "native_case_comparison": {
+    "baseline": 1905,
+    "admission": 138,
+    "total": 2043,
+    "no_missing": true,
+    "no_duplicates": true,
+    "all_admission_passed": true
+  },
+  "kit_paper_case_comparison": {
+    "kit_total": 319,
+    "kit_main_cases": 181,
+    "original47_cases": 247,
+    "admission_cases": 138,
+    "old_cases_retained": true,
+    "no_duplicates": true,
+    "paper_339_ids_unchanged": true,
+    "handoff_traces_retained": 18
+  },
+  "admission_cases_executed_on_windows": 138,
+  "manual_ci_rerun": false,
+  "all_four_workflows_success": true,
+  "all_seven_jobs_success": true,
+  "optional_checks_not_executed": [
+    "dedicated PR42 Windows intentional timeout",
+    "four older database opt-ins"
+  ]
+}

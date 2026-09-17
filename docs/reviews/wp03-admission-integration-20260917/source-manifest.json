@@ -1,0 +1,57 @@
+{
+  ".github/workflows/native-distribution.yml": {
+    "bytes": 5909,
+    "sha256": "e75904505f6ff121df983d8b0cadb71fdad7a8dfbff0b9733aa6993d1c8d0b5b",
+    "blob_sha": "8915d994e21fd652f65e508a4b034b45f950d1fe"
+  },
+  ".github/workflows/native-postgres.yml": {
+    "bytes": 10332,
+    "sha256": "ea4a2ce9afe5d83911178cbc9455d9d7b98d8997e9e78fa657017b5cdd73607d",
+    "blob_sha": "f408a7050ab2a1baeceb51bee41f27bc0afe5ded"
+  },
+  "DELIVERY_PLAN.md": {
+    "bytes": 65839,
+    "sha256": "e8203d406b5ac2c0df64a691345ee4e9542e842cd019ee1e090d6298da73953d",
+    "blob_sha": "5b6ae097569fd3a59b376466f6f6ddec184ea336"
+  },
+  "database/quickstart.md": {
+    "bytes": 25999,
+    "sha256": "34294698f7ce16d21cfaecff3116f23d701704402729fabf3534ef52db346088",
+    "blob_sha": "7d1cf4bdc5fdbee308a6687df8cf834d78bc0a35"
+  },
+  "docs/research-dispatch.md": {
+    "bytes": 36064,
+    "sha256": "10f535fa240fe79deba1dc3cf529b560be835dc8f798ef6d8ed8beed0faa3559",
+    "blob_sha": "a07d869470ca2277186c83657a3842e1182b8e82"
+  },
+  "src/polymarket_alpha_lab/research_dispatch_cli.py": {
+    "bytes": 14730,
+    "sha256": "a876f8746e63f85f4531eb79daf88c2f06d2448c54e411ee2a7c5b3ba5f0a766",
+    "blob_sha": "86e618c52954f7665b7cb77c41afb5c8caab51e4"
+  },
+  "tests/packaged_research_flow.py": {
+    "bytes": 26097,
+    "sha256": "50242ddb4fc6e185b5876e0866e98770b98bebec0bea0d9110d11bd36dc50abc",
+    "blob_sha": "9fe9acf425a82c59f25c6cc29d6123cfae7b1227"
+  },
+  "tests/test_native_postgres_workflow.py": {
+    "bytes": 8214,
+    "sha256": "e96347672f5e40ac1517d630418c5291f2949219b32ec9747d541076854aa21e",
+    "blob_sha": "8db1b2e3018f2b208315731acef41cb57cad65f7"
+  },
+  "tests/test_project_postgres_distribution_native.py": {
+    "bytes": 24519,
+    "sha256": "4bffd87eafb1ef8740f9dd840effbc28d45c1e775ff5d0fd3c731e071580b735",
+    "blob_sha": "78bc7f95b901078906de19b62bf394e8d0f9fbfc"
+  },
+  "tests/test_research_dispatch_cli_admission.py": {
+    "bytes": 8708,
+    "sha256": "0679133b19d0ccb743d6a13b9dae942f87eb6a00e615e40295f0b88c16335f0a",
+    "blob_sha": "fcbeb54cb3a1e706c181fa990c58ad693475f54a"
+  },
+  "tests/test_research_dispatch_cli_admission_review.py": {
+    "bytes": 9338,
+    "sha256": "b35bd02bc1950cae9e84ba4d7f3fb7f86d012a07da54fc65ba91b1039c73d8bf",
+    "blob_sha": "e8eb2fa556ef8f954250fc1efde01391b7aaffd0"
+  }
+}

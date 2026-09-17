@@ -1,0 +1,64 @@
+{
+  "base": "2a0e881a2057ce6cba33c1a6885dcd099d4a5b52",
+  "original_pr47": "f1d9f68d08fdb8a0453319e885c3827296d8d694",
+  "head": "11f7540bfe556c6243b03e64d7246c3c1312576b",
+  "tree": "f6d283f47ed2174bbf0d5567361c7c0e6e55d7e6",
+  "tested_merge": "75800a0811fadbfd02be95cf9fbd52298e214678",
+  "review_id": 5229885260,
+  "review_type": "separate same-assistant phase and detached Git worktree; not third-party/fresh-agent audit",
+  "findings": [
+    {
+      "failed": 8,
+      "passed": 4,
+      "description": "early admission output interruption lost original shared stop",
+      "fixed": true
+    },
+    {
+      "failed": 8,
+      "passed": 16,
+      "description": "input interruption followed by failed error output lost original shared stop",
+      "fixed": true
+    }
+  ],
+  "original_admission_cases": 102,
+  "new_integration_cases": 36,
+  "related": {
+    "passed": 323,
+    "seconds": 9.11
+  },
+  "detached": {
+    "passed": 323,
+    "seconds": 10.23,
+    "source_origin_checked": true
+  },
+  "local_full": {
+    "passed": 38198,
+    "skipped": 42,
+    "seconds": 429.17,
+    "exit": 0
+  },
+  "local_environment": "Linux Python3.13.5/preinstalled container tooling; not hosted locked Windows",
+  "source_frozen": true,
+  "main_server_drain_unchanged": true,
+  "original47_recipe_unchanged": true,
+  "protected_payloads_unchanged": 2921,
+  "migrations_unchanged": 67,
+  "main_outer_assertions_retained": 89,
+  "original47_outer_assertions_retained": 85,
+  "final_outer_assertions": 90,
+  "original_admission_tests_exact_prefix": true,
+  "assembly_failure": {
+    "description": "Wrong whole-plan-prefix precondition stopped assembly; subsequent test command ran incomplete assembly",
+    "failed": 102,
+    "passed": 127,
+    "product_defect_count_claimed": false
+  },
+  "old47_first_kit_failure_preserved": true,
+  "old47_kit_failure_cause_established": false,
+  "D1_D3_changed": false,
+  "G2_G3_G6_complete": false,
+  "manual_ci_rerun": false,
+  "actual_merge": "41cc131d154a8a134d46608f5c5da1ca1e4ddaa6",
+  "final_gate_review_id": 5229945907,
+  "all_final_gates_passed": true
+}

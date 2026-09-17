@@ -1,0 +1,39 @@
+{
+  "composition": {
+    "actual_account_pnl": null,
+    "admission_receipts": 3,
+    "attempts": 4,
+    "confirmation_output_failures": 1,
+    "incomplete_claims": 1,
+    "instance_id": "bc23a99166f02019c9b87b6f9ead1c17",
+    "interrupted_reserved_calls": 1,
+    "project_modules_checked": 186,
+    "reserved_calls": 7,
+    "same_confirmation_replayed": true,
+    "settlements": 2,
+    "simulations": 4,
+    "source_commit": "75800a0811fadbfd02be95cf9fbd52298e214678",
+    "source_tree": "f6d283f47ed2174bbf0d5567361c7c0e6e55d7e6",
+    "status": "packaged_flow_verified",
+    "synthetic_inputs": true
+  },
+  "drain": {
+    "cases": [
+      {
+        "admitted_reads": 1,
+        "borrowed": false,
+        "original_record_preserved": true
+      },
+      {
+        "admitted_reads": 1,
+        "borrowed": true,
+        "original_record_preserved": true
+      }
+    ],
+    "database_mocked": false,
+    "model_called": false,
+    "os_signal_sent": false,
+    "status": "packaged_session_drain_verified"
+  },
+  "lifecycle_seconds": 435.783
+}

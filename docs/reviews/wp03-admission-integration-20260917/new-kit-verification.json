@@ -1,0 +1,17 @@
+{
+  "artifact_id": 10475843478,
+  "wrapper_bytes": 66796978,
+  "wrapper_sha256": "d29707f864338719d9228c5290156cb1f50b8306044b7fa74cdc0d4da26f7a56",
+  "inner_name": "polymarket-windows-native.zip",
+  "inner_bytes": 66796806,
+  "inner_sha256": "b69d2da54d23d226b79151de1f77cc51eab9b9edb05ff4dabdfa25973ef8536f",
+  "manifest_files": 2929,
+  "source_files": 2928,
+  "source_commit": "75800a0811fadbfd02be95cf9fbd52298e214678",
+  "source_tree": "f6d283f47ed2174bbf0d5567361c7c0e6e55d7e6",
+  "postgres_version": "17.11",
+  "seed_entries": 1753,
+  "all_manifest_hashes_match": true,
+  "all_source_payloads_match": true,
+  "engine_executed_in_container": false
+}
