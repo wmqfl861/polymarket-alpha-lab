@@ -1,0 +1,50 @@
+name: Publish fixed lookup output objects
+on:
+  push:
+    branches: [review/wp06-lookup-output-publication-20260917]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-lookup-output-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Apply reviewed patch under fixed hash and tree checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a71ae4d716e8a73bd3614f080f42e5a6968d76f8
+          REF=refs/heads/review/wp06-lookup-output-objects-20260917
+          PATCH="$RUNNER_TEMP/implementation.patch"
+          cp docs/reviews/lookup-output-publication/implementation.patch "$PATCH"
+          echo "beb2a5f14a8d38643dbb211b2ff00d4dd3f13b0b9a8f45927d643ab92fb07d8f  $PATCH" | sha256sum --check
+          test "$(wc -c < "$PATCH")" -eq 31172
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 8
+          TREE=$(git write-tree)
+          test "$TREE" = 1caa7b659d10cf79a1a0ae0be02424b33c828658
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport exact reviewed lookup output objects; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-lookup-output-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
