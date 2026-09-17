@@ -1,0 +1,15 @@
+{
+  "outer_bytes": 66793464,
+  "outer_sha256": "4277e8fe38eb79c6d20d80745fefc473cb9a74e32a24d0acc51dc47f6263cd78",
+  "inner_bytes": 66793292,
+  "inner_sha256": "c3c6187866a0fdb73067d0593c242ed1f76d66fec8c786bfbbdbf35b2878430d",
+  "manifest_files": 2929,
+  "source_files": 2928,
+  "source_commit": "b31a7d20fe83a98ee328e926d38ffa9f4c145b68",
+  "source_tree": "ee504d7967f56c5ae6411333ab8d46247e613357",
+  "postgres_version": "17.11",
+  "seed_entries": 1753,
+  "all_manifest_hashes_match": true,
+  "all_source_payloads_match": true,
+  "engine_executed_in_container": false
+}

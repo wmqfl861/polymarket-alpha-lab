@@ -1,0 +1,42 @@
+{
+  ".github/workflows/native-distribution.yml": {
+    "bytes": 5810,
+    "sha256": "1dc48335d1107003d9dff84bc1a9a762b3c1488da9ada5f9d39da45f6431b5af",
+    "blob_sha": "4f917d762db214767d546a2ded9ed9cd15333ab7"
+  },
+  "DELIVERY_PLAN.md": {
+    "bytes": 61801,
+    "sha256": "09515d92034d5541169a1dbeb03942cac1e8caadb5055ba389d756769bd17398",
+    "blob_sha": "f227b6c939d4bd06beb4ef60db434bfb191b761a"
+  },
+  "docs/research-dispatch.md": {
+    "bytes": 29761,
+    "sha256": "edc3457de388aba02f3a422eac43b3ffbe3497f1a420867c0a86a213a5690799",
+    "blob_sha": "e3c1728e24a5427c1b7da967d8923e46b72c9424"
+  },
+  "src/polymarket_alpha_lab/project_postgres/server.py": {
+    "bytes": 16578,
+    "sha256": "c199b6c15eed8e16eda10981caf313e268569ae992b4ed75494395c79f4493f5",
+    "blob_sha": "4e7ec5f8cd9d14724c09edc5d95f2404fee18009"
+  },
+  "tests/packaged_session_drain.py": {
+    "bytes": 4391,
+    "sha256": "688fc5555bb758d3588568281ab2d23cfea08f0218307439205bfdc21b3c1d4a",
+    "blob_sha": "77d1bc6a56a974ee0651c8261565d383a180d7f4"
+  },
+  "tests/test_project_postgres_distribution_native.py": {
+    "bytes": 24115,
+    "sha256": "1c0418a96dad1599a4352489ad4d41f63e71b3224bd96d9b3f289aa10cdc768e",
+    "blob_sha": "8e12de5d8a99b4f0fe388c31ecff2d350a621ea2"
+  },
+  "tests/test_project_postgres_session_drain.py": {
+    "bytes": 6112,
+    "sha256": "54e44a25b408ca00f0e01cc00183bb1ce99e1874a934398f164d31387306f667",
+    "blob_sha": "5d5f2f1334ae532c928aa3ecef3944cb46338aef"
+  },
+  "tests/test_project_postgres_session_drain_review.py": {
+    "bytes": 10749,
+    "sha256": "a0532194ea50d35c15a8bfb4c582e60f21114815ab0c3013f4da9db635fa91f5",
+    "blob_sha": "fc11bae01a284e4c267d04625764d209ab161d95"
+  }
+}

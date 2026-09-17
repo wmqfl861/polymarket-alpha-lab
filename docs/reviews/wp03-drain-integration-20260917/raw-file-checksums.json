@@ -1,0 +1,20 @@
+{
+  "ci-offline/offline-verification.log": {"bytes": 46119, "sha256": "19733976ea7af4cd051e50ca55666789146b904ba7701dd49af6ac0325ead353"},
+  "ci-storage/native-proof.log": {"bytes": 5652, "sha256": "e735a56c13fa645cf4331898bdd8b4a07eee72c5614504ac152ffcf2d3a9ed5c"},
+  "ci-storage/native-proof.xml": {"bytes": 56492, "sha256": "d478522be6f67ad9a109e73d99a27df3a4103bf66153e3e864bb1fcb1a407ce9"},
+  "ci-research/native-proof.log": {"bytes": 38044, "sha256": "17803944b076932084ce348639dc49a7dabb78bd9da4482d1f8da930910488cd"},
+  "ci-research/native-proof.xml": {"bytes": 241183, "sha256": "a050624733f3ee6403cc0f187b14bfa662c8baa1cb95fc70ddbffff9802f9ba6"},
+  "ci-dispatch/native-proof.log": {"bytes": 10602, "sha256": "fa882a259d82721447273760fa28d6d61f1b300349edea7df2a30448422be322"},
+  "ci-dispatch/native-proof.xml": {"bytes": 109691, "sha256": "8956c395607b17993b654d88997ad3bda725d2bfad1a78581c0159612fa83cea"},
+  "ci-paper/research-paper.log": {"bytes": 9072, "sha256": "50bd583a69fa741a6e8986517edb2487d0e73992439a0d2149983e0341a5703c"},
+  "ci-paper/research-paper.xml": {"bytes": 47892, "sha256": "6f668098a3ca5e69630caabc8781bf373ca2b7d60f71a0f7736353201b63b651"},
+  "ci-kit/distribution-proof.log": {"bytes": 7738, "sha256": "3b6fd15050a983c622579fc293bee1310d011fe0d77a86b0ad749e8ef86da9a0"},
+  "ci-kit/distribution-proof.xml": {"bytes": 28020, "sha256": "b494d5d8fac8b682004e2909b89f4cc2a176388e41025c6d516b0d73af4ef026"},
+  "full-final.log": {"bytes": 46086, "sha256": "7ee86f12409834dc9c383bac70cf314986c02a86de9a2589be150aa4d6024a54"},
+  "integration-red.log": {"bytes": 51558, "sha256": "3182119e277164333a1c88e19946c4c6b80f88097420ba8303111cccc83942be"},
+  "detached-final.log": {"bytes": 729, "sha256": "4f128666cbdfe001d45db1e1e970b75c8581e927b798586b4a06c41e1be50d4c"},
+  "detached-final.xml": {"bytes": 59283, "sha256": "8d99a22b66b3d7eec8c0fdee26adb3da3a1014c577365cacf309a3efd6a257f1"},
+  "detached-new.log": {"bytes": 99, "sha256": "9d84868b605b44ecd85b2ce9dcf3b23c80d5de8e1b5c8222549a464737f5cbdb"},
+  "detached-new.xml": {"bytes": 6342, "sha256": "a2b1232ed9d59c200cd8e917381fa8360e25618cb947cea56d181fb973776306"},
+  "tooling-notes.txt": {"bytes": 1042, "sha256": "955d41c0b26289fc4cd8aff564250af55de3840e01f43da3a4423b4a86b05ae9"}
+}

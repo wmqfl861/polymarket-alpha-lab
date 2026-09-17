@@ -1,0 +1,26 @@
+{
+  "head": "772bef3d2507a061fa2834323c13d7519dc42cd3",
+  "tree": "ee504d7967f56c5ae6411333ab8d46247e613357",
+  "tested_merge": "b31a7d20fe83a98ee328e926d38ffa9f4c145b68",
+  "actual_merge": "2a0e881a2057ce6cba33c1a6885dcd099d4a5b52",
+  "reviews": [5229601685, 5229665525],
+  "runs": [
+    {"name": "offline", "run": 35164891024, "job": 105023664533, "artifact": 10474432033, "passed": 38060, "skipped": 42, "console_seconds": 436.54},
+    {"name": "storage", "run": 35164890798, "job": 105023663672, "artifact": 10474501872, "passed": 290, "skipped": 2, "console_seconds": 392.61},
+    {"name": "research", "run": 35164890798, "job": 105023663467, "artifact": 10474702158, "passed": 1059, "skipped": 0, "console_seconds": 341.97},
+    {"name": "dispatch", "run": 35164890798, "job": 105023663659, "artifact": 10474976419, "passed": 554, "skipped": 0, "console_seconds": 440.50},
+    {"name": "paper", "run": 35164890982, "job": 105023664116, "artifact": 10474801896, "passed": 339, "skipped": 0, "console_seconds": 387.85},
+    {"name": "kit", "run": 35164890794, "job": 105023663609, "artifact": 10474936882, "passed": 181, "skipped": 0, "console_seconds": 478.90}
+  ],
+  "native_aggregate": {"run": 35164890798, "job": 105025443595, "conclusion": "success"},
+  "all_four_workflows_success": true,
+  "all_six_source_cleanliness_checks_success": true,
+  "test_failures": 0,
+  "new36cases_executed_on_Windows": true,
+  "native_case_ids_unchanged": 1905,
+  "paper_case_ids_unchanged": 339,
+  "kit_old_main_cases_retained": 145,
+  "kit_old_pr50_cases_retained": 169,
+  "manual_ci_rerun": false,
+  "optional_checks_not_executed": 5
+}

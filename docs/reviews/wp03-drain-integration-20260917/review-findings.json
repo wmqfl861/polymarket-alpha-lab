@@ -1,0 +1,43 @@
+{
+  "head": "772bef3d2507a061fa2834323c13d7519dc42cd3",
+  "tree": "ee504d7967f56c5ae6411333ab8d46247e613357",
+  "review_type": "separate same-assistant phase and detached worktree, not third-party/fresh-agent audit",
+  "existing_defect": "close interruption released lifecycle lease before admitted work drained",
+  "new_combination_regression": {
+    "failed_on_main_without_drain": 12,
+    "deselected": 14,
+    "seconds": 2.29,
+    "passed_with_integration": 12
+  },
+  "new_drain_cases_relative_main": 36,
+  "new_combination_cases_this_round": 12,
+  "additional_integration_production_defect_found": false,
+  "original_pr50_runtime_preserved": true,
+  "pr51_runtime_preserved": true,
+  "local_full": {
+    "passed": 38060,
+    "skipped": 42,
+    "test_seconds": 539.4,
+    "verification_exit": 0
+  },
+  "detached": {
+    "pytest_passed": 423,
+    "seconds": 20.06,
+    "compound_wrapper_exit": 1,
+    "origins_checked": true
+  },
+  "separate_direct_detached": {
+    "passed": 36,
+    "seconds": 1.4,
+    "pytest_exit": 0,
+    "process_exit": 0,
+    "origins_checked": true
+  },
+  "protected_other_payloads_unchanged": 2921,
+  "sql_migrations_unchanged": 67,
+  "old_kit_assertions_retained": 84,
+  "final_kit_assertions": 89,
+  "G3_G6_closed": false,
+  "PR49_failure_waived": false,
+  "user_database_touched": false
+}
