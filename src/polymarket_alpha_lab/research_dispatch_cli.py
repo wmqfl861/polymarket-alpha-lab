@@ -1,21 +1,28 @@
 """Operate existing durable research tasks; never discover clients or credentials.
 
-Inspect one batch, turn or allowance, or explicitly run one budgeted turn through
-an application's supplied client. No file queue, scheduler, migration or retry.
+Admit one reviewed batch/allowance, inspect existing state, or explicitly run one
+budgeted turn through an application's supplied client. No file queue, scheduler,
+migration, provider discovery or retry.
 """
 from __future__ import annotations
 
 import argparse
 from dataclasses import replace
 import json
+import sys
 from pathlib import Path
 
 from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
-from polymarket_alpha_lab.research_dispatch import ResearchBatchSnapshot
+from polymarket_alpha_lab.research_dispatch import (
+    MAX_BATCH_BYTES, ResearchBatchSnapshot, StoredResearchBatch, decode_batch,
+)
 from polymarket_alpha_lab.research_dispatch_rotation import StoredResearchRotationTurn, batch_ids
 from polymarket_alpha_lab.research_dispatch_rotation_runner import ResearchRotationReport
 from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
-from polymarket_alpha_lab.research_model_budget import ModelBudgetSnapshot
+from polymarket_alpha_lab.research_model_budget import (
+    MAX_POLICY_BYTES, ModelBudgetSnapshot, StoredModelBudget, decode_budget,
+)
+from polymarket_alpha_lab.research_resolution import digest
 from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
 from polymarket_alpha_lab.team_research_agent_types import identifier
 
@@ -64,6 +71,14 @@ def _parser(default_root):
     capture.add_argument('--record-id', type=_identifier, required=True)
     capture.add_argument('--input-sha256', required=True)
     capture.add_argument('--allow-paper-write', action='store_true')
+    for operation, key, permission in (
+            ('enqueue-batch', 'batch-id', 'allow-queue-write'),
+            ('create-budget', 'budget-id', 'allow-budget-write')):
+        admission = commands.add_parser(operation, allow_abbrev=False,
+            help='store one reviewed canonical stdin value; never run research')
+        admission.add_argument('--' + key, type=_identifier, required=True)
+        admission.add_argument('--input-sha256', required=True)
+        admission.add_argument('--' + permission, action='store_true')
     return parser
 
 
@@ -120,6 +135,7 @@ def _run(session, args, model_factory, stop):
     return body, 0
 
 
+
 def _publish(envelope, code, stop):
     """Use the existing checked emitter without losing cooperative interruption.
 
@@ -131,6 +147,65 @@ def _publish(envelope, code, stop):
         stop.request_stop()
     return result
 
+
+
+def _read_admission(args):
+    """Original canonical codec, with at most one optional LF/CRLF frame.
+
+    Bound total bytes before decoding. Short reads are not EOF. The producer
+    must close stdin; this byte limit is not a wall-clock timeout for a pipe.
+    No supplied approval digest, timestamp or source bytes are replaced.
+    """
+    digest(args.input_sha256)
+    batching = args.operation == 'enqueue-batch'
+    maximum = (MAX_BATCH_BYTES if batching else MAX_POLICY_BYTES) + 2
+    source = sys.stdin.buffer
+    data = bytearray()
+    while True:
+        limit = min(65536, maximum + 1 - len(data))
+        part = source.read(limit)
+        if type(part) is not bytes or len(part) > limit:
+            raise ValueError('research_dispatch_input_invalid')
+        if not part:
+            break
+        data.extend(part)
+        if len(data) > maximum:
+            raise ValueError('research_dispatch_input_limit')
+    raw = bytes(data)
+    if raw.endswith(b'\r\n'):
+        raw = raw[:-2]
+    elif raw.endswith(b'\n'):
+        raw = raw[:-1]
+    value = (decode_batch if batching else decode_budget)(raw.decode('utf-8'), args.input_sha256)
+    expected_id = args.batch_id if batching else args.budget_id
+    if (value.batch_id if batching else value.budget_id) != expected_id:
+        raise ValueError('research_dispatch_input_identity_mismatch')
+    return value
+
+
+def _admit(session, args, value):
+    """Only immutable metadata, not a fresh snapshot or proof of new creation."""
+    # Preserve the reviewed value even if a faulty collaborator mutates the
+    # supplied object before returning a receipt that aliases that same object.
+    expected_payload = value.payload
+    if args.operation == 'enqueue-batch':
+        stored = session.enqueue_research_batch(batch=value, allow_queue_write=True)
+        if type(stored) is not StoredResearchBatch:
+            raise ValueError('research_dispatch_receipt_invalid')
+        stored = replace(stored)
+        if stored.batch.payload != expected_payload:
+            raise ValueError('research_dispatch_receipt_mismatch')
+        return dict(batch_id=stored.batch.batch_id, batch_sha256=stored.batch.content_sha256,
+            request_count=len(stored.batch.requests), enqueued_at=stored.enqueued_at.isoformat())
+    stored = session.create_model_budget(policy=value, allow_budget_write=True)
+    if type(stored) is not StoredModelBudget:
+        raise ValueError('research_dispatch_receipt_invalid')
+    stored = replace(stored)
+    if stored.policy.payload != expected_payload:
+        raise ValueError('research_dispatch_receipt_mismatch')
+    return dict(budget_id=stored.policy.budget_id, policy_sha256=stored.policy.content_sha256,
+        created_at=stored.created_at.isoformat(), expires_at=stored.policy.expires_at.isoformat(),
+        request_count=len(stored.policy.request_keys))
 
 def main(argv: list[str] | None = None, *, default_root: Path,
          model_factory=None, stop: ResearchDispatchStop | None = None) -> int:
@@ -148,6 +223,7 @@ def main(argv: list[str] | None = None, *, default_root: Path,
         return operate_paper(root=args.root, operation=args.operation, record_id=args.record_id,
             input_sha256=getattr(args, 'input_sha256', None),
             allow_paper_write=getattr(args, 'allow_paper_write', False))
+    admitting = args.operation in ('enqueue-batch', 'create-budget')
     running = args.operation == 'run-turn'
     if running:
         try:
@@ -168,15 +244,39 @@ def main(argv: list[str] | None = None, *, default_root: Path,
         envelope.update(status='blocked', reason_code=reason,
             operation_entered=False, model_calls_possible=False, business_writes_possible=False)
         return _publish(envelope, 2, stop)
+    admission = None
+    if admitting:
+        envelope.update(operation_entered=False, model_calls_possible=False,
+                        business_writes_possible=False, public_network_called=False)
+        allowed = (args.allow_queue_write if args.operation == 'enqueue-batch'
+                   else args.allow_budget_write)
+        if allowed is not True:
+            return _publish(dict(envelope, status='blocked',
+                reason_code='research_dispatch_admission_opt_in_required'), 2, stop)
+        try:
+            admission = _read_admission(args)
+        except KeyboardInterrupt:
+            # Preserve the INPUT interruption even if publishing its receipt
+            # also fails. Output status alone cannot carry this shared signal.
+            if stop is not None:
+                stop.request_stop()
+            return _publish(dict(envelope, status='interrupted',
+                reason_code='research_dispatch_input_interrupted'), 130, stop)
+        except (Exception, SystemExit):
+            return _publish(dict(envelope, status='invalid_input',
+                reason_code='research_dispatch_input_invalid'), 2, stop)
     # Conservatively report possible effects once the managed operation is
     # entered, including unknown COMMIT/cleanup acknowledgement. Never infer
     # absence of writes from an exception. No success is printed before cleanup.
     envelope.update(operation_entered=True, model_calls_possible=running,
-                    business_writes_possible=running)
+                    business_writes_possible=running or admitting)
     control = ResearchDispatchStop() if stop is None else stop
     try:
         with ProjectPostgres(args.root).session() as session:
-            if running:
+            if admitting:
+                body = _admit(session, args, admission)
+                code, status = 0, 'admission_receipt_returned'
+            elif running:
                 body, code = _run(session, args, model_factory, control)
                 status = body['status']
             else:
