@@ -220,3 +220,170 @@ def test_actual_script_help_has_no_database_initialization(tmp_path):
         capture_output=True, text=True, timeout=30)
     assert result.returncode == 0 and '--as-of' in result.stdout
     assert '--include-decisions' in result.stdout and not (tmp_path / '.local').exists()
+
+
+# Read-only recovery views share the already-reviewed checked JSON emitter.
+@pytest.fixture(params=['execution', 'execution-missing', 'inventory', 'resolution',
+                        'resolution-missing', 'probability', 'settled'])
+def readonly_view(request, monkeypatch):
+    from types import SimpleNamespace
+    from polymarket_alpha_lab import research_execution_cli, research_inventory_cli
+    from polymarket_alpha_lab import research_resolution_inspection_cli
+    from tests.test_research_execution_cli import persisted
+    from tests.test_research_resolution_inspection_cli import stored
+    from tests.test_research_execution_inventory import AT, saved
+    from tests.test_research_settled_cli import exported
+    name = request.param
+    if name.startswith('execution'):
+        module, args, method = research_execution_cli, ['--record-id', 'r1'], 'inspect'
+        value = None if name.endswith('missing') else persisted()
+    elif name.startswith('resolution'):
+        module, args, method = research_resolution_inspection_cli, ['--review-id', 'review-1'], 'inspect_resolution'
+        value = None if name.endswith('missing') else stored()
+    elif name == 'inventory':
+        module, args, method = research_inventory_cli, [], 'execution_inventory'
+        value = research_inventory_cli.ResearchExecutionInventory(AT, (saved(),))
+    else:
+        module, args = cli, ['--settled-paper'] if name == 'settled' else []
+        method = 'evaluate_settled_paper_research' if name == 'settled' else 'evaluate'
+        value = exported() if name == 'settled' else Report((), (), LATER)
+    view = SimpleNamespace(name=name, module=module, args=args, value=value,
+        events=[], fault=None, phase=None, expected_code=3 if name.endswith('missing') else 0)
+    def hit(phase):
+        view.events.append(phase)
+        if view.phase == phase:
+            raise view.fault
+    def read(**kw):
+        hit('read')
+        return view.value
+    class Database:
+        def __init__(self, root): hit('manager')
+        @contextmanager
+        def session(self):
+            hit('enter')
+            try: yield SimpleNamespace(**{method: read})
+            finally: hit('close')
+    monkeypatch.setattr(module, 'ProjectPostgres', Database)
+    view.invoke = lambda: module.main(args, default_root=Path('/synthetic/readonly'))
+    return view
+
+
+@pytest.mark.parametrize('phase', ['manager', 'enter', 'read', 'close'])
+def test_readonly_internal_zero_exit_is_never_success(readonly_view, capsys, phase):
+    view = readonly_view
+    view.phase, view.fault = phase, SystemExit(0)
+    try:
+        code = view.invoke()
+    except SystemExit as escaped:
+        code = ('escaped', escaped.code)
+    assert code == 1
+    out = capsys.readouterr()
+    assert out.err == ''
+    envelope = json.loads(out.out)
+    assert envelope['status'] == 'failed'
+    assert envelope.get('inspection', envelope.get('inventory', envelope.get('evaluation'))) is None
+    assert envelope['business_writes_performed'] is False
+    assert view.events.count('read') == int(phase in ('read', 'close'))
+
+
+@pytest.mark.parametrize('fault', ['none', 'short', 'bool', 'write-exit', 'flush-error', 'flush-interrupt'])
+def test_readonly_output_requires_one_complete_write_and_flush(readonly_view, monkeypatch, fault):
+    view = readonly_view
+    writes, flushes = [], []
+    class Output:
+        def write(self, text):
+            assert view.events == ['manager', 'enter', 'read', 'close']
+            writes.append(text)
+            if fault == 'write-exit': raise SystemExit(0)
+            if fault == 'short': return len(text) - 1
+            if fault == 'bool': return True
+            return len(text)
+        def flush(self):
+            flushes.append(1)
+            if fault == 'flush-error': raise OSError('PRIVATE-output-details')
+            if fault == 'flush-interrupt': raise KeyboardInterrupt('PRIVATE-output-details')
+    with monkeypatch.context() as patch:
+        patch.setattr(sys, 'stdout', Output())
+        try:
+            code = view.invoke()
+        except (Exception, SystemExit, KeyboardInterrupt) as escaped:
+            code = ('escaped', type(escaped).__name__)
+    expected = view.expected_code if fault == 'none' else 130 if fault == 'flush-interrupt' else 1
+    assert code == expected
+    assert len(writes) == 1 and writes[0].endswith('\n')
+    assert len(flushes) == int(fault in ('none', 'flush-error', 'flush-interrupt'))
+    assert 'PRIVATE' not in writes[0]
+    assert view.events == ['manager', 'enter', 'read', 'close']
+
+
+# Separate same-assistant review: error formatting and output must fail closed.
+@pytest.mark.parametrize('args', [(), ('--settled-paper',)])
+def test_readonly_review_conflict_does_not_execute_untrusted_str(monkeypatch, capsys, args):
+    class Conflict(cli.ResearchCaptureConflict):
+        def __str__(self): raise SystemExit(0)
+    class DB:
+        def __init__(self, root): pass
+        @contextmanager
+        def session(self):
+            raise Conflict('PRIVATE-conflict')
+            yield
+    monkeypatch.setattr(cli, 'ProjectPostgres', DB)
+    try:
+        code = cli.main(list(args), default_root=Path('/synthetic'))
+    except SystemExit as error:
+        code = ('escaped', error.code)
+    assert code == 1
+    output = capsys.readouterr()
+    assert output.err == '' and 'PRIVATE' not in output.out
+    assert json.loads(output.out)['status'] == 'failed'
+
+
+@pytest.mark.parametrize('error', [ValueError('PRIVATE-render'), SystemExit(0), KeyboardInterrupt()])
+def test_readonly_review_serialization_failure_writes_nothing(readonly_view, monkeypatch, error):
+    view = readonly_view
+    original = json.dumps
+    writes = []
+    def render(value, **kwargs):
+        if type(value) is dict and ('lookup_scope' in value or 'history_gate' in value):
+            assert view.events[-1] == 'close'
+            raise error
+        return original(value, **kwargs)
+    class Output:
+        def write(self, text): writes.append(text); return len(text)
+        def flush(self): pytest.fail('flush without serialized result')
+    with monkeypatch.context() as patch:
+        patch.setattr(json, 'dumps', render)
+        patch.setattr(sys, 'stdout', Output())
+        try:
+            code = view.invoke()
+        except (Exception, SystemExit, KeyboardInterrupt) as escaped:
+            code = ('escaped', type(escaped).__name__)
+    assert code == (130 if isinstance(error, KeyboardInterrupt) else 1)
+    assert writes == [] and view.events == ['manager', 'enter', 'read', 'close']
+
+
+@pytest.mark.parametrize('first', ['research_resolution_inspection_cli', 'research_resolution_confirmation_cli',
+                                  'research_execution_cli', 'research_inventory_cli', 'research_evaluation_cli'])
+def test_readonly_review_fresh_import_order_and_help(first, tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    program = '''
+import importlib, sys
+from pathlib import Path
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root / 'src'))
+first = importlib.import_module('polymarket_alpha_lab.' + sys.argv[2])
+confirmation = importlib.import_module('polymarket_alpha_lab.research_resolution_confirmation_cli')
+inspection = importlib.import_module('polymarket_alpha_lab.research_resolution_inspection_cli')
+assert callable(confirmation._emit) and callable(inspection.resolution_review_summary)
+assert Path(first.__file__).resolve().is_relative_to(root)
+try:
+    inspection.main(['--help'], default_root=root)
+except SystemExit as error:
+    assert error.code == 0
+else:
+    raise AssertionError('help did not exit')
+'''
+    run = subprocess.run([sys.executable, '-I', '-c', program, str(root), first],
+        cwd=tmp_path, capture_output=True, text=True, timeout=30)
+    assert run.returncode == 0 and run.stderr == '' and '--review-id' in run.stdout
+    assert not (tmp_path / '.local').exists()

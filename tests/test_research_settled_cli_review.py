@@ -87,7 +87,8 @@ def test_failed_stdout_does_not_retry_or_print_traceback(managed, monkeypatch):
     def broken(value):
         writes.append(value)
         raise BrokenPipeError(PRIVATE)
-    monkeypatch.setattr(cli, 'print', broken, raising=False)
+    import sys
+    monkeypatch.setattr(sys.stdout, 'write', broken)
     assert cli.main(['--settled-paper'], default_root=Path('/unused')) == 1
     assert len(writes) == 1 and managed['events'][-1] == ('exit',)
 

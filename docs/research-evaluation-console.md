@@ -187,3 +187,33 @@ identities and preserved first failures are recorded in the implementation PR.
 WP-05 remains PARTIAL, G5 open and V1 1/6. Real approved forecasts, input/fee evidence,
 remaining operator configuration, D1-D3 and the existing PowerShell 5.1 reliability
 issue remain open. No user-machine step or new migration is required by this change.
+
+
+## Checked read-only output (WP-03 / WP-04 / WP-05)
+
+The existing execution lookup, inventory, resolution lookup and both evaluation
+modes reuse the checked resolution emitter. Only after managed cleanup do they
+serialize one complete JSON envelope, write it once, check its character count
+and explicitly flush. A short write, invalid write count, serialization error or
+write/flush failure returns nonzero; no second envelope or repeated query is sent.
+Normal JSON, not-found exit status, history gates and calculations are unchanged.
+
+Internal SystemExit during the managed read or cleanup is a failed operation,
+not a successful process exit. Existing argument/help exits and operation-level
+KeyboardInterrupt behavior are preserved. An output interruption returns130;
+other output failures return1. Known database conflicts are recognized from the
+original string argument without invoking a custom exception string formatter.
+
+A failed sink may retain a partial prefix and cannot reliably receive another
+error envelope. Write/flush success is not proof of consumer receipt. These are
+read-only queries: failing output does not authorize model execution, task reclaim,
+settlement replay, a new identifier or a claim that earlier writes were rolled back.
+No additional business records, provider calls, migrations or file repair occur.
+
+The isolated native inventory test runs the five real command modes with a
+short-output sink, then checks the original records and engine state. This is
+synthetic stdout fault injection, not a universal OS pipe or crash guarantee.
+
+Primary references checked 2026-09-17:
+https://docs.python.org/3.12/library/io.html
+https://docs.python.org/3.12/library/exceptions.html

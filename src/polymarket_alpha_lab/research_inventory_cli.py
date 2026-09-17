@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
 from polymarket_alpha_lab.research_capture_psycopg import ResearchCaptureConflict
 from polymarket_alpha_lab.research_execution_inventory import MAX_CLAIMS, ResearchExecutionInventory
 
@@ -34,14 +35,14 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
             body = inventory.to_dict()
         result.update(status="listed", inventory=body)
         code = 0
-    except Exception as error:
-        reason = str(error) if type(error) is ResearchCaptureConflict else ""
+    except (Exception, SystemExit) as error:
+        reason = (error.args[0] if type(error) is ResearchCaptureConflict
+                  and len(error.args) == 1 and type(error.args[0]) is str else None)
         known = reason in _BLOCKS
         result.update(status="blocked" if known else "failed", inventory=None,
             reason_code=reason if known else "research_execution_inventory_failed")
         code = 1
-    print(json.dumps(result, ensure_ascii=True, allow_nan=False, indent=2))
-    return code
+    return _emit(result, code)
 
 
 __all__ = ("main",)

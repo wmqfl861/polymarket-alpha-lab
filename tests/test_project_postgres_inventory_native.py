@@ -123,6 +123,40 @@ def test_native_inventory_snapshot_limits_legacy_and_incomplete_visibility(tmp_p
                 expected = dict(current); expected.pop('generated_at')
                 assert listed == expected
             assert db.status()['status'] == 'stopped' and db.status()['instance_id'] == info['instance_id']
+        # Real read-only commands must not report successful delivery after a
+        # short stdout write. Only the output sink is injected; DB/lifecycle and
+        # the selected historical snapshot are real and unchanged.
+        probe = r'''
+import json, runpy, sys
+script, expected = sys.argv[1:3]
+arguments = sys.argv[3:]
+original = sys.stdout
+class ShortOutput:
+    def write(self, text):
+        assert json.loads(text)['status'] == expected
+        return original.buffer.write(text[:8].encode('ascii'))
+    def flush(self):
+        original.flush()
+sys.stdout = ShortOutput()
+sys.argv = [script, *arguments]
+runpy.run_path(script, run_name='__main__')
+'''
+        historical = ['--as-of', earlier['generated_at']]
+        for name, options, expected_status in (
+            ('list_project_research.py', [], 'listed'),
+            ('inspect_project_research.py', ['--record-id', 'complete'], 'inspected'),
+            ('inspect_project_resolution.py', ['--review-id', 'output-probe-missing'], 'review_not_found'),
+            ('evaluate_project_research.py', historical, 'evaluated'),
+            ('evaluate_project_research.py', ['--settled-paper', *historical], 'evaluated'),
+        ):
+            result = subprocess.run([sys.executable, '-I', '-c', probe,
+                str(ROOT / 'scripts' / name), expected_status, '--root', str(root), *options],
+                capture_output=True, timeout=120, env=files.clean_environment(),
+                cwd=parent, stdin=subprocess.DEVNULL)
+            assert result.returncode == 1, (name, result.returncode, result.stdout, result.stderr)
+            assert len(result.stdout) == 8 and result.stdout.startswith(b'{\n  "')
+            assert result.stderr == b''
+            assert db.status()['status'] == 'stopped' and db.status()['instance_id'] == info['instance_id']
         with db.session() as session:
             assert session.inspect(record_id='complete').record == ready.record
             assert session.inspect(record_id='failed').record == failed.record
@@ -132,6 +166,7 @@ def test_native_inventory_snapshot_limits_legacy_and_incomplete_visibility(tmp_p
             assert db._psql(info, 'SELECT count(*) FROM research_capture.outcomes;', owner=False) == '0'
             with pytest.raises(capture.ResearchCaptureConflict, match='history_incomplete'): session.evaluate()
         assert len(calls) == 2 and db.status()['status'] == 'stopped'
+        print('native readonly output: PASS; five real commands, short output refused, original records and stopped engine retained')
         print('native execution inventory: PASS; one snapshot across concurrent commit, bounded reads and unchanged records')
     finally:
         if db.status()['status'] != 'stopped': db.down()

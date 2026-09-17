@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
 from polymarket_alpha_lab.research_execution import CapturedResearchExecution
 from polymarket_alpha_lab.team_research_agent_types import identifier
 
@@ -72,11 +73,10 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
         # Publish only after successful cleanup, including the not-found case.
         envelope.update(status="claim_not_found" if result is None else "inspected", inspection=result)
         code = 3 if result is None else 0
-    except Exception:
+    except (Exception, SystemExit):
         envelope.update(status="failed", reason_code="research_execution_inspection_failed", inspection=None)
         code = 1
-    print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
-    return code
+    return _emit(envelope, code)
 
 
 __all__ = ("execution_summary", "main")
