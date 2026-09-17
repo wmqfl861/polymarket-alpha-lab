@@ -1,0 +1,37 @@
+name: Pinned cold recovery integration sources
+on:
+  push:
+    branches: [review/wp06-cold-integration-source-20260917]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 41cc131d154a8a134d46608f5c5da1ca1e4ddaa6
+          persist-credentials: false
+      - name: Archive fixed tracked inputs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 41cc131d154a8a134d46608f5c5da1ca1e4ddaa6
+          git fetch --no-tags --depth=1 origin 14c1bea70cfce3f3ae2dff40f93f5868f439933c
+          for revision in 41cc131d154a8a134d46608f5c5da1ca1e4ddaa6 14c1bea70cfce3f3ae2dff40f93f5868f439933c; do
+            git archive --format=zip --output="$RUNNER_TEMP/$revision.zip" "$revision"
+            git ls-tree -r "$revision" > "$RUNNER_TEMP/$revision.tree.txt"
+            git cat-file commit "$revision" > "$RUNNER_TEMP/$revision.commit.txt"
+            sha256sum "$RUNNER_TEMP/$revision.zip" > "$RUNNER_TEMP/$revision.sha256"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fixed-main-and-pr46
+          path: |
+            ${{ runner.temp }}/*.zip
+            ${{ runner.temp }}/*.tree.txt
+            ${{ runner.temp }}/*.commit.txt
+            ${{ runner.temp }}/*.sha256
+          retention-days: 7
+          if-no-files-found: error
