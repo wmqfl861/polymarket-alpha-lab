@@ -177,6 +177,47 @@ def test_budget_upgrade_shared_cap_replay_and_lost_process(tmp_path,monkeypatch)
                                       ('expires',e,1),(q.budget_id,rs[0],32)):
                 with pytest.raises(RuntimeError):s._call(raw_permit,budget_id=budget_id,record_id=r.record_id,
                     request_sha256=r.content_sha256,call_number=number,message_sha256='b'*64,message_bytes=10,max_output_tokens=1)
+            # A static per-call output mismatch must leave the original request
+            # unclaimed. The same batch can still execute a compatible peer.
+            bad = prepared(850)
+            bad = replace(bad, limits=replace(bad.limits, max_output_tokens=2048))
+            peer = prepared(851, 'crypto_btc')
+            reviewed = policy('output-preflight', (bad, peer), total_micros=1000, max_calls=10)
+            stored_preflight = s.create_model_budget(policy=reviewed, allow_budget_write=True)
+            assert s.inspect(record_id=bad.record_id) is None
+            with pytest.raises(ValueError, match='^research_budget_output_limit_incompatible$'):
+                s.run_budgeted_research(request=bad, budget_id=reviewed.budget_id,
+                    model_factory=forbidden, allow_model_calls=True)
+            assert s.inspect(record_id=bad.record_id) is None
+            zero = s.inspect_model_budget(budget_id=reviewed.budget_id)
+            assert zero.stored == stored_preflight and (zero.reserved_calls, zero.reserved_micros) == (0, 0)
+            created = []
+            def probe_factory(team):
+                created.append(team)
+                return Model()
+            s.enqueue_research_batch(batch=ResearchBatch('output-batch', (bad, peer)), allow_queue_write=True)
+            mixed = s.run_research_batch(batch_id='output-batch', model_factory=probe_factory,
+                allow_model_calls=True, max_workers=1, model_budget_id=reviewed.budget_id)
+            assert [a.status for a in mixed.attempts] == ['operation_failed', 'returned']
+            assert mixed.attempts[1].execution.record.run.research.status == 'completed'
+            assert created == ['crypto_btc'] and s.inspect(record_id=bad.record_id) is None
+            used = s.inspect_model_budget(budget_id=reviewed.budget_id)
+            assert used.stored == stored_preflight and (used.reserved_calls, used.reserved_micros) == (3, 300)
+            original_payload = bad.payload
+            approved = replace(reviewed, budget_id='output-compatible', max_output_tokens=2048)
+            s.create_model_budget(policy=approved, allow_budget_write=True)
+            completed = s.run_budgeted_research(request=bad, budget_id=approved.budget_id,
+                model_factory=probe_factory, allow_model_calls=True)
+            assert completed.record.run.research.status == 'completed' and bad.payload == original_payload
+            assert created == ['crypto_btc', bad.intake.team_id]
+            assert s.inspect_model_budget(budget_id=approved.budget_id).reserved_calls == 3
+            # The earlier incompatible policy still has capacity, but cannot
+            # turn an existing result into a new claim or another model call.
+            replay = s.run_budgeted_research(request=bad, budget_id=reviewed.budget_id,
+                model_factory=forbidden, allow_model_calls=True)
+            assert replay.record == completed.record
+            assert s.inspect_model_budget(budget_id=reviewed.budget_id).reserved_calls == 3
+            print('native budget output preflight: PASS; no claim or permit on mismatch, compatible peer, same-request explicit budget, immutable replay')
             crash_requests=(prepared(840),prepared(841,'crypto_btc'))
             crash_policy=policy('crash-budget',crash_requests,total_micros=400,max_calls=4)
             s.create_model_budget(policy=crash_policy,allow_budget_write=True)
@@ -190,6 +231,11 @@ def test_budget_upgrade_shared_cap_replay_and_lost_process(tmp_path,monkeypatch)
             assert observed.reserved_calls==1 and observed.reserved_micros==100
             original_claim=s.inspect(record_id=crash_requests[0].record_id)
             assert original_claim.status=='incomplete'
+            narrow = policy('incomplete-output-preflight', (crash_requests[0],), max_output_tokens=1)
+            s.create_model_budget(policy=narrow, allow_budget_write=True)
+            assert s.run_budgeted_research(request=crash_requests[0], budget_id=narrow.budget_id,
+                model_factory=forbidden, allow_model_calls=True) == original_claim
+            assert s.inspect_model_budget(budget_id=narrow.budget_id).reserved_calls == 0
             replay=s.run_budgeted_research(request=crash_requests[0],budget_id='crash-budget',
                 model_factory=forbidden,allow_model_calls=True)
             reread=s.inspect_model_budget(budget_id='crash-budget')

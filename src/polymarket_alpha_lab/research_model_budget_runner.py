@@ -81,16 +81,25 @@ def run_budgeted_research_with_psycopg(dsn, *, request, budget_id, model_factory
         raise ValueError('research_budget_lookup_mismatch')
     policy = snapshot.stored.policy
     request = policy.bind_request(request)
+    blocked_reason = None
     if snapshot.to_dict()['available_call_reservations'] == 0:
-        # A known empty/expired allowance must not consume a NEW task claim.
-        # Existing claims still replay inertly, including after policy expiry.
+        blocked_reason = 'research_budget_not_available'
+    elif (request.intake.status == 'prepared'
+            and request.limits.max_output_tokens > policy.max_output_tokens):
+        # The existing loop requests this fixed ceiling on its first call.
+        # Do not consume an immutable claim for a known-incompatible allowance,
+        # or silently clamp the reviewed request to make that call admissible.
+        blocked_reason = 'research_budget_output_limit_incompatible'
+    if blocked_reason is not None:
+        # Existing claims/results remain readable even if this allowance cannot
+        # admit NEW work. No new claim, call permit or client is created here.
         prior = execution.inspect_captured_research_with_psycopg(dsn, record_id=request.record_id)
         if prior is not None:
             prior = replace(prior)
             if prior.request.payload != request.payload:
                 raise ValueError('research_budget_request_mismatch')
             return prior
-        raise ValueError('research_budget_not_available')
+        raise ValueError(blocked_reason)
 
     def factory(team_id):
         if team_id != request.intake.team_id:

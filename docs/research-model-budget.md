@@ -167,3 +167,31 @@ Primary implementation references checked 2026-09-15:
 https://www.postgresql.org/docs/17/explicit-locking.html#ADVISORY-LOCKS
 https://www.postgresql.org/docs/17/transaction-iso.html
 https://docs.python.org/3.13/library/threading.html
+
+
+## Prepared-request output compatibility before claiming (WP-02 / WP-03)
+
+A prepared request whose fixed `limits.max_output_tokens` exceeds the selected
+budget's `max_output_tokens` is refused before a **new** execution claim. The
+existing agent requests that ceiling on its first model call. A mismatch raises
+`research_budget_output_limit_incompatible`; it creates neither a claim nor a
+call reservation and does not construct a client. Previously the task could be
+claimed and captured as `model_failed` before this known mismatch was rejected.
+
+The original request and budget are not clamped, edited or automatically replaced.
+An explicitly reviewed compatible budget may later be supplied for the SAME still
+unclaimed request, subject to all original freshness and execution checks. Batch
+execution records its existing `operation_failed` metadata and keeps the request
+unclaimed; it does not automatically retry. A compatible peer can still run.
+
+Existing completion and incomplete receipts are looked up, revalidated and
+returned unchanged even under an incompatible output allowance. This is not
+permission to restart them. Already-blocked intake with no model work retains its
+original capture behavior. Empty/expired budget errors keep their priority.
+
+This static check is not a general request/provider compatibility certificate or
+a claim that a whole research loop fits the available money. The original
+per-call transaction still validates message bytes, output cap, expiry and shared
+reservations before entering the supplied client. Later exhaustion, provider
+errors, uncertain commits and no-refund behavior are unchanged. No real provider,
+fee verification, credential access or automatic user-database operation is added.
