@@ -1,0 +1,97 @@
+{
+  "head": "c16a8208d27db144bd001196255e636aa525c0a3",
+  "tree": "4d15e1d555f108e19edf19e160593eea2841b28c",
+  "jobs": {
+    "offline": {
+      "run": 35187062409,
+      "job": 105091284250,
+      "artifact": 10482990034,
+      "passed": 38300,
+      "skipped_count": 42,
+      "failed_count": 0,
+      "seconds": 444.43,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    "storage": {
+      "run": 35187062398,
+      "job": 105091284574,
+      "artifact": 10481824295,
+      "passed": 290,
+      "skipped_count": 2,
+      "failed_count": 0,
+      "seconds": 281.3,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    "research": {
+      "run": 35187062398,
+      "job": 105091284533,
+      "artifact": 10481694583,
+      "passed": 1059,
+      "skipped_count": 0,
+      "failed_count": 0,
+      "seconds": 347.14,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    "dispatch": {
+      "run": 35187062398,
+      "job": 105091284406,
+      "artifact": 10481854472,
+      "passed": 745,
+      "skipped_count": 0,
+      "failed_count": 0,
+      "seconds": 524.98,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    "paper": {
+      "run": 35187062595,
+      "job": 105091284835,
+      "artifact": 10482703031,
+      "passed": 339,
+      "skipped_count": 0,
+      "failed_count": 0,
+      "seconds": 405.51,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    },
+    "kit": {
+      "run": 35187062404,
+      "job": 105091284295,
+      "artifact": 10481724760,
+      "passed": 368,
+      "skipped_count": 0,
+      "failed_count": 0,
+      "seconds": 566.21,
+      "conclusion": "success",
+      "source_cleanliness": "success"
+    }
+  },
+  "native_aggregate": {
+    "run": 35187062398,
+    "job": 105093149041,
+    "conclusion": "success"
+  },
+  "all_four_workflows_success": true,
+  "all_seven_jobs_success": true,
+  "native_case_comparison": {
+    "baseline": 2064,
+    "added": 32,
+    "final": 2096,
+    "no_duplicates": true,
+    "no_missing": true,
+    "all_new_passed": true,
+    "enhanced_native_case_seconds": 61.705
+  },
+  "paper_ids_unchanged": 339,
+  "kit_ids_unchanged": 368,
+  "enhanced_native_case_seconds": 61.705,
+  "manual_ci_rerun": false,
+  "unexecuted": [
+    "dedicated PR42 Windows timeout case",
+    "four older optional database checks"
+  ],
+  "actual_merge": "a71ae4d716e8a73bd3614f080f42e5a6968d76f8"
+}

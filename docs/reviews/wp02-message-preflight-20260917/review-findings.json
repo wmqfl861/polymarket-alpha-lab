@@ -1,0 +1,84 @@
+{
+  "base": "a1284c41db411281b666211c6a9ce4b6930ca8ec",
+  "head": "c16a8208d27db144bd001196255e636aa525c0a3",
+  "tree": "4d15e1d555f108e19edf19e160593eea2841b28c",
+  "tested_merge": "54c58434d81ccb70ba67dcee92d34116d7a7bd6c",
+  "review_id": 5231678230,
+  "review_type": "separate same-assistant phase and detached Git worktree, not third-party/fresh-agent audit",
+  "original_red": {
+    "failed": 12,
+    "passed": 6,
+    "oversize_claim_capture_failures": 8,
+    "new_readonly_replay_shortcut_failures": 4,
+    "real_duplicate_database_execution_claimed": false
+  },
+  "separate_review": {
+    "passed": 14,
+    "failed": 0,
+    "new_blocking_findings": 0
+  },
+  "new_tests": 32,
+  "detached": {
+    "passed": 544,
+    "skipped": 0,
+    "seconds": 6.38,
+    "source_origin_verified": true
+  },
+  "local_full": {
+    "passed": 38300,
+    "skipped": 42,
+    "seconds": 319.09,
+    "exit": 0
+  },
+  "local_environment": "Linux Python3.13.5 / preinstalled container tooling, not locked hosted Windows",
+  "agent_comparison": {
+    "baseline": "a1284c41db411281b666211c6a9ce4b6930ca8ec",
+    "comparisons": 180,
+    "all_results_and_transcripts_equal": true
+  },
+  "static_review": {
+    "base": "a1284c41db411281b666211c6a9ce4b6930ca8ec",
+    "changed_paths": [
+      "DELIVERY_PLAN.md",
+      "docs/research-model-budget.md",
+      "src/polymarket_alpha_lab/research_model_budget_runner.py",
+      "src/polymarket_alpha_lab/team_research_agent.py",
+      "tests/test_project_postgres_budget_native.py",
+      "tests/test_research_model_budget.py"
+    ],
+    "initial_context_ast_extraction_equal": true,
+    "original_agent_loop_ast_equal": true,
+    "other_agent_functions_ast_equal": true,
+    "budgeted_model_ast_equal": true,
+    "old_budget_test_bytes_preserved": true,
+    "native_original_assertions": 46,
+    "native_final_assertions": 58,
+    "migrations_unchanged": 67,
+    "workflow_and_dependency_changes": false,
+    "finite_added_text_secret_scan_hits": 0
+  },
+  "publication_readback": {
+    "initial_helper_commit": "cd72dfbc17e84ea688c84e1f6cad0fe897869c11",
+    "initial_patch_blob": "3c2f9f2e84fea80c1a659e0bf027073181d19b99",
+    "transcription_error": "replayplayed instead of replayed in helper patch only",
+    "corrected_before_application": true,
+    "corrected_helper_commit": "a3df6876912b12a7b06c6df8ed1c38837bd0e4ab",
+    "corrected_blob": "665d83f0903b852b45225416dee7fba06cd7b0d6",
+    "bytes": 26359,
+    "sha256": "5c2f55b7645ed240d9d09b8f91c7834a033fc3b597d3128a331e996c6001952d",
+    "tested_source_unchanged": true
+  },
+  "known_limits": [
+    "first message only",
+    "not provider-token or HTTP-envelope measurement",
+    "not full-loop cost certification",
+    "no automatic matching-budget selection",
+    "no reclaim of incomplete executions"
+  ],
+  "D1_D3_changed": false,
+  "G2_G3_G6_complete": false,
+  "user_database_or_provider_called": false,
+  "actual_merge": "a71ae4d716e8a73bd3614f080f42e5a6968d76f8",
+  "all_final_gates_passed": true,
+  "final_review_id": 5231804146
+}

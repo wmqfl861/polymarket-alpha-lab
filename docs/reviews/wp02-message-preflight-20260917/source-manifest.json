@@ -1,0 +1,32 @@
+{
+  "DELIVERY_PLAN.md": {
+    "bytes": 72347,
+    "sha256": "cef3853e85907ef8008ac8cee3cc5522d4589f46515bd49a6e8ced6595ab1d59",
+    "blob_sha": "003988aca15bc3a0eb12f9f19effc0166979550d"
+  },
+  "docs/research-model-budget.md": {
+    "bytes": 13973,
+    "sha256": "f43e384bb6f3d691b5f210ad30bfa4f52c2ac76bc7542f5dc9889b8d7d5ae1bb",
+    "blob_sha": "707f1ffa9ba84656f109f6b268f25d92b5d666ea"
+  },
+  "src/polymarket_alpha_lab/research_model_budget_runner.py": {
+    "bytes": 6673,
+    "sha256": "7dec3a60322bca9be858848960687e07fb637a49b73ab7033fd8adb750d340c0",
+    "blob_sha": "f13f348be8e65352936b66d3a278a0e32a51944e"
+  },
+  "src/polymarket_alpha_lab/team_research_agent.py": {
+    "bytes": 14363,
+    "sha256": "37dd8db491679fba99a4a7919003d53559c47669205cd0c486361f0b9f4d268c",
+    "blob_sha": "02b57e38f8034ee353cfd8cc60469b478fe60073"
+  },
+  "tests/test_project_postgres_budget_native.py": {
+    "bytes": 20088,
+    "sha256": "8133f0b6bac8a3ca7135bc4311951d9e058bb71a0377c0eaaa4317a1c1f058df",
+    "blob_sha": "779701d86b110ad3776e9c4ecc1afdf6494d781f"
+  },
+  "tests/test_research_model_budget.py": {
+    "bytes": 41191,
+    "sha256": "e56eb611449582a5f3faea158a6bc40d0d8198dbb4324459af75b07f67ed89a4",
+    "blob_sha": "a6917bf80bee03ede9d5661f3906e56a99ae0664"
+  }
+}

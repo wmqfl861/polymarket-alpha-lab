@@ -1,0 +1,78 @@
+{
+  "implementation-red.log": {
+    "bytes": 45219,
+    "sha256": "5a090b21d093f7f0057de3aa3bce7bdf18974769200a14c30bc3f3bd88546685"
+  },
+  "implementation-green.log": {
+    "bytes": 500,
+    "sha256": "d7cf284f83d896f50d61d9b81131d9ae4714ead1a0c5207090f5f716d06a600b"
+  },
+  "review-first.log": {
+    "bytes": 115,
+    "sha256": "b2803622dae75da93eb5f4f0442abd47105c1b2857c361a8216f53003ac9e981"
+  },
+  "review-related.log": {
+    "bytes": 671,
+    "sha256": "b73ae225a2e1a158e75e2bc2105f750b525cec9d202f807844f14c84468a40af"
+  },
+  "detached-final.log": {
+    "bytes": 749,
+    "sha256": "0a89f1585eca91fe3e7dfea050c139d23868f4ce09d2125e4f0d229d6a6b2b5a"
+  },
+  "detached-final.xml": {
+    "bytes": 71928,
+    "sha256": "e39992f36f99e039db674186f08e7e5a662eebd94c44428a440928a901165e0e"
+  },
+  "full-final.log": {
+    "bytes": 46334,
+    "sha256": "15e20b5cf34747fa67ec04132572ab1d6be51ebc0b1344a309b004a9957e1b0a"
+  },
+  "comparison-setup-note.txt": {
+    "bytes": 1372,
+    "sha256": "62d0f96ca257f896ab509d6e94587cdadf3cb181ce729fb3efae0c1488dcc11e"
+  },
+  "ci-offline/offline-verification.log": {
+    "bytes": 46359,
+    "sha256": "001f5a80f08c68e7154ccd8a1ebb90c0859dff6eaaff28ab76201804195cc7a3"
+  },
+  "ci-native-storage/native-proof.log": {
+    "bytes": 5637,
+    "sha256": "514ab8d4c1f8ac6bf43ec81f5db7931cf309c6a1120753fe6b8108011800a431"
+  },
+  "ci-native-storage/native-proof.xml": {
+    "bytes": 56493,
+    "sha256": "176daeb971a3bcdd67e536646d14f21d4ed175fef1602faee908d390326554d0"
+  },
+  "ci-native-research/native-proof.log": {
+    "bytes": 38024,
+    "sha256": "f610ab13c4ae25ffd4bd18acc93028b9b81c91995a3b6062c658239386f96cd3"
+  },
+  "ci-native-research/native-proof.xml": {
+    "bytes": 241172,
+    "sha256": "c5ba3e913c085b2e0cc9e1d3e7acccdb56e5aae1f663ba080df047495169d14d"
+  },
+  "ci-native-dispatch/native-proof.log": {
+    "bytes": 11056,
+    "sha256": "f83d63c2fe88409bceb8df9fa34404ebc8a8bf2f79188efab9b40b8814ab5b09"
+  },
+  "ci-native-dispatch/native-proof.xml": {
+    "bytes": 152331,
+    "sha256": "67b3ae1913bdb009a068ae557e618c019d2d6d046206e5a6a8999ffb13d3d7a7"
+  },
+  "ci-paper/research-paper.log": {
+    "bytes": 9072,
+    "sha256": "6481d5b644ba9713aa94d209d47a735f14847d4a9dcb3a4fa20aef759f4e114d"
+  },
+  "ci-paper/research-paper.xml": {
+    "bytes": 47892,
+    "sha256": "e8dd7dfa0988cff90bbf7467b8f1ac1ef5b4cb9c0122cd58c90dfbe59c30a2f8"
+  },
+  "ci-kit/distribution-proof.log": {
+    "bytes": 8651,
+    "sha256": "c3652f6dd663abd3b2c8076706a195eccc07610c2dcf5442ad3e82fb3349ecb5"
+  },
+  "ci-kit/distribution-proof.xml": {
+    "bytes": 58439,
+    "sha256": "7693cb55347f9b745ac06e298e9b331a7b13f8b69ce7882f587ff8297433d595"
+  }
+}
