@@ -1,0 +1,457 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 003988a..448acb2 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -824,3 +824,24 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ **WP-02 AWAITING_OWNER，WP-03 PARTIAL，G2／G3／G6／V1 不因此完成。**
+ 不认证提供商、实际费率或完整请求传输大小；D1—D3、PR #49 及受阻诊断限制不变。
+ 不访问用户数据库或凭据，不调用真实模型／行情，不授权部署或覆盖旧安装。
++
++
++## 32. WP-03／WP-04／WP-05：只读查询与评估回执完整性
++
++基线 `a71ae4d716e8a73bd3614f080f42e5a6968d76f8`（PR #53）。补齐恢复操作的查询端：
++任务查询、任务清单、结算查询及两种评估不得把内部零退出或不完整输出当成可靠回执。
++
++- 复用既有结算输出函数，一次完整 JSON 写入并检查字符数、显式刷新；序列化／输出失败
++  返回非零，不追加第二份信封，不重新查询或重放业务操作。正常输出与未找到的退出码保持。
++- 非结算评估等原只读路径捕获内部 SystemExit，保留参数帮助及操作 KeyboardInterrupt
++  的原行为；异常原因只从原固定字符串参数识别，不执行异常对象的自定义文本转换。
++- 单独自审复现概率评估异常文本转换逸出零退出，修复后保留原断言。21 组正常及普通
++  失败路径的输出、退出码和生命周期顺序逐项一致；测试不改变原评分／历史完整性约束。
++- 原生库存用例追加五次真实只读命令的短写注入，复查原记录、行数、引擎身份及停止状态。
++  只改 CI 隔离测试的 stdout，不模拟数据库，不增加原超时；完整用例和最终门禁须通过。
++- 原迁移、依赖、工作流、领域计算及数据库读写算法不变。最终版本、单独自审、完整
++  本地／Windows／安装包结果与未执行项记录于本 PR，不能用局部通过代替最终验收。
++
++**WP-03／WP-04／WP-05／WP-06 仍 PARTIAL，G3—G6／V1 未关闭。** 输出完成不等于
++消费者已收到，输出失败不证明之前操作回滚。D1—D3、真实模型／输入／费率验收、PR #49
++及受阻诊断限制不变；不操作用户业务库、凭据或旧安装，不自动修复／重试／调用提供商。
+diff --git a/docs/research-evaluation-console.md b/docs/research-evaluation-console.md
+index 48e2d60..3259e49 100644
+--- a/docs/research-evaluation-console.md
++++ b/docs/research-evaluation-console.md
+@@ -187,3 +187,33 @@ identities and preserved first failures are recorded in the implementation PR.
+ WP-05 remains PARTIAL, G5 open and V1 1/6. Real approved forecasts, input/fee evidence,
+ remaining operator configuration, D1-D3 and the existing PowerShell 5.1 reliability
+ issue remain open. No user-machine step or new migration is required by this change.
++
++
++## Checked read-only output (WP-03 / WP-04 / WP-05)
++
++The existing execution lookup, inventory, resolution lookup and both evaluation
++modes reuse the checked resolution emitter. Only after managed cleanup do they
++serialize one complete JSON envelope, write it once, check its character count
++and explicitly flush. A short write, invalid write count, serialization error or
++write/flush failure returns nonzero; no second envelope or repeated query is sent.
++Normal JSON, not-found exit status, history gates and calculations are unchanged.
++
++Internal SystemExit during the managed read or cleanup is a failed operation,
++not a successful process exit. Existing argument/help exits and operation-level
++KeyboardInterrupt behavior are preserved. An output interruption returns130;
++other output failures return1. Known database conflicts are recognized from the
++original string argument without invoking a custom exception string formatter.
++
++A failed sink may retain a partial prefix and cannot reliably receive another
++error envelope. Write/flush success is not proof of consumer receipt. These are
++read-only queries: failing output does not authorize model execution, task reclaim,
++settlement replay, a new identifier or a claim that earlier writes were rolled back.
++No additional business records, provider calls, migrations or file repair occur.
++
++The isolated native inventory test runs the five real command modes with a
++short-output sink, then checks the original records and engine state. This is
++synthetic stdout fault injection, not a universal OS pipe or crash guarantee.
++
++Primary references checked 2026-09-17:
++https://docs.python.org/3.12/library/io.html
++https://docs.python.org/3.12/library/exceptions.html
+diff --git a/src/polymarket_alpha_lab/research_evaluation_cli.py b/src/polymarket_alpha_lab/research_evaluation_cli.py
+index 6079d93..0035fde 100644
+--- a/src/polymarket_alpha_lab/research_evaluation_cli.py
++++ b/src/polymarket_alpha_lab/research_evaluation_cli.py
+@@ -14,6 +14,7 @@ import json
+ from pathlib import Path
+ 
+ from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
++from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
+ from polymarket_alpha_lab.research_capture_psycopg import ResearchCaptureConflict
+ from polymarket_alpha_lab.research_probability_scores import BUCKET_COUNTS, ResearchProbabilityDiagnostics
+ from polymarket_alpha_lab.team_research_evaluation import MAX_RECORDS, REASONS, ResearchEvaluationReport
+@@ -88,17 +89,16 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
+         envelope.update(status="evaluated", history_gate="complete_visible_execution_claims", evaluation=result)
+         code = 0
+     except ResearchCaptureConflict as error:
+-        reason = str(error)
++        reason = error.args[0] if len(error.args) == 1 and type(error.args[0]) is str else None
+         known = reason in _BLOCKS
+         envelope.update(status="blocked" if known else "failed", history_gate="not_established",
+             reason_code=reason if known else "research_evaluation_operation_failed", evaluation=None)
+         code = 1
+-    except Exception:
++    except (Exception, SystemExit):
+         envelope.update(status="failed", history_gate="not_established",
+             reason_code="research_evaluation_operation_failed", evaluation=None)
+         code = 1
+-    print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
+-    return code
++    return _emit(envelope, code)
+ 
+ 
+ def _settled_paper_summary(report: dict, *, include_decisions: bool) -> dict:
+@@ -181,11 +181,9 @@ def _run_settled_paper(args) -> int:
+                             (("bucket_count", args.buckets), ("min_sample_count", args.min_sample_count),
+                              ("min_bin_count", args.min_bin_count)))):
+                     raise ValueError("settled_paper_request_mismatch")
+-        # Serialize only after cleanup. If serialization fails, discard the whole
+-        # success envelope rather than printing partial apparently complete data.
+-        rendered = json.dumps(dict(envelope, status="evaluated",
+-            history_gate="complete_visible_execution_claims", evaluation=result),
+-            ensure_ascii=True, allow_nan=False, indent=2)
++        # The shared emitter serializes only after successful managed cleanup.
++        envelope.update(status="evaluated",
++            history_gate="complete_visible_execution_claims", evaluation=result)
+         code = 0
+     except KeyboardInterrupt:
+         envelope.update(status="interrupted", reason_code="research_paper_evaluation_interrupted")
+@@ -199,17 +197,8 @@ def _run_settled_paper(args) -> int:
+         envelope.update(status="failed", reason_code=reason)
+         code = 1
+     if code:
+-        rendered = json.dumps(dict(envelope, history_gate="not_established", evaluation=None),
+-                              ensure_ascii=True, allow_nan=False, indent=2)
+-    try:
+-        print(rendered)
+-    except KeyboardInterrupt:
+-        return 130
+-    except (Exception, SystemExit):
+-        # A broken output stream cannot deliver an error envelope reliably.
+-        # Return failure without another write or exposing exception details.
+-        return 1
+-    return code
++        envelope.update(history_gate="not_established", evaluation=None)
++    return _emit(envelope, code)
+ 
+ 
+ __all__ = ("evaluation_summary", "main")
+diff --git a/src/polymarket_alpha_lab/research_execution_cli.py b/src/polymarket_alpha_lab/research_execution_cli.py
+index e6914c3..54ae5ac 100644
+--- a/src/polymarket_alpha_lab/research_execution_cli.py
++++ b/src/polymarket_alpha_lab/research_execution_cli.py
+@@ -12,6 +12,7 @@ import json
+ from pathlib import Path
+ 
+ from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
++from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
+ from polymarket_alpha_lab.research_execution import CapturedResearchExecution
+ from polymarket_alpha_lab.team_research_agent_types import identifier
+ 
+@@ -72,11 +73,10 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
+         # Publish only after successful cleanup, including the not-found case.
+         envelope.update(status="claim_not_found" if result is None else "inspected", inspection=result)
+         code = 3 if result is None else 0
+-    except Exception:
++    except (Exception, SystemExit):
+         envelope.update(status="failed", reason_code="research_execution_inspection_failed", inspection=None)
+         code = 1
+-    print(json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2))
+-    return code
++    return _emit(envelope, code)
+ 
+ 
+ __all__ = ("execution_summary", "main")
+diff --git a/src/polymarket_alpha_lab/research_inventory_cli.py b/src/polymarket_alpha_lab/research_inventory_cli.py
+index 485883a..742a730 100644
+--- a/src/polymarket_alpha_lab/research_inventory_cli.py
++++ b/src/polymarket_alpha_lab/research_inventory_cli.py
+@@ -10,6 +10,7 @@ import json
+ from pathlib import Path
+ 
+ from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
++from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
+ from polymarket_alpha_lab.research_capture_psycopg import ResearchCaptureConflict
+ from polymarket_alpha_lab.research_execution_inventory import MAX_CLAIMS, ResearchExecutionInventory
+ 
+@@ -34,14 +35,14 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
+             body = inventory.to_dict()
+         result.update(status="listed", inventory=body)
+         code = 0
+-    except Exception as error:
+-        reason = str(error) if type(error) is ResearchCaptureConflict else ""
++    except (Exception, SystemExit) as error:
++        reason = (error.args[0] if type(error) is ResearchCaptureConflict
++                  and len(error.args) == 1 and type(error.args[0]) is str else None)
+         known = reason in _BLOCKS
+         result.update(status="blocked" if known else "failed", inventory=None,
+             reason_code=reason if known else "research_execution_inventory_failed")
+         code = 1
+-    print(json.dumps(result, ensure_ascii=True, allow_nan=False, indent=2))
+-    return code
++    return _emit(result, code)
+ 
+ 
+ __all__ = ("main",)
+diff --git a/src/polymarket_alpha_lab/research_resolution_inspection_cli.py b/src/polymarket_alpha_lab/research_resolution_inspection_cli.py
+index 6397d71..9980c5a 100644
+--- a/src/polymarket_alpha_lab/research_resolution_inspection_cli.py
++++ b/src/polymarket_alpha_lab/research_resolution_inspection_cli.py
+@@ -93,13 +93,13 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
+         # No apparent success (including not-found) before successful cleanup.
+         envelope.update(status="review_not_found" if result is None else "inspected", inspection=result)
+         code = 3 if result is None else 0
+-        encoded = json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2)
+-    except Exception:
++    except (Exception, SystemExit):
+         envelope.update(status="failed", reason_code="research_resolution_inspection_failed", inspection=None)
+-        encoded = json.dumps(envelope, ensure_ascii=True, allow_nan=False, indent=2)
+         code = 1
+-    print(encoded)
+-    return code
++    # Confirmation imports the pure summary above; defer this reverse import
++    # until both modules are initialized. Reuse the existing checked writer.
++    from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
++    return _emit(envelope, code)
+ 
+ 
+ __all__ = ("resolution_review_summary", "main")
+diff --git a/tests/test_project_postgres_inventory_native.py b/tests/test_project_postgres_inventory_native.py
+index 464e609..a0146fa 100644
+--- a/tests/test_project_postgres_inventory_native.py
++++ b/tests/test_project_postgres_inventory_native.py
+@@ -123,6 +123,40 @@ def test_native_inventory_snapshot_limits_legacy_and_incomplete_visibility(tmp_p
+                 expected = dict(current); expected.pop('generated_at')
+                 assert listed == expected
+             assert db.status()['status'] == 'stopped' and db.status()['instance_id'] == info['instance_id']
++        # Real read-only commands must not report successful delivery after a
++        # short stdout write. Only the output sink is injected; DB/lifecycle and
++        # the selected historical snapshot are real and unchanged.
++        probe = r'''
++import json, runpy, sys
++script, expected = sys.argv[1:3]
++arguments = sys.argv[3:]
++original = sys.stdout
++class ShortOutput:
++    def write(self, text):
++        assert json.loads(text)['status'] == expected
++        return original.buffer.write(text[:8].encode('ascii'))
++    def flush(self):
++        original.flush()
++sys.stdout = ShortOutput()
++sys.argv = [script, *arguments]
++runpy.run_path(script, run_name='__main__')
++'''
++        historical = ['--as-of', earlier['generated_at']]
++        for name, options, expected_status in (
++            ('list_project_research.py', [], 'listed'),
++            ('inspect_project_research.py', ['--record-id', 'complete'], 'inspected'),
++            ('inspect_project_resolution.py', ['--review-id', 'output-probe-missing'], 'review_not_found'),
++            ('evaluate_project_research.py', historical, 'evaluated'),
++            ('evaluate_project_research.py', ['--settled-paper', *historical], 'evaluated'),
++        ):
++            result = subprocess.run([sys.executable, '-I', '-c', probe,
++                str(ROOT / 'scripts' / name), expected_status, '--root', str(root), *options],
++                capture_output=True, timeout=120, env=files.clean_environment(),
++                cwd=parent, stdin=subprocess.DEVNULL)
++            assert result.returncode == 1, (name, result.returncode, result.stdout, result.stderr)
++            assert len(result.stdout) == 8 and result.stdout.startswith(b'{\n  "')
++            assert result.stderr == b''
++            assert db.status()['status'] == 'stopped' and db.status()['instance_id'] == info['instance_id']
+         with db.session() as session:
+             assert session.inspect(record_id='complete').record == ready.record
+             assert session.inspect(record_id='failed').record == failed.record
+@@ -132,6 +166,7 @@ def test_native_inventory_snapshot_limits_legacy_and_incomplete_visibility(tmp_p
+             assert db._psql(info, 'SELECT count(*) FROM research_capture.outcomes;', owner=False) == '0'
+             with pytest.raises(capture.ResearchCaptureConflict, match='history_incomplete'): session.evaluate()
+         assert len(calls) == 2 and db.status()['status'] == 'stopped'
++        print('native readonly output: PASS; five real commands, short output refused, original records and stopped engine retained')
+         print('native execution inventory: PASS; one snapshot across concurrent commit, bounded reads and unchanged records')
+     finally:
+         if db.status()['status'] != 'stopped': db.down()
+diff --git a/tests/test_research_evaluation_cli.py b/tests/test_research_evaluation_cli.py
+index 3174cb0..5265f68 100644
+--- a/tests/test_research_evaluation_cli.py
++++ b/tests/test_research_evaluation_cli.py
+@@ -220,3 +220,170 @@ def test_actual_script_help_has_no_database_initialization(tmp_path):
+         capture_output=True, text=True, timeout=30)
+     assert result.returncode == 0 and '--as-of' in result.stdout
+     assert '--include-decisions' in result.stdout and not (tmp_path / '.local').exists()
++
++
++# Read-only recovery views share the already-reviewed checked JSON emitter.
++@pytest.fixture(params=['execution', 'execution-missing', 'inventory', 'resolution',
++                        'resolution-missing', 'probability', 'settled'])
++def readonly_view(request, monkeypatch):
++    from types import SimpleNamespace
++    from polymarket_alpha_lab import research_execution_cli, research_inventory_cli
++    from polymarket_alpha_lab import research_resolution_inspection_cli
++    from tests.test_research_execution_cli import persisted
++    from tests.test_research_resolution_inspection_cli import stored
++    from tests.test_research_execution_inventory import AT, saved
++    from tests.test_research_settled_cli import exported
++    name = request.param
++    if name.startswith('execution'):
++        module, args, method = research_execution_cli, ['--record-id', 'r1'], 'inspect'
++        value = None if name.endswith('missing') else persisted()
++    elif name.startswith('resolution'):
++        module, args, method = research_resolution_inspection_cli, ['--review-id', 'review-1'], 'inspect_resolution'
++        value = None if name.endswith('missing') else stored()
++    elif name == 'inventory':
++        module, args, method = research_inventory_cli, [], 'execution_inventory'
++        value = research_inventory_cli.ResearchExecutionInventory(AT, (saved(),))
++    else:
++        module, args = cli, ['--settled-paper'] if name == 'settled' else []
++        method = 'evaluate_settled_paper_research' if name == 'settled' else 'evaluate'
++        value = exported() if name == 'settled' else Report((), (), LATER)
++    view = SimpleNamespace(name=name, module=module, args=args, value=value,
++        events=[], fault=None, phase=None, expected_code=3 if name.endswith('missing') else 0)
++    def hit(phase):
++        view.events.append(phase)
++        if view.phase == phase:
++            raise view.fault
++    def read(**kw):
++        hit('read')
++        return view.value
++    class Database:
++        def __init__(self, root): hit('manager')
++        @contextmanager
++        def session(self):
++            hit('enter')
++            try: yield SimpleNamespace(**{method: read})
++            finally: hit('close')
++    monkeypatch.setattr(module, 'ProjectPostgres', Database)
++    view.invoke = lambda: module.main(args, default_root=Path('/synthetic/readonly'))
++    return view
++
++
++@pytest.mark.parametrize('phase', ['manager', 'enter', 'read', 'close'])
++def test_readonly_internal_zero_exit_is_never_success(readonly_view, capsys, phase):
++    view = readonly_view
++    view.phase, view.fault = phase, SystemExit(0)
++    try:
++        code = view.invoke()
++    except SystemExit as escaped:
++        code = ('escaped', escaped.code)
++    assert code == 1
++    out = capsys.readouterr()
++    assert out.err == ''
++    envelope = json.loads(out.out)
++    assert envelope['status'] == 'failed'
++    assert envelope.get('inspection', envelope.get('inventory', envelope.get('evaluation'))) is None
++    assert envelope['business_writes_performed'] is False
++    assert view.events.count('read') == int(phase in ('read', 'close'))
++
++
++@pytest.mark.parametrize('fault', ['none', 'short', 'bool', 'write-exit', 'flush-error', 'flush-interrupt'])
++def test_readonly_output_requires_one_complete_write_and_flush(readonly_view, monkeypatch, fault):
++    view = readonly_view
++    writes, flushes = [], []
++    class Output:
++        def write(self, text):
++            assert view.events == ['manager', 'enter', 'read', 'close']
++            writes.append(text)
++            if fault == 'write-exit': raise SystemExit(0)
++            if fault == 'short': return len(text) - 1
++            if fault == 'bool': return True
++            return len(text)
++        def flush(self):
++            flushes.append(1)
++            if fault == 'flush-error': raise OSError('PRIVATE-output-details')
++            if fault == 'flush-interrupt': raise KeyboardInterrupt('PRIVATE-output-details')
++    with monkeypatch.context() as patch:
++        patch.setattr(sys, 'stdout', Output())
++        try:
++            code = view.invoke()
++        except (Exception, SystemExit, KeyboardInterrupt) as escaped:
++            code = ('escaped', type(escaped).__name__)
++    expected = view.expected_code if fault == 'none' else 130 if fault == 'flush-interrupt' else 1
++    assert code == expected
++    assert len(writes) == 1 and writes[0].endswith('\n')
++    assert len(flushes) == int(fault in ('none', 'flush-error', 'flush-interrupt'))
++    assert 'PRIVATE' not in writes[0]
++    assert view.events == ['manager', 'enter', 'read', 'close']
++
++
++# Separate same-assistant review: error formatting and output must fail closed.
++@pytest.mark.parametrize('args', [(), ('--settled-paper',)])
++def test_readonly_review_conflict_does_not_execute_untrusted_str(monkeypatch, capsys, args):
++    class Conflict(cli.ResearchCaptureConflict):
++        def __str__(self): raise SystemExit(0)
++    class DB:
++        def __init__(self, root): pass
++        @contextmanager
++        def session(self):
++            raise Conflict('PRIVATE-conflict')
++            yield
++    monkeypatch.setattr(cli, 'ProjectPostgres', DB)
++    try:
++        code = cli.main(list(args), default_root=Path('/synthetic'))
++    except SystemExit as error:
++        code = ('escaped', error.code)
++    assert code == 1
++    output = capsys.readouterr()
++    assert output.err == '' and 'PRIVATE' not in output.out
++    assert json.loads(output.out)['status'] == 'failed'
++
++
++@pytest.mark.parametrize('error', [ValueError('PRIVATE-render'), SystemExit(0), KeyboardInterrupt()])
++def test_readonly_review_serialization_failure_writes_nothing(readonly_view, monkeypatch, error):
++    view = readonly_view
++    original = json.dumps
++    writes = []
++    def render(value, **kwargs):
++        if type(value) is dict and ('lookup_scope' in value or 'history_gate' in value):
++            assert view.events[-1] == 'close'
++            raise error
++        return original(value, **kwargs)
++    class Output:
++        def write(self, text): writes.append(text); return len(text)
++        def flush(self): pytest.fail('flush without serialized result')
++    with monkeypatch.context() as patch:
++        patch.setattr(json, 'dumps', render)
++        patch.setattr(sys, 'stdout', Output())
++        try:
++            code = view.invoke()
++        except (Exception, SystemExit, KeyboardInterrupt) as escaped:
++            code = ('escaped', type(escaped).__name__)
++    assert code == (130 if isinstance(error, KeyboardInterrupt) else 1)
++    assert writes == [] and view.events == ['manager', 'enter', 'read', 'close']
++
++
++@pytest.mark.parametrize('first', ['research_resolution_inspection_cli', 'research_resolution_confirmation_cli',
++                                  'research_execution_cli', 'research_inventory_cli', 'research_evaluation_cli'])
++def test_readonly_review_fresh_import_order_and_help(first, tmp_path):
++    root = Path(__file__).resolve().parents[1]
++    program = '''
++import importlib, sys
++from pathlib import Path
++root = Path(sys.argv[1])
++sys.path.insert(0, str(root / 'src'))
++first = importlib.import_module('polymarket_alpha_lab.' + sys.argv[2])
++confirmation = importlib.import_module('polymarket_alpha_lab.research_resolution_confirmation_cli')
++inspection = importlib.import_module('polymarket_alpha_lab.research_resolution_inspection_cli')
++assert callable(confirmation._emit) and callable(inspection.resolution_review_summary)
++assert Path(first.__file__).resolve().is_relative_to(root)
++try:
++    inspection.main(['--help'], default_root=root)
++except SystemExit as error:
++    assert error.code == 0
++else:
++    raise AssertionError('help did not exit')
++'''
++    run = subprocess.run([sys.executable, '-I', '-c', program, str(root), first],
++        cwd=tmp_path, capture_output=True, text=True, timeout=30)
++    assert run.returncode == 0 and run.stderr == '' and '--review-id' in run.stdout
++    assert not (tmp_path / '.local').exists()
+diff --git a/tests/test_research_settled_cli_review.py b/tests/test_research_settled_cli_review.py
+index 074563e..a202ada 100644
+--- a/tests/test_research_settled_cli_review.py
++++ b/tests/test_research_settled_cli_review.py
+@@ -87,7 +87,8 @@ def test_failed_stdout_does_not_retry_or_print_traceback(managed, monkeypatch):
+     def broken(value):
+         writes.append(value)
+         raise BrokenPipeError(PRIVATE)
+-    monkeypatch.setattr(cli, 'print', broken, raising=False)
++    import sys
++    monkeypatch.setattr(sys.stdout, 'write', broken)
+     assert cli.main(['--settled-paper'], default_root=Path('/unused')) == 1
+     assert len(writes) == 1 and managed['events'][-1] == ('exit',)
+ 
