@@ -1,0 +1,58 @@
+name: Publish fixed cold recovery integration objects
+on:
+  push:
+    branches: [review/wp06-cold-integration-publication-20260917]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-pr46-integration-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Reconstruct only pinned reviewed test and documentation bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=41cc131d154a8a134d46608f5c5da1ca1e4ddaa6
+          OLD=14c1bea70cfce3f3ae2dff40f93f5868f439933c
+          COMMON=4df08873f4b9b8f1378913c0d00ca6bb183e51e2
+          REF=refs/heads/review/wp06-cold-integration-objects-20260917
+          SCRIPT="$RUNNER_TEMP/reconstruct.py"
+          PATCH="$RUNNER_TEMP/integration.patch"
+          cp docs/reviews/pr46-integration-publication/reconstruct.py "$SCRIPT"
+          cp docs/reviews/pr46-integration-publication/integration.patch "$PATCH"
+          echo "534c5410d25d05726c4909d48119715cead7d58c1f0a5ba46556e2b630cc7c42  $SCRIPT" | sha256sum --check
+          echo "1da6ce3b199759f618bddbb0452123aa65a8a472026770cc60213e43fd43e79a  $PATCH" | sha256sum --check
+          test "$(wc -c < "$SCRIPT")" -eq 1800
+          test "$(wc -c < "$PATCH")" -eq 17013
+          git fetch --no-tags --depth=1 origin "$BASE" "$OLD" "$COMMON"
+          git checkout --detach "$BASE"
+          python3 "$SCRIPT"
+          test "$(git write-tree)" = 665e9e78476d8ac0819709dbd28f13949e0ae131
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github src scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 7
+          TREE=$(git write-tree)
+          test "$TREE" = 7db8345b50b9010c44e2bd49ae647ac3815be52e
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport reviewed cold-recovery tests and docs; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-pr46-integration-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
