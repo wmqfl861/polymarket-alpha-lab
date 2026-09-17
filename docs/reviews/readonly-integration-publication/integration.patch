@@ -1,0 +1,121 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 77438de..0633851 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -872,3 +872,21 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ 作用域，在返回测试运行器前恢复原流，原断言保留。新增捕获／不捕获两种真实子进程
+ 回归，核对完整用例编号和 JUnit 数量；首次不完整报告及反例保留，最终新版本须重新
+ 完整验收。未改生产逻辑、原超时或测试选择，也未将旧流程追认为成功。
++
++
++### PR #55 与 PR #56 的固定版本整合（2026-09-17）
++
++整合基线 `0adfadaccb4e310c67fcd3a78455f38d2e39d97b`，原 PR #55 候选
++`dc6a5a0cf6b149bfcab065fac36ee9f90c6e7336` 保留为父提交。保留第 32 节模拟
++回执原审核哈希绑定，将原只读输出章节顺延为第 33 节，不覆盖任何原业务修复。
++
++- 生产四个只读命令与原 PR #55 修正后版本字节一致；PR #56 的模拟保存命令、
++  原模型／预算／结算／存储算法、67 份迁移、依赖与工作流保持主线字节不变。
++- 新增模拟保存／任务命令优先导入的两种独立进程验证；另在捕获与不捕获模式下，
++  先运行输出故障，再运行全部 14 项原审核回执反例，要求 15 条完整且成功的 JUnit。
++  不以日志尾部或工作流绿标代替完整用例清单，也不重复计入嵌套子进程覆盖量。
++- 保留原首份不完整托管报告、输出注入生命周期修复及其反例；本轮最终固定树必须
++  重新通过全量、Windows 原生与安装包门禁。阶段自审和实际结果固定记录在原 PR #55。
++
++本项只推进原查询／评估输出接线，G3—G6、V1、D1—D3、PR #49 与受阻诊断限制不变。
++无自动重试、超时放宽、用户数据库／密钥／真实提供商／旧安装操作。
+diff --git a/docs/research-evaluation-console.md b/docs/research-evaluation-console.md
+index 3259e49..454640d 100644
+--- a/docs/research-evaluation-console.md
++++ b/docs/research-evaluation-console.md
+@@ -217,3 +217,21 @@ synthetic stdout fault injection, not a universal OS pipe or crash guarantee.
+ Primary references checked 2026-09-17:
+ https://docs.python.org/3.12/library/io.html
+ https://docs.python.org/3.12/library/exceptions.html
++
++
++### Integration with approved simulation receipts
++
++The read-only output paths coexist with the original-input-hash binding in
++`capture-paper`. They do not authorize a new write or change that binding.
++Integration tests run the scoped BrokenPipe fixture before all fourteen approved
++receipt regressions, under both captured and uncaptured pytest output. Complete
++named JUnit cases and the whole process exit must agree; a passed-only log tail
++cannot replace a missing report. These nested test cases are not counted twice.
++
++The existing checked emitter and original operation/cleanup boundaries are reused.
++A flush is not consumer acknowledgment. Neither a failed lookup output nor a
++successful later query certifies rollback or permits a write retry. Exception
++message filtering is not a sandbox against arbitrary Python objects.
++
++References checked 2026-09-17: Python 3.12 `io.TextIOBase.write` / `flush`, and
++pytest `monkeypatch.context()` guidance for limiting standard-library patches.
+diff --git a/tests/test_research_evaluation_cli.py b/tests/test_research_evaluation_cli.py
+index 5265f68..3c5502c 100644
+--- a/tests/test_research_evaluation_cli.py
++++ b/tests/test_research_evaluation_cli.py
+@@ -363,7 +363,8 @@ def test_readonly_review_serialization_failure_writes_nothing(readonly_view, mon
+ 
+ 
+ @pytest.mark.parametrize('first', ['research_resolution_inspection_cli', 'research_resolution_confirmation_cli',
+-                                  'research_execution_cli', 'research_inventory_cli', 'research_evaluation_cli'])
++                                  'research_execution_cli', 'research_inventory_cli', 'research_evaluation_cli',
++                                  'research_paper_operator', 'research_dispatch_cli'])
+ def test_readonly_review_fresh_import_order_and_help(first, tmp_path):
+     root = Path(__file__).resolve().parents[1]
+     program = '''
+diff --git a/tests/test_research_settled_cli_review.py b/tests/test_research_settled_cli_review.py
+index a0f2565..ca9fe3e 100644
+--- a/tests/test_research_settled_cli_review.py
++++ b/tests/test_research_settled_cli_review.py
+@@ -140,3 +140,50 @@ raise SystemExit(pytest.main(sys.argv[2:]))
+     assert all(c.find('failure') is None and c.find('error') is None
+                and c.find('skipped') is None for c in cases)
+     assert sum(int(s.get('tests', '0')) for s in xml.iter('testsuite')) == 2
++
++
++@pytest.mark.parametrize('capture', ['no', 'fd'])
++def test_output_fault_preserves_combined_approved_receipt_tests(tmp_path, capture):
++    """A query-output fault must not hide the merged PR56 binding regressions."""
++    import subprocess
++    import sys
++    import xml.etree.ElementTree as ET
++    from collections import Counter
++    from polymarket_alpha_lab.project_postgres.files import clean_environment
++
++    root = Path(__file__).resolve().parents[1]
++    report = tmp_path / 'combined-receipts.xml'
++    nodes = (
++        'tests/test_research_settled_cli_review.py::test_failed_stdout_does_not_retry_or_print_traceback',
++        'tests/test_research_paper_operator.py::test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument',
++        'tests/test_research_paper_operator_review.py::test_correct_original_receipt_survives_post_save_argument_mutation',
++        'tests/test_research_paper_operator_review.py::test_cleanup_cannot_rewrite_the_validated_receipt_projection',
++    )
++    program = """
++import sys
++from pathlib import Path
++root = Path(sys.argv[1])
++sys.path[:0] = [str(root / 'src'), str(root)]
++from polymarket_alpha_lab import research_evaluation_cli, research_paper_operator
++for module in (research_evaluation_cli, research_paper_operator):
++    assert Path(module.__file__).resolve().is_relative_to(root / 'src')
++import pytest
++raise SystemExit(pytest.main(sys.argv[2:]))
++"""
++    result = subprocess.run([sys.executable, '-I', '-c', program, str(root),
++        '-q', '--capture=' + capture, *nodes, '--junitxml=' + str(report)],
++        cwd=root, env=dict(clean_environment(), PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'),
++        capture_output=True, timeout=30)
++    assert result.returncode == 0, (result.stdout, result.stderr)
++    assert result.stderr == b'' and b'15 passed' in result.stdout
++    xml = ET.fromstring(report.read_bytes())
++    cases = list(xml.iter('testcase'))
++    assert len(cases) == sum(int(s.get('tests', '0')) for s in xml.iter('testsuite')) == 15
++    assert all(c.get('classname') and c.get('name') for c in cases)
++    assert len({(c.get('classname'), c.get('name')) for c in cases}) == 15
++    expected = {tuple(node.replace('.py::', '::').replace('/', '.').split('::')): count
++                for node, count in zip(nodes, (1, 6, 6, 2), strict=True)}
++    actual = Counter((c.get('classname'), c.get('name').split('[', 1)[0]) for c in cases)
++    assert actual == expected
++    assert all(not any(c.find(kind) is not None for kind in ('failure', 'error', 'skipped'))
++               for c in cases)
