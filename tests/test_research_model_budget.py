@@ -540,3 +540,214 @@ def test_preflight_review_never_clamps_request_or_policy(monkeypatch):
     runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=good.budget_id,
         model_factory=lambda _: None, allow_model_calls=True)
     assert seen == [originals[0]] and (r.payload, bad.payload, good.payload) == originals
+
+
+# Initial UTF-8 message compatibility uses the actual existing agent transcript.
+def first_budget_transcript(r):
+    from polymarket_alpha_lab.team_research_agent import run_team_research_agent
+    seen = []
+    class FirstCall(BaseException):
+        pass
+    class Probe:
+        def complete(self, **kw):
+            seen.append(kw['messages_json'])
+            raise FirstCall()
+    with pytest.raises(FirstCall):
+        run_team_research_agent(r.intake.task, model=Probe(), limits=r.limits,
+                                required_source_ids=r.required_source_ids)
+    assert len(seen) == 1
+    return seen[0]
+
+
+def message_request(number=0, question='Synthetic?'):
+    r = req(number)
+    return replace(r, intake=replace(r.intake, task=replace(r.intake.task, question=question)),
+                   required_source_ids=('s',))
+
+
+def message_execution(monkeypatch, p):
+    events = []
+    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snapshot(p))
+    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: None)
+    def claim(dsn, request):
+        events.append('claim')
+        return True, state(request)
+    def capture(dsn, st, run):
+        events.append('capture')
+        return replace(st, status='captured', record=record_for(st.request, run))
+    # Keep the real permit input validation; only the transaction is synthetic.
+    def tx(dsn, operation, **kw):
+        events.append('permit')
+        return True
+    monkeypatch.setattr(runner.execution, '_claim', claim)
+    monkeypatch.setattr(runner.execution, '_capture', capture)
+    monkeypatch.setattr(store.db, '_local_transaction', tx)
+    class Client(Model):
+        def complete(self, **kw):
+            events.append('complete')
+            return super().complete(**kw)
+    def factory(team):
+        events.append('factory')
+        return Client()
+    return events, factory
+
+
+@pytest.mark.parametrize('number', [0, 1])
+@pytest.mark.parametrize('question', ['Synthetic?', '合成问题？', 'Synthetic 🌕?', 'Quoted "\\\n?'])
+def test_first_message_incompatible_budget_never_claims(monkeypatch, number, question):
+    r = message_request(number, question)
+    transcript = first_budget_transcript(r)
+    p = policy((r,), max_message_bytes=len(transcript.encode('utf-8')) - 1)
+    original = r.payload, p.payload
+    events, factory = message_execution(monkeypatch, p)
+    with pytest.raises(ValueError, match='^research_budget_initial_message_incompatible$'):
+        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
+            model_factory=factory, allow_model_calls=True)
+    assert events == [] and (r.payload, p.payload) == original
+
+
+@pytest.mark.parametrize('question', ['Synthetic?', '合成🌕问题？'])
+@pytest.mark.parametrize('extra', [0, 1, 10000])
+def test_first_message_exact_byte_boundary_keeps_real_call_guard(monkeypatch, question, extra):
+    r = message_request(question=question)
+    initial = first_budget_transcript(r)
+    p = policy((r,), max_message_bytes=len(initial.encode('utf-8')) + extra)
+    events, factory = message_execution(monkeypatch, p)
+    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
+        model_factory=factory, allow_model_calls=True)
+    assert events[:3] == ['claim', 'permit', 'factory'] and events[-1] == 'capture'
+    if extra < 2:
+        # The later transcript is larger: original per-call denial still applies.
+        assert events.count('permit') == events.count('complete') == 1
+        assert out.record.run.research.reason_code == 'model_failed'
+    else:
+        assert out.record.run.research.status == 'completed'
+        assert events.count('permit') == events.count('complete') == 2
+
+
+@pytest.mark.parametrize('number', [0, 1])
+@pytest.mark.parametrize('existing', ['incomplete', 'captured'])
+def test_initial_message_preflight_replays_without_new_claim(monkeypatch, number, existing):
+    r = req(number)
+    p = policy((r,), max_message_bytes=1)
+    original = state(r)
+    if existing == 'captured':
+        original = replace(original, status='captured', record=record_for(r, make_run(
+            condition=r.intake.condition_id, task=r.intake.task_id, team=r.intake.team_id)))
+    events, factory = message_execution(monkeypatch, p)
+    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: original)
+    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
+        model_factory=factory, allow_model_calls=True)
+    assert out == original and events == []
+
+
+# Separate same-assistant adversarial review of first-message preflight.
+@pytest.mark.parametrize('gate', ['intake', 'context', 'evidence'])
+def test_message_review_preserves_no_model_capture_paths(monkeypatch, gate):
+    if gate == 'intake':
+        r = request(record_id='message-blocked', intake=make_run(status='intake_blocked').intake)
+        expected = None
+    else:
+        r = req()
+        if gate == 'context':
+            r = replace(r, limits=replace(r.limits, max_context_chars=1))
+            expected = 'context_limit'
+        else:
+            from polymarket_alpha_lab.team_research_intake import _receipt
+            evidence = tuple(replace(e, observed_at=e.observed_at-timedelta(seconds=1))
+                             for e in r.intake.task.evidence)
+            intake = replace(r.intake, task=replace(r.intake.task, evidence=evidence),
+                             source_receipts=tuple(_receipt(e) for e in evidence))
+            r = replace(r, intake=intake, limits=replace(r.limits, max_evidence_age_seconds=0))
+            expected = 'no_eligible_evidence'
+    p = policy((r,), max_message_bytes=1)
+    events, factory = message_execution(monkeypatch, p)
+    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
+        model_factory=factory, allow_model_calls=True)
+    assert events == ['claim', 'capture']
+    result = out.record.run.research
+    if expected is None:
+        assert result is None
+    else:
+        assert result.reason_code == expected and result.model_calls == 0
+
+
+def test_message_review_byte_limit_does_not_use_character_count(monkeypatch):
+    r = message_request(question='合成🌕问题？')
+    initial = first_budget_transcript(r)
+    r = replace(r, limits=replace(r.limits, max_context_chars=len(initial)))
+    assert len(initial.encode('utf-8')) > len(initial)
+    p = policy((r,), max_message_bytes=len(initial))
+    events, factory = message_execution(monkeypatch, p)
+    with pytest.raises(ValueError, match='^research_budget_initial_message_incompatible$'):
+        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
+            model_factory=factory, allow_model_calls=True)
+    assert events == []
+
+
+@pytest.mark.parametrize('gate', ['exhausted', 'expired', 'output'])
+def test_message_review_prior_gate_does_not_build_a_transcript(monkeypatch, gate):
+    r = req()
+    p = policy((r,), max_message_bytes=1, max_output_tokens=1 if gate == 'output' else 1024)
+    events, factory = message_execution(monkeypatch, p)
+    snap = snapshot(p, 3 if gate == 'exhausted' else 0)
+    if gate == 'expired':
+        snap = replace(snap, observed_at=p.expires_at)
+    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snap)
+    monkeypatch.setattr(runner.agent, '_initial_context', lambda *a, **k: pytest.fail('priority changed'))
+    reason = 'output_limit_incompatible' if gate == 'output' else 'not_available'
+    with pytest.raises(ValueError, match=reason):
+        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
+            model_factory=factory, allow_model_calls=True)
+    assert events == []
+
+
+@pytest.mark.parametrize('defect', ['mismatch', 'mutated', 'type'])
+def test_message_review_existing_receipt_is_revalidated(monkeypatch, defect):
+    r = req()
+    p = policy((r,), max_message_bytes=1)
+    events, factory = message_execution(monkeypatch, p)
+    prior = state(replace(r, protocol_version='other') if defect == 'mismatch' else r)
+    if defect == 'mutated':
+        object.__setattr__(prior, 'readonly', False)
+    if defect == 'type':
+        prior = object()
+    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: prior)
+    with pytest.raises((ValueError, TypeError)):
+        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
+            model_factory=factory, allow_model_calls=True)
+    assert events == []
+
+
+@pytest.mark.parametrize('error', [OSError('synthetic message history failure'), KeyboardInterrupt(), SystemExit(0)])
+def test_message_review_history_error_never_falls_through_to_claim(monkeypatch, error):
+    r = req()
+    p = policy((r,), max_message_bytes=1)
+    events, factory = message_execution(monkeypatch, p)
+    def inspect(*a, **k):
+        raise error
+    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', inspect)
+    with pytest.raises(type(error)) as caught:
+        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
+            model_factory=factory, allow_model_calls=True)
+    assert caught.value is error and events == []
+
+
+def test_message_review_explicit_matching_budget_keeps_same_input(monkeypatch):
+    r = message_request(question='合成预算审核?')
+    bad = policy((r,), max_message_bytes=1)
+    good = replace(bad, budget_id='explicit-message-budget', max_message_bytes=100000)
+    originals = r.payload, bad.payload, good.payload
+    events, factory = message_execution(monkeypatch, bad)
+    policies = {p.budget_id: p for p in (bad, good)}
+    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda dsn, budget_id: snapshot(policies[budget_id]))
+    with pytest.raises(ValueError, match='initial_message_incompatible'):
+        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=bad.budget_id,
+            model_factory=factory, allow_model_calls=True)
+    assert events == []
+    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=good.budget_id,
+        model_factory=factory, allow_model_calls=True)
+    assert out.record.run.research.status == 'completed'
+    assert events.count('claim') == events.count('capture') == 1
+    assert events.count('permit') == events.count('complete') == 2
+    assert (r.payload, bad.payload, good.payload) == originals

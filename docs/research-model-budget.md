@@ -195,3 +195,33 @@ per-call transaction still validates message bytes, output cap, expiry and share
 reservations before entering the supplied client. Later exhaustion, provider
 errors, uncertain commits and no-refund behavior are unchanged. No real provider,
 fee verification, credential access or automatic user-database operation is added.
+
+
+## First-message byte compatibility before claiming (WP-02 / WP-03)
+
+A prepared request whose actual first `messages_json` exceeds the selected
+budget's `max_message_bytes` is now rejected with
+`research_budget_initial_message_incompatible` before a new immutable claim.
+The preflight reuses the agent's original eligible-catalog and initial-message
+construction; it does not approximate message size from the stored request,
+truncate rules or evidence, or change canonical inputs. The allowance measures
+UTF-8 bytes, while the agent's existing context gate measures characters.
+Equality at the byte ceiling remains permitted.
+
+No-model paths (blocked intake, no eligible evidence or an initial context-limit
+rejection) retain their original captured results. Empty/expired allowance and
+the existing output-token incompatibility keep their earlier priority. An already
+visible completed or incomplete execution is revalidated and returned unchanged;
+an incomplete claim is not reclaimed. A history-read failure does not fall through
+to creating a new claim. No automatic budget adjustment or retry is introduced.
+
+An explicitly reviewed compatible budget may later be supplied for the SAME
+unclaimed input. A compatible first message does not mean that later tool messages
+fit: the original per-call transaction still checks each actual message, output
+cap, shared balance and expiry. Later denial/failure capture and no-refund rules
+are unchanged. This internal message-size check is not a provider tokenizer,
+HTTP-envelope size calculation, tariff verification or proof that an entire loop
+fits the monetary budget. D1-D3 and real-provider validation remain required.
+
+Python JSON serialization returns text, not encoded bytes; encoding is explicit.
+Reference checked 2026-09-17: https://docs.python.org/3.12/library/json.html

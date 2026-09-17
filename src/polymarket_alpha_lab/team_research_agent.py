@@ -112,6 +112,32 @@ def _actions(reply: ResearchModelReply, seen_ids: set[str]) -> tuple[tuple[objec
     return tuple(actions)
 
 
+def _initial_context(task: TeamResearchTask, limits: ResearchAgentLimits,
+                     required_source_ids: tuple[str, ...] = ()):
+    """Original eligible catalog and first messages, shared with budget preflight.
+
+    Callers supply validated immutable task/limits. No model, I/O or mutation.
+    The agent remains responsible for its original eligibility/context gates.
+    """
+    # Use elapsed UTC instants: subtraction in one DST zone otherwise ignores
+    # offset changes/fold. Direct agent callers must get the same gate as intake.
+    as_of_utc = task.as_of.astimezone(UTC)
+    catalog = {item.source_id: item for item in task.evidence
+               if timedelta(0) <= as_of_utc - item.observed_at.astimezone(UTC)
+               <= timedelta(seconds=limits.max_evidence_age_seconds)}
+    messages = [
+        {"role": "system", "content": _SYSTEM},
+        {"role": "user", "content": _dump({
+            "team_id": task.team_id, "condition_id": task.condition_id,
+            "market_slug": task.market_slug, "question": task.question,
+            "resolution_criteria": task.resolution_criteria, "as_of": task.as_of.isoformat(),
+            "eligible_source_count": len(catalog),
+            "required_source_ids": required_source_ids,
+        })},
+    ]
+    return catalog, messages
+
+
 def _run(task: TeamResearchTask, model: ResearchModel, limits: ResearchAgentLimits,
          required_source_ids: tuple[str, ...] = ()) -> TeamResearchResult:
     model_calls = tool_calls = tokens = 0
@@ -127,24 +153,9 @@ def _run(task: TeamResearchTask, model: ResearchModel, limits: ResearchAgentLimi
             tool_trace=tuple(trace), **values,
         )
 
-    # Use elapsed UTC instants: subtraction in one DST zone otherwise ignores
-    # offset changes/fold. Direct agent callers must get the same gate as intake.
-    as_of_utc = task.as_of.astimezone(UTC)
-    catalog = {item.source_id: item for item in task.evidence
-               if timedelta(0) <= as_of_utc - item.observed_at.astimezone(UTC)
-               <= timedelta(seconds=limits.max_evidence_age_seconds)}
+    catalog, messages = _initial_context(task, limits, required_source_ids)
     if not catalog:
         return result("blocked", "no_eligible_evidence")
-    messages = [
-        {"role": "system", "content": _SYSTEM},
-        {"role": "user", "content": _dump({
-            "team_id": task.team_id, "condition_id": task.condition_id,
-            "market_slug": task.market_slug, "question": task.question,
-            "resolution_criteria": task.resolution_criteria, "as_of": task.as_of.isoformat(),
-            "eligible_source_count": len(catalog),
-            "required_source_ids": required_source_ids,
-        })},
-    ]
     for _ in range(limits.max_model_calls):
         if tool_calls >= limits.max_tool_calls:
             return result("blocked", "tool_call_limit")

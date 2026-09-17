@@ -218,6 +218,40 @@ def test_budget_upgrade_shared_cap_replay_and_lost_process(tmp_path,monkeypatch)
             assert replay.record == completed.record
             assert s.inspect_model_budget(budget_id=reviewed.budget_id).reserved_calls == 3
             print('native budget output preflight: PASS; no claim or permit on mismatch, compatible peer, same-request explicit budget, immutable replay')
+            # Known oversized FIRST messages must not consume either team's
+            # immutable task, even though the same input may later be admitted
+            # under an explicitly reviewed compatible allowance.
+            for number, team in ((860, 'crypto_btc'), (861, 'crypto_eth')):
+                message_request = prepared(number, team)
+                payload_before = message_request.payload
+                tiny = policy('message-limit-'+str(number), (message_request,), max_message_bytes=1)
+                tiny_saved = s.create_model_budget(policy=tiny, allow_budget_write=True)
+                assert s.inspect(record_id=message_request.record_id) is None
+                with pytest.raises(ValueError, match='^research_budget_initial_message_incompatible$'):
+                    s.run_budgeted_research(request=message_request, budget_id=tiny.budget_id,
+                        model_factory=forbidden, allow_model_calls=True)
+                assert s.inspect(record_id=message_request.record_id) is None
+                untouched = s.inspect_model_budget(budget_id=tiny.budget_id)
+                assert untouched.stored == tiny_saved
+                assert (untouched.reserved_calls, untouched.reserved_micros) == (0, 0)
+                wide = replace(tiny, budget_id='message-compatible-'+str(number), max_message_bytes=100000)
+                s.create_model_budget(policy=wide, allow_budget_write=True)
+                clients = []
+                def message_factory(selected_team):
+                    clients.append(selected_team)
+                    return Model()
+                done = s.run_budgeted_research(request=message_request, budget_id=wide.budget_id,
+                    model_factory=message_factory, allow_model_calls=True)
+                assert done.record.run.research.status == 'completed' and clients == [team]
+                assert message_request.payload == payload_before
+                admitted = s.inspect_model_budget(budget_id=wide.budget_id)
+                assert (admitted.reserved_calls, admitted.reserved_micros) == (3, 300)
+                assert s.run_budgeted_research(request=message_request, budget_id=tiny.budget_id,
+                    model_factory=forbidden, allow_model_calls=True).record == done.record
+                replayed = s.inspect_model_budget(budget_id=tiny.budget_id)
+                assert replayed.stored == tiny_saved
+                assert (replayed.reserved_calls, replayed.reserved_micros) == (0, 0)
+            print('native initial message preflight: PASS; BTC/ETH no claim or permit, same input with explicit matching budget, immutable replay')
             crash_requests=(prepared(840),prepared(841,'crypto_btc'))
             crash_policy=policy('crash-budget',crash_requests,total_micros=400,max_calls=4)
             s.create_model_budget(policy=crash_policy,allow_budget_write=True)
@@ -236,6 +270,11 @@ def test_budget_upgrade_shared_cap_replay_and_lost_process(tmp_path,monkeypatch)
             assert s.run_budgeted_research(request=crash_requests[0], budget_id=narrow.budget_id,
                 model_factory=forbidden, allow_model_calls=True) == original_claim
             assert s.inspect_model_budget(budget_id=narrow.budget_id).reserved_calls == 0
+            message_narrow = policy('incomplete-message-preflight', (crash_requests[0],), max_message_bytes=1)
+            s.create_model_budget(policy=message_narrow, allow_budget_write=True)
+            assert s.run_budgeted_research(request=crash_requests[0], budget_id=message_narrow.budget_id,
+                model_factory=forbidden, allow_model_calls=True) == original_claim
+            assert s.inspect_model_budget(budget_id=message_narrow.budget_id).reserved_calls == 0
             replay=s.run_budgeted_research(request=crash_requests[0],budget_id='crash-budget',
                 model_factory=forbidden,allow_model_calls=True)
             reread=s.inspect_model_budget(budget_id='crash-budget')

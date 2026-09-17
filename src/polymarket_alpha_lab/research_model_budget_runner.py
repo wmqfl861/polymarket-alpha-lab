@@ -8,6 +8,7 @@ from dataclasses import replace
 from threading import Lock
 
 from polymarket_alpha_lab import research_execution_psycopg as execution
+from polymarket_alpha_lab import team_research_agent as agent
 from polymarket_alpha_lab.research_execution import copy_request
 from polymarket_alpha_lab.research_model_budget import ModelBudgetSnapshot, copy_budget
 from polymarket_alpha_lab.research_model_budget_store import _reserve_call, load_model_budget_with_psycopg
@@ -59,6 +60,24 @@ class _BudgetedModel:
                 raise ValueError('research_budget_call_blocked_or_failed') from None
 
 
+def _initial_message_incompatible(request, policy):
+    """Reject only a first call the existing agent would actually attempt.
+
+    Keep no-eligible-evidence/context-limit captures on their original path.
+    The allowance counts UTF-8 bytes, unlike the agent's character context cap.
+    Later tool transcripts still use the original per-call reservation guard.
+    """
+    if request.intake.status != 'prepared':
+        return False
+    catalog, messages = agent._initial_context(request.intake.task, request.limits,
+                                               request.required_source_ids)
+    if not catalog:
+        return False
+    transcript = agent._dump(messages)
+    return (len(transcript) <= request.limits.max_context_chars
+            and len(transcript.encode('utf-8')) > policy.max_message_bytes)
+
+
 def run_budgeted_research_with_psycopg(dsn, *, request, budget_id, model_factory, allow_model_calls=False):
     """Bind explicit policy to a request, then reuse original immutable claims.
 
@@ -90,6 +109,8 @@ def run_budgeted_research_with_psycopg(dsn, *, request, budget_id, model_factory
         # Do not consume an immutable claim for a known-incompatible allowance,
         # or silently clamp the reviewed request to make that call admissible.
         blocked_reason = 'research_budget_output_limit_incompatible'
+    elif _initial_message_incompatible(request, policy):
+        blocked_reason = 'research_budget_initial_message_incompatible'
     if blocked_reason is not None:
         # Existing claims/results remain readable even if this allowance cannot
         # admit NEW work. No new claim, call permit or client is created here.
