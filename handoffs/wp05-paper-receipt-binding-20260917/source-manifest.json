@@ -1,0 +1,32 @@
+{
+  "DELIVERY_PLAN.md": {
+    "bytes": 73802,
+    "sha256": "debba49050fd279a14c74888ed59f9c5c8a077c3ec9b964f7531d1c7a93492c6",
+    "blob_sha": "bba3ccf2dac6c4b7741b761787f6b209a172d5cd"
+  },
+  "docs/research-paper.md": {
+    "bytes": 24715,
+    "sha256": "5395d6e65d6f1b16aba4a3a6f7a657a78f00ec972e827c8b50b3d3d30a4a2350",
+    "blob_sha": "1364af76bc5fd3ac91628eecb039c77280fd1ee0"
+  },
+  "src/polymarket_alpha_lab/research_paper_operator.py": {
+    "bytes": 6210,
+    "sha256": "cace4b664b06b5ed55b4d0284eeaaa2f15679c35986704d3ba1b191692e47725",
+    "blob_sha": "f9c810972911d9faa5dc37e6964a8d5b9f767ff3"
+  },
+  "tests/test_project_postgres_paper_operator_native.py": {
+    "bytes": 7966,
+    "sha256": "5b9074353d9aa3f0657eb703b90b669990947d69734c8677e64a0451f706132a",
+    "blob_sha": "4415c4a0ed804462059562124db128ed87c89309"
+  },
+  "tests/test_research_paper_operator.py": {
+    "bytes": 12199,
+    "sha256": "911379adcb917164c31e6831ed64daebadca0649d74d2e8737e777f1980079bd",
+    "blob_sha": "e64a77844b1d05ff73dfe3e33b0b2a45bf274cd5"
+  },
+  "tests/test_research_paper_operator_review.py": {
+    "bytes": 8008,
+    "sha256": "e1f3c7c63633b6f6f9e201150722676f007696c1b089f65c4926f31e5930d6e2",
+    "blob_sha": "54e03ec6fb8f4dce05636b964b23f494ed376533"
+  }
+}

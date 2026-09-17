@@ -1,0 +1,77 @@
+{
+  "state": "local_candidate_only_not_published",
+  "review_type": "same-assistant separate phase and detached Git worktree; not third-party/fresh-agent audit",
+  "original_code_red": {
+    "failed": 6,
+    "passed": 0,
+    "distinct_bug_classes": 1
+  },
+  "implementation_green": {
+    "passed": 75,
+    "seconds": 2.06
+  },
+  "separate_review": {
+    "passed": 8,
+    "failed": 0,
+    "seconds": 0.77
+  },
+  "final_operator_cases_from_detached_junit": 83,
+  "new_operator_cases": 14,
+  "related": {
+    "passed": 524,
+    "skipped": 1,
+    "seconds": 11.39
+  },
+  "detached": {
+    "passed": 524,
+    "skipped": 0,
+    "seconds": 12.74,
+    "import_origin_verified": true
+  },
+  "full_local": {
+    "passed": 38314,
+    "skipped": 42,
+    "pytest_seconds": 340.17,
+    "wrapper_seconds": 384.785,
+    "exit": 0,
+    "full_verification_pass": true
+  },
+  "byte_comparisons": 24,
+  "all_byte_comparisons_equal": true,
+  "runtime": {
+    "python": "3.13.5",
+    "platform": "Linux",
+    "dependencies": "preinstalled container packages; not hosted locked Windows"
+  },
+  "native_child_compiled": true,
+  "native_wrapper_synthetic_offline_checks": 2,
+  "windows_tests_executed": false,
+  "native_database_test_executed": false,
+  "github_published": false,
+  "github_pr_created": false,
+  "full_hosted_gates_complete": false,
+  "expected_ci_on_exact_tree": {
+    "offline": {
+      "passed": 38314,
+      "skipped": 42
+    },
+    "native_total": {
+      "passed": 2094,
+      "skipped": 2
+    },
+    "paper": {
+      "passed": 353,
+      "skipped": 0
+    },
+    "kit": {
+      "passed": 368,
+      "skipped": 0
+    }
+  },
+  "expected_counts_are_not_observed_results": true,
+  "native_required_case": "tests/test_project_postgres_paper_operator_native.py::test_paper_operator_capture_replay_inspect_and_rejection",
+  "native_marker_is_not_whole_test_acceptance": true,
+  "G5_G6_V1_complete": false,
+  "D1_D3_changed": false,
+  "user_database_provider_or_order_operation": false
+}

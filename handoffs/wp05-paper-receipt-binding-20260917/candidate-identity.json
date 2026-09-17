@@ -1,0 +1,14 @@
+{
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "upstream_base_commit": "a71ae4d716e8a73bd3614f080f42e5a6968d76f8",
+  "upstream_base_tree": "4d15e1d555f108e19edf19e160593eea2841b28c",
+  "expected_result_tree": "ec17d9401fabdb6a3b7507b5324a4811070c7327",
+  "local_bookkeeping_base": "d7ee091a2beef5d46ef3c3916edd41bffa01bc36",
+  "local_bookkeeping_candidate": "ec63131e715b941c2e756a192c6610ca8f50f971",
+  "local_commits_are_not_upstream": true,
+  "patch_bytes": 17318,
+  "patch_sha256": "0ec98726a262b8bf64a1cd2e1022ffd2ac437b4bbc1d2e2fd3f28515bdaae5e3",
+  "published_to_github": false,
+  "pull_request_created": false,
+  "native_execution_claimed": false
+}

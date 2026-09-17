@@ -1,0 +1,7 @@
+Exact patch result tree: ec17d9401fabdb6a3b7507b5324a4811070c7327
+DELIVERY_PLAN.md
+docs/research-paper.md
+src/polymarket_alpha_lab/research_paper_operator.py
+tests/test_project_postgres_paper_operator_native.py
+tests/test_research_paper_operator.py
+tests/test_research_paper_operator_review.py

@@ -1,0 +1,58 @@
+[
+  {
+    "classname": "tests.test_research_paper_operator",
+    "name": "test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[size-crypto_btc]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator",
+    "name": "test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[size-crypto_eth]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator",
+    "name": "test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[fees-crypto_btc]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator",
+    "name": "test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[fees-crypto_eth]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator",
+    "name": "test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[assumptions-crypto_btc]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator",
+    "name": "test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[assumptions-crypto_eth]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator_review",
+    "name": "test_correct_original_receipt_survives_post_save_argument_mutation[size-crypto_btc]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator_review",
+    "name": "test_correct_original_receipt_survives_post_save_argument_mutation[size-crypto_eth]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator_review",
+    "name": "test_correct_original_receipt_survives_post_save_argument_mutation[fees-crypto_btc]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator_review",
+    "name": "test_correct_original_receipt_survives_post_save_argument_mutation[fees-crypto_eth]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator_review",
+    "name": "test_correct_original_receipt_survives_post_save_argument_mutation[assumptions-crypto_btc]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator_review",
+    "name": "test_correct_original_receipt_survives_post_save_argument_mutation[assumptions-crypto_eth]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator_review",
+    "name": "test_cleanup_cannot_rewrite_the_validated_receipt_projection[capture-paper]"
+  },
+  {
+    "classname": "tests.test_research_paper_operator_review",
+    "name": "test_cleanup_cannot_rewrite_the_validated_receipt_projection[inspect-paper]"
+  }
+]

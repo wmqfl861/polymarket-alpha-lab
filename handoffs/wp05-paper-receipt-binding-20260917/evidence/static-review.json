@@ -1,0 +1,21 @@
+{
+  "upstream_base": "a71ae4d716e8a73bd3614f080f42e5a6968d76f8",
+  "base_tree": "4d15e1d555f108e19edf19e160593eea2841b28c",
+  "changed_paths": [
+    "DELIVERY_PLAN.md",
+    "docs/research-paper.md",
+    "src/polymarket_alpha_lab/research_paper_operator.py",
+    "tests/test_project_postgres_paper_operator_native.py",
+    "tests/test_research_paper_operator.py",
+    "tests/test_research_paper_operator_review.py"
+  ],
+  "read_scenario_ast_unchanged": true,
+  "output_emitter_ast_unchanged": true,
+  "public_operation_only_changes_receipt_binding": true,
+  "original_native_assertions": 19,
+  "final_native_assertions": 21,
+  "no_original_native_assertion_removed": true,
+  "original_unit_tests_prefix_preserved": true,
+  "sql_dependencies_workflows_unchanged": true,
+  "native_child_ascii_compiled": true
+}

@@ -1,0 +1,313 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 003988aca15bc3a0eb12f9f19effc0166979550d..bba3ccf2dac6c4b7741b761787f6b209a172d5cd 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -824,3 +824,22 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ **WP-02 AWAITING_OWNER，WP-03 PARTIAL，G2／G3／G6／V1 不因此完成。**
+ 不认证提供商、实际费率或完整请求传输大小；D1—D3、PR #49 及受阻诊断限制不变。
+ 不访问用户数据库或凭据，不调用真实模型／行情，不授权部署或覆盖旧安装。
++
++
++## 32. WP-05：模拟回执绑定原审核输入（候选，尚待最终原生验收）
++
++基线 `a71ae4d716e8a73bd3614f080f42e5a6968d76f8`（PR #53）。本候选修复
++模拟保存命令用调用后的可变参数比较回执的问题，不新增模拟器或业务存储。
++
++- 六个原实现反例复现：故障适配器改变数量、费率或假设后返回内部一致的回执，
++  命令仍成功。现在绑定原 `input_sha256`，不让被改动的参数成为自己的审核依据。
++- 单独自审覆盖正确原回执与参数后改动、清理时回执对象变化；保持原回执投影，
++  不误报正确保存失败。异常仍保守保留可能写入，不补发回执或自动重试。
++- 原有原生模拟命令用例追加 BTC／ETH 实际同编号重放，故障仅在真实存储返回后
++  改动适配器参数；最终仍核对原记录、模拟数量及迁移账本。原 CI 选择与时限不变。
++- 67 份迁移、依赖、工作流、输入编解码、模拟与数据库算法不改；本地反例／自审
++  不代替最终 Windows、原生 PostgreSQL 和实际安装包验证。固定证据在交付记录中。
++
++**WP-05／WP-06 仍 PARTIAL，G5／G6 与 V1 未关闭。** 此项不证明恶意 Python
++隔离或真实费率／盈利，不推断错误后回滚，不处理 PR #49 或受阻诊断；D1—D3、
++真实输入／人工核验及用户数据操作授权不变，禁止覆盖旧安装或调用真实模型。
+diff --git a/docs/research-paper.md b/docs/research-paper.md
+index 8dc5ff1a89ce719eba384ee36eb1c6a2d517d600..1364af76bc5fd3ac91628eecb039c77280fd1ee0 100644
+--- a/docs/research-paper.md
++++ b/docs/research-paper.md
+@@ -382,3 +382,26 @@ reliability issue remain open; exact final-revision results are retained in the
+ Stream/encoding references checked2026-09-15:
+ https://docs.python.org/3.12/library/sys.html#sys.stdin
+ https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_character_encoding
++
++
++### Bind capture receipts to the originally approved input
++
++`capture-paper` validates the returned scenario against the caller's original
++`--input-sha256`, not against the scenario object after passing it to the managed
++capture adapter. A faulty adapter must not turn its own changed quantity, costs
++or assumptions into the reference that authorizes its receipt. A mismatching
++receipt returns the existing `paper_operator_operation_failed` response, with no
++success result and no second capture. Possible committed writes remain explicit.
++
++Conversely, when the original approved receipt is intact and only a collaborator's
++argument object changes after storage, the correct receipt is still returned.
++`inspect-paper` keeps its original ID-based lookup contract; it does not invent
++an approval hash. Original canonical input decoding, framing, permissions, output
++format, simulator, storage and cleanup behavior are unchanged.
++
++This is a receipt-consistency check for faulty collaborators, not a sandbox for
++arbitrary Python code, proof of what an untrusted store committed, or permission
++to repair or overwrite a saved scenario. Frozen dataclasses are not an absolute
++immutability boundary. After uncertainty, inspect the original record; never
++infer rollback or automatically create another record or retry a capture.
++Reference: https://docs.python.org/3.12/library/dataclasses.html#frozen-instances
+diff --git a/src/polymarket_alpha_lab/research_paper_operator.py b/src/polymarket_alpha_lab/research_paper_operator.py
+index b780526d44fcb1c1014d737832762f0cc49eaf9c..f9c810972911d9faa5dc37e6964a8d5b9f767ff3 100644
+--- a/src/polymarket_alpha_lab/research_paper_operator.py
++++ b/src/polymarket_alpha_lab/research_paper_operator.py
+@@ -13,7 +13,7 @@ import sys
+ from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+ from polymarket_alpha_lab.research_paper_capture import StoredResearchPaper
+ from polymarket_alpha_lab.research_paper_capture_codec import (
+-    MAX_PAYLOAD_BYTES, decode_paper_scenario, encode_paper_scenario,
++    MAX_PAYLOAD_BYTES, checksum, decode_paper_scenario, encode_paper_scenario,
+ )
+ from polymarket_alpha_lab.research_resolution import digest
+ from polymarket_alpha_lab.team_research_agent_types import identifier
+@@ -51,14 +51,15 @@ def read_scenario(stream, *, record_id: str, input_sha256: str):
+     return scenario
+ 
+ 
+-def _receipt(value, *, record_id, scenario=None):
++def _receipt(value, *, record_id, input_sha256=None):
+     if type(value) is not StoredResearchPaper:
+         raise ValueError('paper_operator_receipt_invalid')
+     value = replace(value)
+     if (value.scenario.record_id != record_id
+-            or (scenario is not None and encode_paper_scenario(value.scenario)
+-                != encode_paper_scenario(scenario))):
++            or (input_sha256 is not None
++                and checksum(encode_paper_scenario(value.scenario)) != input_sha256)):
+         raise ValueError('paper_operator_receipt_mismatch')
++    # Bind to the reviewed digest, not the mutable object passed to a collaborator.
+     # Storage has already checked original provenance and recomputed its result.
+     # This presenter checks request identity, not a second proof of database truth.
+     return value.to_dict()
+@@ -121,7 +122,7 @@ def operate_paper(*, root: Path, operation: str, record_id: str,
+             if value is None and not capturing:
+                 result, code, status = None, 3, 'not_found'
+             else:
+-                result = _receipt(value, record_id=record_id, scenario=scenario)
++                result = _receipt(value, record_id=record_id, input_sha256=input_sha256)
+                 code, status = 0, 'paper_receipt_returned'
+         envelope.update(status=status, result=result)
+     except KeyboardInterrupt:
+diff --git a/tests/test_project_postgres_paper_operator_native.py b/tests/test_project_postgres_paper_operator_native.py
+index 83e0dd7ab0fd3d676df82c8cb272741ced071613..4415c4a0ed804462059562124db128ed87c89309 100644
+--- a/tests/test_project_postgres_paper_operator_native.py
++++ b/tests/test_project_postgres_paper_operator_native.py
+@@ -61,6 +61,41 @@ def test_paper_operator_capture_replay_inspect_and_rejection(tmp_path, monkeypat
+             args.append('--allow-paper-write')
+         return command(args, payload.encode() + b'\r\n')
+ 
++    def replay_with_post_store_argument_mutation(spec):
++        # Only the adapter argument is deliberately corrupted AFTER the actual
++        # original database replay. The stored receipt and SQL path are real.
++        payload = encode_paper_scenario(spec)
++        program = (
++            'import runpy, sys\n'
++            'from decimal import Decimal\n'
++            'from polymarket_alpha_lab.project_postgres.research import ProjectResearchSession\n'
++            'from polymarket_alpha_lab.research_paper_capture_codec import checksum, encode_paper_scenario\n'
++            'original = ProjectResearchSession.capture_paper_research\n'
++            'calls = 0\n'
++            'def capture(self, *, scenario, allow_paper_write=False):\n'
++            '    global calls\n'
++            '    calls += 1\n'
++            '    reviewed = checksum(encode_paper_scenario(scenario))\n'
++            '    receipt = original(self, scenario=scenario, allow_paper_write=allow_paper_write)\n'
++            '    assert receipt.to_dict()["input_sha256"] == reviewed\n'
++            '    object.__setattr__(scenario, "requested_size", Decimal("6"))\n'
++            '    assert checksum(encode_paper_scenario(scenario)) != reviewed\n'
++            '    return receipt\n'
++            'ProjectResearchSession.capture_paper_research = capture\n'
++            'sys.argv = sys.argv[1:]\n'
++            'try:\n'
++            '    runpy.run_path(sys.argv[0], run_name="__main__")\n'
++            'finally:\n'
++            '    assert calls == 1\n'
++        )
++        child = subprocess.run([sys.executable, '-I', '-c', program,
++            str(ROOT / 'scripts/manage_research_tasks.py'), '--root', str(root),
++            'capture-paper', '--record-id', spec.record_id, '--input-sha256', checksum(payload),
++            '--allow-paper-write'], input=payload.encode()+b'\r\n', cwd=parent,
++            env=files.clean_environment(), capture_output=True, timeout=120)
++        assert child.returncode == 0 and child.stderr == b''
++        return json.loads(child.stdout)
++
+     try:
+         assert db.initialize(port=port)['migrations_applied'] == 67
+         with db.session() as session:
+@@ -89,6 +124,9 @@ def test_paper_operator_capture_replay_inspect_and_rejection(tmp_path, monkeypat
+         code, rejected = capture(scenarios[1])
+         assert code == 0 and rejected['result']['result']['status'] == 'paper_scenario_rejected'
+         assert rejected['result']['result']['reason_code'] == 'malformed_market_or_book'
++        for spec, expected in zip(scenarios, (saved, rejected), strict=True):
++            assert replay_with_post_store_argument_mutation(spec) == expected
++        print('native paper approved-input binding: PASS; original BTC/ETH receipts survive adapter argument mutation, single replay')
+         db.down()
+         code, inspected = command(['inspect-paper', '--record-id', scenarios[0].record_id])
+         assert code == 0 and inspected['result'] == saved['result']
+diff --git a/tests/test_research_paper_operator.py b/tests/test_research_paper_operator.py
+index dad5c0265ce6a39afc6bd8ccc6d31b53d014cec1..e64a77844b1d05ff73dfe3e33b0b2a45bf274cd5 100644
+--- a/tests/test_research_paper_operator.py
++++ b/tests/test_research_paper_operator.py
+@@ -207,3 +207,60 @@ def test_existing_command_routes_canonical_capture_and_query(managed, capsys, mo
+     assert dispatch.main(['inspect-paper', '--record-id', managed['scenario'].record_id], default_root=ROOT) == 0
+     capsys.readouterr()
+     assert [x[0] for x in managed['calls']] == ['capture', 'inspect']
++
++
++@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
++@pytest.mark.parametrize('change', ['size', 'fees', 'assumptions'])
++def test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument(
++        monkeypatch, capsys, team, change):
++    """A faulty adapter must not make a changed scenario its own approval.
++
++    Use a recomputed, internally valid receipt, not merely broken result JSON.
++    This is collaborator-fault injection, not a hostile-Python sandbox claim.
++    """
++    from polymarket_alpha_lab import research_paper_capture as store
++    from polymarket_alpha_lab.research_paper_capture_codec import dump
++    execution, scenario, history, original = sample(team=team)
++    payload = encode_paper_scenario(scenario)
++    approved = checksum(payload)
++    state = dict(calls=0, closed=False)
++
++    class Session:
++        def capture_paper_research(self, *, scenario, allow_paper_write):
++            assert allow_paper_write is True
++            state['calls'] += 1
++            if change == 'size':
++                object.__setattr__(scenario, 'requested_size', Decimal('6'))
++            elif change == 'fees':
++                object.__setattr__(scenario.costs, 'taker_fee_rate', Decimal('.03'))
++            else:
++                object.__setattr__(scenario, 'assumptions_id', 'changed-assumptions')
++            receipt = replace(original, scenario=scenario,
++                result_payload=dump(store._result_for(history, scenario, execution)))
++            assert checksum(encode_paper_scenario(receipt.scenario)) != approved
++            # The ordinary receipt validator and result reconstruction succeed.
++            assert replace(receipt) == receipt
++            return receipt
++
++    class Database:
++        def __init__(self, root):
++            assert root == ROOT
++
++        @contextmanager
++        def session(self):
++            try:
++                yield Session()
++            finally:
++                state['closed'] = True
++
++    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
++    code = cli.operate_paper(root=ROOT, operation='capture-paper', record_id=scenario.record_id,
++        input_sha256=approved, allow_paper_write=True, stream=io.BytesIO(payload.encode()))
++    output = capsys.readouterr()
++    body = json.loads(output.out)
++    assert code == 1 and body['reason_code'] == 'paper_operator_operation_failed'
++    assert body['result'] is None and body['business_writes_possible'] is True
++    assert body['automatic_retry_permitted'] is False
++    assert state == dict(calls=1, closed=True)
++    assert output.err == '' and PRIVATE not in output.out
++    assert encode_paper_scenario(scenario) == payload
+diff --git a/tests/test_research_paper_operator_review.py b/tests/test_research_paper_operator_review.py
+index 166a4b96c2602f44355bc03584c5923e4ce1fd4f..54e03ec6fb8f4dce05636b964b23f494ed376533 100644
+--- a/tests/test_research_paper_operator_review.py
++++ b/tests/test_research_paper_operator_review.py
+@@ -109,3 +109,88 @@ def test_canonical_input_hash_does_not_authorize_pretty_printed_json(managed, ca
+     raw = json.dumps(json.loads(encode_paper_scenario(managed['scenario'])), indent=2)
+     code, out = invoke(managed, capsys, stream=io.BytesIO(raw.encode()), input_sha256=checksum(raw))
+     assert code == 2 and not out['operation_entered']
++
++
++@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
++@pytest.mark.parametrize('change', ['size', 'fees', 'assumptions'])
++def test_correct_original_receipt_survives_post_save_argument_mutation(
++        monkeypatch, capsys, team, change):
++    """A correct receipt remains authoritative when only the adapter argument drifts."""
++    from contextlib import contextmanager
++    from decimal import Decimal
++    from tests.test_research_paper_capture import sample
++    _, scenario, _, original = sample(team=team)
++    payload = encode_paper_scenario(scenario)
++    approved = checksum(payload)
++    expected = original.to_dict()
++    state = dict(calls=0, closed=False)
++
++    class Session:
++        def capture_paper_research(self, *, scenario, allow_paper_write):
++            state['calls'] += 1
++            assert allow_paper_write is True
++            assert encode_paper_scenario(scenario) == payload
++            if change == 'size':
++                object.__setattr__(scenario, 'requested_size', Decimal('6'))
++            elif change == 'fees':
++                object.__setattr__(scenario.costs, 'taker_fee_rate', Decimal('.03'))
++            else:
++                object.__setattr__(scenario, 'assumptions_id', 'changed-assumptions')
++            assert encode_paper_scenario(scenario) != payload
++            return original
++
++    class Database:
++        def __init__(self, root):
++            assert root == ROOT
++
++        @contextmanager
++        def session(self):
++            try:
++                yield Session()
++            finally:
++                state['closed'] = True
++
++    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
++    code = cli.operate_paper(root=ROOT, operation='capture-paper', record_id=scenario.record_id,
++        input_sha256=approved, allow_paper_write=True, stream=io.BytesIO(payload.encode()))
++    output = capsys.readouterr()
++    body = json.loads(output.out)
++    assert code == 0 and body['result'] == expected
++    assert body['result']['input_sha256'] == approved and state == dict(calls=1, closed=True)
++    assert output.err == '' and encode_paper_scenario(scenario) == payload
++
++
++@pytest.mark.parametrize('operation', ['capture-paper', 'inspect-paper'])
++def test_cleanup_cannot_rewrite_the_validated_receipt_projection(
++        managed, monkeypatch, capsys, operation):
++    """Do not publish a retained mutable receipt object after session cleanup."""
++    from contextlib import contextmanager
++    from decimal import Decimal
++    original = managed['receipt']
++    expected = original.to_dict()
++
++    class Session:
++        def capture_paper_research(self, **kw):
++            managed['calls'].append(('capture', kw))
++            return original
++
++        def inspect_paper_research(self, **kw):
++            managed['calls'].append(('inspect', kw))
++            return original
++
++    class Database:
++        def __init__(self, root):
++            pass
++
++        @contextmanager
++        def session(self):
++            try:
++                yield Session()
++            finally:
++                object.__setattr__(original.scenario, 'requested_size', Decimal('6'))
++                managed['closed'] = True
++
++    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
++    code, out = invoke(managed, capsys, operation)
++    assert code == 0 and out['result'] == expected
++    assert managed['closed'] and len(managed['calls']) == 1

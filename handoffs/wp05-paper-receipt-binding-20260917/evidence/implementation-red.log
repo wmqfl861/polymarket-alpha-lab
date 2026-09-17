@@ -1,0 +1,364 @@
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[size-crypto_btc] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff6251bf820>
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff6252cba10>
+team = 'crypto_btc', change = 'size'
+
+    @pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+    @pytest.mark.parametrize('change', ['size', 'fees', 'assumptions'])
+    def test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument(
+            monkeypatch, capsys, team, change):
+        """A faulty adapter must not make a changed scenario its own approval.
+    
+        Use a recomputed, internally valid receipt, not merely broken result JSON.
+        This is collaborator-fault injection, not a hostile-Python sandbox claim.
+        """
+        from polymarket_alpha_lab import research_paper_capture as store
+        from polymarket_alpha_lab.research_paper_capture_codec import dump
+        execution, scenario, history, original = sample(team=team)
+        payload = encode_paper_scenario(scenario)
+        approved = checksum(payload)
+        state = dict(calls=0, closed=False)
+    
+        class Session:
+            def capture_paper_research(self, *, scenario, allow_paper_write):
+                assert allow_paper_write is True
+                state['calls'] += 1
+                if change == 'size':
+                    object.__setattr__(scenario, 'requested_size', Decimal('6'))
+                elif change == 'fees':
+                    object.__setattr__(scenario.costs, 'taker_fee_rate', Decimal('.03'))
+                else:
+                    object.__setattr__(scenario, 'assumptions_id', 'changed-assumptions')
+                receipt = replace(original, scenario=scenario,
+                    result_payload=dump(store._result_for(history, scenario, execution)))
+                assert checksum(encode_paper_scenario(receipt.scenario)) != approved
+                # The ordinary receipt validator and result reconstruction succeed.
+                assert replace(receipt) == receipt
+                return receipt
+    
+        class Database:
+            def __init__(self, root):
+                assert root == ROOT
+    
+            @contextmanager
+            def session(self):
+                try:
+                    yield Session()
+                finally:
+                    state['closed'] = True
+    
+        monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+        code = cli.operate_paper(root=ROOT, operation='capture-paper', record_id=scenario.record_id,
+            input_sha256=approved, allow_paper_write=True, stream=io.BytesIO(payload.encode()))
+        output = capsys.readouterr()
+        body = json.loads(output.out)
+>       assert code == 1 and body['reason_code'] == 'paper_operator_operation_failed'
+E       assert (0 == 1)
+
+tests/test_research_paper_operator.py:261: AssertionError
+_ test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[size-crypto_eth] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff6251bfe10>
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff6251ed6d0>
+team = 'crypto_eth', change = 'size'
+
+    @pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+    @pytest.mark.parametrize('change', ['size', 'fees', 'assumptions'])
+    def test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument(
+            monkeypatch, capsys, team, change):
+        """A faulty adapter must not make a changed scenario its own approval.
+    
+        Use a recomputed, internally valid receipt, not merely broken result JSON.
+        This is collaborator-fault injection, not a hostile-Python sandbox claim.
+        """
+        from polymarket_alpha_lab import research_paper_capture as store
+        from polymarket_alpha_lab.research_paper_capture_codec import dump
+        execution, scenario, history, original = sample(team=team)
+        payload = encode_paper_scenario(scenario)
+        approved = checksum(payload)
+        state = dict(calls=0, closed=False)
+    
+        class Session:
+            def capture_paper_research(self, *, scenario, allow_paper_write):
+                assert allow_paper_write is True
+                state['calls'] += 1
+                if change == 'size':
+                    object.__setattr__(scenario, 'requested_size', Decimal('6'))
+                elif change == 'fees':
+                    object.__setattr__(scenario.costs, 'taker_fee_rate', Decimal('.03'))
+                else:
+                    object.__setattr__(scenario, 'assumptions_id', 'changed-assumptions')
+                receipt = replace(original, scenario=scenario,
+                    result_payload=dump(store._result_for(history, scenario, execution)))
+                assert checksum(encode_paper_scenario(receipt.scenario)) != approved
+                # The ordinary receipt validator and result reconstruction succeed.
+                assert replace(receipt) == receipt
+                return receipt
+    
+        class Database:
+            def __init__(self, root):
+                assert root == ROOT
+    
+            @contextmanager
+            def session(self):
+                try:
+                    yield Session()
+                finally:
+                    state['closed'] = True
+    
+        monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+        code = cli.operate_paper(root=ROOT, operation='capture-paper', record_id=scenario.record_id,
+            input_sha256=approved, allow_paper_write=True, stream=io.BytesIO(payload.encode()))
+        output = capsys.readouterr()
+        body = json.loads(output.out)
+>       assert code == 1 and body['reason_code'] == 'paper_operator_operation_failed'
+E       assert (0 == 1)
+
+tests/test_research_paper_operator.py:261: AssertionError
+_ test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[fees-crypto_btc] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff6252132f0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff6251eda90>
+team = 'crypto_btc', change = 'fees'
+
+    @pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+    @pytest.mark.parametrize('change', ['size', 'fees', 'assumptions'])
+    def test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument(
+            monkeypatch, capsys, team, change):
+        """A faulty adapter must not make a changed scenario its own approval.
+    
+        Use a recomputed, internally valid receipt, not merely broken result JSON.
+        This is collaborator-fault injection, not a hostile-Python sandbox claim.
+        """
+        from polymarket_alpha_lab import research_paper_capture as store
+        from polymarket_alpha_lab.research_paper_capture_codec import dump
+        execution, scenario, history, original = sample(team=team)
+        payload = encode_paper_scenario(scenario)
+        approved = checksum(payload)
+        state = dict(calls=0, closed=False)
+    
+        class Session:
+            def capture_paper_research(self, *, scenario, allow_paper_write):
+                assert allow_paper_write is True
+                state['calls'] += 1
+                if change == 'size':
+                    object.__setattr__(scenario, 'requested_size', Decimal('6'))
+                elif change == 'fees':
+                    object.__setattr__(scenario.costs, 'taker_fee_rate', Decimal('.03'))
+                else:
+                    object.__setattr__(scenario, 'assumptions_id', 'changed-assumptions')
+                receipt = replace(original, scenario=scenario,
+                    result_payload=dump(store._result_for(history, scenario, execution)))
+                assert checksum(encode_paper_scenario(receipt.scenario)) != approved
+                # The ordinary receipt validator and result reconstruction succeed.
+                assert replace(receipt) == receipt
+                return receipt
+    
+        class Database:
+            def __init__(self, root):
+                assert root == ROOT
+    
+            @contextmanager
+            def session(self):
+                try:
+                    yield Session()
+                finally:
+                    state['closed'] = True
+    
+        monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+        code = cli.operate_paper(root=ROOT, operation='capture-paper', record_id=scenario.record_id,
+            input_sha256=approved, allow_paper_write=True, stream=io.BytesIO(payload.encode()))
+        output = capsys.readouterr()
+        body = json.loads(output.out)
+>       assert code == 1 and body['reason_code'] == 'paper_operator_operation_failed'
+E       assert (0 == 1)
+
+tests/test_research_paper_operator.py:261: AssertionError
+_ test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[fees-crypto_eth] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff6251cbce0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff62522c770>
+team = 'crypto_eth', change = 'fees'
+
+    @pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+    @pytest.mark.parametrize('change', ['size', 'fees', 'assumptions'])
+    def test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument(
+            monkeypatch, capsys, team, change):
+        """A faulty adapter must not make a changed scenario its own approval.
+    
+        Use a recomputed, internally valid receipt, not merely broken result JSON.
+        This is collaborator-fault injection, not a hostile-Python sandbox claim.
+        """
+        from polymarket_alpha_lab import research_paper_capture as store
+        from polymarket_alpha_lab.research_paper_capture_codec import dump
+        execution, scenario, history, original = sample(team=team)
+        payload = encode_paper_scenario(scenario)
+        approved = checksum(payload)
+        state = dict(calls=0, closed=False)
+    
+        class Session:
+            def capture_paper_research(self, *, scenario, allow_paper_write):
+                assert allow_paper_write is True
+                state['calls'] += 1
+                if change == 'size':
+                    object.__setattr__(scenario, 'requested_size', Decimal('6'))
+                elif change == 'fees':
+                    object.__setattr__(scenario.costs, 'taker_fee_rate', Decimal('.03'))
+                else:
+                    object.__setattr__(scenario, 'assumptions_id', 'changed-assumptions')
+                receipt = replace(original, scenario=scenario,
+                    result_payload=dump(store._result_for(history, scenario, execution)))
+                assert checksum(encode_paper_scenario(receipt.scenario)) != approved
+                # The ordinary receipt validator and result reconstruction succeed.
+                assert replace(receipt) == receipt
+                return receipt
+    
+        class Database:
+            def __init__(self, root):
+                assert root == ROOT
+    
+            @contextmanager
+            def session(self):
+                try:
+                    yield Session()
+                finally:
+                    state['closed'] = True
+    
+        monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+        code = cli.operate_paper(root=ROOT, operation='capture-paper', record_id=scenario.record_id,
+            input_sha256=approved, allow_paper_write=True, stream=io.BytesIO(payload.encode()))
+        output = capsys.readouterr()
+        body = json.loads(output.out)
+>       assert code == 1 and body['reason_code'] == 'paper_operator_operation_failed'
+E       assert (0 == 1)
+
+tests/test_research_paper_operator.py:261: AssertionError
+_ test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[assumptions-crypto_btc] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff625158050>
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff62522cb00>
+team = 'crypto_btc', change = 'assumptions'
+
+    @pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+    @pytest.mark.parametrize('change', ['size', 'fees', 'assumptions'])
+    def test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument(
+            monkeypatch, capsys, team, change):
+        """A faulty adapter must not make a changed scenario its own approval.
+    
+        Use a recomputed, internally valid receipt, not merely broken result JSON.
+        This is collaborator-fault injection, not a hostile-Python sandbox claim.
+        """
+        from polymarket_alpha_lab import research_paper_capture as store
+        from polymarket_alpha_lab.research_paper_capture_codec import dump
+        execution, scenario, history, original = sample(team=team)
+        payload = encode_paper_scenario(scenario)
+        approved = checksum(payload)
+        state = dict(calls=0, closed=False)
+    
+        class Session:
+            def capture_paper_research(self, *, scenario, allow_paper_write):
+                assert allow_paper_write is True
+                state['calls'] += 1
+                if change == 'size':
+                    object.__setattr__(scenario, 'requested_size', Decimal('6'))
+                elif change == 'fees':
+                    object.__setattr__(scenario.costs, 'taker_fee_rate', Decimal('.03'))
+                else:
+                    object.__setattr__(scenario, 'assumptions_id', 'changed-assumptions')
+                receipt = replace(original, scenario=scenario,
+                    result_payload=dump(store._result_for(history, scenario, execution)))
+                assert checksum(encode_paper_scenario(receipt.scenario)) != approved
+                # The ordinary receipt validator and result reconstruction succeed.
+                assert replace(receipt) == receipt
+                return receipt
+    
+        class Database:
+            def __init__(self, root):
+                assert root == ROOT
+    
+            @contextmanager
+            def session(self):
+                try:
+                    yield Session()
+                finally:
+                    state['closed'] = True
+    
+        monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+        code = cli.operate_paper(root=ROOT, operation='capture-paper', record_id=scenario.record_id,
+            input_sha256=approved, allow_paper_write=True, stream=io.BytesIO(payload.encode()))
+        output = capsys.readouterr()
+        body = json.loads(output.out)
+>       assert code == 1 and body['reason_code'] == 'paper_operator_operation_failed'
+E       assert (0 == 1)
+
+tests/test_research_paper_operator.py:261: AssertionError
+_ test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[assumptions-crypto_eth] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff625232650>
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff6252127b0>
+team = 'crypto_eth', change = 'assumptions'
+
+    @pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+    @pytest.mark.parametrize('change', ['size', 'fees', 'assumptions'])
+    def test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument(
+            monkeypatch, capsys, team, change):
+        """A faulty adapter must not make a changed scenario its own approval.
+    
+        Use a recomputed, internally valid receipt, not merely broken result JSON.
+        This is collaborator-fault injection, not a hostile-Python sandbox claim.
+        """
+        from polymarket_alpha_lab import research_paper_capture as store
+        from polymarket_alpha_lab.research_paper_capture_codec import dump
+        execution, scenario, history, original = sample(team=team)
+        payload = encode_paper_scenario(scenario)
+        approved = checksum(payload)
+        state = dict(calls=0, closed=False)
+    
+        class Session:
+            def capture_paper_research(self, *, scenario, allow_paper_write):
+                assert allow_paper_write is True
+                state['calls'] += 1
+                if change == 'size':
+                    object.__setattr__(scenario, 'requested_size', Decimal('6'))
+                elif change == 'fees':
+                    object.__setattr__(scenario.costs, 'taker_fee_rate', Decimal('.03'))
+                else:
+                    object.__setattr__(scenario, 'assumptions_id', 'changed-assumptions')
+                receipt = replace(original, scenario=scenario,
+                    result_payload=dump(store._result_for(history, scenario, execution)))
+                assert checksum(encode_paper_scenario(receipt.scenario)) != approved
+                # The ordinary receipt validator and result reconstruction succeed.
+                assert replace(receipt) == receipt
+                return receipt
+    
+        class Database:
+            def __init__(self, root):
+                assert root == ROOT
+    
+            @contextmanager
+            def session(self):
+                try:
+                    yield Session()
+                finally:
+                    state['closed'] = True
+    
+        monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+        code = cli.operate_paper(root=ROOT, operation='capture-paper', record_id=scenario.record_id,
+            input_sha256=approved, allow_paper_write=True, stream=io.BytesIO(payload.encode()))
+        output = capsys.readouterr()
+        body = json.loads(output.out)
+>       assert code == 1 and body['reason_code'] == 'paper_operator_operation_failed'
+E       assert (0 == 1)
+
+tests/test_research_paper_operator.py:261: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_research_paper_operator.py::test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[size-crypto_btc] - assert (0 == 1)
+FAILED tests/test_research_paper_operator.py::test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[size-crypto_eth] - assert (0 == 1)
+FAILED tests/test_research_paper_operator.py::test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[fees-crypto_btc] - assert (0 == 1)
+FAILED tests/test_research_paper_operator.py::test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[fees-crypto_eth] - assert (0 == 1)
+FAILED tests/test_research_paper_operator.py::test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[assumptions-crypto_btc] - assert (0 == 1)
+FAILED tests/test_research_paper_operator.py::test_capture_receipt_is_bound_to_approved_hash_not_mutated_argument[assumptions-crypto_eth] - assert (0 == 1)
+6 failed, 52 deselected in 0.83s

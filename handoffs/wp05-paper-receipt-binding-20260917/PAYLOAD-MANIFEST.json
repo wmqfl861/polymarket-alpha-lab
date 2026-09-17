@@ -1,0 +1,117 @@
+{
+  "schema": "candidate-payload-manifest-v1",
+  "files": {
+    "README.md": {
+      "bytes": 3234,
+      "sha256": "725557a3771714a2a7b774dc91b332501fecd01f64c7d123db09602fd00f445c"
+    },
+    "REVIEW.md": {
+      "bytes": 6685,
+      "sha256": "beab93f984fc5ffbe50e5f29861fe4642443c1c7e184f6eb750aba46760ed796"
+    },
+    "candidate-identity.json": {
+      "bytes": 663,
+      "sha256": "8fb9c507fdebdbebb20e9056e5d39d299b1127650d1d23f77d459c701aef12e7"
+    },
+    "evidence/baseline.log": {
+      "bytes": 99,
+      "sha256": "f3651f6c24d56744b9602b1697977b2b60457a1e80b432707f2b09212627739d"
+    },
+    "evidence/detached-final.log": {
+      "bytes": 764,
+      "sha256": "d45bd499c8bcb45ac221ca86ab9b2a61d89a333ea5a13785e9846962f5c364b4"
+    },
+    "evidence/detached-final.xml": {
+      "bytes": 78357,
+      "sha256": "bc26cc1f4e99696e0df1613e558c3652fedb8c89aad9b61a855f904b04c52891"
+    },
+    "evidence/final-scope-check.json": {
+      "bytes": 349,
+      "sha256": "0ae5026ccd15d5f53d7ac541acfb93062e00e5bfe13cda587076f4103f962560"
+    },
+    "evidence/full-final-exit.json": {
+      "bytes": 46,
+      "sha256": "d8b7c8a28f8275eb3e52c146c12a3fd39172b0505700a6a6a9778345d764b373"
+    },
+    "evidence/full-final.log": {
+      "bytes": 46326,
+      "sha256": "0b59b36266e793522d6767edfcf292a938598ae1621a8cc0c85f27c823a1a7a9"
+    },
+    "evidence/implementation-green.log": {
+      "bytes": 179,
+      "sha256": "e88c429b772b338f44d105c4fad7241fd0b468ba230d69b7669ed4e7aea4fa9e"
+    },
+    "evidence/implementation-red.log": {
+      "bytes": 18563,
+      "sha256": "b0e81ff61501390ab29032d9157ef06ed009b443cc1f2000664b542aa66ce148"
+    },
+    "evidence/patch-check.log": {
+      "bytes": 294,
+      "sha256": "00ce08b2493f45909306dcadcecac083316f2de524f4b10cab74ea3d80642e40"
+    },
+    "evidence/receipt-comparison.log": {
+      "bytes": 115,
+      "sha256": "e0d2393b84311bf0cc1b2e0174295b0a5f23120d37f8a84fd44eeeb07d53dc9c"
+    },
+    "evidence/related.log": {
+      "bytes": 672,
+      "sha256": "e3945407ab785404bee8d3f49668233ccd82d29d54668d3e5edce8b5148768f9"
+    },
+    "evidence/review-first.log": {
+      "bytes": 113,
+      "sha256": "ca3270da72f957e72117b0b50ff7b8af789031fd5e374929010fb0a35c8a2314"
+    },
+    "evidence/static-review.json": {
+      "bytes": 808,
+      "sha256": "f7f3efefc04808b6ddb759eda8d6e1d78532aba64887c7f462d9ccc19b5b9189"
+    },
+    "evidence/tooling-notes.txt": {
+      "bytes": 2269,
+      "sha256": "823ffea731633e3b915952644061fd50a34c184725018026c6ba57ae0f6d3686"
+    },
+    "implementation.patch": {
+      "bytes": 17318,
+      "sha256": "0ec98726a262b8bf64a1cd2e1022ffd2ac437b4bbc1d2e2fd3f28515bdaae5e3"
+    },
+    "new-case-ids.json": {
+      "bytes": 2345,
+      "sha256": "d5a0c3453d8644a405ccfedca6085dca7fdae38010d59317c135e78dd7d798a8"
+    },
+    "receipt-byte-compatibility.json": {
+      "bytes": 123,
+      "sha256": "15f4df09163225bd39b2891566c4eb3736da6e2be7a2d0dc4e0eaa817fbc4ed6"
+    },
+    "source-manifest.json": {
+      "bytes": 1266,
+      "sha256": "a78908b60769fdd9d85b36a71599f82a1eae846ef065f42ff6d64eb76f1fc36c"
+    },
+    "sources/DELIVERY_PLAN.md": {
+      "bytes": 73802,
+      "sha256": "debba49050fd279a14c74888ed59f9c5c8a077c3ec9b964f7531d1c7a93492c6"
+    },
+    "sources/docs/research-paper.md": {
+      "bytes": 24715,
+      "sha256": "5395d6e65d6f1b16aba4a3a6f7a657a78f00ec972e827c8b50b3d3d30a4a2350"
+    },
+    "sources/src/polymarket_alpha_lab/research_paper_operator.py": {
+      "bytes": 6210,
+      "sha256": "cace4b664b06b5ed55b4d0284eeaaa2f15679c35986704d3ba1b191692e47725"
+    },
+    "sources/tests/test_project_postgres_paper_operator_native.py": {
+      "bytes": 7966,
+      "sha256": "5b9074353d9aa3f0657eb703b90b669990947d69734c8677e64a0451f706132a"
+    },
+    "sources/tests/test_research_paper_operator.py": {
+      "bytes": 12199,
+      "sha256": "911379adcb917164c31e6831ed64daebadca0649d74d2e8737e777f1980079bd"
+    },
+    "sources/tests/test_research_paper_operator_review.py": {
+      "bytes": 8008,
+      "sha256": "e1f3c7c63633b6f6f9e201150722676f007696c1b089f65c4926f31e5930d6e2"
+    },
+    "validation-summary.json": {
+      "bytes": 1978,
+      "sha256": "022ae560529a3038d454a86a56c84753772680de986a68fe5832dc17b4760076"
+    }
+  }
+}

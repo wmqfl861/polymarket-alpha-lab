@@ -1,0 +1,12 @@
+{
+  "new_operator_cases": 14,
+  "final_operator_cases": 83,
+  "module_case_counts": {
+    "tests.test_research_paper_operator": 58,
+    "tests.test_research_paper_operator_review": 25
+  },
+  "finite_added_text_credential_scan_hits": [],
+  "scan_is_not_a_security_audit": true,
+  "development_worktree_clean": true,
+  "review_worktree_clean": true
+}
