@@ -1,0 +1,47 @@
+name: Publish fixed readonly fixture correction
+on:
+  push:
+    branches: [review/wp05-output-fixture-scope-20260917]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Apply exact reviewed two-file correction only
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=819e5bfa6b2bca436abc55bba00b465bf35f6038
+          REF=refs/heads/review/wp05-output-fixture-objects-20260917
+          PATCH="$RUNNER_TEMP/correction.patch"
+          cp docs/reviews/readonly-output-publication/fixture-scope-correction.patch "$PATCH"
+          echo "4efb4c28e89d3be3578d702cd0da99cc8af117074d34296ba1101b864cbed474  $PATCH" | sha256sum --check
+          test "$(wc -c < "$PATCH")" -eq 4418
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- src scripts database supabase .github pyproject.toml uv.lock
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 2
+          TREE=$(git write-tree)
+          test "$TREE" = f6c66aac62c396d01376fe5399b3c9b5d5334a52
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport fixed test scope and retained failure note; not acceptance or merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/fixture-publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fixed-readonly-fixture-publication
+          path: ${{ runner.temp }}/fixture-publication.txt
+          retention-days: 7
+          if-no-files-found: error

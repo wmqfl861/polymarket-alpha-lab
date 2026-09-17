@@ -1,0 +1,75 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 448acb2918e49221341982381320e5ca09464b88..91b2687e18c09195c3bf88126104d1103f022f2f 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -845,3 +845,11 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ **WP-03／WP-04／WP-05／WP-06 仍 PARTIAL，G3—G6／V1 未关闭。** 输出完成不等于
+ 消费者已收到，输出失败不证明之前操作回滚。D1—D3、真实模型／输入／费率验收、PR #49
+ 及受阻诊断限制不变；不操作用户业务库、凭据或旧安装，不自动修复／重试／调用提供商。
++
++### 本轮首次托管验收发现并修复的测试输出生命周期问题
++
++首次 paper 流程表面成功，但日志／JUnit 数量不一致且遗漏 93 个原用例，不能验收。
++根因复现为测试的 BrokenPipe 注入在 pytest 无捕获运行时仍覆盖真实 stdout；缩短注入
++作用域，在返回测试运行器前恢复原流，原断言保留。新增捕获／不捕获两种真实子进程
++回归，核对完整用例编号和 JUnit 数量；首次不完整报告及反例保留，最终新版本须重新
++完整验收。未改生产逻辑、原超时或测试选择，也未将旧流程追认为成功。
+diff --git a/tests/test_research_settled_cli_review.py b/tests/test_research_settled_cli_review.py
+index a202ada7f27d8110cfc0a7520cffeb7cf94621e1..a0f25656b5bab67ea0291c05ddb53eee9440ce0c 100644
+--- a/tests/test_research_settled_cli_review.py
++++ b/tests/test_research_settled_cli_review.py
+@@ -88,8 +88,10 @@ def test_failed_stdout_does_not_retry_or_print_traceback(managed, monkeypatch):
+         writes.append(value)
+         raise BrokenPipeError(PRIVATE)
+     import sys
+-    monkeypatch.setattr(sys.stdout, 'write', broken)
+-    assert cli.main(['--settled-paper'], default_root=Path('/unused')) == 1
++    # Restore the live stream before pytest reports the result under -s.
++    with monkeypatch.context() as scoped:
++        scoped.setattr(sys.stdout, 'write', broken)
++        assert cli.main(['--settled-paper'], default_root=Path('/unused')) == 1
+     assert len(writes) == 1 and managed['events'][-1] == ('exit',)
+ 
+ 
+@@ -100,3 +102,41 @@ def test_summary_does_not_mutate_original_and_details_can_be_read_again():
+     full = cli._settled_paper_summary(report, include_decisions=True)
+     assert report == original and full['attempts'] == original['attempts']
+     assert full['groups'] == original['groups']
++
++
++@pytest.mark.parametrize('capture', ['no', 'fd'])
++def test_output_fault_fixture_restores_stream_before_pytest_reporting(tmp_path, capture):
++    """An injected CLI fault must not damage pytest's real terminal writer."""
++    import subprocess
++    import sys
++    import xml.etree.ElementTree as ET
++    from polymarket_alpha_lab.project_postgres.files import clean_environment
++    root = Path(__file__).resolve().parents[1]
++    report = tmp_path / 'output-fixture.xml'
++    names = ('test_failed_stdout_does_not_retry_or_print_traceback',
++             'test_summary_does_not_mutate_original_and_details_can_be_read_again')
++    program = '''
++import sys
++from pathlib import Path
++root = Path(sys.argv[1])
++sys.path[:0] = [str(root / 'src'), str(root)]
++from polymarket_alpha_lab import research_evaluation_cli as cli
++assert Path(cli.__file__).resolve().is_relative_to(root)
++import pytest
++raise SystemExit(pytest.main(sys.argv[2:]))
++'''
++    args = ['-q', '--capture=' + capture,
++            *('tests/test_research_settled_cli_review.py::' + name for name in names),
++            '--junitxml=' + str(report)]
++    env = dict(clean_environment(), PYTEST_DISABLE_PLUGIN_AUTOLOAD='1')
++    result = subprocess.run([sys.executable, '-I', '-c', program, str(root), *args],
++        cwd=root, env=env, capture_output=True, timeout=30)
++    assert result.returncode == 0, (result.stdout, result.stderr)
++    assert b'2 passed' in result.stdout and result.stderr == b''
++    xml = ET.fromstring(report.read_bytes())
++    cases = list(xml.iter('testcase'))
++    assert [(c.get('classname'), c.get('name')) for c in cases] == [
++        ('tests.test_research_settled_cli_review', name) for name in names]
++    assert all(c.find('failure') is None and c.find('error') is None
++               and c.find('skipped') is None for c in cases)
++    assert sum(int(s.get('tests', '0')) for s in xml.iter('testsuite')) == 2
