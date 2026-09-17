@@ -1,0 +1,37 @@
+name: Pinned read-only integration sources
+on:
+  push:
+    branches: [review/wp05-readonly-integration-source-20260917]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 0adfadaccb4e310c67fcd3a78455f38d2e39d97b
+          persist-credentials: false
+      - name: Archive immutable inputs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 0adfadaccb4e310c67fcd3a78455f38d2e39d97b
+          git fetch --no-tags --depth=1 origin dc6a5a0cf6b149bfcab065fac36ee9f90c6e7336 a71ae4d716e8a73bd3614f080f42e5a6968d76f8
+          for revision in 0adfadaccb4e310c67fcd3a78455f38d2e39d97b dc6a5a0cf6b149bfcab065fac36ee9f90c6e7336 a71ae4d716e8a73bd3614f080f42e5a6968d76f8; do
+            git archive --format=zip --output="$RUNNER_TEMP/$revision.zip" "$revision"
+            git ls-tree -r "$revision" > "$RUNNER_TEMP/$revision.tree.txt"
+            git cat-file commit "$revision" > "$RUNNER_TEMP/$revision.commit.txt"
+            sha256sum "$RUNNER_TEMP/$revision.zip" > "$RUNNER_TEMP/$revision.sha256"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pinned-pr55-and-main
+          path: |
+            ${{ runner.temp }}/*.zip
+            ${{ runner.temp }}/*.tree.txt
+            ${{ runner.temp }}/*.commit.txt
+            ${{ runner.temp }}/*.sha256
+          retention-days: 7
+          if-no-files-found: error
