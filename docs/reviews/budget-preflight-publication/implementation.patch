@@ -1,0 +1,326 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 279c11c..9f732da 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -785,3 +785,23 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ 
+ **WP-06 仍 PARTIAL，G6／V1 未关闭。** 不宣称跨版本／跨机器升级或真实灾难恢复，
+ 不绕过 PR #49／受阻诊断，D1—D3 与真实模型／来源／费率验收仍待办。
++
++
++## 30. WP-02／WP-03：固定输出额度冲突在任务领取前拒绝
++
++基线 `34e9f3bf7d08650714754c757a9e4a9dff16be92`（PR #46）。复用原预算执行入口，
++在已准备的新请求的单次输出 token 上限超过预算许可时，先拒绝而不消耗不可重跑的领取。
++不修改请求上限凑适配，不自动换预算；后续明确提供匹配的获准预算仍使用同一原请求。
++
++- 原实现反例确认已领取并保存为 `model_failed`，虽未调用真实客户端却消耗了原任务；
++  现在通过已有只读查询保留完成／incomplete 重放，无旧记录时返回固定配置错误。
++- 原已阻断且不需模型的 intake 保存路径保留；额度耗尽／过期错误优先级不变。
++  每次真实调用仍须通过原事务预留、输出上限／消息字节检查，静态预检不代替它们。
++- 同一原生预算用例追加混合批次、零领取／零预留、显式匹配预算及已有记录重放，
++  只使用隔离 CI 数据库和合成客户端。原迁移、收费算法、权限和 CI 选择／时限不变。
++- 最终固定版本的单独自审、完整离线和 Windows／kit 证据记录于本 PR；
++  本地通过不代替尚未执行的原生场景，不把配置拒绝补写为预测记录。
++
++**WP-02 AWAITING_OWNER，WP-03 PARTIAL，G2／G3／G6 和 V1 未关闭。** 只关闭
++不可兼容输出配置的提前拒绝子项；不认证提供商、费率或真实预算，不绕过 PR #49
++及受阻诊断；D1—D3、真实输入／费用／业务验收和用户数据操作授权均未改变。
+diff --git a/docs/research-model-budget.md b/docs/research-model-budget.md
+index fbf4b02..c157509 100644
+--- a/docs/research-model-budget.md
++++ b/docs/research-model-budget.md
+@@ -167,3 +167,31 @@ Primary implementation references checked 2026-09-15:
+ https://www.postgresql.org/docs/17/explicit-locking.html#ADVISORY-LOCKS
+ https://www.postgresql.org/docs/17/transaction-iso.html
+ https://docs.python.org/3.13/library/threading.html
++
++
++## Prepared-request output compatibility before claiming (WP-02 / WP-03)
++
++A prepared request whose fixed `limits.max_output_tokens` exceeds the selected
++budget's `max_output_tokens` is refused before a **new** execution claim. The
++existing agent requests that ceiling on its first model call. A mismatch raises
++`research_budget_output_limit_incompatible`; it creates neither a claim nor a
++call reservation and does not construct a client. Previously the task could be
++claimed and captured as `model_failed` before this known mismatch was rejected.
++
++The original request and budget are not clamped, edited or automatically replaced.
++An explicitly reviewed compatible budget may later be supplied for the SAME still
++unclaimed request, subject to all original freshness and execution checks. Batch
++execution records its existing `operation_failed` metadata and keeps the request
++unclaimed; it does not automatically retry. A compatible peer can still run.
++
++Existing completion and incomplete receipts are looked up, revalidated and
++returned unchanged even under an incompatible output allowance. This is not
++permission to restart them. Already-blocked intake with no model work retains its
++original capture behavior. Empty/expired budget errors keep their priority.
++
++This static check is not a general request/provider compatibility certificate or
++a claim that a whole research loop fits the available money. The original
++per-call transaction still validates message bytes, output cap, expiry and shared
++reservations before entering the supplied client. Later exhaustion, provider
++errors, uncertain commits and no-refund behavior are unchanged. No real provider,
++fee verification, credential access or automatic user-database operation is added.
+diff --git a/src/polymarket_alpha_lab/research_model_budget_runner.py b/src/polymarket_alpha_lab/research_model_budget_runner.py
+index 1ffcf77..d929b40 100644
+--- a/src/polymarket_alpha_lab/research_model_budget_runner.py
++++ b/src/polymarket_alpha_lab/research_model_budget_runner.py
+@@ -81,16 +81,25 @@ def run_budgeted_research_with_psycopg(dsn, *, request, budget_id, model_factory
+         raise ValueError('research_budget_lookup_mismatch')
+     policy = snapshot.stored.policy
+     request = policy.bind_request(request)
++    blocked_reason = None
+     if snapshot.to_dict()['available_call_reservations'] == 0:
+-        # A known empty/expired allowance must not consume a NEW task claim.
+-        # Existing claims still replay inertly, including after policy expiry.
++        blocked_reason = 'research_budget_not_available'
++    elif (request.intake.status == 'prepared'
++            and request.limits.max_output_tokens > policy.max_output_tokens):
++        # The existing loop requests this fixed ceiling on its first call.
++        # Do not consume an immutable claim for a known-incompatible allowance,
++        # or silently clamp the reviewed request to make that call admissible.
++        blocked_reason = 'research_budget_output_limit_incompatible'
++    if blocked_reason is not None:
++        # Existing claims/results remain readable even if this allowance cannot
++        # admit NEW work. No new claim, call permit or client is created here.
+         prior = execution.inspect_captured_research_with_psycopg(dsn, record_id=request.record_id)
+         if prior is not None:
+             prior = replace(prior)
+             if prior.request.payload != request.payload:
+                 raise ValueError('research_budget_request_mismatch')
+             return prior
+-        raise ValueError('research_budget_not_available')
++        raise ValueError(blocked_reason)
+ 
+     def factory(team_id):
+         if team_id != request.intake.team_id:
+diff --git a/tests/test_project_postgres_budget_native.py b/tests/test_project_postgres_budget_native.py
+index 8804528..570164d 100644
+--- a/tests/test_project_postgres_budget_native.py
++++ b/tests/test_project_postgres_budget_native.py
+@@ -177,6 +177,47 @@ def test_budget_upgrade_shared_cap_replay_and_lost_process(tmp_path,monkeypatch)
+                                       ('expires',e,1),(q.budget_id,rs[0],32)):
+                 with pytest.raises(RuntimeError):s._call(raw_permit,budget_id=budget_id,record_id=r.record_id,
+                     request_sha256=r.content_sha256,call_number=number,message_sha256='b'*64,message_bytes=10,max_output_tokens=1)
++            # A static per-call output mismatch must leave the original request
++            # unclaimed. The same batch can still execute a compatible peer.
++            bad = prepared(850)
++            bad = replace(bad, limits=replace(bad.limits, max_output_tokens=2048))
++            peer = prepared(851, 'crypto_btc')
++            reviewed = policy('output-preflight', (bad, peer), total_micros=1000, max_calls=10)
++            stored_preflight = s.create_model_budget(policy=reviewed, allow_budget_write=True)
++            assert s.inspect(record_id=bad.record_id) is None
++            with pytest.raises(ValueError, match='^research_budget_output_limit_incompatible$'):
++                s.run_budgeted_research(request=bad, budget_id=reviewed.budget_id,
++                    model_factory=forbidden, allow_model_calls=True)
++            assert s.inspect(record_id=bad.record_id) is None
++            zero = s.inspect_model_budget(budget_id=reviewed.budget_id)
++            assert zero.stored == stored_preflight and (zero.reserved_calls, zero.reserved_micros) == (0, 0)
++            created = []
++            def probe_factory(team):
++                created.append(team)
++                return Model()
++            s.enqueue_research_batch(batch=ResearchBatch('output-batch', (bad, peer)), allow_queue_write=True)
++            mixed = s.run_research_batch(batch_id='output-batch', model_factory=probe_factory,
++                allow_model_calls=True, max_workers=1, model_budget_id=reviewed.budget_id)
++            assert [a.status for a in mixed.attempts] == ['operation_failed', 'returned']
++            assert mixed.attempts[1].execution.record.run.research.status == 'completed'
++            assert created == ['crypto_btc'] and s.inspect(record_id=bad.record_id) is None
++            used = s.inspect_model_budget(budget_id=reviewed.budget_id)
++            assert used.stored == stored_preflight and (used.reserved_calls, used.reserved_micros) == (3, 300)
++            original_payload = bad.payload
++            approved = replace(reviewed, budget_id='output-compatible', max_output_tokens=2048)
++            s.create_model_budget(policy=approved, allow_budget_write=True)
++            completed = s.run_budgeted_research(request=bad, budget_id=approved.budget_id,
++                model_factory=probe_factory, allow_model_calls=True)
++            assert completed.record.run.research.status == 'completed' and bad.payload == original_payload
++            assert created == ['crypto_btc', bad.intake.team_id]
++            assert s.inspect_model_budget(budget_id=approved.budget_id).reserved_calls == 3
++            # The earlier incompatible policy still has capacity, but cannot
++            # turn an existing result into a new claim or another model call.
++            replay = s.run_budgeted_research(request=bad, budget_id=reviewed.budget_id,
++                model_factory=forbidden, allow_model_calls=True)
++            assert replay.record == completed.record
++            assert s.inspect_model_budget(budget_id=reviewed.budget_id).reserved_calls == 3
++            print('native budget output preflight: PASS; no claim or permit on mismatch, compatible peer, same-request explicit budget, immutable replay')
+             crash_requests=(prepared(840),prepared(841,'crypto_btc'))
+             crash_policy=policy('crash-budget',crash_requests,total_micros=400,max_calls=4)
+             s.create_model_budget(policy=crash_policy,allow_budget_write=True)
+@@ -190,6 +231,11 @@ def test_budget_upgrade_shared_cap_replay_and_lost_process(tmp_path,monkeypatch)
+             assert observed.reserved_calls==1 and observed.reserved_micros==100
+             original_claim=s.inspect(record_id=crash_requests[0].record_id)
+             assert original_claim.status=='incomplete'
++            narrow = policy('incomplete-output-preflight', (crash_requests[0],), max_output_tokens=1)
++            s.create_model_budget(policy=narrow, allow_budget_write=True)
++            assert s.run_budgeted_research(request=crash_requests[0], budget_id=narrow.budget_id,
++                model_factory=forbidden, allow_model_calls=True) == original_claim
++            assert s.inspect_model_budget(budget_id=narrow.budget_id).reserved_calls == 0
+             replay=s.run_budgeted_research(request=crash_requests[0],budget_id='crash-budget',
+                 model_factory=forbidden,allow_model_calls=True)
+             reread=s.inspect_model_budget(budget_id='crash-budget')
+diff --git a/tests/test_research_model_budget.py b/tests/test_research_model_budget.py
+index 92dccfd..d59aef7 100644
+--- a/tests/test_research_model_budget.py
++++ b/tests/test_research_model_budget.py
+@@ -383,3 +383,160 @@ def test_invalid_request_does_not_open_a_budget_connection(monkeypatch):
+     monkeypatch.setattr(runner,'load_model_budget_with_psycopg',lambda *a,**k:pytest.fail('DB read for invalid request'))
+     with pytest.raises(ValueError):runner.run_budgeted_research_with_psycopg('fake',request=object(),
+         budget_id='b',model_factory=lambda _:None,allow_model_calls=True)
++
++
++# Prepared requests must fit a fixed per-call output allowance BEFORE a claim.
++@pytest.mark.parametrize('number', [0, 1])
++@pytest.mark.parametrize('cap', [1, 1023])
++def test_incompatible_output_budget_refuses_before_claim(monkeypatch, number, cap):
++    r = req(number)
++    p = policy((r,), max_output_tokens=cap)
++    events = []
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snapshot(p))
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: None)
++    def claim(dsn, request):
++        events.append('claim')
++        return True, state(request)
++    def capture(dsn, claimed, run):
++        events.append('capture')
++        return replace(claimed, status='captured', record=record_for(r, run))
++    monkeypatch.setattr(runner.execution, '_claim', claim)
++    monkeypatch.setattr(runner.execution, '_capture', capture)
++    def factory(team):
++        events.append('factory')
++        return Model()
++    with pytest.raises(ValueError, match='^research_budget_output_limit_incompatible$'):
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++            model_factory=factory, allow_model_calls=True)
++    assert events == []
++    assert r.limits.max_output_tokens == 1024 and p.max_output_tokens == cap
++
++
++@pytest.mark.parametrize('number', [0, 1])
++@pytest.mark.parametrize('existing', ['incomplete', 'captured'])
++def test_output_preflight_preserves_original_execution_replay(monkeypatch, number, existing):
++    r = req(number)
++    p = policy((r,), max_output_tokens=1)
++    original = state(r)
++    if existing == 'captured':
++        # Reuse the existing valid captured-record fixture for the same request.
++        original = replace(original, status='captured', record=record_for(r, make_run(
++            condition='budget-event-'+str(number), task='budget-task-'+str(number),
++            team='crypto_btc' if number % 2 else 'crypto_eth')))
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snapshot(p))
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: original)
++    entered = []
++    def unexpected(*a, **k):
++        entered.append('execution')
++        return original
++    monkeypatch.setattr(runner.execution, 'run_captured_research_with_psycopg', unexpected)
++    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++        model_factory=lambda _: pytest.fail('replay factory'), allow_model_calls=True)
++    assert out == original and entered == []
++
++
++@pytest.mark.parametrize('cap', [1024, 2048])
++def test_compatible_output_budget_keeps_original_claim_path(monkeypatch, cap):
++    r = req()
++    p = policy((r,), max_output_tokens=cap)
++    seen = []
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snapshot(p))
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg',
++        lambda *a, **k: pytest.fail('unnecessary preflight read'))
++    def execution(dsn, **kw):
++        seen.append(kw['request'])
++        return 'original-path'
++    monkeypatch.setattr(runner.execution, 'run_captured_research_with_psycopg', execution)
++    assert runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++        model_factory=lambda _: None, allow_model_calls=True) == 'original-path'
++    assert seen == [r]
++
++
++# Separate adversarial self-review of the no-new-claim path and compatibility.
++@pytest.mark.parametrize('cap', [1, 1023])
++def test_preflight_review_keeps_blocked_intake_capture(monkeypatch, cap):
++    r = request(record_id='blocked-preflight', intake=make_run(status='intake_blocked').intake)
++    p = policy((r,), max_output_tokens=cap)
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snapshot(p))
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg',
++        lambda *a, **k: pytest.fail('no-model intake changed to preflight refusal'))
++    monkeypatch.setattr(runner.execution, '_claim', lambda *a, **k: (True, state(r)))
++    monkeypatch.setattr(runner.execution, '_capture', lambda dsn, st, run:
++        replace(st, status='captured', record=record_for(r, run)))
++    out = runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++        model_factory=lambda _: pytest.fail('blocked intake constructed a client'), allow_model_calls=True)
++    assert out.record.run.intake.status == 'blocked' and out.record.run.research is None
++
++
++@pytest.mark.parametrize('expired', [False, True])
++def test_preflight_review_preserves_empty_budget_error_and_replay(monkeypatch, expired):
++    r = req()
++    p = policy((r,), max_output_tokens=1)
++    snap = snapshot(p, 0 if expired else 3)
++    if expired:
++        snap = replace(snap, observed_at=p.expires_at)
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snap)
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: None)
++    monkeypatch.setattr(runner.execution, 'run_captured_research_with_psycopg',
++        lambda *a, **k: pytest.fail('new execution under unusable budget'))
++    kwargs = dict(request=r, budget_id=p.budget_id, model_factory=lambda _: None, allow_model_calls=True)
++    with pytest.raises(ValueError, match='^research_budget_not_available$'):
++        runner.run_budgeted_research_with_psycopg('fake', **kwargs)
++    original = state(r)
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: original)
++    assert runner.run_budgeted_research_with_psycopg('fake', **kwargs) == original
++
++
++@pytest.mark.parametrize('defect', ['request', 'readonly', 'type'])
++def test_preflight_review_rejects_bad_existing_receipt(monkeypatch, defect):
++    r = req()
++    p = policy((r,), max_output_tokens=1)
++    prior = state(replace(r, protocol_version='other') if defect == 'request' else r)
++    if defect == 'readonly':
++        object.__setattr__(prior, 'readonly', False)
++    elif defect == 'type':
++        prior = object()
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snapshot(p))
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: prior)
++    entered = []
++    monkeypatch.setattr(runner.execution, 'run_captured_research_with_psycopg', lambda *a, **k: entered.append(1))
++    with pytest.raises((ValueError, TypeError)):
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++            model_factory=lambda _: None, allow_model_calls=True)
++    assert entered == []
++
++
++@pytest.mark.parametrize('error', [OSError('synthetic-private-detail'), KeyboardInterrupt(), SystemExit(0)])
++def test_preflight_review_failed_history_read_never_falls_through_to_execution(monkeypatch, error):
++    r = req()
++    p = policy((r,), max_output_tokens=1)
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda *a, **k: snapshot(p))
++    def inspect(*args, **kwargs):
++        raise error
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', inspect)
++    entered = []
++    monkeypatch.setattr(runner.execution, 'run_captured_research_with_psycopg', lambda *a, **k: entered.append(1))
++    with pytest.raises(type(error)) as caught:
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=p.budget_id,
++            model_factory=lambda _: None, allow_model_calls=True)
++    assert caught.value is error and entered == []
++
++
++def test_preflight_review_never_clamps_request_or_policy(monkeypatch):
++    r = req()
++    bad = policy((r,), max_output_tokens=1)
++    good = replace(bad, budget_id='explicitly-reviewed-compatible-budget', max_output_tokens=r.limits.max_output_tokens)
++    originals = r.payload, bad.payload, good.payload
++    policies = {p.budget_id: p for p in (bad, good)}
++    monkeypatch.setattr(runner, 'load_model_budget_with_psycopg', lambda dsn, budget_id: snapshot(policies[budget_id]))
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **k: None)
++    seen = []
++    monkeypatch.setattr(runner.execution, 'run_captured_research_with_psycopg',
++        lambda dsn, **kw: seen.append(kw['request'].payload))
++    with pytest.raises(ValueError, match='output_limit_incompatible'):
++        runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=bad.budget_id,
++            model_factory=lambda _: None, allow_model_calls=True)
++    assert seen == []
++    runner.run_budgeted_research_with_psycopg('fake', request=r, budget_id=good.budget_id,
++        model_factory=lambda _: None, allow_model_calls=True)
++    assert seen == [originals[0]] and (r.payload, bad.payload, good.payload) == originals
