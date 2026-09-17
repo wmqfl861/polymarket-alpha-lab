@@ -1,0 +1,66 @@
+name: Publish fixed read-only integration objects
+on:
+  push:
+    branches: [review/wp05-readonly-integration-publication-20260917]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-readonly-integration-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Assemble only pinned source and the reviewed integration patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=0adfadaccb4e310c67fcd3a78455f38d2e39d97b
+          OLD=dc6a5a0cf6b149bfcab065fac36ee9f90c6e7336
+          COMMON=a71ae4d716e8a73bd3614f080f42e5a6968d76f8
+          REF=refs/heads/review/wp05-readonly-integration-objects-20260917
+          PATCH="$RUNNER_TEMP/integration.patch"
+          cp docs/reviews/readonly-integration-publication/integration.patch "$PATCH"
+          echo "dbe72fe3d530a94aeb899c54b370595a5b96713e5aec68758b3562ee23e9b440  $PATCH" | sha256sum --check
+          test "$(wc -c < "$PATCH")" -eq 7319
+          git fetch --no-tags --depth=1 origin "$BASE" "$OLD" "$COMMON"
+          git checkout --detach "$BASE"
+          git restore --source="$OLD" --staged --worktree -- docs/research-evaluation-console.md src/polymarket_alpha_lab/research_evaluation_cli.py src/polymarket_alpha_lab/research_execution_cli.py src/polymarket_alpha_lab/research_inventory_cli.py src/polymarket_alpha_lab/research_resolution_inspection_cli.py tests/test_project_postgres_inventory_native.py tests/test_research_evaluation_cli.py tests/test_research_settled_cli_review.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          def read(ref):
+              return subprocess.check_output(['git', 'show', ref + ':DELIVERY_PLAN.md'])
+          common = read('a71ae4d716e8a73bd3614f080f42e5a6968d76f8')
+          current = read('0adfadaccb4e310c67fcd3a78455f38d2e39d97b')
+          old = read('dc6a5a0cf6b149bfcab065fac36ee9f90c6e7336')
+          assert current.startswith(common) and old.startswith(common)
+          Path('DELIVERY_PLAN.md').write_bytes(current + old[len(common):].replace(b'## 32.', b'## 33.', 1))
+          PY
+          git add DELIVERY_PLAN.md
+          test "$(git write-tree)" = ccff1934c1fe4980082db3252a0f28967bbe49af
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json src/polymarket_alpha_lab/research_paper_operator.py src/polymarket_alpha_lab/project_postgres
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 9
+          TREE=$(git write-tree)
+          test "$TREE" = 9a3a2359379532ffb6e6bee45c0060c9a5e56e6c
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport exact reviewed PR55 integration objects; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-readonly-integration-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
