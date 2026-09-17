@@ -404,7 +404,8 @@ raise SystemExit(99)
             incomplete_claims=1, interrupted_reserved_calls=1, project_modules_checked=count,
             actual_account_pnl=None, synthetic_inputs=True,
             confirmation_output_failures=len(output_failed_reviews),
-            same_confirmation_replayed=True, admission_receipts=len(admitted))
+            same_confirmation_replayed=True, admission_receipts=len(admitted),
+            historical_at=after['history']['generated_at'])
     finally:
         # This recipe runs only on the test's fresh second extraction.
         if db.status()['status'] != 'stopped':
