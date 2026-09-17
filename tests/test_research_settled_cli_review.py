@@ -88,8 +88,10 @@ def test_failed_stdout_does_not_retry_or_print_traceback(managed, monkeypatch):
         writes.append(value)
         raise BrokenPipeError(PRIVATE)
     import sys
-    monkeypatch.setattr(sys.stdout, 'write', broken)
-    assert cli.main(['--settled-paper'], default_root=Path('/unused')) == 1
+    # Restore the live stream before pytest reports the result under -s.
+    with monkeypatch.context() as scoped:
+        scoped.setattr(sys.stdout, 'write', broken)
+        assert cli.main(['--settled-paper'], default_root=Path('/unused')) == 1
     assert len(writes) == 1 and managed['events'][-1] == ('exit',)
 
 
@@ -100,3 +102,41 @@ def test_summary_does_not_mutate_original_and_details_can_be_read_again():
     full = cli._settled_paper_summary(report, include_decisions=True)
     assert report == original and full['attempts'] == original['attempts']
     assert full['groups'] == original['groups']
+
+
+@pytest.mark.parametrize('capture', ['no', 'fd'])
+def test_output_fault_fixture_restores_stream_before_pytest_reporting(tmp_path, capture):
+    """An injected CLI fault must not damage pytest's real terminal writer."""
+    import subprocess
+    import sys
+    import xml.etree.ElementTree as ET
+    from polymarket_alpha_lab.project_postgres.files import clean_environment
+    root = Path(__file__).resolve().parents[1]
+    report = tmp_path / 'output-fixture.xml'
+    names = ('test_failed_stdout_does_not_retry_or_print_traceback',
+             'test_summary_does_not_mutate_original_and_details_can_be_read_again')
+    program = '''
+import sys
+from pathlib import Path
+root = Path(sys.argv[1])
+sys.path[:0] = [str(root / 'src'), str(root)]
+from polymarket_alpha_lab import research_evaluation_cli as cli
+assert Path(cli.__file__).resolve().is_relative_to(root)
+import pytest
+raise SystemExit(pytest.main(sys.argv[2:]))
+'''
+    args = ['-q', '--capture=' + capture,
+            *('tests/test_research_settled_cli_review.py::' + name for name in names),
+            '--junitxml=' + str(report)]
+    env = dict(clean_environment(), PYTEST_DISABLE_PLUGIN_AUTOLOAD='1')
+    result = subprocess.run([sys.executable, '-I', '-c', program, str(root), *args],
+        cwd=root, env=env, capture_output=True, timeout=30)
+    assert result.returncode == 0, (result.stdout, result.stderr)
+    assert b'2 passed' in result.stdout and result.stderr == b''
+    xml = ET.fromstring(report.read_bytes())
+    cases = list(xml.iter('testcase'))
+    assert [(c.get('classname'), c.get('name')) for c in cases] == [
+        ('tests.test_research_settled_cli_review', name) for name in names]
+    assert all(c.find('failure') is None and c.find('error') is None
+               and c.find('skipped') is None for c in cases)
+    assert sum(int(s.get('tests', '0')) for s in xml.iter('testsuite')) == 2
