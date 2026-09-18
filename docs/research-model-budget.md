@@ -225,3 +225,111 @@ fits the monetary budget. D1-D3 and real-provider validation remain required.
 
 Python JSON serialization returns text, not encoded bytes; encoding is explicit.
 Reference checked 2026-09-17: https://docs.python.org/3.12/library/json.html
+
+
+## Approved-client assembly contract (WP-02; design only)
+
+**No provider adapter is shipped or enabled by this section.** It records the
+credential-isolation and data-send design that must be reviewed before adding
+one selected adapter. It is not another configuration loader, approval ledger,
+framework or runtime gate. D1-D3 in `DELIVERY_PLAN.md` are still undecided; the
+current standalone task script still supplies no model factory.
+
+### Reuse the current application boundary
+
+The approved application supplies an explicitly imported, inert
+`model_factory(team_id)` to the existing managed task entry. Its client implements
+`complete(*, messages_json, max_output_tokens)` and returns the existing exact
+`ResearchModelReply`; the existing agent validates tool calls and interprets only
+its bounded evidence tools. A reply must not cause arbitrary URLs, code or
+provider-hosted tools to execute. No dynamic `module:function` loader, model-chosen
+provider, fallback provider or credential discovery is part of this design.
+
+The application must use the budgeted path: a reviewed `ModelCallBudget`, exact
+request enrollment and an explicit budget ID on the existing task operation.
+Legacy explicitly unbudgeted Python APIs remain compatibility surfaces, not
+approved shortcuts for this first real run. `run-turn` alone, a provider label,
+a model label or an agent's own login cannot supply or authenticate the client.
+
+Existing order is preserved: validate copied request and allowance; reject known
+initial incompatibility; retain/replay original history or obtain the original
+execution claim; on each model call commit a new nonrefundable permit; only then
+enter the supplied factory/client. The factory performs no discovery, request,
+health check or billable work. A missing client or failed permit never falls back
+to an unbudgeted call. No transaction is held across model I/O.
+
+### Credential and data ownership
+
+Only the owner-approved local application boundary may supply a credential to the
+selected adapter. Do not search `.env`, operating-system credential stores,
+browsers, coding-agent sessions or environment-variable names to find one. Do not
+ask for a key in chat or put one in arguments, repository files, policy metadata,
+request hashes, test fixtures, exception text or reports. A specific credential
+loading mechanism is not selected or authorized by this document.
+
+Client/credential objects stay outside the canonical research and allowance
+values. The adapter must suppress SDK debug traces, request headers, credential
+representations and raw transport exceptions; use synthetic secret sentinels to
+verify that its chosen SDK does not leak them through stdout, stderr, exception
+chains, logs or stored evidence. This is a requirement for the future adapter,
+not proof that redaction or secure memory erasure has already been implemented.
+
+D2 must cover the exact permitted question, complete rules, approved evidence and
+metadata/tool transcript subsequently sent in `messages_json`, not merely the
+first prompt. Being public does not itself authorize transmission. The adapter
+must not attach local files, database credentials, unrelated records, hidden
+system context, remote retrieval or paid tool calls. Existing message/response
+limits still apply. Provider-side retention terms and any required endpoint must
+be reviewed for the selected service; no retention promise is made here.
+If a D2 exclusion cannot be honored with the original approved message protocol,
+block sending; do not silently remove content or mint replacement request IDs.
+
+### Enforceable charge and I/O contract
+
+For a fresh policy, the internal reservation ceiling is
+`min(max_calls, total_micros // per_call_micros)`. Both monetary fields are positive
+integer millionths of one explicitly chosen currency. This bound only constrains
+reserved upper charges; it does not establish the provider's actual bill.
+
+Before enabling the adapter, its reviewed single-operation bound must cover the
+maximum admitted input plus protocol/tool-schema overhead, all output and any
+reasoning tokens, and every other possible billed component. It must apply to
+EVERY call allowed by `max_message_bytes`/`max_output_tokens`, including later tool
+transcripts. A mean token estimate, a cached-input discount, a response-side token
+counter, a dashboard alert or a copied example price is not a hard charge bound.
+If an all-inclusive bound cannot be justified for the selected API, keep real
+execution blocked rather than guessing a value for `cost_bound_attested`.
+
+Each `complete` may submit at most one bounded provider operation. Explicitly
+inspect and test the selected SDK/transport for automatic retries, redirects that
+forward credentials, fallbacks, pagination, repair requests and hidden tool work;
+no such extra submission may evade the permit. Preserve normal TLS validation.
+Specify and test finite connection/read/overall I/O limits and stop behavior in
+that adapter. Policy expiry is checked at reservation time; it does not cancel an
+already-admitted socket operation, and session draining is not an I/O timeout.
+
+Timeout, malformed reply, factory failure, unknown acknowledgement or process loss
+never refunds the permit or automatically resends. Existing incomplete records
+remain incomplete; do not change task IDs, budget IDs or turn IDs to bypass them.
+A fresh policy is a new explicit decision, not a top-up or refund mechanism.
+
+### Adapter-specific acceptance still to perform after D1-D3
+
+Use synthetic transports and a fresh CI-owned database before any real call.
+These are pending adapter tests, NOT results of the existing generic tests:
+
+| Scenario | Required evidence using the chosen adapter |
+| --- | --- |
+| Missing permission/client, invalid input, exhausted allowance | Zero provider submissions; no implicit credentials or fallback |
+| Newly committed permit, matching endpoint/model | One submission with exact approved payload and unchanged requested output cap |
+| Timeout, rate limit, malformed response or ambiguous acknowledgement | No second submission/refund; original failure or incomplete state retained |
+| SDK defaults and redaction | No hidden retries/tools; credential sentinels absent from outputs and retained records |
+| Parallel work, interruption and replay | Existing shared reservation cap preserved; original identities reused without another model call |
+
+After that adapter-specific review and the owner's concrete local execution
+authorization, G2 still needs at least one actual authorized BTC and ETH research
+record, matching allowance evidence and an inert original-ID replay. G3-G5 need
+their existing real-input, stop/restart, source/human settlement and fee-aware
+paper evidence. Generic green CI, this design review and `cost_bound_attested=True`
+are not substitutes. No new acceptance package or reduced completion criterion is
+introduced.

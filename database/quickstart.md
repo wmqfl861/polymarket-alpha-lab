@@ -525,3 +525,21 @@ PostgreSQL coverage. All previous limits and failed-run evidence are retained.
 This integration is not a diagnosis or repair of the intermittent PS5.1 first run.
 Python Condition semantics reference checked 2026-09-18:
 https://docs.python.org/3.12/library/threading.html#condition-objects
+
+
+## Before selecting a real provider or changing an existing installation
+
+The [approved-client assembly contract](../docs/research-model-budget.md#approved-client-assembly-contract-wp-02-design-only)
+is the pending adapter's design and acceptance boundary, not a delivered provider
+or a command that enables one. Give D1-D3 as non-secret decisions in the existing
+delivery plan; do not paste a key or ask a local agent to find credentials. Generic
+allowance tests do not certify a provider's invoice or SDK retry behavior.
+
+Cold backup verification/restoration remains bound to the ORIGINAL physical
+project path, platform and engine. `--allow-catalog-extension` does not authorize
+restoring into a sibling directory, changing instance identity or moving `.local`.
+A second unpacked kit is a separate empty installation, not a migrated copy of
+old history. Do not delete or rename a working database to satisfy restore's
+absent-target requirement. The same-root cold-recovery tests are not a general
+version-switch or cross-path restore procedure. No such user-data operation is
+performed or authorized by this documentation update.
