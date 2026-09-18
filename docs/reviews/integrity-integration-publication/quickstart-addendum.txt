@@ -1,0 +1,13 @@
+
+
+The mainline integration retains managed-session draining and cold-recovery
+semantics. Integrity admission happens before the private lifecycle lease; after
+admission, existing work drains even when close is interrupted. An already-running
+borrowed engine stays owned by its caller. A later bundle change is rejected at
+the next entry, not used to drop the lease during admitted work. The combined
+tests use real Python Conditions/threads with synthetic lifecycle for unit checks;
+the existing packaged drain and cold-recovery scenarios provide separate real
+PostgreSQL coverage. All previous limits and failed-run evidence are retained.
+This integration is not a diagnosis or repair of the intermittent PS5.1 first run.
+Python Condition semantics reference checked 2026-09-18:
+https://docs.python.org/3.12/library/threading.html#condition-objects
