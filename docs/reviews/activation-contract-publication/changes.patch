@@ -1,0 +1,216 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 17982be8c538e2d2854661dfa32c2817eaf30242..244e2dec8bc9932804c0769d9ae6b9c3d7e677d2 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -61,16 +61,16 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ 
+ 状态词：`NEXT` 下一实施项；`PARTIAL` 有基础但未完成；`AWAITING_OWNER` 缺用户决定；
+ `IN_PROGRESS` 正在实施；`WAITING` 等待真实事件或证据；`BLOCKED` 具体障碍；`DONE` 全部完成条件及证据齐备。
+-“工程基础已有”不是 DONE。下表是基线状态，不是虚构的完成百分比。
++“工程基础已有”不是 DONE。下表是当前交付状态；章节内历史记录保留其当时口径，不是虚构的完成百分比。
+ 
+-| ID／工作包 | 基线状态 | 剩余缺口 | 依赖 | 完成证据 |
++| ID／工作包 | 当前状态 | 剩余缺口 | 依赖 | 完成证据 |
+ | --- | --- | --- | --- | --- |
+ | WP-01 候选到研究入口 | **DONE（G1）** | 有界发现、最新规则／观察时刻、一次完整预览和待审规格已接通；本项不包含模型授权或来源真伪认证 | 现有公开输入、PR #19／#20 门禁 | [PR #28](https://github.com/wmqfl861/polymarket-alpha-lab/pull/28)：52 项反例测试、三条 CI、真实 BTC／ETH 待审样例；详见第 10 节 |
+-| WP-02 真实模型与预算 | **AWAITING_OWNER** | 已实现同库共享调用额度预留和惰性客户端接线；仍需提供商／实际收费上界验证／数据授权／预算决定及真实研究收录 | D1—D3；可先离线开发，不需要先拿密钥；真实验收依赖 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
++| WP-02 真实模型与预算 | **AWAITING_OWNER** | 共享调用预留、首次消息／输出额度预检已接通；凭据隔离与发送／收费接入合同已明确；仍缺 D1—D3、所选提供商适配器及真实收费上界／研究验收 | D1—D3；可先离线开发，不需要先拿密钥；真实验收依赖 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，审核后显式入库批次／预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺获准提供商／收费上界验证及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02／D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+-| WP-06 操作与发布收尾 | **PARTIAL** | 已有统一操作说明和入口源码隔离；已接整包预算到结算组合、提交后输出故障及旧冷备份目录前缀兼容；同版本整包冷恢复候选待最终验收；获准配置、安全数据版本切换和长期 Release 仍待办；PR #30 的 PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
++| WP-06 操作与发布收尾 | **PARTIAL** | 统一说明、入口完整性、排空与同版本整包冷恢复已合并验收（PR #49）；冷备份仍绑定原物理根；获准配置、安全数据版本切换和长期 Release 待办；PS5.1 首跑超时根因仍未定位 | 文档整理现在可做；最终验收依赖 G1—G5 | G6：固定版本 Windows 全流程＋负向恢复验收＋发布资产哈希；无本机补丁拼装、无覆盖旧数据 |
+ 
+ **当前完整验收：1／6（仅 WP-01／G1）。** 这是六个端到端工作包的状态，不表示现有代码完成量为零。
+ 每项达到 DONE 必须填入确切 PR、head／merge／tree、执行命令、结果、适用平台和未执行项；
+@@ -967,3 +967,48 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+   D1—D3、G4／G6／V1、真实输入／费用及原 PS5.1 可靠性问题不因此关闭。
+ 
+ 没有用户安装变更、用户数据库操作、密钥访问、真实模型／行情调用或受阻诊断。
++
++
++## 37. WP-02／WP-06：接入前设计与当前剩余决定（2026-09-19）
++
++本轮基线 `8ae414ad56146facdcf7e1369ca40730b69476e6`，代码树
++`65f7df5f5afbee4e4810c6821799c3424dea8abd`。只更新既有文档，不新增
++提供商、SDK、配置加载器、业务存储、运行接口或数据库迁移；没有真实发送或用户库操作。
++
++### 已核对的工程状态
++
++- PR #49 的完整性／排空／同版本冷恢复整合已经合并；最终代码树与上述基线相同。
++  固定验收为 38616／42 离线、2333／2 原生、357／0 paper、427／0 kit；
++  59 项完整性／组合测试在 Windows kit 通过。它们是 2026-09-18 的既有证据，
++  不是本轮重新执行的结果，也不关闭 G6。详细原始证据和来源见
++  [PR #49](https://github.com/wmqfl861/polymarket-alpha-lab/pull/49)。
++- `backup._bindings` 将冷备份绑定原物理根、平台和引擎；`--allow-catalog-extension`
++  只许可经核验的迁移目录前缀扩展，不许可跨目录恢复、覆盖旧库或自动迁移。
++  本轮初步考察的独立目录恢复不在现有接口许可范围，未实施、未放宽根绑定。
++- 新源码路径与 `--root` 数据路径分离不等于升级：迁移目录仍来自原物理数据根，
++  任意两个有效安装包也不因此获得跨版本兼容保证。旧 kit 的一般升级／回滚仍待
++  具体版本方案与授权，不能通过复制 `.local`、改 manifest 或删除原库来补齐。
++
++### 本轮设计交付与真正的下一输入
++
++[预算说明中的接入合同](docs/research-model-budget.md#approved-client-assembly-contract-wp-02-design-only)
++明确了既有工厂／客户端接口、凭据由谁提供、D2 覆盖的后续工具消息、单次全部收费
++上界、SDK 隐式重试／附加请求限制、超时与不退款语义，以及尚待所选适配器执行的反例。
++该合同是接入前设计审查依据，不是已经实现的提供商适配器或运行时授权系统。
++
++继续提供商专属实现前，需要用户给出以下非敏感决定；不索要 API 密钥：
++
++| 决定 | 用户需要填写 | 当前值 |
++| --- | --- | --- |
++| D1 | 提供商、准确 API 模型标识；如使用中转，明确实际端点及中转服务 | 未选定 |
++| D2 | 是否允许把所选市场问题、完整规则、批准证据及相关后续工具消息发给该提供商；任何内容排除项 | 未授权／未知 |
++| D3 | 首轮每团队事件数、每任务最大模型请求数、并发、总金额与币种、运行次数／频率及有效期 | 未确定 |
++
++用户给出决定后，先核对该服务的官方接口、实际收费组成和可落实的硬边界，再实现
++一个最小适配器并做合成验收；不从模型名称猜费率，不把布尔声明当成价格证明。
++具体本机凭据提供方式和实际业务命令仍须落在获准本地边界，不由文档批准自动推导。
++需要本机时再给固定 GitHub 文件及完整提示词，不能派本地 Agent 去猜这些决定。
++
++**六包状态仍为 1／6：仅 G1 完成。** 本轮没有把设计审查或既有测试数转成
++真实模型／来源／人工核验／费用验收。PS5.1 首次调用可靠性风险仍未定位，
++原失败、五项可选未执行检查和两项原生权限跳过继续保留。
+diff --git a/database/quickstart.md b/database/quickstart.md
+index a46f6421b315dfef0143e38ae967f9c26f33ffb5..27c3ae275c7eaa953f0eb5c6e13d1fe1778e278e 100644
+--- a/database/quickstart.md
++++ b/database/quickstart.md
+@@ -525,3 +525,21 @@ PostgreSQL coverage. All previous limits and failed-run evidence are retained.
+ This integration is not a diagnosis or repair of the intermittent PS5.1 first run.
+ Python Condition semantics reference checked 2026-09-18:
+ https://docs.python.org/3.12/library/threading.html#condition-objects
++
++
++## Before selecting a real provider or changing an existing installation
++
++The [approved-client assembly contract](../docs/research-model-budget.md#approved-client-assembly-contract-wp-02-design-only)
++is the pending adapter's design and acceptance boundary, not a delivered provider
++or a command that enables one. Give D1-D3 as non-secret decisions in the existing
++delivery plan; do not paste a key or ask a local agent to find credentials. Generic
++allowance tests do not certify a provider's invoice or SDK retry behavior.
++
++Cold backup verification/restoration remains bound to the ORIGINAL physical
++project path, platform and engine. `--allow-catalog-extension` does not authorize
++restoring into a sibling directory, changing instance identity or moving `.local`.
++A second unpacked kit is a separate empty installation, not a migrated copy of
++old history. Do not delete or rename a working database to satisfy restore's
++absent-target requirement. The same-root cold-recovery tests are not a general
++version-switch or cross-path restore procedure. No such user-data operation is
++performed or authorized by this documentation update.
+diff --git a/docs/research-model-budget.md b/docs/research-model-budget.md
+index 707f1ffa9ba84656f109f6b268f25d92b5d666ea..07ed401c7159ebbb40c4807b9c98c0e8825ba323 100644
+--- a/docs/research-model-budget.md
++++ b/docs/research-model-budget.md
+@@ -225,3 +225,111 @@ fits the monetary budget. D1-D3 and real-provider validation remain required.
+ 
+ Python JSON serialization returns text, not encoded bytes; encoding is explicit.
+ Reference checked 2026-09-17: https://docs.python.org/3.12/library/json.html
++
++
++## Approved-client assembly contract (WP-02; design only)
++
++**No provider adapter is shipped or enabled by this section.** It records the
++credential-isolation and data-send design that must be reviewed before adding
++one selected adapter. It is not another configuration loader, approval ledger,
++framework or runtime gate. D1-D3 in `DELIVERY_PLAN.md` are still undecided; the
++current standalone task script still supplies no model factory.
++
++### Reuse the current application boundary
++
++The approved application supplies an explicitly imported, inert
++`model_factory(team_id)` to the existing managed task entry. Its client implements
++`complete(*, messages_json, max_output_tokens)` and returns the existing exact
++`ResearchModelReply`; the existing agent validates tool calls and interprets only
++its bounded evidence tools. A reply must not cause arbitrary URLs, code or
++provider-hosted tools to execute. No dynamic `module:function` loader, model-chosen
++provider, fallback provider or credential discovery is part of this design.
++
++The application must use the budgeted path: a reviewed `ModelCallBudget`, exact
++request enrollment and an explicit budget ID on the existing task operation.
++Legacy explicitly unbudgeted Python APIs remain compatibility surfaces, not
++approved shortcuts for this first real run. `run-turn` alone, a provider label,
++a model label or an agent's own login cannot supply or authenticate the client.
++
++Existing order is preserved: validate copied request and allowance; reject known
++initial incompatibility; retain/replay original history or obtain the original
++execution claim; on each model call commit a new nonrefundable permit; only then
++enter the supplied factory/client. The factory performs no discovery, request,
++health check or billable work. A missing client or failed permit never falls back
++to an unbudgeted call. No transaction is held across model I/O.
++
++### Credential and data ownership
++
++Only the owner-approved local application boundary may supply a credential to the
++selected adapter. Do not search `.env`, operating-system credential stores,
++browsers, coding-agent sessions or environment-variable names to find one. Do not
++ask for a key in chat or put one in arguments, repository files, policy metadata,
++request hashes, test fixtures, exception text or reports. A specific credential
++loading mechanism is not selected or authorized by this document.
++
++Client/credential objects stay outside the canonical research and allowance
++values. The adapter must suppress SDK debug traces, request headers, credential
++representations and raw transport exceptions; use synthetic secret sentinels to
++verify that its chosen SDK does not leak them through stdout, stderr, exception
++chains, logs or stored evidence. This is a requirement for the future adapter,
++not proof that redaction or secure memory erasure has already been implemented.
++
++D2 must cover the exact permitted question, complete rules, approved evidence and
++metadata/tool transcript subsequently sent in `messages_json`, not merely the
++first prompt. Being public does not itself authorize transmission. The adapter
++must not attach local files, database credentials, unrelated records, hidden
++system context, remote retrieval or paid tool calls. Existing message/response
++limits still apply. Provider-side retention terms and any required endpoint must
++be reviewed for the selected service; no retention promise is made here.
++If a D2 exclusion cannot be honored with the original approved message protocol,
++block sending; do not silently remove content or mint replacement request IDs.
++
++### Enforceable charge and I/O contract
++
++For a fresh policy, the internal reservation ceiling is
++`min(max_calls, total_micros // per_call_micros)`. Both monetary fields are positive
++integer millionths of one explicitly chosen currency. This bound only constrains
++reserved upper charges; it does not establish the provider's actual bill.
++
++Before enabling the adapter, its reviewed single-operation bound must cover the
++maximum admitted input plus protocol/tool-schema overhead, all output and any
++reasoning tokens, and every other possible billed component. It must apply to
++EVERY call allowed by `max_message_bytes`/`max_output_tokens`, including later tool
++transcripts. A mean token estimate, a cached-input discount, a response-side token
++counter, a dashboard alert or a copied example price is not a hard charge bound.
++If an all-inclusive bound cannot be justified for the selected API, keep real
++execution blocked rather than guessing a value for `cost_bound_attested`.
++
++Each `complete` may submit at most one bounded provider operation. Explicitly
++inspect and test the selected SDK/transport for automatic retries, redirects that
++forward credentials, fallbacks, pagination, repair requests and hidden tool work;
++no such extra submission may evade the permit. Preserve normal TLS validation.
++Specify and test finite connection/read/overall I/O limits and stop behavior in
++that adapter. Policy expiry is checked at reservation time; it does not cancel an
++already-admitted socket operation, and session draining is not an I/O timeout.
++
++Timeout, malformed reply, factory failure, unknown acknowledgement or process loss
++never refunds the permit or automatically resends. Existing incomplete records
++remain incomplete; do not change task IDs, budget IDs or turn IDs to bypass them.
++A fresh policy is a new explicit decision, not a top-up or refund mechanism.
++
++### Adapter-specific acceptance still to perform after D1-D3
++
++Use synthetic transports and a fresh CI-owned database before any real call.
++These are pending adapter tests, NOT results of the existing generic tests:
++
++| Scenario | Required evidence using the chosen adapter |
++| --- | --- |
++| Missing permission/client, invalid input, exhausted allowance | Zero provider submissions; no implicit credentials or fallback |
++| Newly committed permit, matching endpoint/model | One submission with exact approved payload and unchanged requested output cap |
++| Timeout, rate limit, malformed response or ambiguous acknowledgement | No second submission/refund; original failure or incomplete state retained |
++| SDK defaults and redaction | No hidden retries/tools; credential sentinels absent from outputs and retained records |
++| Parallel work, interruption and replay | Existing shared reservation cap preserved; original identities reused without another model call |
++
++After that adapter-specific review and the owner's concrete local execution
++authorization, G2 still needs at least one actual authorized BTC and ETH research
++record, matching allowance evidence and an inert original-ID replay. G3-G5 need
++their existing real-input, stop/restart, source/human settlement and fee-aware
++paper evidence. Generic green CI, this design review and `cost_bound_attested=True`
++are not substitutes. No new acceptance package or reduced completion criterion is
++introduced.
