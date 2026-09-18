@@ -1,0 +1,56 @@
+name: Publish fixed integrity integration objects
+on:
+  push:
+    branches: [review/wp06-integrity-integration-publication-20260918]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-integrity-integration-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Assemble exact reviewed text without running project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=e1e47df60a59207575b7a266902e0a99ced9d283
+          OLD=061a55703197cc526f3d707d9da58b971c582e0b
+          COMMON=3a987bc6c1a5df608ff8f0668b866aaf87842c04
+          REF=refs/heads/review/wp06-integrity-integration-objects-20260918
+          INPUT="$RUNNER_TEMP/reviewed-input"
+          mkdir "$INPUT"
+          cp docs/reviews/integrity-integration-publication/reconstruct.py "$INPUT/"
+          cp docs/reviews/integrity-integration-publication/*-addendum.txt "$INPUT/"
+          echo "35dda0720e45433420b67c8d651ccf0b83f22341761927791ef3b9e90cbfe7c5  $INPUT/reconstruct.py" | sha256sum --check
+          echo "6cb1e38a9f264e8e7fdb7c4de7573cae4205bc0c88ef1c32de2fd59e37759bad  $INPUT/plan-addendum.txt" | sha256sum --check
+          echo "5a231be999d5cc6d95e3b00f7737fdd410651df2bddcfa6658a07f82d1311495  $INPUT/quickstart-addendum.txt" | sha256sum --check
+          echo "cf33725d606bfecf38bf72d1f79fc02a4663748c28edcc2f62a1e2931ba19a11  $INPUT/test-addendum.txt" | sha256sum --check
+          git fetch --no-tags --depth=1 origin "$BASE" "$OLD" "$COMMON"
+          git checkout --detach "$BASE"
+          python3 "$INPUT/reconstruct.py" "$INPUT"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 6
+          TREE=$(git write-tree)
+          test "$TREE" = 39c429b07883a221f969119f752584aeddf84f84
+          EXISTING=$(git ls-remote --heads origin "$REF")
+          test -z "$EXISTING"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport exact reviewed integrity integration objects; not acceptance or merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-integrity-integration-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
