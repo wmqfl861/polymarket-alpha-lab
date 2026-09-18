@@ -1,0 +1,34 @@
+name: Pinned next release review source
+on:
+  push:
+    branches: [review/wp03-next-source-20260918]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 80d64b6b081caee385aca64dbf2e086144b016f8
+          persist-credentials: false
+      - name: Archive only fixed tracked source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 80d64b6b081caee385aca64dbf2e086144b016f8
+          git archive --format=zip --output="$RUNNER_TEMP/source.zip" HEAD
+          git ls-tree -r HEAD > "$RUNNER_TEMP/source-tree.txt"
+          git cat-file commit HEAD > "$RUNNER_TEMP/source-commit.txt"
+          sha256sum "$RUNNER_TEMP/source.zip" > "$RUNNER_TEMP/source.sha256"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: source-80d64b6b
+          path: |
+            ${{ runner.temp }}/source.zip
+            ${{ runner.temp }}/source-tree.txt
+            ${{ runner.temp }}/source-commit.txt
+            ${{ runner.temp }}/source.sha256
+          retention-days: 7
+          if-no-files-found: error
