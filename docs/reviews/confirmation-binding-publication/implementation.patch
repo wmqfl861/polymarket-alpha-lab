@@ -1,0 +1,386 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index ce8f0f5..2d8401d 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -909,3 +909,24 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ **WP-03／WP-04／WP-06 仍 PARTIAL，G3／G4／G6／V1 不因此完成。** 原 67 份迁移、
+ 依赖、CI 选择与时间限制均未修改；PR #49、受阻诊断、D1—D3 与真实输入／费用授权不变。
+ 不操作用户数据库，不调用真实模型／行情，不部署或覆盖旧安装。
++
++
++## 35. WP-04：确认回执固定绑定原审核输入（不关闭 G4）
++
++基线 `80d64b6b081caee385aca64dbf2e086144b016f8`（PR #54／#55 整合）。
++修补确认命令与服务在适配器调用后再比较可变参数、可能误接纳改写审核的缺口。
++
++- 24 个完整故障适配器反例先在原代码失败：改动审核编号、审核人、来源文本／引用、
++  时间、原记录或 YES／NO 后返回内部一致的回执，不能替代原审核。最初四项测试
++  引用格式不合规已单独保留并纠正；不把夹具构造失败算成已复现产品缺陷。
++- 命令复用原 `copy_review` 传入分离的嵌套参数；服务在原原子写入前固定规范化载荷。
++  正确原回执不因参数后改动被误拒；不重试写入、不换编号，也不据错误宣称回滚。
++- 单独自审覆盖正确回执保全、清理后的结果投影与绑定失败前零写入；原解码、来源／
++  时间／结果准入、67 份迁移、依赖和工作流均不改，不扩展来源认证或恶意代码隔离。
++- 原生确认用例追加 BTC／ETH 原编号实际重放，只在真实写入返回后注入参数改动；
++  后续原记录、候选、结算行数、迁移及实例检查仍须完整通过。最终固定版本自审与
++  完整 CI、实际安装包证据在本 PR 登记，标记行和本地通过不替代最终原生验收。
++
++**WP-04／WP-06 仍 PARTIAL，G4／G6／V1 不因此完成。** D1—D3、真实预测、
++来源／费用及独立人工核验仍待；不处理 PR #49 的失败或受阻诊断，不操作用户数据库、
++凭据、真实模型／行情或旧安装。此处是故障适配器一致性修复，不是实际用户数据损坏报告。
+diff --git a/docs/research-resolution-review.md b/docs/research-resolution-review.md
+index 1e80840..9fcf928 100644
+--- a/docs/research-resolution-review.md
++++ b/docs/research-resolution-review.md
+@@ -151,3 +151,38 @@ Official field/semantics references (retrieved 2026-09-13):
+ - https://docs.polymarket.com/concepts/resolution
+ - https://docs.polymarket.com/market-data/market-details
+ - https://docs.polymarket.com/api-reference/markets/get-market-by-slug
++
++## Preserve approved confirmation across adapter boundaries (WP-04)
++
++The manual BTC/ETH confirmation command keeps the decoded approved instruction
++private and passes a separately validated copy to its managed adapter. The
++existing `copy_review` also copies the nested independent confirmation; no new
++input format or serializer is introduced. Its receipt is still checked against
++the original review, request, source evidence, time and outcome assertions, not
++against an adapter's subsequently changed argument.
++
++The confirmation service fixes the original canonical `ResolutionSubmission`
++bytes BEFORE calling the existing atomic writer. An internally consistent receipt
++for different content is rejected even when a faulty writer has also changed its
++argument. Conversely, returning the correct original receipt remains valid when
++only the adapter-owned argument was changed after the actual write or replay.
++There is one writer call; neither mismatch nor output failure retries the business
++operation, creates a replacement review or claims the transaction rolled back.
++Original-ID inspection and explicit SAME-input replay remain the recovery path.
++
++This is defensive receipt binding, not a sandbox for hostile Python, source
++truth authentication or a report that an actual database was corrupted. Frozen
++dataclasses emulate read-only values; they do not enforce an execution security
++boundary. The original source/time checks, one-outcome policy, immutable ledger,
++write opt-in, bounded stdin, output behavior and private PostgreSQL rules remain.
++
++The existing isolated native confirmation test replays both original BTC/ETH
++confirmations through the actual writer, then changes only adapter-owned arguments.
++It must still return the original receipts and preserve original candidates,
++forecasts, outcome counts and instance identity. This uses synthetic input on
++CI-owned PostgreSQL, not a user installation or an authorized real settlement.
++
++Reference checked 2026-09-18: Python dataclasses `replace` invokes the dataclass
++constructor (including `__post_init__`); nested copying here is the existing
++project type's explicit behavior, not a generic promise of `replace`.
++https://docs.python.org/3.12/library/dataclasses.html#dataclasses.replace
+diff --git a/src/polymarket_alpha_lab/research_resolution_confirmation.py b/src/polymarket_alpha_lab/research_resolution_confirmation.py
+index 3b35e8c..9a5934c 100644
+--- a/src/polymarket_alpha_lab/research_resolution_confirmation.py
++++ b/src/polymarket_alpha_lab/research_resolution_confirmation.py
+@@ -163,11 +163,14 @@ def confirm_crypto_resolution_with_psycopg(dsn: str, *, instruction: CryptoSettl
+     execution = inspect_captured_research_with_psycopg(dsn, record_id=item.record_id)
+     candidate = load_resolution_review_with_psycopg(dsn, review_id=item.candidate_review_id)
+     submission = build_crypto_resolution_confirmation(instruction=item, execution=execution, candidate=candidate)
++    # Bind BEFORE handing the mutable-in-practice dataclass to the adapter.
++    # A changed argument is not a replacement for the approved canonical bytes.
++    expected_payload = encode_resolution(submission)
+     receipt = record_resolution_review_with_psycopg(dsn, submission=submission)
+     if type(receipt) is not StoredResolutionReview:
+         raise ValueError('settlement_receipt_invalid')
+     receipt = replace(receipt, outcome=None if receipt.outcome is None else replace(receipt.outcome))
+-    if encode_resolution(receipt.submission) != encode_resolution(submission) or receipt.outcome is None:
++    if encode_resolution(receipt.submission) != expected_payload or receipt.outcome is None:
+         raise ValueError('settlement_receipt_mismatch')
+     return receipt
+ 
+diff --git a/src/polymarket_alpha_lab/research_resolution_confirmation_cli.py b/src/polymarket_alpha_lab/research_resolution_confirmation_cli.py
+index 8f10cfc..c8619e2 100644
+--- a/src/polymarket_alpha_lab/research_resolution_confirmation_cli.py
++++ b/src/polymarket_alpha_lab/research_resolution_confirmation_cli.py
+@@ -9,7 +9,7 @@ from pathlib import Path
+ 
+ from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+ from polymarket_alpha_lab.research_resolution import IndependentResolutionConfirmation
+-from polymarket_alpha_lab.research_resolution_confirmation import CryptoSettlementReview, SCHEMA
++from polymarket_alpha_lab.research_resolution_confirmation import CryptoSettlementReview, SCHEMA, copy_review
+ from polymarket_alpha_lab.research_resolution_inspection_cli import resolution_review_summary
+ from polymarket_alpha_lab.team_research_agent_types import strict_json
+ 
+@@ -88,7 +88,10 @@ def confirm_from_stdin(*, root: Path, stream=None, allow_resolution_write: bool
+             envelope['business_writes_possible'] = True
+             try:
+                 with ProjectPostgres(root).session() as session:
+-                    receipt = session.confirm_crypto_resolution(instruction=instruction, allow_resolution_write=True)
++                    # Keep the approved input private; an adapter owns only its
++                    # detached argument, including the nested confirmation.
++                    receipt = session.confirm_crypto_resolution(instruction=copy_review(instruction),
++                                                                  allow_resolution_write=True)
+                     result = resolution_review_summary(receipt, review_id=instruction.review_id)
+                     if result['linked_outcome'] is None:
+                         raise ValueError('settlement_receipt_invalid')
+diff --git a/tests/test_project_postgres_confirmation_native.py b/tests/test_project_postgres_confirmation_native.py
+index 6d09649..ca4e5c2 100644
+--- a/tests/test_project_postgres_confirmation_native.py
++++ b/tests/test_project_postgres_confirmation_native.py
+@@ -114,6 +114,55 @@ def test_original_forecasts_manual_confirmation_replay_restart_and_preservation(
+                 with pytest.raises(ValueError):session.confirm_crypto_resolution(
+                     instruction=replace(instruction,review_id='replacement-'+instruction.record_id),allow_resolution_write=True)
+             reviewed[n]=(instruction,candidate,confirmed,record)
++        # Replay the already-confirmed ORIGINAL inputs through the real writer.
++        # Only adapter-owned arguments are changed AFTER the actual DB returns.
++        binding_probe = r"""
++import runpy, sys
++from polymarket_alpha_lab import research_resolution_confirmation as core
++from polymarket_alpha_lab.project_postgres.research import ProjectResearchSession
++from polymarket_alpha_lab.research_resolution_codec import encode_resolution
++writer = core.record_resolution_review_with_psycopg
++confirm = ProjectResearchSession.confirm_crypto_resolution
++counts = {'writer': 0, 'adapter': 0}
++def changing_writer(dsn, *, submission):
++    counts['writer'] += 1
++    approved = encode_resolution(submission)
++    receipt = writer(dsn, submission=submission)
++    assert encode_resolution(receipt.submission) == approved
++    object.__setattr__(submission.confirmation, 'reviewer_id', 'synthetic-post-store-change')
++    assert encode_resolution(submission) != approved
++    return receipt
++def changing_adapter(self, *, instruction, allow_resolution_write=False):
++    counts['adapter'] += 1
++    receipt = confirm(self, instruction=instruction, allow_resolution_write=allow_resolution_write)
++    object.__setattr__(instruction, 'review_id', 'synthetic-post-adapter-change')
++    object.__setattr__(instruction.confirmation, 'source_text', 'synthetic post-adapter text')
++    return receipt
++core.record_resolution_review_with_psycopg = changing_writer
++ProjectResearchSession.confirm_crypto_resolution = changing_adapter
++sys.argv = sys.argv[1:]
++try:
++    runpy.run_path(sys.argv[0], run_name='__main__')
++finally:
++    core.record_resolution_review_with_psycopg = writer
++    ProjectResearchSession.confirm_crypto_resolution = confirm
++    assert counts == {'writer': 1, 'adapter': 1}
++"""
++        from polymarket_alpha_lab.research_resolution_inspection_cli import resolution_review_summary
++        for instruction, candidate, confirmed, record in reviewed:
++            replay = subprocess.run([sys.executable, '-I', '-c', binding_probe,
++                str(ROOT/'scripts/review_resolution_queue.py'), '--root', str(root),
++                '--confirm', '--allow-resolution-write'], input=input_bytes(instruction),
++                capture_output=True, env=files.clean_environment(), timeout=120, check=False)
++            assert replay.returncode == 0 and replay.stderr == b''
++            assert json.loads(replay.stdout)['result'] == resolution_review_summary(
++                confirmed, review_id=instruction.review_id)
++            assert b'synthetic-post-' not in replay.stdout
++            with db.session() as session:
++                assert session.inspect_resolution(review_id=instruction.review_id) == confirmed
++                assert session.inspect_resolution(review_id=instruction.candidate_review_id) == candidate
++                assert session.inspect(record_id=instruction.record_id).record == record
++        print('native confirmation approved binding: PASS; BTC/ETH original receipts survive adapter and writer argument changes, one replay each')
+         with db.session() as session:
+             # Use the ORIGINAL evaluator, not a second scoring implementation.
+             evaluation=session.evaluate()
+diff --git a/tests/test_research_resolution_confirmation.py b/tests/test_research_resolution_confirmation.py
+index 551e590..29154f6 100644
+--- a/tests/test_research_resolution_confirmation.py
++++ b/tests/test_research_resolution_confirmation.py
+@@ -341,3 +341,88 @@ def test_script_confirmation_flags_are_mutually_exclusive(monkeypatch):
+     for args in (['--confirm'],['--allow-resolution-write'],['--confirm','--allow-resolution-write','--collect','--allow-public-fetch']):
+         with pytest.raises(SystemExit) as error:script.main(args)
+         assert error.value.code==2
++
++
++# Preserve the approved caller input when an adapter changes its own arguments.
++def binding_alternative(instruction, execution, candidate, change):
++    if change == 'outcome':
++        return fixture(execution.request.intake.team_id, yes=False)
++    if change == 'record':
++        other, original, public = fixture(execution.request.intake.team_id, record_id='unapproved-original')
++        return replace(other, review_id=instruction.review_id), original, public
++    if change == 'review-id':
++        return replace(instruction, review_id='unapproved-review'), execution, candidate
++    field, value = {
++        'reviewer': ('reviewer_id', 'unapproved-reviewer'),
++        'source-text': ('source_text', 'different synthetic unapproved source text'),
++        'source-reference': ('source_reference', 'https://data.binance.vision/synthetic-unapproved-source'),
++        'time': ('confirmed_at', instruction.confirmation.confirmed_at + timedelta(seconds=2)),
++    }[change]
++    return replace(instruction, confirmation=replace(instruction.confirmation, **{field: value})), execution, candidate
++
++
++def mutate_instruction_argument(target, replacement):
++    # Deliberately model a faulty adapter, not a hostile-code security boundary.
++    # Include in-place NESTED changes rather than replacing only the outer value.
++    from dataclasses import fields
++    for item in fields(target.confirmation):
++        object.__setattr__(target.confirmation, item.name, getattr(replacement.confirmation, item.name))
++    for item in fields(target):
++        if item.name != 'confirmation':
++            object.__setattr__(target, item.name, getattr(replacement, item.name))
++
++
++@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
++@pytest.mark.parametrize('change', ['review-id', 'reviewer', 'source-text', 'source-reference', 'time', 'outcome', 'record'])
++def test_cli_receipt_cannot_replace_original_approval_by_mutating_argument(team, change, monkeypatch, capsys):
++    original, execution, candidate = fixture(team)
++    replacement, other_execution, other_candidate = binding_alternative(original, execution, candidate, change)
++    wrong = receipt(build(replacement, other_execution, other_candidate), other_execution.request)
++    calls, closed = [], []
++    class Session:
++        def confirm_crypto_resolution(self, *, instruction, allow_resolution_write):
++            assert allow_resolution_write is True
++            calls.append(instruction)
++            mutate_instruction_argument(instruction, replacement)
++            return wrong
++    class Database:
++        def __init__(self, root):
++            assert root == ROOT
++        @contextmanager
++        def session(self):
++            try:
++                yield Session()
++            finally:
++                closed.append(True)
++    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
++    code = cli.confirm_from_stdin(root=ROOT, stream=io.BytesIO(input_bytes(original)), allow_resolution_write=True)
++    output = capsys.readouterr()
++    value = json.loads(output.out)
++    assert code == 1 and value['status'] == 'failed'
++    assert value['reason_code'] == 'settlement_operation_failed' and value['result'] is None
++    assert value['business_writes_possible'] is True
++    assert len(calls) == len(closed) == 1 and output.err == ''
++    assert PRIVATE not in output.out and 'unapproved' not in output.out
++
++
++@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
++@pytest.mark.parametrize('change', ['review-id', 'reviewer', 'source-text', 'source-reference', 'time'])
++def test_confirmation_service_binds_canonical_submission_before_writer(team, change, monkeypatch):
++    instruction, execution, candidate = fixture(team)
++    replacement, _, _ = binding_alternative(instruction, execution, candidate, change)
++    wrong_submission = build(replacement, execution, candidate)
++    calls = []
++    def write(dsn, *, submission):
++        from dataclasses import fields
++        calls.append(encode_resolution(submission))
++        for item in fields(submission):
++            object.__setattr__(submission, item.name, getattr(wrong_submission, item.name))
++        return receipt(submission, execution.request)
++    monkeypatch.setattr(core, 'inspect_captured_research_with_psycopg', lambda *a, **k: execution)
++    monkeypatch.setattr(core, 'load_resolution_review_with_psycopg', lambda *a, **k: candidate)
++    monkeypatch.setattr(core, 'record_resolution_review_with_psycopg', write)
++    approved = encode_resolution(build(instruction, execution, candidate))
++    with pytest.raises(ValueError, match='^settlement_receipt_mismatch$'):
++        core.confirm_crypto_resolution_with_psycopg('synthetic', instruction=instruction, allow_resolution_write=True)
++    assert calls == [approved]
++    assert encode_resolution(build(instruction, execution, candidate)) == approved
+diff --git a/tests/test_research_resolution_confirmation_review.py b/tests/test_research_resolution_confirmation_review.py
+index 86a8bb4..752ab26 100644
+--- a/tests/test_research_resolution_confirmation_review.py
++++ b/tests/test_research_resolution_confirmation_review.py
+@@ -80,3 +80,111 @@ def test_terms_and_hash_tampering_is_not_repaired_in_place():
+     object.__setattr__(i,'source_pair','BTCUSD')
+     with pytest.raises(ValueError):build(i,e,c)
+     assert (e.request.payload,encode_resolution(c.submission))==before
++
++
++# A distinct review pass checks correct receipts and failure-before-write behavior.
++@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
++@pytest.mark.parametrize('change', ['review-id', 'reviewer', 'source-text', 'source-reference', 'time', 'outcome', 'record'])
++def test_review_original_cli_receipt_survives_adapter_argument_changes(team, change, monkeypatch, capsys):
++    from contextlib import contextmanager
++    from tests.test_research_resolution_confirmation import binding_alternative, mutate_instruction_argument
++    instruction, execution, candidate = fixture(team)
++    approved_input = input_bytes(instruction)
++    approved = receipt(build(instruction, execution, candidate), execution.request)
++    expected = cli.resolution_review_summary(approved, review_id=instruction.review_id)
++    replacement, _, _ = binding_alternative(instruction, execution, candidate, change)
++    calls, closed = [], []
++    class Session:
++        def confirm_crypto_resolution(self, *, instruction, allow_resolution_write):
++            calls.append(input_bytes(instruction))
++            mutate_instruction_argument(instruction, replacement)
++            return approved
++    class Database:
++        def __init__(self, root):
++            assert root == ROOT
++        @contextmanager
++        def session(self):
++            try:
++                yield Session()
++            finally:
++                closed.append(True)
++    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
++    assert cli.confirm_from_stdin(root=ROOT, stream=io.BytesIO(approved_input), allow_resolution_write=True) == 0
++    output = capsys.readouterr()
++    assert json.loads(output.out)['result'] == expected and output.err == ''
++    assert calls == [approved_input] and closed == [True]
++    assert input_bytes(instruction) == approved_input and PRIVATE not in output.out
++
++
++@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
++@pytest.mark.parametrize('change', ['review-id', 'reviewer', 'source-text', 'source-reference', 'time'])
++def test_review_original_service_receipt_survives_writer_argument_changes(team, change, monkeypatch):
++    from dataclasses import fields
++    from tests.test_research_resolution_confirmation import binding_alternative
++    instruction, execution, candidate = fixture(team)
++    approved_input = input_bytes(instruction)
++    original = build(instruction, execution, candidate)
++    approved_payload = encode_resolution(original)
++    approved_receipt = receipt(original, execution.request)
++    replacement, _, _ = binding_alternative(instruction, execution, candidate, change)
++    changed = build(replacement, execution, candidate)
++    writes = []
++    def write(dsn, *, submission):
++        writes.append(encode_resolution(submission))
++        for item in fields(submission):
++            object.__setattr__(submission, item.name, getattr(changed, item.name))
++        return approved_receipt
++    monkeypatch.setattr(core, 'inspect_captured_research_with_psycopg', lambda *a, **k: execution)
++    monkeypatch.setattr(core, 'load_resolution_review_with_psycopg', lambda *a, **k: candidate)
++    monkeypatch.setattr(core, 'record_resolution_review_with_psycopg', write)
++    result = core.confirm_crypto_resolution_with_psycopg('synthetic', instruction=instruction, allow_resolution_write=True)
++    assert result == approved_receipt and writes == [approved_payload]
++    assert result is not approved_receipt and result.outcome is not approved_receipt.outcome
++    assert input_bytes(instruction) == approved_input
++
++
++@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
++def test_review_receipt_projection_is_fixed_before_managed_cleanup(team, monkeypatch, capsys):
++    from contextlib import contextmanager
++    instruction, execution, candidate = fixture(team)
++    approved = receipt(build(instruction, execution, candidate), execution.request)
++    expected = cli.resolution_review_summary(approved, review_id=instruction.review_id)
++    calls, closed = [], []
++    class Session:
++        def confirm_crypto_resolution(self, **kwargs):
++            calls.append(1)
++            return approved
++    class Database:
++        def __init__(self, root):
++            assert root == ROOT
++        @contextmanager
++        def session(self):
++            try:
++                yield Session()
++            finally:
++                object.__setattr__(approved.submission, 'review_id', 'late-unapproved-review')
++                object.__setattr__(approved.submission.confirmation, 'source_text', 'late-unapproved-text')
++                object.__setattr__(approved.outcome, 'actual_yes', False)
++                closed.append(True)
++    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
++    assert cli.confirm_from_stdin(root=ROOT, stream=io.BytesIO(input_bytes(instruction)), allow_resolution_write=True) == 0
++    output = capsys.readouterr()
++    assert json.loads(output.out)['result'] == expected and output.err == ''
++    assert calls == [1] and closed == [True] and 'late-unapproved' not in output.out
++
++
++@pytest.mark.parametrize('error', [OSError('synthetic encoding failure'), KeyboardInterrupt(), SystemExit(0)])
++def test_review_failed_binding_does_not_enter_writer(monkeypatch, error):
++    instruction, execution, candidate = fixture()
++    submission = build(instruction, execution, candidate)
++    monkeypatch.setattr(core, 'inspect_captured_research_with_psycopg', lambda *a, **k: execution)
++    monkeypatch.setattr(core, 'load_resolution_review_with_psycopg', lambda *a, **k: candidate)
++    # Only the post-build canonical binding is faulty; no real storage is used.
++    monkeypatch.setattr(core, 'build_crypto_resolution_confirmation', lambda **kw: submission)
++    def encode(value):
++        raise error
++    monkeypatch.setattr(core, 'encode_resolution', encode)
++    monkeypatch.setattr(core, 'record_resolution_review_with_psycopg', lambda *a, **k: pytest.fail('writer reached'))
++    with pytest.raises(type(error)) as caught:
++        core.confirm_crypto_resolution_with_psycopg('synthetic', instruction=instruction, allow_resolution_write=True)
++    assert caught.value is error
