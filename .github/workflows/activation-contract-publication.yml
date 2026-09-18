@@ -1,0 +1,53 @@
+name: Publish fixed activation contract documentation
+on:
+  push:
+    branches: [review/wp02-activation-contract-publication-20260919]
+permissions:
+  contents: write
+concurrency:
+  group: activation-contract-documentation-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Apply only the pinned three-document patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=8ae414ad56146facdcf7e1369ca40730b69476e6
+          REF=refs/heads/review/wp02-activation-contract-objects-20260919
+          PATCH="$RUNNER_TEMP/changes.patch"
+          cp docs/reviews/activation-contract-publication/changes.patch "$PATCH"
+          echo "68c5c15a4f8840c42fd8b54ee150e891bc1abc2ec29f69c342767320f388977d  $PATCH" | sha256sum --check
+          test "$(wc -c < "$PATCH")" -eq 17957
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          printf '%s\n' DELIVERY_PLAN.md database/quickstart.md docs/research-model-budget.md > "$RUNNER_TEMP/expected-paths"
+          git diff --cached --name-only "$BASE" > "$RUNNER_TEMP/actual-paths"
+          cmp "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
+          git diff --cached --exit-code "$BASE" -- src tests scripts .github supabase pyproject.toml uv.lock database/migrations.lock.json
+          TREE=$(git write-tree)
+          test "$TREE" = 2df55db14ee07573cd55c8547fc7600763d59c60
+          EXISTING=$(git ls-remote --heads origin "$REF")
+          test -z "$EXISTING"
+          export GIT_AUTHOR_NAME='Project documentation transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport exact reviewed activation documentation; not implementation or acceptance')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: activation-contract-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
