@@ -9,7 +9,7 @@ from pathlib import Path
 
 from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
 from polymarket_alpha_lab.research_resolution import IndependentResolutionConfirmation
-from polymarket_alpha_lab.research_resolution_confirmation import CryptoSettlementReview, SCHEMA
+from polymarket_alpha_lab.research_resolution_confirmation import CryptoSettlementReview, SCHEMA, copy_review
 from polymarket_alpha_lab.research_resolution_inspection_cli import resolution_review_summary
 from polymarket_alpha_lab.team_research_agent_types import strict_json
 
@@ -88,7 +88,10 @@ def confirm_from_stdin(*, root: Path, stream=None, allow_resolution_write: bool 
             envelope['business_writes_possible'] = True
             try:
                 with ProjectPostgres(root).session() as session:
-                    receipt = session.confirm_crypto_resolution(instruction=instruction, allow_resolution_write=True)
+                    # Keep the approved input private; an adapter owns only its
+                    # detached argument, including the nested confirmation.
+                    receipt = session.confirm_crypto_resolution(instruction=copy_review(instruction),
+                                                                  allow_resolution_write=True)
                     result = resolution_review_summary(receipt, review_id=instruction.review_id)
                     if result['linked_outcome'] is None:
                         raise ValueError('settlement_receipt_invalid')

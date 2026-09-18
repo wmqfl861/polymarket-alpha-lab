@@ -341,3 +341,88 @@ def test_script_confirmation_flags_are_mutually_exclusive(monkeypatch):
     for args in (['--confirm'],['--allow-resolution-write'],['--confirm','--allow-resolution-write','--collect','--allow-public-fetch']):
         with pytest.raises(SystemExit) as error:script.main(args)
         assert error.value.code==2
+
+
+# Preserve the approved caller input when an adapter changes its own arguments.
+def binding_alternative(instruction, execution, candidate, change):
+    if change == 'outcome':
+        return fixture(execution.request.intake.team_id, yes=False)
+    if change == 'record':
+        other, original, public = fixture(execution.request.intake.team_id, record_id='unapproved-original')
+        return replace(other, review_id=instruction.review_id), original, public
+    if change == 'review-id':
+        return replace(instruction, review_id='unapproved-review'), execution, candidate
+    field, value = {
+        'reviewer': ('reviewer_id', 'unapproved-reviewer'),
+        'source-text': ('source_text', 'different synthetic unapproved source text'),
+        'source-reference': ('source_reference', 'https://data.binance.vision/synthetic-unapproved-source'),
+        'time': ('confirmed_at', instruction.confirmation.confirmed_at + timedelta(seconds=2)),
+    }[change]
+    return replace(instruction, confirmation=replace(instruction.confirmation, **{field: value})), execution, candidate
+
+
+def mutate_instruction_argument(target, replacement):
+    # Deliberately model a faulty adapter, not a hostile-code security boundary.
+    # Include in-place NESTED changes rather than replacing only the outer value.
+    from dataclasses import fields
+    for item in fields(target.confirmation):
+        object.__setattr__(target.confirmation, item.name, getattr(replacement.confirmation, item.name))
+    for item in fields(target):
+        if item.name != 'confirmation':
+            object.__setattr__(target, item.name, getattr(replacement, item.name))
+
+
+@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+@pytest.mark.parametrize('change', ['review-id', 'reviewer', 'source-text', 'source-reference', 'time', 'outcome', 'record'])
+def test_cli_receipt_cannot_replace_original_approval_by_mutating_argument(team, change, monkeypatch, capsys):
+    original, execution, candidate = fixture(team)
+    replacement, other_execution, other_candidate = binding_alternative(original, execution, candidate, change)
+    wrong = receipt(build(replacement, other_execution, other_candidate), other_execution.request)
+    calls, closed = [], []
+    class Session:
+        def confirm_crypto_resolution(self, *, instruction, allow_resolution_write):
+            assert allow_resolution_write is True
+            calls.append(instruction)
+            mutate_instruction_argument(instruction, replacement)
+            return wrong
+    class Database:
+        def __init__(self, root):
+            assert root == ROOT
+        @contextmanager
+        def session(self):
+            try:
+                yield Session()
+            finally:
+                closed.append(True)
+    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+    code = cli.confirm_from_stdin(root=ROOT, stream=io.BytesIO(input_bytes(original)), allow_resolution_write=True)
+    output = capsys.readouterr()
+    value = json.loads(output.out)
+    assert code == 1 and value['status'] == 'failed'
+    assert value['reason_code'] == 'settlement_operation_failed' and value['result'] is None
+    assert value['business_writes_possible'] is True
+    assert len(calls) == len(closed) == 1 and output.err == ''
+    assert PRIVATE not in output.out and 'unapproved' not in output.out
+
+
+@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+@pytest.mark.parametrize('change', ['review-id', 'reviewer', 'source-text', 'source-reference', 'time'])
+def test_confirmation_service_binds_canonical_submission_before_writer(team, change, monkeypatch):
+    instruction, execution, candidate = fixture(team)
+    replacement, _, _ = binding_alternative(instruction, execution, candidate, change)
+    wrong_submission = build(replacement, execution, candidate)
+    calls = []
+    def write(dsn, *, submission):
+        from dataclasses import fields
+        calls.append(encode_resolution(submission))
+        for item in fields(submission):
+            object.__setattr__(submission, item.name, getattr(wrong_submission, item.name))
+        return receipt(submission, execution.request)
+    monkeypatch.setattr(core, 'inspect_captured_research_with_psycopg', lambda *a, **k: execution)
+    monkeypatch.setattr(core, 'load_resolution_review_with_psycopg', lambda *a, **k: candidate)
+    monkeypatch.setattr(core, 'record_resolution_review_with_psycopg', write)
+    approved = encode_resolution(build(instruction, execution, candidate))
+    with pytest.raises(ValueError, match='^settlement_receipt_mismatch$'):
+        core.confirm_crypto_resolution_with_psycopg('synthetic', instruction=instruction, allow_resolution_write=True)
+    assert calls == [approved]
+    assert encode_resolution(build(instruction, execution, candidate)) == approved

@@ -80,3 +80,111 @@ def test_terms_and_hash_tampering_is_not_repaired_in_place():
     object.__setattr__(i,'source_pair','BTCUSD')
     with pytest.raises(ValueError):build(i,e,c)
     assert (e.request.payload,encode_resolution(c.submission))==before
+
+
+# A distinct review pass checks correct receipts and failure-before-write behavior.
+@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+@pytest.mark.parametrize('change', ['review-id', 'reviewer', 'source-text', 'source-reference', 'time', 'outcome', 'record'])
+def test_review_original_cli_receipt_survives_adapter_argument_changes(team, change, monkeypatch, capsys):
+    from contextlib import contextmanager
+    from tests.test_research_resolution_confirmation import binding_alternative, mutate_instruction_argument
+    instruction, execution, candidate = fixture(team)
+    approved_input = input_bytes(instruction)
+    approved = receipt(build(instruction, execution, candidate), execution.request)
+    expected = cli.resolution_review_summary(approved, review_id=instruction.review_id)
+    replacement, _, _ = binding_alternative(instruction, execution, candidate, change)
+    calls, closed = [], []
+    class Session:
+        def confirm_crypto_resolution(self, *, instruction, allow_resolution_write):
+            calls.append(input_bytes(instruction))
+            mutate_instruction_argument(instruction, replacement)
+            return approved
+    class Database:
+        def __init__(self, root):
+            assert root == ROOT
+        @contextmanager
+        def session(self):
+            try:
+                yield Session()
+            finally:
+                closed.append(True)
+    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+    assert cli.confirm_from_stdin(root=ROOT, stream=io.BytesIO(approved_input), allow_resolution_write=True) == 0
+    output = capsys.readouterr()
+    assert json.loads(output.out)['result'] == expected and output.err == ''
+    assert calls == [approved_input] and closed == [True]
+    assert input_bytes(instruction) == approved_input and PRIVATE not in output.out
+
+
+@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+@pytest.mark.parametrize('change', ['review-id', 'reviewer', 'source-text', 'source-reference', 'time'])
+def test_review_original_service_receipt_survives_writer_argument_changes(team, change, monkeypatch):
+    from dataclasses import fields
+    from tests.test_research_resolution_confirmation import binding_alternative
+    instruction, execution, candidate = fixture(team)
+    approved_input = input_bytes(instruction)
+    original = build(instruction, execution, candidate)
+    approved_payload = encode_resolution(original)
+    approved_receipt = receipt(original, execution.request)
+    replacement, _, _ = binding_alternative(instruction, execution, candidate, change)
+    changed = build(replacement, execution, candidate)
+    writes = []
+    def write(dsn, *, submission):
+        writes.append(encode_resolution(submission))
+        for item in fields(submission):
+            object.__setattr__(submission, item.name, getattr(changed, item.name))
+        return approved_receipt
+    monkeypatch.setattr(core, 'inspect_captured_research_with_psycopg', lambda *a, **k: execution)
+    monkeypatch.setattr(core, 'load_resolution_review_with_psycopg', lambda *a, **k: candidate)
+    monkeypatch.setattr(core, 'record_resolution_review_with_psycopg', write)
+    result = core.confirm_crypto_resolution_with_psycopg('synthetic', instruction=instruction, allow_resolution_write=True)
+    assert result == approved_receipt and writes == [approved_payload]
+    assert result is not approved_receipt and result.outcome is not approved_receipt.outcome
+    assert input_bytes(instruction) == approved_input
+
+
+@pytest.mark.parametrize('team', ['crypto_btc', 'crypto_eth'])
+def test_review_receipt_projection_is_fixed_before_managed_cleanup(team, monkeypatch, capsys):
+    from contextlib import contextmanager
+    instruction, execution, candidate = fixture(team)
+    approved = receipt(build(instruction, execution, candidate), execution.request)
+    expected = cli.resolution_review_summary(approved, review_id=instruction.review_id)
+    calls, closed = [], []
+    class Session:
+        def confirm_crypto_resolution(self, **kwargs):
+            calls.append(1)
+            return approved
+    class Database:
+        def __init__(self, root):
+            assert root == ROOT
+        @contextmanager
+        def session(self):
+            try:
+                yield Session()
+            finally:
+                object.__setattr__(approved.submission, 'review_id', 'late-unapproved-review')
+                object.__setattr__(approved.submission.confirmation, 'source_text', 'late-unapproved-text')
+                object.__setattr__(approved.outcome, 'actual_yes', False)
+                closed.append(True)
+    monkeypatch.setattr(cli, 'ProjectPostgres', Database)
+    assert cli.confirm_from_stdin(root=ROOT, stream=io.BytesIO(input_bytes(instruction)), allow_resolution_write=True) == 0
+    output = capsys.readouterr()
+    assert json.loads(output.out)['result'] == expected and output.err == ''
+    assert calls == [1] and closed == [True] and 'late-unapproved' not in output.out
+
+
+@pytest.mark.parametrize('error', [OSError('synthetic encoding failure'), KeyboardInterrupt(), SystemExit(0)])
+def test_review_failed_binding_does_not_enter_writer(monkeypatch, error):
+    instruction, execution, candidate = fixture()
+    submission = build(instruction, execution, candidate)
+    monkeypatch.setattr(core, 'inspect_captured_research_with_psycopg', lambda *a, **k: execution)
+    monkeypatch.setattr(core, 'load_resolution_review_with_psycopg', lambda *a, **k: candidate)
+    # Only the post-build canonical binding is faulty; no real storage is used.
+    monkeypatch.setattr(core, 'build_crypto_resolution_confirmation', lambda **kw: submission)
+    def encode(value):
+        raise error
+    monkeypatch.setattr(core, 'encode_resolution', encode)
+    monkeypatch.setattr(core, 'record_resolution_review_with_psycopg', lambda *a, **k: pytest.fail('writer reached'))
+    with pytest.raises(type(error)) as caught:
+        core.confirm_crypto_resolution_with_psycopg('synthetic', instruction=instruction, allow_resolution_write=True)
+    assert caught.value is error

@@ -163,11 +163,14 @@ def confirm_crypto_resolution_with_psycopg(dsn: str, *, instruction: CryptoSettl
     execution = inspect_captured_research_with_psycopg(dsn, record_id=item.record_id)
     candidate = load_resolution_review_with_psycopg(dsn, review_id=item.candidate_review_id)
     submission = build_crypto_resolution_confirmation(instruction=item, execution=execution, candidate=candidate)
+    # Bind BEFORE handing the mutable-in-practice dataclass to the adapter.
+    # A changed argument is not a replacement for the approved canonical bytes.
+    expected_payload = encode_resolution(submission)
     receipt = record_resolution_review_with_psycopg(dsn, submission=submission)
     if type(receipt) is not StoredResolutionReview:
         raise ValueError('settlement_receipt_invalid')
     receipt = replace(receipt, outcome=None if receipt.outcome is None else replace(receipt.outcome))
-    if encode_resolution(receipt.submission) != encode_resolution(submission) or receipt.outcome is None:
+    if encode_resolution(receipt.submission) != expected_payload or receipt.outcome is None:
         raise ValueError('settlement_receipt_mismatch')
     return receipt
 

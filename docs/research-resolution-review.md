@@ -151,3 +151,38 @@ Official field/semantics references (retrieved 2026-09-13):
 - https://docs.polymarket.com/concepts/resolution
 - https://docs.polymarket.com/market-data/market-details
 - https://docs.polymarket.com/api-reference/markets/get-market-by-slug
+
+## Preserve approved confirmation across adapter boundaries (WP-04)
+
+The manual BTC/ETH confirmation command keeps the decoded approved instruction
+private and passes a separately validated copy to its managed adapter. The
+existing `copy_review` also copies the nested independent confirmation; no new
+input format or serializer is introduced. Its receipt is still checked against
+the original review, request, source evidence, time and outcome assertions, not
+against an adapter's subsequently changed argument.
+
+The confirmation service fixes the original canonical `ResolutionSubmission`
+bytes BEFORE calling the existing atomic writer. An internally consistent receipt
+for different content is rejected even when a faulty writer has also changed its
+argument. Conversely, returning the correct original receipt remains valid when
+only the adapter-owned argument was changed after the actual write or replay.
+There is one writer call; neither mismatch nor output failure retries the business
+operation, creates a replacement review or claims the transaction rolled back.
+Original-ID inspection and explicit SAME-input replay remain the recovery path.
+
+This is defensive receipt binding, not a sandbox for hostile Python, source
+truth authentication or a report that an actual database was corrupted. Frozen
+dataclasses emulate read-only values; they do not enforce an execution security
+boundary. The original source/time checks, one-outcome policy, immutable ledger,
+write opt-in, bounded stdin, output behavior and private PostgreSQL rules remain.
+
+The existing isolated native confirmation test replays both original BTC/ETH
+confirmations through the actual writer, then changes only adapter-owned arguments.
+It must still return the original receipts and preserve original candidates,
+forecasts, outcome counts and instance identity. This uses synthetic input on
+CI-owned PostgreSQL, not a user installation or an authorized real settlement.
+
+Reference checked 2026-09-18: Python dataclasses `replace` invokes the dataclass
+constructor (including `__post_init__`); nested copying here is the existing
+project type's explicit behavior, not a generic promise of `replace`.
+https://docs.python.org/3.12/library/dataclasses.html#dataclasses.replace

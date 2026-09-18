@@ -114,6 +114,55 @@ def test_original_forecasts_manual_confirmation_replay_restart_and_preservation(
                 with pytest.raises(ValueError):session.confirm_crypto_resolution(
                     instruction=replace(instruction,review_id='replacement-'+instruction.record_id),allow_resolution_write=True)
             reviewed[n]=(instruction,candidate,confirmed,record)
+        # Replay the already-confirmed ORIGINAL inputs through the real writer.
+        # Only adapter-owned arguments are changed AFTER the actual DB returns.
+        binding_probe = r"""
+import runpy, sys
+from polymarket_alpha_lab import research_resolution_confirmation as core
+from polymarket_alpha_lab.project_postgres.research import ProjectResearchSession
+from polymarket_alpha_lab.research_resolution_codec import encode_resolution
+writer = core.record_resolution_review_with_psycopg
+confirm = ProjectResearchSession.confirm_crypto_resolution
+counts = {'writer': 0, 'adapter': 0}
+def changing_writer(dsn, *, submission):
+    counts['writer'] += 1
+    approved = encode_resolution(submission)
+    receipt = writer(dsn, submission=submission)
+    assert encode_resolution(receipt.submission) == approved
+    object.__setattr__(submission.confirmation, 'reviewer_id', 'synthetic-post-store-change')
+    assert encode_resolution(submission) != approved
+    return receipt
+def changing_adapter(self, *, instruction, allow_resolution_write=False):
+    counts['adapter'] += 1
+    receipt = confirm(self, instruction=instruction, allow_resolution_write=allow_resolution_write)
+    object.__setattr__(instruction, 'review_id', 'synthetic-post-adapter-change')
+    object.__setattr__(instruction.confirmation, 'source_text', 'synthetic post-adapter text')
+    return receipt
+core.record_resolution_review_with_psycopg = changing_writer
+ProjectResearchSession.confirm_crypto_resolution = changing_adapter
+sys.argv = sys.argv[1:]
+try:
+    runpy.run_path(sys.argv[0], run_name='__main__')
+finally:
+    core.record_resolution_review_with_psycopg = writer
+    ProjectResearchSession.confirm_crypto_resolution = confirm
+    assert counts == {'writer': 1, 'adapter': 1}
+"""
+        from polymarket_alpha_lab.research_resolution_inspection_cli import resolution_review_summary
+        for instruction, candidate, confirmed, record in reviewed:
+            replay = subprocess.run([sys.executable, '-I', '-c', binding_probe,
+                str(ROOT/'scripts/review_resolution_queue.py'), '--root', str(root),
+                '--confirm', '--allow-resolution-write'], input=input_bytes(instruction),
+                capture_output=True, env=files.clean_environment(), timeout=120, check=False)
+            assert replay.returncode == 0 and replay.stderr == b''
+            assert json.loads(replay.stdout)['result'] == resolution_review_summary(
+                confirmed, review_id=instruction.review_id)
+            assert b'synthetic-post-' not in replay.stdout
+            with db.session() as session:
+                assert session.inspect_resolution(review_id=instruction.review_id) == confirmed
+                assert session.inspect_resolution(review_id=instruction.candidate_review_id) == candidate
+                assert session.inspect(record_id=instruction.record_id).record == record
+        print('native confirmation approved binding: PASS; BTC/ETH original receipts survive adapter and writer argument changes, one replay each')
         with db.session() as session:
             # Use the ORIGINAL evaluator, not a second scoring implementation.
             evaluation=session.evaluate()
