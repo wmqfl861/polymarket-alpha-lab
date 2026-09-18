@@ -1,0 +1,50 @@
+name: Publish fixed confirmation binding objects
+on:
+  push:
+    branches: [review/wp04-confirmation-binding-publication-20260918]
+permissions:
+  contents: write
+concurrency:
+  group: reviewed-confirmation-binding-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - name: Apply exact reviewed bytes without executing project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=80d64b6b081caee385aca64dbf2e086144b016f8
+          REF=refs/heads/review/wp04-confirmation-binding-objects-20260918
+          PATCH="$RUNNER_TEMP/implementation.patch"
+          cp docs/reviews/confirmation-binding-publication/implementation.patch "$PATCH"
+          echo "41feda4a375625513c05c0319a543f80d2e9bf7cbe833e14b4b14c9b5dac06af  $PATCH" | sha256sum --check
+          test "$(wc -c < "$PATCH")" -eq 24418
+          git fetch --no-tags --depth=1 origin "$BASE"
+          git checkout --detach "$BASE"
+          git apply --check --index "$PATCH"
+          git apply --index "$PATCH"
+          git diff --cached --check
+          git diff --cached --exit-code "$BASE" -- .github scripts supabase/migrations pyproject.toml uv.lock database/migrations.lock.json
+          test "$(git diff --cached --name-only "$BASE" | wc -l)" -eq 7
+          TREE=$(git write-tree)
+          test "$TREE" = 18a96f7da7e46c9d7d0b329d6612ef0a50268da7
+          test -z "$(git ls-remote --heads origin "$REF")"
+          export GIT_AUTHOR_NAME='Project review transport'
+          export GIT_AUTHOR_EMAIL='review@localhost'
+          export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+          export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+          COMMIT=$(git commit-tree "$TREE" -p "$BASE" -m 'Transport exact reviewed confirmation-binding objects; not acceptance or main merge')
+          git push origin "$COMMIT:$REF"
+          printf 'commit=%s\ntree=%s\n' "$COMMIT" "$TREE" > "$RUNNER_TEMP/publication.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-confirmation-binding-publication
+          path: ${{ runner.temp }}/publication.txt
+          retention-days: 7
+          if-no-files-found: error
