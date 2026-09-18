@@ -1,0 +1,37 @@
+name: Pinned integrity integration sources
+on:
+  push:
+    branches: [review/wp06-integrity-integration-source-20260918]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: e1e47df60a59207575b7a266902e0a99ced9d283
+          persist-credentials: false
+      - name: Archive exact tracked revisions only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = e1e47df60a59207575b7a266902e0a99ced9d283
+          git fetch --no-tags --depth=1 origin 061a55703197cc526f3d707d9da58b971c582e0b 3a987bc6c1a5df608ff8f0668b866aaf87842c04
+          for revision in e1e47df60a59207575b7a266902e0a99ced9d283 061a55703197cc526f3d707d9da58b971c582e0b 3a987bc6c1a5df608ff8f0668b866aaf87842c04; do
+            git archive --format=zip --output="$RUNNER_TEMP/$revision.zip" "$revision"
+            git ls-tree -r "$revision" > "$RUNNER_TEMP/$revision.tree.txt"
+            git cat-file commit "$revision" > "$RUNNER_TEMP/$revision.commit.txt"
+            sha256sum "$RUNNER_TEMP/$revision.zip" > "$RUNNER_TEMP/$revision.sha256"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pinned-main-and-integrity
+          path: |
+            ${{ runner.temp }}/*.zip
+            ${{ runner.temp }}/*.tree.txt
+            ${{ runner.temp }}/*.commit.txt
+            ${{ runner.temp }}/*.sha256
+          retention-days: 7
+          if-no-files-found: error
