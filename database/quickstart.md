@@ -485,3 +485,43 @@ query times, not a change to the database backup format or stored timestamps.
 The original failed Windows proof is preserved; a controlled reproduction proves
 this comparison defect but does not identify every possible cause of that older
 generic mismatch. The final combined-tree CI result is recorded in PR #46.
+
+
+### Managed research also checks declared kit integrity
+
+Every new `ProjectPostgres(root).session()` reuses the existing bundle verifier
+BEFORE taking the lifecycle lease, reading private state, or starting/borrowing
+an engine. It checks both the source/kit directory containing the imported server
+module and the selected data root (once if they are the same). Either
+`PROJECT-BUNDLE.json` or `database/postgres-runtime.zip` identifies a declared kit;
+a missing companion, changed payload, extra selected code/SQL, reparse point or
+unreadable marker refuses entry. There is no cached success between sessions.
+This covers existing managed research, task, simulation and confirmation paths,
+not only `start_project.py`. Console commands retain their existing fixed failure
+responses and must not be retried against another root to bypass the rejection.
+
+This is an entry-time integrity check, NOT source authentication, an atomic
+filesystem snapshot or a sandbox against Python code already imported/executed.
+Both markers absent remains the explicit SOURCE-installation path; removing both
+markers maliciously is not detected as a previously installed kit. Check the
+trusted outer archive before execution. Mid-session file changes are not monitored;
+admitted work still uses its original cleanup, and the next entry rechecks bytes.
+No new schema/version compatibility is inferred when code and data roots differ.
+
+The separate `status`/`down` infrastructure controls are unchanged, so a rejected
+research entry does not itself stop a borrowed running engine or block an operator
+from its existing safe-stop procedure. This does not authorize an old-kit overlay,
+file repair, deletion of state/markers, user database migration or real model call.
+
+
+The mainline integration retains managed-session draining and cold-recovery
+semantics. Integrity admission happens before the private lifecycle lease; after
+admission, existing work drains even when close is interrupted. An already-running
+borrowed engine stays owned by its caller. A later bundle change is rejected at
+the next entry, not used to drop the lease during admitted work. The combined
+tests use real Python Conditions/threads with synthetic lifecycle for unit checks;
+the existing packaged drain and cold-recovery scenarios provide separate real
+PostgreSQL coverage. All previous limits and failed-run evidence are retained.
+This integration is not a diagnosis or repair of the intermittent PS5.1 first run.
+Python Condition semantics reference checked 2026-09-18:
+https://docs.python.org/3.12/library/threading.html#condition-objects
