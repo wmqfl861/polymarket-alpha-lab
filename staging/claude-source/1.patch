@@ -1,0 +1,183 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index ec120b2..98b10bf 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -69,7 +69,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | ID／工作包 | 当前状态 | 剩余缺口 | 依赖 | 完成证据 |
+ | --- | --- | --- | --- | --- |
+ | WP-01 候选到研究入口 | **DONE（G1）** | 有界发现、最新规则／观察时刻、一次完整预览和待审规格已接通；本项不包含模型授权或来源真伪认证 | 现有公开输入、PR #19／#20 门禁 | [PR #28](https://github.com/wmqfl861/polymarket-alpha-lab/pull/28)：52 项反例测试、三条 CI、真实 BTC／ETH 待审样例；详见第 10 节 |
+-| WP-02 真实模型与预算 | **PARTIAL** | D1—D3 已明确；本次修复凭据／重定向和必引证据调用前边界。已实现显式无金额封顶 Python 执行路径及 Codex 事件协议转换；已补同库授权／逐次调用审计及真实原生子进程启动、I/O 限制和退出清理；已增加固定版本受控命令配置及官方完整包合成验证；仍缺上下文／持久化隔离及提供商实际使用核验，ephemeral 仍写 SQLite，禁止据此真实启用 | 先接 Codex CLI 的现有 factory 合同；不探测凭据；真实验收依赖具体本地配置和 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
++| WP-02 真实模型与预算 | **PARTIAL** | D1—D3 已明确；本次修复凭据／重定向和必引证据调用前边界。已实现显式无金额封顶 Python 执行路径及 Codex 事件协议转换；已补同库授权／逐次调用审计及真实原生子进程启动、I/O 限制和退出清理；已增加固定版本受控命令配置及官方完整包合成验证；已增加 Claude Code bare／不保存会话的显式 API 模式替代接线，复用审计及进程层；官方 Claude 二进制未实测，仍缺实际写入／上下文／提供商核验；Codex ephemeral 仍写 SQLite，禁止据此真实启用 | 先接 Codex CLI 的现有 factory 合同；不探测凭据；真实验收依赖具体本地配置和 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，审核后显式入库批次／预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺本地 Agent／实际使用核验及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02 与已明确的 D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+@@ -142,7 +142,7 @@ WP-02 的无凭据装配设计、WP-04 的人工操作流程、WP-06 的文档
+ 本地 Agent 方向已确定；具体可执行文件／版本／模型仍需显式配置与核验，不能把“找密钥匙”交给本地 Agent。
+ 
+ WP-01 已按第 10 节关闭 G1，不继续扩充筛选排行榜或旁路报告。
+-**下一实施重点：无金额封顶、持久调用审计、Codex 协议和真实子进程执行层已接通；固定 Codex 配置与完整包合成验证已接通；先解决仍落 SQLite 的持久化／上下文隔离（或核验已允许的其他 CLI），再验实际身份并进行获准真实运行。WP-03 的真实模型组合验收仍按原要求推进。**
++**下一实施重点：无金额封顶、持久调用审计、Codex 协议和真实子进程执行层已接通；固定 Codex 配置与完整包合成验证已接通；Claude Code 替代协议与无会话命令配置已实现，先核验官方二进制的实际状态写入、上下文、工具及重试行为；不把 API 模式当作订阅登录、不默认回退；通过后再验实际身份并进行获准真实运行。WP-03 的真实模型组合验收仍按原要求推进。**
+ Claude Code、OpenCode、Grok CLI、ZCode CLI 为允许的后续替代项，不默认兼容或自动回退。
+ D1—D3 不再阻塞离线实现；真实调用仍需所选版本的隔离／输出／使用验收和显式运行配置。
+ 随后复用原流程完成 WP-03 停机重启、WP-04 实际结算、WP-05 成本样本和 WP-06 固定版发布。
+@@ -1184,3 +1184,30 @@ Windows父进程消失的既有证明仅覆盖Job分配之后；硬终止发生
+ 本轮最终触发检查另发现 Codex／进程模块单独改动不触发实际安装包流程；八项路径反例先失败。
+ 现补齐原整包工作流的相关源码／测试／指南触发路径，保留全部旧路径、原用例命令、权限与时限。
+ 初始候选只有三条托管流程，不能宣称已通过整包；修订后的同一最终树必须四条全部实际验收。
++
++
++## 43. WP-02／WP-03：Claude Code 无会话替代接线与原审计复用（2026-09-20）
++
++基线 `3548f016ef153fcb577d8e5e8306a80e29eacfcb`，完整树
++`3aebdd0e3b7a7ecfda18b23cf7d4bc2cd562eb80`。Codex 的 SQLite 阻断仍保留，
++本轮选择 D1 已允许的 Claude Code 替代项，新增严格结果转换和固定命令配置，
++复用原生进程监督、原动作／引用校验、无金额封顶授权及同库调用审计，不增加框架或数据库。
++
++- 配置声明固定 2.1.278／claude-opus-5／max，bare、restricted、不保存会话、无工具、
++  单轮及关闭重试／压缩／附件扩展；不使用危险跳过权限、不自动发现配置或回退到别的模型。
++- bare 是显式 API 模式，不使用现有订阅登录。获准应用提供内存凭据回调；原审计先提交，
++  再调用回调。密钥不进入提示、参数、配置哈希或审计字段；不读取用户凭据或要求聊天传密钥。
++  已知输入尺寸不兼容、停止或协议摘要变化时不进入回调；宿主／回调仍是可信边界。
++- 只接受完整单轮 JSON 成功结果及一致的唯一模型用量。缓存写入／读取与未缓存输入分别相加，
++  不能套用 Codex 的缓存包含关系；无效结果保留未知外部用量，不伪造零收费。禁止 CLI 结构化
++  输出修复循环；原始动作文本只验证一次，失败关闭，不重发。组织规则和原进程局限仍有效。
++- 合成测试覆盖真实子进程、两团队审计后启动、正常／失败与无新调用重放。现有原生数据库
++  测试追加同样场景并保全原断言；Windows 仅增加测试选择和 Claude 文件触发路径，不扩时限。
++- 分离自审六项反例先失败再修正：stderr 警告被当成功、已知输入过大仍取凭据、摘要漏静态
++  提示协议。初始 stop 方法／回执投影测试夹具错误单列；不把它们当产品漏洞或隐去原记录。
++
++**本单元不是实际 Claude CLI 验收。** 官方包下载受限后已停止，未换路径绕过；官方二进制
++未运行。文档的不保存会话不等于所有文件均不写，实际持久化／网络／上下文／隐式工具与重试
++仍待验证，不能据此宣称 SQLite 冲突已经解除。原 68 份 SQL、依赖、请求身份及历史都不改。
++最终精确树的全量／冻结复测／Windows／整包结果记录于 PR，通过前不合并。
++WP-02／WP-03 仍 PARTIAL，G2—G6 未关闭，V1 仍 1／6；无用户库、安装、真实模型或订单操作。
+diff --git a/docs/research-local-agent.md b/docs/research-local-agent.md
+index aeafccc..fbb004a 100644
+--- a/docs/research-local-agent.md
++++ b/docs/research-local-agent.md
+@@ -752,3 +752,125 @@ Eight path-selection counterexamples failed before the correction. The existing
+ kit workflow now includes these source/test families and this guide, retaining
+ all prior filters, test commands, deadlines and permissions. No manual rerun or
+ old-head success substitutes for the corrected final tree's full verification.
++
++
++## Claude Code alternative: explicit API-mode source adapter (2026-09-20)
++
++**Implemented here, but not an activated or certified official CLI:**
++`research_claude_exec.ClaudeProcessModel` and
++`research_claude_profile.ClaudeExecProfile` reuse the existing native process
++supervisor, original action validation, uncapped authorization and PostgreSQL
++call audit. The selected contract label is Claude Code **2.1.278**, model
++**claude-opus-5**, effort **max**. This is an explicit alternative already allowed
++by D1, never automatic fallback from Codex. The Codex SQLite finding remains open.
++
++### Operation and authentication
++
++The fixed command requests `--print --bare --restricted --no-session-persistence`,
++text stdin / JSON stdout, one turn, no built-in or MCP tools, no slash commands,
++no user/project settings and no permission-prompt host. Environment switches
++request zero API retries, no non-streaming fallback, compaction, title generation,
++attachments, background tasks, updates, telemetry, automatic memory or fast mode.
++Managed policy is not bypassed. No arbitrary extra flags or inherited environment
++are accepted. The declared command is not proof that all combinations of CLI and
++managed configuration enforce it.
++
++Unlike a logged-in interactive Claude session, **bare mode is an API-mode path**:
++it does not use the user's OAuth/keychain/subscription login. An explicitly
++approved local application supplies an in-memory API key callback; no key is
++requested in chat or searched in files/environment/keychains by this code. The
++factory requires both `allow_process_start=True` and `allow_api_key_use=True`.
++The callback is not invoked until the original audited call enters the client.
++Known incompatible stdin size, stop or changed profile contract blocks before
++key retrieval. Callbacks are trusted, bounded application code, not a sandbox.
++A slow callback is not covered by the process supervisor's later deadline.
++
++Public profile inputs include an explicit native executable and its SHA256,
++complete path-only environment including HOME/CLAUDE_CONFIG_DIR, dedicated
++working directory, HTTPS endpoint and original process limits. Endpoint userinfo,
++query strings, fragments and plaintext HTTP are rejected. No config file, schema
++file, gateway, installer or credential loader is created. The profile digest
++covers the public process/command/environment plus prompt/action protocol;
++credentials are excluded. The supplied key enters only the child environment,
++not argv, prompt, profile digest, result or a new audit field. It is NOT erased
++from memory or protected against privileged environment readers or a compromised
++CLI. This is not a general redactor for secrets echoed by external code.
++
++The application creates the existing UncappedResearchAuthorization with the exact
++`profile.contract_sha256`, model and original request hashes, explicitly stores
++that authorization in the SAME project PostgreSQL, obtains
++`claude_profile_factory(profile=..., authorization=..., api_key_supplier=...,
++allow_process_start=True, allow_api_key_use=True)`, and supplies it on the original
++`run_uncapped_research(..., require_durable_audit=True, allow_model_calls=True,
++allow_uncapped_costs=True)` path with the SAME authorization. This is a typed
++integration contract, not a ready-to-run real-provider command. The standalone
++operator script still does not activate a model client.
++
++### Strict result and usage semantics
++
++Only one JSON object of type `result`, successful subtype, exact false error,
++one turn and end-turn reason is accepted. No stderr bytes are accepted, since an
++unclassified warning may indicate incompatible flags/config. Missing or unknown
++keys, duplicate JSON keys, invalid Unicode at either nested boundary, mismatching
++model usage, permission denials, errors, deferred/structured tool work, trailing
++output, nonzero process exit and reported output overruns fail closed. The final
++`result` text must contain only the original closed `calls` action-data contract;
++the original research agent still checks evidence read/citation relationships.
++No output is repaired and no request/process is retried, resumed or substituted.
++
++This path deliberately omits CLI `--json-schema`: that feature has a separate
++structured-output retry mechanism. The host validates the returned action text
++once rather than permitting CLI-hosted repair turns. The original requested
++output limit is forwarded through CLAUDE_CODE_MAX_OUTPUT_TOKENS and checked again
++in reported usage. The official variable applies to **most** requests; neither
++this flag, the one-turn limit nor a CLI result proves exactly one external API
++submission or an all-inclusive pre-request token/monetary bound.
++
++Reported total tokens add uncached input, cache creation, cache read and output.
++Claude's cache counters are not Codex's input subsets. The single model breakdown
++must agree with those four totals; optional cache-creation splits must also agree.
++Optional cost estimates are validated but discarded, never persisted as verified
++charges. Invalid results retain unknown external usage in the original audit;
++zero research counters do not prove zero outside cost. Successful structural
++conversion does not guarantee a completed forecast.
++
++### Evidence, self-review and outstanding actual-CLI checks
++
++The official CLI reference, environment reference and SDK result parser informed
++this contract. An attempt to retrieve the official Linux binary was denied by the
++available download path and stopped: no mirror, alternate package or helper was
++used to work around it. **The official Claude Code binary was not executed here.**
++The release version/digest is metadata, not an attestation of an installed image.
++There is no demonstrated elimination of SQLite or other CLI-owned files yet.
++The no-session flag documents sessions, not every possible local state/log.
++
++Tests use synthetic keys, declared result envelopes and actual isolated Python
++subprocesses. The native PostgreSQL proof appends BTC/ETH success/failure cases,
++separate-transaction start visibility, reported-cache accounting, restart and
++original-ID replay with no extra process. It does not substitute a fake binary
++for an official-CLI persistence/network acceptance claim. No original native
++scenario, migration, dependency, deadline or old workflow selector is removed.
++Claude source/test paths are added to both native and actual-kit triggers.
++
++Separate same-assistant review reproduced six cases before correction: three
++unclassified-stderr acceptances, two known input-limit failures that entered the
++key callback unnecessarily, and a digest missing the static prompt/action
++protocol. Tests now retain those counterexamples. Earlier stop-method and audit
++projection mistakes were fixture errors, fixed using the original APIs, not
++product defects. Exact final full/frozen/Windows evidence belongs in the PR.
++No independent reviewer or zero-defect guarantee is claimed.
++
++**Still required before real use:** obtain an approved official binary, verify
++its flags/result shape and effective managed settings, inspect writes and network
++activity under fresh dedicated state directories, verify no hidden repair/retry/
++tool calls, validate actual model identity and provider usage, and resolve any
++persistence incompatibility under the existing PostgreSQL-only rule. No change to
++that rule or use of existing subscription credentials is implied. No user-local
++installation/database operation or real provider call occurred. G2–G6 stay open.
++
++Primary references checked 2026-09-20 (no new runtime dependency):
++- https://code.claude.com/docs/en/cli-reference
++- https://code.claude.com/docs/en/env-vars
++- https://code.claude.com/docs/en/headless
++- https://github.com/anthropics/claude-agent-sdk-python/blob/3cb0f73e6234408b5883b1e7e2875a46a3049cb9/src/claude_agent_sdk/_internal/message_parser.py
++- https://github.com/anthropics/claude-code/releases/tag/v2.1.278

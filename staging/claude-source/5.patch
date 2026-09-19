@@ -1,0 +1,324 @@
+diff --git a/tests/test_research_claude_profile.py b/tests/test_research_claude_profile.py
+new file mode 100644
+index 0000000..20a20ab
+--- /dev/null
++++ b/tests/test_research_claude_profile.py
+@@ -0,0 +1,211 @@
++"""Application boundary tests only: no actual Claude binary, key or provider."""
++from dataclasses import replace
++from hashlib import sha256
++import json
++import os
++from pathlib import Path
++import traceback
++
++import pytest
++
++from polymarket_alpha_lab import research_claude_profile as profile
++from polymarket_alpha_lab import research_claude_exec as cli
++from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
++from polymarket_alpha_lab.research_process import ResearchProcessSpec
++from tests.test_research_claude_exec import MODEL, action, envelope, wire
++from tests.test_research_uncapped_audit import AuditHarness
++from tests.test_research_uncapped import approval, req, run
++
++SENTINEL = 'SYNTHETIC-NOT-A-REAL-CREDENTIAL'
++
++
++def candidate(tmp_path, **changes):
++    process = ResearchProcessSpec((str(tmp_path/'claude-native'),),str(tmp_path/'work'),
++        (('HOME',str(tmp_path/'home')),('CLAUDE_CONFIG_DIR',str(tmp_path/'config'))),'a'*64,15000)
++    values = dict(process=process,endpoint_url='https://gateway.example.invalid')
++    values.update(changes)
++    return profile.ClaudeExecProfile(**values)
++
++
++def permission(p, request=None, **changes):
++    request = replace(req(),model_id=MODEL) if request is None else request
++    return approval((request,),model_id=MODEL,adapter_contract_sha256=p.contract_sha256,**changes)
++
++
++def bound(p, authorization=None, **kw):
++    return profile.claude_profile_factory(profile=p,
++        authorization=permission(p) if authorization is None else authorization,
++        api_key_supplier=kw.pop('api_key_supplier',lambda:SENTINEL),
++        allow_process_start=kw.pop('allow_process_start',True),
++        allow_api_key_use=kw.pop('allow_api_key_use',True),**kw)
++
++
++def test_construction_and_factory_are_inert_with_no_secret_in_digest(monkeypatch,tmp_path):
++    def forbidden(*args,**kwargs):pytest.fail('construction performed I/O')
++    monkeypatch.setattr(os,'open',forbidden)
++    monkeypatch.setattr(cli,'run_research_process',forbidden)
++    p=candidate(tmp_path); digest=p.contract_sha256
++    factory=bound(p,api_key_supplier=forbidden)
++    assert type(factory('crypto_btc')) is cli.ClaudeProcessModel
++    assert len(digest)==64 and SENTINEL not in repr(p)+repr(factory)+digest
++    assert list(tmp_path.iterdir())==[]
++
++
++def test_closed_arguments_disable_session_tools_and_repair(tmp_path):
++    p=candidate(tmp_path)
++    request=cli.ClaudeExecInput(MODEL,'[{"content":"exact"}]',137)
++    out=p.prepare(request,api_key=SENTINEL)
++    args=out.argv;env=dict(out.environment)
++    assert args[0]==p.process.argv[0]
++    for flag in ('--print','--bare','--restricted','--no-session-persistence',
++                 '--disable-slash-commands','--strict-mcp-config','--no-chrome'):
++        assert flag in args
++    for flag,value in (('--input-format','text'),('--output-format','json'),('--tools',''),
++                       ('--disallowedTools','*'),('--mcp-config','{"mcpServers":{}}'),
++                       ('--setting-sources',''),('--permission-prompts','none'),
++                       ('--max-turns','1'),('--effort','max'),('--model',MODEL)):
++        assert args[args.index(flag)+1]==value
++    assert not {'--json-schema','--resume','--continue','--fallback-model','--dangerously-skip-permissions',
++                '--settings','--debug','--verbose'} & set(args)
++    assert env['CLAUDE_CODE_MAX_RETRIES']=='0'
++    assert env['CLAUDE_CODE_MAX_OUTPUT_TOKENS']=='137'
++    assert env['ANTHROPIC_API_KEY']==SENTINEL
++    assert env['ANTHROPIC_BASE_URL']==p.endpoint_url
++    for name,value in profile._FIXED_ENV:assert env[name]==value
++    assert SENTINEL not in repr(out)+json.dumps(args)+request.prompt_json+p.contract_sha256
++    assert set(env)==set(dict(profile._FIXED_ENV))|{'HOME','CLAUDE_CONFIG_DIR','ANTHROPIC_BASE_URL',
++                                             'ANTHROPIC_API_KEY','CLAUDE_CODE_MAX_OUTPUT_TOKENS'}
++    assert out.timeout_ms==p.process.timeout_ms and out.max_executable_bytes==p.process.max_executable_bytes
++
++
++@pytest.mark.parametrize('name', ['ANTHROPIC_API_KEY','ANTHROPIC_AUTH_TOKEN','CLAUDE_CODE_OAUTH_TOKEN',
++    'PATH','PYTHONPATH','NODE_OPTIONS','HTTP_PROXY','HTTPS_PROXY','DEBUG','CLAUDE_CODE_RETRY_WATCHDOG',
++    'CLAUDE_CODE_EXTRA_BODY','CLAUDE_CODE_FORCE_SESSION_PERSISTENCE','CLAUDE_CODE_MAX_RETRIES'])
++def test_profile_rejects_credential_and_behavior_environment_injection(tmp_path,name):
++    p=candidate(tmp_path)
++    with pytest.raises(ValueError,match='profile_invalid'):
++        replace(p,process=replace(p.process,environment=(*p.process.environment,(name,str(tmp_path)))))
++
++
++@pytest.mark.parametrize('url', ['http://127.0.0.1:1234','http://gateway.invalid','https://user:secret@host',
++    'https://host?q=secret','https://host#fragment','https://host:0','https://host:bad','https:///path',
++    'https://host/\npath',' https://host','https://host\\evil','https://%68ost','https://[broken'])
++def test_no_plaintext_or_embedded_credentials_endpoints(tmp_path,url):
++    with pytest.raises(ValueError,match='profile_invalid') as caught:candidate(tmp_path,endpoint_url=url)
++    assert 'secret' not in str(caught.value)
++
++
++@pytest.mark.parametrize('bad', ['opus','claude-sonnet-5','',None])
++def test_profile_does_not_guess_or_fallback_model(tmp_path,bad):
++    with pytest.raises(ValueError):candidate(tmp_path,model_id=bad)
++
++
++@pytest.mark.parametrize('bad', ['latest','2.1.277',None])
++def test_profile_version_is_an_explicit_contract_not_latest_default(tmp_path,bad):
++    with pytest.raises(ValueError):candidate(tmp_path,cli_version=bad)
++
++
++@pytest.mark.parametrize('bad', ['', '\nkey','key\r','a b','a\t','中文','a'*4097,None,True])
++def test_invalid_supplied_keys_are_fixed_code(tmp_path,bad):
++    p=candidate(tmp_path)
++    with pytest.raises(ValueError,match='profile_unavailable'):
++        p.prepare(cli.ClaudeExecInput(MODEL,'[{}]',100),api_key=bad)
++
++
++@pytest.mark.parametrize('field', ['endpoint','image','cwd','home','timeout','cap'])
++def test_public_contract_changes_cannot_reuse_old_authorization(tmp_path,field):
++    p=candidate(tmp_path); permission0=permission(p)
++    if field=='endpoint':q=replace(p,endpoint_url='https://different.example.invalid')
++    elif field=='image':q=replace(p,process=replace(p.process,executable_sha256='b'*64))
++    elif field=='cwd':q=replace(p,process=replace(p.process,cwd=str(tmp_path/'other')))
++    elif field=='home':q=replace(p,process=replace(p.process,environment=(('HOME',str(tmp_path/'other')),p.process.environment[1])))
++    elif field=='timeout':q=replace(p,process=replace(p.process,timeout_ms=16000))
++    else:q=replace(p,process=replace(p.process,max_stdout_bytes=12345))
++    assert q.contract_sha256!=p.contract_sha256
++    with pytest.raises(ValueError,match='authorization_mismatch'):
++        bound(q,permission0,api_key_supplier=lambda:pytest.fail('supplier'))
++
++
++@pytest.mark.parametrize('option,value', [('allow_process_start',False),('allow_process_start',1),
++                                        ('allow_api_key_use',False),('allow_api_key_use',1),('api_key_supplier',None)])
++def test_auth_and_process_optins_are_explicit(tmp_path,option,value):
++    with pytest.raises(ValueError,match='opt_in_required'):bound(candidate(tmp_path),**{option:value})
++
++
++@pytest.mark.parametrize('bad', ['politics', None, 'crypto_sol'])
++def test_factory_only_accepts_two_v1_teams(tmp_path,bad):
++    with pytest.raises(ValueError,match='team_invalid'):bound(candidate(tmp_path))(bad)
++
++
++@pytest.mark.parametrize('team_number',[0,1])
++@pytest.mark.parametrize('invalid',[False,True])
++def test_audit_commits_before_key_supplier_and_no_repeat_on_replay(monkeypatch,tmp_path,team_number,invalid):
++    harness=AuditHarness(monkeypatch)
++    request=replace(req(team_number),model_id=MODEL)
++    p=candidate(tmp_path);auth=permission(p,request)
++    process_calls=[];keys=[]
++    def supply():
++        assert harness.events[-1]=='start_commit'
++        keys.append(1)
++        return SENTINEL
++    def process(**kw):
++        process_calls.append(kw)
++        source=request.required_source_ids[0] if request.required_source_ids else request.intake.task.evidence[0].source_id
++        calls=([action('read_evidence',source_id=source)] if len(process_calls)==1 else
++            [action('finish_research',probability_yes='0.6',confidence='0.5',summary='Synthetic research',source_ids=[source])])
++        return wire(envelope(calls,num_turns=2 if invalid else 1))
++    monkeypatch.setattr(cli,'run_research_process',process)
++    factory=bound(p,auth,api_key_supplier=supply)
++    result=run(harness,request=request,authorization=auth,model_factory=factory,require_durable_audit=True)
++    assert result.record.run.research.status==('failed' if invalid else 'completed')
++    assert len(process_calls)==len(keys)==(1 if invalid else 2)
++    assert len(harness.starts)==len(harness.outcomes)==len(keys)
++    assert harness.outcomes[0].reported_total_tokens==(None if invalid else 26)
++    for sent in process_calls:
++        assert SENTINEL not in sent['stdin'].decode() and dict(sent['spec'].environment)['ANTHROPIC_API_KEY']==SENTINEL
++    before=len(keys)
++    replay=run(harness,request=request,authorization=auth,
++        model_factory=lambda _:pytest.fail('replayed factory'),require_durable_audit=True)
++    assert replay==result and len(keys)==before
++    assert SENTINEL not in str(result)+repr(harness.outcomes)
++
++
++def test_absent_durable_authorization_never_reads_a_key(monkeypatch,tmp_path):
++    from polymarket_alpha_lab import research_uncapped_audit_store as store
++    h=AuditHarness(monkeypatch);p=candidate(tmp_path);r=replace(req(),model_id=MODEL);auth=permission(p,r)
++    def deny(*a):raise ValueError('research_uncapped_audit_authorization_required')
++    monkeypatch.setattr(store,'require_authorization',deny)
++    with pytest.raises(ValueError):run(h,request=r,authorization=auth,
++        model_factory=bound(p,auth,api_key_supplier=lambda:pytest.fail('supplier')),
++        require_durable_audit=True)
++    assert h.events==[]
++
++
++def test_stop_and_invalid_input_do_not_enter_supplier(tmp_path):
++    p=candidate(tmp_path); stop=ResearchDispatchStop();stop.request_stop()
++    model=bound(p,stop=stop,api_key_supplier=lambda:pytest.fail('supplier'))('crypto_btc')
++    with pytest.raises(ValueError):model.complete(messages_json='[{}]',max_output_tokens=100)
++    model=bound(p,api_key_supplier=lambda:pytest.fail('supplier'))('crypto_btc')
++    with pytest.raises(ValueError):model.complete(messages_json='[]',max_output_tokens=100)
++
++
++def test_supplier_failure_is_fixed_code_and_cannot_retry(monkeypatch,tmp_path):
++    calls=[]
++    def supply():calls.append(1);raise RuntimeError(SENTINEL)
++    monkeypatch.setattr(cli,'run_research_process',lambda **k:pytest.fail('spawn'))
++    model=bound(candidate(tmp_path),api_key_supplier=supply)('crypto_btc')
++    with pytest.raises(ValueError) as caught:model.complete(messages_json='[{}]',max_output_tokens=100)
++    assert SENTINEL not in ''.join(traceback.format_exception(caught.value))
++    with pytest.raises(ValueError,match='stopped'):model.complete(messages_json='[{}]',max_output_tokens=100)
++    assert calls==[1]
++
++
++def test_profile_and_authorization_copies_cannot_be_rebound_by_caller(monkeypatch,tmp_path):
++    p=candidate(tmp_path);auth=permission(p);factory=bound(p,auth)
++    object.__setattr__(p,'endpoint_url','https://changed.example.invalid')
++    object.__setattr__(auth,'model_id','changed')
++    seen=[]
++    def process(**kw):seen.append(kw['spec']);return wire()
++    monkeypatch.setattr(cli,'run_research_process',process)
++    assert factory('crypto_eth').complete(messages_json='[{}]',max_output_tokens=100).total_tokens==26
++    assert dict(seen[0].environment)['ANTHROPIC_BASE_URL']=='https://gateway.example.invalid'
+diff --git a/tests/test_research_claude_review.py b/tests/test_research_claude_review.py
+new file mode 100644
+index 0000000..29ea1e7
+--- /dev/null
++++ b/tests/test_research_claude_review.py
+@@ -0,0 +1,101 @@
++"""Separate adversarial review: precise refusal before secrets or result acceptance."""
++from dataclasses import replace
++from pathlib import Path
++import fnmatch
++import json
++
++import pytest
++
++from polymarket_alpha_lab import research_claude_exec as cli
++from polymarket_alpha_lab import research_claude_profile as profile
++from polymarket_alpha_lab import research_process as process
++from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
++from tests.test_research_claude_exec import MODEL, wire
++from tests.test_research_claude_profile import candidate, bound, SENTINEL
++
++
++@pytest.mark.parametrize('stderr_bytes', [1, 17, 65536])
++def test_unclassified_stderr_cannot_certify_a_clean_single_result(stderr_bytes):
++    result = replace(wire(),stderr_bytes=stderr_bytes)
++    with pytest.raises(ValueError,match='response_invalid'):
++        cli.decode_claude_result(result,request=cli.ClaudeExecInput(MODEL,'[{}]',100),call_number=1)
++
++
++@pytest.mark.parametrize('limit', [1,100])
++def test_known_payload_limit_failure_precedes_credential_supplier(monkeypatch,tmp_path,limit):
++    p = candidate(tmp_path)
++    p = replace(p,process=replace(p.process,max_stdin_bytes=limit))
++    entered=[]
++    def key(): entered.append('key'); return SENTINEL
++    def runner(**kwargs):
++        entered.append('runner')
++        if len(kwargs['stdin']) > kwargs['spec'].max_stdin_bytes:
++            raise ValueError('oversize input')
++        return wire()
++    monkeypatch.setattr(cli,'run_research_process',runner)
++    model = bound(p,api_key_supplier=key)('crypto_btc')
++    with pytest.raises(ValueError): model.complete(messages_json='[{}]',max_output_tokens=100)
++    assert entered==[]
++
++
++def test_profile_digest_includes_original_prompt_and_action_protocol(monkeypatch,tmp_path):
++    p = candidate(tmp_path); original=p.contract_sha256
++    monkeypatch.setattr(cli.ClaudeExecInput,'prompt_json',property(lambda self:'changed protocol'))
++    assert p.contract_sha256 != original
++
++
++def test_stop_during_explicit_supplier_never_starts_image(monkeypatch,tmp_path):
++    p=candidate(tmp_path);stop=ResearchDispatchStop();calls=[]
++    def key():calls.append(1);stop.request_stop();return SENTINEL
++    monkeypatch.setattr(process,'_spawn',lambda *a:pytest.fail('stopped launch'))
++    model=bound(p,stop=stop,api_key_supplier=key)('crypto_btc')
++    with pytest.raises(ValueError):model.complete(messages_json='[{}]',max_output_tokens=100)
++    assert calls==[1]
++
++
++@pytest.mark.parametrize('field,value', [('input_tokens',True),('output_tokens',False),
++                                        ('cache_read_input_tokens',2.0),('cache_creation_input_tokens',-1)])
++def test_model_usage_cannot_hide_wrong_scalar_type_by_equal_value(field,value):
++    from tests.test_research_claude_exec import envelope
++    raw=envelope()
++    names=dict(zip(cli._USAGE,cli._MODEL_USAGE,strict=True))
++    raw['usage'][field]=value
++    raw['modelUsage'][MODEL][names[field]]=value
++    with pytest.raises(ValueError):
++        cli.decode_claude_result(wire(raw),request=cli.ClaudeExecInput(MODEL,'[{}]',100),call_number=1)
++
++
++@pytest.mark.parametrize('path', [
++    'src/polymarket_alpha_lab/research_claude_exec.py',
++    'src/polymarket_alpha_lab/research_claude_profile.py',
++    'tests/test_research_claude_exec.py', 'tests/test_research_claude_profile.py',
++    'tests/test_research_claude_review.py',
++])
++@pytest.mark.parametrize('workflow', ['native-postgres.yml','native-distribution.yml'])
++def test_shipped_claude_changes_trigger_real_platform_gates(path,workflow):
++    import re
++    root=Path(__file__).resolve().parents[1]
++    source=(root/'.github/workflows'/workflow).read_text()
++    filters=re.findall(r"^      - '([^']+)'",source,flags=re.MULTILINE)
++    assert any(fnmatch.fnmatchcase(path,pattern) for pattern in filters)
++
++
++def test_changed_prompt_contract_after_binding_never_enters_key_supplier(monkeypatch,tmp_path):
++    p=candidate(tmp_path)
++    model=bound(p,api_key_supplier=lambda:pytest.fail('supplier after contract drift'))('crypto_btc')
++    monkeypatch.setattr(cli.ClaudeExecInput,'prompt_json',property(lambda self:'changed contract'))
++    with pytest.raises(ValueError):model.complete(messages_json='[{}]',max_output_tokens=100)
++
++
++def test_simultaneous_calls_have_unique_ids_and_never_exceed_client_limit(monkeypatch,tmp_path):
++    from concurrent.futures import ThreadPoolExecutor
++    p=candidate(tmp_path);entered=[]
++    def run(**kwargs):entered.append(1);return wire()
++    monkeypatch.setattr(cli,'run_research_process',run)
++    model=bound(p)('crypto_eth')
++    with ThreadPoolExecutor(max_workers=4) as pool:
++        replies=tuple(pool.map(lambda _:model.complete(messages_json='[{}]',max_output_tokens=100),range(32)))
++    assert {r.calls[0].call_id for r in replies}=={f'claude-{n}-0' for n in range(1,33)}
++    with pytest.raises(ValueError):model.complete(messages_json='[{}]',max_output_tokens=100)
++    with pytest.raises(ValueError,match='stopped'):model.complete(messages_json='[{}]',max_output_tokens=100)
++    assert len(entered)==32

@@ -3,6 +3,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'src/polymarket_alpha_lab/research_claude*.py'
+      - 'tests/test_research_claude*.py'
       - 'tests/ci_thread_dump.py'
       - 'tests/test_ci_thread_dump*.py'
       - 'src/polymarket_alpha_lab/research_uncapped*.py'
@@ -180,7 +182,10 @@ jobs:
               "tests/test_research_process_review.py",
               "tests/test_research_codex_process.py",
               "tests/test_research_codex_profile.py",
-              "tests/test_research_codex_profile_review.py"
+              "tests/test_research_codex_profile_review.py",
+              "tests/test_research_claude_exec.py",
+              "tests/test_research_claude_profile.py",
+              "tests/test_research_claude_review.py"
             ]
           }
         ]

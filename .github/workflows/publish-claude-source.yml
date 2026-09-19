@@ -1,0 +1,95 @@
+name: Publish checked Claude alternative source objects
+on:
+  push:
+    branches: ['audit/wp02-claude-publication-20260920']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact reviewed patch and tree without executing project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -r staging/claude-source "$RUNNER_TEMP/claude-source"
+          cp .github/workflows/native-postgres.yml "$RUNNER_TEMP/native-postgres.yml"
+          cp .github/workflows/native-distribution.yml "$RUNNER_TEMP/native-distribution.yml"
+          git switch --detach 3548f016ef153fcb577d8e5e8306a80e29eacfcb
+          python - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          temp = pathlib.Path(os.environ['RUNNER_TEMP'])
+          parts = temp/'claude-source'
+          hashes = (
+              'a8629abbd9f1d9c05bd81621ab8bd9f26d6d02057add6969f4be7849b68d5fd7',
+              '87178289836c264b8681e5ef12ffa06e59ad1b6f882bd99fd29dfa373fb15679',
+              '3bab812f24de2a3d7b65bd3cd6a96f41145db462a864c8693daf55899a734001',
+              '4cb85811110df2635d09b991fbe03b05a6aacac804aab48a3b0a413ed740297c',
+              'bb88022fe04ebd8c5ccb25f7c9d8954335961286338bdf906934983f757d99ff',
+          )
+          raw = []
+          for index, expected in enumerate(hashes, 1):
+              value = (parts/f'{index}.patch').read_bytes()
+              if index == 1:
+                  # One observed transfer typo in an unchanged diff-context line.
+                  # Correct ONLY that typo, then require the ORIGINAL reviewed
+                  # complete patch hash; never edit source to accept a mismatch.
+                  assert hashlib.sha256(value).hexdigest() == '81739bd352d280a9e097ad338e316469226eec8e5a7d4dcdf9f6636c2d00eef1'
+                  bad = '\u4e0d\u80fd\u628a\u201c\u627e\u5bc6\u94a5\u5319\u201d\u4ea4\u7ed9\u672c\u5730 Agent\u3002'.encode()
+                  good = '\u4e0d\u80fd\u628a\u201c\u627e\u5bc6\u94a5\u201d\u4ea4\u7ed9\u672c\u5730 Agent\u3002'.encode()
+                  assert value.count(bad) == 1
+                  value = value.replace(bad, good)
+              assert hashlib.sha256(value).hexdigest() == expected
+              raw.append(value)
+          patch = b''.join(raw)
+          assert len(patch) == 73915
+          assert hashlib.sha256(patch).hexdigest() == '0222cb021d86f9a7147078c96327a82106067c792dcebfa3658b0d3b7787e3dc'
+          path = temp/'reviewed.patch'; path.write_bytes(patch)
+          subprocess.run(['git','apply','--check','--index',str(path)], check=True)
+          subprocess.run(['git','apply','--index',str(path)], check=True)
+          workflows = {'native-postgres.yml':'d789b51f2436c696508be355ef81c1f580fbd660',
+                       'native-distribution.yml':'d686f7f7338a41a8afed5c07af363f3b6bb1123e'}
+          for name, expected in workflows.items():
+              b = (temp/name).read_bytes()
+              assert hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest() == expected
+              destination = pathlib.Path('.github/workflows')/name
+              destination.write_bytes(b)
+              subprocess.run(['git','add',str(destination)], check=True)
+          subprocess.run(['git','diff','--cached','--check'], check=True)
+          assert subprocess.check_output(['git','write-tree'],text=True).strip() == '9b2ed986387755f4fc86d469a56d33c8e9644798'
+          paths = subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          allowed = {'DELIVERY_PLAN.md','docs/research-local-agent.md',
+              'src/polymarket_alpha_lab/research_claude_exec.py','src/polymarket_alpha_lab/research_claude_profile.py',
+              'tests/test_native_postgres_workflow.py','tests/test_project_postgres_uncapped_audit_native.py',
+              'tests/test_research_claude_exec.py','tests/test_research_claude_profile.py','tests/test_research_claude_review.py'}
+          ordinary = [name for name in paths if not name.startswith('.github/')]
+          assert len(paths) == 11 and set(ordinary) == allowed
+          entries = []
+          for name in ordinary:
+              path = pathlib.Path(name)
+              assert path.is_file() and not path.is_symlink()
+              entries.append(dict(path=name,mode='100644',type='blob',content=path.read_text(encoding='utf-8')))
+          # Both workflow objects were already explicitly written through the
+          # authorized connector. This job publishes ordinary source ONLY.
+          request = dict(base_tree='3a1ac3bb4206b0878326e231d330ae32c5bd32c7',tree=entries)
+          (temp/'tree-request.json').write_text(json.dumps(request),encoding='utf-8')
+          print('reviewed_tree=9b2ed986387755f4fc86d469a56d33c8e9644798')
+          PY
+      - name: Publish ordinary source tree object only, never a ref or workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/trees --input "$RUNNER_TEMP/tree-request.json" > "$RUNNER_TEMP/tree-result.json"
+          python - <<'PY'
+          import json, os, pathlib
+          value = json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'tree-result.json').read_text())
+          assert value['sha'] == '9b2ed986387755f4fc86d469a56d33c8e9644798'
+          print('published_tree='+value['sha'])
+          PY
