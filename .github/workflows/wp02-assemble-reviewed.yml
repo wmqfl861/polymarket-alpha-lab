@@ -1,3 +1,4 @@
+# Explicit push trigger after creating the isolated helper ref.
 name: Assemble exact reviewed WP02 source objects
 on:
   push:
