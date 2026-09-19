@@ -1,0 +1,36 @@
+name: Pinned PR60 review source
+on:
+  push:
+    branches: ['audit/pr60-review-source-20260919']
+    paths: ['.github/workflows/pr60-review-source.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 61b260dd41285e59b5587381bacd025f1bbf6385
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Archive pinned committed public source only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 61b260dd41285e59b5587381bacd025f1bbf6385
+          test "$(git rev-parse HEAD^{tree})" = 91f50504b411dc4be1ae2d13d18dd329e9ae9bb7
+          mkdir -p "$RUNNER_TEMP/review-source"
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/review-source/source.tar.gz"
+          git ls-tree -rz --full-tree HEAD > "$RUNNER_TEMP/review-source/tree.z"
+          git cat-file commit HEAD > "$RUNNER_TEMP/review-source/commit.txt"
+          git diff --binary 8ae2933a843c554b0f4391b4faeb572b2f6b952c HEAD > "$RUNNER_TEMP/review-source/pr60.patch"
+          cd "$RUNNER_TEMP/review-source"
+          sha256sum source.tar.gz tree.z commit.txt pr60.patch > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr60-review-source-61b260dd
+          path: ${{ runner.temp }}/review-source/
+          retention-days: 7
+          if-no-files-found: error
