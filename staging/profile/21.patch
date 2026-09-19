@@ -1,0 +1,252 @@
+diff --git a/tests/test_research_codex_profile_native.py b/tests/test_research_codex_profile_native.py
+new file mode 100644
+index 0000000..7064e61
+--- /dev/null
++++ b/tests/test_research_codex_profile_native.py
+@@ -0,0 +1,121 @@
++"""Opt-in official Linux package + loopback only; synthetic data, no credentials.
++
++This proves the pinned command's observed wire behavior, NOT zero persistence or
++an authorized real-model integration. The package is supplied explicitly, never
++downloaded/installed by a test. Its temporary SQLite files are synthetic upstream
++state, never a project-data backend. Default offline/Windows runs do not launch it.
++"""
++from hashlib import sha256
++from http.server import BaseHTTPRequestHandler, HTTPServer
++import json
++import os
++from pathlib import Path
++import sys
++from threading import Thread
++
++import pytest
++
++from polymarket_alpha_lab.research_codex_exec import CodexExecInput, CodexExecModel
++from polymarket_alpha_lab.research_codex_process import CodexProcessTransport
++from polymarket_alpha_lab.research_codex_profile import CodexExecProfile
++from polymarket_alpha_lab.research_process import ResearchProcessSpec
++
++pytestmark = pytest.mark.skipif(
++    sys.platform != 'linux' or os.environ.get('POLYMARKET_ALPHA_LAB_TEST_CODEX_PROFILE_NATIVE') != '1',
++    reason='explicit pinned Linux Codex package and synthetic loopback opt-in required')
++
++_IMAGE = '0753dfe1d8b87a52436deb13eb1c549661ef4c84fee2c5aa688385eebeccb761'
++_COMPANION = '210ab8ebaebf4bc1421d9e30339c858354ca35fa91e2f87f4c6204e5382f8a63'
++_APPROVED = 'SYNTHETIC-APPROVED-RESEARCH'
++_UNAPPROVED = 'SYNTHETIC-UNRELATED-CONTEXT'
++
++
++@pytest.fixture(scope='module')
++def native_image():
++    root = Path(os.environ['POLYMARKET_ALPHA_LAB_TEST_CODEX_PACKAGE_ROOT'])
++    assert root.is_absolute()
++    binary, companion = root/'bin/codex', root/'bin/codex-code-mode-host'
++    assert binary.stat().st_size == 269273536
++    assert sha256(binary.read_bytes()).hexdigest() == _IMAGE
++    assert sha256(companion.read_bytes()).hexdigest() == _COMPANION
++    return binary
++
++
++@pytest.mark.parametrize('mode', ['success', 'rate_limit', 'server_error', 'malformed_action', 'tool_action'])
++def test_actual_pinned_cli_profile_loopback_single_submission(native_image, tmp_path, mode):
++    """Five distinct scenarios; errors never trigger another invocation/request."""
++    calls, faults = [], []
++    class Handler(BaseHTTPRequestHandler):
++        def log_message(self, *args): pass
++        def do_GET(self):
++            calls.append((self.path, {}, {}))
++            self.send_response(404); self.send_header('Content-Length', '0'); self.end_headers()
++        def do_POST(self):
++            try:
++                self.connection.settimeout(5)
++                count = int(self.headers['Content-Length'])
++                assert 0 < count < 1000000
++                body = json.loads(self.rfile.read(count))
++                calls.append((self.path, dict(self.headers), body))
++                if mode in ('rate_limit', 'server_error'):
++                    self.send_response(429 if mode == 'rate_limit' else 500)
++                    self.send_header('Content-Length', '0'); self.end_headers(); return
++                action = '{broken' if mode == 'malformed_action' else json.dumps({'calls': [
++                    {'name': 'shell' if mode == 'tool_action' else 'search_evidence',
++                     'arguments_json': '{"query":"*"}'}]})
++                events = [
++                    {'type': 'response.created', 'response': {'id': 'resp_synthetic'}},
++                    {'type': 'response.output_item.done', 'item': {'type': 'message', 'role': 'assistant',
++                        'id': 'msg_synthetic', 'content': [{'type': 'output_text', 'text': action}]}},
++                    {'type': 'response.completed', 'response': {'id': 'resp_synthetic',
++                        'usage': {'input_tokens': 100, 'output_tokens': 20,
++                                  'input_tokens_details': {'cached_tokens': 0},
++                                  'output_tokens_details': {'reasoning_tokens': 0}, 'total_tokens': 120}}}]
++                payload = ''.join('event: '+e['type']+'\ndata: '+json.dumps(e)+'\n\n' for e in events).encode()
++                self.send_response(200); self.send_header('Content-Type', 'text/event-stream')
++                self.send_header('Content-Length', str(len(payload))); self.end_headers(); self.wfile.write(payload)
++            except Exception as error:
++                faults.append(type(error).__name__)
++                self.close_connection = True
++    server = HTTPServer(('127.0.0.1', 0), Handler)
++    worker = Thread(target=server.serve_forever)
++    worker.start()
++    try:
++        for name in ('home', 'work', 'codex', 'tmp'): (tmp_path/name).mkdir()
++        # These fixed synthetic probes are not user files/credentials. Strict
++        # config would reject the unknown field if ignore-user-config were lost.
++        (tmp_path/'codex/config.toml').write_text('unknown_setting="'+_UNAPPROVED+'"\n')
++        (tmp_path/'AGENTS.md').write_text(_UNAPPROVED)
++        request = CodexExecInput('gpt-5.6-sol', json.dumps([{'role': 'user', 'content': _APPROVED}]), 1024)
++        schema = tmp_path/'schema.json'; schema.write_bytes(request.output_schema_json.encode())
++        spec = ResearchProcessSpec((str(native_image),), str(tmp_path/'work'),
++            (('CODEX_HOME', str(tmp_path/'codex')), ('HOME', str(tmp_path/'home')), ('TMPDIR', str(tmp_path/'tmp'))),
++            _IMAGE, 10000, max_executable_bytes=native_image.stat().st_size)
++        profile = CodexExecProfile(spec, request.model_id,
++            f'http://127.0.0.1:{server.server_port}/v1', str(schema))
++        client = CodexExecModel(model_id=request.model_id, transport=CodexProcessTransport(
++            prepare_command=profile, allow_process_start=True))
++        if mode == 'success':
++            reply = client.complete(messages_json=request.messages_json, max_output_tokens=1024)
++            assert reply.total_tokens == 120 and reply.calls[0].name == 'search_evidence'
++        else:
++            with pytest.raises(ValueError, match='call_failed'):
++                client.complete(messages_json=request.messages_json, max_output_tokens=1024)
++            with pytest.raises(ValueError, match='stopped'):
++                client.complete(messages_json=request.messages_json, max_output_tokens=1024)
++        assert faults == [] and len(calls) == 1
++        path, headers, body = calls[0]
++        assert path == '/v1/responses' and body['model'] == request.model_id
++        assert body.get('tools') in (None, [])
++        assert 'max_output_tokens' not in body  # Explicitly NOT a hard provider cap.
++        assert body['text']['format']['schema'] == json.loads(request.output_schema_json)
++        assert not any(k.lower() == 'authorization' for k in headers)
++        text = json.dumps(body)
++        assert _APPROVED in text and _UNAPPROVED not in text
++        # Negative proof: ephemeral is NOT no-state. This must stay visible and
++        # blocks activating this profile with real project research inputs.
++        assert any((tmp_path/'codex').glob('*.sqlite'))
++        assert list((tmp_path/'work').iterdir()) == []
++    finally:
++        server.shutdown(); server.server_close(); worker.join(timeout=5)
++        assert not worker.is_alive()
+diff --git a/tests/test_research_codex_profile_review.py b/tests/test_research_codex_profile_review.py
+new file mode 100644
+index 0000000..67c2df8
+--- /dev/null
++++ b/tests/test_research_codex_profile_review.py
+@@ -0,0 +1,94 @@
++"""Separate negative review of config encoding and pre-launch input boundaries."""
++from dataclasses import replace
++import os
++from pathlib import Path
++import stat
++import tomllib
++import traceback
++from types import SimpleNamespace
++
++import pytest
++
++from polymarket_alpha_lab import research_codex_profile as core
++from polymarket_alpha_lab import research_codex_process as host
++from polymarket_alpha_lab import research_process as process
++from tests.test_research_codex_profile import profile, request, MODEL
++from tests.test_research_uncapped import approval
++
++
++@pytest.mark.parametrize('path', ['中文', '😀', '𐀀'])
++def test_gateway_unicode_round_trips_through_actual_toml_parser(tmp_path, path):
++    p = replace(profile(tmp_path), gateway_url='https://example.invalid/' + path)
++    args = p(request()).argv
++    configs = args[args.index('-c'):-1][1::2]
++    assert tomllib.loads('\n'.join(configs)) == p.settings
++
++
++@pytest.mark.parametrize('original', [KeyboardInterrupt(), SystemExit(0)])
++def test_schema_close_failure_never_masks_original_interruption(monkeypatch, tmp_path, original):
++    p = profile(tmp_path); closed = []
++    monkeypatch.setattr(core.os, 'open', lambda *a, **k: 998)
++    monkeypatch.setattr(core.os, 'fstat', lambda _: SimpleNamespace(st_mode=stat.S_IFREG,
++        st_size=len(request().output_schema_json.encode())))
++    def read(*args): raise original
++    def close(fd): closed.append(fd); raise OSError('PRIVATE-SCHEMA-ERROR')
++    monkeypatch.setattr(core.os, 'read', read)
++    monkeypatch.setattr(core.os, 'close', close)
++    with pytest.raises(type(original)) as caught: p(request())
++    assert caught.value is original and closed == [998]
++
++
++def test_schema_partial_reads_preserve_exact_bytes(monkeypatch, tmp_path):
++    p = profile(tmp_path); original = core.os.read
++    monkeypatch.setattr(core.os, 'read', lambda fd, count: original(fd, min(count, 3)))
++    assert p(request()).argv[-1] == '-'
++
++
++def test_schema_close_interruption_propagates_without_leaking_path(monkeypatch, tmp_path):
++    p = profile(tmp_path); original = core.os.close; closed = []; error = KeyboardInterrupt()
++    def close(fd):
++        closed.append(fd); original(fd); raise error
++    monkeypatch.setattr(core.os, 'close', close)
++    with pytest.raises(KeyboardInterrupt) as caught: p(request())
++    assert caught.value is error and len(closed) == 1
++
++
++def test_profile_factory_copies_nested_configuration_before_client_entry(monkeypatch, tmp_path):
++    p = profile(tmp_path)
++    permission = approval(model_id=MODEL, adapter_contract_sha256=p.contract_sha256)
++    factory = core.codex_profile_factory(profile=p, authorization=permission, allow_process_start=True)
++    object.__setattr__(p.process, 'argv', ('/CHANGED-BY-CALLER',))
++    object.__setattr__(p, 'gateway_url', 'http://bad.invalid')
++    seen = []
++    def failed(**kw): seen.append(kw['spec']); raise ValueError('PRIVATE-PROCESS')
++    monkeypatch.setattr(host, 'run_research_process', failed)
++    client = factory('crypto_btc')
++    with pytest.raises(ValueError):
++        client.complete(messages_json=request().messages_json, max_output_tokens=123)
++    assert len(seen) == 1 and seen[0].argv[0].endswith('native-codex')
++    assert 'http://bad.invalid' not in repr(seen[0].argv)
++    with pytest.raises(ValueError, match='stopped'):
++        client.complete(messages_json=request().messages_json, max_output_tokens=123)
++    assert len(seen) == 1
++
++
++def test_schema_growth_after_fstat_is_rejected_before_process(monkeypatch, tmp_path):
++    p = profile(tmp_path); original = core.os.fstat
++    def fstat(fd):
++        result = original(fd)
++        with open(p.schema_path, 'ab') as writer: writer.write(b'X')
++        return result
++    monkeypatch.setattr(core.os, 'fstat', fstat)
++    with pytest.raises(ValueError, match='unavailable'): p(request())
++
++
++def test_native_image_growth_still_hits_explicit_limit(monkeypatch, tmp_path):
++    p = profile(tmp_path).process
++    p = replace(p, max_executable_bytes=4)
++    closed = []; reads = iter((b'\x7fELF', b'extra', b''))
++    monkeypatch.setattr(process.os, 'open', lambda *a, **k: 998)
++    monkeypatch.setattr(process.os, 'fstat', lambda _: SimpleNamespace(st_mode=stat.S_IFREG,st_size=4))
++    monkeypatch.setattr(process.os, 'read', lambda *a: next(reads))
++    monkeypatch.setattr(process.os, 'close', lambda fd: closed.append(fd))
++    with pytest.raises(ValueError, match='image_invalid'): process._verify_executable(p)
++    assert closed == [998]
+diff --git a/tests/test_research_process.py b/tests/test_research_process.py
+index 72937fa..737c6f3 100644
+--- a/tests/test_research_process.py
++++ b/tests/test_research_process.py
+@@ -178 +178,20 @@ def test_linux_leader_is_reaped_after_return(executable,tmp_path):
+     with pytest.raises(ChildProcessError): os.waitpid(child_pid,os.WNOHANG)
++
++
++@pytest.mark.parametrize('limit', [0, True, -1, 536870913])
++def test_invalid_explicit_image_limit(executable, tmp_path, limit):
++    with pytest.raises(ValueError):
++        spec(executable, tmp_path, max_executable_bytes=limit)
++
++
++def test_explicit_native_image_limit_boundary(executable, tmp_path, monkeypatch):
++    size = Path(executable[0]).stat().st_size
++    value = spec(executable, tmp_path, max_executable_bytes=size)
++    assert run(value, b'image-boundary').stdout == b'image-boundary'
++    monkeypatch.setattr(core, '_spawn', lambda _: pytest.fail('oversized image launched'))
++    with pytest.raises(core.ResearchProcessError):
++        run(replace(value, max_executable_bytes=size-1))
++
++
++def test_default_image_limit_is_not_silently_expanded(executable, tmp_path):
++    assert spec(executable, tmp_path).max_executable_bytes == 268435456

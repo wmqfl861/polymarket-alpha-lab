@@ -1,0 +1,203 @@
+diff --git a/tests/test_native_postgres_workflow.py b/tests/test_native_postgres_workflow.py
+index 23a1fcd..a60162a 100644
+--- a/tests/test_native_postgres_workflow.py
++++ b/tests/test_native_postgres_workflow.py
+@@ -85,2 +85,5 @@ PROCESS_FILES = ('tests/test_research_process.py', 'tests/test_research_process_
+ 
++PROFILE_FILES = ('tests/test_research_codex_profile.py',
++                 'tests/test_research_codex_profile_review.py')
++
+ def matrix(source):
+@@ -95,3 +98,3 @@ def matrix(source):
+                    for f in partition['files'])
+-    assert Counter(f for p in value for f in p['files']) == Counter([*ORIGINAL_FILES, SELF, *ADMISSION_FILES, *UNCAPPED_FILES, *AUDIT_FILES, *PROCESS_FILES])
++    assert Counter(f for p in value for f in p['files']) == Counter([*ORIGINAL_FILES, SELF, *ADMISSION_FILES, *UNCAPPED_FILES, *AUDIT_FILES, *PROCESS_FILES, *PROFILE_FILES])
+     return value
+@@ -106,2 +109,3 @@ def test_native_partitions_preserve_exact_original_inventory():
+     assert set(PROCESS_FILES) <= set(parts[2]['files'])
++    assert set(PROFILE_FILES) <= set(parts[2]['files'])
+     for part in parts:
+diff --git a/tests/test_research_codex_profile.py b/tests/test_research_codex_profile.py
+new file mode 100644
+index 0000000..98cf2e9
+--- /dev/null
++++ b/tests/test_research_codex_profile.py
+@@ -0,0 +1,178 @@
++"""Closed-profile construction and original protocol/audit integration."""
++from dataclasses import replace
++from pathlib import Path
++import json
++import os
++import tomllib
++import traceback
++
++import pytest
++
++from polymarket_alpha_lab import research_codex_profile as profile_module
++from polymarket_alpha_lab import research_codex_process as host
++from polymarket_alpha_lab.research_codex_exec import CodexExecInput, codex_action_schema_json
++from polymarket_alpha_lab.research_process import ResearchProcessSpec, ResearchProcessResult
++from tests.test_research_codex_exec import action, events, output
++from tests.test_research_uncapped_audit import AuditHarness
++from tests.test_research_uncapped import approval, req, run
++
++MODEL = 'gpt-5.6-sol'
++
++
++def profile(tmp_path, **changes):
++    schema = tmp_path/'schema.json'
++    schema.write_bytes(codex_action_schema_json().encode('utf-8'))
++    process = ResearchProcessSpec((str(tmp_path/'native-codex'),), str(tmp_path/'work'),
++        (('CODEX_HOME',str(tmp_path/'codex-home')),('HOME',str(tmp_path/'home'))), 'a'*64,10000)
++    values = dict(process=process, model_id=MODEL, gateway_url='https://example.invalid/v1',
++                  schema_path=str(schema))
++    values.update(changes)
++    return profile_module.CodexExecProfile(**values)
++
++
++def request():
++    return CodexExecInput(MODEL,'[{"role":"user","content":"PRIVATE-APPROVED-TEXT 中文"}]',123)
++
++
++def test_inert_constructor_has_no_io_and_no_raw_repr(tmp_path, monkeypatch):
++    p = profile(tmp_path)
++    monkeypatch.setattr(profile_module.os,'open',lambda *a,**k:pytest.fail('constructor I/O'))
++    monkeypatch.setattr(host,'run_research_process',lambda **k:pytest.fail('constructor process'))
++    copied = replace(p)
++    assert copied == p
++    assert str(tmp_path) not in repr(p) and p.gateway_url not in repr(p)
++    assert p.process.executable_sha256 not in repr(p)
++
++
++def test_exact_argv_and_closed_settings(tmp_path):
++    p = profile(tmp_path); r = request(); command = p(r)
++    assert command.argv[:12] == (p.process.argv[0],'exec','--strict-config','--ignore-user-config',
++        '--ephemeral','--skip-git-repo-check','--json','--color','never','--output-schema',p.schema_path,'-c')[:12]
++    # Parse flag/value pairs rather than assuming user or shell splitting.
++    index = command.argv.index('-c')
++    pairs=command.argv[index:-1]
++    assert pairs[::2] == ('-c',)*(len(pairs)//2)
++    effective=tomllib.loads('\n'.join(pairs[1::2]))
++    assert effective == p.settings
++    assert effective['model'] == MODEL and effective['model_reasoning_effort'] == 'max'
++    assert effective['sandbox_mode'] == 'read-only' and effective['approval_policy']=='never'
++    assert effective['features']['hooks'] is False and 'codex_hooks' not in effective['features']
++    assert effective['model_providers']['pal_research']['request_max_retries'] == 0
++    assert effective['model_providers']['pal_research']['stream_max_retries'] == 0
++    assert command.environment == p.process.environment and command.cwd == p.process.cwd
++    assert command.argv[-1] == '-' and 'PRIVATE-APPROVED-TEXT' not in repr(command.argv)
++    assert 'max_output_tokens' not in repr(command.argv)  # no invented CLI enforcement
++    for bad in ('--ignore-rules','--dangerously-bypass-approvals-and-sandbox','--resume','--full-auto'):
++        assert bad not in command.argv
++    assert replace(command,argv=p.process.argv) == p.process
++
++
++@pytest.mark.parametrize('url', ['http://remote.invalid/v1','http://localhost:5555/v1',
++    'http://127.0.0.2:5555/v1','http://127.0.0.1/v1','http://127.0.0.1:0/v1',
++    'https://user:PRIVATE@example.invalid','https://example.invalid/?token=PRIVATE',
++    'https://example.invalid/#PRIVATE','https://example.invalid/\npath',
++    'https://example.invalid:99999/v1','https://example.invalid:bad/v1',
++    'https:///v1','https://example.invalid\\other/v1','https://exam%70le.invalid/v1'])
++def test_ambiguous_or_credential_endpoints_rejected_without_echo(tmp_path,url):
++    with pytest.raises(ValueError,match='profile_invalid') as error:
++        profile(tmp_path,gateway_url=url)
++    assert 'PRIVATE' not in ''.join(traceback.format_exception(error.value))
++
++
++@pytest.mark.parametrize('url',['https://example.invalid/v1','https://example.invalid:8443/v1',
++                              'http://127.0.0.1:5555/v1'])
++def test_explicit_endpoints_are_data_not_shell(tmp_path,url):
++    p=profile(tmp_path,gateway_url=url)
++    assert p.settings['model_providers']['pal_research']['base_url']==url
++    assert p(request()).argv[-1]=='-'
++
++
++@pytest.mark.parametrize('key',['PATH','PYTHONPATH','LD_PRELOAD','OPENAI_API_KEY','CODEX_API_KEY',
++    'HTTP_PROXY','HTTPS_PROXY','CODEX_SQLITE_HOME','CODEX_HOME_EXTRA','RUST_LOG'])
++def test_unapproved_environment_cannot_enter_profile(tmp_path,key):
++    p=profile(tmp_path)
++    with pytest.raises(ValueError,match='profile_invalid'):
++        replace(p,process=replace(p.process,environment=(*p.process.environment,(key,'/private'))))
++
++
++@pytest.mark.parametrize('change',[{'cli_version':'0.155.2'},{'cli_version':None},
++    {'model_id':'gpt-6-astra'},{'model_id':'model --unsafe'},
++    {'schema_path':'relative'},{'schema_path':'/invalid\ud800'}])
++def test_unsupported_profile_fails_inertly(tmp_path,change):
++    with pytest.raises(ValueError): profile(tmp_path,**change)
++
++
++def test_extra_argv_and_missing_home_rejected(tmp_path):
++    p=profile(tmp_path)
++    for process in (replace(p.process,argv=(*p.process.argv,'--resume')),
++                    replace(p.process,environment=(('HOME',str(tmp_path)),))):
++        with pytest.raises(ValueError):replace(p,process=process)
++
++
++@pytest.mark.parametrize('defect',['missing','different','truncated','extra','directory'])
++def test_schema_is_exact_bounded_data_not_a_passed_through_path(tmp_path,defect):
++    p=profile(tmp_path);path=Path(p.schema_path)
++    if defect=='missing':path.unlink()
++    elif defect=='directory':path.unlink();path.mkdir()
++    elif defect=='different':path.write_bytes(b'x'*path.stat().st_size)
++    elif defect=='extra':path.write_bytes(path.read_bytes()+b'\n')
++    else:path.write_bytes(b'{}')
++    with pytest.raises(ValueError,match='profile_unavailable'):p(request())
++
++
++def test_profile_settings_are_fresh_and_digest_covers_operational_config(tmp_path):
++    p=profile(tmp_path);digest=p.contract_sha256
++    s=p.settings;s['features']['shell_tool']=True
++    assert p.contract_sha256==digest and p.settings['features']['shell_tool'] is False
++    for updated in (replace(p,gateway_url='https://other.invalid/v1'),
++                    replace(p,process=replace(p.process,timeout_ms=9999)),
++                    replace(p,process=replace(p.process,max_executable_bytes=300000000)),
++                    replace(p,schema_path=str(tmp_path/'other-schema'))):
++        assert updated.contract_sha256 != digest
++
++
++def test_model_mismatch_rejected_before_schema_read(tmp_path,monkeypatch):
++    p=profile(tmp_path)
++    monkeypatch.setattr(profile_module.os,'open',lambda *a,**k:pytest.fail('mismatched read'))
++    with pytest.raises(ValueError,match='unavailable'):p(replace(request(),model_id='other'))
++
++
++@pytest.mark.parametrize('opt_in',[False,None,1,'yes'])
++def test_factory_is_explicit_and_authorization_bound(tmp_path,opt_in):
++    p=profile(tmp_path)
++    with pytest.raises(ValueError,match='opt_in'):
++        profile_module.codex_profile_factory(profile=p,authorization=approval(),allow_process_start=opt_in)
++
++
++def test_wrong_contract_or_model_never_launches(tmp_path,monkeypatch):
++    p=profile(tmp_path)
++    monkeypatch.setattr(host,'run_research_process',lambda **k:pytest.fail('unauthorized process'))
++    for permission in (replace(approval(),model_id=MODEL),
++                       replace(approval(),adapter_contract_sha256=p.contract_sha256)):
++        with pytest.raises(ValueError,match='authorization_mismatch'):
++            profile_module.codex_profile_factory(profile=p,authorization=permission,allow_process_start=True)
++
++
++@pytest.mark.parametrize('number',[0,1])
++def test_profile_factory_connects_original_audit_and_inert_replay(tmp_path,monkeypatch,number):
++    h=AuditHarness(monkeypatch);r=replace(req(number),model_id=MODEL)
++    p=profile(tmp_path)
++    permission=approval((r,), model_id=MODEL, adapter_contract_sha256=p.contract_sha256)
++    seen=[]
++    def process(**kw):
++        assert h.events[-1]=='start_commit'
++        seen.append(kw)
++        assert kw['spec']==p(request())
++        msg=json.loads(kw['stdin'])
++        assert 'messages_json' in msg and kw['allow_process_start'] is True
++        source=r.required_source_ids or (r.intake.task.evidence[0].source_id,)
++        calls=([action('read_evidence',{'source_id':s}) for s in source] if len(seen)==1 else
++            [action('finish_research',dict(probability_yes='0.6',confidence='0.5',summary='Synthetic',source_ids=list(source)))])
++        return ResearchProcessResult(output(events(calls)).stdout,0,1)
++    monkeypatch.setattr(host,'run_research_process',process)
++    factory=profile_module.codex_profile_factory(profile=p,authorization=permission,allow_process_start=True)
++    result=run(h,request=r,authorization=permission,model_factory=factory,require_durable_audit=True)
++    assert result.record.run.research.status=='completed'
++    assert len(seen)==len(h.starts)==len(h.outcomes)==2
++    assert run(h,request=r,authorization=permission,model_factory=lambda _:pytest.fail('replay'),require_durable_audit=True)==result
++    assert len(seen)==2

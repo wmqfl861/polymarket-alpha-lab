@@ -1,0 +1,82 @@
+name: Publish pinned profile source objects
+on:
+  push:
+    branches: ['audit/wp02-profile-publish-20260919']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify reviewed patches and assemble exact source; execute no project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -r staging/profile "$RUNNER_TEMP/profile-patches"
+          cp .github/workflows/native-postgres.yml "$RUNNER_TEMP/approved-workflow.yml"
+          git switch --detach 82f5ffc0b892714614d3e547745597bc35e721e6
+          python - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          temp = pathlib.Path(os.environ['RUNNER_TEMP'])
+          checks = {'0': '9f18b6440bfcbd74c71b5cd6ba83c9e78e728aa4e00a0adacfc6d8c2592e0cbb',
+                    '1': '076956a3faaafc0f1f8dbe1dca3cde59d69f83520598587eb18ed0bb5f19189f',
+                    '20': '4f746e286161bcda23438f31b05e2863961f33aa943b3a1b2f9ecd1c3cfbf369',
+                    '21': 'afb130ca75c953801ec97bd81295903376212051e16c82f610006a11450933c1'}
+          for group, expected in checks.items():
+              path = temp/'profile-patches'/(group+'.patch')
+              data = path.read_bytes()
+              if group == '1':
+                  # One known transfer-only leading space was caught by the
+                  # prepublication hash check. Correct only that exact header;
+                  # the resulting FULL reviewed patch hash must match below.
+                  assert hashlib.sha256(data).hexdigest() == '39cb2b9cdbca0cec088ddd9b5ec01e80ec357d6034be1ad2a57c9bc560f05528'
+                  old = b'\n diff --git a/src/polymarket_alpha_lab/research_process.py'
+                  assert data.count(old) == 1
+                  data = data.replace(old, old.replace(b'\n ',b'\n'), 1)
+              assert hashlib.sha256(data).hexdigest() == expected
+              path.write_bytes(data)
+              subprocess.run(['git','apply','--check','--index',str(path)],check=True)
+              subprocess.run(['git','apply','--index',str(path)],check=True)
+          workflow = pathlib.Path('.github/workflows/native-postgres.yml')
+          data = (temp/'approved-workflow.yml').read_bytes()
+          assert hashlib.sha1(('blob '+str(len(data))+'\0').encode()+data).hexdigest() == '64465bd4dfc39051bf9797238bb36283d76b1871'
+          workflow.write_bytes(data)
+          subprocess.run(['git','add',str(workflow)],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          assert subprocess.check_output(['git','write-tree'],text=True).strip() == '7058b5d0b6f973132570dfd1d2c0d8ba03331b8b'
+          paths = subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert set(paths) == {str(workflow),'DELIVERY_PLAN.md','docs/research-local-agent.md',
+              'src/polymarket_alpha_lab/research_codex_profile.py','src/polymarket_alpha_lab/research_process.py',
+              'tests/test_native_postgres_workflow.py','tests/test_research_codex_profile.py',
+              'tests/test_research_codex_profile_native.py','tests/test_research_codex_profile_review.py',
+              'tests/test_research_process.py'}
+          entries = []
+          for name in paths:
+              if name == str(workflow): continue
+              path = pathlib.Path(name)
+              assert not name.startswith('.github/') and path.is_file() and not path.is_symlink()
+              entries.append(dict(path=name,mode='100644',type='blob',content=path.read_text(encoding='utf-8')))
+          assert len(entries) == 9
+          # The workflow was already explicitly written by the authorized
+          # connector. This helper writes ordinary source only, never workflows.
+          (temp/'tree-request.json').write_text(json.dumps(dict(base_tree='ee5ed6ce3a338a99194855569213fac5ab908d47',tree=entries)),encoding='utf-8')
+          print('reviewed_tree=7058b5d0b6f973132570dfd1d2c0d8ba03331b8b')
+          PY
+      - name: Publish ordinary source tree only; no ref, main or workflow writes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/trees --input "$RUNNER_TEMP/tree-request.json" > "$RUNNER_TEMP/tree-result.json"
+          python - <<'PY'
+          import json, os, pathlib
+          result = json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'tree-result.json').read_text())
+          assert result['sha'] == '7058b5d0b6f973132570dfd1d2c0d8ba03331b8b'
+          print('published_tree='+result['sha'])
+          PY

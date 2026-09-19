@@ -8,6 +8,7 @@ on:
       - 'src/polymarket_alpha_lab/research_uncapped*.py'
       - 'src/polymarket_alpha_lab/research_codex_exec.py'
       - 'src/polymarket_alpha_lab/research_codex_process.py'
+      - 'src/polymarket_alpha_lab/research_codex_profile.py'
       - 'src/polymarket_alpha_lab/research_process*.py'
       - 'tests/test_research_process*.py'
       - 'tests/test_research_uncapped.py'
@@ -177,7 +178,9 @@ jobs:
               "tests/test_project_postgres_uncapped_audit_native.py",
               "tests/test_research_process.py",
               "tests/test_research_process_review.py",
-              "tests/test_research_codex_process.py"
+              "tests/test_research_codex_process.py",
+              "tests/test_research_codex_profile.py",
+              "tests/test_research_codex_profile_review.py"
             ]
           }
         ]

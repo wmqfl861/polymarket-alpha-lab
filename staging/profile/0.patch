@@ -1,0 +1,185 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 850b6be..0bb05dd 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -71,3 +71,3 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | WP-01 候选到研究入口 | **DONE（G1）** | 有界发现、最新规则／观察时刻、一次完整预览和待审规格已接通；本项不包含模型授权或来源真伪认证 | 现有公开输入、PR #19／#20 门禁 | [PR #28](https://github.com/wmqfl861/polymarket-alpha-lab/pull/28)：52 项反例测试、三条 CI、真实 BTC／ETH 待审样例；详见第 10 节 |
+-| WP-02 真实模型与预算 | **PARTIAL** | D1—D3 已明确；本次修复凭据／重定向和必引证据调用前边界。已实现显式无金额封顶 Python 执行路径及 Codex 事件协议转换；已补同库授权／逐次调用审计及真实原生子进程启动、I/O 限制和退出清理；仍缺所选 Codex 命令配置、上下文／持久化隔离及提供商实际使用核验；进程执行不等于真实客户端启用 | 先接 Codex CLI 的现有 factory 合同；不探测凭据；真实验收依赖具体本地配置和 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
++| WP-02 真实模型与预算 | **PARTIAL** | D1—D3 已明确；本次修复凭据／重定向和必引证据调用前边界。已实现显式无金额封顶 Python 执行路径及 Codex 事件协议转换；已补同库授权／逐次调用审计及真实原生子进程启动、I/O 限制和退出清理；已增加固定版本受控命令配置及官方完整包合成验证；仍缺上下文／持久化隔离及提供商实际使用核验，ephemeral 仍写 SQLite，禁止据此真实启用 | 先接 Codex CLI 的现有 factory 合同；不探测凭据；真实验收依赖具体本地配置和 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，审核后显式入库批次／预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺本地 Agent／实际使用核验及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02 与已明确的 D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+@@ -144,3 +144,3 @@ WP-02 的无凭据装配设计、WP-04 的人工操作流程、WP-06 的文档
+ WP-01 已按第 10 节关闭 G1，不继续扩充筛选排行榜或旁路报告。
+-**下一实施重点：无金额封顶、持久调用审计、Codex 协议和真实子进程执行层已接通；核验所选 Codex 原生安装／命令配置、上下文与持久化隔离、隐式请求和实际身份，再进行获准真实运行。WP-03 的真实模型组合验收仍按原要求推进。**
++**下一实施重点：无金额封顶、持久调用审计、Codex 协议和真实子进程执行层已接通；固定 Codex 配置与完整包合成验证已接通；先解决仍落 SQLite 的持久化／上下文隔离（或核验已允许的其他 CLI），再验实际身份并进行获准真实运行。WP-03 的真实模型组合验收仍按原要求推进。**
+ Claude Code、OpenCode、Grok CLI、ZCode CLI 为允许的后续替代项，不默认兼容或自动回退。
+@@ -1154 +1154,28 @@ Windows父进程消失的既有证明仅覆盖Job分配之后；硬终止发生
+ 上下文隔离与实际提供商验收仍未关闭；本轮无用户库、凭据、真实模型／行情或安装操作。
++
++
++## 42. WP-02：固定 Codex 命令配置与实际完整包验证（2026-09-19）
++
++基线 `82f5ffc0b892714614d3e547745597bc35e721e6`，完整树
++`931456212665b692368932fabeff0d80dff55d49`。新增 `CodexExecProfile`，复用原
++进程、协议、无封顶授权和持久调用审计；不另建执行器、代理、配置发现或报告体系。
++
++- 固定 0.155.1／显式 gpt-5.6-sol 标签及封闭 TOML 开关；禁止额外参数、继承环境、
++  凭据发现和自动选择模型。保留所需组织规则，不用危险绕过或 ignore-rules。
++- 绑定完整进程配置／URL／schema／版本的哈希到原授权，使用同一已保存授权及
++  `require_durable_audit=True`；原任务身份、调用前提交与失败后不重发不改。
++- 发现官方完整包主程序 269,273,536 字节超过旧 256 MiB 校验上限。新增显式
++  `max_executable_bytes`，默认仍 256 MiB，绝对上限 512 MiB；不自动扩容，保留哈希、
++  原生／常规文件和实际读取字节限制。没有提供商输出 token 硬上限的虚构参数。
++- 实际完整 Linux 包与本地合成服务完成正常、429、500、坏动作和未批准工具五种场景；
++  每种仅观察到一次请求，原始回复校验及错误后关闭保留。无真实提供商、凭据或研究数据。
++  完整包含所需 companion，旧单文件缺组件错误不再被误当通用安装结论。
++- 分离自审再现非 BMP 文本的 TOML 编码和关闭失败掩盖中断的四项反例，修复且保留断言。
++  早期测试夹具模型／Harness错误、弃用开关／未知模型探测错误单列，不隐藏或算作通过。
++  原 68 份 SQL、依赖、请求／审计 codec 不改；Windows 仅追加两个测试模块，无时限变更。
++
++**关键阻断仍在：成功探测的 ephemeral 仍写入 SQLite 状态文件。** 不把测试临时目录当作
++项目数据持久化获批，不启用真实研究、不绕过旧规则；须完成隔离方案或核验允许的其他 CLI。
++配置哈希不证明真实模型、来源或账单；进程管理也不是文件／网络沙箱。G2／G3仍开放，V1仍1／6。
++最终冻结源码、自审和全量／Windows／整包证据以关联 PR 实测为准，未完成前不合并。
++本轮无用户机器／业务库／安装操作，不重复派发本地检查。
+diff --git a/docs/research-local-agent.md b/docs/research-local-agent.md
+index d1874c8..15aa6b3 100644
+--- a/docs/research-local-agent.md
++++ b/docs/research-local-agent.md
+@@ -10,8 +10,8 @@ monetary reservation or reporting subsystem is introduced.
+ 
+-**A real subprocess transport is shipped; no default approved Codex command
+-profile or real provider activation is supplied.** `CodexProcessTransport` starts
++**A real subprocess transport and pinned restrictive command builder are shipped;
++no approved real-provider activation is supplied.** `CodexProcessTransport` starts
+ one explicitly configured native command and connects it to `CodexExecModel`.
+ It provides bounded pipe I/O and owned-process cleanup, not filesystem/network,
+-CLI configuration/persistence or provider-output isolation. Those selected-version
+-contracts still require review. The standalone task script has no configured real
++CLI configuration/persistence or provider-output isolation. The selected-version
++profile below has synthetic upstream evidence, not complete isolation approval. The standalone task script has no configured real
+ client. G2/G3 remain open. See the concrete process section below.
+@@ -623 +623,124 @@ This review is by the same assistant in a separate pass, not an external reviewe
+ Primary reference for close/reuse behavior: https://peps.python.org/pep-0475/
++
++
++## Pinned restrictive command profile (WP-02; real activation still blocked)
++
++`research_codex_profile.CodexExecProfile` constructs one closed command for the
++explicit model label **gpt-5.6-sol**, Codex **0.155.1**. No fallback model/version,
++extra flags, shell, config loader, downloader, credential lookup or business store
++is added. This is an executable command builder, not a provider-authentication
++proxy or an assertion that the declared model label is the real serving model.
++
++The caller supplies an original `ResearchProcessSpec` containing only its ONE
++native image, explicit working directory, whole environment, image SHA256 and I/O
++limits, plus an exact schema-file path and explicit gateway URL. Only path-valued
++HOME/CODEX_HOME, USERPROFILE, SYSTEMROOT/WINDIR and TMPDIR/TMP/TEMP environment
++entries are admitted; HOME and CODEX_HOME are required. Parent variables, PATH,
++proxies, loader overrides, credentials and token-variable discovery are not
++inherited. The URL permits HTTPS or literal `http://127.0.0.1:<port>` only, with no
++userinfo/query/fragment. This syntax restriction does not authenticate a gateway
++or redact secrets a caller incorrectly places in a path.
++
++The generated `exec` command uses strict config, ignores the selected user config,
++uses ephemeral mode, JSON events, no colors, the supplied output schema and stdin.
++Closed TOML overrides request max reasoning/default service tier, read-only tool
++sandbox, no interactive approvals, no project documents/environment injection,
++no history/memories/skills instructions/hooks/plugins/MCP/app/shell/search tools,
++no telemetry/update checks, and zero HTTP/SSE retries on the one explicit Responses
++gateway. These are configured switches, **not a blanket guarantee about inherited
++managed configuration or all model-dependent tool behavior**. Required organization
++policies are not bypassed: no ignore-rules, bypass-hook-trust or dangerous sandbox
++flag is used. An empty config table is not an effective-config certificate.
++
++The existing action schema must match byte-for-byte at command preparation. Its
++read is size-bounded and regular-file checked; it is not recreated or repaired.
++The approved prompt remains exact stdin bytes, never an argument or journal.
++There is no invented provider-side `max_output_tokens` flag: the original decoder
++still rejects REPORTED output overrun only after the operation. Neither image nor
++schema verification closes concurrent path replacement, ancestor symlinks,
++dependency loading or malicious in-process mutation. A separately reviewed
++execution boundary is still required for real inputs.
++
++`profile.contract_sha256` covers the complete declared process/environment,
++version/model/URL/schema path, exact action schema and closed settings. It returns
++only a hash, not private paths or transcript. `codex_profile_factory` requires the
++same model and profile digest in an explicit copied uncapped authorization before
++any schema read or process launch, then supplies a fresh client per BTC/ETH task.
++Use it with the existing STORED authorization and `require_durable_audit=True`
++execution path. It does not create approval, waive expiry/request-roster checks,
++or make the legacy unaudited API an approved shortcut. The caller must supply
++that SAME reviewed authorization to both factory construction and execution.
++
++### Explicit executable size compatibility
++
++The official full Linux package's main image is **269,273,536 bytes**, larger
++than the original 256 MiB image ceiling. `ResearchProcessSpec.max_executable_bytes`
++now permits an explicitly declared ceiling up to **512 MiB**, retaining **256 MiB
++as the unchanged default**. No bound is inferred from a file or automatically
++raised after rejection. Both initial file size and actual read bytes enforce the
++selected limit; regular/native-image and SHA256 checks remain. This pins the
++selected image, not all companions/dependencies or filesystem state. Old callers
++retain their original ceiling; explicit limits also enter the profile digest.
++
++### Actual pinned upstream experiment and limits
++
++Source `be2951ea34f0d295ed0becf97079f92fa5f6950e` was obtained as a complete
++blob-verified public archive; the full public Linux release package was downloaded
++without execution, size/SHA256 checked, then tested only with synthetic data,
++new temporary HOME/CODEX_HOME/work directories and an in-memory loopback service.
++No user files/authentication or real model/market requests were used. Unlike the
++earlier standalone-image probe, this full package includes its Code Mode companion.
++
++Package: `codex-package-x86_64-unknown-linux-musl.tar.gz`, 138,838,055 bytes,
++SHA256 `a65b895c6ac1a73629bbe4b864640c86133e94a43b4d67b3103044e1a306d5a2`.
++Main image SHA256 `0753dfe1d8b87a52436deb13eb1c549661ef4c84fee2c5aa688385eebeccb761`;
++companion SHA256 `210ab8ebaebf4bc1421d9e30339c858354ca35fa91e2f87f4c6204e5382f8a63`.
++These are the observed Linux package, not Windows artifact hashes or a reproducible
++build attestation. Binaries are not added to this repository/distribution.
++
++Five opt-in tests use the ACTUAL process transport plus strict decoder: success,
++429, 500, malformed action and unapproved tool action. Each observed exactly one
++loopback POST; request body contained the intended model label and exact schema,
++no offered tool list or Authorization header, the approved prompt sentinel and
++neither the synthetic parent instruction nor hostile user-config sentinel. Valid
++reply reports 120 tokens; every invalid scenario closes the original client and
++never resends. This is not proof of arbitrary managed-config isolation, every
++possible network operation, actual provider billing or Windows CLI acceptance.
++
++**Ephemeral mode still produced SQLite state files in these successful probes.**
++This is explicit negative evidence, not an allowed project persistence backend.
++No real research profile is activated; no flags are invented or errors suppressed
++to pretend zero-persistence. Next resolve CLI-owned state/context isolation within
++the owner's persistence rules (or verify an allowed alternative CLI) before real
++activation. An empty working directory is not proof of no other filesystem writes.
++
++The native test `tests/test_research_codex_profile_native.py` is skipped unless
++`POLYMARKET_ALPHA_LAB_TEST_CODEX_PROFILE_NATIVE=1` and an explicitly supplied
++`POLYMARKET_ALPHA_LAB_TEST_CODEX_PACKAGE_ROOT` points to that hash-checked Linux
++package. It downloads nothing; the sanitized full verifier removes the opt-in.
++Its optional tests are distinct from default Windows/native database checks.
++The two new unit/review modules run in the existing Windows dispatch partition.
++
++### Separate self-review and retained first failures
++
++The original image check was directly observed rejecting the full official image
++before launch. Six interface acceptance tests were RED before adding the explicit
++field; those missing-field failures are not six separate production defects.
++The first profile test run had 2 failed/48 passed because its fixture used the
++old synthetic model and imported the base instead of audit harness. Both fixture
++mistakes were corrected; the original expected audited behavior remained.
++
++The first full-package diagnostic stream contained deprecated-feature/unknown-model
++errors despite exit zero. The decoder correctly refused it. The final profile
++uses the current `hooks` switch and the explicitly reviewed model metadata; no
++error item is stripped. A distinct self-review then reproduced 4 failures/6valid
++controls: JSON surrogate-pair escaping was invalid TOML for non-BMP URL text, and
++schema-close errors could mask original interruptions. UTF-8 scalar serialization
++and original-cancellation precedence fix them without replacing approved text,
++retrying a descriptor close or weakening their assertions.
++
++Final local/hosted exact-tree tests, independent frozen-copy review, original
++failure logs and unexecuted items are recorded in the implementation PR. This is
++same-assistant separate review, not an external/fresh-agent audit or guarantee
++of zero defects. All 68 SQL files, original audit/request codecs and dependencies
++remain unchanged; no user installation/database/credential or live-order work.

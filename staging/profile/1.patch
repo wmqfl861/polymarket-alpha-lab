@@ -1,0 +1,270 @@
+diff --git a/src/polymarket_alpha_lab/research_codex_profile.py b/src/polymarket_alpha_lab/research_codex_profile.py
+new file mode 100644
+index 0000000..7cbb134
+--- /dev/null
++++ b/src/polymarket_alpha_lab/research_codex_profile.py
+@@ -0,0 +1,241 @@
++"""Pinned, restrictive Codex command construction; not an isolation certificate.
++
++No credential loading, installation, config writing, process launch or network
++occurs here. The caller supplies a native image, dedicated environment and exact
++schema file. Commands must run only in a separately reviewed execution boundary:
++Codex 0.155.1 still initializes SQLite even in ephemeral mode. This profile does
++not authorize that persistence for project data or bypass managed requirements.
++"""
++from __future__ import annotations
++
++from dataclasses import asdict, dataclass, field, replace
++from hashlib import sha256
++import json
++import os
++from pathlib import Path
++import stat
++from urllib.parse import urlsplit
++
++from polymarket_alpha_lab.research_codex_exec import (
++    CODEX_VERSION, CodexExecInput, CodexExecModel, codex_action_schema_json,
++)
++from polymarket_alpha_lab.research_codex_process import CodexProcessTransport
++from polymarket_alpha_lab.research_process import ResearchProcessSpec
++from polymarket_alpha_lab.research_uncapped import copy_authorization
++from polymarket_alpha_lab.team_research_agent_types import identifier
++
++_PROFILE_VERSION = 'research-codex-profile-0.155.1-v1'
++# These are individual pinned-version feature switches, NOT a wildcard promise
++# that no tool can ever be supplied by managed config or model metadata.
++_DISABLED_FEATURES = (
++    'api_key_model_discovery', 'apps', 'browser_use', 'code_mode',
++    'code_mode_prewarm', 'hooks', 'computer_use', 'current_time_reminder',
++    'default_mode_request_user_input', 'deferred_executor', 'image_generation',
++    'memories', 'multi_agent', 'multi_agent_v2', 'plugins', 'request_permissions_tool',
++    'search_tool', 'shell_snapshot', 'shell_tool', 'sleep_tool', 'token_budget',
++    'unified_exec', 'view_image',
++)
++_PATH_ENV = frozenset(('CODEX_HOME', 'HOME', 'USERPROFILE', 'SYSTEMROOT', 'WINDIR',
++                       'TMPDIR', 'TMP', 'TEMP'))
++
++
++def _json(value):
++    return json.dumps(value, sort_keys=True, ensure_ascii=True, allow_nan=False,
++                      separators=(',', ':'))
++
++
++def _toml(value):
++    """Small closed serializer; no raw TOML fragments or CLI override input."""
++    if type(value) is dict:
++        return '{' + ','.join(_json(k)+'='+_toml(v) for k, v in sorted(value.items())) + '}'
++    if type(value) is list:
++        return '[' + ','.join(_toml(v) for v in value) + ']'
++    if type(value) is str:
++        # JSON surrogate-pair escapes are not TOML Unicode scalar escapes.
++        # Validated text is emitted as UTF-8 instead of ASCII surrogate pairs.
++        return json.dumps(value, ensure_ascii=False, allow_nan=False)
++    if type(value) in (int, bool):
++        return _json(value)
++    raise ValueError('research_codex_profile_invalid')
++
++
++def _absolute(value):
++    if (type(value) is not str or not value or '\x00' in value
++            or not Path(value).is_absolute()):
++        raise ValueError
++    value.encode('utf-8')
++    return value
++
++
++def _endpoint(value):
++    if (type(value) is not str or not value or len(value) > 2048
++            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in value)):
++        raise ValueError
++    value.encode('utf-8')
++    parts = urlsplit(value)
++    port = parts.port
++    if (not parts.hostname or parts.username is not None or parts.password is not None
++            or '?' in value or '#' in value or '\\' in value or '%' in parts.netloc
++            or (port is not None and port <= 0)):
++        raise ValueError
++    # Plaintext is permitted ONLY for a literal local no-credential gateway.
++    # An approved HTTPS gateway is also possible; this is not an endpoint trust
++    # certification and the caller must approve all transmitted research.
++    if parts.scheme != 'https' and not (parts.scheme == 'http'
++            and parts.hostname == '127.0.0.1' and port is not None and port > 0):
++        raise ValueError
++    return value
++
++
++@dataclass(frozen=True, slots=True)
++class CodexExecProfile:
++    """Closed command profile with a content digest for existing authorization.
++
++    `process.argv` contains the ONE native executable, no user-supplied flags.
++    Environment values are paths, not credentials; no parent env is discovered.
++    The configured gateway owns any separately authorized authentication. The
++    digest identifies declared bytes/settings, not an independently verified CLI,
++    real provider/model, filesystem sandbox or zero-persistence guarantee.
++    """
++    process: ResearchProcessSpec = field(repr=False)
++    model_id: str
++    gateway_url: str = field(repr=False)
++    schema_path: str = field(repr=False)
++    cli_version: str = CODEX_VERSION
++
++    def __post_init__(self):
++        try:
++            if (type(self.process) is not ResearchProcessSpec or type(self.cli_version) is not str
++                    or self.cli_version != CODEX_VERSION):
++                raise ValueError
++            process = replace(self.process)
++            identifier('model_id', self.model_id)
++            if self.model_id != 'gpt-5.6-sol':
++                raise ValueError
++            _endpoint(self.gateway_url)
++            _absolute(self.schema_path)
++            if len(process.argv) != 1:
++                raise ValueError
++            environment = dict(process.environment)
++            if not {'CODEX_HOME', 'HOME'}.issubset(environment) or not set(environment) <= _PATH_ENV:
++                raise ValueError
++            for value in environment.values():
++                _absolute(value)
++            object.__setattr__(self, 'process', process)
++            # Full generated argv must satisfy the original cross-platform
++            # environment/command-size bounds, not just the input image path.
++            self._spec()
++        except Exception:
++            raise ValueError('research_codex_profile_invalid') from None
++
++    @property
++    def settings(self):
++        """A new value each time; changes to it never change the profile."""
++        return {
++            'approval_policy': 'never', 'sandbox_mode': 'read-only',
++            'model': self.model_id, 'model_provider': 'pal_research',
++            'model_reasoning_effort': 'max', 'model_reasoning_summary': 'none',
++            'service_tier': 'default', 'check_for_update_on_startup': False,
++            'web_search': 'disabled', 'project_doc_max_bytes': 0,
++            'include_environment_context': False, 'include_apps_instructions': False,
++            'include_collaboration_mode_instructions': False,
++            'history': {'persistence': 'none'}, 'notify': [], 'mcp_servers': {},
++            'features': {name: False for name in _DISABLED_FEATURES},
++            'skills': {'bundled': {'enabled': False}, 'include_instructions': False},
++            'memories': {'generate_memories': False, 'use_memories': False},
++            'tools': {'update_plan': {'enabled': False},
++                      'experimental_request_user_input': {'enabled': False}},
++            'analytics': {'enabled': False}, 'feedback': {'enabled': False},
++            'model_providers': {'pal_research': {
++                'name': 'Explicit research gateway', 'base_url': self.gateway_url,
++                'wire_api': 'responses', 'requires_openai_auth': False,
++                'request_max_retries': 0, 'stream_max_retries': 0,
++                'supports_websockets': False,
++            }},
++        }
++
++    @property
++    def contract_sha256(self):
++        # No secrets are permitted in the profile environment or URL query.
++        # These inputs still contain private paths: return only the hash.
++        data = dict(schema_version=_PROFILE_VERSION, cli_version=self.cli_version,
++                    process=asdict(self.process), model_id=self.model_id,
++                    gateway_url=self.gateway_url, schema_path=self.schema_path,
++                    settings=self.settings, action_schema=codex_action_schema_json())
++        return sha256(_json(data).encode('utf-8')).hexdigest()
++
++    def _spec(self):
++        args = [self.process.argv[0], 'exec', '--strict-config', '--ignore-user-config',
++                '--ephemeral', '--skip-git-repo-check', '--json', '--color', 'never',
++                '--output-schema', self.schema_path]
++        for name, value in sorted(self.settings.items()):
++            args.extend(('-c', name+'='+_toml(value)))
++        args.append('-')  # Original prompt travels via bounded stdin, never argv.
++        return replace(self.process, argv=tuple(args))
++
++    def __call__(self, request):
++        try:
++            profile = replace(self)
++            if type(request) is not CodexExecInput:
++                raise ValueError
++            request = replace(request)
++            if request.model_id != profile.model_id:
++                raise ValueError
++            expected = request.output_schema_json.encode('utf-8')
++            flags = (os.O_RDONLY | getattr(os, 'O_BINARY', 0)
++                     | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0))
++            fd = os.open(profile.schema_path, flags)
++            failure = None
++            try:
++                info = os.fstat(fd)
++                if not stat.S_ISREG(info.st_mode) or info.st_size != len(expected):
++                    raise ValueError
++                actual = bytearray()
++                while len(actual) <= len(expected):
++                    block = os.read(fd, min(4096, len(expected)+1-len(actual)))
++                    if not block:
++                        break
++                    actual.extend(block)
++                if bytes(actual) != expected:
++                    raise ValueError
++            except BaseException as error:
++                failure = error
++            finally:
++                # Exactly one close attempt; an error cannot prove that the OS
++                # did not release the descriptor. Preserve original cancellation.
++                try:
++                    os.close(fd)
++                except BaseException as error:
++                    if failure is None or isinstance(failure, Exception) and not isinstance(error, Exception):
++                        failure = error
++            if failure is not None:
++                raise failure
++            # No invented max_output_tokens flag. Original decoder checks the
++            # REPORTED overrun afterward; there is no provider-side cap here.
++            return profile._spec()
++        except Exception:
++            raise ValueError('research_codex_profile_unavailable') from None
++
++
++def codex_profile_factory(*, profile, authorization, allow_process_start=False, stop=None):
++    """Bind a declared profile to existing uncapped permission, without I/O.
++
++    Use with the original require_durable_audit=True application path. This
++    factory is not a substitute for that path, local isolation or permission to
++    enable Codex's SQLite state. No default standalone CLI client is installed.
++    """
++    if type(profile) is not CodexExecProfile or allow_process_start is not True:
++        raise ValueError('research_codex_profile_opt_in_required')
++    profile = replace(profile)
++    authorization = copy_authorization(authorization)
++    if (authorization.model_id != profile.model_id
++            or authorization.adapter_contract_sha256 != profile.contract_sha256):
++        raise ValueError('research_codex_profile_authorization_mismatch')
++    # Reuse the original stop-type validator, without launching anything.
++    CodexProcessTransport(prepare_command=profile, allow_process_start=True, stop=stop)
++    def factory(team_id):
++        if team_id not in ('crypto_btc', 'crypto_eth'):
++            raise ValueError('research_codex_profile_team_invalid')
++        return CodexExecModel(model_id=profile.model_id, transport=CodexProcessTransport(
++            prepare_command=profile, allow_process_start=True, stop=stop))
++    return factory
+ diff --git a/src/polymarket_alpha_lab/research_process.py b/src/polymarket_alpha_lab/research_process.py
+index 7274f5b..7b76e38 100644
+--- a/src/polymarket_alpha_lab/research_process.py
++++ b/src/polymarket_alpha_lab/research_process.py
+@@ -39,2 +39,3 @@ class ResearchProcessSpec:
+     cleanup_timeout_ms: int = 5000
++    max_executable_bytes: int = 268435456
+ 
+@@ -71,3 +72,3 @@ class ResearchProcessSpec:
+                             ('max_stdin_bytes', 16000000), ('max_stdout_bytes', 1048576),
+-                            ('max_stderr_bytes', 1048576)):
++                            ('max_stderr_bytes', 1048576), ('max_executable_bytes', 536870912)):
+             integer(name, getattr(self, name), 1, upper)
+@@ -102,3 +103,3 @@ def _verify_executable(spec):
+         info = os.fstat(fd)
+-        if not stat.S_ISREG(info.st_mode) or not 1 <= info.st_size <= 268435456:
++        if not stat.S_ISREG(info.st_mode) or not 1 <= info.st_size <= spec.max_executable_bytes:
+             raise ValueError('research_process_image_invalid')
+@@ -112,3 +113,3 @@ def _verify_executable(spec):
+             size += len(block)
+-            if size > 268435456:
++            if size > spec.max_executable_bytes:
+                 raise ValueError('research_process_image_invalid')
