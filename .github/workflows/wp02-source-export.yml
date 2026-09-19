@@ -1,0 +1,33 @@
+name: WP02 pinned source export
+on:
+  push:
+    branches: ['audit/wp02-source-20260919']
+    paths: ['.github/workflows/wp02-source-export.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 8ae2933a843c554b0f4391b4faeb572b2f6b952c
+          persist-credentials: false
+      - name: Export committed public project source without executing it
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^{tree})" = 1061c4492de3378d00fb1e55179da2e539e36ca4
+          mkdir -p "$RUNNER_TEMP/wp02-source"
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/wp02-source/source.tar.gz"
+          git ls-tree -rz --full-tree HEAD > "$RUNNER_TEMP/wp02-source/tree.z"
+          git cat-file commit HEAD > "$RUNNER_TEMP/wp02-source/commit.txt"
+          cd "$RUNNER_TEMP/wp02-source"
+          sha256sum source.tar.gz tree.z commit.txt > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wp02-source-8ae2933
+          path: ${{ runner.temp }}/wp02-source/
+          retention-days: 7
+          if-no-files-found: error
