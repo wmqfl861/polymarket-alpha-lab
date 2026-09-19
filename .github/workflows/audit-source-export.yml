@@ -1,0 +1,34 @@
+name: Pinned audit source export
+on:
+  push:
+    branches: ['audit/source-export-20260919']
+    paths: ['.github/workflows/audit-source-export.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: a0fffde24d547cd70c950a39a3fada5f7e29cf92
+          persist-credentials: false
+      - name: Archive committed public source only; do not execute project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = a0fffde24d547cd70c950a39a3fada5f7e29cf92
+          test "$(git rev-parse HEAD^{tree})" = 2df55db14ee07573cd55c8547fc7600763d59c60
+          mkdir -p "$RUNNER_TEMP/audit-source"
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/audit-source/source.tar.gz"
+          git ls-tree -rz --full-tree HEAD > "$RUNNER_TEMP/audit-source/tree.z"
+          git cat-file commit HEAD > "$RUNNER_TEMP/audit-source/commit.txt"
+          cd "$RUNNER_TEMP/audit-source"
+          sha256sum source.tar.gz tree.z commit.txt > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: audit-source-a0fffde24d547cd70c950a39a3fada5f7e29cf92
+          path: ${{ runner.temp }}/audit-source/
+          retention-days: 7
+          if-no-files-found: error
