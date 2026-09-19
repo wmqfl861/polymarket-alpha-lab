@@ -1,0 +1,67 @@
+name: Publish verified uncapped audit source objects
+on:
+  push:
+    branches: ['audit/wp02-audit-publication-20260919']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check exact source patch and construct reviewed tree without executing project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -r staging/uncapped-audit "$RUNNER_TEMP/uncapped-audit"
+          git switch --detach 2eb86fa90d143195d771347eb7ac0bb24d010c0e
+          python - <<'PY'
+          import gzip, hashlib, json, os, pathlib, subprocess
+          root = pathlib.Path(os.environ['RUNNER_TEMP'])
+          parts = root / 'uncapped-audit'
+          checks = {
+              1: ('532691f50f3a0cb9f90afc6767023bb1e23826338e0c3a010aa3ddf9b698e7f3', '91a0f5b566f7b4927fee3cfba2fb819a1824982152694ba77f58441662ea89f8'),
+              2: ('2bddca1066c853db67ab65ca373ac52603e295f9e1606265aa575adb6664cac6', '099985777ef92b71b2f0131487befb3dc12331f7e9bfbde662dfb178f8dc56ac'),
+              3: ('df41ce6a46ce1ea2de79662cc7fd2f1c274840a186a7254da760fe3a74e6dda0', '99fc03a32a99cc65a96fe2ef55ba7b24291f090204330e70f3e2a8043940c92a'),
+              4: ('d7742cbb4baf3b10c09a8e1f88819debe918aa51dd10c56aabe3e3567b4bea54', '851ca89f81d863872e837d741459038e75512dba08621607ef3191532a385607'),
+          }
+          for group, (compressed_hash, patch_hash) in checks.items():
+              compressed = b''.join(p.read_bytes() for p in sorted(parts.glob(f'part-{group}-*')))
+              assert hashlib.sha256(compressed).hexdigest() == compressed_hash
+              patch = gzip.decompress(compressed)
+              assert hashlib.sha256(patch).hexdigest() == patch_hash
+              path = root / f'audit-{group}.patch'
+              path.write_bytes(patch)
+              subprocess.run(['git', 'apply', '--check', '--index', str(path)], check=True)
+              subprocess.run(['git', 'apply', '--index', str(path)], check=True)
+          expected = 'e60333e9b289bb7e255a6e68747379d387d0e372'
+          assert subprocess.check_output(['git', 'write-tree'], text=True).strip() == expected
+          subprocess.run(['git', 'diff', '--cached', '--check'], check=True)
+          paths = subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines()
+          assert len(paths) == 26
+          entries = []
+          for name in paths:
+              entry = pathlib.Path(name)
+              assert entry.is_file() and not entry.is_symlink()
+              entries.append(dict(path=name, mode='100644', type='blob', content=entry.read_text(encoding='utf-8')))
+          request = dict(base_tree='1724d4e23856e76ae74cca2c3b75faf31007afe2', tree=entries)
+          (root / 'source-tree-request.json').write_text(json.dumps(request), encoding='utf-8')
+          print('reviewed_tree=' + expected)
+          PY
+      - name: Publish only the checked Git tree object; never update a ref or main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/trees --input "$RUNNER_TEMP/source-tree-request.json" > "$RUNNER_TEMP/source-tree-result.json"
+          python - <<'PY'
+          import json, os, pathlib
+          result = json.loads((pathlib.Path(os.environ['RUNNER_TEMP']) / 'source-tree-result.json').read_text())
+          assert result['sha'] == 'e60333e9b289bb7e255a6e68747379d387d0e372'
+          print('published_tree=' + result['sha'])
+          PY
