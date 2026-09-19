@@ -12,14 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: 86d8b705404e3537c506eb495d0c897d7c849db4
+          ref: f5eebf9a56d3b9020e9305188fffb89a66383231
           persist-credentials: false
       - name: Archive pinned committed public source only
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = 86d8b705404e3537c506eb495d0c897d7c849db4
-          test "$(git rev-parse HEAD^{tree})" = 7a289b70166bf136c278046ef018ab93dc1bb5db
+          test "$(git rev-parse HEAD)" = f5eebf9a56d3b9020e9305188fffb89a66383231
+          test "$(git rev-parse HEAD^{tree})" = 6765f7cffa9a7d3aae2adf80812409b1e729ab19
           mkdir -p "$RUNNER_TEMP/review-source"
           git archive --format=tar.gz HEAD > "$RUNNER_TEMP/review-source/source.tar.gz"
           git ls-tree -rz --full-tree HEAD > "$RUNNER_TEMP/review-source/tree.z"
@@ -28,7 +28,7 @@ jobs:
           sha256sum source.tar.gz tree.z commit.txt > SHA256SUMS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: review-source-86d8b705
+          name: review-source-f5eebf9a
           path: ${{ runner.temp }}/review-source/
           retention-days: 7
           if-no-files-found: error
