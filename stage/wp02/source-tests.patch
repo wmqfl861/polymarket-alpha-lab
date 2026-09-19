@@ -1,0 +1,843 @@
+diff --git a/tests/test_native_postgres_workflow.py b/tests/test_native_postgres_workflow.py
+index 8db1b2e..d872c6f 100644
+--- a/tests/test_native_postgres_workflow.py
++++ b/tests/test_native_postgres_workflow.py
+@@ -74,6 +74,9 @@ ADMISSION_FILES = (
+ )
+ 
+ 
++# Explicit WP02 additions; every original selector remains unchanged.
++UNCAPPED_FILES = ('tests/test_research_uncapped.py', 'tests/test_research_codex_exec.py', 'tests/test_research_codex_uncapped_review.py', 'tests/test_project_postgres_uncapped_native.py')
++
+ def matrix(source):
+     value, end = json.JSONDecoder().raw_decode(source.split('        include: ', 1)[1])
+     assert source.split('        include: ', 1)[1][end:].lstrip().startswith('runs-on:')
+@@ -84,7 +87,7 @@ def matrix(source):
+         assert type(partition['files']) is list and partition['files']
+         assert all(type(f) is str and re.fullmatch(r'tests/test_[a-z0-9_]+[.]py', f)
+                    for f in partition['files'])
+-    assert Counter(f for p in value for f in p['files']) == Counter([*ORIGINAL_FILES, SELF, *ADMISSION_FILES])
++    assert Counter(f for p in value for f in p['files']) == Counter([*ORIGINAL_FILES, SELF, *ADMISSION_FILES, *UNCAPPED_FILES])
+     return value
+ 
+ 
+@@ -92,6 +95,7 @@ def test_native_partitions_preserve_exact_original_inventory():
+     parts = matrix(WORKFLOW.read_text())
+     assert len(ORIGINAL_FILES) == len(set(ORIGINAL_FILES)) == 51
+     assert set(ADMISSION_FILES) <= set(parts[2]['files'])
++    assert set(UNCAPPED_FILES) <= set(parts[2]['files'])
+     for part in parts:
+         assert all((ROOT / path).is_file() for path in part['files'])
+     # Both new unit modules and the REAL backup proof stay together on Windows.
+diff --git a/tests/test_project_postgres_uncapped_native.py b/tests/test_project_postgres_uncapped_native.py
+new file mode 100644
+index 0000000..2729e7a
+--- /dev/null
++++ b/tests/test_project_postgres_uncapped_native.py
+@@ -0,0 +1,193 @@
++"""Original real DB claims with explicit uncapped permission and synthetic Codex events.
++
++No actual Codex process/provider, user cluster, credential discovery or new SQL.
++"""
++from concurrent.futures import ThreadPoolExecutor
++from dataclasses import replace
++from datetime import UTC, datetime, timedelta
++import json
++import os
++from pathlib import Path
++import shutil
++import socket
++import subprocess
++import sys
++from threading import Lock
++import uuid
++
++import pytest
++
++from polymarket_alpha_lab.project_postgres import files
++from polymarket_alpha_lab.project_postgres.runtime import import_runtime_directory
++from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
++from polymarket_alpha_lab.research_codex_exec import CodexExecModel, CodexExecOutput
++from polymarket_alpha_lab.research_dispatch import ResearchBatch
++from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
++from polymarket_alpha_lab.research_uncapped import UncappedResearchAuthorization
++from tests.test_project_postgres_dispatch_native import prepared
++from tests.test_team_research_cross_source import Model
++
++ROOT = Path(__file__).resolve().parents[1]
++ENABLED = os.environ.get('POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES') == '1'
++
++
++def authorization(requests, **kw):
++    now = datetime.now(UTC)
++    values = dict(authorization_id='synthetic-no-cap', model_id=requests[0].model_id,
++        adapter_contract_sha256='a'*64, approved_at=now, expires_at=now+timedelta(hours=1),
++        request_keys=tuple((r.record_id, r.content_sha256) for r in requests),
++        no_monetary_cap_approved=True, research_data_send_approved=True)
++    values.update(kw)
++    return UncappedResearchAuthorization(**values)
++
++
++class SyntheticExec:
++    def __init__(self, counts, lock):
++        self.original, self.counts, self.lock = Model(), counts, lock
++
++    def run(self, request):
++        with self.lock: self.counts.append('operation')
++        original = self.original.complete(messages_json=request.messages_json,
++                                           max_output_tokens=request.max_output_tokens)
++        # Exercise the real adapter without executing another model or CLI.
++        actions = [{'name': c.name, 'arguments_json': c.arguments_json} for c in original.calls]
++        events = [dict(type='thread.started', thread_id=str(uuid.uuid4())), dict(type='turn.started'),
++            dict(type='item.completed', item=dict(id='item_0', type='agent_message',
++                 text=json.dumps(dict(calls=actions)))),
++            dict(type='turn.completed', usage=dict(input_tokens=10, cached_input_tokens=2,
++                 cache_write_input_tokens=0, output_tokens=5, reasoning_output_tokens=1))]
++        return CodexExecOutput(0, ('\n'.join(json.dumps(e) for e in events)+'\n').encode())
++
++
++_CRASH = r'''
++import os, sys
++from pathlib import Path
++from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
++from tests.test_project_postgres_uncapped_native import authorization
++class Lost:
++    def complete(self, **kwargs): os._exit(86)
++with ProjectPostgres(Path(sys.argv[1])).session() as research:
++    request = research.inspect_research_batch(batch_id='uncapped-crash').stored.batch.requests[0]
++    research.run_uncapped_research(request=request, authorization=authorization((request,)),
++        model_factory=lambda _:Lost(), allow_model_calls=True, allow_uncapped_costs=True)
++raise SystemExit(99)
++'''
++
++
++@pytest.mark.skipif(not ENABLED, reason='explicit native uncapped execution proof is opt-in')
++def test_uncapped_claims_codex_protocol_stop_restart_and_process_loss(tmp_path, monkeypatch):
++    prefix = Path(os.environ['POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX'])
++    for key in tuple(os.environ):
++        if key.upper().startswith('PG'): monkeypatch.delenv(key)
++    parent = tmp_path
++    if os.name == 'nt':
++        parent = Path(os.environ['RUNNER_TEMP']) / ('pal-uncapped-'+uuid.uuid4().hex)
++        files.private_directory(parent, create=True)
++    root = parent / 'Uncapped Research With Spaces'; root.mkdir()
++    (root/'pyproject.toml').write_text('[project]\nname="polymarket-alpha-lab"\n')
++    shutil.copytree(ROOT/'database', root/'database')
++    shutil.copytree(ROOT/'supabase/migrations', root/'supabase/migrations')
++    with socket.socket() as sock:
++        sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
++    import_runtime_directory(root, prefix); db = ProjectPostgres(root)
++    calls, made, lock = [], [], Lock()
++    def factory(team):
++        with lock: made.append(team)
++        return CodexExecModel(model_id='synthetic-function-model', transport=SyntheticExec(calls, lock))
++    def forbidden(_): pytest.fail('original history must not start another model')
++    try:
++        assert db.initialize(port=port)['migrations_applied'] == 67
++        identity = db._state()
++        with db.session() as research:
++            prior = research.run_research(request=prepared(1900), model_factory=lambda _:Model())
++            requests = (prepared(1901, 'crypto_btc'), prepared(1902, 'crypto_eth'))
++            policy = authorization(requests)
++            with pytest.raises(ValueError):
++                research.run_uncapped_research(request=requests[0], authorization=policy,
++                    model_factory=forbidden, allow_model_calls=True)
++            assert research.inspect(record_id=requests[0].record_id) is None
++            batch = ResearchBatch('uncapped-rounds', requests)
++            saved = research.enqueue_research_batch(batch=batch, allow_queue_write=True)
++            control = ResearchDispatchStop(); control.request_stop()
++            stopped = research.run_research_batch(batch_id=batch.batch_id, model_factory=forbidden,
++                allow_model_calls=True, uncapped_authorization=policy, allow_uncapped_costs=True, stop=control)
++            assert not stopped.attempts
++            first = research.run_research_rotation(rotation_id='uncapped-rotation', turn_id='first',
++                batch_ids_to_run=(batch.batch_id,), model_factory=factory, allow_model_calls=True,
++                uncapped_authorization=policy, allow_uncapped_costs=True, max_tasks=1, max_workers=1)
++            original = first.attempts[0].execution
++            assert original.record.run.research.status == 'completed' and len(calls) == 3
++            assert original.record.run.research.total_tokens == 45
++        assert db.status()['status'] == 'stopped'
++        with db.session() as research:
++            assert research.enqueue_research_batch(batch=batch, allow_queue_write=True) == saved
++            second = research.run_research_rotation(rotation_id='uncapped-rotation', turn_id='second',
++                batch_ids_to_run=(batch.batch_id,), model_factory=factory, allow_model_calls=True,
++                uncapped_authorization=policy, allow_uncapped_costs=True, max_tasks=1, max_workers=1)
++            assert second.attempts[0].execution.record.run.research.status == 'completed'
++            assert len(calls) == 6 and made == ['crypto_btc', 'crypto_eth']
++            repeat = research.run_research_rotation(rotation_id='uncapped-rotation', turn_id='first',
++                batch_ids_to_run=(batch.batch_id,), model_factory=forbidden, allow_model_calls=True,
++                uncapped_authorization=policy, allow_uncapped_costs=True, max_tasks=1, max_workers=1)
++            assert repeat.status == 'turn_already_reserved' and len(calls) == 6
++            expired = replace(policy, approved_at=policy.approved_at-timedelta(hours=2),
++                               expires_at=policy.approved_at-timedelta(hours=1))
++            replay = research.run_uncapped_research(request=requests[0], authorization=expired,
++                model_factory=forbidden, allow_model_calls=True, allow_uncapped_costs=True)
++            assert replay.record == original.record
++            # Concurrent duplicate starts still use the ONE original DB claim.
++            r = prepared(1903); p = authorization((r,)); before = len(calls)
++            def invoke(_):
++                return research.run_uncapped_research(request=r, authorization=p,
++                    model_factory=factory, allow_model_calls=True, allow_uncapped_costs=True)
++            with ThreadPoolExecutor(max_workers=4) as pool: results = list(pool.map(invoke, range(8)))
++            assert len(calls)-before == 3
++            assert all(x.status in ('captured', 'already_captured', 'incomplete') for x in results)
++            assert research.inspect(record_id=r.record_id).record.run.research.status == 'completed'
++            # Original legacy history and the capped ledger are unaffected.
++            assert research.inspect(record_id=prior.request.record_id).record == prior.record
++            for table in ('model_budgets', 'model_call_reservations'):
++                assert db._psql(identity, f'SELECT count(*) FROM research_capture.{table};', owner=False) == '0'
++            # A real mixed batch captures failure without retrying that task.
++            mixed_requests = (prepared(1905, 'crypto_eth'), prepared(1906, 'crypto_btc'))
++            mixed_policy = authorization(mixed_requests)
++            failure_calls = []
++            class FailedClient:
++                def complete(self, **kwargs):
++                    failure_calls.append(True)
++                    raise TimeoutError('synthetic provider failure')
++            def mixed_factory(team):
++                return FailedClient() if team == 'crypto_eth' else factory(team)
++            research.enqueue_research_batch(batch=ResearchBatch('uncapped-mixed', mixed_requests),
++                                             allow_queue_write=True)
++            mixed = research.run_research_batch(batch_id='uncapped-mixed', model_factory=mixed_factory,
++                allow_model_calls=True, uncapped_authorization=mixed_policy, allow_uncapped_costs=True,
++                max_tasks=2, max_workers=2)
++            assert [a.execution.record.run.research.status for a in mixed.attempts] == ['failed', 'completed']
++            failure = mixed.attempts[0].execution
++            again = research.run_uncapped_research(request=mixed_requests[0], authorization=mixed_policy,
++                model_factory=forbidden, allow_model_calls=True, allow_uncapped_costs=True)
++            assert again.record == failure.record and failure_calls == [True]
++            crash_request = prepared(1904)
++            research.enqueue_research_batch(batch=ResearchBatch('uncapped-crash', (crash_request,)),
++                                             allow_queue_write=True)
++        child = subprocess.run([sys.executable, '-c', _CRASH, str(root)], cwd=ROOT,
++            stdin=subprocess.DEVNULL, capture_output=True, encoding='utf-8',
++            env=files.clean_environment(), timeout=120)
++        assert child.returncode == 86, (child.stdout, child.stderr)
++        db.down()
++        with db.session() as research:
++            incomplete = research.inspect(record_id=crash_request.record_id)
++            assert incomplete.status == 'incomplete'
++            p = authorization((crash_request,))
++            repeated = research.run_uncapped_research(request=crash_request, authorization=p,
++                model_factory=forbidden, allow_model_calls=True, allow_uncapped_costs=True)
++            assert repeated == incomplete
++            assert research.inspect(record_id=prior.request.record_id).record == prior.record
++            assert research.inspect(record_id=original.request.record_id).record == original.record
++            assert db._psql(identity, 'SELECT count(*) FROM project_private.migrations;') == '67'
++            assert db._psql(identity, 'SELECT count(*) FROM research_capture.model_call_reservations;', owner=False) == '0'
++        assert db.status()['instance_id'] == identity['instance_id'] and db.status()['status'] == 'stopped'
++        print('native uncapped: PASS; BTC/ETH protocol, two turns, restart, one claim, zero fake permits, incomplete retained')
++    finally:
++        if db.status()['status'] != 'stopped': db.down()
+diff --git a/tests/test_research_codex_exec.py b/tests/test_research_codex_exec.py
+new file mode 100644
+index 0000000..de7224f
+--- /dev/null
++++ b/tests/test_research_codex_exec.py
+@@ -0,0 +1,191 @@
++"""Strict selected-version protocol; never launches a real CLI/provider."""
++from dataclasses import replace
++import json
++import traceback
++
++import pytest
++
++from polymarket_alpha_lab import research_codex_exec as core
++from polymarket_alpha_lab import team_research_agent as agent
++from tests.test_team_research_agent import task
++
++THREAD='01a0b7b4-3182-72c0-98d3-7f5daa0b7501'
++
++
++def action(name='search_evidence', arguments=None):
++    if arguments is None: arguments={'query':'*'}
++    return {'name':name,'arguments_json':json.dumps(arguments,ensure_ascii=False,separators=(',',':'))}
++
++
++def events(actions=None, **usage):
++    actions=[action()] if actions is None else actions
++    count=dict(input_tokens=100,cached_input_tokens=10,cache_write_input_tokens=0,output_tokens=20,reasoning_output_tokens=5)
++    count.update(usage)
++    return [{'type':'thread.started','thread_id':THREAD},{'type':'turn.started'},
++            {'type':'item.completed','item':{'id':'item_0','type':'reasoning','text':'PRIVATE-REASONING'}},
++            {'type':'item.completed','item':{'id':'item_1','type':'agent_message','text':json.dumps({'calls':actions},ensure_ascii=False)}},
++            {'type':'turn.completed','usage':count}]
++
++
++def output(rows=None, code=0):
++    return core.CodexExecOutput(code, ('\n'.join(json.dumps(e,ensure_ascii=False) for e in (events() if rows is None else rows))+'\n').encode())
++
++
++def decode(rows=None, **kw):
++    return core.decode_codex_exec_output(output(rows),call_number=kw.get('call_number',1))
++
++
++def test_valid_reply_uses_original_actions_and_usage_without_double_counting():
++    reply=decode()
++    assert reply.total_tokens==120
++    assert reply.calls[0].name=='search_evidence' and reply.calls[0].call_id=='codex-1-0'
++    assert 'PRIVATE-REASONING' not in repr(reply)
++    assert decode(call_number=2).calls[0].call_id=='codex-2-0'
++
++
++def test_input_preserves_exact_nested_messages_and_model_boundary():
++    messages='[{"role":"user","content":"private question","extra":0.125}]'
++    request=core.CodexExecInput('synthetic-model',messages,512)
++    body=json.loads(request.prompt_json)
++    assert body['messages_json']==messages
++    assert body['action_definitions']==agent.research_tool_definitions()
++    assert request.max_output_tokens==512
++    assert 'private question' not in repr(request)
++    assert json.loads(request.output_schema_json)['additionalProperties'] is False
++
++
++@pytest.mark.parametrize('value',['', 'null','{}','[]','[NaN]','[{"x":1,"x":2}]','["\ud800"]'])
++def test_invalid_input(value):
++    with pytest.raises((ValueError,UnicodeError)): core.CodexExecInput('model',value,10)
++
++
++@pytest.mark.parametrize('value',[0,True,8193,1.0,None])
++def test_invalid_output_ceiling(value):
++    with pytest.raises(ValueError): core.CodexExecInput('model','[{}]',value)
++
++
++@pytest.mark.parametrize('code',[1,2,-1,130])
++def test_nonzero_exit_never_validates_success_events(code):
++    with pytest.raises(ValueError,match='response_invalid'): core.decode_codex_exec_output(output(code=code),call_number=1)
++
++
++@pytest.mark.parametrize('raw',[b'',b'\xff',b'{}\n',b'\xef\xbb\xbf{}\n',b'null\n',b'\n',b'{"type":NaN}\n'])
++def test_bad_raw_stream_is_redacted(raw):
++    with pytest.raises(ValueError,match='response_invalid'): core.decode_codex_exec_output(core.CodexExecOutput(0,raw),call_number=1)
++
++
++@pytest.mark.parametrize('defect', ['second_thread','second_turn','missing_thread','missing_turn','missing_terminal',
++    'duplicate_terminal','trailing','early_terminal','multiple_final','error_event','error_item',
++    'unknown_type','tool_event','unfinished','updated_without_start','changed_item_kind','reused_item_id',
++    'missing_usage','extra_usage','extra_field','wrong_uuid','empty_calls','too_many_calls','wrong_root',
++    'duplicate_action_key','blank_line','lone_surrogate','unknown_action','bad_args','nan_args'])
++def test_stream_and_action_counterexamples(defect):
++    rows=events()
++    if defect=='second_thread': rows.insert(1,rows[0])
++    if defect=='second_turn': rows.insert(2,rows[1])
++    if defect=='missing_thread': rows.pop(0)
++    if defect=='missing_turn': rows.pop(1)
++    if defect=='missing_terminal': rows.pop()
++    if defect=='duplicate_terminal': rows.append(rows[-1])
++    if defect=='trailing': rows.append({'type':'turn.started'})
++    if defect=='early_terminal': rows.insert(2,rows.pop())
++    if defect=='multiple_final': rows.insert(-1,{'type':'item.completed','item':dict(rows[-2]['item'],id='item_2')})
++    if defect=='error_event': rows.insert(2,{'type':'error','message':'PRIVATE-SENTINEL'})
++    if defect=='error_item': rows[2]['item']={'id':'item_0','type':'error','message':'PRIVATE-SENTINEL'}
++    if defect=='unknown_type': rows[2]['type']='unknown'
++    if defect=='tool_event': rows[2]['item']['type']='command_execution'
++    if defect=='unfinished': rows[2]['type']='item.started'
++    if defect=='updated_without_start': rows[2]['type']='item.updated'
++    if defect=='changed_item_kind': rows.insert(2,{'type':'item.started','item':{'id':'item_0','type':'agent_message','text':''}})
++    if defect=='reused_item_id': rows[-2]['item']['id']='item_0'
++    if defect=='missing_usage': rows[-1]['usage'].pop('output_tokens')
++    if defect=='extra_usage': rows[-1]['usage']['unknown']=0
++    if defect=='extra_field': rows[0]['extra']='PRIVATE-SENTINEL'
++    if defect=='wrong_uuid': rows[0]['thread_id']='not-a-thread'
++    if defect=='empty_calls': rows[-2]['item']['text']='{"calls":[]}'
++    if defect=='too_many_calls': rows=events([action()]*9)
++    if defect=='wrong_root': rows[-2]['item']['text']='[]'
++    if defect=='duplicate_action_key': rows[-2]['item']['text']='{"calls":[],"calls":[]}'
++    if defect=='lone_surrogate': rows[-2]['item']['text']='\\ud800' # invalid action JSON
++    if defect=='unknown_action': rows=events([action('shell')])
++    if defect=='bad_args': rows=events([action(arguments={'query':'*','extra':True})])
++    if defect=='nan_args': rows=events([dict(name='search_evidence',arguments_json='{"query":NaN}')])
++    data=output(rows)
++    if defect=='blank_line': data=replace(data,stdout=data.stdout+b'\n')
++    with pytest.raises(ValueError,match='response_invalid') as error:
++        core.decode_codex_exec_output(data,call_number=1)
++    assert 'PRIVATE-SENTINEL' not in ''.join(traceback.format_exception(error.value))
++
++
++@pytest.mark.parametrize('field',['input_tokens','cached_input_tokens','cache_write_input_tokens','output_tokens','reasoning_output_tokens'])
++@pytest.mark.parametrize('value',[-1,True,1.0,'1',None,1000001])
++def test_usage_strict_integer_bounds(field,value):
++    with pytest.raises(ValueError,match='response_invalid'): decode(events(**{field:value}))
++
++
++@pytest.mark.parametrize('usage',[dict(input_tokens=0,output_tokens=0,cached_input_tokens=0,reasoning_output_tokens=0),
++    dict(cached_input_tokens=101),dict(cache_write_input_tokens=101),dict(reasoning_output_tokens=21),
++    dict(input_tokens=1000000,output_tokens=1)])
++def test_usage_totals_and_subset_accounting(usage):
++    with pytest.raises(ValueError,match='response_invalid'): decode(events(**usage))
++
++
++def test_started_updated_completed_items_valid_and_reasoning_discarded():
++    rows=events(); final=rows[-2]['item']
++    rows.insert(-2,{'type':'item.started','item':dict(final,text='')})
++    rows.insert(-2,{'type':'item.updated','item':dict(final,text='partial')})
++    assert decode(rows).total_tokens==120
++
++
++def test_maximum_events_and_raw_bytes_are_bounded():
++    with pytest.raises(ValueError): core.CodexExecOutput(0,b'x'*(core.MAX_EVENT_BYTES+1))
++    rows=events();rows[2:2]=[{'type':'item.completed','item':{'id':f'r{i}','type':'reasoning','text':''}} for i in range(256)]
++    with pytest.raises(ValueError): decode(rows)
++
++
++@pytest.mark.parametrize('number',[0,33,True,'1'])
++def test_sequence_is_bounded(number):
++    with pytest.raises(ValueError): decode(call_number=number)
++
++
++class ScriptedTransport:
++    def __init__(self): self.requests=[]
++    def run(self,request):
++        self.requests.append(request)
++        messages=json.loads(request.messages_json)
++        if len(self.requests)==1: return output(events([action('search_evidence')]))
++        if len(self.requests)==2: return output(events([action('read_evidence',{'source_id':'source-1'})]))
++        return output(events([action('finish_research',dict(probability_yes='0.6',confidence='0.4',
++                               summary='Synthetic evidence only',source_ids=['source-1']))]))
++
++
++@pytest.mark.parametrize('team',['crypto_btc','crypto_eth'])
++def test_existing_agent_completes_both_teams_through_event_adapter(team):
++    host=ScriptedTransport(); model=core.CodexExecModel(model_id='synthetic-model',transport=host)
++    assert not host.requests
++    result=agent.run_team_research_agent(task(team),model=model,required_source_ids=('source-1',))
++    assert result.status=='completed' and result.model_calls==3 and result.total_tokens==360
++    assert len(host.requests)==3 and result.source_ids==('source-1',)
++    assert 'PRIVATE-REASONING' not in result.summary
++    ids=[call['id'] for msg in json.loads(host.requests[-1].messages_json)
++         for call in msg.get('tool_calls',[])]
++    assert ids==['codex-1-0','codex-2-0']
++
++
++@pytest.mark.parametrize('defect',['raise','nonzero','bad_type','bad_stream','interrupt','exit'])
++def test_failed_model_is_permanently_closed_without_repair_or_retry(defect):
++    seen=[]
++    class Host:
++        def run(self,request):
++            seen.append(request)
++            if defect=='raise': raise RuntimeError('PRIVATE-SENTINEL')
++            if defect=='interrupt': raise KeyboardInterrupt()
++            if defect=='exit': raise SystemExit(0)
++            if defect=='nonzero': return output(code=1)
++            if defect=='bad_type': return object()
++            return core.CodexExecOutput(0,b'PRIVATE-SENTINEL')
++    model=core.CodexExecModel(model_id='model',transport=Host())
++    exception=KeyboardInterrupt if defect=='interrupt' else SystemExit if defect=='exit' else ValueError
++    with pytest.raises(exception) as error: model.complete(messages_json='[{}]',max_output_tokens=10)
++    with pytest.raises(ValueError,match='stopped'): model.complete(messages_json='[{}]',max_output_tokens=10)
++    assert len(seen)==1 and 'PRIVATE-SENTINEL' not in ''.join(traceback.format_exception(error.value))
+diff --git a/tests/test_research_codex_uncapped_review.py b/tests/test_research_codex_uncapped_review.py
+new file mode 100644
+index 0000000..20d764e
+--- /dev/null
++++ b/tests/test_research_codex_uncapped_review.py
+@@ -0,0 +1,110 @@
++"""Separate adversarial review pass; no provider, credentials or real database."""
++from dataclasses import replace
++from datetime import timedelta
++import json
++import traceback
++
++import pytest
++
++from polymarket_alpha_lab import research_codex_exec as codex
++from polymarket_alpha_lab import research_uncapped_runner as runner
++from tests.test_research_codex_exec import events, output, action
++from tests.test_research_uncapped import approval, Harness, run, req, NOW
++from tests.test_research_dispatch_rotation import Harness as RotationHarness, inputs, run as turn
++
++
++@pytest.mark.parametrize('separator', ['\u0085', '\u2028', '\u2029'])
++def test_valid_unicode_inside_json_is_not_a_record_separator(separator):
++    rows = events([action(arguments={'query': 'BTC' + separator + 'ETH'})])
++    reply = codex.decode_codex_exec_output(output(rows), call_number=1)
++    assert json.loads(reply.calls[0].arguments_json)['query'] == 'BTC' + separator + 'ETH'
++
++
++@pytest.mark.parametrize('limit', [1, 19])
++def test_reported_output_overrun_closes_client_without_repair(limit):
++    calls = []
++    class Host:
++        def run(self, request):
++            calls.append(request)
++            return output(events(output_tokens=20))
++    client = codex.CodexExecModel(model_id='model', transport=Host())
++    with pytest.raises(ValueError, match='call_failed'):
++        client.complete(messages_json='[{}]', max_output_tokens=limit)
++    with pytest.raises(ValueError, match='stopped'):
++        client.complete(messages_json='[{}]', max_output_tokens=100)
++    assert len(calls) == 1
++
++
++def test_factory_is_not_entered_for_empty_message_array(monkeypatch):
++    h = Harness(monkeypatch)
++    client = runner._UncappedModel(approval(), req(), h.factory, None)
++    with pytest.raises(ValueError):
++        client.complete(messages_json='[]', max_output_tokens=10)
++    assert h.events == []
++
++
++def test_expired_authorization_does_not_reserve_a_new_rotation(monkeypatch):
++    h = RotationHarness(monkeypatch)
++    requests = tuple(r for snap in inputs() for r in snap.stored.batch.requests)
++    p = approval(requests)
++    monkeypatch.setattr(runner, '_now', lambda: p.expires_at)
++    with pytest.raises(ValueError, match='not_available'):
++        turn(uncapped_authorization=p, allow_uncapped_costs=True)
++    assert h.saved == {} and h.calls == []
++
++
++@pytest.mark.parametrize('ending', [b'', b'\n', b'\r\n'])
++def test_valid_jsonl_ending(ending):
++    wire = output().stdout.rstrip(b'\n')
++    wire = wire.replace(b'\n', b'\r\n') if ending == b'\r\n' else wire
++    assert codex.decode_codex_exec_output(codex.CodexExecOutput(0, wire + ending), call_number=1).total_tokens == 120
++
++
++@pytest.mark.parametrize('defect', ['new_record_with_cr', 'double_newline', 'trailing_data', 'invalid_utf8'])
++def test_non_jsonl_delimiters_and_trailing_content_are_rejected(defect):
++    wire = output().stdout
++    if defect == 'new_record_with_cr': wire = wire.replace(b'\n', b'\r')
++    elif defect == 'double_newline': wire += b'\n'
++    elif defect == 'trailing_data': wire += b'PRIVATE-SENTINEL'
++    else: wire += b'\xff'
++    with pytest.raises(ValueError, match='response_invalid') as error:
++        codex.decode_codex_exec_output(codex.CodexExecOutput(0, wire), call_number=1)
++    assert 'PRIVATE-SENTINEL' not in ''.join(traceback.format_exception(error.value))
++
++
++@pytest.mark.parametrize('failure', ['bad_receipt', 'lookup_failure', 'wrong_request'])
++def test_expired_history_error_never_falls_through_to_new_claim(monkeypatch, failure):
++    h = Harness(monkeypatch)
++    original = run(h)
++    h.events.clear()
++    p = approval()
++    monkeypatch.setattr(runner, '_now', lambda: p.expires_at)
++    def bad(*args, **kwargs):
++        if failure == 'lookup_failure': raise ValueError('synthetic history failure')
++        if failure == 'bad_receipt': return object()
++        return replace(original, request=replace(original.request, required_source_ids=('s',)))
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', bad)
++    with pytest.raises(ValueError): run(h, authorization=p)
++    assert h.events == []
++
++
++def test_integration_guide_is_shipped_with_its_referring_runbooks():
++    from polymarket_alpha_lab.project_postgres.distribution import selected_source
++    assert selected_source('docs/research-local-agent.md')
++
++
++def test_expiry_after_turn_commit_keeps_receipt_but_does_not_start_task(monkeypatch):
++    h = RotationHarness(monkeypatch)
++    requests = tuple(r for snap in inputs() for r in snap.stored.batch.requests)
++    p = approval(requests)
++    clock = [p.approved_at+timedelta(seconds=3)]
++    monkeypatch.setattr(runner, '_now', lambda: clock[0])
++    monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', lambda *a, **kw: None)
++    h.after_reserve = lambda: clock.__setitem__(0, p.expires_at)
++    result = turn(uncapped_authorization=p, allow_uncapped_costs=True)
++    assert result.status == 'dispatched' and result.stored is not None
++    assert len(result.attempts) == 1 and result.attempts[0].status == 'operation_failed'
++    assert h.calls == []
++    again = turn(uncapped_authorization=p, allow_uncapped_costs=True)
++    assert again.status == 'turn_already_reserved' and again.stored == result.stored
++    assert h.calls == []
+diff --git a/tests/test_research_uncapped.py b/tests/test_research_uncapped.py
+new file mode 100644
+index 0000000..b4670dd
+--- /dev/null
++++ b/tests/test_research_uncapped.py
+@@ -0,0 +1,294 @@
++"""Explicit no-monetary-cap permission and original claims; synthetic I/O only."""
++from dataclasses import replace
++from datetime import timedelta, timezone
++from hashlib import sha256
++import json
++from threading import Lock
++from concurrent.futures import ThreadPoolExecutor
++
++import pytest
++
++from polymarket_alpha_lab import research_uncapped as core
++from polymarket_alpha_lab import research_uncapped_runner as runner
++from polymarket_alpha_lab import research_dispatch_runner as dispatch
++from polymarket_alpha_lab import research_dispatch_rotation_runner as rotation
++from polymarket_alpha_lab.research_dispatch import ResearchBatch, StoredResearchBatch, ResearchBatchSnapshot
++from tests.test_research_model_budget import req
++from tests.test_research_execution import NOW, Model, state, record_for
++from tests.test_research_dispatch_rotation import Harness as RotationHarness, inputs, run as run_turn
++
++
++def approval(requests=None, **kw):
++    requests = (req(), req(1)) if requests is None else requests
++    values = dict(authorization_id='approved-no-cap', model_id='synthetic-model',
++                  adapter_contract_sha256='a'*64, approved_at=NOW,
++                  expires_at=NOW+timedelta(minutes=30),
++                  request_keys=tuple((r.record_id, r.content_sha256) for r in requests),
++                  no_monetary_cap_approved=True, research_data_send_approved=True)
++    values.update(kw)
++    return core.UncappedResearchAuthorization(**values)
++
++
++class Harness:
++    def __init__(self, monkeypatch):
++        self.claims, self.events, self.lock = {}, [], Lock()
++        monkeypatch.setattr(runner, '_now', lambda: NOW+timedelta(seconds=3))
++        monkeypatch.setattr(runner.execution, '_claim', self.claim)
++        monkeypatch.setattr(runner.execution, '_capture', self.capture)
++        monkeypatch.setattr(runner.execution, 'inspect_captured_research_with_psycopg', self.inspect)
++
++    def claim(self, dsn, request):
++        with self.lock:
++            prior = self.claims.get(request.record_id)
++            if prior is not None:
++                assert prior.request.payload == request.payload
++                self.events.append('replay')
++                return False, prior
++            self.events.append('claim')
++            value = state(request)
++            self.claims[request.record_id] = value
++            return True, value
++
++    def capture(self, dsn, value, run):
++        self.events.append('capture')
++        result = replace(value, status='captured', record=record_for(value.request, run))
++        self.claims[value.request.record_id] = result
++        return result
++
++    def inspect(self, dsn, *, record_id):
++        self.events.append('inspect')
++        return self.claims.get(record_id)
++
++    def factory(self, team):
++        self.events.append('factory')
++        model = Model()
++        events = self.events
++        class Client:
++            def complete(self, **kw):
++                events.append('complete')
++                return model.complete(**kw)
++        return Client()
++
++
++def run(h, *, request=None, authorization=None, **kw):
++    r = req() if request is None else request
++    return runner.run_uncapped_research_with_psycopg('synthetic', request=r,
++        authorization=approval((r,)) if authorization is None else authorization,
++        model_factory=kw.pop('model_factory', h.factory),
++        allow_model_calls=kw.pop('allow_model_calls', True),
++        allow_uncapped_costs=kw.pop('allow_uncapped_costs', True), **kw)
++
++
++def test_canonical_roundtrip_and_unknown_not_zero():
++    p = approval()
++    copied = core.decode_authorization(p.payload, p.content_sha256)
++    assert copied == p and copied is not p
++    assert copied.bind_request(req()).payload == req().payload
++    metadata = copied.to_dict()
++    assert metadata['monetary_cap'] is metadata['actual_billed_micros'] is None
++    assert metadata['provider_charge_bound_verified'] is False
++    assert metadata['durable_authorization_record_created'] is False
++    assert 'total_micros' not in p.payload and 'per_call_micros' not in p.payload
++    assert 'SYNTHETIC-PRIVATE' not in repr(p) + json.dumps(metadata)
++
++
++@pytest.mark.parametrize('field,value', [
++    ('authorization_id', ''), ('authorization_id', 'bad value'), ('model_id', ''),
++    ('adapter_contract_sha256', 'x'*64), ('adapter_contract_sha256', 'a'*63),
++    ('approved_at', NOW.replace(tzinfo=None)), ('approved_at', NOW+timedelta(hours=1)),
++    ('expires_at', NOW), ('expires_at', NOW.replace(tzinfo=None)),
++    ('request_keys', []), ('request_keys', ()), ('request_keys', (('r','a'*64),('r','b'*64))),
++    ('request_keys', (['r','a'*64],)), ('request_keys', (('r','z'*64),)),
++    ('request_keys', tuple((f'r{i}','a'*64) for i in range(101))),
++    ('no_monetary_cap_approved', False), ('no_monetary_cap_approved', 1),
++    ('research_data_send_approved', False), ('research_data_send_approved', 'yes'),
++    ('paper_only', False), ('report_only', 1), ('readonly', None),
++])
++def test_authorization_rejects_invalid_fields(field, value):
++    with pytest.raises(ValueError): approval(**{field:value})
++
++
++@pytest.mark.parametrize('defect', ['unknown','missing','missing_flag','version','hash','whitespace',
++                                   'duplicate','array','request_member','wrong_time','surrogate'])
++def test_closed_codec_rejects_corruption(defect):
++    p = approval(); data = json.loads(p.payload)
++    if defect=='unknown': data['extra'] = 'PRIVATE-SENTINEL'
++    if defect=='missing': data.pop('model_id')
++    if defect=='missing_flag': data.pop('readonly')
++    if defect=='version': data['schema_version'] = 'v2'
++    if defect=='array': data=[]
++    if defect=='request_member': data['request_keys'][0] = 'bad'
++    if defect=='wrong_time': data['approved_at'] = 'bad'
++    if defect=='surrogate': data['model_id'] = '\ud800'
++    raw=json.dumps(data,sort_keys=True,separators=(',',':'))
++    if defect=='whitespace': raw+='\n'
++    if defect=='duplicate': raw='{"model_id":"PRIVATE-SENTINEL",'+raw[1:]
++    checksum='0'*64 if defect=='hash' else sha256(raw.encode()).hexdigest()
++    with pytest.raises(ValueError, match='payload_invalid') as error: core.decode_authorization(raw, checksum)
++    assert 'PRIVATE-SENTINEL' not in str(error.value)
++
++
++def test_timezone_normalization_and_snapshot_revalidation():
++    p=approval(); zone=timezone(timedelta(hours=8))
++    assert replace(p,approved_at=p.approved_at.astimezone(zone),expires_at=p.expires_at.astimezone(zone)).payload==p.payload
++    object.__setattr__(p,'no_monetary_cap_approved',False)
++    with pytest.raises(ValueError): core.copy_authorization(p)
++
++
++@pytest.mark.parametrize('change', [dict(model_id='other'),dict(max_start_delay_seconds=1),dict(record_id='other')])
++def test_original_request_hash_is_not_rewritten(change):
++    with pytest.raises(ValueError,match='request_mismatch'): approval().bind_request(replace(req(),**change))
++
++
++@pytest.mark.parametrize('number',[0,1])
++def test_original_claim_and_success_replay_without_budget(monkeypatch,number):
++    h=Harness(monkeypatch); r=req(number); original=r.payload
++    out=run(h,request=r)
++    assert h.events==['claim','factory','complete','complete','capture']
++    assert out.record.run.research.status=='completed'
++    assert out.record.run.research.total_tokens==4
++    assert out.request.payload==r.payload==original
++    assert run(h,request=r)==out
++    assert h.events[-1]=='replay' and h.events.count('complete')==2
++
++
++@pytest.mark.parametrize('flag,value', [(f,v) for f in ('allow_model_calls','allow_uncapped_costs') for v in (False,1,None,'yes')])
++def test_double_optin_before_database(monkeypatch,flag,value):
++    h=Harness(monkeypatch)
++    with pytest.raises(ValueError): run(h,**{flag:value})
++    assert not h.events
++
++
++@pytest.mark.parametrize('when',[NOW-timedelta(seconds=1),NOW+timedelta(minutes=30)])
++def test_inactive_authorization_no_new_claim_but_exact_history_readable(monkeypatch,when):
++    h=Harness(monkeypatch); original=run(h); h.events.clear()
++    monkeypatch.setattr(runner,'_now',lambda:when)
++    assert run(h)==original and h.events==['inspect']
++    h.events.clear(); h.claims.clear()
++    with pytest.raises(ValueError,match='not_available'): run(h)
++    assert h.events==['inspect']
++
++
++def test_incomplete_never_reclaimed_under_new_authorization(monkeypatch):
++    h=Harness(monkeypatch); h.claims[req().record_id]=state(req())
++    out=run(h,authorization=approval(authorization_id='another-explicit-approval'))
++    assert out.status=='incomplete' and h.events==['replay']
++
++
++def test_mutating_caller_authorization_does_not_change_active_permission(monkeypatch):
++    h=Harness(monkeypatch); p=approval(); r=req()
++    def factory(team):
++        object.__setattr__(p,'expires_at',NOW-timedelta(seconds=1))
++        object.__setattr__(r,'model_id','changed-after-validation')
++        return h.factory(team)
++    out=run(h,request=r,authorization=p,model_factory=factory)
++    assert out.record.run.research.status=='completed'
++    assert out.request.model_id=='synthetic-model'
++
++
++@pytest.mark.parametrize('exception',[RuntimeError('PRIVATE-SENTINEL'),SystemExit(0),KeyboardInterrupt()])
++def test_provider_failure_is_not_retried_or_reclaimed(monkeypatch,exception):
++    h=Harness(monkeypatch); seen=[]
++    class Bad:
++        def complete(self,**kw): seen.append(True); raise exception
++    if isinstance(exception,Exception):
++        out=run(h,model_factory=lambda _:Bad())
++        assert out.record.run.research.reason_code=='model_failed'
++        assert 'PRIVATE-SENTINEL' not in repr(out)
++    else:
++        with pytest.raises(type(exception)): run(h,model_factory=lambda _:Bad())
++    assert seen==[True]
++    run(h,model_factory=lambda _:pytest.fail('replayed model'))
++    assert seen==[True]
++
++
++def test_expiry_after_factory_is_rechecked_before_provider(monkeypatch):
++    h=Harness(monkeypatch)
++    def factory(team):
++        monkeypatch.setattr(runner,'_now',lambda:approval().expires_at)
++        return h.factory(team)
++    out=run(h,model_factory=factory)
++    assert out.record.run.research.reason_code=='model_failed'
++    assert 'complete' not in h.events
++
++
++def test_stop_between_model_calls_keeps_first_attempt_and_original_claim(monkeypatch):
++    h=Harness(monkeypatch); stop=dispatch.ResearchDispatchStop(); model=Model(); calls=[]
++    class Client:
++        def complete(self,**kw):
++            calls.append(True); reply=model.complete(**kw); stop.request_stop(); return reply
++    out=run(h,model_factory=lambda _:Client(),stop=stop)
++    assert out.record.run.research.reason_code=='model_failed' and calls==[True]
++    assert run(h,stop=stop)==out and calls==[True]
++
++
++def test_invalid_mandatory_evidence_uses_zero_call_capture(monkeypatch):
++    from tests.test_research_required_evidence import mixed_request
++    h=Harness(monkeypatch); r=mixed_request(0)
++    out=run(h,request=r)
++    assert out.record.run.research.reason_code=='invalid_citations'
++    assert out.record.run.research.model_calls==0 and h.events==['claim','capture']
++
++
++def test_parallel_same_request_has_only_one_loop_start(monkeypatch):
++    h=Harness(monkeypatch)
++    with ThreadPoolExecutor(max_workers=4) as pool: results=list(pool.map(lambda _:run(h),range(8)))
++    assert len(results)==8 and h.events.count('claim')==1 and h.events.count('complete')==2
++
++
++@pytest.mark.parametrize('mode', ['batch','rotation'])
++@pytest.mark.parametrize('changes',[dict(allow_uncapped_costs=False),dict(allow_uncapped_costs=1),
++    dict(model_budget_id='b'),dict(uncapped_authorization=None),dict(uncapped_authorization=object())])
++def test_ambiguous_modes_reject_before_database(monkeypatch,mode,changes):
++    h=Harness(monkeypatch)
++    monkeypatch.setattr(dispatch,'load_research_batch_with_psycopg',lambda *a,**k:pytest.fail('DB entered'))
++    monkeypatch.setattr(rotation,'inspect_research_turn_with_psycopg',lambda *a,**k:pytest.fail('DB entered'))
++    args=dict(model_factory=h.factory,allow_model_calls=True,uncapped_authorization=approval(),allow_uncapped_costs=True)
++    args.update(changes)
++    with pytest.raises(ValueError):
++        if mode=='batch': dispatch.run_research_batch_with_psycopg('fake',batch_id='b',**args)
++        else: rotation.run_research_rotation_with_psycopg('fake',rotation_id='r',turn_id='t',batch_ids_to_run=('b',),**args)
++
++
++def test_batch_runs_two_teams_with_no_monetary_reservation(monkeypatch):
++    h=Harness(monkeypatch); requests=(req(),req(1)); batch=ResearchBatch('b',requests)
++    snap=ResearchBatchSnapshot(StoredResearchBatch(batch,NOW),NOW+timedelta(seconds=3),(None,None))
++    monkeypatch.setattr(dispatch,'load_research_batch_with_psycopg',lambda *a,**k:snap)
++    monkeypatch.setattr(dispatch,'run_captured_research_with_psycopg',lambda *a,**k:pytest.fail('legacy fallback'))
++    result=dispatch.run_research_batch_with_psycopg('fake',batch_id='b',model_factory=h.factory,
++        allow_model_calls=True,uncapped_authorization=approval(requests),allow_uncapped_costs=True,max_tasks=2)
++    assert result.to_dict()['execution_invocations']==2
++    assert [a.execution.record.run.research.status for a in result.attempts]==['completed','completed']
++    assert result.to_dict()['hard_money_cap_enforced'] is False and h.events.count('complete')==4
++
++
++def test_batch_scope_conflict_is_not_partial_execution(monkeypatch):
++    h=Harness(monkeypatch); requests=(req(),req(1)); batch=ResearchBatch('b',requests)
++    snap=ResearchBatchSnapshot(StoredResearchBatch(batch,NOW),NOW+timedelta(seconds=3),(None,None))
++    monkeypatch.setattr(dispatch,'load_research_batch_with_psycopg',lambda *a,**k:snap)
++    with pytest.raises(ValueError,match='request_mismatch'):
++        dispatch.run_research_batch_with_psycopg('fake',batch_id='b',model_factory=h.factory,
++            allow_model_calls=True,uncapped_authorization=approval(requests[:1]),allow_uncapped_costs=True,max_tasks=2)
++    assert not h.claims and not h.events
++
++
++def test_rotation_forwards_explicit_policy_and_replay_stays_inert(monkeypatch):
++    monkeypatch.setattr(runner, '_now', lambda: NOW+timedelta(seconds=3))
++    h=RotationHarness(monkeypatch); requests=tuple(r for snap in inputs() for r in snap.stored.batch.requests)
++    p=approval(requests); calls=[]
++    def execute(dsn,**kw):
++        assert kw['authorization']==p and kw['allow_uncapped_costs'] is True and kw['allow_model_calls'] is True
++        calls.append(kw['request'].record_id)
++        from tests.test_research_dispatch import receipt
++        return receipt(kw['request'])
++    monkeypatch.setattr(runner,'run_uncapped_research_with_psycopg',execute)
++    result=run_turn(uncapped_authorization=p,allow_uncapped_costs=True,max_tasks=2)
++    assert len(calls)==2 and result.status=='dispatched'
++    replay=run_turn(uncapped_authorization=p,allow_uncapped_costs=True,max_tasks=2)
++    assert replay.status=='turn_already_reserved' and len(calls)==2
++
++
++def test_rotation_scope_rejection_does_not_consume_turn(monkeypatch):
++    h=RotationHarness(monkeypatch)
++    with pytest.raises(ValueError,match='request_mismatch'): run_turn(uncapped_authorization=approval(),allow_uncapped_costs=True)
++    assert not h.saved and not h.calls
