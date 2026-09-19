@@ -1,0 +1,163 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 41a1475..9c813c7 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -1093 +1093,15 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ 最终修订树必须重新完整验证；旧失败不能由局部通过或诊断标记替代，用户库和安装均不操作。
++
++### PR #61 整包测试时间模型修订（不改变生产截止规则）
++
++`c4fe3a07` 的整包 run `35435161357` 再次失败：第二条模拟保存返回时已过原截止时间，
++第一条回执已经保存。阶段记录显示从正式输入绑定到该返回约67秒；旧夹具按整分钟向下取整
++再加两分钟，实际仅有 `(59,119]` 秒。这个组合测试不是生产“一分钟内完成全流程”的承诺。
++首次300秒超时仍是另一项尚未定因的失败，不以新的阶段证据推定其根因。
++
++本修订明确调整**测试时间模型**：正式输入一开始选择截止至少120秒以后的最早整分钟蜡烛，
++有效窗口为 `[120,180)` 秒；一次构造，不刷新已批准输入、不回溯、不延长已有任务、不重试。
++保留原68条场景断言、两轮与重启、实际分钟收盘、所有命令及生产截止拒绝。相应地，整包测试
++子进程总监督时限由300秒明确改为420秒；单命令60秒、PS检查、180秒诊断和CI作业20分钟不变。
++这不是原300秒指标通过，也不是PS5.1根因修复。60种时钟位置先失败再通过，另测微秒和跨日边界；
++最终冻结版本及Windows证据仍须全部通过才合并。原失败与未执行项不追认为成功。
+diff --git a/docs/research-local-agent.md b/docs/research-local-agent.md
+index 87be755..5f7e1b3 100644
+--- a/docs/research-local-agent.md
++++ b/docs/research-local-agent.md
+@@ -411 +411,31 @@ Python subprocess.run timeout/cleanup and monotonic clock contracts checked
+ https://docs.python.org/3.12/library/time.html#time.monotonic_ns
++
++### PR #61 follow-up: explicit whole-flow test timing profile
++
++The instrumented `c4fe3a07` kit run `35435161357` returned a failed second paper
++capture after its original cutoff (one earlier receipt existed). Its stage trace
++shows about 67 seconds from actual sample binding to that return. The old fixture
++used `floor(now to minute) + 2 minutes`, leaving **more than 59 but at most 119
++seconds** before cutoff. A multi-command two-turn/restart acceptance sequence was
++therefore competing with its clock phase; this was not a promised production
++one-minute service-level objective. The older 300-second timeout remains a
++separate failure whose underlying cause has not been established.
++
++This revision deliberately changes the **test timing profile**, not the runtime
++admission rules: choose the earliest whole-minute opening whose cutoff is at
++least 120 seconds after the actual binding time. The resulting initial sample
++window is `[120, 180)` seconds. Construct each actual input once, after negative
++preflight, with no favorable-phase wait, backdating, extension, replacement or
++retry. All real minute-close waits, original business operations and 68 original
++recipe assertions remain; production late-input/DB-cutoff checks are unchanged.
++
++The enclosing test recipe's supervision limit is explicitly **420 seconds,
++previously 300**, to include the increased initial horizon and real settlement
++wait. The individual 60-second operator commands, PowerShell checks, 180-second
++diagnostic watchdog and 20-minute CI job limits are unchanged. This is not a
++claim that a test completed within the former 300-second limit, a repair of the
++historical PS5.1 issue, or an unlimited-runtime guarantee. Future overruns still
++fail. Sixty original-clock-phase counterexamples failed before this change and
++pass after it; fractional-second, date-rollover and exact-minute controls also
++check the earliest eligible candle. The final source tests, Windows result and
++any remaining failure are retained in PR #61 before any merge.
+diff --git a/tests/packaged_research_flow.py b/tests/packaged_research_flow.py
+index e37aa8d..b0e983b 100644
+--- a/tests/packaged_research_flow.py
++++ b/tests/packaged_research_flow.py
+@@ -105,3 +105,3 @@ def _safe_report_stages(path, observation):
+     # This runs AFTER subprocess.run returns/raises, including its own cleanup;
+-    # it is not a process-state sample at the exact 300s deadline.
++    # it is not a process-state sample at the supervisory deadline.
+     try:
+@@ -115,2 +115,9 @@ _stage('imports_ready')
+ 
++def prospective_opening(at):
++    """Fresh TEST sample: cutoff >=120s ahead; never extend an existing task."""
++    earliest = at + timedelta(seconds=121)  # cutoff is one second before open
++    opening = earliest.replace(second=0, microsecond=0)
++    return opening + (timedelta(minutes=1) if opening < earliest else timedelta(0))
++
++
+ def prepared(at, opening, *, namespace='packaged', condition_base=8800):
+@@ -298,3 +305,3 @@ def run_packaged_flow(root):
+         now = datetime.now(UTC)
+-        opening = now.replace(second=0, microsecond=0) + timedelta(minutes=2)
++        opening = prospective_opening(now)
+         rows = prepared(now, opening)
+@@ -557,3 +564,3 @@ def run_packaged_recipe(root, python, cwd):
+                 cwd=cwd, env=files.clean_environment(), stdin=subprocess.DEVNULL,
+-                capture_output=True, text=True, encoding='utf-8', timeout=300, check=False, shell=False)
++                capture_output=True, text=True, encoding='utf-8', timeout=420, check=False, shell=False)
+         except BaseException:
+diff --git a/tests/test_packaged_research_flow.py b/tests/test_packaged_research_flow.py
+index e7b9f49..2df151f 100644
+--- a/tests/test_packaged_research_flow.py
++++ b/tests/test_packaged_research_flow.py
+@@ -78,3 +78,3 @@ def test_recipe_launch_uses_supplied_interpreter_and_no_checkout_path(monkeypatc
+     assert str(Path(flow.__file__).parent) not in args[3]
+-    assert kw['timeout'] == 300 and kw['shell'] is False and kw['check'] is False
++    assert kw['timeout'] == 420 and kw['shell'] is False and kw['check'] is False
+     assert len(calls) == 1
+diff --git a/tests/test_packaged_research_flow_review.py b/tests/test_packaged_research_flow_review.py
+index 649b5ce..1beec34 100644
+--- a/tests/test_packaged_research_flow_review.py
++++ b/tests/test_packaged_research_flow_review.py
+@@ -26,3 +26,3 @@ def test_no_project_modules_is_not_a_successful_origin_check(monkeypatch, tmp_pa
+ def test_recipe_timeout_is_preserved_without_retry(monkeypatch, tmp_path):
+-    original = subprocess.TimeoutExpired('synthetic', 300)
++    original = subprocess.TimeoutExpired('synthetic', 420)
+     calls = []
+@@ -207,3 +207,3 @@ def test_negative_admission_checks_precede_original_prospective_inputs(monkeypat
+     assert active[1] == state['now'] == control[1] + timedelta(seconds=48)
+-    assert active[2] == active[1].replace(second=0, microsecond=0) + timedelta(minutes=2)
++    assert active[2] == flow.prospective_opening(active[1])
+     control_requests = tuple(row[0] for row in control[3])
+@@ -255,3 +255,3 @@ def test_missing_stage_file_is_explicit_and_not_success(tmp_path):
+ def test_stage_reporting_failure_preserves_original_timeout_and_one_launch(monkeypatch, tmp_path, error_type):
+-    original = subprocess.TimeoutExpired('synthetic', 300)
++    original = subprocess.TimeoutExpired('synthetic', 420)
+     seen = []
+@@ -264,3 +264,3 @@ def test_stage_reporting_failure_preserves_original_timeout_and_one_launch(monke
+         flow.run_packaged_recipe(tmp_path, sys.executable, tmp_path)
+-    assert caught.value is original and seen == [300]
++    assert caught.value is original and seen == [420]
+     assert not list(tmp_path.glob('pal-stage-*'))
+@@ -270,3 +270,3 @@ def test_stage_evidence_is_read_even_without_any_captured_output(monkeypatch, tm
+     import ast
+-    original = subprocess.TimeoutExpired('synthetic', 300)
++    original = subprocess.TimeoutExpired('synthetic', 420)
+     def launch(args, **kw):
+@@ -334 +334,39 @@ def test_injected_recipe_keeps_every_child_statement_and_omits_parent_launcher(m
+         assert ast.dump(by_name[node.name]) == ast.dump(node)
++
++
++@pytest.mark.parametrize('second', range(60))
++def test_actual_sample_has_two_full_minutes_at_every_binding_phase(monkeypatch, tmp_path, second):
++    """The preflight clock is not a sample lifetime or a reason to wait/retry."""
++    from datetime import timedelta
++    state, run = _admission_order_probe(monkeypatch, tmp_path, second)
++    with pytest.raises(_FirstApprovedAdmission):
++        run()
++    control, active = state['prepared']
++    assert active[1] == state['now']  # no backdating or favorable-phase sleep
++    for request, _ in active[3]:
++        remaining = request.forecast_cutoff_at - active[1]
++        assert timedelta(seconds=120) <= remaining < timedelta(seconds=180)
++        assert request.intake.as_of == active[1]
++        assert request.forecast_cutoff_at == active[2] - timedelta(seconds=1)
++    assert active[2].second == active[2].microsecond == 0
++    assert len(state['prepared']) == 2  # one control set, one actual immutable set
++
++
++@pytest.mark.parametrize('instant', [
++    '2026-09-19T10:00:58.999999+00:00',
++    '2026-09-19T10:00:59+00:00',
++    '2026-09-19T10:00:59.000001+00:00',
++    '2026-12-31T23:59:59.999999+00:00',
++    '2028-02-29T23:59:59+00:00',
++])
++def test_prospective_window_ceil_preserves_minute_and_date_boundaries(instant):
++    from datetime import datetime, timedelta
++    at = datetime.fromisoformat(instant)
++    opening = flow.prospective_opening(at)
++    assert opening.second == opening.microsecond == 0
++    assert timedelta(seconds=120) <= opening - timedelta(seconds=1) - at < timedelta(seconds=180)
++    # It is the earliest eligible candle, not an arbitrarily far future sample.
++    assert opening - timedelta(minutes=1, seconds=1) < at + timedelta(seconds=120)
++    rows = flow.prepared(at, opening)
++    assert all(request.intake.as_of == at for request, _ in rows)
++    assert all(request.forecast_cutoff_at == opening - timedelta(seconds=1) for request, _ in rows)
