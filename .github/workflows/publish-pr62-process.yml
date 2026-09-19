@@ -1,0 +1,65 @@
+name: Publish checked process source objects
+on:
+  push:
+    branches: ['audit/pr62-process-publication-20260919']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify source transport and construct the reviewed tree; execute no project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -r staging/pr62 "$RUNNER_TEMP/pr62-parts"
+          cp .github/workflows/native-postgres.yml "$RUNNER_TEMP/approved-native.yml"
+          git switch --detach 86d8b705404e3537c506eb495d0c897d7c849db4
+          python - <<'PY'
+          import base64, gzip, hashlib, json, os, pathlib, subprocess
+          temp = pathlib.Path(os.environ['RUNNER_TEMP'])
+          encoded = b''.join((temp/'pr62-parts'/f'part-{i:02}').read_bytes() for i in range(16))
+          compressed = base64.b64decode(encoded, validate=True)
+          assert hashlib.sha256(compressed).hexdigest() == 'e8b7814390e223fad467eb2236ecceb18172d5107b998d0f703b1a01f8f3ab64'
+          raw = gzip.decompress(compressed)
+          assert len(raw) == 80910
+          assert hashlib.sha256(raw).hexdigest() == 'b38a515ec9623077239a3ebeaf84a33f260de589dd280d4ee7fdf8e668f32fe8'
+          patch = temp/'reviewed.patch'; patch.write_bytes(raw)
+          subprocess.run(['git','apply','--check','--index',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          paths = subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert len(paths) == 10 and all(not name.startswith('.github/') for name in paths)
+          workflow = pathlib.Path('.github/workflows/native-postgres.yml')
+          workflow.write_bytes((temp/'approved-native.yml').read_bytes())
+          assert subprocess.check_output(['git','hash-object',str(workflow)],text=True).strip() == '6277cd0aefb3bfc63bc000bb3fc42256902d18bf'
+          subprocess.run(['git','add',str(workflow)],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          assert subprocess.check_output(['git','write-tree'],text=True).strip() == '6765f7cffa9a7d3aae2adf80812409b1e729ab19'
+          entries = []
+          for name in paths:
+              path = pathlib.Path(name)
+              assert path.is_file() and not path.is_symlink()
+              entries.append(dict(path=name,mode='100644',type='blob',content=path.read_text(encoding='utf-8')))
+          # The workflow blob was already written through the authorized connector.
+          # This contents-only job writes ordinary source objects, never .github or refs.
+          (temp/'tree.json').write_text(json.dumps(dict(base_tree='53443f35cb81a29e73159ed5b5087ca18ea304f8',tree=entries)),encoding='utf-8')
+          print('reviewed_tree=6765f7cffa9a7d3aae2adf80812409b1e729ab19')
+          PY
+      - name: Publish ordinary source tree only; no branch or workflow mutation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/trees --input "$RUNNER_TEMP/tree.json" > "$RUNNER_TEMP/tree-result.json"
+          python - <<'PY'
+          import json, os, pathlib
+          result = json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'tree-result.json').read_text())
+          assert result['sha'] == '6765f7cffa9a7d3aae2adf80812409b1e729ab19'
+          print('published_tree='+result['sha'])
+          PY
