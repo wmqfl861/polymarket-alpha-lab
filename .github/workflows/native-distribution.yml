@@ -3,6 +3,11 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'src/polymarket_alpha_lab/research_codex*.py'
+      - 'src/polymarket_alpha_lab/research_process*.py'
+      - 'tests/test_research_codex*.py'
+      - 'tests/test_research_process*.py'
+      - 'docs/research-local-agent.md'
       - 'tests/ci_thread_dump.py'
       - 'tests/test_ci_thread_dump*.py'
       - 'src/polymarket_alpha_lab/research_paper*.py'

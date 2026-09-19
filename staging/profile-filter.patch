@@ -1,0 +1,51 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 0bb05dd..ec120b2 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -1181 +1181,6 @@ Windows父进程消失的既有证明仅覆盖Job分配之后；硬终止发生
+ 本轮无用户机器／业务库／安装操作，不重复派发本地检查。
++
++
++本轮最终触发检查另发现 Codex／进程模块单独改动不触发实际安装包流程；八项路径反例先失败。
++现补齐原整包工作流的相关源码／测试／指南触发路径，保留全部旧路径、原用例命令、权限与时限。
++初始候选只有三条托管流程，不能宣称已通过整包；修订后的同一最终树必须四条全部实际验收。
+diff --git a/docs/research-local-agent.md b/docs/research-local-agent.md
+index 15aa6b3..aeafccc 100644
+--- a/docs/research-local-agent.md
++++ b/docs/research-local-agent.md
+@@ -746 +746,9 @@ of zero defects. All 68 SQL files, original audit/request codecs and dependencie
+ remain unchanged; no user installation/database/credential or live-order work.
++
++
++The first candidate's hosted selection exposed an existing coverage gap: changes
++to the shipped Codex/process modules alone did not trigger the actual-kit job.
++Eight path-selection counterexamples failed before the correction. The existing
++kit workflow now includes these source/test families and this guide, retaining
++all prior filters, test commands, deadlines and permissions. No manual rerun or
++old-head success substitutes for the corrected final tree's full verification.
+diff --git a/tests/test_research_codex_profile_review.py b/tests/test_research_codex_profile_review.py
+index 67c2df8..b5e98f0 100644
+--- a/tests/test_research_codex_profile_review.py
++++ b/tests/test_research_codex_profile_review.py
+@@ -94 +94,21 @@ def test_native_image_growth_still_hits_explicit_limit(monkeypatch, tmp_path):
+     assert closed == [998]
++
++
++@pytest.mark.parametrize('path', [
++    'src/polymarket_alpha_lab/research_codex_profile.py',
++    'src/polymarket_alpha_lab/research_codex_exec.py',
++    'src/polymarket_alpha_lab/research_codex_process.py',
++    'src/polymarket_alpha_lab/research_process.py',
++    'src/polymarket_alpha_lab/research_process_windows.py',
++    'tests/test_research_codex_profile.py',
++    'tests/test_research_codex_profile_review.py',
++    'tests/test_research_process.py',
++])
++def test_process_and_profile_changes_trigger_actual_kit_verification(path):
++    from fnmatch import fnmatchcase
++    import re
++    root = Path(__file__).resolve().parents[1]
++    source = (root/'.github/workflows/native-distribution.yml').read_text()
++    scope = source.split('    paths:\n', 1)[1].split('permissions:\n', 1)[0]
++    patterns = re.findall(r"^      - '([^']+)'$", scope, re.MULTILINE)
++    assert patterns and any(fnmatchcase(path, pattern) for pattern in patterns)
