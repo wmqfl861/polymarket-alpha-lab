@@ -1,0 +1,291 @@
+diff --git a/src/polymarket_alpha_lab/project_postgres/research.py b/src/polymarket_alpha_lab/project_postgres/research.py
+index b1f407c..2f71348 100644
+--- a/src/polymarket_alpha_lab/project_postgres/research.py
++++ b/src/polymarket_alpha_lab/project_postgres/research.py
+@@ -78,6 +78,19 @@ class ProjectResearchSession:
+         from polymarket_alpha_lab.research_model_budget_runner import run_budgeted_research_with_psycopg
+         return self._call(run_budgeted_research_with_psycopg, **configuration)
+ 
++    def create_uncapped_authorization(self, *, policy, allow_authorization_write=False):
++        from polymarket_alpha_lab.research_uncapped_store import create_uncapped_authorization_with_psycopg
++        return self._call(create_uncapped_authorization_with_psycopg, policy=policy,
++                          allow_authorization_write=allow_authorization_write)
++
++    def inspect_uncapped_authorization(self, *, authorization_id):
++        from polymarket_alpha_lab.research_uncapped_store import inspect_uncapped_authorization_with_psycopg
++        return self._call(inspect_uncapped_authorization_with_psycopg, authorization_id=authorization_id)
++
++    def run_uncapped_research(self, **configuration):
++        from polymarket_alpha_lab.research_uncapped_runner import run_uncapped_research_with_psycopg
++        return self._call(run_uncapped_research_with_psycopg, **configuration)
++
+     def inspect(self, *, record_id):
+         from polymarket_alpha_lab.research_execution_psycopg import inspect_captured_research_with_psycopg
+         return self._call(inspect_captured_research_with_psycopg, record_id=record_id)
+diff --git a/src/polymarket_alpha_lab/research_dispatch_cli.py b/src/polymarket_alpha_lab/research_dispatch_cli.py
+index 86e618c..e5dc7d5 100644
+--- a/src/polymarket_alpha_lab/research_dispatch_cli.py
++++ b/src/polymarket_alpha_lab/research_dispatch_cli.py
+@@ -22,6 +22,9 @@ from polymarket_alpha_lab.research_dispatch_runner import ResearchDispatchStop
+ from polymarket_alpha_lab.research_model_budget import (
+     MAX_POLICY_BYTES, ModelBudgetSnapshot, StoredModelBudget, decode_budget,
+ )
++from polymarket_alpha_lab.research_uncapped_authorization import (
++    StoredUncappedAuthorization, UncappedModelSnapshot, decode_authorization,
++)
+ from polymarket_alpha_lab.research_resolution import digest
+ from polymarket_alpha_lab.research_resolution_confirmation_cli import _emit
+ from polymarket_alpha_lab.team_research_agent_types import identifier
+@@ -53,13 +56,18 @@ def _parser(default_root):
+     turn.add_argument('--turn-id', type=_identifier, required=True)
+     budget = commands.add_parser('inspect-budget', allow_abbrev=False)
+     budget.add_argument('--budget-id', type=_identifier, required=True)
++    auth = commands.add_parser('inspect-uncapped', allow_abbrev=False)
++    auth.add_argument('--authorization-id', type=_identifier, required=True)
+     run = commands.add_parser('run-turn', allow_abbrev=False,
+-        description='One explicit turn; an approved application must supply model_factory. '
+-                    'The standalone script never loads a model or credential.')
++        description='One explicit turn. Capped mode requires an application factory; '
++                    'uncapped Codex requires an approved authorization and explicit nonsecret profile. ')
+     run.add_argument('--rotation-id', type=_identifier, required=True)
+     run.add_argument('--turn-id', type=_identifier, required=True)
+     run.add_argument('--batch-id', type=_identifier, action='append', required=True)
+-    run.add_argument('--budget-id', type=_identifier, required=True)
++    mode = run.add_mutually_exclusive_group(required=True)
++    mode.add_argument('--budget-id', type=_identifier)
++    mode.add_argument('--authorization-id', type=_identifier)
++    run.add_argument('--codex-profile', type=Path)
+     run.add_argument('--max-tasks', type=int, default=10)
+     run.add_argument('--max-workers', type=int, default=2)
+     run.add_argument('--allow-model-calls', action='store_true')
+@@ -73,7 +81,8 @@ def _parser(default_root):
+     capture.add_argument('--allow-paper-write', action='store_true')
+     for operation, key, permission in (
+             ('enqueue-batch', 'batch-id', 'allow-queue-write'),
+-            ('create-budget', 'budget-id', 'allow-budget-write')):
++            ('create-budget', 'budget-id', 'allow-budget-write'),
++            ('create-uncapped', 'authorization-id', 'allow-authorization-write')):
+         admission = commands.add_parser(operation, allow_abbrev=False,
+             help='store one reviewed canonical stdin value; never run research')
+         admission.add_argument('--' + key, type=_identifier, required=True)
+@@ -89,6 +98,9 @@ def _inspect(session, args):
+     elif args.operation == 'inspect-turn':
+         value = session.inspect_research_turn(rotation_id=args.rotation_id, turn_id=args.turn_id)
+         expected = StoredResearchRotationTurn
++    elif args.operation == 'inspect-uncapped':
++        value = session.inspect_uncapped_authorization(authorization_id=args.authorization_id)
++        expected = UncappedModelSnapshot
+     else:
+         value = session.inspect_model_budget(budget_id=args.budget_id)
+         expected = ModelBudgetSnapshot
+@@ -101,6 +113,8 @@ def _inspect(session, args):
+         matches = value.stored.batch.batch_id == args.batch_id
+     elif args.operation == 'inspect-turn':
+         matches = (value.turn.rotation_id, value.turn.turn_id) == (args.rotation_id, args.turn_id)
++    elif args.operation == 'inspect-uncapped':
++        matches = value.stored.policy.authorization_id == args.authorization_id
+     else:
+         matches = value.stored.policy.budget_id == args.budget_id
+     if not matches:
+@@ -109,10 +123,12 @@ def _inspect(session, args):
+ 
+ 
+ def _run(session, args, model_factory, stop):
++    extra = (dict(uncapped_authorization_id=args.authorization_id, codex_profile=args.codex_profile)
++             if getattr(args, 'authorization_id', None) is not None else {})
+     value = session.run_research_rotation(rotation_id=args.rotation_id, turn_id=args.turn_id,
+         batch_ids_to_run=tuple(args.batch_id), model_factory=model_factory,
+         allow_model_calls=True, max_tasks=args.max_tasks, max_workers=args.max_workers,
+-        stop=stop, model_budget_id=args.budget_id)
++        stop=stop, model_budget_id=args.budget_id, **extra)
+     if type(value) is not ResearchRotationReport:
+         raise ValueError('research_dispatch_receipt_invalid')
+     value = replace(value)
+@@ -176,9 +192,11 @@ def _read_admission(args):
+         raw = raw[:-2]
+     elif raw.endswith(b'\n'):
+         raw = raw[:-1]
+-    value = (decode_batch if batching else decode_budget)(raw.decode('utf-8'), args.input_sha256)
+-    expected_id = args.batch_id if batching else args.budget_id
+-    if (value.batch_id if batching else value.budget_id) != expected_id:
++    uncapped = args.operation == 'create-uncapped'
++    decoder = decode_batch if batching else decode_authorization if uncapped else decode_budget
++    value = decoder(raw.decode('utf-8'), args.input_sha256)
++    key = 'batch_id' if batching else 'authorization_id' if uncapped else 'budget_id'
++    if getattr(value, key) != getattr(args, key):
+         raise ValueError('research_dispatch_input_identity_mismatch')
+     return value
+ 
+@@ -197,6 +215,14 @@ def _admit(session, args, value):
+             raise ValueError('research_dispatch_receipt_mismatch')
+         return dict(batch_id=stored.batch.batch_id, batch_sha256=stored.batch.content_sha256,
+             request_count=len(stored.batch.requests), enqueued_at=stored.enqueued_at.isoformat())
++    if args.operation == 'create-uncapped':
++        stored = session.create_uncapped_authorization(policy=value, allow_authorization_write=True)
++        if type(stored) is not StoredUncappedAuthorization:
++            raise ValueError('research_dispatch_receipt_invalid')
++        stored = replace(stored)
++        if stored.policy.payload != expected_payload:
++            raise ValueError('research_dispatch_receipt_mismatch')
++        return stored.to_dict()
+     stored = session.create_model_budget(policy=value, allow_budget_write=True)
+     if type(stored) is not StoredModelBudget:
+         raise ValueError('research_dispatch_receipt_invalid')
+@@ -223,7 +249,7 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+         return operate_paper(root=args.root, operation=args.operation, record_id=args.record_id,
+             input_sha256=getattr(args, 'input_sha256', None),
+             allow_paper_write=getattr(args, 'allow_paper_write', False))
+-    admitting = args.operation in ('enqueue-batch', 'create-budget')
++    admitting = args.operation in ('enqueue-batch', 'create-budget', 'create-uncapped')
+     running = args.operation == 'run-turn'
+     if running:
+         try:
+@@ -238,18 +264,38 @@ def main(argv: list[str] | None = None, *, default_root: Path,
+         automatic_reclaim_permitted=False, automatic_retry_permitted=False,
+         final_database_state_checked=False, provider_charge_bound_verified=False,
+         paper_only=True, report_only=True, readonly=True)
+-    if running and (args.allow_model_calls is not True or not callable(model_factory)):
++    uncapped = running and args.authorization_id is not None
++    if running and (args.allow_model_calls is not True or (not uncapped and not callable(model_factory))):
+         reason = ('research_dispatch_model_opt_in_required' if not args.allow_model_calls
+                   else 'research_dispatch_approved_client_required')
+         envelope.update(status='blocked', reason_code=reason,
+             operation_entered=False, model_calls_possible=False, business_writes_possible=False)
+         return _publish(envelope, 2, stop)
++    if running:
++        try:
++            if uncapped:
++                if model_factory is not None or args.codex_profile is None:
++                    raise ValueError
++                from polymarket_alpha_lab.research_codex_local import read_profile
++                args.codex_profile = read_profile(args.codex_profile)
++                envelope.update(execution_mode='uncapped_codex', authorization_id=args.authorization_id,
++                                monetary_cap=None, provider_submission_count=None)
++            elif args.codex_profile is not None:
++                raise ValueError
++        except (Exception, SystemExit):
++            return _publish(dict(envelope, status='blocked', reason_code='research_dispatch_client_configuration_invalid',
++                operation_entered=False, model_calls_possible=False, business_writes_possible=False), 2, stop)
++        except KeyboardInterrupt:
++            if stop is not None:
++                stop.request_stop()
++            return _publish(dict(envelope, status='interrupted', reason_code='research_dispatch_input_interrupted',
++                operation_entered=False, model_calls_possible=False, business_writes_possible=False), 130, stop)
+     admission = None
+     if admitting:
+         envelope.update(operation_entered=False, model_calls_possible=False,
+                         business_writes_possible=False, public_network_called=False)
+         allowed = (args.allow_queue_write if args.operation == 'enqueue-batch'
+-                   else args.allow_budget_write)
++                   else args.allow_authorization_write if args.operation == 'create-uncapped' else args.allow_budget_write)
+         if allowed is not True:
+             return _publish(dict(envelope, status='blocked',
+                 reason_code='research_dispatch_admission_opt_in_required'), 2, stop)
+diff --git a/src/polymarket_alpha_lab/research_dispatch_rotation_runner.py b/src/polymarket_alpha_lab/research_dispatch_rotation_runner.py
+index b995c57..ed9a91d 100644
+--- a/src/polymarket_alpha_lab/research_dispatch_rotation_runner.py
++++ b/src/polymarket_alpha_lab/research_dispatch_rotation_runner.py
+@@ -73,7 +73,8 @@ class ResearchRotationReport:
+ 
+ 
+ def run_research_rotation_with_psycopg(dsn, *, rotation_id, turn_id, batch_ids_to_run,
+-        model_factory, allow_model_calls=False, max_tasks=10, max_workers=2, stop=None, model_budget_id=None):
++        model_factory=None, allow_model_calls=False, max_tasks=10, max_workers=2, stop=None, model_budget_id=None,
++        uncapped_authorization_id=None, codex_profile=None):
+     """Persist a fair selection, then reuse the original bounded claim runner.
+ 
+     The roster is fixed under rotation_id. Same turn_id replays only its original
+@@ -89,7 +90,8 @@ def run_research_rotation_with_psycopg(dsn, *, rotation_id, turn_id, batch_ids_t
+     ids = batch_ids(batch_ids_to_run)
+     integer('max_tasks', max_tasks, 1, 100)
+     integer('max_workers', max_workers, 1, 8)
+-    if allow_model_calls is not True or not callable(model_factory):
++    codex_profile = drain._client_mode(model_factory, model_budget_id, uncapped_authorization_id, codex_profile)
++    if allow_model_calls is not True or (uncapped_authorization_id is None and not callable(model_factory)):
+         raise ValueError('research_rotation_model_opt_in_required')
+     if stop is not None and type(stop) is not drain.ResearchDispatchStop:
+         raise ValueError('research_rotation_stop_invalid')
+@@ -122,5 +124,6 @@ def run_research_rotation_with_psycopg(dsn, *, rotation_id, turn_id, batch_ids_t
+     # Reservation is now committed. If interrupted here, a new turn (not replay
+     # of this one) rotates onwards. The original claim still governs loop start.
+     attempts = drain._drain_requests(dsn, requests, stored.turn.chosen,
+-                                     model_factory, max_workers, control, model_budget_id=model_budget_id)
++                                     model_factory, max_workers, control, model_budget_id=model_budget_id,
++                                     **drain._uncapped_kwargs(uncapped_authorization_id, codex_profile))
+     return ResearchRotationReport('dispatched', stored, attempts, control.is_stopped())
+diff --git a/src/polymarket_alpha_lab/research_dispatch_runner.py b/src/polymarket_alpha_lab/research_dispatch_runner.py
+index 27f8247..7abccdd 100644
+--- a/src/polymarket_alpha_lab/research_dispatch_runner.py
++++ b/src/polymarket_alpha_lab/research_dispatch_runner.py
+@@ -109,10 +109,11 @@ class ResearchDispatchReport:
+             hard_money_cap_enforced=False, paper_only=True, report_only=True, readonly=True)
+ 
+ 
+-def run_research_batch_with_psycopg(dsn: str, *, batch_id: str, model_factory,
++def run_research_batch_with_psycopg(dsn: str, *, batch_id: str, model_factory=None,
+                                   allow_model_calls: bool = False, max_tasks: int = 10,
+                                   max_workers: int = 2, stop: ResearchDispatchStop | None = None,
+-                                  model_budget_id: str | None = None) -> ResearchDispatchReport:
++                                  model_budget_id: str | None = None, uncapped_authorization_id=None,
++                                  codex_profile=None) -> ResearchDispatchReport:
+     """Run a bounded pending prefix; later explicit rounds skip existing claims.
+ 
+     All batch inputs are persisted BEFORE this operation. Snapshot/transactions
+@@ -131,7 +132,8 @@ def run_research_batch_with_psycopg(dsn: str, *, batch_id: str, model_factory,
+         identifier('model_budget_id', model_budget_id)
+     integer('max_tasks', max_tasks, 1, 100)
+     integer('max_workers', max_workers, 1, 8)
+-    if allow_model_calls is not True or not callable(model_factory):
++    codex_profile = _client_mode(model_factory, model_budget_id, uncapped_authorization_id, codex_profile)
++    if allow_model_calls is not True or (uncapped_authorization_id is None and not callable(model_factory)):
+         raise ValueError('research_dispatch_model_opt_in_required')
+     if stop is not None and type(stop) is not ResearchDispatchStop:
+         raise ValueError('research_dispatch_stop_invalid')
+@@ -144,11 +146,32 @@ def run_research_batch_with_psycopg(dsn: str, *, batch_id: str, model_factory,
+     snapshot = replace(snapshot)
+     pending = [i for i, state in enumerate(snapshot.states()) if state == 'pending'][:max_tasks]
+     attempts = _drain_requests(dsn, snapshot.stored.batch.requests, pending,
+-                               model_factory, max_workers, stop, model_budget_id=model_budget_id)
++                               model_factory, max_workers, stop, model_budget_id=model_budget_id,
++                               **_uncapped_kwargs(uncapped_authorization_id, codex_profile))
+     return ResearchDispatchReport(snapshot, attempts, max_tasks, max_workers, stop.is_stopped())
+ 
+ 
+-def _drain_requests(dsn, requests, pending, model_factory, max_workers, stop, *, model_budget_id=None):
++def _client_mode(factory, budget_id, authorization_id, profile):
++    """Validate distinct capped/legacy and explicit local-CLI paths before I/O."""
++    if authorization_id is None:
++        if profile is not None:
++            raise ValueError('research_dispatch_uncapped_authorization_required')
++        return None
++    identifier('authorization_id', authorization_id)
++    if budget_id is not None or factory is not None:
++        raise ValueError('research_dispatch_client_modes_conflict')
++    from polymarket_alpha_lab.research_codex_local import copy_profile
++    return copy_profile(profile)
++
++
++def _uncapped_kwargs(authorization_id, profile):
++    # Preserve the exact original collaborator interface for legacy callers.
++    return ({} if authorization_id is None else
++            dict(uncapped_authorization_id=authorization_id, codex_profile=profile))
++
++
++def _drain_requests(dsn, requests, pending, model_factory, max_workers, stop, *, model_budget_id=None,
++                    uncapped_authorization_id=None, codex_profile=None):
+     """Shared bounded execution mechanics; callers supply a validated selection.
+ 
+     Preserve selection order, including a cyclic order chosen by durable rotation.
+@@ -161,7 +184,11 @@ def _drain_requests(dsn, requests, pending, model_factory, max_workers, stop, *,
+             return DispatchAttempt(position, 'stopped_before_start')
+         request = requests[position]
+         try:
+-            if model_budget_id is None:
++            if uncapped_authorization_id is not None:
++                from polymarket_alpha_lab.research_uncapped_runner import run_uncapped_research_with_psycopg
++                receipt = run_uncapped_research_with_psycopg(dsn, request=request,
++                    authorization_id=uncapped_authorization_id, profile=codex_profile, allow_model_calls=True)
++            elif model_budget_id is None:
+                 receipt = run_captured_research_with_psycopg(dsn, request=request, model_factory=model_factory)
+             else:
+                 from polymarket_alpha_lab.research_model_budget_runner import run_budgeted_research_with_psycopg

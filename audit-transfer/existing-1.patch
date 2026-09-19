@@ -1,0 +1,228 @@
+diff --git a/docs/research-dispatch.md b/docs/research-dispatch.md
+index a07d869..a1390f6 100644
+--- a/docs/research-dispatch.md
++++ b/docs/research-dispatch.md
+@@ -590,3 +590,46 @@ charge limits still require D1-D3; queue/budget admission is not model approval.
+ Integration references: Python3.12 text-stream write/flush and Condition contracts
+ were checked on2026-09-17; they do not guarantee consumer receipt or an
+ uninterruptible filesystem/database operation.
++
++## Explicit uncapped Codex mode (2026-09-19)
++
++The existing task script now has a second explicitly authorized run mode; it does
++not discover a client, credential or unbounded business-input queue. See
++[the uncapped contract](research-model-budget.md#explicit-uncapped-codex-operation-wp-02--wp-03-2026-09-19)
++for the pinned profile, isolation requirements, non-hard output bound and migration68.
++
++`create-uncapped --authorization-id ID --input-sha256 SHA256 --allow-authorization-write`
++reads one reviewed canonical authorization from binary stdin (optional one LF/CRLF),
++checks its exact hash/ID, and calls the existing managed session. No model runs.
++`inspect-uncapped --authorization-id ID` reads its immutable policy/usage metadata;
++unknown fees/provider request counts are null and unknown/failed invocations remain
++visible. Missing authorization is not an empty project. Output is published only
++after managed cleanup; short write or interruption remains nonzero.
++
++The standalone script can run a turn only with an explicit authorization and
++six-field nonsecret profile, on an explicitly prepared/approved local installation:
++
++```text
++python scripts/manage_research_tasks.py --root <approved-project-root> run-turn --rotation-id <original-rotation-id> --turn-id <explicit-new-turn-id> --batch-id <approved-batch-id> --authorization-id <stored-authorization-id> --codex-profile <explicit-profile-path> --max-tasks 1 --max-workers 1 --allow-model-calls
++```
++
++Placeholders must be supplied from operator-reviewed configuration, not copied as
++literal commands. For Python callers, `run_research_batch` and
++`run_research_rotation` accept `uncapped_authorization_id` and `codex_profile` with
++`model_factory=None`. Capped mode retains `model_budget_id` plus the approved
++application factory; the two modes are mutually exclusive. A missing run opt-in
++causes rejection before even reading the selected profile. No factory/profile,
++budget/authorization mismatch or missing credentials trigger another client.
++
++Original batch/turn hashes and claim identities are unchanged. A replayed turn
++returns its original selection receipt, not proof that a new policy was used;
++new top-level authorization fields identify the current invocation's requested
++mode only. The per-request database invocation ledger, not turn metadata, is the
++source for actual authorized work. Stop, claim-before-client, captured failure,
++unknown-commit and incomplete semantics are unchanged; no old claim is reclaimed.
++Ordinary failed output does not undo already recorded work or refund a permit.
++
++No automatic install/login, real research activation, user migration, service
++registration, alternate provider, real order or Release is performed by these
++commands without the respective explicit runtime inputs/permissions. This source
++stage is first verified on synthetic servers and private CI databases.
+diff --git a/docs/research-model-budget.md b/docs/research-model-budget.md
+index c6b2f93..b365f9a 100644
+--- a/docs/research-model-budget.md
++++ b/docs/research-model-budget.md
+@@ -361,3 +361,172 @@ request is still claimed and its blocked result captured; no permit or factory
+ is entered. Existing expiry/output-cap checks keep their priority. Original
+ request/policy hashes and completed/incomplete replay semantics are unchanged.
+ This is not permission to delete required evidence or replace immutable inputs.
++
++## Explicit uncapped Codex operation (WP-02 / WP-03, 2026-09-19)
++
++This is a separate policy from `ModelCallBudget`. It implements the recorded D3
++choice of **no business monetary/global-call ceiling**, without fabricated prices,
++infinite numeric allowances or `cost_bound_attested`. The original priced path
++is unchanged. No real provider, credential or user-database operation is enabled
++merely by installing this source. Only BTC/ETH requests explicitly labeled with
++protocol `codex-cli-0.155.1-pal-v1` can use the new path; do not relabel/recreate an
++already claimed request. Unknown invoices and provider request counts stay null.
++
++### Explicit local profile, never credential discovery
++
++`research_codex_local.CodexLocalProfile` requires an absolute executable path,
++its operator-reviewed SHA256, an explicit dedicated `codex_home`, a separate
++private `workspace_parent`, an exact model ID and a 1..600 second I/O timeout.
++Only the official native **Codex CLI 0.155.1** protocol is supported; both binary
++hash and `--version` are checked on each invocation. No PATH search, installation,
++model discovery or automatic upgrade is performed. Model reasoning effort is
++explicitly `max` and fast mode is disabled; unsupported model/settings fail, not
++fall back. Supporting another CLI or version needs a separately tested adapter.
++
++The six-field nonsecret UTF-8 JSON profile is read only from the explicitly
++supplied `--codex-profile` file (at most 16 KiB). Paths are configuration, not
++business persistence. Its shape is:
++
++```json
++{
++  "executable": "C:\\ApprovedTools\\codex.exe",
++  "executable_sha256": "<operator-verified binary SHA256>",
++  "codex_home": "C:\\PrivateResearch\\CodexAuth",
++  "workspace_parent": "C:\\PrivateResearch\\CodexScratch",
++  "model_id": "<explicit approved model ID>",
++  "timeout_seconds": 180
++}
++```
++
++Placeholders are not executable configuration. Do not put keys in this file,
++arguments, repository or chat. The operator must establish the dedicated private
++auth directory through an authorized local login procedure; this wrapper neither
++reads/copies credentials nor imports another coding session. The CLI itself may
++use/update its selected authentication state, installation metadata and temporary
++auth housekeeping. It is not accurate to promise that this directory is untouched.
++
++Native tools, shell, apps, plugins, hooks, MCP and host-skill discovery are disabled
++in a restrictive local model catalog/config. Each invocation receives a new
++private working directory with an empty Git boundary, a fresh ephemeral session,
++allowlisted environment, and the **exact original messages_json** plus fixed
++research action definitions. Original evidence is not truncated or rewritten to
++fit a provider. Native tools are not used to research; the existing application
++executes only its approved snapshot actions returned as strict structured JSON.
++
++`--ignore-user-config` does not disable global auth-directory instructions in this
++pinned version. The adapter therefore rejects `AGENTS.md`, `AGENTS.override.md`
++and `managed_config.toml` in the selected auth home. It also rejects system
++`config.toml`, `requirements.toml` and `managed_config.toml` in `/etc/codex` on
++Linux or the OS-known `ProgramData/OpenAI/Codex` directory on Windows. Presence
++or unreadability blocks; files are not opened, deleted, disabled or rewritten.
++An empty MCP-table override is **not** proof that inherited servers disappeared.
++Managed installations need separate reviewed support, not policy bypass flags.
++macOS/other platform profiles are not supported by this implementation.
++
++The pinned CLI's own transient state databases/logs are directed to the private
++scratch directory and removed after a normal/handled invocation. These are CLI
++infrastructure, **not an alternate durable store for project business evidence**.
++The project's authorization, claims, outcomes and research remain in the same
++native PostgreSQL. Hard process termination can leave private scratch remnants;
++there is no automatic cross-process scavenger or secure-erasure claim. Auth and
++scratch directories, native binaries and raw client logs must never be uploaded.
++
++### Immutable authorization and shared replay protection
++
++`UncappedModelAuthorization` binds the exact profile digest, model, expiry,
++1..100 explicit `(record_id, request_sha256)` entries and a message-byte ceiling.
++`uncapped_cost_approved=True` is required; the output mode is explicitly
++`observed_after_response`. The bounded roster is an admission/codec boundary,
++not a business quota. Existing per-task calls, context, tokens, deadline and
++worker/stop controls remain; new authorizations are never generated automatically.
++
++```python
++from polymarket_alpha_lab.research_uncapped_authorization import UncappedModelAuthorization
++
++# All names below are explicitly reviewed application inputs, not inferred defaults.
++policy = UncappedModelAuthorization(
++    authorization_id=approved_authorization_id,
++    model_id=profile.model_id,
++    profile_sha256=profile.content_sha256,
++    expires_at=approved_expiry,
++    request_keys=tuple((r.record_id, r.content_sha256) for r in reviewed_requests),
++    uncapped_cost_approved=True,
++)
++with ProjectPostgres(actual_project_root).session() as research:
++    research.create_uncapped_authorization(policy=policy, allow_authorization_write=True)
++    result = research.run_uncapped_research(
++        request=reviewed_requests[0], authorization_id=policy.authorization_id,
++        profile=profile, allow_model_calls=True,
++    )
++    usage = research.inspect_uncapped_authorization(authorization_id=policy.authorization_id)
++```
++
++The existing execution claim commits first. A new append-only invocation permit
++then commits before entering the CLI; its `(record_id, call_number)` is the SAME
++unique key used by capped budgets. New uncapped columns require null budget ID,
++null monetary charge and null priced sequence, never zero-price substitution.
++Changing policy or switching modes cannot reuse a lost original ordinal. The
++trigger also refuses mixed modes for later ordinals of the same claimed request.
++
++Validated CLI usage is committed before the next action is returned to the agent.
++Input/output usage is retained; cached/cache-write/reasoning values are subsets,
++not added twice. A failed invocation has unknown usage, not zero. A reservation
++with no outcome stays unknown after process loss or uncertain acknowledgement;
++no refund, resend, reassignment or guessed recovery occurs. Completed, failed and
++incomplete research still replay the original record without entering a client.
++Policy and profile are copied/revalidated; no transaction is held across model I/O.
++
++This extends the existing catalog with **migration 68**,
++`20260919000000_research_uncapped_codex.sql`. Original67 SQL payloads and all old
++records are preserved; existing permissions/transaction guards apply to the new
++append-only tables. The isolated native proof upgrades67->68 and checks old capped
++history, two-team real-CLI/mock-server turns, stopped/replayed turns, failure,
++crash-after-permit and cross-mode rejection. It does not migrate a user's database.
++Do not overwrite an old kit or copy `.local`; existing version-switch restrictions
++still apply and an authorized concrete upgrade must be handled separately.
++
++### What the adapter proves, and what it does not
++
++One application `complete` launches one `exec`, with no outer retry, repair,
++resume, new task ID or fallback. The custom `pal_codex` provider uses the pinned
++CLI's OpenAI authentication and default endpoint selection; it does not override
++a reserved built-in provider or choose an arbitrary production URL. HTTP/SSE
++retry settings are explicitly zero and native tools are absent in tested requests.
++Real pinned-binary synthetic cases exercise success,429,500,broken stream and
++invalid JSON; their observed request counts do not certify every possible
++internal CLI/auth/provider behavior. **A CLI invocation is not a certified count
++of billable provider submissions.** Provider counts and actual fees remain null.
++
++The CLI protocol does not provide an attested provider-enforced output-token
++ceiling for this adapter. The ceiling is requested in the task and checked AFTER
++receipt; overruns/malformed outputs fail without a second request. Do not use this
++adapter under a priced single-operation hard-bound attestation. Unknown or failed
++usage is omitted from validated totals and exposed as failed/unknown counts;
++`reported_total_tokens` is not a complete provider invoice or economic limit.
++
++Stdout (1 MiB), stderr (64 KiB), event count, schema and I/O time are bounded.
++Only one complete terminal turn with allowed research actions and valid usage is
++accepted; native tool activity, duplicate/partial results and unexpected events
++are rejected. Native reasoning and raw stderr are discarded, not logged into
++research evidence. Linux owns a new process group; Windows assigns a kill-on-close
++Job Object before sending the prompt. The owning child/descendants are cleaned up
++on handled failures, including descendant-held pipes. OS creation/filesystem
++latency, repeated hard interrupts, malicious same-user races, administrators and
++arbitrary hostile binaries are not a universal sandbox or real-time guarantee.
++The executable starts before Windows job assignment; this is not prevention of
++all pre-assignment activity by a hostile executable. Preserve OS security rules.
++
++Pinned primary implementation reviewed:
++`openai/codex@be2951ea34f0d295ed0becf97079f92fa5f6950e` (release0.155.1), especially
++`codex-rs/exec/src/cli.rs`, `codex-rs/exec/src/exec_events.rs`,
++`codex-rs/core/config.schema.json`, `codex-rs/config/src/merge.rs`,
++`codex-rs/config/src/loader/mod.rs`, `codex-rs/codex-home/src/instructions/mod.rs`
++and `codex-rs/model-provider-info/src/lib.rs`.
++Official non-interactive/config documentation:
++https://developers.openai.com/codex/noninteractive/
++https://developers.openai.com/codex/config-reference/
++
++The stage adds engineering integration, not real G2 acceptance. Actual authorized
++BTC/ETH inputs, the selected local account/model, endpoint/retention behavior,
++usage/fees and original-ID replay still need real-run evidence. No user must repeat
++D1-D3 and no credentials are requested in chat.

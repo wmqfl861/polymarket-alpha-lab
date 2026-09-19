@@ -1,0 +1,90 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 2c03fda..4515ca6 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -30,7 +30,9 @@ roadmaps and team lists are long-term references, not evidence of completed V1.
+   provider, inspect credentials, mutate user databases or authorize live orders.
+   The existing positive-micros ModelCallBudget is capped-only: do not fake zero
+   prices, huge ceilings or fee attestations to represent an uncapped policy.
+-  Implement and review that distinction before real-run acceptance; do not send
++  The explicit uncapped Codex path is now implemented; see DELIVERY_PLAN section
++  39 and research-model-budget.md for its non-hard output/fee boundaries. Real-run
++  acceptance remains separate; do not send
+   local agents to rediscover credentials or repeat completed acceptance.
+ - Perform a separate self-review/test pass, accurately labeled as self-review.
+   Require relevant final-revision gates and no unresolved release-blocking finding
+ diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 1514eca..05925ef 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -69,7 +69,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | ID／工作包 | 当前状态 | 剩余缺口 | 依赖 | 完成证据 |
+ | --- | --- | --- | --- | --- |
+ | WP-01 候选到研究入口 | **DONE（G1）** | 有界发现、最新规则／观察时刻、一次完整预览和待审规格已接通；本项不包含模型授权或来源真伪认证 | 现有公开输入、PR #19／#20 门禁 | [PR #28](https://github.com/wmqfl861/polymarket-alpha-lab/pull/28)：52 项反例测试、三条 CI、真实 BTC／ETH 待审样例；详见第 10 节 |
+-| WP-02 真实模型与预算 | **PARTIAL** | D1—D3 已明确；本次修复凭据／重定向和必引证据调用前边界。仍缺首个本地 Agent 适配器、明确的首轮无业务封顶策略及真实研究／使用核验；现有金额预留模式不等于无限模式 | 先接 Codex CLI 的现有 factory 合同；不探测凭据；真实验收依赖具体本地配置和 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
++| WP-02 真实模型与预算 | **PARTIAL** | D1—D3 已明确；本次修复凭据／重定向和必引证据调用前边界。本轮已实现固定 Codex CLI 接入、明确无业务金额封顶授权和使用记录，最终工程验收见第 39 节；仍缺获准本机模型／账户及真实研究／使用核验 | 先接 Codex CLI 的现有 factory 合同；不探测凭据；真实验收依赖具体本地配置和 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，审核后显式入库批次／预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺本地 Agent／实际使用核验及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02 与已明确的 D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+@@ -142,7 +142,7 @@ WP-02 的无凭据装配设计、WP-04 的人工操作流程、WP-06 的文档
+ 本地 Agent 方向已确定；具体可执行文件／版本／模型仍需显式配置与核验，不能把“找密钥”交给本地 Agent。
+ 
+ WP-01 已按第 10 节关闭 G1，不继续扩充筛选排行榜或旁路报告。
+-**下一实施重点：先关闭本次可复现边界缺陷；再以现有 factory/complete 接口接一个 Codex CLI 适配器，并明确实现首轮无业务金额封顶策略。WP-03 受控入口已接通，真实模型组合验收仍待办。**
++**下一实施重点：完成第 39 节固定 Codex／无封顶授权的最终工程验收，再安排真正本地必需的显式配置与获准研究验收；随后复用现有结算和模拟链路。不重复 D1—D3 或已完成的数据库／网络检查。**
+ Claude Code、OpenCode、Grok CLI、ZCode CLI 为允许的后续替代项，不默认兼容或自动回退。
+ D1—D3 不再阻塞离线实现；真实调用仍需所选版本的隔离／输出／使用验收和显式运行配置。
+ 随后复用原流程完成 WP-03 停机重启、WP-04 实际结算、WP-05 成本样本和 WP-06 固定版发布。
+@@ -1043,3 +1043,39 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ **WP-02 改为 PARTIAL，不再 AWAITING_OWNER；G2 未关闭，V1 仍 1／6。**
+ 本次没有真实模型、凭据探测、市场取数、用户数据库或订单操作；历史 PS5.1 故障不算修复。
+ 后续关键路径固定为一个本地 CLI 适配器与明确授权策略、G3 组合恢复、G4 实际核验、G5 成本样本、G6 发布。
++
++
++## 39. WP-02／WP-03：固定本地 Codex 与明确无金额封顶授权（2026-09-19）
++
++基线 `8ae2933a843c554b0f4391b4faeb572b2f6b952c`，树
++`1061c4492de3378d00fb1e55179da2e539e36ca4`。本轮复用原研究循环、任务领取、
++批次／轮转和命令入口，新增固定 Codex CLI0.155.1 适配器，不扩展另外八团队或实盘。
++
++- 显式配置可执行文件／SHA256／准确模型／独立私有认证目录及临时目录；版本不匹配、
++  未获运行许可或继承指令／系统管理配置存在时拒绝，不读取／搬运凭据，不删除策略。
++- 只发送原任务消息和固定动作定义；禁用原生工具、插件和 MCP，严格解析一个完整结果。
++  stdout／stderr／进程 I/O 有界，原始思考与错误不进入研究证据；不自动重试或回退。
++- 无封顶授权不是伪装预算：金额和提供商请求计数保持未知；单次输出上限是响应后检查，
++  不冒充硬收费边界。CLI 报告用量单独保存，缓存／思考子计数不重复相加。
++- 第 68 份迁移保持原67份 SQL 和旧记录；无封顶与封顶调用共用原 `(record_id,call_number)`
++  唯一键。任务领取与调用许可先提交，模型 I/O 不持数据库事务；未知调用不退款／重发，
++  原完成／失败／incomplete 保持原样重放。新建与查询授权复用原受控 stdin／输出入口。
++- 新的隔离验收覆盖 Linux／Windows 官方固定二进制与本地模拟服务器，以及 Windows
++  67→68、旧封顶历史、两团队两轮、停止重启、HTTP失败、许可提交后进程退出和跨模式拒绝。
++  真实数据库／二进制测试与纯单元测试分列，不把模拟响应说成真实模型或费用认证。
++
++开发中首轮完整离线为 38,809通过／49跳过（当时收集范围）；新增 CLI 测试首轮七项
++夹具错误单列纠正。真正的实现反例包括严格配置字段不兼容、模型名校验、全局 AGENTS
++污染请求；单独自审再复现两项底层配置绑定缺口并修复。修复后定向184项通过，其中
++7项实际 Linux CLI／模拟 HTTP 验证；最终全量、Windows、原生／整包与固定提交的
++自审结果由本轮 PR 记录，未执行项不算通过。不存在第三方／全新 Agent 审核或零缺陷承诺。
++
++详细合同见 [预算说明](docs/research-model-budget.md#explicit-uncapped-codex-operation-wp-02--wp-03-2026-09-19)
++和 [任务操作](docs/research-dispatch.md#explicit-uncapped-codex-mode-2026-09-19)。
++CLI 瞬态状态库仅是隔离临时基础设施，不是业务耐久后端；正常清理不代表崩溃安全擦除，
++认证目录可由 CLI 自身更新基础设施。受管理安装、恶意二进制、同用户文件竞争及全部
++提供商内部行为未获普遍隔离认证；旧 kit 不能覆盖或自动升级。
++
++**本轮源码与工程接线不关闭真实 G2—G6；WP-02／WP-03 仍 PARTIAL，V1 仍 1／6。**
++不再要求用户重复 D1—D3；真正本机的登录、所选模型、来源、独立人工结算和费用样本
++须单独实际验收。没有用户业务库、真实提供商／行情、密钥发现或订单操作。
+diff --git a/database/migrations.lock.json b/database/migrations.lock.json
+index 2e2327f..91a83ec 100644
+--- a/database/migrations.lock.json
++++ b/database/migrations.lock.json
+@@ -67,6 +67,7 @@
+     {"name":"20260914000000_research_dispatch_batches.sql","sha256":"afd50399909967d6b22633ad763f9e96c10fd2c1d360001f38b8c90e6c6c9c67","transaction_wrapper":false},
+     {"name":"20260915000000_research_dispatch_turns.sql","sha256":"e2f377662c43f1894818d3064e91ff192966c3521d82bd305c8fd6fed117e5f0","transaction_wrapper":false},
+     {"name":"20260915010000_research_model_budgets.sql","sha256":"1413e9479daf69e53bcadaed336d8ee28ff9e486b7319c7ed53a0b63c14f467e","transaction_wrapper":false},
+-    {"name":"20260915020000_research_paper_simulations.sql","sha256":"60ba1277e25caef5ba75f44f8c3974cee63a964f1c9b9c14ff72d68cf5c75d17","transaction_wrapper":false}
++    {"name":"20260915020000_research_paper_simulations.sql","sha256":"60ba1277e25caef5ba75f44f8c3974cee63a964f1c9b9c14ff72d68cf5c75d17","transaction_wrapper":false},
++    {"name":"20260919000000_research_uncapped_codex.sql","sha256":"186fd1fb9627636b5177281863670ba9d0db9c30987d6a37d0d30bd77283a3b2","transaction_wrapper":false}
+   ]
+ }

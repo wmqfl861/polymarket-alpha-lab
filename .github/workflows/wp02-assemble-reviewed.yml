@@ -1,0 +1,107 @@
+name: Assemble exact reviewed WP02 source objects
+on:
+  push:
+    branches: ['audit/wp02-assemble-20260919']
+    paths: ['.github/workflows/wp02-assemble-reviewed.yml']
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          path: delivery
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 8ae2933a843c554b0f4391b4faeb572b2f6b952c
+          persist-credentials: false
+          path: source
+      - name: Verify exact patch and publish tree objects only; no source execution or refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -I - <<'PY'
+          import hashlib, json, os, pathlib, subprocess, urllib.request
+          repo = 'wmqfl861/polymarket-alpha-lab'
+          assert os.environ['GITHUB_REPOSITORY'] == repo
+          source, delivery = pathlib.Path('source'), pathlib.Path('delivery')
+          expected = 'e30460267f5243553f8741deb7905482dcbf50c8'
+          def git(*args):
+              return subprocess.check_output(['git', '-C', str(source), *args]).decode().strip()
+          assert git('rev-parse', 'HEAD') == '8ae2933a843c554b0f4391b4faeb572b2f6b952c'
+          assert git('rev-parse', 'HEAD^{tree}') == '1061c4492de3378d00fb1e55179da2e539e36ca4'
+          digests = ['c372b33204a94d5704100c4e23ad2ca409b69ca7034c9fb21e17473eafea1b07',
+                     'bb94d2c10cbeaab4bd1c3627aec5a20b37750169b8aa3b2865f5f4269d38f6f2',
+                     'd0604c189d0a2496deb2e3db74458592c38cd842108221bc4538c02c85215c89',
+                     'a92b5f02e5f9054257fdd398f075cb78829d7716d63d3f00f4325661096733a3']
+          parts = []
+          for i, checksum in enumerate(digests):
+              data = (delivery / f'audit-transfer/existing-{i}.patch').read_bytes()
+              if i == 0:
+                  # One known transport-only separator typo, checked both before
+                  # and after correction. Never repair arbitrary patch contents.
+                  assert hashlib.sha256(data).hexdigest() == 'ceb0b0cfcda67ded8069ea9965cedb5f68d06894aff988c098da09a174eaf794'
+                  assert data.count(b'\n diff --git a/DELIVERY_PLAN.md') == 1
+                  data = data.replace(b'\n diff --git a/DELIVERY_PLAN.md', b'\ndiff --git a/DELIVERY_PLAN.md', 1)
+              assert hashlib.sha256(data).hexdigest() == checksum
+              parts.append(data)
+          patch = pathlib.Path(os.environ['RUNNER_TEMP']) / 'reviewed-existing.patch'
+          patch.write_bytes(b''.join(parts))
+          for args in (['--check', '--index'], ['--index']):
+              subprocess.run(['git', '-C', str(source), 'apply', '--whitespace=error', *args, str(patch)], check=True)
+          new = ['.github/workflows/codex-uncapped.yml',
+              'src/polymarket_alpha_lab/research_codex_local.py',
+              'src/polymarket_alpha_lab/research_codex_protocol.py',
+              'src/polymarket_alpha_lab/research_uncapped_authorization.py',
+              'src/polymarket_alpha_lab/research_uncapped_runner.py',
+              'src/polymarket_alpha_lab/research_uncapped_store.py',
+              'supabase/migrations/20260919000000_research_uncapped_codex.sql',
+              'tests/prepare_codex_native.py', 'tests/test_codex_wire_native.py',
+              'tests/test_project_postgres_uncapped_native.py', 'tests/test_research_codex.py',
+              'tests/test_research_codex_review.py', 'tests/test_research_uncapped.py',
+              'tests/test_research_uncapped_cli.py']
+          for name in new:
+              target = source / name
+              assert not target.exists() and not (delivery/name).is_symlink()
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes((delivery/name).read_bytes())
+          git('add', '--', *new)
+          git('diff', '--cached', '--check')
+          assert git('write-tree') == expected
+          assert len(git('ls-files').splitlines()) == 6480
+          changed = git('diff', '--cached', '--name-only').splitlines()
+          modified = git('diff', '--cached', '--name-only', '--diff-filter=M').splitlines()
+          assert len(changed) == 33 and len(modified) == 19
+          # New14 blobs/tree were already published and separately verified.
+          # POST creates unreferenced Git objects only, never a commit/ref/merge.
+          entries = [{'path': name, 'mode': '100644', 'type': 'blob',
+                      'content': (source/name).read_bytes().decode('utf-8')} for name in modified]
+          payload = json.dumps({'base_tree': '7b7f3263673d1687b868ddeb137c38e0b49836ff', 'tree': entries}).encode()
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs): return None
+          request = urllib.request.Request('https://api.github.com/repos/'+repo+'/git/trees',
+              data=payload, method='POST', headers={'Authorization': 'Bearer '+os.environ['GH_TOKEN'],
+              'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json',
+              'X-GitHub-Api-Version': '2022-11-28'})
+          try:
+              with urllib.request.build_opener(NoRedirect()).open(request, timeout=60) as response:
+                  result = json.load(response)
+          except Exception:
+              raise SystemExit('source_object_publication_failed; no reference was changed') from None
+          assert result['sha'] == expected
+          proof = dict(tree_sha=result['sha'], base_commit=git('rev-parse','HEAD'),
+                       changed_paths=changed, tracked_files=6480, project_code_executed=False,
+                       references_modified=False, patch_sha256=hashlib.sha256(patch.read_bytes()).hexdigest(),
+                       payloads={name: hashlib.sha256((source/name).read_bytes()).hexdigest() for name in changed})
+          (pathlib.Path(os.environ['RUNNER_TEMP'])/'source-tree.json').write_text(json.dumps(proof, indent=2))
+          print(json.dumps(dict(tree_sha=result['sha'], changed_files=33, references_modified=False)))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: reviewed-wp02-source-tree
+          path: ${{ runner.temp }}/source-tree.json
+          retention-days: 7
+          if-no-files-found: error

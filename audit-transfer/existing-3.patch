@@ -1,0 +1,200 @@
+diff --git a/tests/test_project_postgres.py b/tests/test_project_postgres.py
+index 62c48d1..c6b9d17 100644
+--- a/tests/test_project_postgres.py
++++ b/tests/test_project_postgres.py
+@@ -79,7 +79,7 @@ def test_canonical_validator_is_same_audited_function():
+ 
+ def test_all_67_migrations_have_checked_in_receipts():
+     rows = sql.migration_catalog(files.Layout(ROOT))
+-    assert len(rows) == 67
++    assert len(rows) == 68
+     for name, digest, body in rows:
+         from polymarket_alpha_lab.project_postgres.migration_compat import native_migration_bytes
+         original = (ROOT/'supabase/migrations'/name).read_bytes()
+diff --git a/tests/test_project_postgres_backup_native.py b/tests/test_project_postgres_backup_native.py
+index f4ce1bd..82bf43a 100644
+--- a/tests/test_project_postgres_backup_native.py
++++ b/tests/test_project_postgres_backup_native.py
+@@ -157,6 +157,11 @@ def test_native_old_backup_restore_requires_explicit_catalog_extension_and_migra
+     manifest_file = root / 'database/migrations.lock.json'
+     manifest_bytes = manifest_file.read_bytes()
+     manifest = json.loads(manifest_bytes)
++    for later in manifest['migrations'][67:]:
++        (root / 'supabase/migrations' / later['name']).unlink()
++    manifest = dict(manifest, migrations=manifest['migrations'][:67])
++    manifest_bytes = json.dumps(manifest).encode('utf-8')
++    manifest_file.write_bytes(manifest_bytes)
+     tail = '20260915020000_research_paper_simulations.sql'
+     assert len(manifest['migrations']) == 67 and manifest['migrations'][-1]['name'] == tail
+     (root / 'supabase/migrations' / tail).unlink()
+diff --git a/tests/test_project_postgres_confirmation_native.py b/tests/test_project_postgres_confirmation_native.py
+index ca4e5c2..5b2aeca 100644
+--- a/tests/test_project_postgres_confirmation_native.py
++++ b/tests/test_project_postgres_confirmation_native.py
+@@ -58,7 +58,7 @@ def test_original_forecasts_manual_confirmation_replay_restart_and_preservation(
+     with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
+     import_runtime_directory(root,prefix);db=ProjectPostgres(root)
+     try:
+-        assert db.initialize(port=port)['migrations_applied']==67
++        assert db.initialize(port=port)['migrations_applied']==68
+         with db.session() as session:
+             identity=db._state()
+             now=datetime.now(UTC)
+@@ -176,7 +176,7 @@ finally:
+                 assert session.inspect(record_id=instruction.record_id).record==record
+             assert db._psql(identity,'SELECT count(*) FROM research_capture.resolution_reviews;')=='4'
+             assert db._psql(identity,'SELECT count(*) FROM research_capture.outcomes;')=='2'
+-            assert db._psql(identity,'SELECT count(*) FROM project_private.migrations;')=='67'
++            assert db._psql(identity,'SELECT count(*) FROM project_private.migrations;')=='68'
+         # Recovery lookups use real isolated storage; inject ONLY a short stdout
+         # sink in actual command processes after all prospective captures finish.
+         probe = r"""
+diff --git a/tests/test_project_postgres_dispatch_cli_native.py b/tests/test_project_postgres_dispatch_cli_native.py
+index 686cc99..ab2cd77 100644
+--- a/tests/test_project_postgres_dispatch_cli_native.py
++++ b/tests/test_project_postgres_dispatch_cli_native.py
+@@ -83,7 +83,7 @@ def test_operator_rounds_stop_restart_failures_and_process_loss(tmp_path, monkey
+     import_runtime_directory(root, prefix)
+     db = ProjectPostgres(root)
+     try:
+-        assert db.initialize(port=port)['migrations_applied'] == 67
++        assert db.initialize(port=port)['migrations_applied'] == 68
+         requests = tuple(prepared(1100+i, 'crypto_btc' if i%2 == 0 else 'crypto_eth') for i in range(6))
+         with db.session() as session:
+             identity = db._state()
+@@ -207,7 +207,7 @@ def test_operator_rounds_stop_restart_failures_and_process_loss(tmp_path, monkey
+             assert session.inspect(record_id=crashed[0].record_id).status == 'incomplete'
+             assert session.inspect(record_id=requests[0].record_id).record == old_record
+             with pytest.raises(ResearchCaptureConflict, match='history_incomplete'): session.evaluate()
+-            assert db._psql(identity, 'SELECT count(*) FROM project_private.migrations;') == '67'
++            assert db._psql(identity, 'SELECT count(*) FROM project_private.migrations;') == '68'
+         assert db.status()['instance_id'] == identity['instance_id']
+         print('native operator CLI: PASS; two-team rounds, stop/restart, failed result, replay, crash remains incomplete')
+     finally:
+diff --git a/tests/test_project_postgres_native.py b/tests/test_project_postgres_native.py
+index fece70c..98076e3 100644
+--- a/tests/test_project_postgres_native.py
++++ b/tests/test_project_postgres_native.py
+@@ -103,9 +103,9 @@ def test_native_project_lifecycle_all_migrations_and_real_research(tmp_path,monk
+     print('native proof: copy binaries only, never reuse installed data')
+     version=import_runtime_directory(root,prefix)
+     db=ProjectPostgres(root)
+-    print('native proof: initialize private cluster and all 67 migrations')
++    print('native proof: initialize private cluster and all 68 migrations')
+     result=db.initialize(port=port)
+-    assert result==dict(status='initialized',version=version,migrations_applied=67)
++    assert result==dict(status='initialized',version=version,migrations_applied=68)
+     assert db.status()['status']=='stopped'
+     with pytest.raises(ProjectDatabaseError,match='existing_data'):db.initialize(port=port)
+     assert not (db.layout.home/'initial-password').exists()
+@@ -204,7 +204,7 @@ def test_native_project_lifecycle_all_migrations_and_real_research(tmp_path,monk
+             assert db.up()['status']=='migrations_pending'
+             with pytest.raises(ProjectDatabaseError):db.migrate()
+             assert db._psql(info,"SELECT to_regclass('public.must_rollback') IS NULL;")=='t'
+-            assert db._psql(info,'SELECT count(*) FROM project_private.migrations;')=='67'
++            assert db._psql(info,'SELECT count(*) FROM project_private.migrations;')=='68'
+         finally:path.unlink();manifest.write_bytes(old)
+         with db.session() as session:assert len(session.evaluate().records)==5
+     finally:db.down()
+diff --git a/tests/test_project_postgres_paper_capture_native.py b/tests/test_project_postgres_paper_capture_native.py
+index 163f6b9..012eb0c 100644
+--- a/tests/test_project_postgres_paper_capture_native.py
++++ b/tests/test_project_postgres_paper_capture_native.py
+@@ -50,6 +50,9 @@ def test_paper_capture_upgrade_atomic_replay_rejection_and_history_preservation(
+     shutil.copytree(ROOT/'database',root/'database')
+     shutil.copytree(ROOT/'supabase/migrations',root/'supabase/migrations')
+     manifest=json.loads((root/'database/migrations.lock.json').read_text())
++    for later in manifest['migrations'][67:]:
++        (root/'supabase/migrations'/later['name']).unlink()
++    manifest = dict(manifest, migrations=manifest['migrations'][:67])
+     assert len(manifest['migrations'])==67 and manifest['migrations'][-1]['name']==TAIL
+     (root/'supabase/migrations'/TAIL).unlink()
+     (root/'database/migrations.lock.json').write_text(json.dumps(dict(manifest,migrations=manifest['migrations'][:-1])))
+@@ -63,7 +66,7 @@ def test_paper_capture_upgrade_atomic_replay_rejection_and_history_preservation(
+             assert old.record.run.research.status=='completed'
+             identity=db._state()
+         shutil.copyfile(ROOT/'supabase/migrations'/TAIL,root/'supabase/migrations'/TAIL)
+-        shutil.copyfile(ROOT/'database/migrations.lock.json',root/'database/migrations.lock.json')
++        (root/'database/migrations.lock.json').write_text(json.dumps(manifest))
+         assert db.migrate()['migrations_applied']==1
+         assert db.migrate()['migrations_applied']==0
+         saved=[]
+diff --git a/tests/test_project_postgres_paper_native.py b/tests/test_project_postgres_paper_native.py
+index 6431460..0e53539 100644
+--- a/tests/test_project_postgres_paper_native.py
++++ b/tests/test_project_postgres_paper_native.py
+@@ -50,7 +50,7 @@ def test_paper_assembly_replays_reads_preserves_failures_and_blocks_incomplete(t
+     with socket.socket() as sock: sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
+     import_runtime_directory(root,prefix);db=ProjectPostgres(root)
+     try:
+-        assert db.initialize(port=port)['migrations_applied']==67
++        assert db.initialize(port=port)['migrations_applied']==68
+         with db.session() as s:
+             identity=db._state();original=[];scenarios=[];made=[]
+             def factory(team): made.append(team);return Model()
+@@ -87,7 +87,7 @@ def test_paper_assembly_replays_reads_preserves_failures_and_blocks_incomplete(t
+             assert s.inspect(record_id=incomplete.record_id).status=='incomplete'
+             assert db._psql(identity,'SELECT count(*) FROM research_capture.attempts;')=='3'
+             assert db._psql(identity,'SELECT count(*) FROM research_capture.execution_claims;')=='4'
+-            assert db._psql(identity,'SELECT count(*) FROM project_private.migrations;')=='67'
++            assert db._psql(identity,'SELECT count(*) FROM project_private.migrations;')=='68'
+         assert db.status()['instance_id']==identity['instance_id']
+         print('native research paper: PASS; BTC/ETH read-only scenarios, failures/denominator, replay/restart, incomplete blocked')
+     finally:
+diff --git a/tests/test_project_postgres_paper_operator_native.py b/tests/test_project_postgres_paper_operator_native.py
+index 4415c4a..a16bc50 100644
+--- a/tests/test_project_postgres_paper_operator_native.py
++++ b/tests/test_project_postgres_paper_operator_native.py
+@@ -97,7 +97,7 @@ def test_paper_operator_capture_replay_inspect_and_rejection(tmp_path, monkeypat
+         return json.loads(child.stdout)
+ 
+     try:
+-        assert db.initialize(port=port)['migrations_applied'] == 67
++        assert db.initialize(port=port)['migrations_applied'] == 68
+         with db.session() as session:
+             identity = db._state()
+             originals, scenarios = [], []
+@@ -137,7 +137,7 @@ def test_paper_operator_capture_replay_inspect_and_rejection(tmp_path, monkeypat
+                 assert session.inspect_paper_research(record_id=spec.record_id).scenario == spec
+             assert db._psql(identity, 'SELECT count(*) FROM research_capture.paper_simulations;') == '2'
+             assert db._psql(identity, 'SELECT count(*) FROM research_capture.attempts;') == '2'
+-            assert db._psql(identity, 'SELECT count(*) FROM project_private.migrations;') == '67'
++            assert db._psql(identity, 'SELECT count(*) FROM project_private.migrations;') == '68'
+         assert db.status()['instance_id'] == identity['instance_id']
+         print('native paper operator: PASS; explicit capture, replay/conflict, rejection, restart/readback, unchanged originals')
+     finally:
+diff --git a/tests/test_project_postgres_paper_settlement_native.py b/tests/test_project_postgres_paper_settlement_native.py
+index baf2932..890e9cb 100644
+--- a/tests/test_project_postgres_paper_settlement_native.py
++++ b/tests/test_project_postgres_paper_settlement_native.py
+@@ -57,7 +57,7 @@ def test_paper_settlement_snapshot_outcomes_denominators_restart_and_no_writes(t
+     with socket.socket() as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
+     import_runtime_directory(root,prefix);db=ProjectPostgres(root)
+     try:
+-        assert db.initialize(port=port)['migrations_applied']==67
++        assert db.initialize(port=port)['migrations_applied']==68
+         with db.session() as s:
+             identity=db._state();now=datetime.now(UTC)
+             opening=now.replace(second=0,microsecond=0)+timedelta(minutes=2)
+@@ -193,7 +193,7 @@ def test_paper_settlement_snapshot_outcomes_denominators_restart_and_no_writes(t
+                 s.evaluate_settled_paper_research()
+             # A historical view predating that claim remains its original scope.
+             assert s.evaluate_settled_paper_research(generated_at=before_at)==before
+-            assert db._psql(identity,'SELECT count(*) FROM project_private.migrations;')=='67'
++            assert db._psql(identity,'SELECT count(*) FROM project_private.migrations;')=='68'
+         failure=console(expected_code=1)
+         assert failure['reason_code']=='research_execution_history_incomplete' and failure['evaluation'] is None
+         assert console('--as-of',before_at.isoformat(),'--include-decisions')['evaluation']==dict(before,decisions_included=True)
+diff --git a/tests/test_research_dispatch.py b/tests/test_research_dispatch.py
+index 7262ca2..42f362d 100644
+--- a/tests/test_research_dispatch.py
++++ b/tests/test_research_dispatch.py
+@@ -348,7 +348,7 @@ def test_closed_managed_session_and_binding(monkeypatch):
+ def test_migration_tail_hashes_and_no_lease_or_destructive_ddl():
+     root=Path(__file__).resolve().parents[1]
+     entries=json.loads((root/'database/migrations.lock.json').read_text())['migrations']
+-    assert len(entries)==67
++    assert len(entries)==68
+     entry=entries[63];assert entry['name']=='20260914000000_research_dispatch_batches.sql'
+     sql=(root/'supabase/migrations'/entry['name']).read_bytes()
+     assert entry['sha256']==sha256(sql).hexdigest()

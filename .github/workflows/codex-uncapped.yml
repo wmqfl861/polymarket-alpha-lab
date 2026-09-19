@@ -1,0 +1,56 @@
+name: Pinned Codex and uncapped research
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: codex-uncapped-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native:
+    name: codex-${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - name: Install locked environment
+        run: uv sync --locked --extra dev --extra postgres --python 3.12
+      - name: Fetch and verify public pinned CLI without execution
+        run: uv run --no-sync python tests/prepare_codex_native.py
+      - name: Native CLI and isolated uncapped database proof
+        shell: pwsh
+        run: |
+          $env:PYTEST_DISABLE_PLUGIN_AUTOLOAD = '1'
+          $env:PYTHONUTF8 = '1'
+          if ($IsWindows) {
+            $env:POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES = '1'
+            $env:POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX = 'C:\Program Files\PostgreSQL\17'
+          }
+          Get-ChildItem Env: | Where-Object { $_.Name -like 'PG*' } | ForEach-Object { Remove-Item ('Env:' + $_.Name) }
+          uv run --no-sync python -u -m pytest -q -s -p no:faulthandler -p tests.ci_thread_dump -o faulthandler_timeout=180 tests/test_research_codex.py tests/test_research_codex_review.py tests/test_research_uncapped.py tests/test_research_uncapped_cli.py tests/test_codex_wire_native.py tests/test_project_postgres_uncapped_native.py --junitxml="$env:RUNNER_TEMP/codex-uncapped.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/codex-uncapped.log"
+          exit $LASTEXITCODE
+      - name: Verify tracked source unchanged
+        run: |
+          git diff --check
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: codex-uncapped-${{ matrix.os }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/codex-uncapped.log
+            ${{ runner.temp }}/codex-uncapped.xml
+            ${{ runner.temp }}/codex-native-asset.json
+          retention-days: 7
+          if-no-files-found: error
