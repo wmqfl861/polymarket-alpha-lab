@@ -1,0 +1,67 @@
+name: Publish exact reviewed WP02 source
+on:
+  push:
+    branches: ['audit/wp02-reviewed-source-publish-20260919']
+    paths: ['.github/workflows/wp02-reviewed-source-publish.yml']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          # Used only to create the new fixed branch below, never to update main.
+          persist-credentials: true
+      - name: Verify visible patch chunks and reconstruct exact reviewed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, os, pathlib
+          root = pathlib.Path('stage/wp02')
+          expected = {
+              'docs': (23380, 'd71c887564c0fe769a925a2c2674501210be377f5bb3d09776564130004cf265'),
+              'runtime': (33984, '68871653f33073b05990c7348b74fedefcb301404d87c70a342b88fd0162ad6d'),
+              'tests': (45805, '4c2ee87fbadbfb5f69b11fe386433e7ab2f806ee264bd278be6caf5193a19b21'),
+          }
+          parts = []
+          for name, (size, digest) in expected.items():
+              data = (root / ('source-' + name + '.patch')).read_bytes()
+              if name == 'runtime':
+                  # Three transfer-only leading spaces in diff headers were
+                  # identified by readback. Fix only this exact known payload,
+                  # then require the ORIGINAL reviewed patch hash below.
+                  assert len(data) == 33987
+                  assert hashlib.sha256(data).hexdigest() == 'e44b07e2e8d1ec3242c9ab22eb566dfd9df6451d584caf3a46a731ea05de413a'
+                  assert data.count(b'\n diff --git ') == 3
+                  data = data.replace(b'\n diff --git ', b'\ndiff --git ')
+              assert len(data) == size and hashlib.sha256(data).hexdigest() == digest
+              parts.append(data)
+          patch = b''.join(parts)
+          assert len(patch) == 103169
+          assert hashlib.sha256(patch).hexdigest() == 'ddf35fa9d6441dddf8b58a0417e54f163b199da9a40922e7a3b39c941f3f1ab3'
+          (pathlib.Path(os.environ['RUNNER_TEMP']) / 'reviewed-source.patch').write_bytes(patch)
+          print('Exact original reviewed source patch verified; no project code executed.')
+          PY
+          base=8ae2933a843c554b0f4391b4faeb572b2f6b952c
+          target=refs/heads/feature/wp02-uncapped-protocol-20260919
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$base"
+          test -z "$(git ls-remote origin "$target")"
+          git checkout --detach "$base"
+          test "$(git rev-parse HEAD^{tree})" = 1061c4492de3378d00fb1e55179da2e539e36ca4
+          git apply --check --index --whitespace=error-all "$RUNNER_TEMP/reviewed-source.patch"
+          git apply --index --whitespace=error-all "$RUNNER_TEMP/reviewed-source.patch"
+          git diff --cached --check
+          tree=$(git write-tree)
+          test "$tree" = d5cbcfefefd987c8d0fa8944b4545fe75edd027c
+          test "$(git diff --cached --name-only | wc -l)" = 16
+          test -z "$(git diff --cached --name-only -- .github supabase/migrations uv.lock pyproject.toml)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          commit=$(printf '%s\n' 'feat(wp02): explicit uncapped execution and strict Codex event protocol' '' 'Reviewed source only; no real CLI launcher, credentials, provider call or SQL changes. Original claims and replay retained. Native workflow extension follows separately before final PR verification.' | git commit-tree "$tree" -p "$base")
+          git push origin "$commit:$target"
+          test "$(git ls-remote origin "$target" | cut -f1)" = "$commit"
+          printf 'Published commit=%s tree=%s target=%s\n' "$commit" "$tree" "$target"
