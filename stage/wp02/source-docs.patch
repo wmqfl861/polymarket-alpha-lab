@@ -1,0 +1,304 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 1514eca..da4d02c 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -69,7 +69,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ | ID／工作包 | 当前状态 | 剩余缺口 | 依赖 | 完成证据 |
+ | --- | --- | --- | --- | --- |
+ | WP-01 候选到研究入口 | **DONE（G1）** | 有界发现、最新规则／观察时刻、一次完整预览和待审规格已接通；本项不包含模型授权或来源真伪认证 | 现有公开输入、PR #19／#20 门禁 | [PR #28](https://github.com/wmqfl861/polymarket-alpha-lab/pull/28)：52 项反例测试、三条 CI、真实 BTC／ETH 待审样例；详见第 10 节 |
+-| WP-02 真实模型与预算 | **PARTIAL** | D1—D3 已明确；本次修复凭据／重定向和必引证据调用前边界。仍缺首个本地 Agent 适配器、明确的首轮无业务封顶策略及真实研究／使用核验；现有金额预留模式不等于无限模式 | 先接 Codex CLI 的现有 factory 合同；不探测凭据；真实验收依赖具体本地配置和 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
++| WP-02 真实模型与预算 | **PARTIAL** | D1—D3 已明确；本次修复凭据／重定向和必引证据调用前边界。已实现显式无金额封顶 Python 执行路径及 Codex 事件协议转换；仍缺获准实际 CLI 启动器、完整隔离／使用证据及真实验收；协议转换不等于客户端启用 | 先接 Codex CLI 的现有 factory 合同；不探测凭据；真实验收依赖具体本地配置和 WP-01 | G2：两团队分别至少一次获准真实研究；原失败保留；重复请求不再次调用模型；授权与使用可核对 |
+ | WP-03 任务调度与恢复 | **PARTIAL** | 持久批次／公平轮转／共享额度已接统一受控入口：查询批次、轮次和预算，审核后显式入库批次／预算，显式运行一轮与停止恢复；独立脚本不装配真实客户端。仍缺本地 Agent／实际使用核验及最终 G3 组合验收 | 复用现有领取／收录；先合成模型，真实运行依赖 WP-02 与已明确的 D3 | G3：两轮调度＋一次停机重启＋混合失败／中断场景，任务不丢失、不重复执行、不隐去 incomplete |
+ | WP-04 结算闭环 | **PARTIAL** | 已接原预测／候选哈希绑定的人工确认入口，核对原规则、声明来源与分钟时刻，并复用原子结算保存；仍缺真实 BTC／ETH 前瞻预测、实际匹配来源和独立人工核验 | WP-01 支持事件；WP-02 真实记录；事件到期和独立人工核验 | G4：BTC／ETH 各至少一个真实事件保留预测到结算的完整证据；过期、争议、拒绝和未决路径可追踪 |
+ | WP-05 研究到模拟评估 | **PARTIAL** | 已接同库模拟证据、审核结算损益下界、--settled-paper 评估及现有任务命令的保存／查询入口；全部尝试、未决和缺失仍保留。仍缺获准真实预测、真实输入／费率证据及完整操作验收；假设成本不等于账户收益，准入不保证提交确认先于截止 | WP-02、WP-04；订单簿和成本记录；可先做离线组合 | G5：两团队至少各一个完整工程样本；拒绝项、样本缺口、成本和时间均可复算，不据此声称策略有效 |
+@@ -97,7 +97,7 @@ PR #26 的全量、Windows 和 kit 测试是组件工程证据，不是六个工
+ - 同一任务重放返回原结果；不自动重试付费模型或借换 task ID 绕过 incomplete。恢复路径不抹掉首次失败。
+ - 保留单次调用、进程并发、输入输出及截止／停止的工程边界；首轮不另设业务规模／金额封顶。
+   必须显式区分“用户未要求金额上限”和“已有硬金额上限”；现有 ModelCallBudget 只能表达后者。
+-  无封顶策略尚未接通前不得用零价、巨大虚构额度或伪造收费声明冒充实现；使用与费用保留可核验状态。
++  无封顶应用路径不等于实际CLI已验收；不得用零价、巨大虚构额度或伪造收费声明冒充保证；使用与费用保留可核验状态。
+ 
+ ### WP-03：连续运行有明确边界
+ 
+@@ -142,7 +142,7 @@ WP-02 的无凭据装配设计、WP-04 的人工操作流程、WP-06 的文档
+ 本地 Agent 方向已确定；具体可执行文件／版本／模型仍需显式配置与核验，不能把“找密钥”交给本地 Agent。
+ 
+ WP-01 已按第 10 节关闭 G1，不继续扩充筛选排行榜或旁路报告。
+-**下一实施重点：先关闭本次可复现边界缺陷；再以现有 factory/complete 接口接一个 Codex CLI 适配器，并明确实现首轮无业务金额封顶策略。WP-03 受控入口已接通，真实模型组合验收仍待办。**
++**下一实施重点：显式无金额封顶应用路径与 Codex 事件协议已接通；继续验证实际 CLI 宿主的隔离、持久化及调用边界，再接入真实运行。WP-03 受控入口和真实模型组合验收仍按原要求推进。**
+ Claude Code、OpenCode、Grok CLI、ZCode CLI 为允许的后续替代项，不默认兼容或自动回退。
+ D1—D3 不再阻塞离线实现；真实调用仍需所选版本的隔离／输出／使用验收和显式运行配置。
+ 随后复用原流程完成 WP-03 停机重启、WP-04 实际结算、WP-05 成本样本和 WP-06 固定版发布。
+@@ -166,7 +166,7 @@ D1—D3 不再阻塞离线实现；真实调用仍需所选版本的隔离／输
+ | --- | --- | --- | --- |
+ | D1 提供商和准确模型 | **方向已定：本地 Agent** | 允许 Codex、Claude Code、OpenCode、Grok CLI、ZCode CLI；先接 Codex，具体 executable／版本／model 需显式配置 | 不再等待泛化选型决定；未核验的 CLI 不自动启动或回退 |
+ | D2 研究输入发送许可 | **已同意：所有所需研究数据** | 具体任务仍绑定问题、完整规则、批准证据及后续工具消息 | 不是扫描无关文件或发送凭据的许可；不裁剪已批准输入冒充兼容 |
+-| D3 首轮规模和费用约束 | **首轮不设业务规模／金额限制** | 实现显式无封顶策略，保留单次调用／资源／截止／停止边界和实际使用记录 | 正整数金额 ModelCallBudget 不是无限模式；不伪造价格、额度或收费认证 |
++| D3 首轮规模和费用约束 | **首轮不设业务规模／金额限制** | 已接无封顶应用路径；保留单次调用／资源／截止／停止边界，真实使用审计仍待验收 | 正整数金额 ModelCallBudget 不是无限模式；不伪造价格、额度或收费认证 |
+ 
+ 不在聊天中索要 API 密钥，也不探测 `.env`、登录缓存或用户凭据。以上记录最新 D1—D3；
+ 本次“接手、审计并直接修改仓库”仍是源码开发，不自动启动真实模型、修改用户业务库或实盘交易。
+@@ -1043,3 +1043,24 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ **WP-02 改为 PARTIAL，不再 AWAITING_OWNER；G2 未关闭，V1 仍 1／6。**
+ 本次没有真实模型、凭据探测、市场取数、用户数据库或订单操作；历史 PS5.1 故障不算修复。
+ 后续关键路径固定为一个本地 CLI 适配器与明确授权策略、G3 组合恢复、G4 实际核验、G5 成本样本、G6 发布。
++
++
++## 39. WP-02／WP-03：显式无金额封顶执行与 Codex 协议转换（2026-09-19）
++
++基线 `8ae2933a843c554b0f4391b4faeb572b2f6b952c`，完整树
++`1061c4492de3378d00fb1e55179da2e539e36ca4`。本轮按用户要求实施后另作单独自审。
++[本地 Agent 接口说明](docs/research-local-agent.md)明确已实现能力、用法及真实启动阻断项。
++
++- 显式无金额封顶授权加双重许可接入原托管单任务、批次和轮转，不伪造金额／收费上界／调用预留；
++  请求身份、原领取／结果、停止、截止和不可重跑规则不变。授权是应用值，不是耐久授权账本。
++- Codex 0.155.1 事件转换严格校验完整终态、动作、用量及原证据工具；异常后不修复重试。
++  它需要外部已审阅 transport，本轮没有默认真实 CLI 启动器或独立完整使用账本。
++- 实际官方 Linux CLI 与本机合成服务探测发现临时模式仍落状态、单关 shell 不清空工具，
++  且退出零可伴随错误事件；未证实与原接口匹配的硬输出上限。阻断真实启用，不探测用户凭据。
++- 单独自审先复现 Unicode／消息／输出上限／过期轮次八项反例；修复后相关回归 587 项通过。
++  新原生证明追加到原 Windows dispatch 分区；最终完整／原生验收、head／tree 和日志见关联 PR。
++  原67份SQL、依赖、原记录及既有期限不改，不用模拟测试冒充真实CLI／用户数据库验收。
++
++**WP-02／WP-03 仍 PARTIAL，G2／G3 未关闭，V1 仍 1／6。** 本轮完成的是无封顶执行及协议
++子项，不宣称实际Codex已就绪、研究／来源／计费已验收；PS5.1历史问题继续保留。
++不派重复本机检查，不访问用户库或真实提供商，不发布覆盖旧安装的升级。
+diff --git a/docs/research-dispatch.md b/docs/research-dispatch.md
+index a07d869..684d9dd 100644
+--- a/docs/research-dispatch.md
++++ b/docs/research-dispatch.md
+@@ -590,3 +590,13 @@ charge limits still require D1-D3; queue/budget admission is not model approval.
+ Integration references: Python3.12 text-stream write/flush and Condition contracts
+ were checked on2026-09-17; they do not guarantee consumer receipt or an
+ uninterruptible filesystem/database operation.
++
++
++## Explicit uncapped integration (2026-09-19)
++
++Managed batch/rotation APIs accept `uncapped_authorization` and
++`allow_uncapped_costs=True` with the original explicit model-call opt-in. This is
++mutually exclusive with `model_budget_id` and preserves original claims/results.
++See [local-agent integration](research-local-agent.md) for scope, expiry, stop
++and replay. The standalone script still has no real client configuration; no
++default subprocess transport or durable authorization ledger is supplied here.
+diff --git a/docs/research-local-agent.md b/docs/research-local-agent.md
+new file mode 100644
+index 0000000..9a988dd
+--- /dev/null
++++ b/docs/research-local-agent.md
+@@ -0,0 +1,185 @@
++# Local-agent protocol and explicit uncapped research (WP-02 / WP-03)
++
++## Delivered boundary, not a ready-to-run Codex launcher
++
++The strict **Codex 0.155.1 event-protocol adapter** and explicit
++**no-business-monetary-cap execution path** cover one task, a batch and a
++rotation. They reuse the original managed PostgreSQL session, immutable requests,
++claim-before-model ordering and result capture. No second queue, backend,
++monetary reservation or reporting subsystem is introduced.
++
++**No default subprocess transport or real Codex activation is shipped.**
++`CodexExecModel` requires an application-supplied `CodexExecTransport`. CLI
++isolation/persistence/output-bound behavior remains an activation blocker, not
++permission to supply a naive subprocess wrapper or silently use the legacy API.
++The standalone task script still has no configured real client. G2/G3 remain open.
++
++## Permission without a fictitious budget
++
++`UncappedResearchAuthorization` is a copied, canonical application value: ID,
++model label, reviewed adapter-contract digest, UTC approval/expiry, 1..100 exact
++original `(record_id, request_sha256)` pairs, and explicit true approvals for
++research transmission and no monetary ceiling. The finite roster is a resource
++bound per intake, not a cumulative business event/cost limit. The original
++per-task message/output/call limits remain.
++
++`monetary_cap` and `actual_billed_micros` are **null**, not zero. There is no price,
++currency, all-inclusive fee attestation, fake huge allowance or refund. Existing
++capped `ModelCallBudget` behavior is unchanged. Selecting both modes, missing an
++explicit opt-in, or mismatching a task/model/hash fails closed.
++
++The value is **not signed authorization or a durable approval ledger**. Its
++digest is a reviewed reference, not executable/provider identity attestation.
++Only the original execution requests/results are written durably by this path;
++authorization metadata and raw Codex streams are not automatically persisted.
++Independent historical approval/usage/invoice audit remains an acceptance gap.
++Real activation must resolve it, not claim that a Boolean certifies approval.
++
++The explicitly configured owning application supplies the reviewed values below,
++not a model response, guessed credential or implicit environment scan:
++
++```python
++from pathlib import Path
++from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
++from polymarket_alpha_lab.research_uncapped import UncappedResearchAuthorization
++from polymarket_alpha_lab.research_codex_exec import CodexExecModel
++
++permission = UncappedResearchAuthorization(
++    authorization_id=reviewed_authorization_id,
++    model_id=reviewed_model_id,
++    adapter_contract_sha256=reviewed_adapter_contract_sha256,
++    approved_at=reviewed_approval_time,
++    expires_at=reviewed_expiry_time,
++    request_keys=tuple((r.record_id, r.content_sha256) for r in reviewed_requests),
++    no_monetary_cap_approved=True,
++    research_data_send_approved=True,
++)
++
++def inert_factory(team_id):
++    return CodexExecModel(model_id=reviewed_model_id,
++                          transport=approved_transport_factory(team_id))
++
++with ProjectPostgres(Path(actual_project_root)).session() as research:
++    receipt = research.run_uncapped_research(
++        request=reviewed_requests[0], authorization=permission,
++        model_factory=inert_factory,
++        allow_model_calls=True, allow_uncapped_costs=True,
++    )
++```
++
++This is an integration example requiring reviewed values and a separately proven
++transport, **not an executable real-model setup command**. Managed sessions retain
++DSN validation, instance binding and lifecycle draining. No user instance is
++opened, migrated or upgraded by this source change.
++
++Existing batch/rotation methods accept `uncapped_authorization=permission` and
++`allow_uncapped_costs=True` with `allow_model_calls=True`, the inert factory and
++original limits/stop token. Omit `model_budget_id`. Batch scope validates the
++selected pending prefix; rotation scope validates every pending roster member
++before reserving a new turn. Permission already expired at that preflight
++rejects a new reservation. It may expire during/after a committed reservation;
++then task admission fails without a model call and the original turn remains.
++Same-turn replay remains inert. The standalone CLI is unchanged.
++
++## Execution, expiry and uncertain outcomes
++
++A new original execution claim commits before real factory/client entry. No
++monetary permit is appropriate here. The wrapper checks permission time, cutoff,
++stop, messages, output request and call count; it rechecks time/stop after factory
++construction. A zero-model evidence rejection never constructs a real client.
++Callbacks remain trusted in-process code, not malicious-code sandboxes.
++
++Permission expiry uses the application UTC clock. The original DB claim also
++checks its task window with the DB clock. This is not a new DB approval clock,
++hard process deadline, universal cancellation or actual provider-request counter.
++In-flight responses may arrive later; the transport must separately enforce I/O,
++cleanup and absence of hidden retries/tools/fallback.
++
++Every client/decoder error closes that wrapper. Ordinary errors become fixed
++codes; interrupts propagate. No automatic resend, repair, resume, refund or task-ID
++substitution. Original failures are captured normally. Process loss after claim
++leaves **incomplete**, never age-based reclaim. Exact original histories replay
++under expired permission without model entry; lookup errors do not create work.
++
++## Codex protocol contract
++
++`CodexExecInput` preserves exact message text, explicit model label, unchanged
++output request and closed action schema. Its prompt encloses the transcript plus
++existing research tool definitions. Those are action **data**, not executable
++CLI tools. The adapter does not read files, launch a process or perform I/O.
++
++The decoder requires one successful thread/turn, supported complete items, one
++final action object and the pinned five-field usage schema. Unknown/tool/error
++events, nonzero exits, missing/duplicate terminal events, unfinished items,
++invalid usage/UTF-8/JSON/arguments and excess bytes/events fail closed. LF/CRLF
++separate records; Unicode within JSON does not. Generated tool IDs do not collide
++across calls. The original agent still verifies citations against read evidence.
++
++Returned `total_tokens` is reported input plus output; cached-input and reasoning
++subsets are not double counted. It is not independent token or invoice verification.
++Failed streams have no validated usage receipt: zero original counters must not
++be interpreted as proof of no outside usage/charge. Reported output overrun is
++rejected **after** the operation, not a pre-request provider cap. Raw stderr and
++reasoning are not copied to the research result or a new durable store.
++
++## Actual upstream investigation and remaining activation blockers
++
++Checked 2026-09-19 against official **0.155.1**, source
++`be2951ea34f0d295ed0becf97079f92fa5f6950e`. A separately exported official Linux
++binary matched its release size/digest. Probes used new private home/work
++folders, synthetic prompts and a loopback in-memory Responses service. No real
++provider, API token, user login/database or market input was used. These are
++experiments, not a production launcher or Windows CLI acceptance.
++
++- `--ephemeral` still created local SQLite state files in the observed process.
++  Pinned source initializes state storage separately from rollout persistence;
++  `sqlite` is a removed feature. No test-only in-memory flag or unsafe bypass is
++  adopted as a product persistence solution.
++- Disabling shell left other tools in the initial request. Additional settings
++  yielded an empty tool list in one sample, not proof of ancestor-config,
++  hooks/plugins/MCP or filesystem isolation.
++- A corrected probe exited zero and completed but also emitted a Code Mode error
++  item. The decoder rejects it: exit zero alone is not sufficient. That probe
++  does not certify an admissible host.
++- Pinned request construction did not establish a provider-enforced output limit
++  matching this project's interface. No undocumented flag is invented. Default
++  documented HTTP/SSE retries cannot be counted as one request per CLI start.
++
++Host persistence/context isolation, no-hidden-operation evidence, resource and
++cleanup enforcement, actual model identity and authorization/usage audit remain
++required before a launcher can be enabled. No user-local task is delegated to
++bypass these unresolved contracts.
++
++Primary references (checked 2026-09-19):
++- https://developers.openai.com/codex/noninteractive/
++- https://developers.openai.com/codex/config-reference/
++- https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/exec/src/exec_events.rs
++- https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/core/src/client.rs
++- https://github.com/openai/codex/blob/be2951ea34f0d295ed0becf97079f92fa5f6950e/codex-rs/rollout/src/state_db.rs
++
++## Evidence and separate review
++
++Initial focused **2 failed / 175 passed**: an authorization model lone surrogate
++was incorrectly accepted (fixed); one stale-evidence fixture was incorrectly
++constructed (corrected, same zero-call expectation). Related tests then passed570.
++
++Separate same-assistant review first reproduced **8 failed / 9 passed**:
++Unicode/CR-only framing, reported output overrun, empty messages entering a
++factory, expired permission consuming a rotation. Original counterexamples remain.
++An intermediate **1 failed / 586 passed** used an unpatched static-time fixture;
++after providing its clock, the unchanged expectations passed **587** tests.
++This is not external/fresh-agent review or a guarantee of no defects.
++
++The native proof `tests/test_project_postgres_uncapped_native.py` uses current67
++migrations, BTC/ETH synthetic Codex events, stop/two turns/restart, duplicate claims,
++expired replay, zero fake permits, real child-process loss and older/incomplete
++history preservation. Windows dispatch appends this and three new unit modules;
++all original selectors/deadlines/permissions remain. Exact final tree, full/hosted
++results, first failures and unexecuted checks belong in the implementation PR.
++
++A subsequent packaging review reproduced one omitted integration-guide test, then
++added the guide to the existing optional distribution list. Older kits remain
++verifiable; the counterexample is retained in the review test module. A third
++synthetic CLI probe still emitted the missing Code Mode companion error despite
++an explicit feature setting; the decoder rejected it without stripping the error.
++This is an incomplete probe runtime, not proof every Codex installation fails.
+diff --git a/docs/research-model-budget.md b/docs/research-model-budget.md
+index c6b2f93..34e5e2e 100644
+--- a/docs/research-model-budget.md
++++ b/docs/research-model-budget.md
+@@ -23,9 +23,10 @@ No project provider/rate or fee bound has been verified in this delivery.
+ The latest owner decisions are local coding agents (Codex first; Claude Code,
+ OpenCode, Grok CLI and ZCode CLI are allowed alternatives), all needed research
+ data, and no first-round business scale/monetary cap. Do not relabel D2 unapproved.
+-The existing positive-micros allowance is capped-only; an explicit uncapped policy
+-is a remaining implementation task, not permission to fake zero charges, huge
+-ceilings or `cost_bound_attested`. Finite I/O, task identity, isolation and stop
++The positive-micros allowance remains capped-only. A separate explicit uncapped
++application path is now available; see [local-agent integration](research-local-agent.md).
++It does not fake zero charges, huge ceilings or `cost_bound_attested`. The real
++CLI host and independent authorization/usage audit remain unaccepted. Finite I/O, task identity, isolation and stop
+ controls remain required. No real client is activated by this source change;
+ configuration alone does not close G2. Tests use synthetic clients
+ and synthetic integer charges, not real prices or invoices. Existing unwrapped
+@@ -361,3 +362,11 @@ request is still claimed and its blocked result captured; no permit or factory
+ is entered. Existing expiry/output-cap checks keep their priority. Original
+ request/policy hashes and completed/incomplete replay semantics are unchanged.
+ This is not permission to delete required evidence or replace immutable inputs.
++
++
++## Explicit uncapped path (2026-09-19)
++
++See [local-agent integration](research-local-agent.md). The explicit uncapped mode
++never creates a ModelCallBudget or monetary permit. The existing capped contract
++and no-refund rules stay unchanged; selecting both modes is an error. The new
++application authorization is not a durable approval ledger or a provider bill.
