@@ -1,0 +1,341 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 3427c9b..850b6be 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -1138,0 +1139,16 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
++
++### PR #62 继续开发与分离自审（2026-09-19）
++
++在已发布候选 `f5eebf9a56d3b9020e9305188fffb89a66383231` 上重新复现19项反例，
++修复清理截止／等待失败掩盖原中断、描述符及Windows句柄关闭后被重用仍再次关闭，
++以及Linux误把FIFO当可执行文件时在校验前等待写端的问题。原中断优先级、所有清理尝试、
++固定错误和失败后不重发保留；关闭报错不代表资源已回收，也不按旧编号重试关闭。
++
++原生组合夹具明确区分首次`captured`与重放`already_captured`，其余全部回执字段一致；
++200KB用例只改为短测试编号，原字节／限制／断言保留。原失败CI不追认为成功，
++不改生产或测试时限、SQL、工作流选择、授权与重放语义。定向380通过／5跳过；
++最终冻结源码及托管Windows结果以PR #62的确切提交和原始证据为准，未齐备前不合并。
++
++Windows父进程消失的既有证明仅覆盖Job分配之后；硬终止发生在挂起创建到Job分配之间
++可能留下未执行目标指令的挂起进程，不宣传为原子启动或完整沙箱。真实CLI的配置／持久化／
++上下文隔离与实际提供商验收仍未关闭；本轮无用户库、凭据、真实模型／行情或安装操作。
+diff --git a/docs/research-local-agent.md b/docs/research-local-agent.md
+index 62c3cb2..d1874c8 100644
+--- a/docs/research-local-agent.md
++++ b/docs/research-local-agent.md
+@@ -521 +521 @@ are fixed-code errors; KeyboardInterrupt/SystemExit propagate after cleanup.
+-Every launched process domain is terminated on exit, including success, so
++Termination of the owned domain is attempted on exit, including success, so
+@@ -530 +530 @@ that transport; the existing model wrapper also closes on protocol errors.
+-| Windows x64, Python >=3.12 | Create native child **suspended**, give it only the three allowed pipe handles, assign it to an anonymous parent-owned **kill-on-close Job Object**, then resume. Assignment/resume failures do not execute the target or fall back. Cleanup terminates the job and waits for its active count and leader exit. Parent loss closes the noninherited job handle. Nested-job denial stays a failure; no breakaway or security-policy change. |
++| Windows x64, Python >=3.12 | Create native child **suspended**, give it only the three allowed pipe handles, assign it to an anonymous parent-owned **kill-on-close Job Object**, then resume. Assignment/resume failures do not execute the target or fall back. Cleanup terminates the job and waits for its active count and leader exit. After assignment, parent loss closes the noninherited job handle. Nested-job denial stays a failure; no breakaway or security-policy change. |
+@@ -579,0 +580,44 @@ References checked 2026-09-19:
++
++### Continuation review: cancellation and handle ownership
++
++A separate continuation of PR #62 at original head
++`f5eebf9a56d3b9020e9305188fffb89a66383231` reproduced nineteen negative cases:
++four first-interruption/cleanup-error cases, six descriptor-reuse cases, six
++Windows handle/thread-close cases, two repeat-cleanup cases and a real Linux
++FIFO-image check. The original direct process tests passed 72 with four Windows
++skips; these additional counterexamples still failed and were corrected.
++
++Cleanup now retains the first KeyboardInterrupt/SystemExit even when a later
++wait fails or its deadline expires, and still attempts each owned close. Both
++pipe descriptors and Windows handles are relinquished before close: the OS can
++release and reuse a number before Python receives cancellation. Neither a
++subsequent cleanup nor constructor-finally closes that stale number again.
++An error from close is not retried by number and is not proof of successful
++reclamation. This is a specific ownership boundary, not a promise covering every
++possible asynchronous Python/OS interruption point.
++
++On Linux, image validation opens nonblocking before fstat so a FIFO without a
++writer is immediately rejected as nonregular instead of blocking validation.
++Regular native images retain their original digest, size and magic checks.
++Kernel/file operations can still exceed the supervision deadline; this does not
++create a universal wall-clock guarantee.
++
++The Windows native integration fixture explicitly expects `captured` on first
++execution and `already_captured` on replay, comparing every other receipt field
++unchanged. Short named test IDs preserve the entire 200KB binary fixture while
++avoiding a Windows environment-value overflow before the test could run.
++No payload, production semantics, test deadline or workflow selector is relaxed.
++The original failed native run remains evidence, not a passed earlier version.
++
++The existing parent-loss proof observes the target **after Job assignment**.
++The suspended-create/assign sequence is not atomic with respect to hard parent
++termination before assignment; a suspended process may remain in that window.
++No target instructions run before assignment/resume, but this is not complete
++parent-loss containment at every startup instruction. A selected real CLI profile
++must account for this and the existing filesystem/network/persistence limits.
++
++The corrected ten-file local regression passed 380 with five platform/opt-in
++skips. Final frozen full results and actual Windows case inventories belong to
++the exact implementation PR revision; no old-head success replaces them.
++This review is by the same assistant in a separate pass, not an external reviewer.
++Primary reference for close/reuse behavior: https://peps.python.org/pep-0475/
+diff --git a/src/polymarket_alpha_lab/research_process.py b/src/polymarket_alpha_lab/research_process.py
+index 94183cb..7274f5b 100644
+--- a/src/polymarket_alpha_lab/research_process.py
++++ b/src/polymarket_alpha_lab/research_process.py
+@@ -96 +96,4 @@ def _verify_executable(spec):
+-    flags = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NOFOLLOW', 0)
++    # A FIFO must reach fstat without waiting for a writer. O_NONBLOCK has no
++    # effect on regular image files; nonregular descriptors are rejected below.
++    flags = (os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NOFOLLOW', 0)
++             | getattr(os, 'O_NONBLOCK', 0))
+@@ -177 +180 @@ def _spawn(spec):
+-                _cleanup(owned, live, spec.cleanup_timeout_ms)
++                _cleanup(owned, list(live), spec.cleanup_timeout_ms)
+@@ -201 +204,5 @@ def _drain(owned, descriptors, stdin, spec, deadline, stop):
+-                os.close(source); descriptors[0] = source = None
++                # Relinquish before close: cancellation can arrive after the
++                # OS released/reused the number. Cleanup must not close it twice.
++                fd, source = source, None
++                descriptors[0] = None
++                os.close(fd)
+@@ -225 +232 @@ def _drain(owned, descriptors, stdin, spec, deadline, stop):
+-                os.close(fd); descriptors[index] = None
++                descriptors[index] = None
+@@ -227,0 +235 @@ def _drain(owned, descriptors, stdin, spec, deadline, stop):
++                os.close(fd)
+@@ -244,2 +252,7 @@ def _cleanup(owned, descriptors, timeout_ms):
+-    """Terminate the owned domain and close descriptors on every exit path."""
+-    interruption = None
++    """Attempt every close and retain the first interruption on all exit paths.
++
++    Descriptor ownership is relinquished before close, including a failed close:
++    a failure cannot prove that the OS did not already release/reuse its number.
++    There is no retry by stale number or successful-cleanup claim after an error.
++    """
++    failure = None
+@@ -257,2 +270 @@ def _cleanup(owned, descriptors, timeout_ms):
+-                if interruption is None:
+-                    interruption = error
++                failure = _prefer_failure(failure, error)
+@@ -260 +272,3 @@ def _cleanup(owned, descriptors, timeout_ms):
+-                    raise ResearchProcessError('research_process_cleanup_failed') from None
++                    break
++    except BaseException as error:
++        failure = _prefer_failure(failure, error)
+@@ -262,2 +276 @@ def _cleanup(owned, descriptors, timeout_ms):
+-        close_failure = None
+-        for fd in descriptors:
++        for index, fd in enumerate(descriptors):
+@@ -264,0 +278 @@ def _cleanup(owned, descriptors, timeout_ms):
++                descriptors[index] = None
+@@ -268 +282 @@ def _cleanup(owned, descriptors, timeout_ms):
+-                    close_failure = _prefer_failure(close_failure, error)
++                    failure = _prefer_failure(failure, error)
+@@ -272,5 +286,3 @@ def _cleanup(owned, descriptors, timeout_ms):
+-            close_failure = _prefer_failure(close_failure, error)
+-        if close_failure is not None:
+-            raise _prefer_failure(interruption, close_failure)
+-    if interruption is not None:
+-        raise interruption
++            failure = _prefer_failure(failure, error)
++    if failure is not None:
++        raise failure
+diff --git a/src/polymarket_alpha_lab/research_process_windows.py b/src/polymarket_alpha_lab/research_process_windows.py
+index d7f57e0..4a1617f 100644
+--- a/src/polymarket_alpha_lab/research_process_windows.py
++++ b/src/polymarket_alpha_lab/research_process_windows.py
+@@ -146,2 +146,2 @@ class OwnedWindowsProcess:
+-            _checked(api.CloseHandle(thread))
+-            thread = None
++            closing_thread, thread = thread, None
++            _checked(api.CloseHandle(closing_thread))
+@@ -192,0 +193,3 @@ class OwnedWindowsProcess:
++                # Close can take effect before cancellation is delivered. Do
++                # not retain/retry a value the OS may already have reassigned.
++                setattr(self, name, None)
+@@ -195 +197,0 @@ class OwnedWindowsProcess:
+-                    setattr(self, name, None)
+diff --git a/tests/test_project_postgres_uncapped_audit_native.py b/tests/test_project_postgres_uncapped_audit_native.py
+index b12388a..7ddb679 100644
+--- a/tests/test_project_postgres_uncapped_audit_native.py
++++ b/tests/test_project_postgres_uncapped_audit_native.py
+@@ -286 +286 @@ def _prove_actual_process_transport(db, parent):
+-            assert session.run_uncapped_research(request=request, authorization=permission,
++            replay = session.run_uncapped_research(request=request, authorization=permission,
+@@ -288 +288,5 @@ def _prove_actual_process_transport(db, parent):
+-                require_durable_audit=True) == result
++                require_durable_audit=True)
++            assert result.status == 'captured' and replay.status == 'already_captured'
++            # This is a new operation receipt over the SAME durable execution.
++            # Compare every other field, not just the record or token count.
++            assert replace(replay, status=result.status) == result
+diff --git a/tests/test_research_process.py b/tests/test_research_process.py
+index 5879be2..72937fa 100644
+--- a/tests/test_research_process.py
++++ b/tests/test_research_process.py
+@@ -40 +40,2 @@ def run(value, data=b'', **kw):
+-@pytest.mark.parametrize('data', [b'', b'Chinese \xe4\xb8\xad\xe6\x96\x87\r\n\x00\xff', b'x'*200000])
++@pytest.mark.parametrize('data', [b'', b'Chinese \xe4\xb8\xad\xe6\x96\x87\r\n\x00\xff', b'x'*200000],
++                         ids=['empty', 'unicode-and-binary', 'large-200kb'])
+diff --git a/tests/test_research_process_review.py b/tests/test_research_process_review.py
+index 3f64148..e8beab6 100644
+--- a/tests/test_research_process_review.py
++++ b/tests/test_research_process_review.py
+@@ -194,0 +195,161 @@ def test_partial_launch_cleanup_error_does_not_swallow_original_interrupt(monkey
++
++
++@pytest.mark.parametrize('kind', [KeyboardInterrupt, SystemExit])
++@pytest.mark.parametrize('later', ['wait-error', 'deadline'])
++def test_cleanup_retains_first_interrupt_after_wait_failure(monkeypatch, kind, later):
++    original = kind('original interruption')
++    events = []
++    now = [0]
++    attempts = [0]
++
++    def terminate():
++        events.append('terminate')
++        attempts[0] += 1
++        if attempts[0] == 1:
++            raise original
++        if later == 'wait-error':
++            raise OSError('secondary failure')
++        now[0] = 1000001
++
++    owner = SimpleNamespace(terminate=terminate, is_closed=lambda: False,
++                            close=lambda: events.append('owner-close'))
++    monkeypatch.setattr(core.time, 'monotonic_ns', lambda: now[0])
++    monkeypatch.setattr(core.os, 'close', lambda fd: events.append(fd))
++    with pytest.raises(kind) as error:
++        core._cleanup(owner, [101, 102, 103], 1)
++    assert error.value is original
++    assert events == ['terminate', 'terminate', 101, 102, 103, 'owner-close']
++
++
++@pytest.mark.parametrize('kind', [KeyboardInterrupt, SystemExit])
++@pytest.mark.parametrize('index', [0, 1, 2], ids=['stdin', 'stdout', 'stderr'])
++def test_close_interruption_never_closes_reused_descriptor(monkeypatch, executable, tmp_path, kind, index):
++    # Simulate close taking effect, then a signal handler allocating the freed
++    # descriptor and raising. No real foreign descriptors are closed by the test.
++    original = kind('original close interruption')
++    target = 101 + index
++    closed = []
++    foreign_closed = []
++    owner = SimpleNamespace(terminate=lambda: None, is_closed=lambda: True,
++                            close=lambda: None, poll=lambda: 0)
++
++    def close(fd):
++        if fd == target and target in closed:
++            foreign_closed.append(fd)
++        closed.append(fd)
++        if fd == target and closed.count(fd) == 1:
++            raise original
++
++    with monkeypatch.context() as patch:
++        patch.setattr(core, '_verify_executable', lambda _: None)
++        patch.setattr(core, '_spawn', lambda _: (owner, (101, 102, 103)))
++        patch.setattr(core.os, 'close', close)
++        patch.setattr(core.os, 'read', lambda *_: b'')
++        with pytest.raises(kind) as error:
++            run(spec(executable, tmp_path))
++    assert error.value is original
++    assert foreign_closed == []
++    assert sorted(closed) == [101, 102, 103]
++
++
++@pytest.mark.parametrize('kind', [KeyboardInterrupt, SystemExit])
++@pytest.mark.parametrize('name', ['job', 'process'])
++def test_windows_closed_handle_is_not_owned_again_after_interruption(kind, name):
++    original = kind('original Windows close interruption')
++    handles = {'job': 201, 'process': 202}
++    closed = []
++    foreign_closed = []
++
++    def close(handle):
++        if handle in closed:
++            foreign_closed.append(handle)
++        closed.append(handle)
++        if handle == handles[name] and closed.count(handle) == 1:
++            raise original
++        return True
++
++    owner = windows.OwnedWindowsProcess.__new__(windows.OwnedWindowsProcess)
++    owner.api = SimpleNamespace(CloseHandle=close)
++    owner.job, owner.process = 201, 202
++    with pytest.raises(kind) as error:
++        owner.close()
++    assert error.value is original
++    owner.close()
++    assert owner.job is owner.process is None
++    assert foreign_closed == [] and closed == [201, 202]
++
++
++@pytest.mark.parametrize('kind', [KeyboardInterrupt, SystemExit])
++def test_windows_constructor_relinquishes_closed_thread_before_cancel(monkeypatch, executable, tmp_path, kind):
++    original = kind('closed thread interruption')
++    closed = []
++    foreign_closed = []
++    def attribute_size(_buffer, _count, _flags, length):
++        length._obj.value = 64
++        return True
++    def create(*args):
++        args[-1]._obj.hProcess = 302
++        args[-1]._obj.hThread = 303
++        return True
++    def close(handle):
++        if handle in closed:
++            foreign_closed.append(handle)
++        closed.append(handle)
++        if handle == 303 and closed.count(handle) == 1:
++            raise original
++        return True
++    api = SimpleNamespace(CreateJobObjectW=lambda *_: 301,
++        SetInformationJobObject=lambda *_: True,
++        InitializeProcThreadAttributeList=attribute_size,
++        UpdateProcThreadAttribute=lambda *_: True,
++        DeleteProcThreadAttributeList=lambda *_: None,
++        CreateProcessW=create, AssignProcessToJobObject=lambda *_: True,
++        ResumeThread=lambda *_: 1, CloseHandle=close,
++        TerminateProcess=lambda *_: True, WaitForSingleObject=lambda *_: 0)
++    monkeypatch.setattr(windows, '_api', lambda: api)
++    monkeypatch.setitem(sys.modules, 'msvcrt', SimpleNamespace(get_osfhandle=lambda fd: fd))
++    monkeypatch.setattr(os, 'set_handle_inheritable', lambda *_: None, raising=False)
++    with pytest.raises(kind) as error:
++        windows.OwnedWindowsProcess(spec(executable, tmp_path), (401, 402, 403))
++    assert error.value is original
++    assert foreign_closed == [] and sorted(closed) == [301, 302, 303]
++
++
++@pytest.mark.parametrize('kind', [KeyboardInterrupt, SystemExit])
++def test_cleanup_relinquishes_descriptors_even_if_close_is_interrupted(monkeypatch, kind):
++    original = kind('closed descriptor interruption')
++    seen = []
++    def close(fd):
++        seen.append(fd)
++        if fd == 101 and seen.count(fd) == 1:
++            raise original
++    owner = SimpleNamespace(terminate=lambda: None, is_closed=lambda: True, close=lambda: None)
++    descriptors = [101, 102, 103]
++    monkeypatch.setattr(core.os, 'close', close)
++    with pytest.raises(kind) as error:
++        core._cleanup(owner, descriptors, 1000)
++    assert error.value is original
++    core._cleanup(owner, descriptors, 1000)
++    assert seen == [101, 102, 103]
++    assert descriptors == [None, None, None]
++
++
++@pytest.mark.skipif(sys.platform != 'linux', reason='Linux FIFO image validation')
++def test_fifo_executable_is_rejected_without_waiting_for_a_writer(executable, tmp_path):
++    fifo = tmp_path / 'not-a-native-image'
++    os.mkfifo(fifo)
++    root = Path(__file__).resolve().parents[1]
++    code = (f'import sys;sys.path.insert(0,{str(root / "src")!r})\n'
++            'from polymarket_alpha_lab import research_process as core\n'
++            f'value=core.ResearchProcessSpec(({str(fifo)!r},),{str(tmp_path)!r},(),"0"*64,100)\n'
++            'def forbidden(_): raise AssertionError("unverified process launched")\n'
++            'core._spawn=forbidden\n'
++            'try: core.run_research_process(spec=value,stdin=b"",allow_process_start=True)\n'
++            'except core.ResearchProcessError: print("rejected")\n'
++            'else: raise AssertionError("FIFO accepted")\n')
++    try:
++        child = subprocess.run([executable[0], '-I', '-S', '-c', code],
++            cwd=tmp_path, env={}, capture_output=True, check=False, timeout=5)
++    except subprocess.TimeoutExpired:
++        pytest.fail('Image validation blocked waiting for a FIFO writer')
++    assert child.returncode == 0 and child.stdout == b'rejected\n' and child.stderr == b''

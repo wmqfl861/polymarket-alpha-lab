@@ -1,0 +1,54 @@
+name: Publish reviewed PR62 correction objects
+on:
+  push:
+    branches: ['audit/pr62-corrections-20260919']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify fixed source patch without executing project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp staging/pr62-review.patch "$RUNNER_TEMP/review.patch"
+          git switch --detach f5eebf9a56d3b9020e9305188fffb89a66383231
+          python - <<'PY'
+          import hashlib,json,os,pathlib,subprocess
+          temp=pathlib.Path(os.environ['RUNNER_TEMP'])
+          patch=temp/'review.patch'
+          assert hashlib.sha256(patch.read_bytes()).hexdigest()=='2d2df4a96841d06ae1f98f9820e9ac3f036cdeec491b385b695f434a54f27b34'
+          assert subprocess.check_output(['git','rev-parse','HEAD^{tree}'],text=True).strip()=='6765f7cffa9a7d3aae2adf80812409b1e729ab19'
+          subprocess.run(['git','apply','--unidiff-zero','--check','--index',str(patch)],check=True)
+          subprocess.run(['git','apply','--unidiff-zero','--index',str(patch)],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          assert subprocess.check_output(['git','write-tree'],text=True).strip()=='931456212665b692368932fabeff0d80dff55d49'
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert set(paths)=={'DELIVERY_PLAN.md','docs/research-local-agent.md','src/polymarket_alpha_lab/research_process.py','src/polymarket_alpha_lab/research_process_windows.py','tests/test_project_postgres_uncapped_audit_native.py','tests/test_research_process.py','tests/test_research_process_review.py'}
+          entries=[]
+          for name in paths:
+              path=pathlib.Path(name)
+              assert not name.startswith('.github/') and path.is_file() and not path.is_symlink()
+              entries.append(dict(path=name,mode='100644',type='blob',content=path.read_text(encoding='utf-8')))
+          (temp/'tree-request.json').write_text(json.dumps(dict(base_tree='6765f7cffa9a7d3aae2adf80812409b1e729ab19',tree=entries)),encoding='utf-8')
+          print('reviewed_tree=931456212665b692368932fabeff0d80dff55d49')
+          PY
+      - name: Publish ordinary Git objects only; no ref, workflow or main update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/trees --input "$RUNNER_TEMP/tree-request.json" > "$RUNNER_TEMP/tree-result.json"
+          python - <<'PY'
+          import json,os,pathlib
+          result=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'tree-result.json').read_text())
+          assert result['sha']=='931456212665b692368932fabeff0d80dff55d49'
+          print('published_tree='+result['sha'])
+          PY
