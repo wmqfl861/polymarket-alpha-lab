@@ -1,0 +1,27 @@
+name: Pinned Codex profile package
+on:
+  push:
+    branches: ['audit/codex-profile-source-20260919']
+    paths: ['.github/workflows/codex-profile-binary.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Download public release package; do not install or execute it
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/profile-package"
+          cd "$RUNNER_TEMP/profile-package"
+          curl --fail --location --max-time 120 --output codex-package.tar.gz https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package-x86_64-unknown-linux-musl.tar.gz
+          test "$(wc -c < codex-package.tar.gz)" = 138838055
+          echo 'a65b895c6ac1a73629bbe4b864640c86133e94a43b4d67b3103044e1a306d5a2  codex-package.tar.gz' | sha256sum --check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: codex-profile-package-0.155.1-linux
+          path: ${{ runner.temp }}/profile-package/
+          retention-days: 7
+          if-no-files-found: error
