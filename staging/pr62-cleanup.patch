@@ -1,0 +1,180 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 3427c9b..ffb8e20 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -1133,6 +1133,15 @@ restore 命令。不增加生产恢复接口、业务文件账本或自动升级
+ 不冒充产品缺陷或完整测试结论。最终冻结源码、自审、全量和实际 Windows／整包结果
+ 以关联 PR 的确切 head/tree 与原日志为准；全部适用门禁通过前不合并。
+ 
++冻结后复核再现四个清理阶段的中断反例：先收到中断，再发生普通等待错误或清理超时时，
++原中断可能被替换。修正后继续尝试全部关闭并保留原中断，不据此声称清理完全成功；
++原四条失败断言保留。旧 head 的托管结果不能代替这一修订树的最终完整／原生验收。
++
++后续六条反例再现中断关闭后描述符编号被复用时的所有权错误；现于关闭前移除原编号，
++避免清理误关新资源。首次 Windows 原生失败另包括重放操作状态断言错误，以及200KB参数
++成为过长 pytest 用例名而导致同一用例的准备／清理错误。只修正操作状态比较和短用例名，
++原数据、全部其余回执字段、时限和业务规则保留；新版本必须完整实际验收后才合并。
++
+ **WP-02／WP-03 仍 PARTIAL，G2／G3 未关闭，V1 仍 1／6。** 本轮完成进程层，
+ 所选 CLI 的上下文／持久化／隐藏工具请求及真实模型身份仍须核验；没有真实提供商启用、
+ 用户凭据／业务库／安装覆盖、迁移、真实行情或订单操作。历史 Windows 可靠性问题仍保留。
+diff --git a/docs/research-local-agent.md b/docs/research-local-agent.md
+index 62c3cb2..149f051 100644
+--- a/docs/research-local-agent.md
++++ b/docs/research-local-agent.md
+@@ -564,6 +564,24 @@ A separate same-assistant review reproduced four initial boundary failures:
+ zero-write backpressure, arbitrary error text, interrupt precedence and Windows
+ handle-close failure. A later two-case review reproduced interrupted partial
+ launch being masked by a secondary cleanup error. Original counterexamples stay.
++A further four-case review found that an interruption first observed during
++cleanup could be replaced by a later ordinary wait error or cleanup timeout.
++The correction preserves that first interruption while still attempting every
++handle/descriptor close. It never turns the uncertain cleanup into success or
++changes any deadline. The original four RED cases remain in the review module.
++Another six-case review covers descriptor reuse after an interrupted close:
++remove a closing descriptor number from owned bookkeeping before closing it, so
++later cleanup cannot close an unrelated resource that reused that number. This
++preserves cancellation and fails closed; it does not certify every OS-level
++interruption point or malicious in-process isolation.
++
++The first Windows native run retained a replay-fixture failure (`captured` versus
++`already_captured`) and two setup/teardown errors on one large-input case because
++pytest embedded the200KB payload in its environment-bound case ID. The corrected
++fixture expects only the documented operation-status transition and compares all
++other fields unchanged. Short explicit IDs leave every input byte and size check
++intact; the new final native run must actually execute that case. No production
++replay rule, timeout, operating-system limit or workflow selector is relaxed.
+ One test fixture initially timed out waiting for a nested interpreter's site
+ startup; the stdlib-only synthetic commands now use `-I -S`, with unchanged
+ production and test operation deadlines. A tool-execution timeout and local venv
+diff --git a/src/polymarket_alpha_lab/research_process.py b/src/polymarket_alpha_lab/research_process.py
+index 94183cb..5198eb8 100644
+--- a/src/polymarket_alpha_lab/research_process.py
++++ b/src/polymarket_alpha_lab/research_process.py
+@@ -198,7 +198,11 @@ def _drain(owned, descriptors, stdin, spec, deadline, stop):
+         progress = False
+         if source is not None:
+             if offset == len(stdin):
+-                os.close(source); descriptors[0] = source = None
++                # Relinquish the descriptor number before close can deliver an
++                # interruption. It may already be reused when cleanup resumes.
++                fd = source
++                descriptors[0] = source = None
++                os.close(fd)
+             else:
+                 try:
+                     count = os.write(source, stdin[offset:offset+4096])
+@@ -222,9 +226,10 @@ def _drain(owned, descriptors, stdin, spec, deadline, stop):
+                 continue
+             progress = True
+             if not block:
+-                os.close(fd); descriptors[index] = None
++                descriptors[index] = None
+                 if index == 1: out = None
+                 else: err = None
++                os.close(fd)
+             elif len(block)+used > cap:
+                 raise ResearchProcessError('research_process_output_limit')
+             elif index == 1:
+@@ -258,6 +263,13 @@ def _cleanup(owned, descriptors, timeout_ms):
+                     interruption = error
+                 if time.monotonic_ns() >= deadline:
+                     raise ResearchProcessError('research_process_cleanup_failed') from None
++    except Exception:
++        # Once cancellation was observed, a later ordinary wait/deadline failure
++        # must not erase it. The finally block still attempts every close; no
++        # successful cleanup or complete process termination is inferred here.
++        if interruption is not None:
++            raise interruption from None
++        raise
+     finally:
+         close_failure = None
+         for fd in descriptors:
+diff --git a/tests/test_project_postgres_uncapped_audit_native.py b/tests/test_project_postgres_uncapped_audit_native.py
+index b12388a..d7af017 100644
+--- a/tests/test_project_postgres_uncapped_audit_native.py
++++ b/tests/test_project_postgres_uncapped_audit_native.py
+@@ -283,8 +283,10 @@ def _prove_actual_process_transport(db, parent):
+     with db.session() as session:
+         for request, permission, result, audit in originals:
+             def forbidden(_): pytest.fail('replayed subprocess')
++            assert result.status == 'captured'
++            # Replay changes the operation receipt, never its durable contents.
+             assert session.run_uncapped_research(request=request, authorization=permission,
+                 model_factory=forbidden, allow_model_calls=True, allow_uncapped_costs=True,
+-                require_durable_audit=True) == result
++                require_durable_audit=True) == replace(result, status='already_captured')
+             assert session.inspect_uncapped_calls(record_id=request.record_id) == audit
+     assert not list(work.iterdir())
+diff --git a/tests/test_research_process.py b/tests/test_research_process.py
+index 5879be2..3948451 100644
+--- a/tests/test_research_process.py
++++ b/tests/test_research_process.py
+@@ -37,7 +37,8 @@ def run(value, data=b'', **kw):
+     return core.run_research_process(spec=value, stdin=data, allow_process_start=True, **kw)
+ 
+ 
+-@pytest.mark.parametrize('data', [b'', b'Chinese \xe4\xb8\xad\xe6\x96\x87\r\n\x00\xff', b'x'*200000])
++@pytest.mark.parametrize('data', [b'', b'Chinese \xe4\xb8\xad\xe6\x96\x87\r\n\x00\xff', b'x'*200000],
++                         ids=['empty', 'binary', 'large-200kb'])
+ def test_actual_binary_round_trip_without_spool_files(executable, tmp_path, data):
+     before = list(tmp_path.iterdir())
+     result = run(spec(executable, tmp_path), data)
+diff --git a/tests/test_research_process_review.py b/tests/test_research_process_review.py
+index 3f64148..3a2c77d 100644
+--- a/tests/test_research_process_review.py
++++ b/tests/test_research_process_review.py
+@@ -192,3 +192,53 @@ def test_partial_launch_cleanup_error_does_not_swallow_original_interrupt(monkey
+     monkeypatch.setattr(core,'_cleanup',cleanup)
+     with pytest.raises(type(fault)) as error:core._spawn(spec(executable,tmp_path))
+     assert error.value is fault
++
++
++@pytest.mark.parametrize('fault',[KeyboardInterrupt(),SystemExit(0)])
++@pytest.mark.parametrize('later',['deadline','wait_error'])
++def test_first_cleanup_interrupt_survives_later_wait_failure(monkeypatch,fault,later):
++    events=[]
++    def terminate():
++        events.append('terminate')
++        if len(events)==1:raise fault
++    def is_closed():
++        if later=='wait_error':raise OSError('secondary wait failure')
++        return False
++    owner=SimpleNamespace(terminate=terminate,is_closed=is_closed,
++                          close=lambda:events.append('owner-close'))
++    clock=iter((0,1,2_000_000))
++    monkeypatch.setattr(core.time,'monotonic_ns',lambda:next(clock))
++    monkeypatch.setattr(core.os,'close',lambda fd:events.append(fd))
++    with pytest.raises(type(fault)) as error:core._cleanup(owner,[21,22],1)
++    assert error.value is fault
++    assert events==['terminate','terminate',21,22,'owner-close']
++
++
++@pytest.mark.parametrize('fault',[KeyboardInterrupt(),SystemExit(0)])
++@pytest.mark.parametrize('index',[0,1,2],ids=['stdin','stdout','stderr'])
++def test_interrupted_close_does_not_close_reused_foreign_descriptor(monkeypatch,fault,index):
++    # Simulate a close that finishes before cancellation is delivered, then an
++    # unrelated allocation reusing the number. Cleanup must not own that number.
++    fd=os.open(os.devnull,os.O_RDONLY); replacement=[]; real_close=os.close
++    descriptors=[None,None,None];descriptors[index]=fd
++    owner=SimpleNamespace(poll=lambda:0,terminate=lambda:None,is_closed=lambda:True,close=lambda:None)
++    settings=SimpleNamespace(max_stdout_bytes=1,max_stderr_bytes=1)
++    def close(value):
++        real_close(value)
++        if value==fd:
++            replacement.append(os.open(os.devnull,os.O_RDONLY))
++            assert replacement[0]==fd
++            raise fault
++    try:
++        with monkeypatch.context() as patch:
++            patch.setattr(core.os,'close',close)
++            with pytest.raises(type(fault)) as error:
++                core._drain(owner,descriptors,b'',settings,time.monotonic_ns()+1_000_000_000,None)
++            assert error.value is fault
++        core._cleanup(owner,descriptors,100)
++        assert os.fstat(replacement[0]) is not None
++        assert descriptors==[None,None,None]
++    finally:
++        for value in replacement or [fd]:
++            try:real_close(value)
++            except OSError:pass
