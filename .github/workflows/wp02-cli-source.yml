@@ -1,0 +1,56 @@
+name: WP02 pinned source and CLI export
+on:
+  push:
+    branches: ['audit/wp02-cli-source-20260919']
+    paths: ['.github/workflows/wp02-cli-source.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 8ae2933a843c554b0f4391b4faeb572b2f6b952c
+          path: project
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: openai/codex
+          ref: be2951ea34f0d295ed0becf97079f92fa5f6950e
+          path: upstream
+          persist-credentials: false
+      - name: Archive public source and pinned official binary without executing it
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/wp02-export"
+          test "$(git -C project rev-parse HEAD^{tree})" = 1061c4492de3378d00fb1e55179da2e539e36ca4
+          git -C project archive --format=tar.gz HEAD > "$RUNNER_TEMP/wp02-export/project.tar.gz"
+          git -C project ls-tree -rz --full-tree HEAD > "$RUNNER_TEMP/wp02-export/project-tree.z"
+          git -C project cat-file commit HEAD > "$RUNNER_TEMP/wp02-export/project-commit.txt"
+          git -C upstream archive --format=tar.gz HEAD > "$RUNNER_TEMP/wp02-export/codex-source.tar.gz"
+          git -C upstream ls-tree -rz --full-tree HEAD > "$RUNNER_TEMP/wp02-export/codex-tree.z"
+          python - <<'PY'
+          import hashlib, json, os, pathlib, urllib.request
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'wp02-export'
+          with urllib.request.urlopen('https://api.github.com/repos/openai/codex/releases/tags/rust-v0.155.1', timeout=60) as response:
+              release = json.load(response)
+          asset = next(a for a in release['assets'] if a['name'] == 'codex-x86_64-unknown-linux-musl.tar.gz')
+          with urllib.request.urlopen(asset['browser_download_url'], timeout=60) as response:
+              data = response.read()
+          assert len(data) == asset['size']
+          assert 'sha256:' + hashlib.sha256(data).hexdigest() == asset['digest']
+          (root / 'codex-linux.tar.gz').write_bytes(data)
+          (root / 'codex-asset.json').write_text(json.dumps(asset, indent=2))
+          print(asset['name'], len(data), asset['digest'])
+          PY
+          cd "$RUNNER_TEMP/wp02-export"
+          sha256sum *.gz *.z *.txt *.json > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wp02-source-and-cli-8ae2933
+          path: ${{ runner.temp }}/wp02-export/
+          retention-days: 7
+          if-no-files-found: error
