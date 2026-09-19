@@ -1,0 +1,37 @@
+name: Pinned Codex profile source
+on:
+  push:
+    branches: ['audit/codex-profile-source-20260919']
+    paths: ['.github/workflows/codex-profile-source.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: openai/codex
+          ref: be2951ea34f0d295ed0becf97079f92fa5f6950e
+          persist-credentials: false
+      - name: Archive public source and release metadata; execute no upstream code
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = be2951ea34f0d295ed0becf97079f92fa5f6950e
+          mkdir -p "$RUNNER_TEMP/profile-source"
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/profile-source/source.tar.gz"
+          git ls-tree -rz HEAD > "$RUNNER_TEMP/profile-source/tree.z"
+          git cat-file commit HEAD > "$RUNNER_TEMP/profile-source/commit.txt"
+          gh api repos/openai/codex/releases/tags/rust-v0.155.1 > "$RUNNER_TEMP/profile-source/release.json"
+          cd "$RUNNER_TEMP/profile-source"
+          sha256sum source.tar.gz tree.z commit.txt release.json > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: codex-profile-source-be2951ea
+          path: ${{ runner.temp }}/profile-source/
+          retention-days: 7
+          if-no-files-found: error
