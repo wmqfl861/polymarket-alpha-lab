@@ -43,16 +43,25 @@ jobs:
           subprocess.run(['git', 'diff', '--cached', '--check'], check=True)
           paths = subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines()
           assert len(paths) == 26
+          # The authorized repository connector already wrote the reviewed
+          # workflow blob into this base tree. This job has no workflow-write
+          # authority and must not try to change any .github path.
+          workflow = '.github/workflows/native-postgres.yml'
+          assert subprocess.check_output(['git', 'hash-object', workflow], text=True).strip() == 'b8fde9a0a4b47511bc85ea6afa4c6122ef5bbc24'
           entries = []
           for name in paths:
+              if name == workflow:
+                  continue
+              assert not name.startswith('.github/')
               entry = pathlib.Path(name)
               assert entry.is_file() and not entry.is_symlink()
               entries.append(dict(path=name, mode='100644', type='blob', content=entry.read_text(encoding='utf-8')))
-          request = dict(base_tree='1724d4e23856e76ae74cca2c3b75faf31007afe2', tree=entries)
+          assert len(entries) == 25
+          request = dict(base_tree='6c4e5c725ab887a046111db4e9818e32602aee65', tree=entries)
           (root / 'source-tree-request.json').write_text(json.dumps(request), encoding='utf-8')
           print('reviewed_tree=' + expected)
           PY
-      - name: Publish only the checked Git tree object; never update a ref or main
+      - name: Publish ordinary source objects only; never update a ref, workflow or main
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
