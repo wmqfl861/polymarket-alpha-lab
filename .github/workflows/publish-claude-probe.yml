@@ -61,7 +61,18 @@ jobs:
           assert set(payloads) == set(hashes)
           temp = pathlib.Path(os.environ['RUNNER_TEMP'])
           env = dict(os.environ, GIT_INDEX_FILE=str(temp/'probe-index'))
-          subprocess.run(['git','read-tree',approved_workflow_tree],env=env,check=True)
+          # A Git fetch does not include an unreferenced intermediate tree.
+          # Reconstruct it from the SAME directly approved workflow blobs already
+          # reachable in this helper commit, then require its original exact SHA.
+          subprocess.run(['git','read-tree',base],env=env,check=True)
+          workflows = {
+              '.github/workflows/native-postgres.yml':'77bdf6cb3c9fe78374fc2ff75ea938f91e5dbcc4',
+              '.github/workflows/native-distribution.yml':'7ae13514f0932726c31a9190249e6370f3c6964a',
+          }
+          for path, blob in workflows.items():
+              assert subprocess.check_output(['git','hash-object',path],text=True).strip() == blob
+              subprocess.run(['git','update-index','--cacheinfo','100644',blob,path],env=env,check=True)
+          assert subprocess.check_output(['git','write-tree'],env=env,text=True).strip() == approved_workflow_tree
           entries = []
           for path, data in payloads.items():
               assert not path.startswith('.github/')
