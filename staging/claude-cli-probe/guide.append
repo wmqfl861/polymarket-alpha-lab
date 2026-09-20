@@ -1,0 +1,128 @@
+
+
+## Supplied Claude binary acceptance probe (2026-09-20; WP-02)
+
+The source-only test `tests/test_research_claude_profile_native.py` now provides
+six fixed scenarios for a separately verified, explicitly supplied **2.1.278**
+native image: success, HTTP429, HTTP500, invalid action text, an actual tool-use
+response, and a truncated event stream. This is not a seventh adapter, a product
+reporting subsystem, a downloader, or a default live-model configuration.
+
+**The official binary was unavailable in this development environment and has
+NOT been executed for this delivery.** Earlier restricted downloads are not
+retried via mirrors/packages/CI helpers. The local and normal CI proofs use
+explicitly labeled standard-library Python stand-ins; their success is not
+vendor compatibility, state, network or identity acceptance. Default verification
+skips the six supplied-image cases, and the full verifier strips their opt-ins.
+
+### Prerequisites and invocation
+
+Use a fresh SOURCE checkout and its locked Python3.12 test environment, not a
+business installation/kit. The operator must already have a publisher-verified
+native image and a disposable, secret-free host with external egress denied and
+numeric loopback allowed. The harness does not install or weaken security policy,
+create that isolation, inspect real credentials or adopt a subscription login.
+Do not copy user HOME, `.claude`, `.env`, `.local`, a database or backups into it.
+Absent prerequisites are a blocker, not permission to improvise another route.
+
+Five exact environment values enable the test. All have the original prefix that
+`scripts/verify_local.py` removes, so ordinary full verification cannot silently
+activate an image inherited from the parent environment:
+
+```text
+POLYMARKET_ALPHA_LAB_CLAUDE_PROBE=1
+POLYMARKET_ALPHA_LAB_CLAUDE_PROBE_IMAGE=<absolute path of reviewed native image>
+POLYMARKET_ALPHA_LAB_CLAUDE_PROBE_SHA256=<independently recorded lowercase SHA256>
+POLYMARKET_ALPHA_LAB_CLAUDE_PROBE_BYTES=<exact positive byte count>
+POLYMARKET_ALPHA_LAB_CLAUDE_PROBE_ISOLATED_HOST=1
+```
+
+The last value is the operator's assertion of the required test environment,
+**not isolation attestation by the program**. No values means six explicit skips;
+partial/invalid values mean failures, not skips. Do not derive publisher trust
+from hashing arbitrary bytes. Native-image type, exact size/hash and reported
+version are checked; no version substitution, automatic install or upgrade.
+
+Run only the named file, with a unique previously nonexistent pytest base temp:
+
+```text
+python -m pytest -q -s --tb=short -o junit_family=legacy tests/test_research_claude_profile_native.py --junitxml=<outside-source proof path> --basetemp=<new disposable path>
+```
+
+Use the retained handoff's concrete source commit, tree, checksums and ordered
+Windows commands. Do not run this template against user data or broad test
+selection. Six cases must actually execute; skips are not acceptance. Stop after
+this one fixed batch, preserve first failures and return the metadata. Do not
+retry until green, update the image, relax an assertion, refresh an input or
+whitelist a newly observed state file without a separately reviewed correction.
+
+### What the probe measures
+
+Each scenario creates its own new private root and explicit HOME/config/tmp/work
+paths. Fixed unrelated-context canaries are seeded only there; the real user
+configuration is neither read nor copied. The helper never reuses an existing
+root. It performs two explicitly counted operations: `--version`, then one prompt
+with the original restrictive arguments/environment. A wrong version or traffic
+during the version operation prevents the prompt operation.
+
+The production profile remains HTTPS-only. This test has **one declared transport
+override**: `ANTHROPIC_BASE_URL` is changed from a numeric-loopback HTTPS declaration
+to HTTP at its newly bound127.0.0.1port. Only the public synthetic noncredential is
+supplied. No forwarding, TLS disabling, real provider endpoint or real key is
+involved. This tests binary/protocol behavior, **not production TLS or an unchanged
+end-to-end profile digest**; the observation explicitly records the override.
+
+The mock records only bounded counts and Boolean checks, not headers or bodies.
+It requires one Messages request, the declared model/output request, unchanged
+approved prompt, no offered tools/unrelated canary/key in the body, and the exact
+synthetic key header. Duplicate JSON, malformed/unknown methods, extra requests
+and server errors cannot hide behind a valid final CLI result. Stream fixtures
+follow the documented Messages event order. Success requires the exact supplied
+research action and cache-inclusive26synthetic tokens; negative scenarios must
+actually reach the proper mock request/response, not pass because an image failed
+to start. No invoice/model-identity or all-provider-request claim is inferred.
+
+Before/after snapshots cover only that fresh root, at most256entries,64KiBper
+file and4MiBtotal. They hash surviving regular files, detect changes/new/deleted
+entries and synthetic prompt/response/key canaries in UTF-8/UTF-16. Observed
+links, reparse points, multiply linked files, replaced roots, oversized or
+inconsistent reads are incomplete/failing evidence; no observed link is followed.
+This is not an atomic filesystem sandbox: races, outside-root activity and
+transient/deleted writes still require independent OS-level observation. The
+probe cannot approve a path merely because its final snapshot is empty.
+
+`CLAUDE_CLI_PROBE` output and the JUnit property contain fixed metadata only: image
+hash/size, expected-version match, process/decoder result, request counts,
+conformance flags and surviving-state counts. They contain no raw output,
+credential, path, prompt, response or state-file contents. The private test root
+is retained locally for inspection; do not upload its directory to GitHub.
+`activation_authorized`, `vendor_provenance_verified`, `external_egress_verified`,
+`outside_root_verified` and `transient_writes_verified` remain **false**, even on
+an otherwise successful observation. No Boolean proves an unobserved guarantee.
+
+### Implementation evidence and limits
+
+The helper has tests for all six scenarios using both in-process controlled
+responses and real synthetic Python subprocesses, malformed requests, hidden
+retries, output substitution, state writes and interruption/cleanup. Separate
+review reproduced six initial helper gaps (reply equality, exact image size,
+root/queued directory links, duplicate JSON and an uncounted unknown method),
+then fixed them without changing production code or old business test limits.
+The first queued-directory fixture did not actually replace a directory on the
+old code; it was corrected and reproduced again before the fix. Initial absence
+of the new helper was a collection error, not an existing product defect. An
+intermediate negative test needed to handle deliberate HTTP connection refusal;
+its final assertion was retained. Exact final results and failures are in the PR.
+
+A passed supplied-image batch is only a compatibility/surviving-state subset,
+not G2, full sandboxing or approval for real research. The original Codex SQLite
+conflict remains. If real Claude writes state, record that negative evidence and
+leave activation blocked; do not delete it before taking the snapshot or silently
+reinterpret the PostgreSQL-only persistence rule. No new migrations, dependency,
+account credential loader, production endpoint exception or real-model call.
+
+Primary references checked2026-09-20:
+- https://code.claude.com/docs/en/cli-reference
+- https://code.claude.com/docs/en/headless
+- https://code.claude.com/docs/en/env-vars
+- https://platform.claude.com/docs/en/build-with-claude/streaming

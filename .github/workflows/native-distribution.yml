@@ -3,6 +3,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'tests/claude_cli_probe.py'
+      - 'tests/test_claude_cli_probe*.py'
       - 'src/polymarket_alpha_lab/research_claude*.py'
       - 'tests/test_research_claude*.py'
       - 'src/polymarket_alpha_lab/research_codex*.py'

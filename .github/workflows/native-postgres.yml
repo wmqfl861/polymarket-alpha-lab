@@ -3,6 +3,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'tests/claude_cli_probe.py'
+      - 'tests/test_claude_cli_probe*.py'
       - 'src/polymarket_alpha_lab/research_claude*.py'
       - 'tests/test_research_claude*.py'
       - 'tests/ci_thread_dump.py'
@@ -185,7 +187,9 @@ jobs:
               "tests/test_research_codex_profile_review.py",
               "tests/test_research_claude_exec.py",
               "tests/test_research_claude_profile.py",
-              "tests/test_research_claude_review.py"
+              "tests/test_research_claude_review.py",
+              "tests/test_claude_cli_probe.py",
+              "tests/test_claude_cli_probe_review.py"
             ]
           }
         ]

@@ -1,0 +1,89 @@
+name: Publish checked supplied-CLI probe source
+on:
+  push:
+    branches: ['audit/wp02-claude-probe-publication-20260920']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Reconstruct exact ordinary source without executing project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          base = 'cbf2d3b1baff46c1a9b1e5f2983984837c8e6786'
+          approved_workflow_tree = '6bfe521cc31bc2c1e3f0ead560fb897ab983f2b2'
+          expected_tree = '7c159b8ddbb50dfc659ed5bcd6836e07336adbee'
+          staging = pathlib.Path('staging/claude-cli-probe')
+          def prior(path):
+              return subprocess.check_output(['git','show',base+':'+path])
+          helper = (staging/'helper.py').read_bytes()
+          # One transfer-only leading space was independently hash-identified.
+          # Correct only that exact token; the ORIGINAL tested full blob must match.
+          assert helper.count(b'\n def loopback_server(mode):') == 1
+          helper = helper.replace(b'\n def loopback_server(mode):', b'\ndef loopback_server(mode):')
+          workflow_test = prior('tests/test_native_postgres_workflow.py').decode()
+          old = '\ndef matrix(source):'
+          assert workflow_test.count(old) == 1
+          workflow_test = workflow_test.replace(old, "\nCLAUDE_PROBE_FILES = ('tests/test_claude_cli_probe.py', 'tests/test_claude_cli_probe_review.py')\n"+old)
+          old = '*CLAUDE_FILES])'
+          assert workflow_test.count(old) == 1
+          workflow_test = workflow_test.replace(old, '*CLAUDE_FILES, *CLAUDE_PROBE_FILES])')
+          old = "    assert set(CLAUDE_FILES) <= set(parts[2]['files'])\n"
+          assert workflow_test.count(old) == 1
+          workflow_test = workflow_test.replace(old, old+"    assert set(CLAUDE_PROBE_FILES) <= set(parts[2]['files'])\n")
+          payloads = {
+              'tests/claude_cli_probe.py': helper,
+              'tests/test_claude_cli_probe.py': (staging/'unit.py').read_bytes(),
+              'tests/test_claude_cli_probe_review.py': (staging/'review.py').read_bytes(),
+              'tests/test_research_claude_profile_native.py': (staging/'native.py').read_bytes(),
+              'tests/test_native_postgres_workflow.py': workflow_test.encode(),
+              'DELIVERY_PLAN.md': prior('DELIVERY_PLAN.md')+(staging/'plan.append').read_bytes(),
+              'docs/research-local-agent.md': prior('docs/research-local-agent.md')+(staging/'guide.append').read_bytes(),
+          }
+          hashes = {
+              'tests/claude_cli_probe.py':'926b2a10faa4f6fa5af82dff22849181f633f0a6',
+              'tests/test_claude_cli_probe.py':'b0c38407032296afd0a044f7b6aa4a7668bfa4f5',
+              'tests/test_claude_cli_probe_review.py':'0f3bde6eb2c33b356e1d7e4ee15ba58d38d011ef',
+              'tests/test_research_claude_profile_native.py':'950c71153b6ecbbf854c4bd3878f2e5f43f5e43b',
+              'tests/test_native_postgres_workflow.py':'8b82d0291ba006d5050b33e0d53a360c5840e955',
+              'DELIVERY_PLAN.md':'6ea8c9116f832661022cc2b014309fa9cc7cd294',
+              'docs/research-local-agent.md':'ce0a6120b181ae0972d6acac9f46941290f02b8b',
+          }
+          assert set(payloads) == set(hashes)
+          temp = pathlib.Path(os.environ['RUNNER_TEMP'])
+          env = dict(os.environ, GIT_INDEX_FILE=str(temp/'probe-index'))
+          subprocess.run(['git','read-tree',approved_workflow_tree],env=env,check=True)
+          entries = []
+          for path, data in payloads.items():
+              assert not path.startswith('.github/')
+              assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() == hashes[path], path
+              blob = subprocess.check_output(['git','hash-object','-w','--stdin'],input=data).decode().strip()
+              assert blob == hashes[path]
+              subprocess.run(['git','update-index','--add','--cacheinfo','100644',blob,path],env=env,check=True)
+              entries.append(dict(path=path,mode='100644',type='blob',content=data.decode('utf-8')))
+          assert subprocess.check_output(['git','write-tree'],env=env,text=True).strip() == expected_tree
+          (temp/'probe-tree-request.json').write_text(json.dumps(dict(base_tree=approved_workflow_tree,tree=entries)),encoding='utf-8')
+          print('reviewed_tree='+expected_tree)
+          PY
+      - name: Publish ordinary source objects only; no refs, workflows or vendor downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/trees --input "$RUNNER_TEMP/probe-tree-request.json" > "$RUNNER_TEMP/probe-tree-result.json"
+          python - <<'PY'
+          import json, os, pathlib
+          result = json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'probe-tree-result.json').read_text())
+          assert result['sha'] == '7c159b8ddbb50dfc659ed5bcd6836e07336adbee'
+          print('published_tree='+result['sha'])
+          PY
