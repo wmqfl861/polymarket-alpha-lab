@@ -1002,3 +1002,36 @@ Primary references checked2026-09-20:
 - https://code.claude.com/docs/en/headless
 - https://code.claude.com/docs/en/env-vars
 - https://platform.claude.com/docs/en/build-with-claude/streaming
+
+### First Windows apparatus failure and correction
+
+The first PR65 head `a64e7033047efea81538409ebf95ba747db2a272` did NOT
+pass native dispatch: its log has1475passed/30failed/3skipped and the JUnit
+contains an extra internal-error node with three final expected cases absent.
+The new snapshot relied on `os.DirEntry.stat` identity fields; Python3.12 sets
+inode/device/link-count to zero there on Windows. The helper now uses current
+`os.stat(..., follow_symlinks=False)` metadata while retaining all link, reparse,
+hardlink, identity and size checks. Two simulated Windows-metadata counterexamples
+fail on the original helper and pass with this correction. The queued-directory
+swap test moves its injection to the actual metadata call, preserving rejection
+and adding proof that the replacement really occurred.
+
+The original new interrupted-read fixture also kept global OS replacements live
+until pytest fixture teardown. When its expected exception did not occur, those
+replacements affected the existing diagnostic hook during failure reporting.
+The injection is now scoped only to the tested operation and restored before
+pytest reports an assertion failure. Two additional RED-to-GREEN tests check
+this. A separate deliberately failing three-case interpreter experiment now
+retains both intended failures AND the following passing case, without an
+internal reporting error. Its nonzero status is intentional, not a passing
+product-test result. The original Windows failure remains failed.
+
+No runtime, existing diagnostic implementation, timeout, test selection or state
+refusal rule is weakened. The old provisional handoff pins the failed source
+and refuses use because the accepted PR head must match; replace its delivery
+references with the final reviewed revision before any local task. All final
+frozen-source/Windows evidence and first failures are retained in PR65. An actual
+official binary is still not available or run here.
+
+Python reference checked2026-09-20:
+https://docs.python.org/3.12/library/os.html#os.DirEntry.stat

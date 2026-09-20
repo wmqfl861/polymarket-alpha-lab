@@ -45,25 +45,20 @@ def test_snapshot_root_link_is_not_read(tmp_path):
 def test_queued_directory_link_is_not_followed(monkeypatch, tmp_path):
     root = tmp_path/'root'; root.mkdir(); child = root/'child'; child.mkdir()
     outside = tmp_path/'outside'; outside.mkdir(); (outside/'foreign').write_text(probe.TEST_KEY)
-    from contextlib import contextmanager
-    original = probe.os.scandir
-    class Entry:
-        def __init__(self, original_entry):
-            self._entry = original_entry
-            self.path, self.name = original_entry.path, original_entry.name
-        def stat(self, **kwargs):
-            info = self._entry.stat(**kwargs)
-            if Path(self.path) == child:
-                child.rmdir()
-                try: child.symlink_to(outside, target_is_directory=True)
-                except OSError: pytest.skip('symlink privilege unavailable')
-            return info
-    @contextmanager
-    def changed_scan(path):
-        with original(path) as entries:
-            yield (Entry(e) for e in entries) if Path(path) == root else entries
-    monkeypatch.setattr(probe.os, 'scandir', changed_scan)
-    result = probe.state_snapshot(root)
+    original = probe.os.stat
+    replaced = []
+    def changed_stat(path, *args, **kwargs):
+        info = original(path, *args, **kwargs)
+        if Path(path) == child and not replaced:
+            replaced.append(True)
+            child.rmdir()
+            try: child.symlink_to(outside, target_is_directory=True)
+            except OSError: pytest.skip('symlink privilege unavailable')
+        return info
+    with monkeypatch.context() as patch:
+        patch.setattr(probe.os, 'stat', changed_stat)
+        result = probe.state_snapshot(root)
+    assert replaced == [True]
     assert result['complete'] is False and result['sentinel_files'] == 0
 
 
@@ -141,12 +136,16 @@ def test_snapshot_close_failure_never_masks_original_interruption(monkeypatch, t
     original=kind();closed=[]
     def interrupted(*args): raise original
     def close(fd): closed.append(fd);raise OSError('synthetic second error')
-    monkeypatch.setattr(probe.os,'open',lambda *a: 987)
-    monkeypatch.setattr(probe.os,'fstat',lambda *a: metadata)
-    monkeypatch.setattr(probe.os,'read',interrupted)
-    monkeypatch.setattr(probe.os,'close',close)
-    with pytest.raises(kind) as caught: probe.state_snapshot(tmp_path)
+    # Restore process-wide os functions BEFORE pytest reports an unexpected
+    # inner assertion failure; the diagnostic watcher owns unrelated descriptors.
+    with monkeypatch.context() as patch:
+        patch.setattr(probe.os,'open',lambda *a: 987)
+        patch.setattr(probe.os,'fstat',lambda *a: metadata)
+        patch.setattr(probe.os,'read',interrupted)
+        patch.setattr(probe.os,'close',close)
+        with pytest.raises(kind) as caught: probe.state_snapshot(tmp_path)
     assert caught.value is original and closed == [987]
+
 
 
 def test_server_close_failure_does_not_mask_original_interrupt(monkeypatch):
@@ -169,3 +168,52 @@ def test_server_start_failure_closes_socket_without_waiting_for_unstarted_worker
     with pytest.raises(OSError) as caught:
         with probe.loopback_server('success'):pytest.fail('entered')
     assert caught.value is original and calls == [1]
+
+
+@pytest.mark.parametrize('nested', [False, True])
+def test_snapshot_uses_current_file_identity_not_windows_direntry_zeroes(monkeypatch, tmp_path, nested):
+    """Windows DirEntry.stat omits device/inode/link count; lstat does not."""
+    from contextlib import contextmanager
+    from types import SimpleNamespace
+    from hashlib import sha256
+    root = tmp_path/'root'; root.mkdir()
+    target = root/'sub' if nested else root
+    target.mkdir(exist_ok=True)
+    (target/'file').write_bytes(b'known bytes')
+    original = probe.os.scandir
+    class Entry:
+        def __init__(self, entry):
+            self._entry = entry
+            self.path, self.name = entry.path, entry.name
+        def stat(self, **kwargs):
+            actual = self._entry.stat(**kwargs)
+            return SimpleNamespace(st_mode=actual.st_mode, st_size=actual.st_size,
+                st_mtime_ns=actual.st_mtime_ns, st_ino=0, st_dev=0, st_nlink=0,
+                st_file_attributes=getattr(actual, 'st_file_attributes', 0))
+    @contextmanager
+    def windows_entries(path):
+        with original(path) as stream:
+            yield (Entry(entry) for entry in stream)
+    with monkeypatch.context() as patch:
+        patch.setattr(probe.os, 'scandir', windows_entries)
+        result = probe.state_snapshot(root)
+    assert result['complete'] is True and result['unsafe_entries'] == 0
+    assert len(result['files']) == (2 if nested else 1)
+    key = str(Path('sub/file')) if nested else 'file'
+    assert result['files'][key] == ('file', sha256(b'known bytes').hexdigest())
+
+
+@pytest.mark.parametrize('kind', [KeyboardInterrupt, SystemExit])
+def test_failed_injection_assertion_restores_os_before_pytest_reporting(monkeypatch, tmp_path, kind):
+    """Deliberately make the inner assertion fail, without poisoning its reporter."""
+    original = (probe.os.open, probe.os.read, probe.os.close, probe.os.fstat)
+    inner = pytest.MonkeyPatch()
+    with monkeypatch.context() as patch:
+        patch.setattr(probe, 'state_snapshot', lambda _: {'complete': False})
+        try:
+            with pytest.raises(pytest.fail.Exception):
+                test_snapshot_close_failure_never_masks_original_interruption(inner, tmp_path, kind)
+            restored = (probe.os.open, probe.os.read, probe.os.close, probe.os.fstat) == original
+        finally:
+            inner.undo()  # Keep the RED test itself from breaking pytest's reporter.
+    assert restored is True

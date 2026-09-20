@@ -255,7 +255,9 @@ def state_snapshot(root, *, expected_root=None):
                     if entries > MAX_ENTRIES:
                         result.update(complete=False, limit_reached=True)
                         return result
-                    info = entry.stat(follow_symlinks=False)
+                    # Windows DirEntry.stat omits device/inode/link count.
+                    # Retrieve current identity without following the entry.
+                    info = os.stat(entry.path, follow_symlinks=False)
                     name = str(Path(entry.path).relative_to(root))
                     if (stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0)
                             & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 1024)):
