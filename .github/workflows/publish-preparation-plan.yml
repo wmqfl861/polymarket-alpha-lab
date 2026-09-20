@@ -1,0 +1,67 @@
+name: Publish reviewed preparation-plan blob
+on:
+  push:
+    branches: ['audit/wp02-preparation-plan-20260920']
+    paths: ['.github/workflows/publish-preparation-plan.yml']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 96c706503902630a829a12421205e7e7ccfac2b3
+          persist-credentials: false
+      - name: Compose the reviewed document only, without executing project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          addition = '''
+
+
+          ## 45. WP-02／WP-06：解除隔离验收准备死锁（2026-09-20）
+
+          用户提供的本地回执为 **A/B均未执行、6/6未执行、无日志/XML的BLOCKED**，不是测试失败。
+          主力机含业务库／个人配置、无已准备的无秘密宿主／出站隔离、缺官方镜像元数据，uv为0.12.13；
+          这些作为用户回报保留，不冒充本轮远程扫描结果，不由B9G标题推定其他恢复工作已经完成。
+
+          旧提示词要求环境先已存在却禁止准备，现拆开为「安全准备」与「官方CLI执行」。
+          新增只读定点OS能力查询、GitHub侧构建的离线Python3.12／锁定依赖包及新目录暂存工具，
+          全局uv不需要降级；无Claude/Codex二进制、凭据、.local或数据库被打包或下载。
+          暂存只生成关闭网络／剪贴板等共享的Windows Sandbox配置：仅新建只读输入和独立空输出映射，
+          不自动启用Windows功能、不提权、不改防火墙／ACL／策略、不在主力机运行官方程序。
+          已启用Sandbox后的无供应商准备烟测仍需明确本地批准；缺少功能时只返回具体启用／重启审批项。
+
+          新的[准备交接](docs/handoffs/2026-09-20-probe-preparation.md)替代旧A/B准备前置死锁，
+          不放宽后续真实CLI隔离／来源／网络／状态要求。源代码与长效GitHub交接资产先固定哈希与版本，
+          先云端构建、搬移与分离自审，再只交接主机能力和获准的来宾准备。原官方六场景仍未运行。
+          原生产代码、68SQL、依赖锁及原CI时限保持不变；最终实测在关联PR记录，未通过不合并。
+          **G2—G6仍开放，V1仍1/6；不再把全局uv版本或官方镜像缺失当作只读准备不可执行的理由。**
+          '''
+          original = pathlib.Path('DELIVERY_PLAN.md').read_bytes()
+          # The literal has one opening newline in addition to the two appended
+          # blank lines. Use the reviewed append exactly, not indentation repair.
+          addition = addition[1:]
+          data = original + addition.encode('utf-8')
+          expected = 'e6ccf3523811bf7740e871d3511959b1d180fc5f'
+          assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() == expected
+          target = pathlib.Path(os.environ['RUNNER_TEMP'])/'plan-blob.json'
+          target.write_text(json.dumps({'content':data.decode('utf-8'),'encoding':'utf-8'}), encoding='utf-8')
+          PY
+      - name: Publish only this ordinary document blob; never a ref or workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/blobs --input "$RUNNER_TEMP/plan-blob.json" > "$RUNNER_TEMP/plan-result.json"
+          python - <<'PY'
+          import json,os,pathlib
+          value=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'plan-result.json').read_text())
+          assert value['sha']=='e6ccf3523811bf7740e871d3511959b1d180fc5f'
+          print('published reviewed DELIVERY_PLAN blob '+value['sha'])
+          PY
