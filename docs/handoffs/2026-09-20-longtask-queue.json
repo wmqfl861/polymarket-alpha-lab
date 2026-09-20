@@ -1,0 +1,124 @@
+{
+  "schema": "pal-local-longtask-v1",
+  "task_id": "PAL_LONGTASK_20260920_V1",
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "base_commit": "199f5a4f629466467f638d7f4a383e4bead19120",
+  "base_tree": "5202e9a8422d99922eb60725b1384f48299d2257",
+  "maximum_window_hours": 168,
+  "soak_target_hours": 72,
+  "soak_extension_ceiling_hours": 120,
+  "round_period_seconds": 300,
+  "minimum_valid_rounds": 864,
+  "minimum_distinct_generated_inputs": 100000,
+  "seed": 2026092001,
+  "heartbeat_seconds": 60,
+  "checkpoint_seconds": 7200,
+  "progress_summary_seconds": 43200,
+  "max_unobserved_gap_seconds": 900,
+  "initial_test_workers": 2,
+  "max_campaign_disk_bytes": 4294967296,
+  "max_evidence_bytes": 536870912,
+  "minimum_volume_free_bytes": 10737418240,
+  "per_round_log_bytes": 1048576,
+  "baseline_test_groups": {
+    "protocol": [
+      "tests/test_research_codex_exec.py",
+      "tests/test_research_codex_profile.py",
+      "tests/test_research_codex_profile_review.py",
+      "tests/test_research_claude_exec.py",
+      "tests/test_research_claude_profile.py",
+      "tests/test_research_claude_review.py"
+    ],
+    "audit": [
+      "tests/test_research_uncapped.py",
+      "tests/test_research_uncapped_audit.py",
+      "tests/test_research_uncapped_audit_review.py",
+      "tests/test_research_dispatch_rotation.py"
+    ],
+    "process": [
+      "tests/test_research_process.py",
+      "tests/test_research_process_review.py",
+      "tests/test_research_codex_process.py"
+    ],
+    "paper": [
+      "tests/test_research_paper.py",
+      "tests/test_research_paper_review.py",
+      "tests/test_research_paper_settlement.py",
+      "tests/test_research_paper_settlement_review.py",
+      "tests/test_research_resolution_confirmation.py",
+      "tests/test_research_resolution_confirmation_review.py",
+      "tests/test_research_scope_instants.py",
+      "tests/test_research_record_timezone_codec.py"
+    ]
+  },
+  "forbidden_test_paths": [
+    "tests/test_research_codex_profile_native.py",
+    "tests/test_research_claude_profile_native.py",
+    "tests/test_project_postgres*",
+    "tests/test_handoff_download.py",
+    "tests/test_handoff_process_probe*"
+  ],
+  "lanes": [
+    {
+      "id": "LT-00",
+      "depends": [],
+      "deliverable": "New workspace and preserved reported state; no repeated host query or staging"
+    },
+    {
+      "id": "LT-01",
+      "depends": [
+        "LT-00"
+      ],
+      "deliverable": "Bounded test-only driver; its failure/stop/resume tests; 20-minute rehearsal"
+    },
+    {
+      "id": "LT-02",
+      "depends": [
+        "LT-00"
+      ],
+      "deliverable": "Protocol, usage, authorization and replay properties with valid controls and minimal reproductions"
+    },
+    {
+      "id": "LT-03",
+      "depends": [
+        "LT-00"
+      ],
+      "deliverable": "Synthetic BTC/ETH paper and settlement Decimal oracle, source/time/hash binding properties"
+    },
+    {
+      "id": "LT-04",
+      "depends": [
+        "LT-01",
+        "LT-02",
+        "LT-03"
+      ],
+      "deliverable": "One frozen candidate, measured 72-hour uninterrupted observation and at least 864 seeded rounds"
+    },
+    {
+      "id": "LT-05",
+      "depends": [
+        "LT-04"
+      ],
+      "dependency_note": "May start read-only when LT-04 has frozen its candidate; changes require a new candidate",
+      "deliverable": "Separate same-agent audit of exact code and original evidence; no self-certified external review"
+    },
+    {
+      "id": "LT-06",
+      "depends": [
+        "LT-05"
+      ],
+      "deliverable": "At most one new draft PR and exact partial/pass/fail report; no merge"
+    },
+    {
+      "id": "ADMIN-CLI",
+      "depends": [],
+      "state": "WAITING_OWNER",
+      "blocks_main_lanes": false,
+      "deliverable": "No feature enablement, firmware change, guest start or real CLI execution in this batch"
+    }
+  ],
+  "official_cases_run": 0,
+  "sandbox_started": false,
+  "activation_authorized": false,
+  "policy_note": "This JSON is a plan, not a runnable agent scheduler or permission to bypass project restrictions. Published plan and prompt define failure and scope rules."
+}
