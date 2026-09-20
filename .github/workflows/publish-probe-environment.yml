@@ -1,0 +1,97 @@
+name: Preserve verified offline probe preparation asset
+on:
+  push:
+    branches: ['handoff/publish-probe-environment-20260920']
+    paths: ['.github/workflows/publish-probe-environment.yml']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: wmqfl861/polymarket-alpha-lab
+    steps:
+      - name: Require reviewed merged source and successful build/relocations
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/wmqfl861/polymarket-alpha-lab/pulls/66 > pr.json
+          gh api repos/wmqfl861/polymarket-alpha-lab/actions/runs/35512340340 > run.json
+          gh api repos/wmqfl861/polymarket-alpha-lab/git/matching-refs/tags/probe-environment-20260920-faa91588 > tags.json
+          python - <<'PY'
+          import json, os
+          p=json.load(open('pr.json'));r=json.load(open('run.json'))
+          assert p['merged'] and p['head']['sha']=='faa915887dff4222b9457087cc6d532ee8bd61b6'
+          assert r['head_sha']==p['head']['sha'] and r['conclusion']=='success'
+          assert json.load(open('tags.json'))==[], 'Never replace an existing tag or release'
+          with open(os.environ['GITHUB_ENV'],'a') as out:out.write('ACCEPTED_MERGE='+p['merge_commit_sha']+'\n')
+          PY
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: probe-environment-package-21d888a0b4db49d92e3d73293ca7a71ec1087783
+          repository: wmqfl861/polymarket-alpha-lab
+          run-id: 35512340340
+          github-token: ${{ github.token }}
+          path: package
+      - name: Reverify exact accepted bytes without rebuilding or running payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/wmqfl861/polymarket-alpha-lab/git/commits/$ACCEPTED_MERGE" > merge.json
+          python - <<'PY'
+          import hashlib,json,pathlib,zipfile
+          root=pathlib.Path('package');z=root/'claude-probe-environment.zip'
+          digest='ac1ff95623ce9f20d7a2a6b876554242b277066c952ed9d62bda3b4747fddb57'
+          assert json.load(open('merge.json'))['tree']['sha']=='5202e9a8422d99922eb60725b1384f48299d2257'
+          assert {p.name for p in root.iterdir()}=={'claude-probe-environment.zip','SHA256SUMS'}
+          assert z.stat().st_size==35497151 and hashlib.sha256(z.read_bytes()).hexdigest()==digest
+          assert (root/'SHA256SUMS').read_text().strip()==digest+'  claude-probe-environment.zip'
+          with zipfile.ZipFile(z) as a:
+              assert a.testzip() is None
+              m=json.loads(a.read('environment-manifest.json'))
+              assert m['source_commit']=='21d888a0b4db49d92e3d73293ca7a71ec1087783'
+              assert m['source_tree']=='5202e9a8422d99922eb60725b1384f48299d2257'
+              assert m['official_cli_included'] is False and m['activation_authorized'] is False
+              assert len(m['files'])==6293
+              assert set(a.namelist())=={'environment-manifest.json',*(e['path'] for e in m['files'])}
+              for e in m['files']:
+                  raw=a.read(e['path'])
+                  assert len(raw)==e['bytes'] and hashlib.sha256(raw).hexdigest()==e['sha256']
+          print('verified original archive: 35497151 bytes; no repacking, vendor or user data')
+          PY
+          cat > notes.md <<EOF
+          # Offline probe preparation only
+
+          Exact original Windows CI archive, not rebuilt/repacked. This is NOT a V1 application release, official Claude package or real-research authorization.
+
+          - Accepted merge: $ACCEPTED_MERGE
+          - Implementation: faa915887dff4222b9457087cc6d532ee8bd61b6
+          - CI source commit retained inside manifest: 21d888a0b4db49d92e3d73293ca7a71ec1087783
+          - Same source tree: 5202e9a8422d99922eb60725b1384f48299d2257
+          - Build and both separate relocated smokes: run 35512340340
+          - ZIP: 35497151 bytes; SHA256 ac1ff95623ce9f20d7a2a6b876554242b277066c952ed9d62bda3b4747fddb57
+
+          Contains Windows Python3.12.12, pinned dependency/source files and licenses. No Claude/Codex image, .local, user database, credentials or user virtual environment. Host uv is not used or downgraded. Use only the pinned preparation scripts and final handoff linked in PR66. Do not overlay an existing installation, enable Windows features, run a vendor program or treat a smoke as isolation verification.
+
+          Official CLI, guest launch/isolation and G2-G6 remain unverified. Original failed/cancelled candidate checks remain documented in PR66. Both read-only input and dedicated empty writable output mappings require review before any separately authorized guest start.
+          EOF
+      - name: Create new draft, verify uploaded assets, then publish non-latest prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=probe-environment-20260920-faa91588
+          gh release create "$tag" package/claude-probe-environment.zip package/SHA256SUMS --target "$ACCEPTED_MERGE" --draft --prerelease --latest=false --title 'Offline probe environment - preparation only (PR66)' --notes-file notes.md
+          gh release download "$tag" --dir readback
+          cmp package/claude-probe-environment.zip readback/claude-probe-environment.zip
+          cmp package/SHA256SUMS readback/SHA256SUMS
+          gh release edit "$tag" --draft=false --latest=false
+          gh api "repos/wmqfl861/polymarket-alpha-lab/releases/tags/$tag" > published.json
+          python - <<'PY'
+          import json
+          p=json.load(open('published.json'));assert p['prerelease'] and not p['draft']
+          assert len(p['assets'])==2
+          print(json.dumps({'url':p['html_url'],'id':p['id'],'tag':p['tag_name'],'assets':[{k:a[k] for k in ('id','name','size','digest','browser_download_url')} for a in p['assets']]},indent=2))
+          PY
