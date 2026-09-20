@@ -1,0 +1,47 @@
+{
+  "schema_version": "claude-cli-probe-handoff-v1",
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "source_tree": "7c159b8ddbb50dfc659ed5bcd6836e07336adbee",
+  "source_commit": "a64e7033047efea81538409ebf95ba747db2a272",
+  "files": [
+    {
+      "path": "tests/claude_cli_probe.py",
+      "bytes": 20379,
+      "sha256": "c12592ef152974fc8c834adc8fb6bf79f1a7300cfc722f66e9206cd61799b5b6"
+    },
+    {
+      "path": "tests/test_claude_cli_probe.py",
+      "bytes": 10474,
+      "sha256": "fc443bbddb0c58a8c3e743d3aa6f8c71a4a2f80264a31494866c65ab2b386702"
+    },
+    {
+      "path": "tests/test_claude_cli_probe_review.py",
+      "bytes": 8159,
+      "sha256": "911225acdaa2df4a5a70505bf27be90c7d0d6d5d07dad1fb287f6aed5847851e"
+    },
+    {
+      "path": "tests/test_research_claude_profile_native.py",
+      "bytes": 1541,
+      "sha256": "3bdf3d4412cd190165c0628e7a5fad862152db43e311ba53c570ba085bb0b032"
+    },
+    {
+      "path": "docs/research-local-agent.md",
+      "bytes": 62992,
+      "sha256": "6acc090766d9e812a986fb1df4ee21f4e3baabd5e7bce720ecbbffeb187bdcfa"
+    },
+    {
+      "path": "pyproject.toml",
+      "bytes": 603,
+      "sha256": "cc7d8885f6a97434ee2f94090f8c03a765ce1af2f78ea68d9dac43d00f1344c7"
+    },
+    {
+      "path": "uv.lock",
+      "bytes": 21974,
+      "sha256": "114db5230ce1b51130a6f2b246c807f4e142229c5717354edf95c8e44fc22d9f"
+    }
+  ],
+  "source_ref": "feature/wp02-claude-cli-probe-20260920",
+  "source_pr": 65,
+  "official_binary_supplied": false,
+  "activation_authorized": false
+}
