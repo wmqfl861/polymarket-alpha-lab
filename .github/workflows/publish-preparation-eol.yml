@@ -1,0 +1,47 @@
+name: Publish checked preparation EOL correction
+on:
+  push:
+    branches: ['audit/wp02-preparation-eol-20260920']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify ordinary-source patch only; do not execute project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp staging/preparation-eol.patch "$RUNNER_TEMP/correction.patch"
+          git switch --detach 3eea43844bb1972f0209de2c2285408f90af3c43
+          python - <<'PY'
+          import hashlib,os,pathlib,subprocess,json
+          root=pathlib.Path(os.environ['RUNNER_TEMP']); patch=root/'correction.patch'
+          assert hashlib.sha256(patch.read_bytes()).hexdigest()=='734d79c20a35d66607809644115238f7e07e3a32fdc29e25320dc5efd01618b4'
+          subprocess.run(['git','apply','--check','--index',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          assert subprocess.check_output(['git','write-tree'],text=True).strip()=='e0513b497251d2ed65826e1210ae1da9f1abb8ee'
+          names=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert set(names)=={'scripts/claude_probe_environment.py','tests/test_claude_probe_environment.py'}
+          entries=[dict(path=n,mode='100644',type='blob',content=pathlib.Path(n).read_text()) for n in names]
+          (root/'tree.json').write_text(json.dumps(dict(base_tree='f5ea07f2b50b5bfb690d15c9c5863dc659161e84',tree=entries)))
+          PY
+      - name: Publish checked ordinary tree only; never a ref or workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/trees --input "$RUNNER_TEMP/tree.json" > "$RUNNER_TEMP/tree-result.json"
+          python - <<'PY'
+          import json,os,pathlib
+          r=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'tree-result.json').read_text())
+          assert r['sha']=='e0513b497251d2ed65826e1210ae1da9f1abb8ee'
+          print('published_tree='+r['sha'])
+          PY

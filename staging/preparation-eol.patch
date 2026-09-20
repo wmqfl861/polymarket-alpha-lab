@@ -1,0 +1,111 @@
+diff --git a/scripts/claude_probe_environment.py b/scripts/claude_probe_environment.py
+index 6c00a9d..b67b13c 100644
+--- a/scripts/claude_probe_environment.py
++++ b/scripts/claude_probe_environment.py
+@@ -10,6 +10,7 @@ from __future__ import annotations
+ import argparse
+ from hashlib import sha256
+ import importlib.metadata as metadata
++import io
+ import json
+ import os
+ from pathlib import Path, PurePosixPath
+@@ -264,6 +265,37 @@ def selftest(root, receipt):
+     return result
+ 
+ 
++def committed_source_files(git):
++    """Read committed bytes, not checkout EOL transformations; verify each blob.
++
++    One archive avoids thousands of git child processes. Export substitutions or
++    omitted committed files fail the original blob check, not silent normalization.
++    """
++    from hashlib import sha1
++    selected = git('ls-files', '--stage', '-z', 'src', *SOURCE_EXTRA).decode().split('\0')
++    selected = tuple(filter(None, selected))
++    if not 1 <= len(selected) <= MAX_FILES:
++        fail('source_inventory_invalid')
++    raw = git('-c', 'core.autocrlf=false', '-c', 'core.eol=lf',
++              'archive', '--format=zip', 'HEAD', 'src', *SOURCE_EXTRA)
++    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
++        total = 0
++        for entry in selected:
++            fields, name = entry.split('\t', 1)
++            mode, expected, index = fields.split()
++            clean_name(name)
++            if mode != '100644' or index != '0': fail('source_mode_invalid')
++            info = archive.getinfo(name)
++            if not 0 <= info.file_size <= MAX_FILE: fail('file_too_large')
++            with archive.open(info) as stream:
++                data = stream.read(MAX_FILE + 1)
++            total += len(data)
++            if total > MAX_BYTES or len(data) != info.file_size: fail('source_bounds')
++            if sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() != expected:
++                fail('source_changed')
++            yield name, data
++
++
+ def build(source, output, allow_ci_build=False):
+     """Copy only committed research source and a fresh CI-owned locked runtime."""
+     if (allow_ci_build is not True or os.environ.get('GITHUB_ACTIONS') != 'true'
+@@ -307,15 +339,7 @@ def build(source, output, allow_ci_build=False):
+             target = root/'python/Lib/site-packages'/rel
+             target.parent.mkdir(parents=True, exist_ok=True)
+             with target.open('xb') as dst: dst.write(data)
+-    selected = git('ls-files', '--stage', '-z', 'src', *SOURCE_EXTRA).decode().split('\0')
+-    from hashlib import sha1
+-    for entry in filter(None, selected):
+-        fields, name = entry.split('\t', 1)
+-        mode, expected, index = fields.split()
+-        if mode != '100644' or index != '0': fail('source_mode_invalid')
+-        data = file_bytes(source/name)
+-        if sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() != expected:
+-            fail('source_changed')
++    for name, data in committed_source_files(git):
+         target = root/'source'/name; target.parent.mkdir(parents=True, exist_ok=True)
+         target.write_bytes(data)
+     (root/'probe-environment.py').write_bytes(git('show', 'HEAD:scripts/claude_probe_environment.py'))
+diff --git a/tests/test_claude_probe_environment.py b/tests/test_claude_probe_environment.py
+index 2705381..7347cb1 100644
+--- a/tests/test_claude_probe_environment.py
++++ b/tests/test_claude_probe_environment.py
+@@ -202,3 +202,39 @@ def test_unreadable_walk_never_silently_certifies_partial_inventory(monkeypatch,
+         yield from original(path,**kwargs)
+     monkeypatch.setattr(e.os,'walk',failing_walk)
+     with pytest.raises(OSError):e.verify(root)
++
++
++def test_committed_source_bytes_survive_windows_checkout_eol_conversion(tmp_path):
++    repository = tmp_path/'git-source'; repository.mkdir()
++    def git(*args):
++        return subprocess.check_output(['git','-C',str(repository),'-c','core.autocrlf=true',*args],
++                                       stderr=subprocess.PIPE)
++    git('init')
++    names = ('src/sample.py', *e.SOURCE_EXTRA)
++    for name in names:
++        target=repository/name;target.parent.mkdir(parents=True,exist_ok=True)
++        target.write_bytes(b'# committed LF\nsecond line\n')
++    git('add','.')
++    git('-c','user.name=Fixture','-c','user.email=fixture@invalid','commit','-m','synthetic source')
++    for name in names:
++        (repository/name).write_bytes(b'# committed LF\r\nsecond line\r\n')
++    # Compare content after Git's own EOL conversion, not transient index stat cache.
++    assert git('diff','--exit-code')==b''
++    selected=dict(e.committed_source_files(git))
++    assert set(selected)==set(names)
++    assert all(data==b'# committed LF\nsecond line\n' for data in selected.values())
++
++
++def test_export_substitution_cannot_silently_change_committed_bytes(tmp_path):
++    repository=tmp_path/'git-source';repository.mkdir()
++    def git(*args):
++        return subprocess.check_output(['git','-C',str(repository),*args],stderr=subprocess.PIPE)
++    git('init')
++    for name in ('src/sample.py', *e.SOURCE_EXTRA):
++        target=repository/name;target.parent.mkdir(parents=True,exist_ok=True)
++        target.write_bytes(b'# $Format:%H$\n')
++    (repository/'.gitattributes').write_bytes(b'src/sample.py export-subst\n')
++    git('add','.')
++    git('-c','user.name=Fixture','-c','user.email=fixture@invalid','commit','-m','synthetic export substitution')
++    with pytest.raises(ValueError,match='source_changed'):
++        tuple(e.committed_source_files(git))
