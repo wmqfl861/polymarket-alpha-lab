@@ -1,0 +1,54 @@
+name: Publish verified Windows probe correction objects
+on:
+  push:
+    branches: ['audit/wp02-claude-probe-correction-20260920']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact ordinary-source correction without executing project code
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp staging/claude-probe-correction.patch "$RUNNER_TEMP/correction.patch"
+          git switch --detach a64e7033047efea81538409ebf95ba747db2a272
+          python - <<'PY'
+          import hashlib,json,os,pathlib,subprocess
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])
+          patch=root/'correction.patch'
+          assert len(patch.read_bytes())==10905
+          assert hashlib.sha256(patch.read_bytes()).hexdigest()=='84982db9971828679c3d28bdb739f845f11b6173062ee7d4d6eb26553af3be3e'
+          subprocess.run(['git','apply','--check','--index',str(patch)],check=True)
+          subprocess.run(['git','apply','--index',str(patch)],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          assert subprocess.check_output(['git','write-tree'],text=True).strip()=='b33bfcd4e3a2e2ad20d77e581e5ca1136d9590dc'
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          assert set(paths)=={'DELIVERY_PLAN.md','docs/research-local-agent.md','tests/claude_cli_probe.py','tests/test_claude_cli_probe_review.py'}
+          entries=[]
+          for name in paths:
+              p=pathlib.Path(name)
+              assert p.is_file() and not p.is_symlink() and not name.startswith('.github/')
+              entries.append(dict(path=name,mode='100644',type='blob',content=p.read_text(encoding='utf-8')))
+          (root/'tree-request.json').write_text(json.dumps(dict(base_tree='7c159b8ddbb50dfc659ed5bcd6836e07336adbee',tree=entries)),encoding='utf-8')
+          print('reviewed_tree=b33bfcd4e3a2e2ad20d77e581e5ca1136d9590dc')
+          PY
+      - name: Publish only the verified tree; never update refs or main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST repos/wmqfl861/polymarket-alpha-lab/git/trees --input "$RUNNER_TEMP/tree-request.json" > "$RUNNER_TEMP/tree-result.json"
+          python - <<'PY'
+          import json,os,pathlib
+          result=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'tree-result.json').read_text())
+          assert result['sha']=='b33bfcd4e3a2e2ad20d77e581e5ca1136d9590dc'
+          print('published_tree='+result['sha'])
+          PY

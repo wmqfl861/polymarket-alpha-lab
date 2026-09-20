@@ -1,0 +1,197 @@
+diff --git a/DELIVERY_PLAN.md b/DELIVERY_PLAN.md
+index 6ea8c91..f52e46a 100644
+--- a/DELIVERY_PLAN.md
++++ b/DELIVERY_PLAN.md
+@@ -1240,3 +1240,15 @@ WP-02／WP-03 仍 PARTIAL，G2—G6 未关闭，V1 仍 1／6；无用户库、
+ 
+ 本单元完成只表示验收入口和测试装置可交付，**G2—G6仍未关闭，V1仍1／6**。
+ 不以合成测试解除 Codex SQLite 阻断或批准 Claude 的真实持久化／网络／模型身份。
++
++### 第44节首轮 Windows 验收失败的修复记录
++
++首个候选 `a64e7033047efea81538409ebf95ba747db2a272` 的原生 dispatch
++出现30项失败，另有报告器内部错误和3项未执行；不以其他作业通过替代。
++新测试装置误用了 Windows `DirEntry.stat` 中为零的文件身份字段，现改用
++不跟随链接的当前 `os.stat`，保留全部硬链接／重解析点／身份／大小拒绝规则。
++故障注入限制在被测调用期间，避免断言失败时干扰 pytest 原诊断线程。
++四个新增反例先失败后通过，独立子进程验证故意失败仍完整报告后续用例；
++不删除原断言、不放宽时限、不禁用诊断。最终候选须重新完成全量及托管验收。
++旧交接草稿仍固定到未获通过的候选，交付前必须换成最终源码／清单提交，
++不能要求本地执行原失败版本。该修复不等于官方 CLI 已运行或 G2 已关闭。
+diff --git a/docs/research-local-agent.md b/docs/research-local-agent.md
+index ce0a612..eff2310 100644
+--- a/docs/research-local-agent.md
++++ b/docs/research-local-agent.md
+@@ -1002,3 +1002,36 @@ Primary references checked2026-09-20:
+ - https://code.claude.com/docs/en/headless
+ - https://code.claude.com/docs/en/env-vars
+ - https://platform.claude.com/docs/en/build-with-claude/streaming
++
++### First Windows apparatus failure and correction
++
++The first PR65 head `a64e7033047efea81538409ebf95ba747db2a272` did NOT
++pass native dispatch: its log has1475passed/30failed/3skipped and the JUnit
++contains an extra internal-error node with three final expected cases absent.
++The new snapshot relied on `os.DirEntry.stat` identity fields; Python3.12 sets
++inode/device/link-count to zero there on Windows. The helper now uses current
++`os.stat(..., follow_symlinks=False)` metadata while retaining all link, reparse,
++hardlink, identity and size checks. Two simulated Windows-metadata counterexamples
++fail on the original helper and pass with this correction. The queued-directory
++swap test moves its injection to the actual metadata call, preserving rejection
++and adding proof that the replacement really occurred.
++
++The original new interrupted-read fixture also kept global OS replacements live
++until pytest fixture teardown. When its expected exception did not occur, those
++replacements affected the existing diagnostic hook during failure reporting.
++The injection is now scoped only to the tested operation and restored before
++pytest reports an assertion failure. Two additional RED-to-GREEN tests check
++this. A separate deliberately failing three-case interpreter experiment now
++retains both intended failures AND the following passing case, without an
++internal reporting error. Its nonzero status is intentional, not a passing
++product-test result. The original Windows failure remains failed.
++
++No runtime, existing diagnostic implementation, timeout, test selection or state
++refusal rule is weakened. The old provisional handoff pins the failed source
++and refuses use because the accepted PR head must match; replace its delivery
++references with the final reviewed revision before any local task. All final
++frozen-source/Windows evidence and first failures are retained in PR65. An actual
++official binary is still not available or run here.
++
++Python reference checked2026-09-20:
++https://docs.python.org/3.12/library/os.html#os.DirEntry.stat
+diff --git a/tests/claude_cli_probe.py b/tests/claude_cli_probe.py
+index 926b2a1..5830f45 100644
+--- a/tests/claude_cli_probe.py
++++ b/tests/claude_cli_probe.py
+@@ -255,7 +255,9 @@ def state_snapshot(root, *, expected_root=None):
+                     if entries > MAX_ENTRIES:
+                         result.update(complete=False, limit_reached=True)
+                         return result
+-                    info = entry.stat(follow_symlinks=False)
++                    # Windows DirEntry.stat omits device/inode/link count.
++                    # Retrieve current identity without following the entry.
++                    info = os.stat(entry.path, follow_symlinks=False)
+                     name = str(Path(entry.path).relative_to(root))
+                     if (stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0)
+                             & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 1024)):
+diff --git a/tests/test_claude_cli_probe_review.py b/tests/test_claude_cli_probe_review.py
+index 0f3bde6..4f9d4a4 100644
+--- a/tests/test_claude_cli_probe_review.py
++++ b/tests/test_claude_cli_probe_review.py
+@@ -45,25 +45,20 @@ def test_snapshot_root_link_is_not_read(tmp_path):
+ def test_queued_directory_link_is_not_followed(monkeypatch, tmp_path):
+     root = tmp_path/'root'; root.mkdir(); child = root/'child'; child.mkdir()
+     outside = tmp_path/'outside'; outside.mkdir(); (outside/'foreign').write_text(probe.TEST_KEY)
+-    from contextlib import contextmanager
+-    original = probe.os.scandir
+-    class Entry:
+-        def __init__(self, original_entry):
+-            self._entry = original_entry
+-            self.path, self.name = original_entry.path, original_entry.name
+-        def stat(self, **kwargs):
+-            info = self._entry.stat(**kwargs)
+-            if Path(self.path) == child:
+-                child.rmdir()
+-                try: child.symlink_to(outside, target_is_directory=True)
+-                except OSError: pytest.skip('symlink privilege unavailable')
+-            return info
+-    @contextmanager
+-    def changed_scan(path):
+-        with original(path) as entries:
+-            yield (Entry(e) for e in entries) if Path(path) == root else entries
+-    monkeypatch.setattr(probe.os, 'scandir', changed_scan)
+-    result = probe.state_snapshot(root)
++    original = probe.os.stat
++    replaced = []
++    def changed_stat(path, *args, **kwargs):
++        info = original(path, *args, **kwargs)
++        if Path(path) == child and not replaced:
++            replaced.append(True)
++            child.rmdir()
++            try: child.symlink_to(outside, target_is_directory=True)
++            except OSError: pytest.skip('symlink privilege unavailable')
++        return info
++    with monkeypatch.context() as patch:
++        patch.setattr(probe.os, 'stat', changed_stat)
++        result = probe.state_snapshot(root)
++    assert replaced == [True]
+     assert result['complete'] is False and result['sentinel_files'] == 0
+ 
+ 
+@@ -141,14 +136,18 @@ def test_snapshot_close_failure_never_masks_original_interruption(monkeypatch, t
+     original=kind();closed=[]
+     def interrupted(*args): raise original
+     def close(fd): closed.append(fd);raise OSError('synthetic second error')
+-    monkeypatch.setattr(probe.os,'open',lambda *a: 987)
+-    monkeypatch.setattr(probe.os,'fstat',lambda *a: metadata)
+-    monkeypatch.setattr(probe.os,'read',interrupted)
+-    monkeypatch.setattr(probe.os,'close',close)
+-    with pytest.raises(kind) as caught: probe.state_snapshot(tmp_path)
++    # Restore process-wide os functions BEFORE pytest reports an unexpected
++    # inner assertion failure; the diagnostic watcher owns unrelated descriptors.
++    with monkeypatch.context() as patch:
++        patch.setattr(probe.os,'open',lambda *a: 987)
++        patch.setattr(probe.os,'fstat',lambda *a: metadata)
++        patch.setattr(probe.os,'read',interrupted)
++        patch.setattr(probe.os,'close',close)
++        with pytest.raises(kind) as caught: probe.state_snapshot(tmp_path)
+     assert caught.value is original and closed == [987]
+ 
+ 
++
+ def test_server_close_failure_does_not_mask_original_interrupt(monkeypatch):
+     original=KeyboardInterrupt();calls=[];close=probe._Server.server_close
+     def failed_close(server):
+@@ -169,3 +168,52 @@ def test_server_start_failure_closes_socket_without_waiting_for_unstarted_worker
+     with pytest.raises(OSError) as caught:
+         with probe.loopback_server('success'):pytest.fail('entered')
+     assert caught.value is original and calls == [1]
++
++
++@pytest.mark.parametrize('nested', [False, True])
++def test_snapshot_uses_current_file_identity_not_windows_direntry_zeroes(monkeypatch, tmp_path, nested):
++    """Windows DirEntry.stat omits device/inode/link count; lstat does not."""
++    from contextlib import contextmanager
++    from types import SimpleNamespace
++    from hashlib import sha256
++    root = tmp_path/'root'; root.mkdir()
++    target = root/'sub' if nested else root
++    target.mkdir(exist_ok=True)
++    (target/'file').write_bytes(b'known bytes')
++    original = probe.os.scandir
++    class Entry:
++        def __init__(self, entry):
++            self._entry = entry
++            self.path, self.name = entry.path, entry.name
++        def stat(self, **kwargs):
++            actual = self._entry.stat(**kwargs)
++            return SimpleNamespace(st_mode=actual.st_mode, st_size=actual.st_size,
++                st_mtime_ns=actual.st_mtime_ns, st_ino=0, st_dev=0, st_nlink=0,
++                st_file_attributes=getattr(actual, 'st_file_attributes', 0))
++    @contextmanager
++    def windows_entries(path):
++        with original(path) as stream:
++            yield (Entry(entry) for entry in stream)
++    with monkeypatch.context() as patch:
++        patch.setattr(probe.os, 'scandir', windows_entries)
++        result = probe.state_snapshot(root)
++    assert result['complete'] is True and result['unsafe_entries'] == 0
++    assert len(result['files']) == (2 if nested else 1)
++    key = str(Path('sub/file')) if nested else 'file'
++    assert result['files'][key] == ('file', sha256(b'known bytes').hexdigest())
++
++
++@pytest.mark.parametrize('kind', [KeyboardInterrupt, SystemExit])
++def test_failed_injection_assertion_restores_os_before_pytest_reporting(monkeypatch, tmp_path, kind):
++    """Deliberately make the inner assertion fail, without poisoning its reporter."""
++    original = (probe.os.open, probe.os.read, probe.os.close, probe.os.fstat)
++    inner = pytest.MonkeyPatch()
++    with monkeypatch.context() as patch:
++        patch.setattr(probe, 'state_snapshot', lambda _: {'complete': False})
++        try:
++            with pytest.raises(pytest.fail.Exception):
++                test_snapshot_close_failure_never_masks_original_interruption(inner, tmp_path, kind)
++            restored = (probe.os.open, probe.os.read, probe.os.close, probe.os.fstat) == original
++        finally:
++            inner.undo()  # Keep the RED test itself from breaking pytest's reporter.
++    assert restored is True
