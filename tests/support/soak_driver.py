@@ -583,7 +583,14 @@ class SoakDriver:
             pass
 
     def _recover(self) -> None:
-        """Scan previous segments; finalize interrupted/unknown; never rerun."""
+        """Scan previous segments; finalize interrupted/unknown; never rerun.
+
+        A round directory whose round.json is missing (controller died
+        between creating the round directory and writing its 'running'
+        record) is finalized unknown exactly like an unreadable record:
+        the audit reads the directory as a round, so its number is burned
+        and never handed out again by a restart.
+        """
         segments_dir = self.root / 'segments'
         segments_dir.mkdir(exist_ok=True)
         last_closed = True
@@ -594,10 +601,12 @@ class SoakDriver:
             if _read_json(segment / 'segment-close.json') is None:
                 last_closed = False
             unknown_dir = segment / 'rounds' / 'unknown'
-            for record_path in sorted((segment / 'rounds').glob('round-*/round.json')):
+            for round_dir in sorted(path for path in (segment / 'rounds').iterdir()
+                                    if path.is_dir() and path.name.startswith('round-')):
+                record_path = round_dir / 'round.json'
                 record = _read_json(record_path)
                 if record is None:
-                    sidecar = unknown_dir / f'{record_path.parent.name}.json'
+                    sidecar = unknown_dir / f'{round_dir.name}.json'
                     if not sidecar.exists():  # count each unreadable round exactly once
                         unknown_dir.mkdir(exist_ok=True)
                         self._write_json(sidecar, {
@@ -605,7 +614,8 @@ class SoakDriver:
                             'classified_by': 'recovery', 'wall': time.time(),
                             'source': str(record_path.relative_to(segment))})
                         self._totals['unknown'] += 1
-                    highest_round = max(highest_round, self._round_number_from_name(record_path.name))
+                    highest_round = max(highest_round,
+                                        self._round_number_from_name(round_dir.name))
                     continue
                 highest_round = max(highest_round, int(record.get('round', 0)))
                 final = record.get('final')
@@ -1057,10 +1067,11 @@ def inspect_campaign(root: Path) -> dict:
                             previous_wall = wall
             rounds_dir = segment / 'rounds'
             if rounds_dir.is_dir():
-                for record_path in sorted(rounds_dir.glob('round-*/round.json')):
-                    record = _read_json(record_path)
+                for round_dir in sorted(p for p in rounds_dir.iterdir()
+                                        if p.is_dir() and p.name.startswith('round-')):
+                    record = _read_json(round_dir / 'round.json')
                     if record is None:
-                        counts['unknown'] += 1
+                        counts['unknown'] += 1  # missing record == unreadable here too
                         continue
                     final = record.get('final')
                     if final in counts:
