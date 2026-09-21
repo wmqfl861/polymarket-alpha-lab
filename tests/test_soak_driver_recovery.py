@@ -10,10 +10,12 @@ driver's documented recovery contract only (module docstring of
 tests/support/soak_driver.py plus the frozen soak_audit semantics):
 every round directory a dead controller leaves behind must end in one of
 the four final states; a record that is unreadable or was never written is
-'unknown' (counted exactly once per campaign via the sidecar); a record
-without a final state is rewritten 'interrupted'; no round number is ever
-handed out twice. The oracle shares no code with the driver and is never
-fed values produced by the driver's recovery implementation.
+'unknown' (counted exactly once on EVERY recovery pass, matching the
+audit's directory-based count; the sidecar marking it is written exactly
+once and its bytes are never rewritten); a record without a final state is
+rewritten 'interrupted'; no round number is ever handed out twice. The
+oracle shares no code with the driver and is never fed values produced by
+the driver's recovery implementation.
 
 Determinism policy: every fault fires at a fixed call boundary selected by
 file name and call ordinal (monkeypatched write seams), at a rendezvous
@@ -211,12 +213,15 @@ def _dir_round_number(name: str) -> int:
 class RecoveryOracle:
     """Pure model of the documented post-crash recovery state.
 
-    observe() walks the campaign disk exactly once, BEFORE any restart, and
-    computes: per-state totals, the next round number that may be handed out
-    (every round number a dead controller touched is reserved), the next
-    segment number, whether all previous segments closed, the final state
-    each round record must carry afterwards, and which unknown sidecars a
-    recovery pass must create (exactly once per campaign).
+    observe() walks the campaign disk and computes: per-state totals, the
+    next round number that may be handed out (every round number a dead
+    controller touched is reserved), the next segment number, whether all
+    previous segments closed, the final state each round record must carry
+    afterwards, and which unknown sidecars a recovery pass must still
+    create. The model is idempotent: observing again after sidecars were
+    created yields the same totals, because an existing unknown round is
+    recounted on every pass (R7) — the sidecar is a durable marker, not a
+    'do not count' flag.
     """
 
     def __init__(self):
@@ -254,7 +259,10 @@ class RecoveryOracle:
                         if not (rounds_root / 'unknown'
                                 / f'{round_dir.name}.json').exists():
                             self.sidecars_to_create.append(key)
-                            self.totals['unknown'] += 1
+                        # R7: recounted on EVERY observation/pass — the audit
+                        # and each new recovery count this round unknown
+                        # exactly once, whether or not the sidecar exists.
+                        self.totals['unknown'] += 1
                         self.expected_disk[key] = 'unknown'
                         continue
                     number = record.get('round') \
@@ -298,6 +306,37 @@ def boot_recovery(config, campaign):
     """A restart's boot phase (identity check, lock, recovery, new segment)."""
     fresh = drv.SoakDriver(config, campaign)
     return fresh, fresh._boot()
+
+
+def patch_bounded_open(monkeypatch):
+    """Instrument drv's module-level ``open``: record the size of every
+    binary read, per file, so a test can prove reads are bounded at the
+    I/O layer (R6) instead of read-in-full-then-truncated."""
+    reads: dict[str, list[int]] = {}
+    real_open = open
+
+    def counting_open(file, mode='r', *args, **kwargs):
+        handle = real_open(file, mode, *args, **kwargs)
+        if 'r' in mode and 'b' in mode:
+            key = str(Path(file).resolve())
+            real_read, real_readline = handle.read, handle.readline
+
+            def counting_read(size=-1):
+                data = real_read(size)
+                reads.setdefault(key, []).append(len(data))
+                return data
+
+            def counting_readline(size=-1):
+                data = real_readline(size)
+                reads.setdefault(key, []).append(len(data))
+                return data
+
+            handle.read = counting_read
+            handle.readline = counting_readline
+        return handle
+
+    monkeypatch.setattr(drv, 'open', counting_open, raising=False)
+    return reads
 
 
 # ---------------------------------------------------------------------------
@@ -424,12 +463,15 @@ def test_crash_before_running_record_is_unknown_and_number_reserved(tmp_path, mo
     finally:
         fresh._release_lock()
 
-    # A second recovery pass must not recount the sidecar (counted once).
+    # Corrected R7 semantics: a second recovery recounts the same unknown
+    # from the complete on-disk evidence (the sidecar is a durable marker,
+    # not a 'do not count' flag); the totals never drop back to zero and
+    # the round number stays burned.
     second, code2 = boot_recovery(config, campaign)
     try:
         assert code2 == drv.EXIT_OK
-        assert second._totals == {state: 0 for state in ORACLE_FINAL_STATES}
-        assert second._next_round_no == 2
+        assert second._totals == oracle.totals
+        assert second._next_round_no == oracle.next_round_no
     finally:
         second._release_lock()
 
@@ -860,3 +902,145 @@ def test_unclosed_segment_after_close_write_failure_is_flagged_by_recovery(
         assert fresh._recovery['previous_segment_closed'] is False
     finally:
         fresh._release_lock()
+
+
+# ===========================================================================
+# R7: repeated recoveries recount unknown; R6: bounded recovery reads
+# ===========================================================================
+
+
+def test_second_and_third_recovery_recount_unknown_sidecar_unchanged(tmp_path):
+    """R7 counterexample: recoveries two and three must recount the existing
+    unknown round (the count never drops back to zero), keep the sidecar
+    bytes untouched, and keep the round number burned — matching what the
+    read-only audit counts for the same disk state."""
+    manifest = manifest_with(tmp_path, [{'name': 'echo', 'kind': 'process',
+                                         'code': ECHO}])
+    config = drv.SoakConfig.from_dict(base_config(manifest))
+    campaign = tmp_path / 'campaign'
+    round_dir = campaign / 'segments' / 'segment-000001' / 'rounds' / 'round-000000001'
+    round_dir.mkdir(parents=True)  # controller died before any record existed
+    (campaign / 'campaign.json').write_text(json.dumps(
+        {'schema': 'pal-soak-campaign-v1', 'max_unobserved_gap_seconds': 900}),
+        encoding='utf-8')
+    sidecar = campaign / 'segments' / 'segment-000001' / 'rounds' / 'unknown' \
+        / 'round-000000001.json'
+
+    first = drv.SoakDriver(config, campaign)
+    first._recover()
+    assert first._totals['unknown'] == 1 and first._next_round_no == 2
+    assert sidecar.is_file()
+    original_bytes = sidecar.read_bytes()
+
+    for _recovery_pass in (2, 3):
+        again = drv.SoakDriver(config, campaign)
+        again._recover()
+        assert again._totals['unknown'] == 1  # recounted, never zeroed
+        assert again._totals == first._totals
+        assert again._next_round_no == 2  # the number stays burned
+        assert sidecar.read_bytes() == original_bytes  # marker never rewritten
+
+    # Audit consistency: the read-only audit view counts the same unknown.
+    report = drv.inspect_campaign(campaign)
+    assert report['rounds_total']['unknown'] == 1
+
+
+def test_oversized_round_record_is_refused_after_a_bounded_read(tmp_path, monkeypatch):
+    """R6 counterexample in the recovery path: a round.json padded far over
+    the record cap is refused after a bounded read (at most the cap per
+    read) and recovered as unknown on every pass, with the sidecar written
+    once and never rewritten."""
+    manifest = manifest_with(tmp_path, [{'name': 'echo', 'kind': 'process',
+                                         'code': ECHO}])
+    config = drv.SoakConfig.from_dict(base_config(manifest))
+    campaign = tmp_path / 'campaign'
+    round_dir = campaign / 'segments' / 'segment-000001' / 'rounds' / 'round-000000002'
+    round_dir.mkdir(parents=True)
+    record_path = round_dir / 'round.json'
+    record_path.write_bytes(b'{"round":2,"final":"passed"'
+                            + b' ' * (2 * drv.RECORD_MAX_BYTES))
+    sidecar = campaign / 'segments' / 'segment-000001' / 'rounds' / 'unknown' \
+        / 'round-000000002.json'
+    reads = patch_bounded_open(monkeypatch)
+
+    first = drv.SoakDriver(config, campaign)
+    first._recover()
+    assert first._totals['unknown'] == 1 and first._next_round_no == 3
+    assert sidecar.is_file()
+    original_bytes = sidecar.read_bytes()
+    record_reads = reads.get(str(record_path), [])
+    assert record_reads, 'the oversized record must actually be read'
+    assert max(record_reads) <= drv.RECORD_MAX_BYTES  # bounded per read
+    assert sum(record_reads) <= drv.RECORD_MAX_BYTES + 1  # cap + probe only
+    assert record_path.stat().st_size > drv.RECORD_MAX_BYTES  # evidence intact
+
+    second = drv.SoakDriver(config, campaign)
+    second._recover()
+    assert second._totals['unknown'] == 1 and second._next_round_no == 3
+    assert sidecar.read_bytes() == original_bytes
+    still_bounded = reads.get(str(record_path), [])
+    assert all(size <= drv.RECORD_MAX_BYTES for size in still_bounded)
+
+
+def test_repeated_recovery_recomputes_totals_from_complete_evidence(tmp_path):
+    """R7 via the independent oracle: every recovery pass rebuilds the SAME
+    totals from full on-disk evidence (unknown sidecars already present
+    included), the oracle stays idempotent, no round number is reused, and
+    the driver's recovery totals agree with the audit's view."""
+    campaign = tmp_path / 'campaign'
+    first_segment = campaign / 'segments' / 'segment-000001'
+    second_segment = campaign / 'segments' / 'segment-000002'
+    (first_segment / 'rounds' / 'round-000000001').mkdir(parents=True)
+    (first_segment / 'rounds' / 'round-000000002').mkdir(parents=True)
+    (first_segment / 'rounds' / 'round-000000003').mkdir(parents=True)
+    (second_segment / 'rounds' / 'round-000000004').mkdir(parents=True)
+    (first_segment / 'rounds' / 'round-000000001' / 'round.json').write_text(json.dumps(
+        {'round': 1, 'status': 'final', 'final': 'passed',
+         'input_sha256': 'a' * 64}), encoding='utf-8')
+    (first_segment / 'rounds' / 'round-000000002' / 'round.json').write_text(json.dumps(
+        {'round': 2, 'status': 'running'}), encoding='utf-8')  # never finalized
+    (first_segment / 'segment-close.json').write_text(json.dumps(
+        {'reason': 'stop_file'}), encoding='utf-8')
+    # round 3 and round 4: no round.json at all; segment 2 never closed
+    (campaign / 'campaign.json').write_text(json.dumps(
+        {'schema': 'pal-soak-campaign-v1', 'max_unobserved_gap_seconds': 900}),
+        encoding='utf-8')
+
+    oracle = RecoveryOracle().observe(campaign)
+    assert oracle.totals == {'passed': 1, 'failed': 0, 'interrupted': 1, 'unknown': 2}
+    assert oracle.next_round_no == 5 and oracle.all_segments_closed is False
+
+    manifest = manifest_with(tmp_path, [{'name': 'echo', 'kind': 'process',
+                                         'code': ECHO}])
+    config = drv.SoakConfig.from_dict(base_config(manifest))
+
+    sidecars = [first_segment / 'rounds' / 'unknown' / 'round-000000003.json',
+                second_segment / 'rounds' / 'unknown' / 'round-000000004.json']
+    first_pass = drv.SoakDriver(config, campaign)
+    first_pass._recover()
+    assert first_pass._totals == oracle.totals
+    assert first_pass._next_round_no == oracle.next_round_no == 5
+    for (seg_name, dir_name), expected in oracle.expected_disk.items():
+        base = campaign / 'segments' / seg_name / 'rounds' / dir_name
+        if expected == 'unknown':
+            document = _parse_json_object(
+                base.parent / 'unknown' / f'{dir_name}.json')
+            assert document is not None and document['final'] == 'unknown'
+        else:
+            record = _parse_json_object(base / 'round.json')
+            assert record is not None and record['final'] == expected
+    assert all(sidecar.is_file() for sidecar in sidecars)
+    frozen = {sidecar: sidecar.read_bytes() for sidecar in sidecars}
+
+    for _recovery_pass in (2, 3):
+        again = drv.SoakDriver(config, campaign)
+        again._recover()
+        assert again._totals == oracle.totals  # full recount, identical
+        assert again._next_round_no == 5  # no number reused across passes
+        assert again._recovery['interrupted_or_unknown_finalized'] == 3
+        assert all(sidecar.read_bytes() == frozen[sidecar] for sidecar in sidecars)
+
+    # The oracle stays idempotent once the sidecars exist.
+    assert RecoveryOracle().observe(campaign).totals == oracle.totals
+    # Audit consistency: same totals from the read-only audit view.
+    assert drv.inspect_campaign(campaign)['rounds_total'] == oracle.totals

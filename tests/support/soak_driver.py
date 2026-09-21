@@ -23,6 +23,9 @@ Control contract (queue schema pal-local-longtask-v1):
   is unreadable) by recovery, never rerun under the same round number.
 - Log caps pause instead of overwriting evidence. The first complete
   failure is append-only (O_EXCL) and is never rewritten or deleted.
+- Every record read is capped at the I/O layer (a read never allocates
+  past the cap); a record over its cap is refused as unreadable/invalid
+  instead of being read in full and truncated afterwards.
 - Only successful rounds' own-marked temporary directories are cleaned;
   symlinks/reparse points and anything resolving outside the campaign
   root are refused. Uncertain cleanup stops the whole driver.
@@ -72,6 +75,18 @@ EXIT_PAUSED = 6
 FINAL_STATES = ('passed', 'failed', 'interrupted', 'unknown')
 CLOSE_REASONS = ('complete', 'stop_file', 'signal', 'paused_logs', 'paused_disk',
                  'evidence_failure', 'cleanup_uncertain')
+
+# Bounded-input caps (R6). Reads are limited before any allocation: each
+# bounded read touches at most cap bytes, and a record larger than its cap
+# is refused outright (treated as unreadable/invalid), never read in full
+# and sliced afterwards.
+RECORD_MAX_BYTES = 2 * 1048576        # campaign/lock/round/segment JSON records
+MANIFEST_MAX_BYTES = 16 * 1048576     # scenario manifest (256 x 30,000-byte sources)
+CONFIG_MAX_BYTES = 1048576            # campaign configuration document
+JUNIT_MAX_BYTES = 1048576             # pytest receipt XML
+STOP_NOTE_MAX_BYTES = 256             # stop-file note snippet
+HEARTBEAT_LINE_MAX_BYTES = 65536      # one heartbeat JSONL line
+HEARTBEAT_MAX_LINES = 65536           # heartbeat lines read per segment (inspect)
 _SIGNAL_NAMES = {int(signal.SIGINT): 'sigint'}
 for _name in ('SIGTERM', 'SIGBREAK'):
     if hasattr(signal, _name):
@@ -114,12 +129,42 @@ def _canonical(obj) -> bytes:
     return json.dumps(obj, sort_keys=True, separators=(',', ':')).encode('utf-8')
 
 
-def _read_json(path: Path):
+def _read_capped(path: Path, max_bytes: int) -> bytes | None:
+    """Bounded file read: at most ``max_bytes`` bytes ever leave the file.
+
+    The bound is enforced by the read sizes themselves (one read of
+    ``max_bytes`` plus a one-byte over-limit probe), so a damaged or padded
+    record can never make this driver allocate past the cap. Returns None
+    for a missing file, an I/O error, or a record over its cap — an
+    explicit refusal, never a silently truncated read.
+    """
     try:
         with open(path, 'rb') as handle:
-            return json.loads(handle.read().decode('utf-8'))
-    except (OSError, ValueError, UnicodeDecodeError):
+            data = handle.read(max_bytes)
+            if handle.read(1):
+                return None  # over the cap: refuse instead of truncating
+            return data
+    except OSError:
         return None
+
+
+def _read_json(path: Path, max_bytes: int = RECORD_MAX_BYTES):
+    raw = _read_capped(path, max_bytes)
+    if raw is None:
+        return None
+    try:
+        return json.loads(raw.decode('utf-8'))
+    except (ValueError, UnicodeDecodeError):
+        return None
+
+
+def _read_stop_note(path: Path) -> str:
+    """Bounded stop-file snippet (R6: never read-all then slice)."""
+    try:
+        with open(path, 'rb') as handle:
+            return handle.read(STOP_NOTE_MAX_BYTES).decode('utf-8', 'replace')[:200].strip()
+    except OSError:
+        return ''
 
 
 def _atomic_write_bytes(path: Path, data: bytes) -> None:
@@ -269,7 +314,7 @@ class SoakScenario:
 
 
 def _load_manifest(path: Path) -> tuple[tuple[SoakScenario, ...], str]:
-    document = _read_json(path)
+    document = _read_json(path, MANIFEST_MAX_BYTES)
     if type(document) is not dict or type(document.get('scenarios')) is not list \
             or not 1 <= len(document['scenarios']) <= 256:
         raise SoakConfigError('soak_manifest_invalid')
@@ -590,6 +635,12 @@ class SoakDriver:
         record) is finalized unknown exactly like an unreadable record:
         the audit reads the directory as a round, so its number is burned
         and never handed out again by a restart.
+
+        Every recovery pass rebuilds its totals from the complete on-disk
+        evidence, so an existing unknown round is recounted once on every
+        new recovery (second, third, ...) exactly like the audit's
+        directory-based count; the durable unknown sidecar is written only
+        by the first recovery and its bytes are never rewritten afterwards.
         """
         segments_dir = self.root / 'segments'
         segments_dir.mkdir(exist_ok=True)
@@ -607,13 +658,13 @@ class SoakDriver:
                 record = _read_json(record_path)
                 if record is None:
                     sidecar = unknown_dir / f'{round_dir.name}.json'
-                    if not sidecar.exists():  # count each unreadable round exactly once
+                    if not sidecar.exists():  # durable marker written once, never rewritten
                         unknown_dir.mkdir(exist_ok=True)
                         self._write_json(sidecar, {
                             'final': 'unknown', 'reason': 'record_unreadable',
                             'classified_by': 'recovery', 'wall': time.time(),
                             'source': str(record_path.relative_to(segment))})
-                        self._totals['unknown'] += 1
+                    self._totals['unknown'] += 1  # recounted on EVERY recovery pass
                     highest_round = max(highest_round,
                                         self._round_number_from_name(round_dir.name))
                     continue
@@ -702,10 +753,7 @@ class SoakDriver:
                 continue
             if exists and not self.stop.is_stopped():
                 self._stop_source = self._stop_source or 'stop_file'
-                try:
-                    self._stop_note = self.stop_path.read_text('utf-8', 'replace')[:200].strip()
-                except OSError:
-                    self._stop_note = ''
+                self._stop_note = _read_stop_note(self.stop_path)
                 self.stop.request_stop()
                 return
 
@@ -822,12 +870,15 @@ class SoakDriver:
         junit = round_tmp / 'pytest.xml'
         try:
             import xml.etree.ElementTree as etree
-            root = etree.parse(junit).getroot()
+            raw = _read_capped(junit, JUNIT_MAX_BYTES)
+            if raw is None:  # over the cap: refused, never truncated
+                return None, 'receipt_invalid'
+            root = etree.fromstring(raw)
             if root.tag == 'testsuites':
                 root = root.find('testsuite')
             receipt = {key: int(root.get(key, 0))
                        for key in ('tests', 'failures', 'errors', 'skipped')}
-        except (OSError, ValueError, AttributeError, TypeError):
+        except (OSError, ValueError, SyntaxError, AttributeError, TypeError):
             return None, 'receipt_invalid'
         if receipt['failures'] or receipt['errors']:
             return receipt, 'nonzero_exit'
@@ -1050,12 +1101,25 @@ def inspect_campaign(root: Path) -> dict:
             close = _read_json(segment / 'segment-close.json')
             counts = {'passed': 0, 'failed': 0, 'interrupted': 0, 'unknown': 0}
             heartbeats, gaps, previous_wall = 0, [], None
+            heartbeat_read_stopped = None
             heartbeat_file = segment / 'heartbeats.jsonl'
             if heartbeat_file.exists():
+                # R6: bounded JSONL iteration — each read is at most one
+                # line cap, the line count is capped, and an over-long line
+                # stops parsing (the remainder would only desync) instead
+                # of being read in full.
+                lines_seen = 0
                 with open(heartbeat_file, 'rb') as handle:
-                    for line in handle:
+                    while lines_seen < HEARTBEAT_MAX_LINES:
+                        raw = handle.readline(HEARTBEAT_LINE_MAX_BYTES + 1)
+                        if not raw:
+                            break
+                        lines_seen += 1
+                        if len(raw) > HEARTBEAT_LINE_MAX_BYTES:
+                            heartbeat_read_stopped = 'line_over_limit'
+                            break
                         try:
-                            entry = json.loads(line)
+                            entry = json.loads(raw)
                         except ValueError:
                             continue
                         heartbeats += 1
@@ -1065,6 +1129,9 @@ def inspect_campaign(root: Path) -> dict:
                             gaps.append({'wall': wall, 'gap_seconds': round(wall - previous_wall, 3)})
                         if type(wall) in (int, float):
                             previous_wall = wall
+                    if heartbeat_read_stopped is None and lines_seen >= HEARTBEAT_MAX_LINES \
+                            and handle.readline(1):
+                        heartbeat_read_stopped = 'line_count_over_limit'
             rounds_dir = segment / 'rounds'
             if rounds_dir.is_dir():
                 for round_dir in sorted(p for p in rounds_dir.iterdir()
@@ -1080,7 +1147,8 @@ def inspect_campaign(root: Path) -> dict:
                         distinct.add(record['input_sha256'])
             totals = {key: totals[key] + counts[key] for key in totals}
             report['segments'].append({'path': str(segment), 'close': close, 'rounds': counts,
-                                       'heartbeats': heartbeats, 'gaps_over_limit': gaps})
+                                       'heartbeats': heartbeats, 'gaps_over_limit': gaps,
+                                       'heartbeat_read_stopped': heartbeat_read_stopped})
     used, measured = _tree_bytes(root)
     report['rounds_total'] = totals
     report['distinct_inputs'] = len(distinct)
@@ -1107,7 +1175,10 @@ def main(argv=None) -> int:
         print(json.dumps(inspect_campaign(Path(args.campaign).resolve()), indent=2, sort_keys=True))
         return EXIT_OK
     try:
-        document = json.loads(Path(args.config).read_text(encoding='utf-8'))
+        raw = _read_capped(Path(args.config), CONFIG_MAX_BYTES)
+        if raw is None:  # over the cap: refuse the configuration outright
+            raise ValueError('config_over_read_cap') from None
+        document = json.loads(raw.decode('utf-8'))
         config = SoakConfig.from_dict(document)
         driver = SoakDriver(config, Path(args.campaign).resolve())
     except (OSError, ValueError):

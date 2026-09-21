@@ -46,6 +46,54 @@ PAD_RECEIPT = ('import sys,json\n'
                'sys.stdout.write(json.dumps({"echo_round":p["round"],"echo_seed":p["sub_seed"],'
                '"pad":"x"*100000}))\n')
 
+# Scenario executed by a REAL pytest child: it reports its own interpreter,
+# sys.path, and the pytest/tzdata it actually imported, with file digests.
+SOURCE_PROBE_SCENARIO = '''import hashlib
+import json
+import os
+import sys
+
+
+def _digest(path):
+    with open(path, 'rb') as handle:
+        return hashlib.sha256(handle.read()).hexdigest()
+
+
+def test_report_runtime_sources(capfd):
+    import pytest
+    try:
+        import tzdata
+        tzdata_file = getattr(tzdata, '__file__', None)
+    except ImportError:
+        tzdata_file = None
+    receipt = {
+        'executable': sys.executable,
+        'executable_sha256': _digest(sys.executable),
+        'sys_path': list(sys.path),
+        'pytest_file': getattr(pytest, '__file__', None),
+        'pytest_version': getattr(pytest, '__version__', None),
+        'pytest_init_sha256': _digest(pytest.__file__),
+        'tzdata_file': tzdata_file,
+        'tzdata_init_sha256': _digest(tzdata.__file__) if tzdata_file else None,
+    }
+    with capfd.disabled():
+        os.write(1, b'PAL_SOURCE_RECEIPT ' + json.dumps(receipt).encode('utf-8') + b'\\n')
+'''
+
+# Same receipt for a plain -c child (used by the shadow-site control).
+SHADOW_PROBE_CODE = (
+    'import json,sys\n'
+    'import pytest\n'
+    'try:\n'
+    '    import tzdata\n'
+    '    tz = getattr(tzdata, "__file__", None)\n'
+    'except ImportError:\n'
+    '    tz = None\n'
+    'receipt = {"executable": sys.executable, "sys_path": list(sys.path),'
+    ' "pytest_file": getattr(pytest, "__file__", None),'
+    ' "pytest_version": getattr(pytest, "__version__", None), "tzdata_file": tz}\n'
+    'sys.stdout.write("PAL_SOURCE_RECEIPT " + json.dumps(receipt) + "\\n")\n')
+
 if os.name == 'nt':
     LOCK_SLEEP = ('import sys,json,time,os,msvcrt\n'
                   'p=json.loads(sys.stdin.buffer.read())\n'
@@ -154,6 +202,45 @@ def final_record(campaign, segment, round_no):
     """A round record only once it has reached a final state."""
     record = round_record(campaign, segment, round_no)
     return record if record is not None and record.get('status') == 'final' else None
+
+
+def patch_bounded_open(monkeypatch):
+    """Instrument the driver module's ``open``: record the size of every
+    binary read, per file, so a test can prove reads are bounded at the
+    I/O layer (R6) instead of read-in-full-then-truncated."""
+    reads: dict[str, list[int]] = {}
+    real_open = open
+
+    def counting_open(file, mode='r', *args, **kwargs):
+        handle = real_open(file, mode, *args, **kwargs)
+        if 'r' in mode and 'b' in mode:
+            key = str(Path(file).resolve())
+            real_read, real_readline = handle.read, handle.readline
+
+            def counting_read(size=-1):
+                data = real_read(size)
+                reads.setdefault(key, []).append(len(data))
+                return data
+
+            def counting_readline(size=-1):
+                data = real_readline(size)
+                reads.setdefault(key, []).append(len(data))
+                return data
+
+            handle.read = counting_read
+            handle.readline = counting_readline
+        return handle
+
+    monkeypatch.setattr(drv, 'open', counting_open, raising=False)
+    return reads
+
+
+def child_receipt_from_stdout(stdout: bytes):
+    """Parse the child's self-reported import receipt (one JSON line)."""
+    for line in stdout.decode('utf-8', 'replace').splitlines():
+        if line.startswith('PAL_SOURCE_RECEIPT '):
+            return json.loads(line[len('PAL_SOURCE_RECEIPT '):])
+    return None
 
 
 # ---------- deterministic seeding and configuration ----------
@@ -348,6 +435,94 @@ def test_pytest_site_refuses_a_purelib_without_pytest(tmp_path, monkeypatch):
     with pytest.raises(drv.SoakConfigError) as raised:
         drv._pinned_purelib()
     assert 'soak_pytest_site_invalid' in str(raised.value)
+
+
+def test_pytest_scenario_child_reports_pinned_runtime_sources(tmp_path):
+    """Real-subprocess source control: the scenario child ITSELF must run the
+    pinned interpreter and import pytest/tzdata from the pinned purelib
+    (``_pinned_purelib``), proven by a receipt the child prints about its
+    own imports (paths, versions, file digests) — not by the parent's
+    ambient resolution. Covers the formal-soak failure where a user
+    site-packages shadowed pytest and silently dropped tzdata."""
+    from polymarket_alpha_lab.research_process import run_research_process
+    import site as site_module
+    purelib = Path(drv._pinned_purelib()).resolve()
+    probe = tmp_path / 'source_probe.py'
+    probe.write_text(SOURCE_PROBE_SCENARIO, encoding='utf-8')
+    manifest = manifest_with(tmp_path, [{'name': 'probe', 'kind': 'pytest',
+                                         'files': [str(probe)]}])
+    config = drv.SoakConfig.from_dict(base_config(manifest, minimum_valid_rounds=1,
+                                                  scenario_timeout_ms=60000))
+    driver = drv.SoakDriver(config, tmp_path / 'campaign')
+    round_tmp = tmp_path / 'roundtmp'
+    round_tmp.mkdir()
+    spec = driver._scenario_spec(drv.SoakScenario('probe', 'pytest', files=(str(probe),)),
+                                 round_tmp)
+    result = run_research_process(spec=spec, stdin=b'{"round":1}',
+                                  allow_process_start=True, stop=drv.ResearchDispatchStop())
+    receipt = child_receipt_from_stdout(result.stdout)
+    assert receipt is not None, result.stdout[-2000:]
+    # The child really runs the pinned executable, byte-identical.
+    assert Path(receipt['executable']).resolve() == Path(driver.python).resolve()
+    assert receipt['executable_sha256'] == driver.python_sha
+    # pytest comes from the pinned purelib, same version and bytes.
+    pytest_file = Path(receipt['pytest_file']).resolve()
+    assert pytest_file.is_relative_to(purelib)
+    assert receipt['pytest_version'] == pytest.__version__
+    assert receipt['pytest_init_sha256'] == drv._sha256_file(purelib / 'pytest' / '__init__.py')
+    # tzdata comes from the pinned purelib when it ships there, and never
+    # leaks in from anywhere else when it does not.
+    if (purelib / 'tzdata' / '__init__.py').is_file():
+        tzdata_file = Path(receipt['tzdata_file']).resolve()
+        assert receipt['tzdata_file'] is not None
+        assert tzdata_file.is_relative_to(purelib)
+        assert receipt['tzdata_init_sha256'] == drv._sha256_file(
+            purelib / 'tzdata' / '__init__.py')
+    else:
+        assert receipt['tzdata_file'] is None
+    # The -S child's only dependency source is PYTHONPATH = the purelib, and
+    # no ambient user site-packages appears on its path.
+    assert str(purelib) in receipt['sys_path']
+    try:
+        user_site = Path(site_module.getusersitepackages())
+    except OSError:
+        user_site = None
+    if user_site is not None:
+        assert not any(entry and Path(entry).is_relative_to(user_site)
+                       for entry in receipt['sys_path'])
+
+
+def test_source_receipt_detects_a_shadow_site_ahead_of_the_purelib(tmp_path):
+    """Negative control for the receipt oracle: a fabricated directory
+    holding a fake pytest (and no tzdata) placed AHEAD of the pinned purelib
+    on PYTHONPATH is exactly what the child reports. This proves the source
+    receipt detects import drift instead of passing vacuously. Everything is
+    built inside this test's own tmp directory; no real user site is read."""
+    from polymarket_alpha_lab.research_process import (
+        ResearchProcessSpec, run_research_process)
+    purelib = Path(drv._pinned_purelib()).resolve()
+    shadow = tmp_path / 'shadow-site'
+    (shadow / 'pytest').mkdir(parents=True)
+    (shadow / 'pytest' / '__init__.py').write_text(
+        "__version__ = '0.0.0-shadow'\n", encoding='utf-8')
+    environment = [('PYTHONPATH', os.pathsep.join([str(shadow), str(purelib)])),
+                   ('PYTHONUTF8', '1'), ('PYTHONDONTWRITEBYTECODE', '1')]
+    if os.name == 'nt':
+        environment.append(('SystemRoot', os.environ['SystemRoot']))
+    spec = ResearchProcessSpec(
+        argv=(str(Path(sys.executable).resolve()), '-S', '-c', SHADOW_PROBE_CODE),
+        cwd=str(tmp_path), environment=tuple(environment),
+        executable_sha256=drv._sha256_file(Path(sys.executable)),
+        timeout_ms=60000)
+    result = run_research_process(spec=spec, stdin=b'{}',
+                                  allow_process_start=True, stop=drv.ResearchDispatchStop())
+    receipt = child_receipt_from_stdout(result.stdout)
+    assert receipt is not None, result.stdout[-2000:]
+    assert Path(receipt['pytest_file']).resolve().is_relative_to(shadow)
+    assert receipt['pytest_version'] == '0.0.0-shadow'
+    # tzdata still resolves from the only real provider behind the shadow.
+    if receipt['tzdata_file'] is not None:
+        assert Path(receipt['tzdata_file']).resolve().is_relative_to(purelib)
 
 
 # ---------- driver-as-subprocess control behaviors ----------
@@ -592,3 +767,155 @@ def test_inspect_flags_heartbeat_gap_as_broken_continuity(tmp_path):
         env={'SystemRoot': os.environ['SystemRoot']} if os.name == 'nt' else {}).stdout)
     assert report['continuity']['broken'] is True
     assert report['segments'][0]['gaps_over_limit'][0]['gap_seconds'] > 900
+
+
+# ---------- bounded reads (R6: limit before allocation, never read-all) ----------
+
+def test_oversized_lock_read_is_bounded_and_fail_closed(tmp_path, monkeypatch):
+    """R6 counterexample: a padded driver.lock far over the record cap is
+    refused after a bounded read (each read at most the cap) and recovered
+    through the stale path exactly like an unreadable lock; the oversized
+    bytes are preserved as evidence, never silently truncated."""
+    manifest = manifest_with(tmp_path, [{'name': 'echo', 'kind': 'process', 'code': ECHO}])
+    config = drv.SoakConfig.from_dict(base_config(manifest))
+    campaign = tmp_path / 'campaign'
+    campaign.mkdir()
+    lock = campaign / 'driver.lock'
+    lock.write_bytes(b'{"pid":7}' + b' ' * (2 * drv.RECORD_MAX_BYTES))
+    reads = patch_bounded_open(monkeypatch)
+    driver = drv.SoakDriver(config, campaign)
+    assert driver._acquire_lock() == drv.EXIT_OK
+    lock_reads = reads.get(str(lock), [])
+    assert lock_reads, 'the lock must actually be read'
+    assert max(lock_reads) <= drv.RECORD_MAX_BYTES  # bounded per read
+    assert sum(lock_reads) <= drv.RECORD_MAX_BYTES + 1  # cap + one-byte probe
+    stale = list(campaign.glob('driver.lock.stale-*'))
+    assert len(stale) == 1 and stale[0].stat().st_size > drv.RECORD_MAX_BYTES
+    new_lock = json.loads((campaign / 'driver.lock').read_text(encoding='utf-8'))
+    assert new_lock['pid'] == os.getpid()
+    driver._release_lock()
+
+
+def test_small_lock_still_reads_its_pid(tmp_path, monkeypatch):
+    """R6 control: a small well-formed lock is read within the cap and its
+    live PID is honored (lock busy), unlike the oversized refusal above."""
+    manifest = manifest_with(tmp_path, [{'name': 'echo', 'kind': 'process', 'code': ECHO}])
+    config = drv.SoakConfig.from_dict(base_config(manifest))
+    campaign = tmp_path / 'campaign'
+    campaign.mkdir()
+    lock = campaign / 'driver.lock'
+    lock.write_text(json.dumps({'pid': os.getpid(), 'wall': 0.0, 'argv': []}),
+                    encoding='utf-8')
+    reads = patch_bounded_open(monkeypatch)
+    driver = drv.SoakDriver(config, campaign)
+    assert driver._acquire_lock() == drv.EXIT_LOCK_BUSY  # own PID is alive
+    lock_reads = reads.get(str(lock), [])
+    assert lock_reads and max(lock_reads) <= drv.RECORD_MAX_BYTES
+    assert json.loads(lock.read_text(encoding='utf-8'))['pid'] == os.getpid()
+
+
+def test_stop_note_read_is_bounded(tmp_path, monkeypatch):
+    """R6: the stop-file note snippet is read with a bounded read, not
+    read-all-then-sliced."""
+    huge = tmp_path / 'stop'
+    huge.write_bytes(b'n' * (64 * drv.STOP_NOTE_MAX_BYTES))
+    reads = patch_bounded_open(monkeypatch)
+    note = drv._read_stop_note(huge)
+    sizes = reads.get(str(huge), [])
+    assert note == 'n' * 200
+    assert sizes and max(sizes) <= drv.STOP_NOTE_MAX_BYTES
+    # control: a normal stop note round-trips verbatim
+    normal = tmp_path / 'stop2'
+    normal.write_text('operator stop for test', encoding='utf-8')
+    assert drv._read_stop_note(normal) == 'operator stop for test'
+
+
+def test_oversized_config_document_is_rejected(tmp_path, capsys):
+    """R6: a configuration document over its read cap is refused outright
+    (explicit EXIT_CONFIG) instead of being fully read."""
+    path = tmp_path / 'config.json'
+    path.write_text('{"pad":"' + 'x' * (2 * drv.CONFIG_MAX_BYTES) + '"}', encoding='utf-8')
+    code = drv.main(['run', '--campaign', str(tmp_path / 'campaign'), '--config', str(path)])
+    assert code == drv.EXIT_CONFIG
+    assert 'SOAK_CONFIG_INVALID' in capsys.readouterr().out
+
+
+def test_oversized_manifest_is_rejected(tmp_path):
+    """R6: a scenario manifest over its read cap is invalid, not read."""
+    manifest = tmp_path / 'manifest.json'
+    manifest.write_text('{"scenarios":[{"name":"big","kind":"process","code":"x"'
+                        + ' ' * drv.MANIFEST_MAX_BYTES + '}]}' + ' ' * 64,
+                        encoding='utf-8')
+    config = drv.SoakConfig.from_dict(base_config(manifest))
+    with pytest.raises(drv.SoakConfigError):
+        drv.SoakDriver(config, tmp_path / 'campaign')
+
+
+def test_oversized_junit_receipt_is_refused(tmp_path):
+    """R6: a pytest receipt XML over its read cap is receipt_invalid (the
+    round fails closed); a small well-formed one still parses."""
+    manifest = manifest_with(tmp_path, [{'name': 'batch', 'kind': 'pytest',
+                                         'files': [str(tmp_path / 'case.py')]}])
+    (tmp_path / 'case.py').write_text('def test_one():\n    pass\n', encoding='utf-8')
+    config = drv.SoakConfig.from_dict(base_config(manifest))
+    driver = drv.SoakDriver(config, tmp_path / 'campaign')
+    scenario = driver.scenarios[0]
+    round_tmp = tmp_path / 'roundtmp'
+    round_tmp.mkdir()
+    junit = round_tmp / 'pytest.xml'
+    junit.write_bytes(b'<?xml version="1.0"?><testsuites><testsuite tests="1"/>'
+                      + b' ' * (2 * drv.JUNIT_MAX_BYTES))
+    receipt, reason = driver._validate_receipt(scenario, b'', 1, 7, round_tmp)
+    assert receipt is None and reason == 'receipt_invalid'
+    # control: small receipt parses; failures surface as nonzero_exit
+    junit.write_bytes(b'<?xml version="1.0"?><testsuite tests="2" failures="0"'
+                      b' errors="0" skipped="1"></testsuite>')
+    receipt, reason = driver._validate_receipt(scenario, b'', 1, 7, round_tmp)
+    assert receipt == {'tests': 2, 'failures': 0, 'errors': 0, 'skipped': 1} \
+        and reason is None
+    junit.write_bytes(b'<?xml version="1.0"?><testsuite tests="1" failures="1"'
+                      b' errors="0" skipped="0"></testsuite>')
+    receipt, reason = driver._validate_receipt(scenario, b'', 1, 7, round_tmp)
+    assert receipt is not None and reason == 'nonzero_exit'
+    # control: torn XML is receipt_invalid, never an uncaught ParseError
+    junit.write_bytes(b'<?xml version="1.0"?><testsuites><tests')
+    receipt, reason = driver._validate_receipt(scenario, b'', 1, 7, round_tmp)
+    assert receipt is None and reason == 'receipt_invalid'
+
+
+def test_inspect_heartbeat_reads_are_bounded(tmp_path, monkeypatch):
+    """R6: inspect's heartbeat scan reads bounded lines; an over-long line
+    stops the scan (the remainder would only desync) instead of being read
+    in full, and later lines are never mis-parsed."""
+    campaign = tmp_path / 'campaign'
+    segment = campaign / 'segments' / 'segment-000001'
+    (campaign / 'segments' / 'segment-000001' / 'rounds').mkdir(parents=True)
+    (campaign / 'campaign.json').write_text(json.dumps(
+        {'schema': 'pal-soak-campaign-v1', 'max_unobserved_gap_seconds': 900}),
+        encoding='utf-8')
+    heartbeats = segment / 'heartbeats.jsonl'
+    payload = b''.join((json.dumps({'wall': index * 10.0}).encode('utf-8') + b'\n'
+                        for index in range(2)))
+    overlong = b'{"pad":"' + b'x' * drv.HEARTBEAT_LINE_MAX_BYTES + b'"}\n'
+    trailing = json.dumps({'wall': 999.0}).encode('utf-8') + b'\n'
+    heartbeats.write_bytes(payload + overlong + trailing)
+    reads = patch_bounded_open(monkeypatch)
+    report = drv.inspect_campaign(campaign)
+    sizes = reads.get(str(heartbeats), [])
+    assert sizes and max(sizes) <= drv.HEARTBEAT_LINE_MAX_BYTES + 1
+    entry = report['segments'][0]
+    assert entry['heartbeats'] == 2  # only the lines before the over-long one
+    assert entry['heartbeat_read_stopped'] == 'line_over_limit'
+    # control: a normal heartbeat file is fully counted, nothing flagged
+    control_root = tmp_path / 'control'
+    control_segment = control_root / 'segments' / 'segment-000001'
+    (control_segment / 'rounds').mkdir(parents=True)
+    (control_root / 'campaign.json').write_text(json.dumps(
+        {'schema': 'pal-soak-campaign-v1', 'max_unobserved_gap_seconds': 900}),
+        encoding='utf-8')
+    (control_segment / 'heartbeats.jsonl').write_bytes(b''.join(
+        (json.dumps({'wall': index * 10.0}).encode('utf-8') + b'\n'
+         for index in range(3))))
+    control_report = drv.inspect_campaign(control_root)
+    assert control_report['segments'][0]['heartbeats'] == 3
+    assert control_report['segments'][0]['heartbeat_read_stopped'] is None
