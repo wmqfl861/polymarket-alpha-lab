@@ -1,0 +1,27 @@
+{
+  "master_seed": 2026092103,
+  "round_period_seconds": 300,
+  "heartbeat_seconds": 60,
+  "checkpoint_seconds": 7200,
+  "progress_summary_seconds": 43200,
+  "max_unobserved_gap_seconds": 900,
+  "scenario_timeout_ms": 900000,
+  "cleanup_timeout_ms": 5000,
+  "per_round_log_bytes": 1048576,
+  "max_stdout_bytes": 1048576,
+  "max_stderr_bytes": 65536,
+  "max_evidence_bytes": 536870912,
+  "max_repro_files": 100,
+  "minimum_volume_free_bytes": 10737418240,
+  "minimum_valid_rounds": 864,
+  "max_wall_seconds": 259200,
+  "workers": 1,
+  "candidate": {
+    "label": "BIND:freeze-wave-final-label",
+    "commit": "BIND:freeze-wave-final-commit-sha",
+    "tree": "BIND:freeze-wave-final-tree-sha",
+    "base_commit": "2584f6f2d86ce19e7e2dab6bea6a27a013587753"
+  },
+  "scenario_manifest": "BIND:absolute-path-to-launch/manifest-rv05-final.json",
+  "min_distinct_qualified_subinputs": 100000
+}
