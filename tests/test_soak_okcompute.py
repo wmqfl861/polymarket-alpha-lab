@@ -738,3 +738,59 @@ def test_real_subprocess_two_families(tmp_path):
     for name in ('subinputs-paper-decimal-fill.json',
                  'subinputs-uncapped-authz-codec.json'):
         gen.check_receipt_doc(json.loads((tmp_path / name).read_bytes()))
+
+
+def _link_directory(target: Path, link: Path) -> str | None:
+    """Make ``link`` point at ``target``: real symlink when the host allows
+    one (the POSIX/Linux CI shape), else a Windows junction (which
+    ``Path.resolve()`` follows exactly like a symlink). None when the host
+    allows neither."""
+    if hasattr(os, 'symlink'):
+        try:
+            os.symlink(target, link, target_is_directory=True)
+            return 'symlink'
+        except (OSError, NotImplementedError):
+            pass
+    try:
+        import _winapi
+        _winapi.CreateJunction(str(target), str(link))
+        return 'junction'
+    except (ImportError, AttributeError, OSError):
+        return None
+
+
+def test_venv_site_packages_preserves_symlinked_launcher(tmp_path, monkeypatch):
+    # Linux venv launchers (.venv/bin/python) are symlinks to the base
+    # interpreter; a resolve()-based probe FOLLOWS the link and walks up
+    # from the base home, where no pyvenv.cfg is in reach -- the W4c
+    # offline/Linux residual first failure. Simulated with a directory
+    # symlink when the host allows one (on Linux CI this is the real
+    # launcher shape), else a junction; the abspath probe must keep the
+    # venv-anchored path.
+    base_bin = tmp_path / 'base-home' / 'bin'
+    base_bin.mkdir(parents=True)
+    (base_bin / 'python.exe').write_bytes(b'')
+    venv_root = tmp_path / 'fake-venv'
+    venv_root.mkdir()
+    (venv_root / 'pyvenv.cfg').write_text('home = base\n', encoding='ascii')
+    launcher = venv_root / 'bin' / 'python.exe'
+    if _link_directory(base_bin, venv_root / 'bin') is None:
+        pytest.skip('directory symlink/junction unavailable on this host')
+    monkeypatch.setattr(sys, 'executable', str(launcher), raising=False)
+    monkeypatch.setattr(sys, 'orig_argv', [str(launcher)], raising=False)
+    # fixture self-check: the RESOLVED launcher starts from the base home,
+    # where no pyvenv.cfg sits within the probe's four-parent reach
+    resolved_launcher = str(Path(launcher).resolve())
+    assert resolved_launcher != str(launcher)
+    assert all(not (parent / 'pyvenv.cfg').is_file()
+               for parent in Path(resolved_launcher).parents[:4])
+    found = gen._venv_site_packages()
+    expected = (venv_root / 'Lib' / 'site-packages' if os.name == 'nt'
+                else venv_root / 'lib'
+                / ('python%d.%d' % sys.version_info[:2]) / 'site-packages')
+    assert found == expected
+    assert str(found).startswith(str(venv_root))
+    # the pre-fix resolve() semantics on the same fixture finds nothing
+    monkeypatch.setattr(sys, 'executable', resolved_launcher, raising=False)
+    monkeypatch.setattr(sys, 'orig_argv', [resolved_launcher], raising=False)
+    assert gen._venv_site_packages() is None

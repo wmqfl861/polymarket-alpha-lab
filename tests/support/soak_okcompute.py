@@ -99,7 +99,10 @@ def _venv_site_packages() -> Path | None:
     Under ``-S`` a Windows venv launcher resolves sysconfig to the BASE
     interpreter (the pristine uv-managed CPython whose site-packages holds
     no project deps), so the venv root must be located from the executable
-    path via pyvenv.cfg instead.
+    path via pyvenv.cfg instead. On Linux the venv launcher
+    (``.venv/bin/python``) is a symlink to that base interpreter, so the
+    probe must NOT follow links: a resolved start walks up from the BASE
+    home, where no pyvenv.cfg is in reach, and the venv is never found.
     """
     starts = []
     orig_argv = getattr(sys, 'orig_argv', None)
@@ -107,7 +110,10 @@ def _venv_site_packages() -> Path | None:
         if not start:
             continue
         try:
-            resolved = str(Path(start).resolve())
+            # lexical absolute path only -- os.path.abspath never follows
+            # symlinks/junctions, so a symlinked venv launcher keeps the
+            # venv-anchored path its parents are walked up from.
+            resolved = os.path.abspath(start)
         except Exception:
             continue
         if resolved not in starts:
