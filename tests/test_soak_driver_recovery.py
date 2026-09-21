@@ -787,6 +787,11 @@ def test_recovery_sidecar_write_failure_fails_boot(tmp_path, monkeypatch):
     assert not (campaign / 'driver.lock').exists()  # boot released it
 
 
+@pytest.mark.skipif(os.name!='nt',
+                    reason='requires Windows Job-Object KILL_ON_JOB_CLOSE reclamation: '
+                           'an abruptly killed controller closes the job handle and the '
+                           'OS reaps the owned child; the POSIX start_new_session orphan '
+                           'survives and keeps the child lock')
 def test_controller_killed_mid_child_recovers_per_oracle(tmp_path):
     """Controller dies first while its owned child is still running (real
     subprocess kill, marker-gated): the job layer reaps the child, recovery

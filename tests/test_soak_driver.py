@@ -445,6 +445,11 @@ def test_second_live_instance_is_refused_without_touching_the_first(tmp_path):
     assert finish(first)[0] == drv.EXIT_OK
 
 
+@pytest.mark.skipif(os.name!='nt',
+                    reason='requires Windows Job-Object KILL_ON_JOB_CLOSE reclamation: '
+                           'an abruptly killed parent closes the job handle and the OS '
+                           'reaps the owned child; the POSIX start_new_session orphan '
+                           'survives and keeps the child lock')
 def test_abnormal_exit_recovers_into_a_new_segment_with_new_round_numbers(tmp_path):
     manifest = manifest_with(tmp_path, [{'name': 'sleep', 'kind': 'process', 'code': LOCK_SLEEP},
                                         {'name': 'echo', 'kind': 'process', 'code': ECHO}])
