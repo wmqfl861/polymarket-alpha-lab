@@ -93,19 +93,62 @@ def _hex64(value: str) -> bool:
 _PROJECT = None
 
 
+def _venv_site_packages() -> Path | None:
+    """The venv's own site-packages when running from a venv launcher.
+
+    Under ``-S`` a Windows venv launcher resolves sysconfig to the BASE
+    interpreter (the pristine uv-managed CPython whose site-packages holds
+    no project deps), so the venv root must be located from the executable
+    path via pyvenv.cfg instead.
+    """
+    starts = []
+    orig_argv = getattr(sys, 'orig_argv', None)
+    for start in (sys.executable, orig_argv[0] if orig_argv else None):
+        if not start:
+            continue
+        try:
+            resolved = str(Path(start).resolve())
+        except Exception:
+            continue
+        if resolved not in starts:
+            starts.append(resolved)
+    for start in starts:
+        for parent in Path(start).parents[:4]:
+            if not (parent / 'pyvenv.cfg').is_file():
+                continue
+            if os.name == 'nt':
+                return parent / 'Lib' / 'site-packages'
+            return parent / 'lib' / ('python%d.%d' % sys.version_info[:2]) \
+                       / 'site-packages'
+    return None
+
+
 def _bootstrap_sys_path() -> None:
     repo = Path(__file__).resolve().parents[2]
     for candidate in (repo / 'src', repo):
         if candidate.is_dir() and str(candidate) not in sys.path:
             sys.path.append(str(candidate))
+    # -S strips site-packages, yet the import chain reuses a test-module
+    # fixture (make_run) whose module imports pytest, and zone lookups need
+    # tzdata wherever the OS ships no tz database (Windows). Probe both
+    # purelib shapes: sysconfig's (correct for a standalone interpreter)
+    # and the venv's own (see _venv_site_packages); append a candidate
+    # only when it carries the pinned surface (the pytest gate the driver's
+    # _pinned_purelib uses; tzdata rides along in the same directory). The
+    # append must not depend on ZoneInfo failing: POSIX hosts have an OS tz
+    # database, but the chain still needs pytest from the purelib.
+    candidates = []
     try:
-        ZoneInfo('America/New_York')
-    except Exception:
-        # -S strips site-packages; the pinned runtime ships tzdata (and pytest,
-        # needed by the reused make_run fixture) in its own purelib.
         import sysconfig
-        purelib = Path(sysconfig.get_paths()['purelib'])
-        if (purelib / 'tzdata' / '__init__.py').is_file() and str(purelib) not in sys.path:
+        candidates.append(Path(sysconfig.get_paths()['purelib']))
+    except Exception:
+        pass
+    venv_site = _venv_site_packages()
+    if venv_site is not None:
+        candidates.append(venv_site)
+    for purelib in candidates:
+        if (purelib / 'pytest' / '__init__.py').is_file() \
+                and str(purelib) not in sys.path:
             sys.path.append(str(purelib))
 
 

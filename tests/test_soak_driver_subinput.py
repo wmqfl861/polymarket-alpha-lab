@@ -329,6 +329,12 @@ def test_subinput_child_spawns_as_module_with_exact_env_in_real_subprocess(tmp_p
     expected_keys = {'PYTHONPATH', 'PYTHONUTF8', 'PYTHONDONTWRITEBYTECODE'}
     if os.name == 'nt':
         expected_keys.add('SystemRoot')
+    else:
+        # POSIX shape: the sanitized env carries no locale variable, so the
+        # CPython child itself performs legacy C-locale coercion (PEP 538)
+        # and sets LC_CTYPE in its own environment during startup; the child
+        # measures that key, so the exact-set claim includes it on POSIX.
+        expected_keys.add('LC_CTYPE')
     # Windows env keys are case-insensitive (the child reports SYSTEMROOT for
     # a passed SystemRoot); the exact SET is the purity claim, case aside.
     assert {key.upper() for key in receipt['keys']} == {key.upper() for key in expected_keys}

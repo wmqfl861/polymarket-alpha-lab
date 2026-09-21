@@ -699,7 +699,10 @@ def test_real_subprocess_single_family(tmp_path):
                                    '--candidate', '{"rv05":"child"}',
                                    '--manifest-sha256', 'aa' * 32,
                                    '--contract-sha256', 'bb' * 32], payload)
-    assert done.returncode == 0, done.stderr
+    # exit-1 failures report their diagnostic JSON on stdout (stderr stays
+    # empty), so the message carries both streams (the first CI failure at
+    # 954faaf4 was undiagnosable from stderr alone).
+    assert done.returncode == 0, (done.stderr, done.stdout)
     summary = json.loads(done.stdout.decode('utf-8'))
     assert summary['echo_round'] == 1 and summary['echo_seed'] == 7
     assert summary['ok'] is True
@@ -725,7 +728,7 @@ def test_real_subprocess_two_families(tmp_path):
                                    '--candidate', '{"rv05":"child"}',
                                    '--manifest-sha256', 'aa' * 32,
                                    '--contract-sha256', 'bb' * 32], payload)
-    assert done.returncode == 0, done.stderr
+    assert done.returncode == 0, (done.stderr, done.stdout)
     summary = json.loads(done.stdout.decode('utf-8'))
     assert summary['ok'] is True
     assert {entry['family']: entry['rows'] for entry in summary['subinput_families']} \
