@@ -32,7 +32,7 @@ from tests.test_soak_audit import (audit, control, failed_names, forge,
 AUDIT_CLI = Path(aud.__file__).resolve()
 
 ENTRY = {'capture-codec': 'capture-codec/encode',
-         'paper-decimal-fill': 'paper-decimal-fill/simulate',
+         'paper-decimal-fill': 'paper-decimal-fill/simulate-fill',
          'uncapped-authz-codec': 'uncapped-authz-codec/payload'}
 RULE = {'capture-codec': 'norm:capture-codec-v1',
         'paper-decimal-fill': 'norm:paper-decimal-fill-v1',
@@ -163,7 +163,7 @@ def _authz_row(index):
         UncappedResearchAuthorization, copy_authorization,
     )
     authorization = copy_authorization(UncappedResearchAuthorization(
-        authorization_id=f'rv05-authz-{index:012d}', model_id='synthetic',
+        authorization_id=f'authz-{index:012d}', model_id='synthetic',
         adapter_contract_sha256=adapter, approved_at=approved_at,
         expires_at=expires_at, request_keys=tuple(request_keys),
         no_monetary_cap_approved=True, research_data_send_approved=True))
@@ -191,6 +191,16 @@ def manifest_sha_of(control) -> str:
     return drv._read_json(control['campaign'] / 'campaign.json')['manifest_sha256']
 
 
+# Integration tree (N0) carries the repository contract copy; when present,
+# the audit enforces receipt contract_sha256 provenance against it, so the
+# synthetic legal control must carry the real value. N2's standalone branch
+# has no copy and the check is skipped there ('b' * 64 inert).
+_CONTRACT_COPY = Path(drv.__file__).resolve().parents[2] / 'docs' / 'contracts' \
+    / 'soak-subinput-receipt-v1.md'
+_CONTRACT_SHA = (sha256(_CONTRACT_COPY.read_bytes()).hexdigest()
+                 if _CONTRACT_COPY.is_file() else 'b' * 64)
+
+
 def receipt_doc(control, record, family, indices, *, index_origin=None,
                 entry=None, normalize_rule=None, counts=None, rows=None,
                 updates=None):
@@ -204,7 +214,7 @@ def receipt_doc(control, record, family, indices, *, index_origin=None,
                                 separators=(',', ':')),
         'manifest_sha256': manifest_sha_of(control),
         'generator_sha256': 'a' * 64,
-        'contract_sha256': 'b' * 64,
+        'contract_sha256': _CONTRACT_SHA,
         'round': record['round'], 'segment': record['segment'],
         'sub_seed': record['sub_seed'], 'scenario': record['scenario'],
         'index_origin': index_origin if index_origin is not None
@@ -326,7 +336,7 @@ def test_paper_verifier_does_not_call_the_audited_entry(monkeypatch):
 def test_registry_covers_exactly_the_three_contract_families():
     assert set(sub.REGISTRY) == {
         ('capture-codec', 'capture-codec/encode'),
-        ('paper-decimal-fill', 'paper-decimal-fill/simulate'),
+        ('paper-decimal-fill', 'paper-decimal-fill/simulate-fill'),
         ('uncapped-authz-codec', 'uncapped-authz-codec/payload')}
     for rule in sub.REGISTRY.values():
         assert rule['normalize_rule'].startswith('norm:')

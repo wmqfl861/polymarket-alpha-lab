@@ -27,20 +27,22 @@ This module never imports the N1 generator and never evaluates receipt or
 manifest content as code. Production entry points are imported lazily so an
 audit without receipts for a family never loads that family's dependencies.
 
-Contract notes (interface-face clarifications N2 had to resolve; flagged for
-the N1 alignment checklist):
+Contract notes (interface-face clarifications resolved by ERRATA-001; the
+N0 integration wave aligned this module to the adjudicated unique rules):
 
-- entry ids are ``<family>/<verb>`` with the verbs ``encode`` / ``simulate``
-  / ``payload`` taken from the contract's audited-entry descriptions;
+- entry ids are ``<family>/<verb>`` pinned to ``encode`` / ``simulate-fill``
+  / ``payload`` (ERRATA-001 Q2);
 - F3's ``authorization_id`` is not part of the contract's input descriptor
-  but IS part of the serialized payload; N2 derives
-  ``rv05-authz-<index:012d>`` and requires N1 to use the same rule;
+  but IS part of the serialized payload; the pinned rule is
+  ``authz-<index:012d>`` (ERRATA-001 Q5);
 - F2's book always carries a symmetric 5+5 ladder around ``p0`` (asks
   ascending above, bids descending below, same per-j quantities); the
-  descriptor lists the walked side's levels only;
+  descriptor lists the walked side's levels only (ERRATA-001 Q1);
+- decimal-to-text in descriptors is ``format(d, 'f')`` — never scientific
+  notation (ERRATA-001 B-5);
 - F1 zone conversion needs the IANA tz database; when ``tzdata`` is not
   importable the verifier fails CLOSED (``tzdata_unavailable``) instead of
-  silently substituting fixed offsets.
+  silently substituting fixed offsets (ERRATA-001 B-4).
 """
 from __future__ import annotations
 
@@ -172,8 +174,9 @@ def paper_decimal_book(index: int) -> dict:
         'family': 'paper-decimal-fill',
         'token_id': token_id,
         'side': side,
-        'size': str(size),
-        'levels': [[str(price), str(quantity)] for price, quantity in walked],
+        'size': format(size, 'f'),
+        'levels': [[format(price, 'f'), format(quantity, 'f')]
+                   for price, quantity in walked],
         'captured_at': captured_at.isoformat(),
     }
     return {'side': side, 'token_id': token_id, 'size': size, 'asks': asks,
@@ -312,7 +315,7 @@ def verify_uncapped_authz(index: int, input_sha256: str,
         UncappedResearchAuthorization, copy_authorization,
     )
     authorization = copy_authorization(UncappedResearchAuthorization(
-        authorization_id=f'rv05-authz-{index:012d}',
+        authorization_id=f'authz-{index:012d}',
         model_id=descriptor['model_id'],
         adapter_contract_sha256=descriptor['adapter_contract_sha256'],
         approved_at=datetime.fromisoformat(descriptor['approved_at']),
@@ -352,7 +355,7 @@ REGISTRY = {
         'normalize_rule': 'norm:capture-codec-v1',
         'verify': verify_capture_codec,
     },
-    ('paper-decimal-fill', 'paper-decimal-fill/simulate'): {
+    ('paper-decimal-fill', 'paper-decimal-fill/simulate-fill'): {
         'family': 'paper-decimal-fill',
         'normalize_rule': 'norm:paper-decimal-fill-v1',
         'verify': verify_paper_decimal,
