@@ -28,7 +28,19 @@ and only writes a file when ``--json-out`` explicitly names one):
 - inventory: driver.log round_final closure, junit XML presence on failed
   pytest rounds, receipt/XML test counts against an optional collection
   baseline;
-- resources: heartbeats must not record unmeasured values as zero.
+- resources: heartbeats must not record unmeasured values as zero;
+- subinput receipts (``pal-soak-subinput-receipt-v1``): per-round
+  ``subinputs-<family>.json`` files are read under a strict 512KiB
+  limit-first probe, structurally validated against the receipt contract
+  (exact schema/field set, types, hex64 rows, counts invariants, header
+  byte budget, in-file duplicate keys), whitelist-recomputed row by row
+  through the audit's OWN independent family verifiers (never the
+  generator), deduplicated globally by ``entry + NUL + input_sha256`` over
+  passed rounds of the R4-qualified segment, and reported in a dedicated
+  ``subinputs`` block with the new ``min_distinct_qualified_subinputs``
+  gate. Legacy input metrics and the old ``min_distinct_inputs`` gate are
+  frozen side by side and never convert into the new counters; unknown
+  fields in old records are ignored but listed in the report.
 
 Every check reports PASS / FAIL / UNKNOWN. While the campaign is live (lock
 holder alive, a round mid-flight, or last segment unclosed), torn or in-flight
@@ -38,7 +50,8 @@ or as passing; the original files are never modified.
 Usage:
   python tests/support/soak_audit.py audit --campaign DIR [--config FILE]
       [--manifest FILE] [--master-seed N] [--baseline FILE]
-      [--expect key=value ...] [--min-distinct-inputs N] [--json-out FILE]
+      [--expect key=value ...] [--min-distinct-inputs N]
+      [--min-distinct-qualified-subinputs N] [--json-out FILE]
 
 Exit codes: 0 no FAIL, 3 FAIL found, 5 invalid invocation, 1 internal error.
 """
@@ -57,6 +70,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from tests.support import soak_driver as drv  # noqa: E402
+from tests.support import soak_audit_subinputs as subinputs  # noqa: E402
 
 EXIT_OK = 0
 EXIT_INTERNAL = 1
@@ -66,6 +80,25 @@ EXIT_CONFIG = 5
 PASS, FAIL, UNKNOWN = 'PASS', 'FAIL', 'UNKNOWN'
 INCOMPLETE = 'SNAPSHOT_INCOMPLETE'
 _HEX64 = re.compile(r'[0-9a-f]{64}')
+
+# --- pal-soak-subinput-receipt-v1 audit constants (contract decisions 2/7/8)
+RECEIPT_MAX_BYTES = 524288            # 512KiB per receipt file, limit-first
+RECEIPT_HEADER_MAX_BYTES = 2048       # serialized header skeleton budget
+RECEIPT_BASE_FIELDS = frozenset({
+    'schema', 'family', 'entry', 'normalize_rule', 'candidate',
+    'manifest_sha256', 'generator_sha256', 'contract_sha256', 'round',
+    'segment', 'sub_seed', 'scenario', 'index_origin', 'oracle', 'counts',
+    'rows'})
+RECEIPT_PART_FIELDS = frozenset({'part', 'part_count'})
+RECEIPT_COUNT_FIELDS = ('planned', 'generated', 'attempted', 'oracle_passed',
+                        'completed')
+_FAMILY_RE = re.compile(r'[a-z0-9-]{1,32}')
+# Round-record fields the baseline driver writes (plus the wired subinput
+# pointer fields); anything else is reported, never interpreted (decision 7).
+KNOWN_ROUND_FIELDS = frozenset({
+    'round', 'segment', 'sub_seed', 'scenario', 'input_sha256', 'status',
+    'final', 'reason', 'finished_wall', 'elapsed_ms', 'stderr_bytes',
+    'receipt', 'log_truncated', 'subinput_receipts', 'subinput_counts'})
 
 
 def check(kind, status, detail=None):
@@ -132,10 +165,404 @@ def payload_hash_matches(record: dict, round_dir: Path,
         return False
 
 
+class _DuplicateKeyError(ValueError):
+    """A receipt document repeated a JSON object key."""
+
+
+def _pairs_without_duplicates(items):
+    result = {}
+    for key, value in items:
+        if key in result:
+            raise _DuplicateKeyError(key)
+        result[key] = value
+    return result
+
+
+def _read_receipt_capped(path: Path):
+    """Limit-first receipt read (contract decision 2.4 / N2 interface).
+
+    At most ``RECEIPT_MAX_BYTES`` bytes ever leave the file: one bounded
+    read plus a single-byte over-limit probe executed BEFORE any parsing.
+    Returns ``(data, None)`` on success and ``(None, reason)`` on refusal.
+    """
+    try:
+        with open(path, 'rb') as handle:
+            data = handle.read(RECEIPT_MAX_BYTES)
+            if handle.read(1):
+                return None, 'receipt_over_limit'
+            return data, None
+    except OSError:
+        return None, 'receipt_unreadable'
+
+
+def _parse_receipt_doc(raw: bytes):
+    """Strict receipt parse: duplicate JSON keys are a rejection, not a
+    last-writer-wins merge."""
+    return json.loads(raw.decode('utf-8'),
+                      object_pairs_hook=_pairs_without_duplicates)
+
+
+def _is_plain_int(value) -> bool:
+    return type(value) is int  # bool is an int subclass; reject it explicitly
+
+
+def _validate_receipt_doc(doc):
+    """Structural validation (contract decisions 1/2/7).
+
+    Returns ``(reason, detail)`` when the file must be rejected, else
+    ``(None, None)``.
+    """
+    if type(doc) is not dict:
+        return 'receipt_not_object', {'type': type(doc).__name__}
+    schema = doc.get('schema')
+    if schema != subinputs.RECEIPT_SCHEMA:
+        return 'receipt_schema_rejected', {
+            'found': schema if type(schema) is str else type(schema).__name__}
+    if 'distinct_qualified' in doc:
+        # Decision 5: the qualified-distinct count is audit-exclusive.
+        return 'producer_claim_reserved_field', None
+    keys = set(doc)
+    extra = sorted(keys - RECEIPT_BASE_FIELDS - RECEIPT_PART_FIELDS)
+    if extra:
+        return 'receipt_unknown_field', {'fields': extra}
+    missing = sorted(RECEIPT_BASE_FIELDS - keys)
+    if missing:
+        return 'receipt_missing_field', {'fields': missing}
+    part, part_count = doc.get('part'), doc.get('part_count')
+    if (part is None) != (part_count is None):
+        return 'receipt_field_type', {'field': 'part/part_count',
+                                      'note': 'both or neither'}
+    if part is not None and not (_is_plain_int(part) and _is_plain_int(part_count)
+                                 and 1 <= part <= part_count):
+        return 'receipt_field_type', {'field': 'part'}
+    for field in ('family', 'entry', 'normalize_rule', 'candidate', 'oracle',
+                  'scenario'):
+        if type(doc.get(field)) is not str:
+            return 'receipt_field_type', {'field': field}
+    if _FAMILY_RE.fullmatch(doc['family']) is None:
+        return 'receipt_field_type', {'field': 'family',
+                                      'value': doc['family'][:64]}
+    for field in ('manifest_sha256', 'generator_sha256', 'contract_sha256'):
+        if type(doc.get(field)) is not str \
+                or _HEX64.fullmatch(doc[field]) is None:
+            return 'receipt_field_type', {'field': field}
+    for field in ('round', 'segment', 'sub_seed', 'index_origin'):
+        if not _is_plain_int(doc.get(field)):
+            return 'receipt_field_type', {'field': field}
+    if doc['index_origin'] < 0:
+        return 'receipt_field_type', {'field': 'index_origin', 'note': 'negative'}
+    counts = doc.get('counts')
+    if type(counts) is not dict or set(counts) != set(RECEIPT_COUNT_FIELDS) \
+            or any(not _is_plain_int(counts[name]) or counts[name] < 0
+                   for name in RECEIPT_COUNT_FIELDS):
+        return 'receipt_field_type', {'field': 'counts'}
+    rows = doc.get('rows')
+    if type(rows) is not list:
+        return 'receipt_field_type', {'field': 'rows'}
+    for position, row in enumerate(rows):
+        if type(row) is not list or len(row) != 2 \
+                or any(type(item) is not str or _HEX64.fullmatch(item) is None
+                       for item in row):
+            return 'receipt_row_shape', {'row': position}
+    skeleton = dict(doc)
+    skeleton['rows'] = []
+    header_bytes = len(json.dumps(skeleton, sort_keys=True,
+                                  separators=(',', ':')).encode('utf-8')) + 1
+    if header_bytes > RECEIPT_HEADER_MAX_BYTES:
+        return 'receipt_header_over_limit', {'bytes': header_bytes}
+    planned, generated = counts['planned'], counts['generated']
+    attempted, oracle_passed, completed = (counts['attempted'],
+                                           counts['oracle_passed'],
+                                           counts['completed'])
+    if not (planned >= generated >= attempted >= oracle_passed == completed) \
+            or completed != len(rows):
+        return 'counts_inconsistent', dict(counts, rows=len(rows))
+    row_inputs = [row[0] for row in rows]
+    if len(set(row_inputs)) != len(row_inputs):
+        seen, duplicated = set(), set()
+        for value in row_inputs:
+            (duplicated if value in seen else seen).add(value)
+        return 'receipt_duplicate_key', {'input_sha256': sorted(duplicated)[:5]}
+    return None, None
+
+
+def _sub_accumulator():
+    return {'receipt_files': 0, 'rows_read': 0, 'rows_whitelist_verified': 0,
+            'rows_rejected': 0, 'planned_sum': 0, 'generated_sum': 0,
+            'attempted_sum': 0, 'completed_sum': 0, 'oracle_passed_sum': 0,
+            'declared_vs_rows_consistent': 0, 'domain_overlaps': 0,
+            'dedup_collapsed': 0, 'distinct_qualified': 0}
+
+
+def _audit_subinputs(records, identity, cfg, qualified_segment, min_qualified,
+                     unknown_fields_seen, legacy_verified_round_inputs):
+    """Walk every round's ``subinputs-*.json`` receipts (contract N2 side).
+
+    Returns ``(report_block, checks_list)``. Row failures are isolated per
+    row; file-level contract violations reject the whole file; the legacy
+    input metrics are reported next to — never merged into — the new
+    ``distinct_qualified`` counter.
+    """
+    total = _sub_accumulator()
+    families: dict[str, dict] = {}
+    rejected_files: list[dict] = []
+    row_rejections: list[dict] = []
+    pointer_problems: list[dict] = []
+    overlap_events: list[dict] = []
+    provenance = {'generator_sha256': set(), 'contract_sha256': set()}
+    contract_copy_path = _REPO_ROOT / 'docs' / 'contracts' \
+        / 'soak-subinput-receipt-v1.md'
+    contract_copy_sha = None
+    if contract_copy_path.is_file():
+        try:
+            contract_copy_sha = sha256(contract_copy_path.read_bytes()).hexdigest()
+        except OSError:
+            contract_copy_sha = None
+    want_candidate = None
+    if cfg is not None and isinstance(getattr(cfg, 'candidate', None), dict):
+        want_candidate = json.dumps(cfg.candidate, sort_keys=True,
+                                    separators=(',', ':'))
+    qualified_keys: dict[str, dict] = {}
+
+    def process(seg_name, rno, record, round_dir, name, pointer):
+        path = round_dir / name
+        label = {'segment': seg_name, 'round': rno, 'file': name}
+
+        def reject(reason, detail=None):
+            rejected_files.append({**label, 'reason': reason, 'detail': detail})
+
+        raw, read_reason = _read_receipt_capped(path)
+        if raw is None:
+            reject(read_reason, {'limit_bytes': RECEIPT_MAX_BYTES})
+            return
+        try:
+            doc = _parse_receipt_doc(raw)
+        except _DuplicateKeyError as error:
+            reject('receipt_duplicate_json_key', {'key': str(error)})
+            return
+        except (ValueError, UnicodeDecodeError):
+            reject('receipt_unparseable')
+            return
+        if json.dumps(doc, sort_keys=True, separators=(',', ':')).encode(
+                'utf-8') + b'\n' != raw:
+            reject('receipt_noncanonical')
+            return
+        reason, detail = _validate_receipt_doc(doc)
+        if reason is not None:
+            reject(reason, detail)
+            return
+        family, entry = doc['family'], doc['entry']
+        rule = subinputs.REGISTRY.get((family, entry))
+        if rule is None:
+            reject('whitelist_unknown', {'family': family, 'entry': entry})
+            return
+        if doc['normalize_rule'] != rule['normalize_rule']:
+            reject('normalize_rule_mismatch',
+                   {'found': doc['normalize_rule'],
+                    'expected': rule['normalize_rule']})
+            return
+        if re.fullmatch(rf'subinputs-{re.escape(family)}(?:\.p\d+)?.json',
+                        name) is None:
+            reject('receipt_filename_mismatch', {'family': family})
+            return
+        if (doc['round'] != record.get('round')
+                or doc['segment'] != record.get('segment')
+                or doc['sub_seed'] != record.get('sub_seed')
+                or doc['scenario'] != record.get('scenario')):
+            reject('receipt_echo_transport')
+            return
+        if doc['manifest_sha256'] != identity.get('manifest_sha256'):
+            reject('receipt_manifest_mismatch')
+            return
+        if want_candidate is not None and doc['candidate'] != want_candidate:
+            reject('receipt_candidate_mismatch')
+            return
+        if pointer is not None and (
+                pointer.get('sha256') != sha256(raw).hexdigest()
+                or pointer.get('rows') != len(doc['rows'])
+                or pointer.get('family') != family
+                or pointer.get('entry') != entry):
+            reject('receipt_pointer_mismatch')
+            return
+        provenance['generator_sha256'].add(doc['generator_sha256'])
+        provenance['contract_sha256'].add(doc['contract_sha256'])
+        family_acc = families.setdefault(family, _sub_accumulator())
+        for acc in (family_acc, total):
+            acc['receipt_files'] += 1
+            for counter in RECEIPT_COUNT_FIELDS:
+                acc[f'{counter}_sum'] += doc['counts'][counter]
+            acc['rows_read'] += len(doc['rows'])
+        if doc['counts']['completed'] == len(doc['rows']):
+            family_acc['declared_vs_rows_consistent'] += 1
+            total['declared_vs_rows_consistent'] += 1
+        source = f'{seg_name}/{rno}/{name}'
+        in_qualified_segment = (qualified_segment is not None
+                                and seg_name == qualified_segment
+                                and record.get('final') == 'passed')
+        for offset, row in enumerate(doc['rows']):
+            index = doc['index_origin'] + offset
+            verdict = subinputs.verify_row((family, entry), index,
+                                           row[0], row[1])
+            if verdict['ok']:
+                for acc in (family_acc, total):
+                    acc['rows_whitelist_verified'] += 1
+                if in_qualified_segment:
+                    key = entry + '\x00' + row[0]
+                    first = qualified_keys.get(key)
+                    if first is None:
+                        qualified_keys[key] = {'family': family, 'source': source}
+                    else:
+                        for acc in (family_acc, total):
+                            acc['dedup_collapsed'] += 1
+                        if first['source'] != source:
+                            for acc in (family_acc, total):
+                                acc['domain_overlaps'] += 1
+                            overlap_events.append(
+                                {'first': first['source'], 'repeat': source,
+                                 'entry': entry})
+            else:
+                for acc in (family_acc, total):
+                    acc['rows_rejected'] += 1
+                row_rejections.append({**label, 'row': offset, 'index': index,
+                                       'reason': verdict['reason'],
+                                       'detail': verdict.get('detail')})
+
+    for rno in sorted(records):
+        for seg_name, record, round_dir in sorted(records[rno],
+                                                  key=lambda item: item[0]):
+            pointer_map = {}
+            raw_pointers = record.get('subinput_receipts')
+            if raw_pointers is not None:
+                if type(raw_pointers) is list:
+                    for pointer in raw_pointers:
+                        if type(pointer) is dict \
+                                and type(pointer.get('file')) is str:
+                            pointer_map[pointer['file']] = pointer
+                        else:
+                            pointer_problems.append(
+                                {'segment': seg_name, 'round': rno,
+                                 'problem': 'malformed_pointer'})
+                else:
+                    pointer_problems.append({'segment': seg_name, 'round': rno,
+                                             'problem': 'subinput_receipts_not_a_list'})
+            try:
+                disk_files = sorted(p.name for p in round_dir.glob('subinputs-*.json'))
+            except OSError:
+                disk_files = []
+            if record.get('final') == 'passed' \
+                    and set(pointer_map) != set(disk_files):
+                pointer_problems.append(
+                    {'segment': seg_name, 'round': rno,
+                     'missing_files': sorted(set(pointer_map) - set(disk_files)),
+                     'unpointed_files': sorted(set(disk_files) - set(pointer_map))})
+            for name in disk_files:
+                process(seg_name, rno, record, round_dir, name, pointer_map.get(name))
+
+    for info in qualified_keys.values():
+        families[info['family']]['distinct_qualified'] += 1
+        total['distinct_qualified'] += 1
+
+    provenance_problems = []
+    for field in ('generator_sha256', 'contract_sha256'):
+        if len(provenance[field]) > 1:
+            provenance_problems.append({'field': field,
+                                        'values': sorted(provenance[field])})
+    contract_copy_verified = None
+    if contract_copy_sha is not None and provenance['contract_sha256']:
+        if provenance['contract_sha256'] == {contract_copy_sha}:
+            contract_copy_verified = True
+        else:
+            contract_copy_verified = False
+            provenance_problems.append(
+                {'field': 'contract_sha256',
+                 'note': 'does not match the repository contract copy',
+                 'expected': contract_copy_sha,
+                 'found': sorted(provenance['contract_sha256'])})
+
+    checks_out = []
+    if total['receipt_files'] or rejected_files or pointer_problems:
+        if rejected_files:
+            checks_out.append(check('subinput_receipts', FAIL,
+                                    {'count_rejected': len(rejected_files),
+                                     'rejected_files': rejected_files[:20],
+                                     'receipt_files': total['receipt_files'],
+                                     'rows_read': total['rows_read']}))
+        else:
+            checks_out.append(check('subinput_receipts', PASS,
+                                    {'receipt_files': total['receipt_files'],
+                                     'rows_read': total['rows_read']}))
+        if total['rows_read']:
+            if row_rejections:
+                checks_out.append(check('subinput_row_recompute', FAIL,
+                                        {'rows_rejected': total['rows_rejected'],
+                                         'sample': row_rejections[:20]}))
+            else:
+                checks_out.append(check('subinput_row_recompute', PASS,
+                                        {'rows_whitelist_verified':
+                                         total['rows_whitelist_verified']}))
+        if pointer_problems:
+            checks_out.append(check('subinput_pointer_consistency', FAIL,
+                                    {'problems': pointer_problems[:20]}))
+        if provenance_problems:
+            checks_out.append(check('subinput_provenance_consistency', FAIL,
+                                    {'problems': provenance_problems}))
+        elif total['receipt_files']:
+            checks_out.append(check('subinput_provenance_consistency', PASS,
+                                    {'generator_sha256':
+                                     sorted(provenance['generator_sha256']),
+                                     'contract_copy_verified':
+                                     contract_copy_verified}))
+    else:
+        checks_out.append(check(
+            'subinput_receipts', PASS,
+            {'receipt_files': 0, 'rows_read': 0,
+             'note': 'no subinput receipt files present; '
+                     'pal-soak-subinput-receipt-v1 not exercised '
+                     '(legacy rules only)'}))
+    if isinstance(min_qualified, int):
+        checks_out.append(check(
+            'min_distinct_qualified_subinputs',
+            PASS if total['distinct_qualified'] >= min_qualified else FAIL,
+            {'required': min_qualified,
+             'distinct_qualified': total['distinct_qualified'],
+             'dedup_collapsed': total['dedup_collapsed'],
+             'domain_overlaps': total['domain_overlaps'],
+             'families': {family: acc['distinct_qualified']
+                          for family, acc in sorted(families.items())},
+             'qualified_segment': qualified_segment,
+             'note': 'counts only rows individually re-verified by the '
+                     'audit-side whitelist in passed rounds of the '
+                     'R4-qualified segment; legacy '
+                     'verified_distinct_inputs never contributes'}))
+    else:
+        checks_out.append(check('min_distinct_qualified_subinputs', UNKNOWN,
+                                {'note': 'no qualified-subinput minimum '
+                                         'provided'}))
+
+    block = {
+        'contract': subinputs.RECEIPT_SCHEMA,
+        'qualified_segment': qualified_segment,
+        'families': {family: dict(acc) for family, acc in sorted(families.items())},
+        'total': total,
+        'rejected_files': rejected_files[:50],
+        'row_rejections': row_rejections[:50],
+        'domain_overlap_events': overlap_events[:50],
+        'pointer_problems': pointer_problems[:50],
+        'unknown_fields_seen': sorted(unknown_fields_seen),
+        'contract_copy_verified': contract_copy_verified,
+        'legacy_verified_round_inputs': legacy_verified_round_inputs,
+        'legacy_note': 'legacy metrics are frozen: verified_distinct_inputs '
+                       'and receipt_declared_subinputs_sum never convert '
+                       'into distinct_qualified and are never summed with it',
+    }
+    return block, checks_out
+
+
 def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=None,
                    expected: dict | None = None, baseline: dict | None = None,
                    clock_tolerance: float = 5.0,
-                   min_distinct_inputs: int | None = None):
+                   min_distinct_inputs: int | None = None,
+                   min_distinct_qualified_subinputs: int | None = None):
     """Read-only adjudication of one campaign directory. Returns a report.
 
     ``config``: parsed SoakConfig config dict (master_seed, max_wall_seconds,
@@ -147,6 +574,9 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
     ``min_distinct_inputs``: required count of distinct logical inputs. The
     wall gate is a strict floor (no tolerance is deducted); only actually
     passed rounds count toward minimum_valid_rounds.
+    ``min_distinct_qualified_subinputs``: required count of distinct
+    qualified sub-inputs per the ``pal-soak-subinput-receipt-v1`` audit
+    (decision 8); independent of the legacy gate above.
     """
     root = Path(root)
     checks: list[dict] = []
@@ -239,6 +669,7 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
     seed_bad, scenario_bad, payload_bad, receipt_bad = [], [], [], []
     failed_pytest_xml = {}
     unclosed_segments = []
+    unknown_fields_seen: set[str] = set()
 
     for segment in segment_dirs:
         seg_name = segment.name
@@ -261,6 +692,7 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
                 continue
             rno = record.get('round')
             records.setdefault(rno, []).append((seg_name, record, round_dir))
+            unknown_fields_seen.update(set(record) - KNOWN_ROUND_FIELDS)
             if round_dir.name != f'round-{rno:09d}':
                 dir_mismatches.append({'segment': seg_name, 'dir': round_dir.name,
                                        'record_round': rno})
@@ -572,6 +1004,20 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
                              'rounds_total': totals,
                              'min_rounds': min_rounds, 'max_wall_seconds': max_wall}))
 
+    # ---------- subinput receipts (pal-soak-subinput-receipt-v1) ----------
+    # Decision 8 qualification scope: only the R4-qualified segment (the
+    # latest closed segment whose complete receipt is not spliced) feeds
+    # distinct_qualified; every other file is still read, verified and
+    # reported, it just never qualifies.
+    qualified_segment = None
+    if latest_segment is not None and complete_segment_names == [latest_segment.name]:
+        qualified_segment = latest_segment.name
+    report['subinputs'], subinput_checks = _audit_subinputs(
+        records, identity, cfg, qualified_segment,
+        min_distinct_qualified_subinputs, unknown_fields_seen,
+        len(verified_keys))
+    checks.extend(subinput_checks)
+
     # ---------- driver.log closure ----------
     log_events = []
     torn_log = False
@@ -696,6 +1142,7 @@ def main(argv=None) -> int:
     audit.add_argument('--json-out')
     audit.add_argument('--clock-tolerance', type=float, default=5.0)
     audit.add_argument('--min-distinct-inputs', type=int)
+    audit.add_argument('--min-distinct-qualified-subinputs', type=int)
     args = parser.parse_args(argv)
     try:
         config = None
@@ -718,7 +1165,9 @@ def main(argv=None) -> int:
                                 scenarios=scenarios, scenario_objects=scenario_objects,
                                 expected=expected or None,
                                 baseline=baseline, clock_tolerance=args.clock_tolerance,
-                                min_distinct_inputs=args.min_distinct_inputs)
+                                min_distinct_inputs=args.min_distinct_inputs,
+                                min_distinct_qualified_subinputs=
+                                args.min_distinct_qualified_subinputs)
     except (OSError, ValueError, drv.SoakConfigError) as error:
         print(f'SOAK_AUDIT_CONFIG_INVALID {error.__class__.__name__}')
         return EXIT_CONFIG
