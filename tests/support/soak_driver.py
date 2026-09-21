@@ -47,6 +47,7 @@ import re
 import shutil
 import signal
 import sys
+import sysconfig
 import threading
 import time
 
@@ -237,6 +238,26 @@ def _volume_free_bytes(path: Path) -> int | None:
         return shutil.disk_usage(path).free
     except OSError:
         return None
+
+
+def _pinned_purelib() -> str:
+    """This interpreter's own site-packages, immune to user-site shadowing.
+
+    Deriving the pytest child's PYTHONPATH from an ambient ``import pytest``
+    resolution is unsound: ``site`` orders a user site-packages BEFORE this
+    interpreter's own site-packages, and such a directory can hold pytest
+    without the rest of the pinned dependencies. The ``-S`` scenario child
+    strips its own site-packages, so PYTHONPATH becomes the only dependency
+    source and anything the ambient directory lacks (observed in the formal
+    soak: tzdata, present in the pinned runtime but not in the user site)
+    silently vanishes from every pytest round. Resolve the pinned
+    interpreter's purelib instead, and refuse to construct the scenario
+    when pytest is absent from it rather than degrade silently.
+    """
+    purelib = Path(sysconfig.get_paths()['purelib']).resolve()
+    if not (purelib / 'pytest' / '__init__.py').is_file():
+        raise SoakConfigError('soak_pytest_site_invalid')
+    return str(purelib)
 
 
 @dataclass(frozen=True, slots=True)
@@ -758,7 +779,7 @@ class SoakDriver:
             argv = (self.python, '-I', '-S', '-c', scenario.code)
             cwd = str(round_tmp)
         else:
-            site_dir = str(Path(__import__('pytest').__file__).resolve().parents[1])
+            site_dir = _pinned_purelib()
             environment = [*environment, ('PYTHONPATH', site_dir),
                            ('PYTHONUTF8', '1'), ('PYTHONDONTWRITEBYTECODE', '1'),
                            ('PYTEST_DISABLE_PLUGIN_AUTOLOAD', '1')]

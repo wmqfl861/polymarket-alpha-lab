@@ -307,6 +307,49 @@ def test_pytest_kind_runs_a_synthetic_pytest_batch(tmp_path):
     assert record['receipt']['tests'] == 2 and record['receipt']['failures'] == 0
 
 
+def test_pytest_child_pythonpath_is_the_pinned_purelib(tmp_path):
+    """The -S child's PYTHONPATH must be this interpreter's own site-packages.
+
+    Regression for the formal-soak failure mode: deriving it from an ambient
+    ``import pytest`` lets a user site-packages (which ``site`` orders before
+    the interpreter's own and which may hold pytest without the remaining
+    pinned dependencies) leak into the child, whose ``-S`` strip leaves
+    PYTHONPATH as the only dependency source — tzdata then vanishes and
+    every zone-dependent test fails. The pinned purelib must be used even
+    when the ambient pytest import resolves somewhere else.
+    """
+    import sysconfig
+    target = tmp_path / 'synthetic_case.py'
+    target.write_text('def test_one():\n    pass\n', encoding='utf-8')
+    manifest = manifest_with(tmp_path, [{'name': 'batch', 'kind': 'pytest',
+                                         'files': [str(target)]}])
+    config = drv.SoakConfig.from_dict(base_config(manifest))
+    driver = drv.SoakDriver(config, tmp_path / 'campaign')
+    scenario = drv.SoakScenario('batch', 'pytest', files=(str(target),))
+    spec = driver._scenario_spec(scenario, tmp_path / 'roundtmp')
+    env = dict(spec.environment)
+    purelib = str(Path(sysconfig.get_paths()['purelib']).resolve())
+    assert env['PYTHONPATH'] == purelib
+    assert (Path(purelib) / 'pytest' / '__init__.py').is_file()
+    # The ambient import resolution must not be the source: when a shadowing
+    # user site provides pytest, the two locations differ and the pinned one
+    # must still win.
+    ambient = str(Path(__import__('pytest').__file__).resolve().parents[1])
+    assert env['PYTHONPATH'] != ambient or ambient == purelib
+
+
+def test_pytest_site_refuses_a_purelib_without_pytest(tmp_path, monkeypatch):
+    """A purelib lacking pytest fails loudly instead of degrading the child."""
+    import sysconfig
+    empty = tmp_path / 'not-a-site'
+    empty.mkdir()
+    monkeypatch.setattr(sysconfig, 'get_paths',
+                        lambda *a, **k: {'purelib': str(empty)})
+    with pytest.raises(drv.SoakConfigError) as raised:
+        drv._pinned_purelib()
+    assert 'soak_pytest_site_invalid' in str(raised.value)
+
+
 # ---------- driver-as-subprocess control behaviors ----------
 
 def test_stop_file_closes_cleanly_with_receipts(tmp_path):
