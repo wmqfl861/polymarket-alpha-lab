@@ -20,6 +20,16 @@ its own side-root output/checkpoint directories. Its stop path is a
 side-root stop file; it never creates or touches the campaign's own stop
 file and never writes inside the campaign.
 
+Write-target guard (R5): every write root — the output directory, the
+checkpoint directory, and each derived target (final-summary.json,
+FINAL_REVIEW_READY, closeout-failed/-stopped/-status/-started markers, the
+poll log and its ``.tmp`` rotation siblings) — is resolved to its absolute
+form (``..`` ancestor escapes and reparse-point aliases included) and
+refused, before any file is opened, when it is the campaign directory or
+anywhere inside it. Required roots (out, stop-file) are refused at entry;
+the optional checkpoint root is refused per write and recorded honestly in
+the started receipt instead of silently writing elsewhere.
+
 Subcommands:
   wait    real polling loop until a definite end condition, then close out
   settle  one-shot closeout assuming the end already happened (recovery or
@@ -355,13 +365,61 @@ def write_poll_log(out_dir: Path, entry: dict) -> None:
         pass
 
 
-def _ckpt_dir(value) -> Path | None:
-    return Path(value) if value else None
+def write_target_rejected(campaign: Path, target: Path) -> str | None:
+    """Reason a planned write target must be refused, or None when allowed.
+
+    The target is resolved to its absolute form (``..`` ancestor escapes
+    and reparse-point aliases included) and refused when it is the campaign
+    directory itself or anywhere inside it. Pure; never writes.
+    """
+    campaign_resolved = Path(campaign).resolve()
+    resolved = Path(target).resolve()
+    if resolved == campaign_resolved:
+        return f'target is the campaign directory: {resolved}'
+    try:
+        resolved.relative_to(campaign_resolved)
+    except ValueError:
+        return None
+    return f'target inside campaign directory: {resolved}'
 
 
-def write_checkpoint(checkpoint_dir: Path | None, payload: dict) -> None:
+def refuse_campaign_target(campaign: Path, target: Path, label: str) -> None:
+    """Refuse a required write target that would land in the campaign.
+
+    Raised before any file is opened, so a refusal never leaves a
+    half-written artifact behind.
+    """
+    reason = write_target_rejected(campaign, target)
+    if reason:
+        raise SystemExit(f'{TOOL} refusing {label} inside campaign: {reason}')
+
+
+def guarded_checkpoint_dir(campaign: Path,
+                           value) -> tuple[Path | None, str | None]:
+    """Guard a configured checkpoint dir against campaign writes.
+
+    Returns ``(dir, rejection)``: a configured dir is either the guarded
+    directory (rejection None) or None with the rejection reason — the
+    checkpoint is then disabled and nothing is ever written, following the
+    existing tolerated-checkpoint-failure path instead of crashing or
+    writing elsewhere. No value configured -> ``(None, None)``.
+    """
+    if not value:
+        return None, None
+    target = Path(value)
+    reason = write_target_rejected(campaign, target)
+    if reason:
+        return None, reason
+    return target, None
+
+
+def write_checkpoint(checkpoint_dir: Path | None, payload: dict,
+                     campaign: Path | None = None) -> None:
     if checkpoint_dir is None:
         return
+    if campaign is not None \
+            and write_target_rejected(campaign, checkpoint_dir):
+        return  # guarded before mkdir/open: never write into the campaign
     try:
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         _atomic_write(checkpoint_dir / 'closeout-checkpoint.json',
@@ -373,16 +431,8 @@ def write_checkpoint(checkpoint_dir: Path | None, payload: dict) -> None:
 
 def guard_paths(campaign: Path, out_dir: Path, stop_file: Path) -> None:
     """Refuse output locations that would write inside the campaign."""
-    campaign_resolved = campaign.resolve()
     for label, path in (('out', out_dir), ('stop-file', stop_file)):
-        resolved = path.resolve()
-        if resolved == campaign_resolved:
-            raise SystemExit(f'{TOOL} refusing {label} inside campaign: {path}')
-        try:
-            resolved.relative_to(campaign_resolved)
-        except ValueError:
-            continue
-        raise SystemExit(f'{TOOL} refusing {label} inside campaign: {path}')
+        refuse_campaign_target(campaign, path, label)
 
 
 # ------------------------------------------------------------- closeout
@@ -397,6 +447,10 @@ def do_closeout(*, outcome: str, snapshot: dict, campaign: Path,
                 baseline_path: str | None, extra: dict | None) -> dict:
     """Run the audit and write final-summary.json (+markers). Never writes
     inside the campaign. Returns the summary dict."""
+    # every target written below (final-summary.json, closeout-failed.txt,
+    # FINAL_REVIEW_READY, and their .tmp siblings) is a fixed name derived
+    # from out_dir, so guarding out_dir guards them all
+    refuse_campaign_target(campaign, out_dir, 'out')
     out_dir.mkdir(parents=True, exist_ok=True)
     closeout_wall = time.time()
     summary: dict = {
@@ -482,7 +536,10 @@ def do_closeout(*, outcome: str, snapshot: dict, campaign: Path,
 
 
 def write_stopped(out_dir: Path, label: str, snapshot: dict,
-                  stop_file: Path, polls: int) -> None:
+                  stop_file: Path, polls: int,
+                  campaign: Path | None = None) -> None:
+    if campaign is not None:
+        refuse_campaign_target(campaign, out_dir, 'out')
     out_dir.mkdir(parents=True, exist_ok=True)
     _atomic_write(out_dir / 'closeout-stopped.json', json.dumps({
         'tool': TOOL, 'label': label, 'outcome': STOP_REQUESTED,
@@ -502,6 +559,8 @@ def wait_loop(opts) -> int:
     out_dir = Path(opts.out)
     stop_file = Path(opts.stop_file)
     guard_paths(campaign, out_dir, stop_file)
+    ckpt_dir, ckpt_reject = guarded_checkpoint_dir(campaign,
+                                                   opts.checkpoint_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     started_wall = time.time()
     deadline_wall = parse_utc(opts.deadline)
@@ -513,6 +572,10 @@ def wait_loop(opts) -> int:
         'argv': sys.argv, 'started_wall_utc': utc_iso(started_wall),
         'campaign': str(campaign), 'out_dir': str(out_dir),
         'stop_path': str(stop_file),
+        'checkpoint_dir_requested': str(opts.checkpoint_dir)
+        if opts.checkpoint_dir else None,
+        'checkpoint_dir_effective': str(ckpt_dir) if ckpt_dir else None,
+        'checkpoint_guard_rejection': ckpt_reject,
         'driver_pid': pid_expected, 'deadline_wall_utc': opts.deadline,
         'target_end_wall_utc': opts.target_end,
         'poll_interval_seconds': opts.interval,
@@ -581,12 +644,12 @@ def wait_loop(opts) -> int:
             if snap.get('segments') else [],
         }
         write_poll_log(out_dir, poll_entry)
-        write_checkpoint(_ckpt_dir(opts.checkpoint_dir), {
+        write_checkpoint(ckpt_dir, {
             'tool': TOOL, 'label': opts.label, 'pid': os.getpid(),
             'wall_utc': utc_iso(now), 'polls': polls,
             'outcome_so_far': outcome, 'pid_alive': pid_alive,
             'receipt': receipt, 'stable': stable, 'stop_seen': stop_seen,
-            'first_error': first_error})
+            'first_error': first_error}, campaign=campaign)
         if outcome is not None:
             ended_observed = now
             break
@@ -611,11 +674,12 @@ def wait_loop(opts) -> int:
             break
 
     if outcome == STOP_REQUESTED:
-        write_stopped(out_dir, opts.label, last_snap, stop_file, polls)
-        write_checkpoint(_ckpt_dir(opts.checkpoint_dir), {
+        write_stopped(out_dir, opts.label, last_snap, stop_file, polls,
+                      campaign=campaign)
+        write_checkpoint(ckpt_dir, {
             'tool': TOOL, 'label': opts.label, 'pid': os.getpid(),
             'wall_utc': utc_iso(time.time()), 'outcome': STOP_REQUESTED,
-            'polls': polls})
+            'polls': polls}, campaign=campaign)
         return EXIT_STOPPED
     if outcome == CLOSEOUT_FAILED:
         summary = {
@@ -627,6 +691,7 @@ def wait_loop(opts) -> int:
             'note': 'repeated bounded snapshot failures; campaign state '
                     'could not be read honestly',
         }
+        refuse_campaign_target(campaign, out_dir, 'out')
         out_dir.mkdir(parents=True, exist_ok=True)
         _atomic_write(out_dir / 'final-summary.json',
                       json.dumps(summary, indent=2, sort_keys=True,
@@ -668,9 +733,11 @@ def settle_once(opts) -> int:
         deadline_wall=deadline_wall, target_end_wall=target_end_wall,
         settle_mode=True)
     if outcome == STOP_REQUESTED:
-        write_stopped(out_dir, opts.label, snap, stop_file, 0)
+        write_stopped(out_dir, opts.label, snap, stop_file, 0,
+                      campaign=campaign)
         return EXIT_STOPPED
     if outcome in (NOT_ENDED, UNKNOWN_END_STATE):
+        refuse_campaign_target(campaign, out_dir, 'out')
         _atomic_write(out_dir / 'closeout-status.json', json.dumps({
             'tool': TOOL, 'label': opts.label, 'outcome': outcome,
             'wall_utc': utc_iso(time.time()), 'pid_alive': pid_alive,

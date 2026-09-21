@@ -9,6 +9,13 @@ CLI guard. Forged campaigns are hand-built minimal directories; no real
 driver, no subprocess scenario, no network, no credentials. Every test also
 asserts the closeout never wrote inside the (forged) campaign directory and
 never created a campaign ``stop`` file.
+
+R5 write-target guard coverage: the historical probe showed ``wait_loop``
+accepting a ``--checkpoint-dir`` pointing into the campaign and writing the
+original directory. Its counterexample is migrated here (mocked terminal
+closeout, exactly the probe's shape) alongside an unmocked variant and the
+side-root control: a campaign-inside checkpoint target is refused with zero
+campaign writes, while a side-root target still receives its checkpoint.
 """
 import argparse
 import json
@@ -17,6 +24,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+from unittest.mock import patch
 
 import pytest
 
@@ -146,6 +154,108 @@ def test_guard_refuses_out_inside_campaign(tmp_path):
     args = settle_args(campaign, campaign / 'nested-out')
     with pytest.raises(SystemExit, match='refusing'):
         run_cli(args)
+
+
+def test_guard_refuses_out_ancestor_escape(tmp_path):
+    campaign = forge_campaign(tmp_path / 'campaign')
+    escape = tmp_path / 'side-root' / 'nested' / '..' / '..' \
+        / campaign.name / 'inside-out'
+    with pytest.raises(SystemExit, match='refusing'):
+        clo.guard_paths(campaign, escape, tmp_path / 'stop')
+
+
+# ------------------------------------------------- R5 write-target guard
+
+def test_write_target_rejected_boundaries(tmp_path):
+    campaign = forge_campaign(tmp_path / 'campaign')
+    side = tmp_path / 'side-root'
+    assert clo.write_target_rejected(campaign, side) is None
+    assert clo.write_target_rejected(campaign, side / 'ckpt') is None
+    assert clo.write_target_rejected(campaign, campaign) is not None
+    assert clo.write_target_rejected(
+        campaign, campaign / 'closeout-checkpoint.json') is not None
+    escape = tmp_path / 'side-root' / 'nested' / '..' / '..' \
+        / campaign.name / 'ckpt'
+    assert clo.write_target_rejected(campaign, escape) is not None
+
+
+def test_write_target_rejected_resolves_reparse_alias(tmp_path):
+    campaign = forge_campaign(tmp_path / 'campaign')
+    alias = tmp_path / 'ckpt-alias'
+    try:
+        alias.symlink_to(campaign, target_is_directory=True)
+    except OSError:
+        pytest.skip('directory symlink unavailable on this host')
+    assert clo.write_target_rejected(campaign, alias) is not None
+
+
+def test_guarded_checkpoint_dir_variants(tmp_path):
+    campaign = forge_campaign(tmp_path / 'campaign')
+    none_dir, none_reason = clo.guarded_checkpoint_dir(campaign, None)
+    assert none_dir is None and none_reason is None
+    side = tmp_path / 'side-ckpt'
+    ok_dir, ok_reason = clo.guarded_checkpoint_dir(campaign, str(side))
+    assert ok_dir == side and ok_reason is None
+    bad_dir, bad_reason = clo.guarded_checkpoint_dir(campaign, str(campaign))
+    assert bad_dir is None and bad_reason
+
+
+def test_wait_loop_checkpoint_inside_campaign_is_refused(tmp_path):
+    """Migrated R5 counterexample (probe shape): wait_loop must refuse a
+    checkpoint dir pointing into the campaign and leave it byte-identical."""
+    campaign = forge_campaign(tmp_path / 'campaign')
+    out = tmp_path / 'out'
+    before = tree_fingerprint(campaign)
+    opts = argparse.Namespace(
+        campaign=str(campaign), out=str(out), stop_file=str(out / 'stop'),
+        deadline=PAST, target_end=None, driver_pid=None, label='px05a-r5',
+        stability=900, interval=300, checkpoint_dir=str(campaign),
+        audit_config=None, audit_manifest=None, audit_baseline=None)
+    with patch.object(clo, 'campaign_snapshot',
+                      return_value={'missing': False}), \
+         patch.object(clo, 'do_closeout',
+                      return_value={'outcome': clo.DEADLINE_REACHED}):
+        assert clo.wait_loop(opts) == clo.EXIT_OK
+    assert not (campaign / 'closeout-checkpoint.json').exists()
+    assert tree_fingerprint(campaign) == before  # zero campaign writes
+    receipt = load_json(out / 'closeout-started.json')
+    assert receipt['checkpoint_dir_requested'] == str(campaign)
+    assert receipt['checkpoint_dir_effective'] is None
+    assert receipt['checkpoint_guard_rejection']
+    assert (out / 'closeout-poll-log.jsonl').is_file()  # side root unaffected
+
+
+def test_wait_loop_checkpoint_inside_campaign_real_closeout(tmp_path):
+    """Unmocked variant: the whole deadline closeout still runs, the guard
+    alone disables the checkpoint target, and nothing lands in campaign."""
+    campaign = forge_campaign(tmp_path / 'campaign', lock_pid=os.getpid())
+    opts = wait_opts(tmp_path, campaign, deadline=utc_iso(time.time() - 10),
+                     driver_pid=os.getpid())
+    opts.checkpoint_dir = str(campaign)
+    before = tree_fingerprint(campaign)
+    assert clo.wait_loop(opts) == 0
+    assert not (campaign / 'closeout-checkpoint.json').exists()
+    summary = load_json(tmp_path / 'out' / 'final-summary.json')
+    assert summary['outcome'] == clo.DEADLINE_REACHED
+    receipt = load_json(tmp_path / 'out' / 'closeout-started.json')
+    assert receipt['checkpoint_guard_rejection']
+    assert tree_fingerprint(campaign) == before
+
+
+def test_wait_loop_checkpoint_side_root_control(tmp_path):
+    """Control: a side-root checkpoint dir is still written normally."""
+    campaign = forge_campaign(tmp_path / 'campaign', lock_pid=os.getpid())
+    opts = wait_opts(tmp_path, campaign, deadline=utc_iso(time.time() - 10),
+                     driver_pid=os.getpid())
+    before = tree_fingerprint(campaign)
+    assert clo.wait_loop(opts) == 0
+    ckpt = tmp_path / 'ckpt' / 'closeout-checkpoint.json'
+    assert ckpt.is_file()
+    assert load_json(ckpt)['label'] == 'px05a-test'
+    receipt = load_json(tmp_path / 'out' / 'closeout-started.json')
+    assert receipt['checkpoint_dir_effective'] == str(tmp_path / 'ckpt')
+    assert receipt['checkpoint_guard_rejection'] is None
+    assert tree_fingerprint(campaign) == before
 
 
 # ------------------------------------------------------- normal end (1/5)
