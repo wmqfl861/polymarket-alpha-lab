@@ -10,6 +10,8 @@ on:
       - 'tests/test_research_exec_boundaries.py'
       - 'tests/test_research_transport_stop_order.py'
       - 'tests/test_research_paper_settlement_decimal_oracle.py'
+      - 'tests/test_packaged_session_drain_failure_witness.py'
+      - 'tests/test_rv05_n5_launch_review_rejection.py'
       - '.github/workflows/windows-soak-contract.yml'
 permissions:
   contents: read
@@ -42,11 +44,17 @@ jobs:
             'tests/test_soak_driver_recovery.py',
             'tests/test_soak_audit.py',
             'tests/test_soak_closeout.py',
+            'tests/test_soak_okcompute.py',
+            'tests/test_soak_driver_subinput.py',
+            'tests/test_soak_audit_subinputs.py',
+            'tests/test_soak_fault_contracts.py',
             'tests/test_px02_gap_regressions.py',
             'tests/test_research_cross_module_composition.py',
             'tests/test_research_exec_boundaries.py',
             'tests/test_research_transport_stop_order.py',
-            'tests/test_research_paper_settlement_decimal_oracle.py'
+            'tests/test_research_paper_settlement_decimal_oracle.py',
+            'tests/test_packaged_session_drain_failure_witness.py',
+            'tests/test_rv05_n5_launch_review_rejection.py'
           )
           .\.venv\Scripts\python.exe -u -m pytest -q -p no:cacheprovider -o junit_family=legacy @TestFiles --junitxml="$env:RUNNER_TEMP/windows-soak.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/windows-soak.log"
           exit $LASTEXITCODE
