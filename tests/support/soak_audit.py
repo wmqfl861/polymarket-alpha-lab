@@ -13,11 +13,18 @@ and only writes a file when ``--json-out`` explicitly names one):
   scenarios[sub_seed % n], payload SHA recomputation, child receipt echo
   cross-checks (echo_seed / stdin_sha256 when present);
 - logical inputs: strict accounting that EXCLUDES round number, segment and
-  tmp path from input identity, plus duplicate-functional-input detection;
+  tmp path from input identity, plus duplicate-functional-input detection,
+  and an optional min-distinct-inputs gate that counts only distinct logical
+  inputs verified against executed round records — a receipt's declared
+  sub-input sum alone is a declaration, never execution proof;
 - clocks and observation: heartbeat gaps, wall-vs-monotonic drift (rollback /
   forward jump), closed-segment span vs max_wall_seconds (a "complete" close
-  observed for less than the wall gate is FAIL), stopped-wall vs heartbeat
-  consistency, summary/segment-close agreement with the round records;
+  observed for less than the wall gate is FAIL — the floor is strict and no
+  tolerance is deducted from it), stopped-wall vs heartbeat consistency,
+  summary/segment-close agreement with the round records, and completion
+  binding: a "complete" close receipt must belong to the LATEST closed
+  segment, so an older segment's complete receipt cannot be spliced with a
+  newer segment's times, identity or rounds to pose as a normal end;
 - inventory: driver.log round_final closure, junit XML presence on failed
   pytest rounds, receipt/XML test counts against an optional collection
   baseline;
@@ -31,7 +38,7 @@ or as passing; the original files are never modified.
 Usage:
   python tests/support/soak_audit.py audit --campaign DIR [--config FILE]
       [--manifest FILE] [--master-seed N] [--baseline FILE]
-      [--expect key=value ...] [--json-out FILE]
+      [--expect key=value ...] [--min-distinct-inputs N] [--json-out FILE]
 
 Exit codes: 0 no FAIL, 3 FAIL found, 5 invalid invocation, 1 internal error.
 """
@@ -127,7 +134,8 @@ def payload_hash_matches(record: dict, round_dir: Path,
 
 def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=None,
                    expected: dict | None = None, baseline: dict | None = None,
-                   clock_tolerance: float = 5.0, wall_tolerance: float | None = None):
+                   clock_tolerance: float = 5.0,
+                   min_distinct_inputs: int | None = None):
     """Read-only adjudication of one campaign directory. Returns a report.
 
     ``config``: parsed SoakConfig config dict (master_seed, max_wall_seconds,
@@ -136,6 +144,9 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
     name); when absent, loaded from the manifest the config names, if readable.
     ``expected``: {field: value} overrides checked against campaign.json.
     ``baseline``: {scenario_name: collected_test_count} for inventory closure.
+    ``min_distinct_inputs``: required count of distinct logical inputs. The
+    wall gate is a strict floor (no tolerance is deducted); only actually
+    passed rounds count toward minimum_valid_rounds.
     """
     root = Path(root)
     checks: list[dict] = []
@@ -344,9 +355,13 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
     payload_bad = []
     stop_path = identity.get('stop_path')
     original_root = Path(stop_path).parent if isinstance(stop_path, str) else None
+    verified_keys: set[tuple] = set()
     for rno, entries in sorted(records.items()):
         for seg_name, record, round_dir in entries:
-            if not payload_hash_matches(record, round_dir, original_root):
+            if payload_hash_matches(record, round_dir, original_root):
+                # executed-and-verified logical input identity
+                verified_keys.add((record.get('scenario'), record.get('sub_seed')))
+            else:
                 payload_bad.append({'round': rno, 'segment': seg_name,
                                     'found': record.get('input_sha256')})
     checks.append(check('payload_hash', FAIL if payload_bad else PASS,
@@ -365,10 +380,30 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
                 'logical inputs',
         'payload_level_distinct': len(payload_hashes),
         'functional_seed_distinct': len(functional_keys),
+        'verified_distinct_inputs': len(verified_keys),
         'receipt_declared_subinputs_sum': receipt_subinputs,
         'pytest_test_invocations_sum': pytest_invocations,
         'pytest_logical_identities': pytest_identities,
     }
+    # R1: a declared sub-input sum is not execution proof. Only distinct
+    # logical inputs whose round records actually verify against the campaign
+    # count toward the gate; with no required minimum the gate stays UNKNOWN
+    # instead of an optimistic PASS.
+    if isinstance(min_distinct_inputs, int):
+        checks.append(check(
+            'min_distinct_inputs',
+            PASS if len(verified_keys) >= min_distinct_inputs else FAIL,
+            {'required': min_distinct_inputs,
+             'verified_distinct_inputs': len(verified_keys),
+             'receipt_declared_subinputs_sum': receipt_subinputs,
+             'functional_seed_distinct': len(functional_keys),
+             'payload_level_distinct': len(payload_hashes),
+             'note': 'declaration alone is not distinct-input proof; only '
+                     'logical inputs verified against executed round records '
+                     'count'}))
+    else:
+        checks.append(check('min_distinct_inputs', UNKNOWN,
+                            {'note': 'no distinct-input minimum provided'}))
 
     # ---------- heartbeats / clocks / observation ----------
     max_gap = cfg.max_unobserved_gap_seconds if cfg is not None \
@@ -449,36 +484,48 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
             checks.append(check('inconsistent_span', FAIL,
                                 {'segment': segment.name, 'stopped_span': span,
                                  'heartbeat_span': hb_span}))
+        # per-segment recount from records (drives the completion gates)
+        seg_counts = {'passed': 0, 'failed': 0, 'interrupted': 0, 'unknown': 0}
+        for rno, entries in records.items():
+            for seg_name, record, _p in entries:
+                if seg_name == segment.name and record.get('final') in seg_counts:
+                    seg_counts[record['final']] += 1
         if close.get('reason') == 'complete':
+            # R2: only actually passed rounds are valid rounds. Failed,
+            # interrupted and unknown rounds never satisfy
+            # minimum_valid_rounds, regardless of what the close summary sums.
             if isinstance(min_rounds, int):
-                claimed = (close.get('rounds_total') or {}).get('passed', 0) \
-                    + (close.get('rounds_total') or {}).get('failed', 0) \
-                    + (close.get('rounds_total') or {}).get('interrupted', 0) \
-                    + (close.get('rounds_total') or {}).get('unknown', 0)
-                if claimed < min_rounds:
+                close_totals = close.get('rounds_total')
+                claimed_passed = close_totals.get('passed', 0) \
+                    if isinstance(close_totals, dict) else 0
+                if not isinstance(claimed_passed, int):
+                    claimed_passed = 0
+                if seg_counts['passed'] < min_rounds:
                     checks.append(check('false_completion', FAIL,
-                                        {'segment': segment.name, 'claimed': claimed,
-                                         'min_rounds': min_rounds}))
+                                        {'segment': segment.name,
+                                         'passed_recounted': seg_counts['passed'],
+                                         'passed_claimed': claimed_passed,
+                                         'required_valid_rounds': min_rounds,
+                                         'note': 'only actually passed rounds count '
+                                                 'toward minimum_valid_rounds'}))
+            # R3: the wall gate is a strict floor — no tolerance is deducted
+            # from max_wall_seconds, so a 120-second deficit on a 72-hour gate
+            # is a FAIL, not a met target.
             if isinstance(max_wall, (int, float)) and span is not None:
-                tolerance = wall_tolerance if wall_tolerance is not None \
-                    else max(0.5, 0.001 * max_wall)
-                if span < max_wall - tolerance:
+                if span < max_wall:
                     checks.append(check('short_observation', FAIL,
-                                        {'segment': segment.name, 'observed_span': span,
+                                        {'segment': segment.name,
+                                         'observed_span': span,
                                          'max_wall_seconds': max_wall,
-                                         'tolerance': round(tolerance, 3)}))
+                                         'deficit_seconds': round(max_wall - span, 3),
+                                         'note': 'strict wall floor; no tolerance '
+                                                 'deducted'}))
                 else:
                     checks.append(check('observation_span', PASS,
                                         {'segment': segment.name, 'observed_span': span}))
             elif isinstance(max_wall, (int, float)):
                 checks.append(check('observation_span', UNKNOWN,
                                     {'segment': segment.name, 'note': 'span not computable'}))
-        # per-segment summary consistency (recount from records)
-        seg_counts = {'passed': 0, 'failed': 0, 'interrupted': 0, 'unknown': 0}
-        for rno, entries in records.items():
-            for seg_name, record, _p in entries:
-                if seg_name == segment.name and record.get('final') in seg_counts:
-                    seg_counts[record['final']] += 1
         claimed_totals = close.get('rounds_total')
         if isinstance(claimed_totals, dict) and claimed_totals != seg_counts:
             checks.append(check('summary_mismatch', FAIL,
@@ -487,6 +534,33 @@ def audit_campaign(root: Path, *, config=None, scenarios=None, scenario_objects=
         else:
             checks.append(check('summary_consistency', PASS, {'segment': segment.name,
                                                               'recounted': seg_counts}))
+
+    # R4: a "complete" close receipt must belong to the LATEST closed
+    # segment. An older segment's complete receipt combined with a newer
+    # segment's start/stop times, identity or rounds is a cross-segment
+    # splice and can never support a normal-end verdict.
+    latest_segment = segment_dirs[-1] if segment_dirs else None
+    complete_segment_names = [segment.name for segment in segment_dirs
+                              if (drv._read_json(segment / 'segment-close.json')
+                                  or {}).get('reason') == 'complete']
+    if complete_segment_names:
+        spliced = [name for name in complete_segment_names
+                   if latest_segment is None or name != latest_segment.name]
+        if spliced:
+            checks.append(check('completion_segment_binding', FAIL,
+                                {'complete_segments': complete_segment_names,
+                                 'latest_segment': latest_segment.name
+                                 if latest_segment else None,
+                                 'spliced_receipts': spliced,
+                                 'note': 'complete receipt not bound to the latest '
+                                         'closed segment; receipt, start/stop times, '
+                                         'identity and rounds must come from one '
+                                         'continuous closed segment'}))
+        else:
+            checks.append(check('completion_segment_binding', PASS,
+                                {'segment': latest_segment.name,
+                                 'note': 'receipt, span, identity and rounds bound '
+                                         'to the same latest closed segment'}))
     if live:
         first = segment_dirs[0] / 'segment.json'
         header = drv._read_json(first) or {}
@@ -621,7 +695,7 @@ def main(argv=None) -> int:
     audit.add_argument('--expect', action='append', default=[])
     audit.add_argument('--json-out')
     audit.add_argument('--clock-tolerance', type=float, default=5.0)
-    audit.add_argument('--wall-tolerance', type=float)
+    audit.add_argument('--min-distinct-inputs', type=int)
     args = parser.parse_args(argv)
     try:
         config = None
@@ -644,7 +718,7 @@ def main(argv=None) -> int:
                                 scenarios=scenarios, scenario_objects=scenario_objects,
                                 expected=expected or None,
                                 baseline=baseline, clock_tolerance=args.clock_tolerance,
-                                wall_tolerance=args.wall_tolerance)
+                                min_distinct_inputs=args.min_distinct_inputs)
     except (OSError, ValueError, drv.SoakConfigError) as error:
         print(f'SOAK_AUDIT_CONFIG_INVALID {error.__class__.__name__}')
         return EXIT_CONFIG
