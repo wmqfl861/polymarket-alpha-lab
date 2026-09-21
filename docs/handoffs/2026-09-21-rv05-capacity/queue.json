@@ -1,0 +1,78 @@
+{
+  "schema": "pal-rv05-capacity-plan-v1",
+  "task_id": "PAL_RV05_CAPACITY_20260921",
+  "continues": "PAL_CORRECTIVE_LONGTASK_20260921_V3",
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "pr_number": 67,
+  "head_branch": "work/pal-parallel-20260921-ad7a9c77be5a497ab908bb33b031a182",
+  "source_commit": "2584f6f2d86ce19e7e2dab6bea6a27a013587753",
+  "source_tree": "702d25b5aaabbd790bd48a0ebed8d1a79f12c24d",
+  "original_candidate": "d929cc35214996a44008d4bbdd643bc8cc3550ea",
+  "original_target_end_utc": "2026-09-24T02:14:50Z",
+  "latest_corrected_start_utc": "2026-09-24T12:36:41Z",
+  "unchanged_deadline_utc": "2026-09-28T00:36:41Z",
+  "decisions": {
+    "minimal_new_candidate_receipt_and_auditor_change": "APPROVED",
+    "nominal_profile": "11_SCENARIOS_WITH_2_SEPARATE_REQUIRED_FAULT_CONTRACTS",
+    "historical_failure_rate_waiver": "REJECTED",
+    "kit_diagnostic_rerun": "ONE_REQUEST_ALREADY_SUBMITTED_BY_COORDINATOR_NO_LOCAL_REPEAT"
+  },
+  "diagnostic_job": {
+    "run_id": 35596758777,
+    "original_attempt": 1,
+    "failed_job_id": 106323241565,
+    "attempt2_job_id": 106355705018,
+    "failed_artifact_id": 10636917895,
+    "repeated_job_is_future_candidate_gate": false
+  },
+  "corrected_soak": {
+    "maximum_launches": 1,
+    "original_must_exit_and_cleanup_first": true,
+    "seed": 2026092103,
+    "round_period_seconds": 300,
+    "heartbeat_seconds": 60,
+    "checkpoint_seconds": 7200,
+    "summary_seconds": 43200,
+    "max_observation_gap_seconds": 900,
+    "minimum_observation_seconds": 259200,
+    "minimum_valid_rounds": 864,
+    "minimum_completed_distinct_inputs": 100000,
+    "planned_compute_subinputs_per_round": 2048,
+    "max_compute_subinputs_per_round": 4096,
+    "proposed_receipt_max_bytes": 524288,
+    "planning_capacity_is_execution_evidence": false,
+    "automatic_restart_on_failed_unknown_or_interrupted": false
+  },
+  "nodes": [
+    {"id":"N0","role":"integration_and_queue","depends":[],"owns":["tests/support/soak_driver.py","shared-contract","final-manifest-config","PR67-head"],"next":"review completed-node evidence and dispatch another ready nonconflicting item"},
+    {"id":"N1","role":"producer_and_real_subinput_checks","depends":["N0-contract"],"owns":["existing-ok-compute-fixture","producer-tests"],"must_not_edit":["soak_audit.py","soak_driver.py"]},
+    {"id":"N2","role":"independent_audit_and_dedup","depends":["N0-contract"],"owns":["tests/support/soak_audit.py","audit-tests"],"must_not_edit":["generator","soak_driver.py"]},
+    {"id":"N3","role":"nominal_and_fault_contract_mapping","depends":[],"owns":["scenario-mapping","fault-contract-tests"],"integration_via":"N0"},
+    {"id":"N4","role":"bounded_kit_failure_diagnosis","depends":[],"owns":["tests/packaged_session_drain.py","test-only-sanitized-diagnostic-tests"],"may_not_rerun_again":true},
+    {"id":"N5","role":"reuse_launch_and_final_review","depends":["N0-contract"],"owns":["new-copy-of-launch-rv05","new-copy-of-final-review","tests/support/soak_closeout.py"],"final_dependencies":["N1","N2","N3","N4","N0-integration"]}
+  ],
+  "resource_limits": {
+    "initial_additional_synthetic_workers": 1,
+    "combined_working_set_target_bytes": 2147483648,
+    "combined_workspace_bytes": 4294967296,
+    "combined_evidence_bytes": 536870912,
+    "minimum_free_volume_bytes": 10737418240,
+    "these_are_measured_targets_not_unproved_hard_os_limits": true
+  },
+  "permissions": {
+    "production_src_change": false,
+    "sql_or_dependency_change": false,
+    "real_vendor_or_provider": false,
+    "user_database": false,
+    "system_feature_policy_change": false,
+    "merge_main": false,
+    "force_push": false,
+    "existing_authorized_logical_workers": true,
+    "new_host_or_credential_acquisition": false,
+    "existing_scoped_windows_ci": true
+  },
+  "official_cases_run": 0,
+  "sandbox_started": false,
+  "activation_authorized": false,
+  "note": "This is a bounded development assignment, not an implemented receipt protocol, launched controller or completed soak. Resolve exact existing file ownership before editing."
+}

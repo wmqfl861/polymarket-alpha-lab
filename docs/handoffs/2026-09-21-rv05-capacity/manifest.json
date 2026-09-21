@@ -1,0 +1,32 @@
+{
+  "schema": "pal-rv05-handoff-manifest-v1",
+  "base_commit": "2584f6f2d86ce19e7e2dab6bea6a27a013587753",
+  "base_tree": "702d25b5aaabbd790bd48a0ebed8d1a79f12c24d",
+  "files": [
+    {
+      "path": "plan.md",
+      "bytes": 14916,
+      "sha256": "f54f39f98d9315d0df31987da3676b6977bd316a2f3817571eee4db6c8ceb667"
+    },
+    {
+      "path": "queue.json",
+      "bytes": 4058,
+      "sha256": "0569e1a39d4841d59f8bcf25a9a24bffa08a8ac977c50e36ab7370e92f396556"
+    },
+    {
+      "path": "capacity_plan.py",
+      "bytes": 5724,
+      "sha256": "5a5dab8709d4a0dd70f1114cd950f9505528aa1c446b88d2f57bb52c9acc9fee"
+    },
+    {
+      "path": "test_capacity_plan.py",
+      "bytes": 4705,
+      "sha256": "a87880337a6f2e19969e8abfb710bd88ffc22cea8ea9ef13b3eaf398547cf9bf"
+    },
+    {
+      "path": "coordinator-evidence.json",
+      "bytes": 2286,
+      "sha256": "10385c47146366056a75061f71dd00941b9e289f12256b38984b8b8a13b989c6"
+    }
+  ]
+}
