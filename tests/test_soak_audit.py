@@ -27,12 +27,16 @@ ECHO = ('import sys,json,hashlib\n'
         'print(json.dumps({"echo_round":p["round"],"echo_seed":p["sub_seed"],'
         '"stdin_sha256":hashlib.sha256(raw).hexdigest(),"stdin_bytes":len(raw)}))\n')
 
-FAIL_ALWAYS = ('import sys,json,os\n'
-               'p=json.loads(sys.stdin.buffer.read())\n'
-               'open(os.path.join(p["tmp_dir"],"junk.bin"),"wb").write(b"j"*64)\n'
-               'sys.stdout.write(json.dumps({"echo_round":p["round"],'
-               '"echo_seed":p["sub_seed"]}))\n'
-               'sys.exit(3)\n')
+# A passing process scenario that still writes inside its tmp dir, so the
+# legal control exercises the passed-round tmp-cleanup path. The historical
+# always-fail variant made the control itself fail the corrected R2 gate
+# (failed rounds are not valid rounds), so the legal control now uses a
+# passing writer and failure shapes are forged per-test instead.
+WRITER = ('import sys,json,os\n'
+          'p=json.loads(sys.stdin.buffer.read())\n'
+          'open(os.path.join(p["tmp_dir"],"junk.bin"),"wb").write(b"j"*64)\n'
+          'sys.stdout.write(json.dumps({"echo_round":p["round"],'
+          '"echo_seed":p["sub_seed"]}))\n')
 
 
 def failed_names(report):
@@ -79,7 +83,9 @@ def round_records(campaign: Path):
 
 @pytest.fixture(scope='session')
 def control(tmp_path_factory):
-    """One real driver campaign: rounds 1-3 echo, 4 failed, 5 pytest, 6 failed."""
+    """One real driver campaign: six rounds, all passing (echo / writer /
+    pytest batch), closed complete. minimum_valid_rounds=6 is met by six
+    actually passed rounds, which is what the corrected R2 gate requires."""
     base = tmp_path_factory.mktemp('px01-control')
     target = base / 'synthetic_case.py'
     target.write_text('def test_one():\n    assert 1 + 1 == 2\n\n\n'
@@ -89,7 +95,7 @@ def control(tmp_path_factory):
     manifest.write_text(json.dumps({'scenarios': [
         {'name': 'audit-batch', 'kind': 'pytest', 'files': [str(target)]},
         {'name': 'audit-echo', 'kind': 'process', 'code': ECHO},
-        {'name': 'audit-failwrite', 'kind': 'process', 'code': FAIL_ALWAYS}]}),
+        {'name': 'audit-writer', 'kind': 'process', 'code': WRITER}]}),
         encoding='utf-8')
     config = {
         'master_seed': 2026092001, 'round_period_seconds': 0.25,
@@ -128,15 +134,20 @@ def test_control_campaign_passes_every_dimension(control):
     report = audit(control['campaign'], config=control['config'])
     assert report['overall'] == aud.PASS, report['failures']
     assert failed_names(report) == []
-    assert report['rounds_total'] == {'passed': 4, 'failed': 2, 'interrupted': 0,
+    assert report['rounds_total'] == {'passed': 6, 'failed': 0, 'interrupted': 0,
                                       'unknown': 0}
     assert report['inputs']['payload_level_distinct'] == 6
     assert report['inputs']['functional_seed_distinct'] == 6
+    assert report['inputs']['verified_distinct_inputs'] == 6
     assert report['inputs']['pytest_test_invocations_sum'] == 3
     records = round_records(control['campaign'])
     assert records[5][1]['receipt']['tests'] == 3  # pytest batch closed at 3 cases
     first = drv._read_json(control['campaign'] / 'first-failure.json')
-    assert first['round'] == 4
+    assert first is None                            # no failed rounds in the control
+    # corrected R2/R3/R4 gates all hold for the legal control
+    assert status_of(report, 'false_completion') is None
+    assert status_of(report, 'observation_span') == aud.PASS
+    assert status_of(report, 'completion_segment_binding') == aud.PASS
 
 
 # ---------- 1. missing round ----------
@@ -188,7 +199,7 @@ def test_torn_tail_fails_closed_campaign_but_not_live_snapshot(control, tmp_path
     running = round_path(live, 7)
     running.mkdir()
     seed = drv.derive_sub_seed(2026092001, 7)
-    names = ['audit-batch', 'audit-echo', 'audit-failwrite']
+    names = ['audit-batch', 'audit-echo', 'audit-writer']
     record = {'round': 7, 'segment': 1, 'status': 'running', 'final': None,
               'sub_seed': seed, 'scenario': names[seed % 3],
               'input_sha256': ''}
@@ -220,7 +231,10 @@ def test_summary_mismatch_is_detected(control, tmp_path):
     copy = forge(control, tmp_path)
     close_path = copy / 'segments' / 'segment-000001' / 'segment-close.json'
     close = drv._read_json(close_path)
-    close['rounds_total']['passed'] = 6
+    # The legal control really passed 6 rounds; claim 5 to contradict the
+    # records. (Updated for the all-passing control: the old forged value 6
+    # matched the new control by accident and forged nothing.)
+    close['rounds_total']['passed'] = 5
     write_json(close_path, close)
     report = audit(copy, config=control['config'])
     assert 'summary_mismatch' in failed_names(report)
@@ -282,10 +296,10 @@ def test_undercounted_test_cases_are_detected(control, tmp_path):
     record['receipt']['tests'] = 2  # three tests really ran
     write_json(path, record)
     report = audit(copy, config=control['config'],
-                   baseline={'audit-batch': 3, 'audit-echo': 0, 'audit-failwrite': 0})
+                   baseline={'audit-batch': 3, 'audit-echo': 0, 'audit-writer': 0})
     assert 'inventory_baseline' in failed_names(report)
     clean = audit(control['campaign'], config=control['config'],
-                  baseline={'audit-batch': 3, 'audit-echo': 0, 'audit-failwrite': 0})
+                  baseline={'audit-batch': 3, 'audit-echo': 0, 'audit-writer': 0})
     assert 'inventory_baseline' not in failed_names(clean)
 
 
@@ -311,22 +325,19 @@ def test_label_only_duplicate_input_is_detected(control, tmp_path):
 # ---------- 12. swallowed failure ----------
 
 def test_swallowed_failure_is_detected_two_ways(control, tmp_path):
-    copy = forge(control, tmp_path)
-    (copy / 'first-failure.json').unlink()
-    (copy / 'first-failure.log').unlink()
-    report = audit(copy, config=control['config'])
-    assert 'first_failure' in failed_names(report)
-
+    # A passing round is forged into a "failed" record: the driver log still
+    # says passed, the close summary no longer matches the recount, and the
+    # failed round has no first-failure record to back it.
     flipped = forge(control, tmp_path, name='flipped')
-    path, record = round_records(flipped)[4]
-    record['final'] = 'passed'                   # round 4 really failed
-    record['reason'] = None
+    path, record = round_records(flipped)[3]
+    record['final'] = 'failed'                   # round 4 really passed
+    record['reason'] = 'nonzero_exit'
     write_json(path, record)
     report = audit(flipped, config=control['config'])
     names = failed_names(report)
-    assert 'driver_log_closure' in names         # the log still says failed
+    assert 'driver_log_closure' in names         # the log still says passed
     assert 'summary_mismatch' in names           # the close summary no longer matches
-    assert 'first_failure' in names              # first-failure now names a "passed" round
+    assert 'first_failure' in names              # failed round without a first-failure record
 
 
 # ---------- 13. unmeasured resources written as zero ----------
@@ -345,6 +356,140 @@ def test_unmeasured_resource_written_as_zero_is_detected(control, tmp_path):
     assert 'resources_plausibility' in failed_names(report)
     clean = audit(control['campaign'], config=control['config'])
     assert 'resources_plausibility' not in failed_names(clean)
+
+
+# ---------- 14. R1: declared sub-inputs are not distinct-input proof ----------
+
+def test_r1_declared_subinputs_alone_cannot_pass_distinct_inputs_gate(control, tmp_path):
+    # Historical counterexample shape: receipts declare a sub-input sum that
+    # meets the gate (100000) while the campaign actually executed only a
+    # handful of distinct logical inputs. Declaration is not execution proof.
+    copy = forge(control, tmp_path)
+    for round_no in (1, 2):
+        path, record = round_records(copy)[round_no]
+        record['receipt']['inputs'] = 50000
+        write_json(path, record)
+    report = audit(copy, config=control['config'], min_distinct_inputs=100000)
+    names = failed_names(report)
+    assert 'min_distinct_inputs' in names
+    assert report['inputs']['receipt_declared_subinputs_sum'] == 100000
+    assert report['inputs']['verified_distinct_inputs'] < 100000
+    assert report['overall'] == aud.FAIL
+
+
+def test_r1_verified_distinct_inputs_pass_the_gate(control):
+    report = audit(control['campaign'], config=control['config'],
+                   min_distinct_inputs=6)
+    assert 'min_distinct_inputs' not in failed_names(report)
+    assert status_of(report, 'min_distinct_inputs') == aud.PASS
+    assert report['inputs']['verified_distinct_inputs'] == 6
+    # Without a required minimum the gate stays UNKNOWN, never an optimistic PASS.
+    plain = audit(control['campaign'], config=control['config'])
+    assert status_of(plain, 'min_distinct_inputs') == aud.UNKNOWN
+
+
+# ---------- 15. R2: failed rounds are not valid rounds ----------
+
+def test_r2_all_failed_rounds_do_not_satisfy_minimum_valid_rounds(control, tmp_path):
+    # Historical counterexample shape: passed=0 / failed=864 against
+    # minimum_valid_rounds=864. Only actually passed rounds count; failed,
+    # interrupted and unknown rounds never do.
+    copy = forge(control, tmp_path)
+    for path in sorted((copy / 'segments' / 'segment-000001' / 'rounds')
+                       .glob('round-*/round.json')):
+        record = drv._read_json(path)
+        record['final'] = 'failed'
+        record['reason'] = 'nonzero_exit'
+        write_json(path, record)
+    report = audit(copy, config=control['config'])
+    names = failed_names(report)
+    assert 'false_completion' in names
+    gate = [c for c in report['checks'] if c['check'] == 'false_completion'][0]
+    assert gate['detail']['passed_recounted'] == 0
+    assert gate['detail']['required_valid_rounds'] == \
+        control['config']['minimum_valid_rounds']
+    assert report['overall'] == aud.FAIL
+
+
+def test_r2_six_actually_passed_rounds_satisfy_the_minimum(control):
+    report = audit(control['campaign'], config=control['config'])
+    assert 'false_completion' not in failed_names(report)
+
+
+# ---------- 16. R3: no tolerance is deducted from the wall floor ----------
+
+def test_r3_small_wall_deficit_is_not_accepted(control, tmp_path):
+    # 0.9s observed against a 1.0s gate: the old audit accepted any deficit
+    # inside max(0.5, 0.1%) tolerance; the corrected gate is a strict floor.
+    copy = forge(control, tmp_path)
+    close_path = copy / 'segments' / 'segment-000001' / 'segment-close.json'
+    close = drv._read_json(close_path)
+    header = drv._read_json(copy / 'segments' / 'segment-000001' / 'segment.json')
+    close['stopped_wall'] = header['started_wall'] + 0.9
+    write_json(close_path, close)
+    report = audit(copy, config=control['config'])
+    names = failed_names(report)
+    assert 'short_observation' in names
+    gate = [c for c in report['checks'] if c['check'] == 'short_observation'][0]
+    assert gate['detail']['deficit_seconds'] == 0.1
+
+    # The historical 72h shape: 259080s observed against a 259200s gate is a
+    # 120-second deficit, previously hidden by the 259.2s proportional
+    # tolerance. (The config override also trips config_sha_match, which is
+    # expected: the campaign pins the real config hash.)
+    scaled = forge(control, tmp_path, name='scaled')
+    close_path = scaled / 'segments' / 'segment-000001' / 'segment-close.json'
+    close = drv._read_json(close_path)
+    header = drv._read_json(scaled / 'segments' / 'segment-000001' / 'segment.json')
+    close['stopped_wall'] = header['started_wall'] + 259080
+    write_json(close_path, close)
+    report = audit(scaled, config={**control['config'], 'max_wall_seconds': 259200})
+    gate = [c for c in report['checks'] if c['check'] == 'short_observation'][0]
+    assert gate['status'] == aud.FAIL
+    assert gate['detail']['deficit_seconds'] == 120.0
+
+
+def test_r3_span_exactly_at_the_gate_is_accepted(control, tmp_path):
+    copy = forge(control, tmp_path)
+    close_path = copy / 'segments' / 'segment-000001' / 'segment-close.json'
+    close = drv._read_json(close_path)
+    header = drv._read_json(copy / 'segments' / 'segment-000001' / 'segment.json')
+    close['stopped_wall'] = header['started_wall'] + 1.0  # exactly the gate
+    write_json(close_path, close)
+    report = audit(copy, config=control['config'])
+    assert 'short_observation' not in failed_names(report)
+    assert status_of(report, 'observation_span') == aud.PASS
+
+
+# ---------- 17. R4: completion receipt must bind to one closed segment ----------
+
+def test_r4_old_complete_receipt_spliced_with_new_segment_is_rejected(control, tmp_path):
+    # Historical counterexample shape: segment-000001 closed "complete" (the
+    # receipt and the full wall span) while a newer segment-000002 actually
+    # ended the campaign via stop_file. Borrowing the old segment's receipt
+    # must never pose as a normal end.
+    copy = forge(control, tmp_path)
+    latest = copy / 'segments' / 'segment-000002'
+    (latest / 'rounds').mkdir(parents=True)
+    write_json(latest / 'segment.json', {'started_wall': 2000, 'segment': 2})
+    write_json(latest / 'segment-close.json',
+               {'reason': 'stop_file', 'stopped_wall': 261200,
+                'rounds_total': {'passed': 0, 'failed': 0, 'interrupted': 0,
+                                 'unknown': 0}})
+    report = audit(copy, config=control['config'])
+    names = failed_names(report)
+    assert 'completion_segment_binding' in names
+    gate = [c for c in report['checks'] if c['check'] == 'completion_segment_binding'][0]
+    assert gate['detail']['spliced_receipts'] == ['segment-000001']
+    assert gate['detail']['latest_segment'] == 'segment-000002'
+    assert report['overall'] == aud.FAIL
+
+
+def test_r4_completion_bound_to_the_same_closed_segment_is_accepted(control):
+    report = audit(control['campaign'], config=control['config'])
+    gate = [c for c in report['checks'] if c['check'] == 'completion_segment_binding'][0]
+    assert gate['status'] == aud.PASS
+    assert gate['detail']['segment'] == 'segment-000001'
 
 
 # ---------- pure helpers and CLI ----------
