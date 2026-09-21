@@ -45,6 +45,7 @@ import calendar
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -125,8 +126,12 @@ def campaign_snapshot(root: Path) -> dict:
         if entry is not None:
             snap['root_files'][name] = entry
     try:
-        raw = (root / 'driver.lock').read_bytes()[:LOCK_READ_CAP]
-        data = json.loads(raw.decode('utf-8', 'replace'))
+        # R6: bound the lock read at the I/O layer BEFORE allocation
+        # (mirrors the driver's capped reads); slicing after a full
+        # read_bytes would already have allocated the whole file.
+        raw = drv._read_capped(root / 'driver.lock', LOCK_READ_CAP)
+        data = json.loads(raw.decode('utf-8', 'replace')) \
+            if raw is not None else None
         pid = data.get('pid') if isinstance(data, dict) else None
         snap['lock_pid'] = pid if isinstance(pid, int) else None
     except (OSError, ValueError):
@@ -180,9 +185,32 @@ def campaign_snapshot(root: Path) -> dict:
     return snap
 
 
+def latest_segment_name(snap: dict) -> str | None:
+    """Name of the LATEST driver segment directory in a snapshot.
+
+    Mirrors the audit's completion_segment_binding gate: only directories
+    named like real driver segments (``segment-\\d{6}``) can be the latest
+    segment, so a stray later-sorting directory can never hijack the
+    completion binding. The snapshot lists segment directories sorted by
+    name; the last pattern-matching entry is the latest one.
+    """
+    for seg in reversed(snap.get('segments') or []):
+        name = seg.get('name') if isinstance(seg, dict) else None
+        if isinstance(name, str) and re.fullmatch(r'segment-\d{6}', name):
+            return name
+    return None
+
+
 def complete_receipt(snap: dict) -> bool:
-    return any(reason == 'complete'
-               for reason in snap.get('close_reasons', {}).values())
+    """A 'complete' close receipt counts only on the LATEST closed segment.
+
+    R4: an older segment's complete receipt must never be borrowed by a newer
+    segment's continuation — receipt, span, identity and rounds must come
+    from one continuous closed segment (mirrors the audit's
+    completion_segment_binding gate)."""
+    latest = latest_segment_name(snap)
+    return latest is not None and \
+        snap.get('close_reasons', {}).get(latest) == 'complete'
 
 
 def detect_outcome(*, stop_seen: bool, receipt: bool, pid_alive,
@@ -254,26 +282,31 @@ def build_gates(report: dict, config: dict | None, outcome: str,
         'status': 'PASS' if receipt else 'NOT_YET',
         'detail': {'receipt': receipt, 'outcome': outcome}}
     if receipt:
-        # span of the closed segment, recomputed from its own files
+        # span of the closed segment the receipt is bound to, recomputed
+        # from that same segment's own files (receipt and span must come
+        # from one continuous closed segment — the audit's binding)
         span = None
-        for seg in reversed(snapshot.get('segments', [])):
-            close_path = Path(campaign) / 'segments' / seg['name'] \
-                / 'segment-close.json'
-            header = drv._read_json(Path(campaign) / 'segments' / seg['name']
-                                    / 'segment.json') or {}
-            close = drv._read_json(close_path) or {}
+        latest = latest_segment_name(snapshot)
+        if latest is not None:
+            seg_dir = Path(campaign) / 'segments' / latest
+            header = drv._read_json(seg_dir / 'segment.json') or {}
+            close = drv._read_json(seg_dir / 'segment-close.json') or {}
             started = header.get('started_wall')
             stopped = close.get('stopped_wall')
             if isinstance(started, (int, float)) \
                     and isinstance(stopped, (int, float)):
                 span = round(stopped - started, 3)
-            break
         if isinstance(max_wall, (int, float)) and span is not None:
-            tolerance = max(0.5, 0.001 * max_wall)
+            # R3: the wall gate is a strict floor — no tolerance is deducted
+            # from max_wall_seconds (mirrors the audit's short_observation
+            # gate); a 120-second deficit on a 72-hour target is not a met
+            # target.
+            wall_detail = {'span_seconds': span, 'max_wall_seconds': max_wall}
+            if span < max_wall:
+                wall_detail['deficit_seconds'] = round(max_wall - span, 3)
             gates['observation_wall_target'] = {
-                'status': 'PASS' if span >= max_wall - tolerance else 'NOT_YET',
-                'detail': {'span_seconds': span, 'max_wall_seconds': max_wall,
-                           'tolerance_seconds': round(tolerance, 3)}}
+                'status': 'PASS' if span >= max_wall else 'NOT_YET',
+                'detail': wall_detail}
         else:
             gates['observation_wall_target'] = {
                 'status': 'UNKNOWN',
@@ -286,32 +319,42 @@ def build_gates(report: dict, config: dict | None, outcome: str,
                                'reached', 'outcome': outcome}}
 
     rounds_total = report.get('rounds_total') or {}
-    achieved_rounds = sum(v for v in rounds_total.values()
-                          if isinstance(v, (int, float)))
+    # R2: only actually PASSED rounds are valid rounds (mirrors the audit's
+    # false_completion gate). Failed, interrupted and unknown rounds never
+    # satisfy minimum_valid_rounds regardless of what a summed total claims.
+    passed_rounds = rounds_total.get('passed')
+    passed_rounds = passed_rounds if isinstance(passed_rounds, int) else 0
     if isinstance(min_rounds, int):
         gates['min_rounds'] = {
-            'status': 'PASS' if achieved_rounds >= min_rounds else 'NOT_YET',
-            'detail': {'achieved': achieved_rounds, 'required': min_rounds}}
+            'status': 'PASS' if passed_rounds >= min_rounds else 'NOT_YET',
+            'detail': {'achieved_passed': passed_rounds, 'required': min_rounds,
+                       'rounds_total': dict(rounds_total)}}
     else:
         gates['min_rounds'] = {'status': 'UNKNOWN',
-                               'detail': {'achieved': achieved_rounds}}
+                               'detail': {'achieved_passed': passed_rounds}}
 
     inputs = report.get('inputs') or {}
-    subinputs = inputs.get('receipt_declared_subinputs_sum')
+    # R1: a declared sub-input sum is not execution proof (mirrors the
+    # audit's min_distinct_inputs gate). Only distinct logical inputs the
+    # audit verified against executed round records count toward this gate;
+    # a report without that verified count can never PASS it.
+    verified = inputs.get('verified_distinct_inputs')
     gates['min_distinct_inputs'] = {
-        'status': ('PASS' if isinstance(subinputs, int)
-                   and subinputs >= MIN_DISTINCT_INPUTS_GATE else 'NOT_YET'),
+        'status': ('PASS' if isinstance(verified, int)
+                   and verified >= MIN_DISTINCT_INPUTS_GATE else 'NOT_YET'),
         'threshold': MIN_DISTINCT_INPUTS_GATE,
         'detail': {
-            'receipt_declared_subinputs_sum': subinputs,
+            'verified_distinct_inputs': verified,
+            'receipt_declared_subinputs_sum':
+                inputs.get('receipt_declared_subinputs_sum'),
             'functional_seed_distinct': inputs.get('functional_seed_distinct'),
             'payload_level_distinct': inputs.get('payload_level_distinct'),
             'pytest_logical_identities':
                 inputs.get('pytest_logical_identities'),
-            'note': 'raw accounting per soak_audit inputs section; the '
-                    'caliber (kouchi) judgment for this gate belongs to the '
-                    'PX-05 main-lane final adjudication, not this bypass '
-                    'closeout'}}
+            'note': 'declaration alone is not distinct-input proof; only '
+                    'audit-verified distinct logical inputs count toward '
+                    'this gate; the PX-05 main-lane final adjudication owns '
+                    'the caliber judgment'}}
     if not ended_planned and outcome != DEADLINE_REACHED:
         for name in ('segment_close_complete', 'observation_wall_target',
                      'min_rounds', 'min_distinct_inputs'):

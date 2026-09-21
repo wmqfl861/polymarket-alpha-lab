@@ -497,3 +497,221 @@ def test_detect_outcome_priority(tmp_path):
         clo.DEADLINE_REACHED
     assert clo.detect_outcome(**{**kw, 'pid_alive': None}) is None
     assert clo.detect_outcome(**{**kw, 'pid_alive': True}) is None
+
+
+# ------------------------- gate corrections R1/R2/R3/R4/R6 (V3 mirrors)
+#
+# These mirror the historical probe's exercise() constructions at the
+# closeout build_gates/detect_outcome layer: each historical counterexample
+# shape must land on NOT_YET (never an optimistic PASS), and each control
+# shape must still PASS. The underlying corrected semantics live in the
+# embedded soak_audit report (R1-R4) and the driver's capped reads (R6);
+# the closeout mirrors them so the bypass layer can never re-admit what
+# the audit/driver layers refuse.
+
+GATE_CONFIG = {'max_wall_seconds': 259200, 'minimum_valid_rounds': 864}
+
+
+def gate_report(*, passed=864, failed=0, unknown=0, interrupted=0,
+                verified_distinct_inputs=None,
+                receipt_declared_subinputs_sum=100000) -> dict:
+    return {'rounds_total': {'passed': passed, 'failed': failed,
+                             'unknown': unknown, 'interrupted': interrupted},
+            'inputs': {
+                'receipt_declared_subinputs_sum': receipt_declared_subinputs_sum,
+                'verified_distinct_inputs': verified_distinct_inputs,
+                'functional_seed_distinct': 1, 'payload_level_distinct': 1,
+                'pytest_logical_identities': ['one-fixed-test']}}
+
+
+def gate_campaign(tmp_path, name, *, seg='segment-000001', started=1000,
+                  stopped=260200, reason='complete'):
+    campaign = tmp_path / name
+    seg_dir = campaign / 'segments' / seg
+    seg_dir.mkdir(parents=True, exist_ok=True)
+    write_json(seg_dir / 'segment.json', {'started_wall': started})
+    write_json(seg_dir / 'segment-close.json',
+               {'reason': reason, 'stopped_wall': stopped})
+    return campaign
+
+
+def test_r1_declared_subinput_sum_alone_cannot_pass_distinct_inputs_gate(
+        tmp_path):
+    # Historical shape: receipts declare a 100000 sub-input sum while nothing
+    # was verified against executed round records. Declaration is not
+    # distinct-execution proof; the gate must never PASS on it.
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign')
+    snap = clo.campaign_snapshot(campaign)
+    gates = clo.build_gates(gate_report(), GATE_CONFIG, clo.ENDED_NORMALLY,
+                            snap, campaign)
+    assert gates['min_distinct_inputs']['status'] == 'NOT_YET'
+    detail = gates['min_distinct_inputs']['detail']
+    assert detail['verified_distinct_inputs'] is None
+    assert detail['receipt_declared_subinputs_sum'] == 100000
+
+
+def test_r1_verified_distinct_inputs_pass_the_gate(tmp_path):
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign')
+    snap = clo.campaign_snapshot(campaign)
+    gates = clo.build_gates(
+        gate_report(verified_distinct_inputs=clo.MIN_DISTINCT_INPUTS_GATE),
+        GATE_CONFIG, clo.ENDED_NORMALLY, snap, campaign)
+    assert gates['min_distinct_inputs']['status'] == 'PASS'
+    assert gates['min_distinct_inputs']['threshold'] == \
+        clo.MIN_DISTINCT_INPUTS_GATE
+
+
+def test_r2_failed_rounds_do_not_satisfy_minimum_valid_rounds(tmp_path):
+    # Historical shape: 864 failed rounds against minimum_valid_rounds=864.
+    # Only actually PASSED rounds are valid rounds; a summed total claiming
+    # 864 rounds must not satisfy the gate when passed=0.
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign')
+    snap = clo.campaign_snapshot(campaign)
+    gates = clo.build_gates(
+        gate_report(passed=0, failed=864), GATE_CONFIG, clo.ENDED_NORMALLY,
+        snap, campaign)
+    assert gates['min_rounds']['status'] == 'NOT_YET'
+    assert gates['min_rounds']['detail']['achieved_passed'] == 0
+    assert gates['min_rounds']['detail']['required'] == 864
+
+
+def test_r2_actually_passed_rounds_satisfy_the_minimum(tmp_path):
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign')
+    snap = clo.campaign_snapshot(campaign)
+    gates = clo.build_gates(gate_report(passed=864), GATE_CONFIG,
+                            clo.ENDED_NORMALLY, snap, campaign)
+    assert gates['min_rounds']['status'] == 'PASS'
+
+
+def test_r3_wall_deficit_inside_the_old_tolerance_is_not_accepted(tmp_path):
+    # Historical shape: 259080s observed against a 259200s target — a
+    # 120-second deficit the old max(0.5, 0.1%) tolerance swallowed. The
+    # corrected gate is a strict floor; a large deficit (C2 shape) stays
+    # rejected too.
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign', stopped=260080)
+    snap = clo.campaign_snapshot(campaign)
+    gates = clo.build_gates(gate_report(), GATE_CONFIG, clo.ENDED_NORMALLY,
+                            snap, campaign)
+    assert gates['observation_wall_target']['status'] == 'NOT_YET'
+    detail = gates['observation_wall_target']['detail']
+    assert detail['span_seconds'] == 259080.0
+    assert detail['deficit_seconds'] == 120.0
+    assert 'tolerance_seconds' not in detail
+
+    large = gate_campaign(tmp_path, 'large-deficit', stopped=130600)
+    gates = clo.build_gates(gate_report(), GATE_CONFIG, clo.ENDED_NORMALLY,
+                            clo.campaign_snapshot(large), large)
+    assert gates['observation_wall_target']['status'] == 'NOT_YET'
+    assert gates['observation_wall_target']['detail']['deficit_seconds'] == \
+        129600.0  # span 129600 (130600-1000) vs the 259200 floor
+
+
+def test_r3_span_exactly_at_the_gate_is_accepted(tmp_path):
+    # Control (C1 shape): a span exactly equal to max_wall_seconds passes;
+    # the floor is strict, not exclusive.
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign', stopped=260200)
+    snap = clo.campaign_snapshot(campaign)
+    gates = clo.build_gates(gate_report(), GATE_CONFIG, clo.ENDED_NORMALLY,
+                            snap, campaign)
+    assert gates['observation_wall_target']['status'] == 'PASS'
+    assert 'deficit_seconds' not in gates['observation_wall_target']['detail']
+
+
+def test_r4_old_complete_receipt_borrowed_by_a_newer_segment_is_rejected(
+        tmp_path):
+    # Historical shape: segment-000001 closed 'complete' (receipt plus the
+    # full wall span) while the newer segment-000002 actually ended the
+    # campaign via stop_file. Borrowing the old receipt must never pose as a
+    # normal end at the outcome or the gate layer.
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign', stopped=260080)
+    gate_campaign(tmp_path, 'synthetic-campaign', seg='segment-000002',
+                  started=1000, stopped=260200, reason='stop_file')
+    snap = clo.campaign_snapshot(campaign)
+    assert clo.complete_receipt(snap) is False
+    outcome = clo.detect_outcome(stop_seen=False, receipt=False,
+                                 pid_alive=False, stable=True, now_wall=300000,
+                                 deadline_wall=400000, target_end_wall=200000)
+    assert outcome == clo.LATE_EXIT_NO_RECEIPT
+    gates = clo.build_gates(gate_report(), GATE_CONFIG, outcome, snap,
+                            campaign)
+    assert gates['segment_close_complete']['status'] == 'NOT_YET'
+    assert gates['observation_wall_target']['status'] == 'NOT_YET'
+
+
+def test_r4_completion_bound_to_the_latest_closed_segment_is_accepted(
+        tmp_path):
+    # Control: receipt and span both bound to the same latest closed segment
+    # (segment-000002, complete, exactly the full wall) -> normal end.
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign', stopped=260080)
+    gate_campaign(tmp_path, 'synthetic-campaign', seg='segment-000002',
+                  started=1000, stopped=260200, reason='complete')
+    snap = clo.campaign_snapshot(campaign)
+    assert clo.complete_receipt(snap) is True
+    outcome = clo.detect_outcome(stop_seen=False, receipt=True,
+                                 pid_alive=False, stable=True, now_wall=300000,
+                                 deadline_wall=400000, target_end_wall=200000)
+    assert outcome == clo.ENDED_NORMALLY
+    gates = clo.build_gates(gate_report(), GATE_CONFIG, outcome, snap,
+                            campaign)
+    assert gates['segment_close_complete']['status'] == 'PASS'
+    assert gates['observation_wall_target']['status'] == 'PASS'
+    assert gates['observation_wall_target']['detail']['span_seconds'] == \
+        259200.0
+
+
+def test_r4_stray_directory_cannot_hijack_the_latest_segment_binding(
+        tmp_path):
+    # The audit's binding counts only real segment-\d{6} directories; a
+    # stray later-sorting directory with a forged 'complete' receipt can
+    # neither lend a receipt to a stopped campaign nor steal one from a
+    # genuinely completed latest segment.
+    stopped = gate_campaign(tmp_path, 'hijack', seg='segment-000001',
+                            stopped=260080, reason='complete')
+    gate_campaign(tmp_path, 'hijack', seg='segment-000002', started=1000,
+                  stopped=260200, reason='stop_file')
+    gate_campaign(tmp_path, 'hijack', seg='zzz-stray-not-a-segment',
+                  started=1000, stopped=260200, reason='complete')
+    snap = clo.campaign_snapshot(stopped)
+    assert snap['close_reasons']['zzz-stray-not-a-segment'] == 'complete'
+    assert clo.latest_segment_name(snap) == 'segment-000002'
+    assert clo.complete_receipt(snap) is False
+
+    finished = gate_campaign(tmp_path, 'hijack-control',
+                             seg='segment-000001', stopped=260080,
+                             reason='stop_file')
+    gate_campaign(tmp_path, 'hijack-control', seg='segment-000002',
+                  started=1000, stopped=260200, reason='complete')
+    gate_campaign(tmp_path, 'hijack-control', seg='zzz-stray-not-a-segment',
+                  started=1000, stopped=260200, reason='stop_file')
+    snap = clo.campaign_snapshot(finished)
+    assert clo.complete_receipt(snap) is True
+
+
+def test_r6_lock_read_is_capped_before_allocation(tmp_path):
+    # Historical shape: an oversized driver.lock (valid JSON prefix plus
+    # 4x-cap padding). The read must be bounded at the I/O layer (no
+    # read-all-then-slice path), and the over-cap record must be refused —
+    # lock_pid None — instead of truncated and parsed.
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign')
+    lock = campaign / 'driver.lock'
+    lock.write_bytes(b'{"pid":7}' + b' ' * (4 * clo.LOCK_READ_CAP))
+    observed = []
+    original_read_bytes = Path.read_bytes
+
+    def instrument(path):
+        raw = original_read_bytes(path)
+        if path == lock:
+            observed.append(len(raw))
+        return raw
+
+    with patch.object(Path, 'read_bytes', instrument):
+        snap = clo.campaign_snapshot(campaign)
+    assert observed == []  # the historical read-all path is gone entirely
+    assert snap['lock_pid'] is None  # over-cap record: refused, not sliced
+
+
+def test_r6_small_lock_is_still_read(tmp_path):
+    # Control (C4 shape): a small, valid lock is still read and parsed.
+    campaign = gate_campaign(tmp_path, 'synthetic-campaign')
+    (campaign / 'driver.lock').write_bytes(b'{"pid":7}')
+    assert clo.campaign_snapshot(campaign)['lock_pid'] == 7

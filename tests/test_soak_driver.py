@@ -538,8 +538,17 @@ def test_stop_file_closes_cleanly_with_receipts(tmp_path):
     # round 2's final state makes the >= 2 passed / clean-close / receipt
     # assertions deterministic; none of them is weakened.
     assert _wait_for(lambda: final_record(campaign, 1, 2), timeout=25) is not None
+    # Anchor the identity to the pid this instance registered in its own
+    # driver.lock (the real interpreter holding the campaign). Under a
+    # Windows venv parent, child.pid is the venvlauncher trampoline pid and
+    # is never the pid the driver records; the lock/segment/boot receipts
+    # always carry the true holder. Precise equality, not a relaxation: the
+    # lock can only be created ('x', exclusive) by this test's one driver.
+    lock = drv._read_json(campaign / 'driver.lock')
+    assert lock is not None and lock['pid'] != os.getpid()
+    assert drv._pid_alive(lock['pid']) is True
     segment = drv._read_json(campaign / 'segments' / 'segment-000001' / 'segment.json')
-    assert segment['pid'] == child.pid and 'soak_driver.py' in ' '.join(segment['argv'])
+    assert segment['pid'] == lock['pid'] and 'soak_driver.py' in ' '.join(segment['argv'])
     heartbeats = campaign / 'segments' / 'segment-000001' / 'heartbeats.jsonl'
     assert _wait_for(lambda: heartbeats.exists() and len(heartbeats.read_text().splitlines()) >= 3,
                      timeout=15) is not None
@@ -607,10 +616,16 @@ def test_second_live_instance_is_refused_without_touching_the_first(tmp_path):
     campaign = tmp_path / 'campaign'
     first = start_driver(campaign, config)
     assert _wait_for(lambda: round_record(campaign, 1, 1), timeout=25) is not None
+    # The busy message names the pid registered in the first instance's
+    # driver.lock — the real holder an operator must act on. first.pid is
+    # only the parent-side handle pid, which under a Windows venv parent is
+    # the venvlauncher trampoline and never appears in the lock.
+    first_lock = drv._read_json(campaign / 'driver.lock')
+    assert first_lock is not None and first_lock['pid'] != os.getpid()
     second = start_driver(campaign, config)
     code, out, err = finish(second)
     assert code == drv.EXIT_LOCK_BUSY and 'SOAK_LOCK_BUSY' in (out + err)
-    assert f'pid={first.pid}' in (out + err)
+    assert f"pid={first_lock['pid']}" in (out + err)
     heartbeats = campaign / 'segments' / 'segment-000001' / 'heartbeats.jsonl'
     count_before = len(heartbeats.read_text().splitlines())
     assert _wait_for(lambda: len(heartbeats.read_text().splitlines()) > count_before + 1,
