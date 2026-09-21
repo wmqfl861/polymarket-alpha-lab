@@ -1,0 +1,89 @@
+name: Windows soak contracts
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/support/soak*.py'
+      - 'tests/test_soak*.py'
+      - 'tests/test_px02_gap_regressions.py'
+      - 'tests/test_research_cross_module_composition.py'
+      - 'tests/test_research_exec_boundaries.py'
+      - 'tests/test_research_transport_stop_order.py'
+      - 'tests/test_research_paper_settlement_decimal_oracle.py'
+      - '.github/workflows/windows-soak-contract.yml'
+permissions:
+  contents: read
+concurrency:
+  group: windows-soak-contract-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows-soak-contract:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - name: Install existing locked test dependencies
+        run: uv sync --locked --extra dev --python 3.12
+      - name: Run Windows test-driver contracts, not a long soak or database
+        shell: pwsh
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+          PYTHONUTF8: '1'
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          $TestFiles = @(
+            'tests/test_soak_driver.py',
+            'tests/test_soak_driver_recovery.py',
+            'tests/test_soak_audit.py',
+            'tests/test_soak_closeout.py',
+            'tests/test_px02_gap_regressions.py',
+            'tests/test_research_cross_module_composition.py',
+            'tests/test_research_exec_boundaries.py',
+            'tests/test_research_transport_stop_order.py',
+            'tests/test_research_paper_settlement_decimal_oracle.py'
+          )
+          .\.venv\Scripts\python.exe -u -m pytest -q -p no:cacheprovider -o junit_family=legacy @TestFiles --junitxml="$env:RUNNER_TEMP/windows-soak.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/windows-soak.log"
+          exit $LASTEXITCODE
+      - name: Require both platform-guarded cases to execute and pass
+        if: always()
+        shell: pwsh
+        run: |
+          $Check = @'
+          import os, pathlib, xml.etree.ElementTree as ET
+          report = pathlib.Path(os.environ['RUNNER_TEMP']) / 'windows-soak.xml'
+          root = ET.parse(report).getroot()
+          cases = list(root.iter('testcase'))
+          required = {
+              ('tests.test_soak_driver', 'test_abnormal_exit_recovers_into_a_new_segment_with_new_round_numbers'),
+              ('tests.test_soak_driver_recovery', 'test_controller_killed_mid_child_recovers_per_oracle'),
+          }
+          assert cases, 'missing case inventory'
+          assert not list(root.iter('failure')) and not list(root.iter('error')), 'failed suite'
+          for pair in required:
+              hits = [c for c in cases if (c.get('classname'), c.get('name')) == pair]
+              assert len(hits) == 1, ('missing or duplicate required case', pair)
+              assert hits[0].find('skipped') is None, ('required case skipped', pair)
+          print('BOTH_WINDOWS_OWNERSHIP_CASES_EXECUTED_AND_PASSED')
+          '@
+          .\.venv\Scripts\python.exe -I -S -c $Check
+          exit $LASTEXITCODE
+      - name: Verify tracked source unchanged
+        if: always()
+        run: |
+          git diff --check
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: windows-soak-contract-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/windows-soak.log
+            ${{ runner.temp }}/windows-soak.xml
+          retention-days: 7
+          if-no-files-found: error
