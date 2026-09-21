@@ -99,10 +99,17 @@ SUBINPUT_RECEIPT_MAX_BYTES = 524288   # one per-family receipt file (512KiB)
 SUBINPUT_PLANNED_ROWS_MAX = 4096      # absolute per-round row budget (contract 2.4)
 SUBINPUT_FAMILIES = ('capture-codec', 'paper-decimal-fill', 'uncapped-authz-codec')
 SUBINPUT_COUNT_KEYS = ('planned', 'generated', 'attempted', 'completed', 'oracle_passed')
+# ERRATA-001 Q3/Q4: numbered part files carry part/part_count; the base-name
+# file is part 1 and never carries them. The contract copy is hashed at import
+# time from the real repository root so a monkeypatched _REPO_ROOT (used by the
+# env-purity wiring tests with a synthetic repo) cannot redirect it.
 _SUBINPUT_RECEIPT_KEYS = frozenset({
     'schema', 'family', 'entry', 'normalize_rule', 'candidate', 'manifest_sha256',
     'generator_sha256', 'contract_sha256', 'round', 'segment', 'sub_seed',
     'scenario', 'index_origin', 'oracle', 'counts', 'rows'})
+_SUBINPUT_PART_KEYS = frozenset({'part', 'part_count'})
+_SUBINPUT_CONTRACT_COPY = _REPO_ROOT / 'docs' / 'contracts' \
+    / 'soak-subinput-receipt-v1.md'
 _HEX64_RE = re.compile('[0-9a-f]{64}')
 _SIGNAL_NAMES = {int(signal.SIGINT): 'sigint'}
 for _name in ('SIGTERM', 'SIGBREAK'):
@@ -525,6 +532,7 @@ class SoakDriver:
         self._totals = {'passed': 0, 'failed': 0, 'interrupted': 0, 'unknown': 0}
         self._distinct_inputs: set[str] = set()
         self._subinput_rows_completed = 0  # declared completed rows, passed subinput rounds
+        self._subinput_contract_sha: str | None = None  # lazy argv-channel anchor
         self._recovery: dict = {}
         self._last_heartbeat_wall = 0.0
         self._gaps: list[dict] = []
@@ -880,6 +888,19 @@ class SoakDriver:
 
     # ---------- rounds ----------
 
+    def _subinput_contract_sha256(self) -> str:
+        """sha256 of the repository contract copy (ERRATA-001 Q3 argv channel).
+
+        Read once per driver instance; an unreadable copy is a wiring-level
+        configuration failure, never a silently skipped identity binding.
+        """
+        if self._subinput_contract_sha is None:
+            try:
+                self._subinput_contract_sha = _sha256_file(_SUBINPUT_CONTRACT_COPY)
+            except OSError:
+                raise SoakConfigError('soak_config_invalid:contract_copy_unreadable') from None
+        return self._subinput_contract_sha
+
     def _scenario_spec(self, scenario: SoakScenario, round_tmp: Path):
         if os.name == 'nt':
             environment: list[tuple[str, str]] = [('SystemRoot', os.environ['SystemRoot'])]
@@ -898,7 +919,18 @@ class SoakDriver:
             environment = [*environment,
                            ('PYTHONPATH', os.pathsep.join([str(_REPO_ROOT), _pinned_purelib()])),
                            ('PYTHONUTF8', '1'), ('PYTHONDONTWRITEBYTECODE', '1')]
-            argv = (self.python, '-S', '-m', scenario.module)
+            # ERRATA-001 Q3: the receipt-header identity fields ride argv
+            # (the five-field payload bytes stay frozen): canonical candidate
+            # JSON, the manifest identity sha, the repository contract-copy
+            # sha, the per-round planned rows, and one --family flag per
+            # enabled family in the manifest's stored (sorted) order.
+            argv = (self.python, '-S', '-m', scenario.module,
+                    '--candidate', _canonical(self.config.candidate).decode('utf-8'),
+                    '--manifest-sha256', self.manifest_sha,
+                    '--contract-sha256', self._subinput_contract_sha256(),
+                    '--rows', str(scenario.planned_rows))
+            for family in scenario.families:
+                argv += ('--family', family)
             cwd = str(round_tmp)
         else:
             site_dir = _pinned_purelib()
@@ -967,17 +999,30 @@ class SoakDriver:
                                   sub_seed: int) -> str | None:
         """Fixed-reason structural check of one receipt document.
 
-        Light driver subset of contract decisions 1/2.2/2.3/7: exact schema
-        string, exact top-level field set, transport echo bindings, declared
-        family/entry shape, lowercase-hex64 two-element rows without a
-        duplicate input hash, and the five-count chain with
-        ``len(rows) == counts['completed']``. Returns 'receipt_invalid',
-        'counts_inconsistent', or None. NOT checked here (independent audit
-        owns them): whitelist recomputation of both hashes, index continuity,
-        header 2048-byte budget, candidate/generator/contract sha semantics.
+        Light driver subset of contract decisions 1/2.2/2.3/7 (+ERRATA-001
+        Q4 part fields): exact schema string, exact top-level field set
+        (optionally extended by a structurally valid part/part_count pair),
+        transport echo bindings, declared family/entry shape, lowercase-hex64
+        two-element rows without a duplicate input hash, and the five-count
+        chain with ``len(rows) == counts['completed']``. Returns
+        'receipt_invalid', 'counts_inconsistent', or None. NOT checked here
+        (independent audit owns them): whitelist recomputation of both hashes,
+        index continuity, header 2048-byte budget, candidate/generator/
+        contract sha semantics.
         """
-        if type(document) is not dict or set(document) != _SUBINPUT_RECEIPT_KEYS:
+        if type(document) is not dict:
             return 'receipt_invalid'
+        has_part = 'part' in document or 'part_count' in document
+        expected_keys = _SUBINPUT_RECEIPT_KEYS | (_SUBINPUT_PART_KEYS if has_part
+                                                  else frozenset())
+        if set(document) != expected_keys:
+            return 'receipt_invalid'
+        if has_part:
+            part, part_count = document.get('part'), document.get('part_count')
+            if (type(part) is not int or isinstance(part, bool) or part < 1
+                    or type(part_count) is not int or isinstance(part_count, bool)
+                    or part_count < 1 or part > part_count):
+                return 'receipt_invalid'
         strings = ('family', 'entry', 'normalize_rule', 'candidate', 'manifest_sha256',
                    'generator_sha256', 'contract_sha256', 'oracle')
         for key in strings:
@@ -1018,16 +1063,18 @@ class SoakDriver:
                                     round_no: int, sub_seed: int, round_tmp: Path):
         """S4' — validate the generator's stdout summary and its receipts.
 
-        Reads every receipt file the summary declares under ``round_tmp``
-        with a bounded 512KiB-plus-probe read, checks the summary shape
-        (echo fields, one entry per manifest-declared family, contract file
-        name), then each file's light structure and the summary-vs-file
-        sha256. Returns ``(summary, metas, totals, reason)``; ``metas`` is a
-        list of ``{family, entry, file, rows, sha256}`` pointers ready for
-        promotion and round.json registration, ``totals`` the five-count
-        aggregate. Any failure keeps the round fail-closed with one of the
-        fixed words receipt_missing / receipt_invalid / receipt_over_limit /
-        receipt_sha_mismatch / counts_inconsistent and no promotion.
+        Summary shape per ERRATA-001 Q3: one entry per manifest-declared
+        family carrying ``files: [{file, rows, sha256, bytes}]`` (part files
+        listed explicitly), family-level ``rows``/``counts`` aggregates, and
+        ``ok`` true. Every declared file is read under round_tmp with a
+        bounded 512KiB-plus-probe read, structurally checked, and matched to
+        the summary's sha256. Returns ``(summary, metas, totals, reason)``;
+        ``metas`` is a list of ``{family, entry, file, rows, sha256}``
+        pointers ready for promotion and round.json registration, ``totals``
+        the five-count aggregate. Any failure keeps the round fail-closed
+        with one of the fixed words receipt_missing / receipt_invalid /
+        receipt_over_limit / receipt_sha_mismatch / counts_inconsistent and
+        no promotion.
         """
         try:
             summary = json.loads(stdout.decode('utf-8'))
@@ -1037,55 +1084,77 @@ class SoakDriver:
             return None, None, None, 'receipt_invalid'
         if summary.get('echo_round') != round_no or summary.get('echo_seed') != sub_seed:
             return summary, None, None, 'receipt_invalid'
+        if summary.get('ok') is not True:  # lying child: fail closed
+            return summary, None, None, 'receipt_invalid'
         declared = summary.get('subinput_families')
         if type(declared) is not list or len(declared) != len(scenario.families):
             return summary, None, None, 'receipt_invalid'
         metas: list[dict] = []
         totals = dict.fromkeys(SUBINPUT_COUNT_KEYS, 0)
         seen_families: set[str] = set()
+        seen_files: set[str] = set()
         for item in declared:
             if type(item) is not dict:
                 return summary, None, None, 'receipt_invalid'
             family, entry = item.get('family'), item.get('entry')
-            file_name, rows_declared = item.get('file'), item.get('rows')
-            sha_declared, counts_declared = item.get('sha256'), item.get('counts')
+            files_declared = item.get('files')
+            family_rows = item.get('rows')
+            counts_declared = item.get('counts')
             if (family not in scenario.families or family in seen_families
-                    or type(entry) is not str or type(file_name) is not str
-                    or file_name != f'subinputs-{family}.json'
-                    or type(rows_declared) is not int or isinstance(rows_declared, bool)
-                    or rows_declared < 0
-                    or type(sha_declared) is not str
-                    or _HEX64_RE.fullmatch(sha_declared) is None):
+                    or type(entry) is not str
+                    or type(files_declared) is not list
+                    or not 1 <= len(files_declared) <= scenario.planned_rows
+                    or type(family_rows) is not int or isinstance(family_rows, bool)
+                    or family_rows < 0):
                 return summary, None, None, 'receipt_invalid'
             seen_families.add(family)
             if not self._subinput_counts_ok(counts_declared):
                 return summary, None, None, 'counts_inconsistent'
-            source = round_tmp / file_name
-            try:
-                source.stat()
-            except OSError:
-                return summary, None, None, 'receipt_missing'
-            raw = _read_capped(source, SUBINPUT_RECEIPT_MAX_BYTES)
-            if raw is None:  # over the 512KiB budget: refused, never truncated
-                return summary, None, None, 'receipt_over_limit'
-            if _sha256_bytes(raw) != sha_declared:
-                return summary, None, None, 'receipt_sha_mismatch'
-            try:
-                document = json.loads(raw.decode('utf-8'))
-            except (ValueError, UnicodeDecodeError):
-                return summary, None, None, 'receipt_invalid'
-            reason = self._subinput_document_reason(document, family, scenario.name,
-                                                    self.manifest_sha, round_no,
-                                                    self._segment_no, sub_seed)
-            if reason is not None:
-                return summary, None, None, reason
-            rows = document['rows']
-            if counts_declared != document['counts'] or rows_declared != len(rows):
+            family_totals = dict.fromkeys(SUBINPUT_COUNT_KEYS, 0)
+            for file_item in files_declared:
+                if type(file_item) is not dict:
+                    return summary, None, None, 'receipt_invalid'
+                file_name, rows_declared = file_item.get('file'), file_item.get('rows')
+                sha_declared = file_item.get('sha256')
+                if (type(file_name) is not str or file_name in seen_files
+                        or re.fullmatch(rf'subinputs-{re.escape(family)}(?:\.p\d+)?\.json',
+                                        file_name) is None
+                        or type(rows_declared) is not int or isinstance(rows_declared, bool)
+                        or rows_declared < 0
+                        or type(sha_declared) is not str
+                        or _HEX64_RE.fullmatch(sha_declared) is None):
+                    return summary, None, None, 'receipt_invalid'
+                seen_files.add(file_name)
+                source = round_tmp / file_name
+                try:
+                    source.stat()
+                except OSError:
+                    return summary, None, None, 'receipt_missing'
+                raw = _read_capped(source, SUBINPUT_RECEIPT_MAX_BYTES)
+                if raw is None:  # over the 512KiB budget: refused, never truncated
+                    return summary, None, None, 'receipt_over_limit'
+                if _sha256_bytes(raw) != sha_declared:
+                    return summary, None, None, 'receipt_sha_mismatch'
+                try:
+                    document = json.loads(raw.decode('utf-8'))
+                except (ValueError, UnicodeDecodeError):
+                    return summary, None, None, 'receipt_invalid'
+                reason = self._subinput_document_reason(document, family, scenario.name,
+                                                        self.manifest_sha, round_no,
+                                                        self._segment_no, sub_seed)
+                if reason is not None:
+                    return summary, None, None, reason
+                rows = document['rows']
+                if rows_declared != len(rows):
+                    return summary, None, None, 'counts_inconsistent'
+                metas.append({'family': family, 'entry': entry, 'file': file_name,
+                              'rows': len(rows), 'sha256': sha_declared})
+                for key in SUBINPUT_COUNT_KEYS:
+                    family_totals[key] += document['counts'][key]
+            if family_totals != counts_declared or family_rows != family_totals['completed']:
                 return summary, None, None, 'counts_inconsistent'
-            metas.append({'family': family, 'entry': entry, 'file': file_name,
-                          'rows': len(rows), 'sha256': sha_declared})
             for key in SUBINPUT_COUNT_KEYS:
-                totals[key] += document['counts'][key]
+                totals[key] += family_totals[key]
         return summary, metas, totals, None
 
     def _promote_subinput_receipts(self, round_tmp: Path, round_dir: Path,

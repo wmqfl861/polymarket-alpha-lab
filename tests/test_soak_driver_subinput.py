@@ -57,15 +57,19 @@ def receipt_bytes(doc) -> bytes:
 
 
 def summary_entry(doc, raw: bytes) -> dict:
+    """One family summary item exactly as the real generator writes it
+    (ERRATA-001 Q3): files list + family-level row/count aggregates."""
     return {'family': doc['family'], 'entry': doc['entry'],
-            'file': f"subinputs-{doc['family']}.json",
-            'rows': len(doc['rows']), 'sha256': hashlib.sha256(raw).hexdigest(),
-            'counts': dict(doc['counts'])}
+            'files': [{'file': f"subinputs-{doc['family']}.json",
+                       'rows': len(doc['rows']),
+                       'sha256': hashlib.sha256(raw).hexdigest(),
+                       'bytes': len(raw)}],
+            'rows': len(doc['rows']), 'counts': dict(doc['counts'])}
 
 
 def summary_stdout(round_no, sub_seed, entries) -> bytes:
-    payload = {'echo_round': round_no, 'echo_seed': sub_seed,
-               'subinput_families': entries, 'receipt_bytes_total': 0}
+    payload = {'echo_round': round_no, 'echo_seed': sub_seed, 'echo_scenario': 'ok-compute',
+               'ok': True, 'subinput_families': entries, 'receipt_bytes_total': 0}
     return json.dumps(payload).encode('utf-8') + b'\n'
 
 
@@ -256,7 +260,15 @@ def test_subinput_scenario_spec_matches_pytest_sanitization_level(tmp_path):
     round_tmp = tmp_path / 'roundtmp'
     round_tmp.mkdir()
     spec = driver._scenario_spec(driver.scenarios[0], round_tmp)
-    assert spec.argv == (driver.python, '-S', '-m', 'tests.support.soak_okcompute')
+    # ERRATA-001 Q3: argv identity channel — candidate canonical JSON,
+    # manifest sha, repository contract-copy sha, planned rows, one --family
+    # flag per enabled family in stored (sorted) order.
+    assert spec.argv == (driver.python, '-S', '-m', 'tests.support.soak_okcompute',
+                         '--candidate', json.dumps(config.candidate, sort_keys=True,
+                                                   separators=(',', ':')),
+                         '--manifest-sha256', driver.manifest_sha,
+                         '--contract-sha256', driver._subinput_contract_sha256(),
+                         '--rows', '2048', '--family', 'capture-codec')
     assert spec.cwd == str(round_tmp)
     expected_keys = {'PYTHONPATH', 'PYTHONUTF8', 'PYTHONDONTWRITEBYTECODE'}
     if os.name == 'nt':
@@ -272,6 +284,17 @@ def test_subinput_scenario_spec_matches_pytest_sanitization_level(tmp_path):
                                         tmp_path / 'other')
     pytest_keys = {key for key, _ in pytest_spec.environment}
     assert expected_keys <= pytest_keys and pytest_keys - expected_keys == {'PYTEST_DISABLE_PLUGIN_AUTOLOAD'}
+
+
+def test_subinput_contract_sha_is_the_repository_copy(tmp_path):
+    """The argv --contract-sha256 value is the hashed docs/contracts copy —
+    the same bytes the audit cross-checks (contract_copy_verified)."""
+    manifest = subinput_manifest(tmp_path)
+    config = drv.SoakConfig.from_dict(subinput_config(manifest))
+    driver = drv.SoakDriver(config, tmp_path / 'campaign')
+    expected = hashlib.sha256(drv._SUBINPUT_CONTRACT_COPY.read_bytes()).hexdigest()
+    assert driver._subinput_contract_sha256() == expected
+    assert drv._HEX64_RE.fullmatch(expected)
 
 
 SYNTH_GENERATOR = '''import json, os, sys
@@ -310,6 +333,14 @@ def test_subinput_child_spawns_as_module_with_exact_env_in_real_subprocess(tmp_p
     # a passed SystemRoot); the exact SET is the purity claim, case aside.
     assert {key.upper() for key in receipt['keys']} == {key.upper() for key in expected_keys}
     assert Path(receipt['executable']).resolve() == Path(driver.python).resolve()
+    # The child (not the parent) proves the identity argv arrived intact.
+    child_argv = receipt['argv'][1:]
+    assert child_argv[:2] == ['--candidate',
+                              json.dumps(config.candidate, sort_keys=True,
+                                         separators=(',', ':'))]
+    assert child_argv[2:4] == ['--manifest-sha256', driver.manifest_sha]
+    assert child_argv[4:6] == ['--contract-sha256', driver._subinput_contract_sha256()]
+    assert child_argv[6:] == ['--rows', '2048', '--family', 'capture-codec']
     summary = json.loads(result.stdout.decode('utf-8'))
     assert summary == {'echo_round': 4, 'echo_seed': 77}
 
@@ -370,10 +401,76 @@ def test_two_family_round_promotes_each_file(tmp_path, monkeypatch):
     assert drv.inspect_campaign(campaign)['subinput_rows_completed'] == 6
 
 
+def test_part_files_are_accepted_with_part_headers_and_two_pointers(tmp_path, monkeypatch):
+    """ERRATA-001 Q4: base-name file = part 1 without part fields; numbered
+    part >= 2 carries part/part_count; both files promote with pointers and
+    aggregate into one family summary entry."""
+    def plan(payload, round_tmp, manifest_sha):
+        rows = [[format(0xa1b2c3 + index, '064x'), format(0x3f4e5d + index, '064x')]
+                for index in range(4)]
+        files, part_docs = {}, []
+        for part_no, (name, chunk, extra) in enumerate((
+                ('subinputs-capture-codec.json', rows[:3], {}),
+                ('subinputs-capture-codec.p02.json', rows[3:], {'part': 2, 'part_count': 2}),
+        ), start=1):
+            doc = receipt_doc(payload['round'], payload['segment'], payload['sub_seed'],
+                              manifest_sha, rows=chunk,
+                              counts={key: len(chunk) for key in drv.SUBINPUT_COUNT_KEYS})
+            doc['index_origin'] = 0 if part_no == 1 else 3
+            doc.update(extra)
+            raw = receipt_bytes(doc)
+            files[name] = raw
+            part_docs.append((name, doc, raw))
+        entry = {'family': 'capture-codec', 'entry': 'capture-codec/encode',
+                 'files': [{'file': name, 'rows': len(doc['rows']),
+                            'sha256': hashlib.sha256(raw).hexdigest(),
+                            'bytes': len(raw)} for name, doc, raw in part_docs],
+                 'rows': 4, 'counts': {key: 4 for key in drv.SUBINPUT_COUNT_KEYS}}
+        return files, summary_stdout(payload['round'], payload['sub_seed'], [entry])
+
+    code, campaign, _ = run_campaign(monkeypatch, tmp_path, plan)
+    assert code == drv.EXIT_OK
+    record = round_record(campaign, 1)
+    assert record['final'] == 'passed'
+    assert [pointer['file'] for pointer in record['subinput_receipts']] \
+        == ['subinputs-capture-codec.json', 'subinputs-capture-codec.p02.json']
+    assert [pointer['rows'] for pointer in record['subinput_receipts']] == [3, 1]
+    assert record['subinput_counts']['completed'] == 4
+    round_dir = campaign / 'segments' / 'segment-000001' / 'rounds' / 'round-000000001'
+    assert (round_dir / 'subinputs-capture-codec.p02.json').is_file()
+    assert not (round_dir / 'tmp').exists()
+
+
+def test_part_field_on_base_name_or_malformed_part_is_rejected(tmp_path, monkeypatch):
+    """part/part_count must arrive as a structurally valid pair (ERRATA-001
+    Q4); a lone or out-of-range field is a structural rejection."""
+    def make_plan(mutate):
+        def plan(payload, round_tmp, manifest_sha):
+            doc = receipt_doc(payload['round'], payload['segment'], payload['sub_seed'],
+                              manifest_sha)
+            mutate(doc)
+            raw = receipt_bytes(doc)
+            return ({'subinputs-capture-codec.json': raw},
+                    summary_stdout(payload['round'], payload['sub_seed'],
+                                   [summary_entry(doc, raw)]))
+        return plan
+
+    for position, mutate in enumerate((lambda doc: doc.update(part=1),
+                                        lambda doc: doc.update(part_count=2),
+                                        lambda doc: doc.update(part=3, part_count=2))):
+        case_dir = tmp_path / f'case{position}'
+        case_dir.mkdir()
+        code, campaign, _ = run_campaign(monkeypatch, case_dir, make_plan(mutate))
+        record = round_record(campaign, 1)
+        assert record['final'] == 'failed' and record['reason'] == 'receipt_invalid', position
+
+
 def test_missing_generator_module_fails_clearly_not_unknown(tmp_path):
-    """The contract module name (N1 branch, not in this tree) must surface as
-    a clear child failure, never an unknown: python -m exits nonzero."""
-    manifest = subinput_manifest(tmp_path, module='tests.support.soak_okcompute')
+    """A module name that resolves to nothing must surface as a clear child
+    failure, never an unknown: python -m exits nonzero. (The real contract
+    generator tests.support.soak_okcompute exists in the integrated tree, so
+    the absent-module path uses a name that is genuinely not importable.)"""
+    manifest = subinput_manifest(tmp_path, module='tests.support.soak_okcompute_absent')
     config = drv.SoakConfig.from_dict(subinput_config(manifest, minimum_valid_rounds=1))
     campaign = tmp_path / 'campaign'
     driver = drv.SoakDriver(config, campaign)
@@ -466,7 +563,7 @@ def test_summary_file_name_escape_is_rejected_before_any_read(tmp_path, monkeypa
                           manifest_sha)
         raw = receipt_bytes(doc)
         entry = summary_entry(doc, raw)
-        entry['file'] = '../subinputs-capture-codec.json'
+        entry['files'][0]['file'] = '../subinputs-capture-codec.json'
         return ({}, summary_stdout(payload['round'], payload['sub_seed'], [entry]))
     code, campaign, _ = run_campaign(monkeypatch, tmp_path, plan)
     record = round_record(campaign, 1)
@@ -493,7 +590,7 @@ def test_counts_variants_fail_counts_inconsistent(tmp_path, monkeypatch, mutate)
         entry = summary_entry(doc, raw)
         mutate(doc, entry)
         raw = receipt_bytes(doc)  # doc may have changed; summary sha tracks it
-        entry['sha256'] = hashlib.sha256(raw).hexdigest()
+        entry['files'][0]['sha256'] = hashlib.sha256(raw).hexdigest()
         return ({'subinputs-capture-codec.json': raw},
                 summary_stdout(payload['round'], payload['sub_seed'], [entry]))
     code, campaign, _ = run_campaign(monkeypatch, tmp_path, plan)
@@ -507,7 +604,7 @@ def test_summary_sha_mismatch_fails_receipt_sha_mismatch(tmp_path, monkeypatch):
                           manifest_sha)
         raw = receipt_bytes(doc)
         entry = summary_entry(doc, raw)
-        entry['sha256'] = 'e' * 64  # declared sha does not match the file bytes
+        entry['files'][0]['sha256'] = 'e' * 64  # declared sha does not match the file bytes
         return ({'subinputs-capture-codec.json': raw},
                 summary_stdout(payload['round'], payload['sub_seed'], [entry]))
     code, campaign, _ = run_campaign(monkeypatch, tmp_path, plan)
@@ -541,11 +638,17 @@ def test_summary_shape_variants_fail_receipt_invalid(tmp_path, monkeypatch):
         'missing_subinput_families': lambda summary: summary.pop('subinput_families'),
         'echo_round_mismatch': lambda summary: summary.update(
             echo_round=summary['echo_round'] + 1),
+        'ok_not_true': lambda summary: summary.update(ok=False),
+        'ok_missing': lambda summary: summary.pop('ok'),
         'family_not_in_manifest': lambda summary: summary['subinput_families'][0].update(
             family='paper-decimal-fill'),
         'entry_not_a_dict': lambda summary: summary.update(
             subinput_families=['capture-codec']),
-        'sha_not_hex': lambda summary: summary['subinput_families'][0].update(sha256='zz'),
+        'files_not_a_list': lambda summary: summary['subinput_families'][0].update(
+            files='subinputs-capture-codec.json'),
+        'files_empty': lambda summary: summary['subinput_families'][0].update(files=[]),
+        'sha_not_hex': lambda summary: summary['subinput_families'][0]['files'][0].update(
+            sha256='zz'),
     }
     for name, mutate in cases.items():
         case_dir = tmp_path / name  # one fresh campaign per case
@@ -556,6 +659,7 @@ def test_summary_shape_variants_fail_receipt_invalid(tmp_path, monkeypatch):
                               manifest_sha)
             raw = receipt_bytes(doc)
             summary = {'echo_round': payload['round'], 'echo_seed': payload['sub_seed'],
+                       'echo_scenario': 'ok-compute', 'ok': True,
                        'subinput_families': [summary_entry(doc, raw)],
                        'receipt_bytes_total': 0}
             mutate(summary)
