@@ -1,0 +1,73 @@
+{
+  "schema": "pal-rv05-closure-plan-v1",
+  "task_id": "PAL_RV05_CLOSURE_20260922",
+  "continues": "PAL_RV05_CAPACITY_20260921",
+  "repo": "wmqfl861/polymarket-alpha-lab",
+  "pr": 67,
+  "base_commit": "15f24d246493cdc114a127c366da537659d8c5d8",
+  "base_tree": "d388d113c0a75bb297bf1d60b13a9237fb31a07a",
+  "original_candidate": "d929cc35214996a44008d4bbdd643bc8cc3550ea",
+  "start_not_before": "2026-09-24T02:14:50Z",
+  "latest_start": "2026-09-24T12:36:41Z",
+  "unchanged_deadline": "2026-09-28T00:36:41Z",
+  "one_corrected_launch_only": true,
+  "no_fresh_owner_wakeup_required_within_approved_scope": true,
+  "acceptance_thresholds_unchanged": {
+    "seconds": 259200,
+    "valid_passed_rounds": 864,
+    "distinct_qualified_inputs": 100000
+  },
+  "nodes": [
+    {
+      "id": "N0",
+      "owns": "integration/identity/PR",
+      "dependencies": []
+    },
+    {
+      "id": "N1",
+      "owns": "existing-capacity-runner",
+      "dependencies": [
+        "N0-identity"
+      ],
+      "required_before_launch": true
+    },
+    {
+      "id": "N2",
+      "owns": "existing-review-source/packaging/N5-fixtures",
+      "dependencies": [
+        "N0-identity"
+      ],
+      "required_before_launch": true
+    },
+    {
+      "id": "N3",
+      "owns": "existing-launcher-finite-wait-mode",
+      "dependencies": [
+        "N2-interface"
+      ],
+      "required_before_launch": true
+    },
+    {
+      "id": "N4",
+      "owns": "existing-business-boundary-tests-if-coverage-missing",
+      "dependencies": [
+        "N0-scope"
+      ],
+      "new_launch_gate": false
+    },
+    {
+      "id": "N5",
+      "owns": "existing-delivery-docs/final-readonly-review",
+      "dependencies": [
+        "N0-scope"
+      ],
+      "new_launch_gate": false
+    }
+  ],
+  "new_physical_hosts_authorized": false,
+  "merge_main": false,
+  "official_cases_run": 0,
+  "sandbox_started": false,
+  "activation_authorized": false,
+  "note": "Not a deployed controller. Reuse local state and actual existing tools; close existing gaps rather than inventing new gates."
+}

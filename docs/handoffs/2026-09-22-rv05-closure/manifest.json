@@ -1,0 +1,23 @@
+{
+  "schema": "pal-rv05-closure-delivery-v1",
+  "task_id": "PAL_RV05_CLOSURE_20260922",
+  "base_commit": "15f24d246493cdc114a127c366da537659d8c5d8",
+  "base_tree": "d388d113c0a75bb297bf1d60b13a9237fb31a07a",
+  "files": [
+    {
+      "path": "plan.md",
+      "bytes": 11876,
+      "sha256": "adc4ae7a8b4df1cc12e905caa749c97fc18a052dffc7114990a53c62aeb0ce7b"
+    },
+    {
+      "path": "queue.json",
+      "bytes": 2041,
+      "sha256": "e0c6affa4393cdebc1eac0b746e314405549b92210b08682c8227e33e286d987"
+    },
+    {
+      "path": "coordinator-evidence.json",
+      "bytes": 4013,
+      "sha256": "a50bead47167368cb7090a1244384fbe7977d5aa9cd2d38b0cd5aad3cce93a00"
+    }
+  ]
+}
