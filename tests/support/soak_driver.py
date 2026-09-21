@@ -87,6 +87,23 @@ JUNIT_MAX_BYTES = 1048576             # pytest receipt XML
 STOP_NOTE_MAX_BYTES = 256             # stop-file note snippet
 HEARTBEAT_LINE_MAX_BYTES = 65536      # one heartbeat JSONL line
 HEARTBEAT_MAX_LINES = 65536           # heartbeat lines read per segment (inspect)
+
+# kind='subinput' wiring (docs/contracts/soak-subinput-receipt-v1.md). The
+# driver checks only the contract's light subset here; whitelist recomputation,
+# index continuity, header byte budget, and deduplication stay with the
+# independent audit (N2). New evidence lives in new files and new field names;
+# the five-field payload bytes, ``_validate_receipt``, and the legacy
+# ``_distinct_inputs`` semantics are deliberately untouched.
+SUBINPUT_SCHEMA = 'pal-soak-subinput-receipt-v1'
+SUBINPUT_RECEIPT_MAX_BYTES = 524288   # one per-family receipt file (512KiB)
+SUBINPUT_PLANNED_ROWS_MAX = 4096      # absolute per-round row budget (contract 2.4)
+SUBINPUT_FAMILIES = ('capture-codec', 'paper-decimal-fill', 'uncapped-authz-codec')
+SUBINPUT_COUNT_KEYS = ('planned', 'generated', 'attempted', 'completed', 'oracle_passed')
+_SUBINPUT_RECEIPT_KEYS = frozenset({
+    'schema', 'family', 'entry', 'normalize_rule', 'candidate', 'manifest_sha256',
+    'generator_sha256', 'contract_sha256', 'round', 'segment', 'sub_seed',
+    'scenario', 'index_origin', 'oracle', 'counts', 'rows'})
+_HEX64_RE = re.compile('[0-9a-f]{64}')
 _SIGNAL_NAMES = {int(signal.SIGINT): 'sigint'}
 for _name in ('SIGTERM', 'SIGBREAK'):
     if hasattr(signal, _name):
@@ -308,9 +325,12 @@ def _pinned_purelib() -> str:
 @dataclass(frozen=True, slots=True)
 class SoakScenario:
     name: str
-    kind: str  # 'process' | 'pytest'
+    kind: str  # 'process' | 'pytest' | 'subinput'
     code: str = ''
     files: tuple[str, ...] = ()
+    module: str = ''            # subinput: generator import name (-S -m <module>)
+    planned_rows: int = 0       # subinput: per-round planned rows (1..4096)
+    families: tuple[str, ...] = ()  # subinput: enabled contract families (sorted)
 
 
 def _load_manifest(path: Path) -> tuple[tuple[SoakScenario, ...], str]:
@@ -324,13 +344,33 @@ def _load_manifest(path: Path) -> tuple[tuple[SoakScenario, ...], str]:
             raise SoakConfigError('soak_manifest_invalid')
         name, kind = item['name'], item.get('kind')
         if name in seen or not 1 <= len(name) <= 120 \
-                or re.fullmatch('[A-Za-z0-9_.-]+', name) is None or kind not in ('process', 'pytest'):
+                or re.fullmatch('[A-Za-z0-9_.-]+', name) is None \
+                or kind not in ('process', 'pytest', 'subinput'):
             raise SoakConfigError('soak_manifest_invalid')
         if kind == 'process':
             code = item.get('code')
             if type(code) is not str or not 1 <= len(code.encode('utf-8')) <= 30000 or '\x00' in code:
                 raise SoakConfigError('soak_manifest_invalid')
             entries.append(SoakScenario(name, 'process', code=code))
+        elif kind == 'subinput':
+            module = item.get('module')
+            if type(module) is not str or not 1 <= len(module) <= 200 \
+                    or re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*',
+                                    module) is None:
+                raise SoakConfigError('soak_manifest_invalid')
+            planned_rows = item.get('planned_rows')
+            if type(planned_rows) is not int or isinstance(planned_rows, bool) \
+                    or not 1 <= planned_rows <= SUBINPUT_PLANNED_ROWS_MAX:
+                raise SoakConfigError('soak_manifest_invalid')
+            families = item.get('families')
+            if type(families) is not list or not 1 <= len(families) <= len(SUBINPUT_FAMILIES) \
+                    or any(type(family) is not str or family not in SUBINPUT_FAMILIES
+                           for family in families) \
+                    or len(set(families)) != len(families):
+                raise SoakConfigError('soak_manifest_invalid')
+            entries.append(SoakScenario(name, 'subinput', module=module,
+                                        planned_rows=planned_rows,
+                                        families=tuple(sorted(families))))
         else:
             files = item.get('files')
             if type(files) is not list or not 1 <= len(files) <= 64:
@@ -352,8 +392,18 @@ def _load_manifest(path: Path) -> tuple[tuple[SoakScenario, ...], str]:
             entries.append(SoakScenario(name, 'pytest', files=tuple(resolved)))
         seen.add(name)
     ordered = tuple(sorted(entries, key=lambda item: item.name))
-    identity = [{'name': s.name, 'kind': s.kind, 'code': s.code, 'files': list(s.files)}
-                for s in ordered]
+    # Identity keys for process/pytest entries stay exactly {name, kind, code,
+    # files}: a manifest without subinput scenarios hashes identically to the
+    # pre-subinput driver. A subinput entry adds its own wiring identity.
+    identity = []
+    for scenario in ordered:
+        entry = {'name': scenario.name, 'kind': scenario.kind,
+                 'code': scenario.code, 'files': list(scenario.files)}
+        if scenario.kind == 'subinput':
+            entry['module'] = scenario.module
+            entry['planned_rows'] = scenario.planned_rows
+            entry['families'] = list(scenario.families)
+        identity.append(entry)
     return ordered, _sha256_bytes(_canonical(identity))
 
 
@@ -474,6 +524,7 @@ class SoakDriver:
         self._next_round_no = 1
         self._totals = {'passed': 0, 'failed': 0, 'interrupted': 0, 'unknown': 0}
         self._distinct_inputs: set[str] = set()
+        self._subinput_rows_completed = 0  # declared completed rows, passed subinput rounds
         self._recovery: dict = {}
         self._last_heartbeat_wall = 0.0
         self._gaps: list[dict] = []
@@ -811,6 +862,7 @@ class SoakDriver:
             'pid': os.getpid(),
             'rounds_total': dict(self._totals),
             'distinct_inputs': len(self._distinct_inputs),
+            'subinput_rows_completed': self._subinput_rows_completed,
             'next_round_no': self._next_round_no,
             'gaps_over_limit': list(self._gaps),
             'rss_samples': {'count': len(self._rss_samples),
@@ -835,6 +887,18 @@ class SoakDriver:
             environment = []
         if scenario.kind == 'process':
             argv = (self.python, '-I', '-S', '-c', scenario.code)
+            cwd = str(round_tmp)
+        elif scenario.kind == 'subinput':
+            # Generator child: repo root first (tests package + the module
+            # named by the manifest), then the pinned purelib — measured on
+            # this host, ZoneInfo('America/New_York') fails under -S without
+            # it, and the capture-codec contract family needs it. Same pinned
+            # dependency rule as the pytest branch; -S keeps PYTHONPATH the
+            # only dependency source, so no ambient site can shadow either.
+            environment = [*environment,
+                           ('PYTHONPATH', os.pathsep.join([str(_REPO_ROOT), _pinned_purelib()])),
+                           ('PYTHONUTF8', '1'), ('PYTHONDONTWRITEBYTECODE', '1')]
+            argv = (self.python, '-S', '-m', scenario.module)
             cwd = str(round_tmp)
         else:
             site_dir = _pinned_purelib()
@@ -884,6 +948,162 @@ class SoakDriver:
             return receipt, 'nonzero_exit'
         return receipt, None
 
+    # ---------- kind='subinput' receipt handling (contract light subset) ----------
+
+    @staticmethod
+    def _subinput_counts_ok(counts) -> bool:
+        """Contract decision 5 invariant helper: five ints, monotonic chain."""
+        if type(counts) is not dict or set(counts) != set(SUBINPUT_COUNT_KEYS):
+            return False
+        for value in counts.values():
+            if type(value) is not int or isinstance(value, bool) or value < 0:
+                return False
+        return (counts['planned'] >= counts['generated'] >= counts['attempted']
+                >= counts['oracle_passed'] == counts['completed'])
+
+    @classmethod
+    def _subinput_document_reason(cls, document, expected_family: str, scenario_name: str,
+                                  manifest_sha: str, round_no: int, segment_no: int,
+                                  sub_seed: int) -> str | None:
+        """Fixed-reason structural check of one receipt document.
+
+        Light driver subset of contract decisions 1/2.2/2.3/7: exact schema
+        string, exact top-level field set, transport echo bindings, declared
+        family/entry shape, lowercase-hex64 two-element rows without a
+        duplicate input hash, and the five-count chain with
+        ``len(rows) == counts['completed']``. Returns 'receipt_invalid',
+        'counts_inconsistent', or None. NOT checked here (independent audit
+        owns them): whitelist recomputation of both hashes, index continuity,
+        header 2048-byte budget, candidate/generator/contract sha semantics.
+        """
+        if type(document) is not dict or set(document) != _SUBINPUT_RECEIPT_KEYS:
+            return 'receipt_invalid'
+        strings = ('family', 'entry', 'normalize_rule', 'candidate', 'manifest_sha256',
+                   'generator_sha256', 'contract_sha256', 'oracle')
+        for key in strings:
+            if type(document[key]) is not str or not 1 <= len(document[key]) <= 65536:
+                return 'receipt_invalid'
+        if (document['schema'] != SUBINPUT_SCHEMA
+                or document['family'] != expected_family
+                or re.fullmatch(re.escape(expected_family) + r'/[a-z0-9-]{1,32}',
+                                document['entry']) is None
+                or _HEX64_RE.fullmatch(document['manifest_sha256']) is None
+                or _HEX64_RE.fullmatch(document['generator_sha256']) is None
+                or _HEX64_RE.fullmatch(document['contract_sha256']) is None
+                or document['manifest_sha256'] != manifest_sha
+                or type(document['round']) is not int or document['round'] != round_no
+                or type(document['segment']) is not int or document['segment'] != segment_no
+                or type(document['sub_seed']) is not int or document['sub_seed'] != sub_seed
+                or document['scenario'] != scenario_name
+                or type(document['index_origin']) is not int
+                or isinstance(document['index_origin'], bool) or document['index_origin'] < 0):
+            return 'receipt_invalid'
+        counts, rows = document['counts'], document['rows']
+        if type(rows) is not list:
+            return 'receipt_invalid'
+        if not cls._subinput_counts_ok(counts) or counts['completed'] != len(rows):
+            return 'counts_inconsistent'
+        seen_inputs: set[str] = set()
+        for row in rows:
+            if type(row) is not list or len(row) != 2 \
+                    or any(type(cell) is not str or _HEX64_RE.fullmatch(cell) is None
+                           for cell in row):
+                return 'receipt_invalid'
+            if row[0] in seen_inputs:  # duplicate input hash: whole file rejected
+                return 'receipt_invalid'
+            seen_inputs.add(row[0])
+        return None
+
+    def _validate_subinput_receipts(self, scenario: SoakScenario, stdout: bytes,
+                                    round_no: int, sub_seed: int, round_tmp: Path):
+        """S4' — validate the generator's stdout summary and its receipts.
+
+        Reads every receipt file the summary declares under ``round_tmp``
+        with a bounded 512KiB-plus-probe read, checks the summary shape
+        (echo fields, one entry per manifest-declared family, contract file
+        name), then each file's light structure and the summary-vs-file
+        sha256. Returns ``(summary, metas, totals, reason)``; ``metas`` is a
+        list of ``{family, entry, file, rows, sha256}`` pointers ready for
+        promotion and round.json registration, ``totals`` the five-count
+        aggregate. Any failure keeps the round fail-closed with one of the
+        fixed words receipt_missing / receipt_invalid / receipt_over_limit /
+        receipt_sha_mismatch / counts_inconsistent and no promotion.
+        """
+        try:
+            summary = json.loads(stdout.decode('utf-8'))
+        except (ValueError, UnicodeDecodeError):
+            return None, None, None, 'receipt_invalid'
+        if type(summary) is not dict:
+            return None, None, None, 'receipt_invalid'
+        if summary.get('echo_round') != round_no or summary.get('echo_seed') != sub_seed:
+            return summary, None, None, 'receipt_invalid'
+        declared = summary.get('subinput_families')
+        if type(declared) is not list or len(declared) != len(scenario.families):
+            return summary, None, None, 'receipt_invalid'
+        metas: list[dict] = []
+        totals = dict.fromkeys(SUBINPUT_COUNT_KEYS, 0)
+        seen_families: set[str] = set()
+        for item in declared:
+            if type(item) is not dict:
+                return summary, None, None, 'receipt_invalid'
+            family, entry = item.get('family'), item.get('entry')
+            file_name, rows_declared = item.get('file'), item.get('rows')
+            sha_declared, counts_declared = item.get('sha256'), item.get('counts')
+            if (family not in scenario.families or family in seen_families
+                    or type(entry) is not str or type(file_name) is not str
+                    or file_name != f'subinputs-{family}.json'
+                    or type(rows_declared) is not int or isinstance(rows_declared, bool)
+                    or rows_declared < 0
+                    or type(sha_declared) is not str
+                    or _HEX64_RE.fullmatch(sha_declared) is None):
+                return summary, None, None, 'receipt_invalid'
+            seen_families.add(family)
+            if not self._subinput_counts_ok(counts_declared):
+                return summary, None, None, 'counts_inconsistent'
+            source = round_tmp / file_name
+            try:
+                source.stat()
+            except OSError:
+                return summary, None, None, 'receipt_missing'
+            raw = _read_capped(source, SUBINPUT_RECEIPT_MAX_BYTES)
+            if raw is None:  # over the 512KiB budget: refused, never truncated
+                return summary, None, None, 'receipt_over_limit'
+            if _sha256_bytes(raw) != sha_declared:
+                return summary, None, None, 'receipt_sha_mismatch'
+            try:
+                document = json.loads(raw.decode('utf-8'))
+            except (ValueError, UnicodeDecodeError):
+                return summary, None, None, 'receipt_invalid'
+            reason = self._subinput_document_reason(document, family, scenario.name,
+                                                    self.manifest_sha, round_no,
+                                                    self._segment_no, sub_seed)
+            if reason is not None:
+                return summary, None, None, reason
+            rows = document['rows']
+            if counts_declared != document['counts'] or rows_declared != len(rows):
+                return summary, None, None, 'counts_inconsistent'
+            metas.append({'family': family, 'entry': entry, 'file': file_name,
+                          'rows': len(rows), 'sha256': sha_declared})
+            for key in SUBINPUT_COUNT_KEYS:
+                totals[key] += document['counts'][key]
+        return summary, metas, totals, None
+
+    def _promote_subinput_receipts(self, round_tmp: Path, round_dir: Path,
+                                   metas: list[dict]) -> None:
+        """S5' — move validated receipts out of tmp before any cleanup.
+
+        Promotion happens only after validation passed and always before the
+        passed-round tmp cleanup, so ``shutil.rmtree`` can never destroy the
+        only copy. ``os.replace`` is the atomic rename within one round
+        directory pair; any failure is an evidence failure (fail closed).
+        """
+        for meta in metas:
+            try:
+                os.replace(round_tmp / meta['file'], round_dir / meta['file'])
+            except OSError:
+                raise EvidenceWriteFailure(
+                    f"evidence_write_failed:{meta['file']}") from None
+
     def _run_round(self, round_no: int) -> None:
         if self._segment_dir is None:
             raise EvidenceWriteFailure('evidence_write_failed:no_segment')
@@ -904,6 +1124,7 @@ class SoakDriver:
             'started_wall': time.time()})
         started = time.monotonic()
         receipt, stdout, stderr_bytes, final, reason = None, b'', 0, None, None
+        receipts_meta = counts_agg = None
         self._in_flight = True
         try:
             spec = self._scenario_spec(scenario, round_tmp)
@@ -930,7 +1151,17 @@ class SoakDriver:
         else:
             stdout = result.stdout
             stderr_bytes = result.stderr_bytes
-            receipt, invalid = self._validate_receipt(scenario, stdout, round_no, sub_seed, round_tmp)
+            if scenario.kind == 'subinput':
+                # S4' light validation (missing generator module surfaces here
+                # as the child's own nonzero exit above, never an unknown).
+                receipt, receipts_meta, counts_agg, invalid = \
+                    self._validate_subinput_receipts(scenario, stdout, round_no,
+                                                     sub_seed, round_tmp)
+                if invalid is None and receipts_meta:
+                    self._promote_subinput_receipts(round_tmp, round_dir, receipts_meta)
+            else:
+                receipt, invalid = self._validate_receipt(scenario, stdout, round_no,
+                                                          sub_seed, round_tmp)
             final, reason = ('passed', None) if invalid is None else ('failed', invalid)
         self._in_flight = False
         record = {
@@ -941,6 +1172,9 @@ class SoakDriver:
             'elapsed_ms': int((time.monotonic() - started) * 1000),
             'stderr_bytes': stderr_bytes, 'receipt': receipt,
         }
+        if receipts_meta is not None:  # promoted receipts: pointers + declared counts
+            record['subinput_receipts'] = receipts_meta
+            record['subinput_counts'] = counts_agg
         # Per-round log: capped stdout snippet; never exceeds per_round_log_bytes.
         header = _canonical({'round': round_no, 'scenario': scenario.name,
                              'final': final, 'reason': reason}).strip()
@@ -955,6 +1189,10 @@ class SoakDriver:
         self._write_json(round_dir / 'round.json', record)
         self._totals[final] += 1
         self._distinct_inputs.add(input_sha)
+        if final == 'passed' and counts_agg is not None:
+            # Declared progress counter only — never named distinct_qualified,
+            # which is the independent audit's exclusive proof field.
+            self._subinput_rows_completed += counts_agg['completed']
         self._driver_log('round_final', round=round_no, final=final, reason=reason,
                          scenario=scenario.name, elapsed_ms=record['elapsed_ms'])
         if final == 'failed':
@@ -1064,6 +1302,7 @@ class SoakDriver:
                 'segment_elapsed_seconds': round(time.time() - self._started_wall, 3),
                 'targets_met': {'min_rounds': sum(self._totals.values()) >= self.config.min_rounds},
                 'distinct_inputs': len(self._distinct_inputs),
+                'subinput_rows_completed': self._subinput_rows_completed,
             })
             self._write_json(self._segment_dir / 'summary.json', summary)
             self._write_json(self._segment_dir / 'segment-close.json', {
@@ -1074,6 +1313,7 @@ class SoakDriver:
                 'gaps_over_limit': list(self._gaps),
                 'stop_note': summary['stop_note'], 'signal': self._signal_name,
                 'targets_met': summary['targets_met'],
+                'subinput_rows_completed': self._subinput_rows_completed,
             })
             self._driver_log('segment_close', reason=close_reason, code=code)
         except EvidenceWriteFailure:
@@ -1094,6 +1334,7 @@ def inspect_campaign(root: Path) -> dict:
         report['lock'] = {'pid': lock.get('pid'), 'alive': _pid_alive(lock.get('pid'))}
     totals = {'passed': 0, 'failed': 0, 'interrupted': 0, 'unknown': 0}
     distinct: set[str] = set()
+    subinput_rows = 0
     segments_dir = root / 'segments'
     if segments_dir.is_dir():
         for segment in sorted(path for path in segments_dir.iterdir()
@@ -1145,6 +1386,12 @@ def inspect_campaign(root: Path) -> dict:
                         counts[final] += 1
                     if type(record.get('input_sha256')) is str:
                         distinct.add(record['input_sha256'])
+                    if final == 'passed' and type(record.get('subinput_receipts')) is list:
+                        # Read-only declared progress from registered pointers;
+                        # qualification is the independent audit's judgment.
+                        for pointer in record['subinput_receipts']:
+                            if type(pointer) is dict and type(pointer.get('rows')) is int:
+                                subinput_rows += pointer['rows']
             totals = {key: totals[key] + counts[key] for key in totals}
             report['segments'].append({'path': str(segment), 'close': close, 'rounds': counts,
                                        'heartbeats': heartbeats, 'gaps_over_limit': gaps,
@@ -1152,6 +1399,7 @@ def inspect_campaign(root: Path) -> dict:
     used, measured = _tree_bytes(root)
     report['rounds_total'] = totals
     report['distinct_inputs'] = len(distinct)
+    report['subinput_rows_completed'] = subinput_rows
     report['campaign_bytes'] = used if measured else None
     report['campaign_bytes_measured'] = measured
     report['volume_free_bytes'] = _volume_free_bytes(root)
