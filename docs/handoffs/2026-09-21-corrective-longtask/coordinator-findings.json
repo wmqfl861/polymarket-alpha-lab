@@ -1,0 +1,104 @@
+{
+  "activation_authorized": false,
+  "controls": [
+    {
+      "id": "C1_FULL_WALL_CONTROL",
+      "passed": true
+    },
+    {
+      "id": "C2_LARGE_DEFICIT_REJECTED",
+      "passed": true
+    },
+    {
+      "id": "C3_EXISTING_OUTPUT_GUARD_WORKS",
+      "passed": true
+    },
+    {
+      "id": "C4_SMALL_LOCK_CONTROL",
+      "passed": true
+    },
+    {
+      "id": "C5_FIRST_UNKNOWN_RECOVERY",
+      "passed": true
+    }
+  ],
+  "controls_passed": 5,
+  "findings": [
+    {
+      "expected": "not PASS without actual distinct-execution proof",
+      "id": "R1_DECLARATION_IS_NOT_DISTINCT_PROOF",
+      "observed": "PASS",
+      "reproduced": true
+    },
+    {
+      "expected": "not PASS for minimum_valid_rounds",
+      "id": "R2_FAILED_ROUNDS_ARE_NOT_VALID_ROUNDS",
+      "observed": {
+        "detail": {
+          "achieved": 864,
+          "required": 864
+        },
+        "status": "PASS"
+      },
+      "reproduced": true
+    },
+    {
+      "expected": "not PASS for a strict 72-hour target",
+      "id": "R3_120_SECOND_WALL_DEFICIT_ACCEPTED",
+      "observed": {
+        "detail": {
+          "max_wall_seconds": 259200,
+          "span_seconds": 259080,
+          "tolerance_seconds": 259.2
+        },
+        "status": "PASS"
+      },
+      "reproduced": true
+    },
+    {
+      "expected": "bind receipt and time to the same completed segment",
+      "id": "R4_OLD_RECEIPT_BORROWED_BY_NEW_SEGMENT",
+      "observed": {
+        "complete_gate": "PASS",
+        "latest_reason": "stop_file",
+        "outcome": "ENDED_NORMALLY"
+      },
+      "reproduced": true
+    },
+    {
+      "expected": "reject every campaign write target before any write",
+      "id": "R5_CHECKPOINT_PATH_ESCAPES_CAMPAIGN_GUARD",
+      "observed": {
+        "wait_exit": 0,
+        "wrote_inside_campaign": true
+      },
+      "reproduced": true
+    },
+    {
+      "expected": "bound I/O before allocation, not after read_bytes",
+      "id": "R6_READ_ALL_BEFORE_SLICING",
+      "observed": {
+        "bytes_read": [
+          32777
+        ],
+        "claimed_read_cap": 8192
+      },
+      "reproduced": true
+    },
+    {
+      "expected": "recount an existing unknown record once on every new recovery",
+      "id": "R7_SECOND_RECOVERY_LOSES_UNKNOWN_COUNT",
+      "observed": {
+        "first_unknown": 1,
+        "next_round_still_burned": 2,
+        "second_unknown": 0
+      },
+      "reproduced": true
+    }
+  ],
+  "historical_source": "f2aff305cd30879ff4b15c6a7bbafd82856aaf75",
+  "official_cases_run": 0,
+  "reproduced": 7,
+  "schema": "pr67-finite-contract-repro-v1",
+  "scope": "finite actual-function tests; mocked final audit in checkpoint case; no live campaign"
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "pal-corrective-handoff-v3",
+  "base_commit": "f2aff305cd30879ff4b15c6a7bbafd82856aaf75",
+  "base_tree": "7cb160f73c96380dc69f9474098e69ae64d83f8a",
+  "expected_patch_tree": "5672dc17c19aecdeb610374a72b598817aaef863",
+  "files": [
+    {
+      "path": "plan.md",
+      "bytes": 14414,
+      "sha256": "b16ba39c58dc5b77a6d9f73f243b3b8ba810aa12cb2079efefe2d3cd728dcb61"
+    },
+    {
+      "path": "queue.json",
+      "bytes": 2972,
+      "sha256": "19f2e3b138982135968e10c7df17802d206288ea9287f70cc5ca1990bd1f674a"
+    },
+    {
+      "path": "pr67_contract_repro.py",
+      "bytes": 11125,
+      "sha256": "8fa0428479d33f2ef5e56fedc247500902e87fc3dc2a4c37ffa41190a1ecd6a3"
+    },
+    {
+      "path": "coordinator-findings.json",
+      "bytes": 2663,
+      "sha256": "96cf5bbdce3492ea171962fad25a0a03d74a7d3d33e53778737fceb8158df231"
+    },
+    {
+      "path": "pr67-windows-soak-contract.patch",
+      "bytes": 4062,
+      "sha256": "107270268fb0fc76590ff5c4bd3306782db97b4e17cdae03d527cb7807e3007d"
+    }
+  ]
+}

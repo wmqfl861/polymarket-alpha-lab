@@ -1,0 +1,93 @@
+{
+  "schema": "pal-corrective-longtask-v3",
+  "task_id": "PAL_CORRECTIVE_LONGTASK_20260921_V3",
+  "pr": 67,
+  "repository": "wmqfl861/polymarket-alpha-lab",
+  "base_commit": "f2aff305cd30879ff4b15c6a7bbafd82856aaf75",
+  "base_tree": "7cb160f73c96380dc69f9474098e69ae64d83f8a",
+  "workflow_patch_result_tree": "5672dc17c19aecdeb610374a72b598817aaef863",
+  "original_candidate": "d929cc35214996a44008d4bbdd643bc8cc3550ea",
+  "original_deadline_utc": "2026-09-28T00:36:41Z",
+  "latest_corrected_start_utc": "2026-09-24T12:36:41Z",
+  "final_review_reserve_hours": 12,
+  "corrected_soak_hours": 72,
+  "new_formal_start_limit": 1,
+  "overlap_with_original_formal_allowed": false,
+  "automatic_retry_after_failed_or_unknown_start": false,
+  "seed": 2026092103,
+  "period_seconds": 300,
+  "heartbeat_seconds": 60,
+  "max_gap_seconds": 900,
+  "checkpoint_seconds": 7200,
+  "summary_seconds": 43200,
+  "min_valid_rounds": 864,
+  "min_distinct_checked_inputs": 100000,
+  "existing_campaigns_read_only": true,
+  "main_merge_allowed": false,
+  "initial_additional_synthetic_workers": 1,
+  "combined_working_set_target_bytes": 2147483648,
+  "combined_evidence_limit_bytes": 536870912,
+  "combined_working_directory_limit_bytes": 4294967296,
+  "min_free_volume_bytes": 10737418240,
+  "lanes": [
+    {
+      "id": "RV-00",
+      "dependencies": [],
+      "deliverable": "Exact source and finite seven-case historical reproducer; preserve live processes"
+    },
+    {
+      "id": "RV-01",
+      "dependencies": [
+        "RV-00"
+      ],
+      "deliverable": "R1-R6: truthful qualification and bounded read/write paths"
+    },
+    {
+      "id": "RV-02",
+      "dependencies": [
+        "RV-00"
+      ],
+      "deliverable": "R7 multi-recovery plus actual synthetic-child dependency origin"
+    },
+    {
+      "id": "RV-03",
+      "dependencies": [
+        "RV-00"
+      ],
+      "deliverable": "Additive Windows contract job; both required nodes execute"
+    },
+    {
+      "id": "RV-04",
+      "dependencies": [
+        "RV-01",
+        "RV-02",
+        "RV-03"
+      ],
+      "deliverable": "Frozen corrected candidate, focused gates, new 20-minute rehearsal and separate review"
+    },
+    {
+      "id": "RV-05",
+      "dependencies": [
+        "RV-04"
+      ],
+      "deliverable": "One sequential corrected 72-hour run only after original ownership is released and before start cutoff"
+    },
+    {
+      "id": "RV-06",
+      "dependencies": [
+        "RV-05"
+      ],
+      "dependency_note": "Code review may begin earlier; NOT_STARTED/PARTIAL must also close out honestly",
+      "deliverable": "Exact original/corrected evidence and existing draft PR67"
+    },
+    {
+      "id": "ADMIN-CLI",
+      "state": "WAITING_OWNER",
+      "blocks_offline_lanes": false
+    }
+  ],
+  "official_cases_run": 0,
+  "sandbox_started": false,
+  "activation_authorized": false,
+  "notes": "Plan only. Historical reproducer exits3. Workflow patch and new run are NOT executed by the coordinator."
+}
