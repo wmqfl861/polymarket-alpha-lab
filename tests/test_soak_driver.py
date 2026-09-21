@@ -150,6 +150,12 @@ def round_record(campaign, segment, round_no):
                           / f'round-{round_no:09d}' / 'round.json')
 
 
+def final_record(campaign, segment, round_no):
+    """A round record only once it has reached a final state."""
+    record = round_record(campaign, segment, round_no)
+    return record if record is not None and record.get('status') == 'final' else None
+
+
 # ---------- deterministic seeding and configuration ----------
 
 def test_sub_seed_derivation_is_deterministic_and_distinct():
@@ -308,7 +314,12 @@ def test_stop_file_closes_cleanly_with_receipts(tmp_path):
     config = write_config(tmp_path, base_config(manifest))
     campaign = tmp_path / 'campaign'
     child = start_driver(campaign, config)
-    assert _wait_for(lambda: round_record(campaign, 1, 2), timeout=25) is not None
+    # RED->fix: previously this waited only until round 2's record existed
+    # (status 'running'), so on a loaded host the STOP file could land before
+    # round 2 finished and rounds_total['passed'] stayed at 1. Waiting for
+    # round 2's final state makes the >= 2 passed / clean-close / receipt
+    # assertions deterministic; none of them is weakened.
+    assert _wait_for(lambda: final_record(campaign, 1, 2), timeout=25) is not None
     segment = drv._read_json(campaign / 'segments' / 'segment-000001' / 'segment.json')
     assert segment['pid'] == child.pid and 'soak_driver.py' in ' '.join(segment['argv'])
     heartbeats = campaign / 'segments' / 'segment-000001' / 'heartbeats.jsonl'
