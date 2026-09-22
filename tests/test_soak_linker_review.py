@@ -109,77 +109,146 @@ def run_linker(args, timeout=180):
 # ---------------------------------------------------------------------------
 
 FAKE_PREFLIGHT = '''\
-import json, os, subprocess, sys, time
+import datetime as dt
+import hashlib, json, subprocess, sys, time
 from pathlib import Path
 args = sys.argv[1:]
 out = None
+spec = None
+execution_id = None
 for i, a in enumerate(args):
     if a == '--json-out' and i + 1 < len(args):
         out = args[i + 1]
-sleep = float(os.environ.get('FAKE_PREFLIGHT_SLEEP', '0') or 0)
+    elif a == '--spec' and i + 1 < len(args):
+        spec = args[i + 1]
+    elif a == '--execution-id' and i + 1 < len(args):
+        execution_id = args[i + 1]
+# N4/N0 reconciliation (fix wave N2 closed child env): behavior comes from
+# a JSON config NEXT TO THIS SCRIPT, written by the test before wait -
+# never from environment variables. Formal preflight/launch children run
+# with a closed env and must not be steerable by ambient test knobs.
+cfg = {}
+cfg_path = Path(__file__).resolve().parent / 'preflight-behavior.json'
+if cfg_path.is_file():
+    cfg = json.loads(cfg_path.read_text(encoding='utf-8'))
+sleep = float(cfg.get('sleep', 0) or 0)
 if sleep:
     time.sleep(sleep)
 # deterministic mid-preflight injections: each completes strictly before
 # this stub exits, so the blocked parent never races them.
-cancel = os.environ.get('FAKE_PREFLIGHT_CANCEL_BINDING', '')
+cancel = cfg.get('cancel') or {}
 if cancel:
-    link = os.environ['FAKE_PREFLIGHT_CANCEL_LINKER']
-    now = os.environ.get('FAKE_PREFLIGHT_CANCEL_NOW', '2026-09-24T03:00:00Z')
-    log = os.environ['FAKE_PREFLIGHT_CANCEL_LOG']
-    r = subprocess.run([sys.executable, '-I', '-S', '-B', link, 'cancel',
-                        '--binding', cancel, '--now-utc', now],
+    r = subprocess.run([sys.executable, '-I', '-S', '-B',
+                        cancel['linker'], 'cancel', '--binding',
+                        cancel['binding'], '--now-utc', cancel['now']],
                        capture_output=True, text=True,
                        encoding='utf-8', errors='replace')
-    Path(log).write_text('rc=%d\\n%s\\n%s\\n' % (r.returncode, r.stdout,
-                                                 r.stderr), encoding='utf-8')
-mutate = os.environ.get('FAKE_PREFLIGHT_MUTATE_PIN', '')
+    Path(cancel['log']).write_text(
+        'rc=%d\\n%s\\n%s\\n' % (r.returncode, r.stdout, r.stderr),
+        encoding='utf-8')
+mutate = cfg.get('mutate_pin') or ''
 if mutate:
     Path(mutate).write_text('MUTATED DURING PREFLIGHT\\n', encoding='utf-8')
-verdict = os.environ.get('FAKE_PREFLIGHT_VERDICT', 'GO')
-unmet = [s for s in os.environ.get('FAKE_PREFLIGHT_UNMET', '').split(',') if s]
-if os.environ.get('FAKE_PREFLIGHT_CHECKS', 'full') == 'empty':
+verdict = cfg.get('verdict', 'GO')
+unmet = list(cfg.get('unmet') or [])
+if cfg.get('checks', 'full') == 'empty':
     checks = []
 else:
-    checks = [{'id': i, 'status': 'pass'} for i in (
+    checks = [{'id': i, 'status': 'PASS'} for i in (
         'capacity_reachable', 'windows_kit_present', 'frozen_tree_integrity',
         'resources_available', 'original_driver_exited',
         'original_segment_close_present', 'original_evidence_stable',
         'original_children_cleaned', 'launch_window')]
+
+
+def _sha(path):
+    if path and Path(path).is_file():
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    return None
+
+
+now_utc = dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 report = {'schema': 'pal-rv05-preflight-v1', 'overall': verdict,
           'unmet_count': len(unmet), 'unmet_ids': unmet, 'checks': checks}
-text = os.environ.get('FAKE_PREFLIGHT_RAW_REPORT',
-                      json.dumps(report, indent=2))
-rc = int(os.environ.get('FAKE_PREFLIGHT_RC', '0') or 0)
-skip_write = bool(os.environ.get('FAKE_PREFLIGHT_SKIP_WRITE', ''))
+# execution provenance block (N2 fresh-report contract): bound to THIS
+# invocation (the linker passes --execution-id and re-verifies the echo,
+# the spec digest, the argv echo and the generation time). The
+# 'execution' config key lets the negative vectors forge one field.
+xo = cfg.get('execution') or {}
+report['execution'] = {
+    'execution_id': xo.get('execution_id', execution_id),
+    'spec': xo.get('spec', spec),
+    'spec_sha256': xo.get('spec_sha256', _sha(spec)),
+    'json_out': out,
+    'argv': list(args),
+    'invoked_at_utc': now_utc}
+report['generated_at_utc'] = xo.get('generated_at_utc', now_utc)
+if xo.get('omit_block'):
+    del report['execution']
+text = cfg.get('raw_report')
+if text is None:
+    text = json.dumps(report, indent=2)
+rc = int(cfg.get('rc', 0) or 0)
+skip_write = bool(cfg.get('skip_write'))
 if out and not skip_write and not rc:
     Path(out).write_text(text + '\\n', encoding='utf-8')
 print(text)
 sys.exit(rc if rc else (0 if verdict == 'GO' else 1))
 '''
 
-FAKE_LAUNCH = '''\
-import json, os, sys, time
-from pathlib import Path
-args = sys.argv[1:]
-campaign = None
-for i, a in enumerate(args):
-    if a == '--campaign' and i + 1 < len(args):
-        campaign = args[i + 1]
-counter = os.environ.get('FAKE_LAUNCH_COUNTER', '')
-if counter:
-    with open(counter, 'a', encoding='utf-8') as handle:
-        handle.write('launch %s pid=%d\\n' % (time.time(), os.getpid()))
-rc = int(os.environ.get('FAKE_LAUNCH_RC', '0') or 0)
-mode = os.environ.get('FAKE_LAUNCH_CAMPAIGN', 'ok')
-if campaign and mode in ('ok', 'badschema'):
-    target = Path(campaign)
-    target.mkdir(parents=True, exist_ok=True)
-    schema = ('pal-soak-campaign-v1' if mode == 'ok'
-              else 'not-the-bound-campaign-schema')
-    (target / 'campaign.json').write_text(
-        json.dumps({'schema': schema, 'synthetic': mode == 'ok'}),
-        encoding='utf-8')
-sys.exit(rc)
+# N4/N0 reconciliation (fix wave N2 L5/L6 structured argv whitelist): the
+# bound launch_argv must use the PowerShell grammar, so the synthetic
+# launch stand-in is a real .ps1 executed by the host's canonical System32
+# WindowsPowerShell. It reads launch-behavior.json NEXT TO ITSELF
+# (counter / rc / mode / campaign), writes campaign.json BOM-LESS via
+# .NET WriteAllText (the linker's strict record reader rejects a UTF-8
+# BOM), and never needs an environment knob.
+SYSTEM32_POWERSHELL = os.path.join(
+    os.environ.get('SystemRoot') or r'C:\Windows',
+    r'System32\WindowsPowerShell\v1.0\powershell.exe')
+
+SYNTHETIC_LAUNCHER_PS1 = '''\
+param([string]$SpecPath)
+$ErrorActionPreference = 'Stop'
+# synthetic launch stand-in (pinned by sha256 in the test binding; the
+# behavior file is test-owned and NOT part of the pin)
+$cfgPath = Join-Path $PSScriptRoot 'launch-behavior.json'
+$cfg = @{}
+if (Test-Path -LiteralPath $cfgPath -PathType Leaf) {
+    $cfg = Get-Content -LiteralPath $cfgPath -Raw -Encoding UTF8 |
+        ConvertFrom-Json
+}
+$campaign = [string]$cfg.campaign
+if (-not $campaign -and $SpecPath -and
+    (Test-Path -LiteralPath $SpecPath -PathType Leaf)) {
+    $spec = Get-Content -LiteralPath $SpecPath -Raw -Encoding UTF8 |
+        ConvertFrom-Json
+    if ($spec.PSObject.Properties['paths'] -and
+        $spec.paths.PSObject.Properties['planned_campaign_dir']) {
+        $campaign = [string]$spec.paths.planned_campaign_dir
+    }
+}
+$mode = [string]$cfg.mode
+if ('' -ne $campaign -and $mode -ne 'skip') {
+    New-Item -ItemType Directory -Force -Path $campaign | Out-Null
+    $schema = if ($mode -eq 'badschema') {
+        'not-the-bound-campaign-schema'
+    } else {
+        'pal-soak-campaign-v1'
+    }
+    $doc = @{ schema = $schema
+              synthetic = ($mode -ne 'badschema') } | ConvertTo-Json
+    [System.IO.File]::WriteAllText(
+        (Join-Path $campaign 'campaign.json'), $doc)
+}
+$counter = [string]$cfg.counter
+if ('' -ne $counter) {
+    $line = 'launch {0} pid={1}' -f `
+        ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()), $PID
+    [System.IO.File]::AppendAllText($counter, $line +
+        [System.Environment]::NewLine)
+}
+exit ([int]$cfg.rc)
 '''
 
 
@@ -210,12 +279,15 @@ class ReviewSynth:
             'config': self.pkg / 'config-bound.json',
         }
         self.files['launcher'].write_text(
-            '# synthetic launcher stand-in (pinned; never executed by the '
-            'review tests\' start-path cases)\n', encoding='utf-8')
+            SYNTHETIC_LAUNCHER_PS1, encoding='utf-8')
         self.files['preflight'].write_text(FAKE_PREFLIGHT, encoding='utf-8')
         self.files['launch_spec'].write_text(
             json.dumps({'schema': 'pal-rv05-launch-spec-v1',
-                        'synthetic': True}), encoding='utf-8')
+                        'synthetic': True,
+                        'paths': {
+                            'planned_campaign_root': str(self.new_root),
+                            'planned_campaign_dir': str(self.new_campaign),
+                        }}), encoding='utf-8')
         self.files['contract'].write_text(
             '# synthetic receipt contract\n', encoding='utf-8')
         self.files['errata'].write_text('# synthetic errata\n', encoding='utf-8')
@@ -250,10 +322,11 @@ class ReviewSynth:
             'started_receipt_path': str(control / 'linker-started.json'),
             'linker_stop_path': str(control / 'linker-stop'),
             'preflight_report_path': str(self.report_path),
-            'launch_argv': [PY, '-I', '-S', '-B',
-                            str(self.pkg / 'launch-fake.py'),
-                            '--launcher', str(self.files['launcher']),
-                            '--campaign', str(self.new_campaign)],
+            'launch_argv': [SYSTEM32_POWERSHELL, '-NoProfile',
+                            '-NonInteractive', '-ExecutionPolicy',
+                            'RemoteSigned', '-File',
+                            str(self.files['launcher']),
+                            '-SpecPath', str(self.files['launch_spec'])],
             'preflight_argv': [PY, '-I', '-S', '-B',
                                str(self.files['preflight']),
                                '--spec', str(self.files['launch_spec']),
@@ -276,8 +349,35 @@ class ReviewSynth:
         return self.binding_path
 
     def write_fake_launch_script(self) -> None:
-        (self.pkg / 'launch-fake.py').write_text(
-            FAKE_LAUNCH, encoding='utf-8')
+        """Install the synthetic launch stand-in's DEFAULT behavior config
+        (counter on, campaign at the bound dir, rc 0). The .ps1 itself is
+        pinned in __init__; per-test variants go through launch_behavior().
+        """
+        self.launch_behavior(counter=str(self.launch_counter),
+                             campaign=str(self.new_campaign),
+                             mode='ok', rc=0)
+
+    def preflight_behavior(self, **cfg) -> None:
+        """Merge keys into preflight-behavior.json (the fake preflight's
+        behavior config next to the pinned script). Replaces the old
+        FAKE_PREFLIGHT_* environment knobs: formal child runs get a closed
+        environment, so test steering happens through this file."""
+        path = self.pkg / 'preflight-behavior.json'
+        merged = {}
+        if path.exists():
+            merged = json.loads(path.read_text(encoding='utf-8'))
+        merged.update(cfg)
+        path.write_text(json.dumps(merged, indent=2), encoding='utf-8')
+
+    def launch_behavior(self, **cfg) -> None:
+        """Merge keys into launch-behavior.json (the synthetic launcher's
+        behavior config next to the pinned .ps1)."""
+        path = self.pkg / 'launch-behavior.json'
+        merged = {}
+        if path.exists():
+            merged = json.loads(path.read_text(encoding='utf-8'))
+        merged.update(cfg)
+        path.write_text(json.dumps(merged, indent=2), encoding='utf-8')
 
     def write_powershell_stub(self) -> Path:
         stub = self.pkg / 'powershell.exe'
@@ -331,17 +431,13 @@ class ReviewSynth:
                            '--now-utc', now])
 
     def wait(self, now: str, extra=(), binding_path: Path | None = None,
-             env_extra=None, timeout=300):
-        env = dict(os.environ)
-        env.setdefault('FAKE_LAUNCH_COUNTER', str(self.launch_counter))
-        if env_extra:
-            env.update(env_extra)
+             timeout=300):
         proc = subprocess.run(
             [PY, '-I', '-S', '-B', str(LINKER), 'wait', '--binding',
              str(binding_path or self.binding_path), '--now-utc', now,
              *extra],
             capture_output=True, text=True, encoding='utf-8',
-            errors='replace', timeout=timeout, env=env)
+            errors='replace', timeout=timeout)
         return proc.returncode, proc.stdout + proc.stderr
 
     def state(self) -> dict:
@@ -494,11 +590,12 @@ class TestPreflightBoundary:
         synth.original_exited_clean()
         assert synth.arm()[0] == EXIT_OK
         cancel_log = synth.control / 'cancel-grandchild.log'
-        rc, out = synth.wait(IN1, env_extra={
-            'FAKE_PREFLIGHT_CANCEL_BINDING': str(synth.binding_path),
-            'FAKE_PREFLIGHT_CANCEL_LINKER': str(LINKER),
-            'FAKE_PREFLIGHT_CANCEL_NOW': IN1,
-            'FAKE_PREFLIGHT_CANCEL_LOG': str(cancel_log)})
+        synth.preflight_behavior(cancel={
+            'binding': str(synth.binding_path),
+            'linker': str(LINKER),
+            'now': IN1,
+            'log': str(cancel_log)})
+        rc, out = synth.wait(IN1)
         # the injected cancel itself succeeded (test validity)
         assert 'rc=0' in cancel_log.read_text(encoding='utf-8')
         assert (synth.control / 'linker-stop').exists()
@@ -519,8 +616,9 @@ class TestPreflightBoundary:
         re-verified before the claim; NO_GO, no launch."""
         synth.original_exited_clean()
         assert synth.arm()[0] == EXIT_OK
-        rc, out = synth.wait(IN1, env_extra={
-            'FAKE_PREFLIGHT_MUTATE_PIN': str(synth.files['config'])})
+        synth.preflight_behavior(
+            mutate_pin=str(synth.files['config']))
+        rc, out = synth.wait(IN1)
         assert rc == EXIT_NO_GO, out
         state = synth.state()
         assert state['state'] == 'NO_GO', state
@@ -545,13 +643,38 @@ class TestInProcessBoundaryInjection:
         binding = json.loads(env.binding_path.read_text(encoding='utf-8'))
 
         def stub_run(argv, **_kwargs):
-            if list(argv) == list(binding['preflight_argv']):
+            static = list(binding['preflight_argv'])
+            if list(argv[:len(static)]) == static and \
+                    len(argv) == len(static) + 2 and \
+                    argv[len(static)] == '--execution-id':
+                # the runtime preflight argv = static 9-token whitelist +
+                # this cycle's fresh execution id; the stub report echoes
+                # the execution provenance block the 9a/9a2 consumption
+                # contract requires (execution id, spec digest, argv echo,
+                # generation time, full PASS gate inventory)
                 events.append('preflight')
+                execution_id = argv[-1]
+                spec_path = static[6]
+                now_utc = datetime.now(timezone.utc).strftime(
+                    '%Y-%m-%dT%H:%M:%SZ')
                 env.report_path.write_text(json.dumps(
                     {'schema': 'pal-rv05-preflight-v1', 'overall': 'GO',
                      'unmet_count': 0, 'unmet_ids': [],
-                     'checks': [{'id': 'capacity_reachable',
-                                 'status': 'pass'}]}) + '\n',
+                     'checks': [{'id': i, 'status': 'PASS'} for i in (
+                         'capacity_reachable', 'windows_kit_present',
+                         'frozen_tree_integrity', 'resources_available',
+                         'original_driver_exited',
+                         'original_segment_close_present',
+                         'original_evidence_stable',
+                         'original_children_cleaned', 'launch_window')],
+                     'execution': {
+                         'execution_id': execution_id,
+                         'spec': spec_path,
+                         'spec_sha256': sha256_file(spec_path),
+                         'json_out': static[8],
+                         'argv': list(argv)[5:],
+                         'invoked_at_utc': now_utc},
+                     'generated_at_utc': now_utc}) + '\n',
                     encoding='utf-8')
                 if harness.preflight_hook:
                     harness.preflight_hook()
@@ -641,7 +764,8 @@ class TestPreflightReportContracts:
         synth.original_exited_clean()
         synth.plant_stale_go_report()
         assert synth.arm()[0] == EXIT_OK
-        rc, out = synth.wait(IN1, env_extra={'FAKE_PREFLIGHT_SKIP_WRITE': '1'})
+        synth.preflight_behavior(skip_write=True)
+        rc, out = synth.wait(IN1)
         assert rc in (EXIT_NO_GO, EXIT_UNKNOWN), out
         state = synth.state()
         assert state['state'] in ('NO_GO', 'UNKNOWN'), state
@@ -656,14 +780,13 @@ class TestPreflightReportContracts:
         synth.original_exited_clean()
         synth.plant_stale_go_report()
         assert synth.arm()[0] == EXIT_OK
-        rc, out = synth.wait(IN1, env_extra={
-            'FAKE_PREFLIGHT_RC': '1', 'FAKE_PREFLIGHT_SKIP_WRITE': '1'})
+        synth.preflight_behavior(rc=1, skip_write=True)
+        rc, out = synth.wait(IN1)
         assert rc in (EXIT_NO_GO, EXIT_UNKNOWN), out
         assert synth.state()['state'] in ('NO_GO', 'UNKNOWN')
         assert synth.claim() is None
         assert synth.launch_count() == 0
-        rc2, out2 = synth.wait(IN1, env_extra={
-            'FAKE_PREFLIGHT_RC': '1', 'FAKE_PREFLIGHT_SKIP_WRITE': '1'})
+        rc2, out2 = synth.wait(IN1)
         assert rc2 in (EXIT_NO_GO, EXIT_UNKNOWN), out2
         assert synth.state()['state'] in ('NO_GO', 'UNKNOWN')
         assert synth.launch_count() == 0
@@ -674,9 +797,9 @@ class TestPreflightReportContracts:
         authorize a launch."""
         synth.original_exited_clean()
         assert synth.arm()[0] == EXIT_OK
-        rc, out = synth.wait(IN1, env_extra={
-            'FAKE_PREFLIGHT_VERDICT': 'GO',
-            'FAKE_PREFLIGHT_UNMET': 'frozen_tree_integrity'})
+        synth.preflight_behavior(verdict='GO',
+                                 unmet=['frozen_tree_integrity'])
+        rc, out = synth.wait(IN1)
         assert rc in (EXIT_NO_GO, EXIT_UNKNOWN), out
         state = synth.state()
         assert state['state'] in ('NO_GO', 'UNKNOWN'), state
@@ -689,9 +812,8 @@ class TestPreflightReportContracts:
         launch."""
         synth.original_exited_clean()
         assert synth.arm()[0] == EXIT_OK
-        rc, out = synth.wait(IN1, env_extra={
-            'FAKE_PREFLIGHT_VERDICT': 'GO',
-            'FAKE_PREFLIGHT_CHECKS': 'empty'})
+        synth.preflight_behavior(verdict='GO', checks='empty')
+        rc, out = synth.wait(IN1)
         assert rc in (EXIT_NO_GO, EXIT_UNKNOWN), out
         state = synth.state()
         assert state['state'] in ('NO_GO', 'UNKNOWN'), state
@@ -711,8 +833,8 @@ class TestLaunchOutcomeContracts:
         the consumed claim and the preserved receipt all stay put."""
         synth.original_exited_clean()
         assert synth.arm()[0] == EXIT_OK
-        rc, out = synth.wait(IN1, env_extra={
-            'FAKE_LAUNCH_RC': '7', 'FAKE_LAUNCH_CAMPAIGN': 'skip'})
+        synth.launch_behavior(rc=7, mode='skip')
+        rc, out = synth.wait(IN1)
         assert rc == EXIT_NO_GO, out
         assert synth.state()['state'] == 'NO_GO'
         claim_before = synth.claim()
@@ -734,7 +856,8 @@ class TestLaunchOutcomeContracts:
         re-observation stays UNKNOWN with the claim consumed."""
         synth.original_exited_clean()
         assert synth.arm()[0] == EXIT_OK
-        rc, out = synth.wait(IN1, env_extra={'FAKE_LAUNCH_CAMPAIGN': 'skip'})
+        synth.launch_behavior(mode='skip')
+        rc, out = synth.wait(IN1)
         assert rc == EXIT_UNKNOWN, out
         state = synth.state()
         assert state['state'] == 'UNKNOWN', state
@@ -752,8 +875,8 @@ class TestLaunchOutcomeContracts:
         campaign -> UNKNOWN, never STARTED."""
         synth.original_exited_clean()
         assert synth.arm()[0] == EXIT_OK
-        rc, out = synth.wait(IN1, env_extra={
-            'FAKE_LAUNCH_CAMPAIGN': 'badschema'})
+        synth.launch_behavior(mode='badschema')
+        rc, out = synth.wait(IN1)
         assert rc == EXIT_UNKNOWN, out
         state = synth.state()
         assert state['state'] == 'UNKNOWN', state
@@ -849,13 +972,19 @@ class TestLaunchArgvContract:
 
     def test_real_argv_strict_shape_control_arms(self, synth):
         """Legal control: the documented real shape - fixed powershell
-        executable, -NoProfile -NonInteractive, pinned launcher at the -File
-        position, pinned SpecPath - arms cleanly."""
+        executable, -NoProfile -NonInteractive -ExecutionPolicy
+        RemoteSigned, pinned launcher at the -File position, pinned
+        SpecPath - arms cleanly. (N4/N0 reconciliation: the interpreter is
+        the pinned powershell stub via the optional launch_interpreter
+        key; arm-level validation never executes it.)"""
         stub = synth.write_powershell_stub()
 
         def real_shape(binding):
+            binding['launch_interpreter'] = {
+                'path': str(stub), 'sha256': sha256_file(stub)}
             binding['launch_argv'] = [
-                str(stub), '-NoProfile', '-NonInteractive', '-File',
+                str(stub), '-NoProfile', '-NonInteractive',
+                '-ExecutionPolicy', 'RemoteSigned', '-File',
                 binding['launcher']['path'], '-SpecPath',
                 binding['launch_spec']['path']]
         rc, out = synth.arm(binding_path=synth.write_binding(real_shape))
@@ -1074,9 +1203,14 @@ class TestWin32ErrorInjection:
 
     def _probe(self, openproc, wait, close):
         module = _load_linker_module()
+        # N4/N0 reconciliation: the N3 subpatch ABI-declares GetLastError
+        # on the kernel32 handle, so the injected fake carries it too
+        # (declaration-only at this seam; runtime classification reads
+        # ctypes.get_last_error, which the fakes below set deterministically).
         api = SimpleNamespace(OpenProcess=openproc,
                               WaitForSingleObject=wait, CloseHandle=close,
-                              GetProcessTimes=lambda *_a: False)
+                              GetProcessTimes=lambda *_a: False,
+                              GetLastError=lambda *_a: ctypes.get_last_error())
         real_win = ctypes.WinDLL
         ctypes.WinDLL = lambda *_a, **_k: api
         try:

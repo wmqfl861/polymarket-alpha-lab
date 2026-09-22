@@ -213,6 +213,9 @@ SCHEMA_PREFLIGHT_REPORT = 'pal-rv05-preflight-v1'
 SCHEMA_STATE = 'pal-rv05-linker-state-v1'
 SCHEMA_CLAIM = 'pal-rv05-linker-claim-v1'
 SCHEMA_STARTED_RECEIPT = 'pal-rv05-linker-started-receipt-v1'
+# the soak campaign record schema the new campaign must carry for rc0 to
+# count as corroborated start evidence (L4 file-identity contract)
+SCHEMA_CAMPAIGN = 'pal-soak-campaign-v1'
 SCHEMA_ARMED_RECEIPT = 'pal-rv05-linker-armed-receipt-v1'
 
 STATES = ('UNARMED', 'ARMED_WAITING', 'PRECHECK', 'CLAIMED', 'STARTED',
@@ -1682,6 +1685,11 @@ class Linker:
         if resolved != bound:
             return False, 'campaign_json_outside_bound_dir', detail
         detail['campaign_json_schema'] = doc.get('schema')
+        # L4 identity (review RED->GREEN contract): the corroborating
+        # record must BE a bound campaign record - the soak campaign
+        # schema - not merely a readable JSON object parked at the target
+        if doc.get('schema') != SCHEMA_CAMPAIGN:
+            return False, 'campaign_schema_mismatch', detail
         if 'task_id' in doc and doc.get('task_id') != self.binding['task_id']:
             return False, 'campaign_task_mismatch', detail
         detail['note'] = ('rc0 corroborated by the intact claim plus the '
@@ -2150,6 +2158,11 @@ class Linker:
                             and c.get('status') != 'PASS']
                 if non_pass:
                     inventory_defects.append(f'go_with_non_pass:{non_pass}')
+                # a GO that simultaneously lists unmet gates contradicts
+                # itself (report logic must not be self-contradictory) -
+                # the verdict authorizes nothing (review mixed-GO contract)
+                if unmet_ids:
+                    inventory_defects.append(f'go_with_unmet:{unmet_ids}')
         if inventory_defects:
             self._record_check(
                 state, 'NO_GO', 'preflight_report_gate_inventory_invalid',
