@@ -1,0 +1,18 @@
+{
+  "commit": "NEW_CANDIDATE_COMMIT_40HEX",
+  "tree": "NEW_CANDIDATE_TREE_40HEX",
+  "modules": {
+    "soak_driver.py": "NEW_soak_driver.py_SHA256_64HEX",
+    "soak_audit.py": "NEW_soak_audit.py_SHA256_64HEX",
+    "soak_closeout.py": "NEW_soak_closeout.py_SHA256_64HEX"
+  },
+  "python_sha256": "RUNTIME_python.exe_SHA256_64HEX",
+  "config_sha256": "CANONICAL_SoakConfig_DIGEST_64HEX",
+  "manifest_sha256": "MANIFEST_IDENTITY_DIGEST_64HEX",
+  "_notes": [
+    "TEMPLATE ONLY for run_final_review.py --identity-json. commit/tree/modules (all three support modules) are REQUIRED and must be complete 40-hex/64-hex values; an incomplete core identity is an invalid invocation (exit 5), never a silent legacy fallback to the frozen V3 record.",
+    "python_sha256 / config_sha256 / manifest_sha256 are optional pins; omit a key to leave that dimension unbound (legacy behavior). config_sha256 is the canonical SoakConfig digest; manifest_sha256 is the manifest IDENTITY digest (frozen _load_manifest), not the raw manifest file hash.",
+    "campaign_schema / receipt_schema (string) may also be pinned to activate the schema-mixing caps.",
+    "No real identity hashes, host paths or credentials ship in this template; the binding owner fills them per candidate."
+  ]
+}

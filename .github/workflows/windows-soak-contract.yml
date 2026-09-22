@@ -12,6 +12,7 @@ on:
       - 'tests/test_research_paper_settlement_decimal_oracle.py'
       - 'tests/test_packaged_session_drain_failure_witness.py'
       - 'tests/test_rv05_n5_launch_review_rejection.py'
+      - 'tools/soakctl/**'
       - '.github/workflows/windows-soak-contract.yml'
 permissions:
   contents: read
@@ -77,7 +78,31 @@ jobs:
               hits = [c for c in cases if (c.get('classname'), c.get('name')) == pair]
               assert len(hits) == 1, ('missing or duplicate required case', pair)
               assert hits[0].find('skipped') is None, ('required case skipped', pair)
+          # RV05 N5 rejection suite (PAL_RV05_CLOSURE_20260922 N2): the module
+          # must NEVER skip wholesale - the self-contained cases really run on
+          # this Windows runner from a fresh checkout with synthetic fixtures
+          # and no PAL_RV05_N5_* environment. Launcher-slot cases may skip
+          # individually until node N3 lands tools/soakctl/launch-rv05.ps1;
+          # that allowance is bounded by the >= 30 executed floor below.
+          n5 = [c for c in cases
+                if c.get('classname') == 'tests.test_rv05_n5_launch_review_rejection']
+          assert n5, ('N5 rejection module missing from the inventory '
+                      '(module-level skip is forbidden)')
+          n5_executed = [c for c in n5 if c.find('skipped') is None]
+          assert len(n5_executed) >= 30, (
+              'N5 self-contained rejection cases must actually execute '
+              '(module-level skip or broken self-contained layout)', len(n5_executed))
+          for pair in {
+              ('tests.test_rv05_n5_launch_review_rejection', 'test_preflight_synthetic_go_without_binding'),
+              ('tests.test_rv05_n5_launch_review_rejection', 'test_preflight_binding_complete_still_go'),
+              ('tests.test_rv05_n5_launch_review_rejection', 'test_review_legacy_reviewer_rejects_new_receipt_schema'),
+              ('tests.test_rv05_n5_launch_review_rejection', 'test_identity_json_complete_binding_passes'),
+          }:
+              hits = [c for c in cases if (c.get('classname'), c.get('name')) == pair]
+              assert len(hits) == 1, ('missing or duplicate required N5 case', pair)
+              assert hits[0].find('skipped') is None, ('required N5 case skipped', pair)
           print('BOTH_WINDOWS_OWNERSHIP_CASES_EXECUTED_AND_PASSED')
+          print('N5_REJECTION_SUITE_EXECUTED', len(n5_executed), 'OF', len(n5))
           '@
           .\.venv\Scripts\python.exe -I -S -c $Check
           exit $LASTEXITCODE

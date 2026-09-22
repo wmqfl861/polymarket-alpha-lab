@@ -1,0 +1,71 @@
+{
+  "schema": "pal-rv05-launch-spec-v1",
+  "task_id": "PAL_RV05_CAPACITY_20260921",
+  "run_label": "rv05-corrected-candidate-PLACEHOLDER",
+  "frozen": {
+    "commit": "NEW_CANDIDATE_COMMIT_40HEX",
+    "tree": "NEW_CANDIDATE_TREE_40HEX",
+    "base_commit": "2584f6f2d86ce19e7e2dab6bea6a27a013587753",
+    "driver_sha256": "NEW_soak_driver.py_SHA256_64HEX",
+    "audit_sha256": "NEW_soak_audit.py_SHA256_64HEX",
+    "closeout_sha256": "NEW_soak_closeout.py_SHA256_64HEX",
+    "python_sha256": "RUNTIME_python.exe_SHA256_64HEX"
+  },
+  "binding": {
+    "label": "rv05-corrected-candidate-PLACEHOLDER",
+    "config_sha256": "CANONICAL_SoakConfig_DIGEST_64HEX",
+    "manifest_sha256": "MANIFEST_IDENTITY_DIGEST_64HEX",
+    "receipt_schema": "NEW_RECEIPT_SCHEMA_ID_FROM_N0_CONTRACT",
+    "contract_path": "C:\\PATH\\TO\\receipt-contract.json",
+    "contract_sha256": "RECEIPT_CONTRACT_SHA256_64HEX",
+    "generator_py": "C:\\PATH\\TO\\NEW_GENERATOR.py",
+    "generator_sha256": "GENERATOR_SHA256_64HEX"
+  },
+  "paths": {
+    "v3_root": "C:\\PATH\\TO\\CONTROL_PACKAGE_ROOT",
+    "src_root": "C:\\PATH\\TO\\NEW_CANDIDATE_REPO_ROOT",
+    "python_exe": "C:\\PATH\\TO\\python.exe",
+    "driver_py": "C:\\PATH\\TO\\NEW_CANDIDATE_REPO_ROOT\\tests\\support\\soak_driver.py",
+    "audit_py": "C:\\PATH\\TO\\NEW_CANDIDATE_REPO_ROOT\\tests\\support\\soak_audit.py",
+    "closeout_py": "C:\\PATH\\TO\\NEW_CANDIDATE_REPO_ROOT\\tests\\support\\soak_closeout.py",
+    "config": "C:\\PATH\\TO\\config-candidate.json",
+    "manifest": "C:\\PATH\\TO\\manifest-candidate.json",
+    "preflight": "C:\\PATH\\TO\\CONTROL_PACKAGE_ROOT\\tools\\soakctl\\preflight-rv05.py",
+    "original_campaign": "C:\\PATH\\TO\\ORIGINAL_SOAK_CAMPAIGN",
+    "original_driver_pid_reported": "ORIGINAL_DRIVER_PID_PLACEHOLDER",
+    "original_closeout_pid_reported": "ORIGINAL_CLOSEOUT_PID_PLACEHOLDER",
+    "v3_state": "C:\\PATH\\TO\\STATE_FILE.md",
+    "rehearsal_campaign": "C:\\PATH\\TO\\NEW_CANDIDATE_REHEARSAL\\campaign",
+    "smoke_rv05_root": "C:\\PATH\\TO\\smoke-rv05-candidate",
+    "planned_campaign_root": "C:\\PATH\\TO\\pal-soak-rv05-candidate",
+    "planned_campaign_dir": "C:\\PATH\\TO\\pal-soak-rv05-candidate\\campaign",
+    "receipt": "C:\\PATH\\TO\\launch-receipt-candidate.json",
+    "claim": "C:\\PATH\\TO\\launch-claim-candidate.json",
+    "preflight_last": "C:\\PATH\\TO\\preflight-last.json",
+    "work_temp": "C:\\PATH\\TO\\work-temp"
+  },
+  "gates": {
+    "min_rounds": 864,
+    "min_distinct_inputs": 100000,
+    "max_wall_seconds": 259200,
+    "max_unobserved_gap_seconds": 900,
+    "evidence_stability_seconds": 900,
+    "volume_min_free_bytes": 10737418240,
+    "closeout_deadline_utc": "2026-09-28T00:36:41Z"
+  },
+  "launch": {
+    "closeout_label": "rv05-candidate-closeout"
+  },
+  "launch_window_utc": {
+    "earliest": "AFTER_ORIGINAL_SOAK_ACTUAL_EXIT_UTC",
+    "latest": "2026-09-24T12:36:41Z"
+  },
+  "once_only": true,
+  "notes": [
+    "TEMPLATE ONLY - every PLACEHOLDER/*_HEX value must be replaced with real measured values by the binding owner when the new candidate exists. Until then any launch attempt with this template is NO_GO (binding checks fail on placeholder strings).",
+    "No real host paths, PIDs or credentials ship in this repository copy; every C:\\PATH\\TO\\... value is filled per host at bind time.",
+    "binding.receipt_schema/contract_path/contract_sha256 activate the receipt-contract check; binding.generator_* is the capacity-generator pin. Remove a pair to leave that dimension unbound.",
+    "paths.receipt/claim/preflight_last/work_temp and gates.closeout_deadline_utc / launch.closeout_label are the N5 parameterization keys; absent keys fall back to the launcher-script defaults.",
+    "LAUNCHER INTEGRATION SLOT (node N3): the launcher script (launch-rv05.ps1) is NOT part of this N2 delivery; it belongs to the N3 node and is expected at tools/soakctl/launch-rv05.ps1 next to this template. The rejection-test launcher cases discover it there (or via PAL_RV05_N5_LAUNCH_DIR) and skip individually, with an explicit reason, until N3 lands it."
+  ]
+}
