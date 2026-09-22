@@ -49,6 +49,70 @@ level up):
     and from the new campaign's stop file: cancelling the linker never
     stops (and never writes anything to) either campaign.
 
+Irreversible boundaries, cancel linearization, receipt semantics
+(fix wave N1, PAL_RV05_CONTROL_SAFETY_20260922, L1-L4). Within one
+wait cycle the boundaries are linear and DOCUMENTED - "one more if" is
+not the fix; the fix is WHERE the re-checks sit:
+
+  B0  preflight-phase re-checks (marker/terminal/pins/clock/window)
+      run before any irreversible step (unchanged B0 checks);
+  B1  the bound preflight subprocess is read-only and reversible. The
+      moment it returns, the POST-PREFLIGHT GATE re-validates everything
+      its duration could have invalidated, BEFORE the claim consumes
+      the one-shot slot: the operator cancel marker (a cancel written
+      while the preflight ran - L1), the window/deadline against a
+      FRESH clock read (crossing latest during preflight - L2), binding
+      pin drift, and report freshness (the GO report must have been
+      produced by THIS invocation - mtime >= preflight spawn; a stale
+      leftover GO from an earlier cycle is UNKNOWN, never a launch
+      basis). A foreign terminal state WITHOUT a cancel marker is
+      deliberately NOT a gate abort: a concurrent instance that already
+      won is adjudicated by the O_EXCL claim race (exit 3), preserving
+      the two-instance competition contract.
+  B2  the one-shot CLAIM write (O_CREAT|O_EXCL, full-write loop over
+      partial writes, fsync, byte-identical readback + claim_id
+      verification) is the SLOT-CONSUMPTION boundary. From here the
+      slot is consumed and no later step may un-consume it; a claim
+      write that cannot be confirmed (short/torn write) is UNKNOWN and
+      is never re-attempted.
+  B3  immediately before the launch invocation the LAST-SAFE-POINT GATE
+      re-checks the cancel marker and the window/deadline one final
+      time. THIS IS THE LAST MOMENT AT WHICH A CANCEL CAN PREVENT THE
+      LAUNCH: a marker present there (cancel confirmed before the
+      boundary) aborts to CANCELLED with ``launch_invoked=false`` while
+      the claim stays consumed (recorded no-launch prevention,
+      re-reported as CANCELLED on every later wait).
+  B4  the launch invocation itself is THE IRREVOCABLE BOUNDARY. Once
+      the bound launch_argv child has been spawned, a cancel can no
+      longer prevent anything: only the launch's own recorded outcome
+      stands (STARTED / LAUNCH_FAILED / LAUNCH_UNKNOWN, or lost-ack
+      UNKNOWN), and no later wait may upgrade or re-issue it.
+
+Receipts record their PRODUCING outcome (``outcome``: ``STARTED`` |
+``LAUNCH_FAILED`` | ``LAUNCH_UNKNOWN``) together with rc and full
+identity (task_id / binding_sha256 / frozen / claim_id). Every later
+wait re-reports STRICTLY the outcome recorded inside the receipt (L3):
+a failed receipt stays NO_GO, an unknown receipt stays UNKNOWN, a
+legacy/foreign receipt (no outcome, wrong task/binding/claim/frozen,
+or outcome inconsistent with rc) is rejected to UNKNOWN, and only
+``outcome=STARTED`` with ``launch_returncode == 0`` and intact
+identity proves STARTED. A launch rc==0 additionally requires start
+EVIDENCE (L4): the receipt written and read back intact, the on-disk
+claim still matching, and the bound ``campaign.json`` present at
+exactly the pinned ``new_campaign_dir`` as a valid record; any gap
+means outcome LAUNCH_UNKNOWN and state UNKNOWN - rc0 alone is never
+start evidence. Missing/incomplete receipts stay UNKNOWN and are never
+re-issued; human re-adjudication is separate from automatic re-issue.
+
+N2/N3 integration points RESERVED this wave (linker-side patches from
+those nodes are integrated by N1 in the next wave): the launcher layer
+(launch-rv05.ps1) must mirror B1/B3 inside itself before ITS inner
+claim - the ``boundary_gate`` map in the started receipt records the
+linker-side gate verdicts for that mirror, and the receipt outcome
+vocabulary above is the cross-layer contract; N3's bounded-read /
+short-write / Win32 tri-state patches attach to ``_read_capped`` and
+the claim write loop without moving these boundaries.
+
 Binding manifest (schema ``pal-rv05-linker-binding-v1``): the complete,
 hash-pinned identity the linker is allowed to start. Validated at arm
 time AND re-verified on every poll cycle: placeholders, unknown schema,
@@ -150,6 +214,20 @@ STATE_EXIT = {'ARMED_WAITING': 0, 'STARTED': 0, 'CANCELLED': 0,
 EXIT_OK, EXIT_NO_GO, EXIT_CLAIM_LOST, EXIT_EXPIRED, EXIT_UNKNOWN, \
     EXIT_USAGE, EXIT_BINDING = 0, 2, 3, 4, 5, 6, 7
 
+# Receipt outcome vocabulary (L3/L4 fix wave): a receipt records the
+# state its PRODUCING launch attempt ended in; later waits re-report
+# strictly this recorded outcome and never upgrade it.
+RECEIPT_OUTCOME_STARTED = 'STARTED'
+RECEIPT_OUTCOME_LAUNCH_FAILED = 'LAUNCH_FAILED'
+RECEIPT_OUTCOME_LAUNCH_UNKNOWN = 'LAUNCH_UNKNOWN'
+# Reason strings for a recorded no-launch prevention (abort after the
+# claim, before the launch invocation) re-reported on later waits.
+NO_LAUNCH_REASONS = {
+    'CANCELLED': 'operator_cancel_after_claim_no_launch',
+    'EXPIRED': 'window_closed_after_claim_no_launch',
+    'NO_GO': 'binding_drift_after_claim_no_launch',
+}
+
 # Plan-approved limits (PAL_RV05_CLOSURE_20260922 plan section 6). The
 # binding must carry EXACTLY these values; any deviation (in particular a
 # relaxation: later latest/deadline, shorter stability, faster polling) is
@@ -166,6 +244,11 @@ DEFAULT_POLL_INTERVAL = 300
 PREFLIGHT_TIMEOUT_S = 600
 LAUNCH_TIMEOUT_S = 900
 RECORD_MAX_BYTES = 64 * 1024
+# A GO report older than the preflight spawn moment (minus this mtime
+# tolerance) is a stale leftover from an earlier invocation, not bound
+# to THIS preflight call (L2 pass condition: "a previous GO never
+# substitutes the live launch boundary").
+REPORT_FRESHNESS_TOLERANCE_S = 2.0
 MAX_CHECK_HISTORY = 100
 MAX_TRANSITIONS = 100
 MAX_SEGMENTS_SCAN = 200
@@ -200,6 +283,12 @@ class BindingError(Exception):
 
 class Refused(Exception):
     """Invalid usage or refused transition."""
+
+
+class ClaimWriteError(Exception):
+    """The one-shot claim could not be confirmed fully written (short or
+    torn write, failed fsync, readback mismatch). The slot must be
+    treated as consumed -> UNKNOWN, never re-attempted, never deleted."""
 
 
 # --------------------------------------------------------------------------
@@ -809,9 +898,19 @@ class Linker:
         return self.claim_path.exists()
 
     def write_claim(self) -> str:
+        """Create the one-shot claim atomically and CONFIRM the complete
+        write (slot-consumption boundary B2): O_CREAT|O_EXCL open, a
+        full-write loop over short/partial writes, fsync, then a
+        byte-identical readback whose parsed claim_id matches. Any
+        failure raises ClaimWriteError - the slot is then treated as
+        consumed (UNKNOWN on the cycle path) and the partial file is
+        PRESERVED as evidence; it is never deleted, retried or patched.
+
+        FileExistsError propagates unchanged (claim competition lost)."""
         claim_id = uuid.uuid4().hex
         doc = {'schema': SCHEMA_CLAIM, 'task_id': self.binding['task_id'],
                'claim_id': claim_id,
+               'linker_id': self.linker_id,
                'binding_sha256': _sha256_file(self.binding_path),
                'claimed_at_utc': self.now_iso(),
                'once_only': True,
@@ -825,33 +924,366 @@ class Linker:
                    'no receipt rewrite; manual adjudication only.']}
         data = (json.dumps(doc, indent=2, ensure_ascii=False,
                            sort_keys=True) + '\n').encode('utf-8')
-        fd = os.open(self.claim_path,
-                     os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         try:
-            os.write(fd, data)
-            os.fsync(fd)
+            # O_BINARY: on Windows os.open defaults to TEXT mode, which
+            # would translate \n to \r\n and break the byte-identical
+            # readback contract (the claim must be byte-exact on disk)
+            fd = os.open(self.claim_path,
+                         os.O_CREAT | os.O_EXCL | os.O_WRONLY
+                         | getattr(os, 'O_BINARY', 0))
+        except FileExistsError:
+            raise
+        except OSError as error:
+            raise ClaimWriteError(
+                f'claim open failed (slot treated as consumed): {error}'
+            ) from error
+        try:
+            view = memoryview(data)
+            while view:
+                try:
+                    written = os.write(fd, view)
+                except OSError as error:
+                    raise ClaimWriteError(
+                        'claim write failed mid-document (short/torn write; '
+                        'the partial file persists and the slot is treated '
+                        f'as consumed): {error}') from error
+                if written <= 0:
+                    raise ClaimWriteError(
+                        'claim write made no progress (persistent short '
+                        'write); the partial file persists and the slot is '
+                        'treated as consumed')
+                view = view[written:]
+            try:
+                os.fsync(fd)
+            except OSError as error:
+                raise ClaimWriteError(
+                    f'claim fsync failed (durability unconfirmed; slot '
+                    f'treated as consumed): {error}') from error
         finally:
             os.close(fd)
+        readback = _read_capped(self.claim_path, max_bytes=len(data) + 64)
+        if readback != data:
+            raise ClaimWriteError(
+                'claim readback mismatch: the on-disk claim does not '
+                'byte-match the intended document (short/torn write or '
+                'concurrent tampering); the file persists, the slot is '
+                'treated as consumed, and no launch may proceed')
+        try:
+            confirmed = json.loads(readback.decode('utf-8'))
+        except (ValueError, UnicodeDecodeError) as error:
+            raise ClaimWriteError(
+                f'claim readback unparseable: {error}') from error
+        if not isinstance(confirmed, dict) \
+                or confirmed.get('claim_id') != claim_id:
+            raise ClaimWriteError(
+                'claim readback identity mismatch: parsed claim_id does '
+                'not match the intended claim')
         return claim_id
 
+    def _receipt_identity_defect(self, doc, claim) -> str:
+        """-> '' when the started-receipt doc carries the right schema and
+        the COMPLETE bound identity (task / binding bytes / frozen pins /
+        claim). Any defect returns a typed reason; a defective receipt is
+        never accepted as proof of anything (rejected, not healed)."""
+        if not isinstance(doc, dict) \
+                or doc.get('schema') != SCHEMA_STARTED_RECEIPT:
+            return 'receipt_unknown_schema'
+        if doc.get('task_id') != self.binding['task_id']:
+            return 'receipt_task_mismatch'
+        if doc.get('binding_sha256') != _sha256_file(self.binding_path):
+            return 'receipt_binding_mismatch'
+        if doc.get('frozen') != self.binding['frozen']:
+            return 'receipt_frozen_mismatch'
+        if not isinstance(claim, dict) \
+                or not isinstance(claim.get('claim_id'), str) \
+                or claim.get('claim_id') != doc.get('claim_id'):
+            return 'receipt_claim_mismatch'
+        return ''
+
     def valid_started_receipt(self):
-        """-> (doc | None, reason). A receipt is valid only if it parses,
-        carries the right schema and matches the on-disk claim id."""
-        claim, creason = _read_json_record(self.claim_path)
+        """-> (doc | None, reason). PROOF of a successful start ONLY: right
+        schema, complete bound identity, matching on-disk claim, recorded
+        ``outcome == STARTED`` AND ``launch_returncode == 0``. A recorded
+        failure (LAUNCH_FAILED) or unknown (LAUNCH_UNKNOWN) outcome, a
+        legacy receipt without an outcome, or an outcome inconsistent
+        with its rc NEVER validates as started (L3: receipts record their
+        producing state; re-observation cannot upgrade them)."""
+        claim, _creason = _read_json_record(self.claim_path)
         doc, reason = _read_json_record(self.receipt_path)
-        if creason == 'absent' and reason == 'absent':
+        if reason == 'absent' and _creason == 'absent':
             return None, 'no_claim_no_receipt'
         if reason == 'absent':
             return None, 'receipt_absent_after_claim'
         if reason in ('unreadable', 'invalid'):
             return None, f'receipt_{reason}'
-        if not isinstance(doc, dict) \
-                or doc.get('schema') != SCHEMA_STARTED_RECEIPT:
-            return None, 'receipt_unknown_schema'
-        if not isinstance(claim, dict) \
-                or claim.get('claim_id') != doc.get('claim_id'):
-            return None, 'receipt_claim_mismatch'
+        defect = self._receipt_identity_defect(doc, claim)
+        if defect:
+            return None, defect
+        if doc.get('outcome') != RECEIPT_OUTCOME_STARTED:
+            return None, 'receipt_outcome_not_started'
+        if doc.get('launch_returncode') != 0:
+            return None, 'receipt_outcome_started_rc_conflict'
         return doc, ''
+
+    def _recorded_launch_prevention(self, state_doc, claim) -> str | None:
+        """-> 'CANCELLED' | 'EXPIRED' | 'NO_GO' | None. Recognizes a
+        terminal state that records a NO-LAUNCH prevention after the
+        claim but before the launch invocation (boundary B3): the
+        persisted state must name the same claim_id, carry
+        ``launch_invoked == false``, and be one of the gate verdicts;
+        a CANCELLED record additionally requires the cancel marker to
+        still exist (the cancel evidence itself). Anything less certain
+        stays None -> the caller treats the claim as lost-ack UNKNOWN."""
+        if not isinstance(state_doc, dict) or not isinstance(claim, dict):
+            return None
+        recorded_claim = state_doc.get('claim')
+        if not isinstance(recorded_claim, dict) \
+                or recorded_claim.get('claim_id') != claim.get('claim_id'):
+            return None
+        if state_doc.get('launch_invoked') is not False:
+            return None
+        verdict = state_doc.get('state')
+        if verdict not in NO_LAUNCH_REASONS:
+            return None
+        if verdict == 'CANCELLED' and not self.stop_path.exists():
+            return None
+        return verdict
+
+    def adjudicate_claim(self, state_doc):
+        """Re-derive the verdict for a consumed claim STRICTLY from the
+        recorded evidence (claim + receipt). Returns
+        (verdict, exit_code, reason, receipt_or_None, detail).
+
+        The receipt is the state machine binding (L3): its recorded
+        ``outcome`` decides, never the re-observation. LAUNCH_FAILED
+        re-reports NO_GO, LAUNCH_UNKNOWN re-reports UNKNOWN, STARTED
+        (rc 0, identity intact) re-reports STARTED; absent / unreadable /
+        invalid / identity-defective / outcome-less receipts are UNKNOWN
+        (lost-ack) - never re-issued, never upgraded. A recorded
+        no-launch prevention after the claim re-reports its gate verdict.
+        FINAL_REVIEW_READY (a post-start operator terminal) is handled by
+        the caller before adjudication."""
+        claim, creason = _read_json_record(self.claim_path)
+        if creason in ('unreadable', 'invalid') \
+                or not isinstance(claim, dict) \
+                or not isinstance(claim.get('claim_id'), str):
+            return ('UNKNOWN', EXIT_UNKNOWN, 'lost_ack:claim_corrupt',
+                    None, {'claim_reason': creason,
+                           'note': 'the unique slot may be consumed but its '
+                                   'record cannot be read; no re-launch'})
+        receipt, rreason = _read_json_record(self.receipt_path)
+        if rreason == 'absent':
+            prevented = self._recorded_launch_prevention(state_doc, claim)
+            if prevented is not None:
+                return (prevented, STATE_EXIT[prevented],
+                        NO_LAUNCH_REASONS[prevented], None,
+                        {'claim_id': claim['claim_id'],
+                         'launch_invoked': False,
+                         'note': 'recorded no-launch prevention after the '
+                                 'claim, before the launch invocation '
+                                 '(boundary B3); re-reported verbatim'})
+            return ('UNKNOWN', EXIT_UNKNOWN, 'lost_ack:receipt_absent',
+                    None, {'claim_id': claim['claim_id']})
+        if rreason in ('unreadable', 'invalid'):
+            return ('UNKNOWN', EXIT_UNKNOWN, f'lost_ack:receipt_{rreason}',
+                    None, {'claim_id': claim['claim_id']})
+        defect = self._receipt_identity_defect(receipt, claim)
+        if defect:
+            return ('UNKNOWN', EXIT_UNKNOWN, f'lost_ack:{defect}', receipt,
+                    {'claim_id': claim['claim_id']})
+        outcome = receipt.get('outcome')
+        rc = receipt.get('launch_returncode')
+        if outcome == RECEIPT_OUTCOME_STARTED:
+            if rc != 0:
+                return ('UNKNOWN', EXIT_UNKNOWN,
+                        'lost_ack:receipt_outcome_rc_conflict', receipt,
+                        {'outcome': outcome, 'launch_returncode': rc,
+                         'note': 'recorded outcome inconsistent with its '
+                                 'own rc; rejected, not healed'})
+            return ('STARTED', EXIT_OK, 'receipt_outcome_started', receipt,
+                    {'claim_id': claim['claim_id']})
+        if outcome == RECEIPT_OUTCOME_LAUNCH_FAILED:
+            return ('NO_GO', EXIT_NO_GO,
+                    f'launch_command_nonzero_exit: rc={rc} '
+                    '(receipt-recorded; re-observed, never upgraded)',
+                    receipt, {'launch_returncode': rc,
+                              'claim_id': claim['claim_id']})
+        if outcome == RECEIPT_OUTCOME_LAUNCH_UNKNOWN:
+            return ('UNKNOWN', EXIT_UNKNOWN,
+                    f"launch_unknown: "
+                    f"{receipt.get('failure_reason', 'unrecorded')}",
+                    receipt, {'claim_id': claim['claim_id']})
+        return ('UNKNOWN', EXIT_UNKNOWN, 'lost_ack:receipt_outcome_missing',
+                receipt, {'outcome': outcome,
+                          'note': 'legacy or foreign receipt without a '
+                                  'recorded producing outcome; rejected, '
+                                  'never upgraded to STARTED'})
+
+    # -- last-safe-point gates (L1/L2) ------------------------------------
+
+    def _launch_boundary_gate(self, phase, preflight_started=None,
+                              report_path=None):
+        """Re-validate every condition the elapsed step could have
+        invalidated, at the boundary BEFORE the next irreversible step
+        (fix wave N1). ``phase`` is ``'post_preflight'`` (before the
+        claim) or ``'post_claim'`` (immediately before the launch
+        invocation - the LAST moment a confirmed cancel can prevent the
+        launch).
+
+        Returns None when every gate passes, else a typed verdict dict
+        {verdict, reason, exit, detail}. Checks, in order:
+          * operator cancel marker - the linearization point of cancel;
+            present here means the cancel is confirmed BEFORE the
+            irreversible boundary and MUST win (L1);
+          * window / deadline against a FRESH ``self.now()`` read - never
+            a clock value cached before the preflight ran (L2);
+          * binding pin drift over every pinned file;
+          * report freshness (post_preflight only): the GO report must
+            have been written by THIS preflight invocation (mtime >=
+            spawn time - tolerance); a leftover GO from an earlier cycle
+            is UNKNOWN, not a launch basis.
+
+        Deliberately NOT checked: a foreign terminal state WITHOUT a
+        cancel marker - a concurrent instance that already won is
+        adjudicated by the O_EXCL claim race (exit 3), preserving the
+        two-instance competition contract."""
+        if self.stop_path.exists():
+            note = ''
+            raw = _read_capped(self.stop_path, 4096)
+            if isinstance(raw, bytes):
+                note = raw.decode('utf-8', 'replace')[:200].strip()
+            reason = ('operator_cancel_confirmed_during_preflight'
+                      if phase == 'post_preflight' else
+                      'operator_cancel_confirmed_after_claim')
+            return {'verdict': 'CANCELLED', 'exit': EXIT_OK,
+                    'reason': reason,
+                    'detail': {'stop_marker': str(self.stop_path),
+                               'note': note, 'phase': phase,
+                               'claim_consumed': phase == 'post_claim'}}
+        now = self.now()
+        latest = parse_utc(self.binding['launch_window_utc']['latest'])
+        deadline = parse_utc(self.binding['deadline_utc'])
+        if now > deadline:
+            return {'verdict': 'EXPIRED', 'exit': EXIT_EXPIRED,
+                    'reason': ('past_total_deadline_during_preflight'
+                               if phase == 'post_preflight' else
+                               'past_total_deadline_after_claim'),
+                    'detail': {'now_utc': self.now_iso(), 'phase': phase,
+                               'deadline_utc': self.binding['deadline_utc'],
+                               'claim_consumed': phase == 'post_claim'}}
+        if now > latest:
+            return {'verdict': 'EXPIRED', 'exit': EXIT_EXPIRED,
+                    'reason': ('window_crossed_during_preflight'
+                               if phase == 'post_preflight' else
+                               'window_crossed_after_claim'),
+                    'detail': {'now_utc': self.now_iso(), 'phase': phase,
+                               'window_latest':
+                                   self.binding['launch_window_utc']['latest'],
+                               'claim_consumed': phase == 'post_claim',
+                               'note': 'preflight duration cannot make '
+                                       'window validation stale'}}
+        drifted = verify_binding_pins(self.binding)
+        if drifted:
+            return {'verdict': 'NO_GO', 'exit': EXIT_NO_GO,
+                    'reason': f'binding_drift_at_{phase}',
+                    'detail': {'drifted': drifted, 'phase': phase,
+                               'claim_consumed': phase == 'post_claim'}}
+        if phase == 'post_preflight' and preflight_started is not None:
+            try:
+                mtime = Path(report_path).stat().st_mtime
+            except OSError:
+                return {'verdict': 'UNKNOWN', 'exit': EXIT_UNKNOWN,
+                        'reason': 'preflight_report_stat_failed',
+                        'detail': {'report': str(report_path),
+                                   'phase': phase,
+                                   'note': 'cannot confirm the GO report '
+                                           'was produced by this '
+                                           'invocation'}}
+            if mtime + REPORT_FRESHNESS_TOLERANCE_S < preflight_started:
+                return {'verdict': 'UNKNOWN', 'exit': EXIT_UNKNOWN,
+                        'reason': 'preflight_report_stale',
+                        'detail': {
+                            'report': str(report_path),
+                            'report_age_at_preflight_spawn_s': round(
+                                preflight_started - mtime, 3),
+                            'phase': phase,
+                            'note': 'GO report predates THIS preflight '
+                                    'invocation (stale leftover); a '
+                                    'previous GO never substitutes the '
+                                    'live launch boundary'}}
+        return None
+
+    def _settle_gate(self, state: dict, gate: dict) -> tuple[int, bool]:
+        """Apply a failed last-safe-point gate: record the typed verdict,
+        transition to its terminal state and STOP before the irreversible
+        step. A gate failure after the claim keeps the consumed slot and
+        records ``launch_invoked=false`` (boundary B3 prevention)."""
+        verdict, reason = gate['verdict'], gate['reason']
+        if state.get('claim') is not None:
+            state['launch_invoked'] = False
+        self._record_check(state, verdict, reason, gate['detail'])
+        state['_terminal_reason'] = reason
+        self._transition(state, verdict, self.linker_id, self.now_iso())
+        self.write_state(state)
+        print(f'{verdict}: last-safe-point gate ({gate["detail"].get("phase")}) '
+              f'reason={reason}')
+        if verdict == 'CANCELLED':
+            if gate['detail'].get('claim_consumed'):
+                print('  cancel confirmed AFTER the claim but BEFORE the '
+                      'launch invocation - the last moment a cancel can '
+                      'prevent the launch; the claim stays consumed and '
+                      'NO launch was invoked')
+            else:
+                print('  cancel confirmed during preflight (before the '
+                      'claim); the one-shot slot is NOT consumed')
+        elif verdict == 'EXPIRED':
+            print('  the fresh post-step clock read crossed the approved '
+                  'bound; elapsed preflight time cannot keep a stale '
+                  'window validation alive')
+        return gate['exit'], False
+
+    # -- start-evidence verification (L4) ---------------------------------
+
+    def _verify_start_evidence(self, claim_id: str, returncode: int):
+        """Exit 0 alone is NOT proof of an actual start (L4). Required
+        evidence, all of it: the on-disk claim still exists with the same
+        claim_id, and the bound ``campaign.json`` exists at exactly the
+        pinned ``new_campaign_dir`` as a readable, valid record (identity
+        echo: if the campaign record carries a task_id it must match the
+        bound task). Returns (ok, reason, detail)."""
+        detail = {}
+        campaign_dir = Path(self.binding['new_campaign_dir'])
+        campaign_json = campaign_dir / 'campaign.json'
+        claim_doc, creason = _read_json_record(self.claim_path)
+        if creason != '' or not isinstance(claim_doc, dict) \
+                or claim_doc.get('claim_id') != claim_id:
+            return False, 'claim_missing_or_identity_changed', {
+                'claim_reason': creason, 'expected_claim_id': claim_id,
+                'launch_returncode': returncode}
+        try:
+            present = campaign_json.exists()
+        except OSError:
+            present = False
+        detail['campaign_json_exists'] = present
+        if not present:
+            return False, 'campaign_json_absent_at_bound_target', detail
+        doc, rreason = _read_json_record(campaign_json)
+        detail['campaign_json_reason'] = rreason
+        if rreason != '' or not isinstance(doc, dict):
+            return False, 'campaign_json_not_valid_record', detail
+        try:
+            resolved = campaign_json.parent.resolve()
+            bound = campaign_dir.resolve()
+        except OSError:
+            return False, 'campaign_target_identity_unresolvable', detail
+        if resolved != bound:
+            return False, 'campaign_json_outside_bound_dir', detail
+        detail['campaign_json_schema'] = doc.get('schema')
+        if 'task_id' in doc and doc.get('task_id') != self.binding['task_id']:
+            return False, 'campaign_task_mismatch', detail
+        detail['note'] = ('rc0 corroborated by the intact claim plus the '
+                          'campaign.json record at the pinned target')
+        return True, '', detail
 
     # ======================================================================
     # subcommands
@@ -947,13 +1379,24 @@ class Linker:
         state = self.read_state()
         current = state['state']
 
-        # 1. lost-ack/started guard BEFORE anything else: a claim without a
-        #    valid receipt = UNKNOWN forever (restart included; no
-        #    re-launch); a claim WITH a valid receipt = STARTED (heals a
-        #    state file that lags behind the receipt).
+        # 1. consumed-slot adjudication BEFORE anything else: the verdict
+        #    is derived STRICTLY from the recorded claim/receipt evidence
+        #    (receipt-outcome binding, L3). A claim WITH a valid
+        #    outcome=STARTED receipt is STARTED (heals a lagging state
+        #    file); a recorded LAUNCH_FAILED receipt re-reports NO_GO;
+        #    anything else (absent/unreadable/identity-defective receipt,
+        #    recorded unknown, recorded no-launch prevention) re-reports
+        #    its recorded verdict - NEVER an upgrade, NEVER a re-issue.
         if self.claim_exists():
-            doc, reason = self.valid_started_receipt()
-            if doc is not None:
+            if current == 'FINAL_REVIEW_READY':
+                # post-start operator terminal: keep it, never roll back
+                # to STARTED by re-adjudication
+                print('STATE: FINAL_REVIEW_READY (terminal) - no work '
+                      'performed')
+                return EXIT_OK, False
+            verdict, code, reason, doc, detail = \
+                self.adjudicate_claim(state)
+            if verdict == 'STARTED':
                 if current != 'STARTED':
                     self._record_check(state, 'STARTED',
                                        'receipt_present_state_lagging',
@@ -968,23 +1411,34 @@ class Linker:
                     print(f'STATE: STARTED (claim_id={doc.get("claim_id")}) '
                           '- idempotent; the one shot is consumed')
                 return EXIT_OK, False
+            if verdict == current:
+                self._record_check(
+                    state, verdict, f'{reason}:re_reported_from_record',
+                    detail)
+                self.write_state(state)
+                print(f'{verdict} (re-reported from the recorded evidence; '
+                      f'reason={reason}) - receipt-bound verdict, never '
+                      'upgraded and never re-issued by re-observation')
+                return code, False
             before = _sha256_file(self.claim_path)
-            self._record_check(state, 'UNKNOWN', f'lost_ack:{reason}', {
+            self._record_check(state, verdict, reason, {
+                **(detail or {}),
                 'claim': str(self.claim_path),
-                'claim_sha256_before': before,
-                'receipt_reason': reason})
-            state['_terminal_reason'] = f'lost_ack: {reason}'
-            self._transition(state, 'UNKNOWN', self.linker_id,
-                             self.now_iso())
+                'claim_sha256_before': before})
+            state['_terminal_reason'] = reason
+            self._transition(state, verdict, self.linker_id, self.now_iso())
             self.write_state(state)
             after = _sha256_file(self.claim_path)
-            print('UNKNOWN (lost-ack): claim exists without a valid started '
-                  f'receipt ({reason}).')
-            print(f'  claim kept byte-identical: {before == after} '
-                  f'({self.claim_path})')
-            print('  NO second launch, NO claim recovery, NO receipt '
-                  'rewrite. Manual adjudication required.')
-            return EXIT_UNKNOWN, False
+            if verdict == 'UNKNOWN':
+                print(f'UNKNOWN (lost-ack): {reason}.')
+                print(f'  claim kept byte-identical: {before == after} '
+                      f'({self.claim_path})')
+                print('  NO second launch, NO claim recovery, NO receipt '
+                      'rewrite. Manual adjudication required.')
+            else:
+                print(f'{verdict}: {reason} (claim/receipt evidence kept '
+                      'byte-identical; no work performed)')
+            return code, False
 
         # 2. terminal states are re-reported verbatim; never retried into
         #    pass. A STARTED state whose claim vanished is broken evidence.
@@ -1134,6 +1588,9 @@ class Linker:
         report_path = Path(self.binding['preflight_report_path'])
         argv = [str(part) for part in self.binding['preflight_argv']]
         print(f'PRECHECK: running bound preflight: {" ".join(argv[:8])}...')
+        # real wall-clock spawn time: the GO report must be FRESHER than
+        # this moment, proving it was produced by THIS invocation
+        preflight_spawned_at = time.time()
         try:
             proc = subprocess.run(argv, capture_output=True, text=True,
                                   encoding='utf-8', errors='replace',
@@ -1186,7 +1643,23 @@ class Linker:
                   f'{report.get("overall")} unmet={unmet}')
             return EXIT_NO_GO, False
 
-        # 10. CLAIM: unique one-shot slot, atomically, before any effect
+        # 9b. POST-PREFLIGHT GATE (boundary B1, L1/L2 fix wave N1): the
+        #     preflight ran for real elapsed time - everything its
+        #     duration could have invalidated is re-validated HERE,
+        #     BEFORE the claim consumes the one-shot slot: a cancel
+        #     written while the preflight ran, the window/deadline against
+        #     a FRESH clock read, binding pin drift, and the freshness of
+        #     this very GO report (a leftover GO from an earlier cycle is
+        #     rejected).
+        gate = self._launch_boundary_gate(
+            'post_preflight', preflight_started=preflight_spawned_at,
+            report_path=report_path)
+        if gate is not None:
+            return self._settle_gate(state, gate)
+        gate_log = {'post_preflight': 'pass'}
+
+        # 10. CLAIM (slot-consumption boundary B2): unique one-shot slot,
+        #     atomically with full-write confirmation, before any effect
         try:
             claim_id = self.write_claim()
         except FileExistsError:
@@ -1196,6 +1669,21 @@ class Linker:
                   f'unique claim ({self.claim_path}); this instance exits '
                   'without launching and without modifying state')
             return EXIT_CLAIM_LOST, False
+        except ClaimWriteError as error:
+            # unconfirmable claim write: the slot may be half-consumed;
+            # treat as UNKNOWN, keep whatever is on disk, never re-attempt
+            self._record_check(state, 'UNKNOWN', 'claim_write_unconfirmed',
+                               {'error': str(error),
+                                'claim': str(self.claim_path)})
+            state['_terminal_reason'] = f'claim_write_unconfirmed: {error}'
+            self._transition(state, 'UNKNOWN', self.linker_id,
+                             self.now_iso())
+            self.write_state(state)
+            print(f'UNKNOWN: one-shot claim could not be confirmed fully '
+                  f'written ({error}); the slot is treated as consumed, '
+                  'NO launch, the partial claim is preserved; manual '
+                  'adjudication required')
+            return EXIT_UNKNOWN, False
         state['claim'] = {'path': str(self.claim_path),
                           'claim_id': claim_id,
                           'claimed_at_utc': self.now_iso()}
@@ -1209,8 +1697,23 @@ class Linker:
                   'receipt; synthetic tests only, never in a real arm)')
             return EXIT_OK, False
 
-        # 11. START: invoke the bound launch flow (fixed argv) once
+        # 10b. LAST-SAFE-POINT GATE (boundary B3, L1/L2 fix wave N1):
+        #     immediately before the launch invocation - the LAST moment
+        #     at which a confirmed cancel can still prevent the launch.
+        #     A marker present here aborts to CANCELLED with the claim
+        #     consumed and launch_invoked=false (recorded prevention);
+        #     after the invocation (B4) only the launch's own recorded
+        #     outcome may stand.
+        gate = self._launch_boundary_gate('post_claim')
+        if gate is not None:
+            return self._settle_gate(state, gate)
+        gate_log['post_claim'] = 'pass'
+
+        # 11. START: invoke the bound launch flow (fixed argv) once.
+        #     This invocation is THE IRREVOCABLE BOUNDARY (B4).
         argv = [str(part) for part in self.binding['launch_argv']]
+        state['launch_invoked'] = True
+        self.write_state(state)
         print(f'STARTING: {" ".join(argv[:8])}...')
         try:
             proc = subprocess.run(argv, capture_output=True, text=True,
@@ -1231,7 +1734,9 @@ class Linker:
 
         campaign_dir = Path(self.binding['new_campaign_dir'])
         campaign_written = (campaign_dir / 'campaign.json').exists()
-        receipt = {
+        evidence_ok, evidence_reason, evidence_detail = \
+            self._verify_start_evidence(claim_id, proc.returncode)
+        receipt_common = {
             'schema': SCHEMA_STARTED_RECEIPT,
             'task_id': self.binding['task_id'],
             'claim_id': claim_id,
@@ -1242,20 +1747,31 @@ class Linker:
             'new_campaign_root': self.binding['new_campaign_root'],
             'new_campaign_dir': self.binding['new_campaign_dir'],
             'campaign_json_written': campaign_written,
+            'campaign_evidence': evidence_detail,
+            'boundary_gate': dict(gate_log),
             'binding_sha256': _sha256_file(self.binding_path),
             'frozen': dict(self.binding['frozen']),
             'preflight_verdict': report.get('overall'),
             'notes': [
                 'STARTED receipt: the unique one-shot slot was consumed by '
                 'THIS claim.',
+                'outcome records the PRODUCING result of this launch '
+                'attempt (STARTED / LAUNCH_FAILED / LAUNCH_UNKNOWN); a '
+                'later wait re-reports strictly this recorded outcome and '
+                'can never upgrade a failure or unknown to STARTED.',
                 'If this receipt is later missing/half-written while the '
                 'claim exists, the state is UNKNOWN (lost-ack): no '
                 're-launch, no rewrite.',
                 'The new campaign STOP path belongs to the campaign; '
                 'cancelling the linker never touches it.']}
-        _atomic_write_json(self.receipt_path, receipt)
-        state['started'] = receipt
         if proc.returncode != 0:
+            receipt = {**receipt_common,
+                       'outcome': RECEIPT_OUTCOME_LAUNCH_FAILED,
+                       'failure_reason': (
+                           f'launch_command_nonzero_exit: '
+                           f'rc={proc.returncode}')}
+            _atomic_write_json(self.receipt_path, receipt)
+            state['started'] = receipt
             self._record_check(state, 'NO_GO',
                                'launch_command_nonzero_exit',
                                {'returncode': proc.returncode,
@@ -1265,12 +1781,63 @@ class Linker:
             self._transition(state, 'NO_GO', self.linker_id, self.now_iso())
             self.write_state(state)
             print(f'NO_GO: bound launch flow exited rc={proc.returncode} '
-                  '(receipt kept; typed terminal state)')
+                  '(receipt outcome=LAUNCH_FAILED, kept; a later wait '
+                  're-reports THIS recorded failure and can never upgrade '
+                  'it to STARTED)')
             return EXIT_NO_GO, False
+        if not evidence_ok:
+            receipt = {**receipt_common,
+                       'outcome': RECEIPT_OUTCOME_LAUNCH_UNKNOWN,
+                       'failure_reason': evidence_reason}
+            _atomic_write_json(self.receipt_path, receipt)
+            state['started'] = receipt
+            self._record_check(
+                state, 'UNKNOWN', 'launch_start_evidence_insufficient',
+                {'reason': evidence_reason, 'claim_id': claim_id,
+                 **evidence_detail})
+            state['_terminal_reason'] = (
+                f'launch_start_evidence_insufficient: {evidence_reason}')
+            self._transition(state, 'UNKNOWN', self.linker_id,
+                             self.now_iso())
+            self.write_state(state)
+            print(f'UNKNOWN: launch exited rc=0 but the start evidence is '
+                  f'insufficient ({evidence_reason}); rc0 alone is never '
+                  'start evidence (receipt outcome=LAUNCH_UNKNOWN, kept)')
+            return EXIT_UNKNOWN, False
+        receipt = {**receipt_common,
+                   'outcome': RECEIPT_OUTCOME_STARTED}
+        _atomic_write_json(self.receipt_path, receipt)
+        # receipt readback (L4): the proof itself must read back intact
+        # with its full identity before STARTED may be claimed
+        rdoc, rreason = _read_json_record(self.receipt_path)
+        rclaim, _rcreason = _read_json_record(self.claim_path)
+        readback_defect = (f'receipt_{rreason}' if rreason else
+                           self._receipt_identity_defect(rdoc, rclaim))
+        if readback_defect:
+            self._record_check(state, 'UNKNOWN',
+                               'receipt_write_unconfirmed',
+                               {'reason': readback_defect,
+                                'claim_id': claim_id,
+                                'note': 'the started receipt could not be '
+                                        'read back intact; a later wait '
+                                        'adjudicates strictly from what '
+                                        'actually reads back'})
+            state['_terminal_reason'] = (
+                f'receipt_write_unconfirmed: {readback_defect}')
+            self._transition(state, 'UNKNOWN', self.linker_id,
+                             self.now_iso())
+            self.write_state(state)
+            print(f'UNKNOWN: started receipt write could not be confirmed '
+                  f'({readback_defect}); claim retained, manual '
+                  'adjudication required')
+            return EXIT_UNKNOWN, False
+        state['started'] = rdoc
         self._record_check(state, 'STARTED', 'started', {
             'claim_id': claim_id,
+            'outcome': RECEIPT_OUTCOME_STARTED,
             'new_campaign_dir': self.binding['new_campaign_dir'],
-            'campaign_json_written': campaign_written})
+            'campaign_json_written': campaign_written,
+            'campaign_evidence': evidence_detail})
         self._transition(state, 'STARTED', self.linker_id, self.now_iso())
         self.write_state(state)
         print(f'STARTED: claim_id={claim_id} campaign='
