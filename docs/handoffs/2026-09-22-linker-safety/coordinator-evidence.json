@@ -1,0 +1,193 @@
+{
+  "schema": "pal-linker-safety-coordinator-evidence-v1",
+  "date": "2026-09-22",
+  "source_commit": "b061b7d7ad51cd21d7a64c84eba0941a1fd08085",
+  "source_tree": "79ec2d7945f9dd2b492e243521e0c166f8fbebd0",
+  "source_blobs_verified": 6543,
+  "export_run_id": 35688825166,
+  "export_artifact_id": 10678460728,
+  "export_artifact_sha256": "792dc21e0688f62a19379875a95e65e1a7537547a8b43079f8c5b981f82f324e",
+  "probe": {
+    "activation_authorized": false,
+    "controls": [
+      {
+        "actual": {
+          "launch_stub_calls": 1,
+          "state": "STARTED"
+        },
+        "case": "valid_once",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "calls": [],
+          "state": "CANCELLED"
+        },
+        "case": "cancel_before",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "calls": [],
+          "state": "ARMED_WAITING"
+        },
+        "case": "before_window",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "calls": [],
+          "state": "UNKNOWN"
+        },
+        "case": "lost_ack",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "calls": [],
+          "state": "NO_GO"
+        },
+        "case": "pin_drift",
+        "matched_expected_historical_behavior": true
+      }
+    ],
+    "controls_passed": 5,
+    "counterexamples": [
+      {
+        "actual": {
+          "launch_stub_calls": 1,
+          "state": "STARTED",
+          "stop_marker_present": true
+        },
+        "case": "L1_cancel_during_preflight",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "after_latest": true,
+          "launch_stub_calls": 1,
+          "state": "STARTED"
+        },
+        "case": "L2_expired_during_preflight",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "first_exit": 2,
+          "first_state": "NO_GO",
+          "launch_stub_calls": 1,
+          "second_exit": 0,
+          "second_state": "STARTED"
+        },
+        "case": "L3_failed_receipt_heals_to_started",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "campaign_exists": false,
+          "campaign_json_written": false,
+          "state": "STARTED"
+        },
+        "case": "L4_zero_exit_missing_campaign_started",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "accepted": true,
+          "actual_launches": 0,
+          "pinned_path_only_unused_argument": true
+        },
+        "case": "L5_unpinned_command_membership",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "accepted": true,
+          "actual_launches": 0,
+          "policy_bypass_accepted": true
+        },
+        "case": "L6_execution_policy_bypass_accepted",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "accepted_prefix": {
+            "state": "STARTED"
+          },
+          "bytes": 65552,
+          "read_cap": 65536,
+          "reason": ""
+        },
+        "case": "L7_oversize_prefix_accepted",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "api_shape": "OpenProcess NULL",
+          "expected": "UNKNOWN/None",
+          "probe_return": false,
+          "windows_api_executed": false
+        },
+        "case": "L8_openprocess_null_reported_dead",
+        "matched_expected_historical_behavior": true
+      },
+      {
+        "actual": {
+          "api_shape": "WAIT_FAILED",
+          "expected": "UNKNOWN/None",
+          "probe_return": false,
+          "windows_api_executed": false
+        },
+        "case": "L9_wait_failed_reported_dead",
+        "matched_expected_historical_behavior": true
+      }
+    ],
+    "linker_sha256": "1e1edfd4a90d5f57ab0e4845859e18ed3a30b9f6dd14a4ed3d2d084fe6709965",
+    "official_cases_run": 0,
+    "real_process_launches": 0,
+    "reproduced": 9,
+    "schema": "pal-b061-linker-repro-v1",
+    "scope": "Original module, fake preflight/launch/Win32, synthetic local records only",
+    "source_commit": "b061b7d7ad51cd21d7a64c84eba0941a1fd08085"
+  },
+  "windows": {
+    "run_id": 35684842124,
+    "artifact_id": 10676482084,
+    "artifact_sha256": "ca91c6efd2d832361b14ea968979f726c31d9d40a3d7cdab4d9be47a2e45531a",
+    "cases": 456,
+    "passed": 456,
+    "skipped": 0,
+    "linker_cases": [],
+    "n5_cases": 39
+  },
+  "baseline_local_tests": {
+    "platform": "Linux",
+    "python": "3.13.5",
+    "pytest": "9.0.2",
+    "selection": [
+      "tests/test_soak_linker.py"
+    ],
+    "passed": 20,
+    "seconds": 8.79,
+    "initial_setup_failure": "Sanitized PATH selected system Python without pytest; no tests ran. Corrected explicit /opt/pyvenv/bin/python, no dependency/source change."
+  },
+  "scope_limits": [
+    "No official CLI or user-host execution",
+    "No full PR correctness audit",
+    "No local cancellation performed",
+    "No all-target 151552 re-execution",
+    "Four hosted status checks; only one Windows proof ZIP independently downloaded",
+    "Two raw-download attempts failed viewed-URL precondition; web cache miss; used existing authorized read-only source exporter instead; no vendor download or security denial bypass"
+  ],
+  "review_comment": 5771446403,
+  "files": {
+    "linker-original-run.log": {
+      "bytes": 99,
+      "sha256": "8f825593d9a7a038da13d905048900419ab149df9d154451c8c50cb75ea77f94"
+    },
+    "linker-original.xml": {
+      "bytes": 2481,
+      "sha256": "e17c13ecac1fd7118b9beffce412fd6da33641e855b85cfc2fedcbbeecc0f26e"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "pal-rv05-control-safety-plan-v1",
+  "task_id": "PAL_RV05_CONTROL_SAFETY_20260922",
+  "repo": "wmqfl861/polymarket-alpha-lab",
+  "pr": 67,
+  "base_commit": "b061b7d7ad51cd21d7a64c84eba0941a1fd08085",
+  "base_tree": "79ec2d7945f9dd2b492e243521e0c166f8fbebd0",
+  "original_candidate": "d929cc35214996a44008d4bbdd643bc8cc3550ea",
+  "old_arm_disposition": "HOLD_CANCEL_IF_UNCONSUMED_BEFORE_WINDOW",
+  "old_user_reported_wait_pid": 74784,
+  "coordinator_cancelled_user_process": false,
+  "no_new_business_acceptance_gates": true,
+  "do_not_repeat_full_capacity_when_target_bytes_unchanged": true,
+  "start_not_before": "2026-09-24T02:14:50Z",
+  "latest_start": "2026-09-24T12:36:41Z",
+  "deadline": "2026-09-28T00:36:41Z",
+  "official_cases_run": 0,
+  "sandbox_started": false,
+  "activation_authorized": false,
+  "nodes": [
+    {
+      "id": "N0",
+      "scope": "old-arm cancel confirmation; identities; task queue and PR integration"
+    },
+    {
+      "id": "N1",
+      "scope": "linker single writer: cancellation/time/claim/receipt state machine",
+      "findings": [
+        "L1",
+        "L2",
+        "L3",
+        "L4"
+      ]
+    },
+    {
+      "id": "N2",
+      "scope": "launcher/preflight/argv/template policy; patches to N1",
+      "findings": [
+        "L5",
+        "L6"
+      ]
+    },
+    {
+      "id": "N3",
+      "scope": "Windows helper/bounded record subpatches to N1",
+      "findings": [
+        "L7",
+        "L8",
+        "L9"
+      ]
+    },
+    {
+      "id": "N4",
+      "scope": "independent regressions; real Windows test selection and evidence"
+    },
+    {
+      "id": "N5",
+      "scope": "existing ops/release evidence and final review"
+    }
+  ],
+  "first_priority": "cancel only unconsumed old waiting controller, never original soak",
+  "one_corrected_soak_only": true,
+  "synthetic_worker_initial_limit": 1,
+  "working_set_target_bytes": 2147483648,
+  "campaign_disk_budget_bytes": 4294967296,
+  "evidence_budget_bytes": 536870912,
+  "minimum_volume_free_bytes": 10737418240,
+  "checkpoint_seconds": 7200,
+  "summary_seconds": 43200
+}

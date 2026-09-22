@@ -1,0 +1,28 @@
+{
+  "schema": "pal-linker-safety-delivery-v1",
+  "task_id": "PAL_RV05_CONTROL_SAFETY_20260922",
+  "base_commit": "b061b7d7ad51cd21d7a64c84eba0941a1fd08085",
+  "base_tree": "79ec2d7945f9dd2b492e243521e0c166f8fbebd0",
+  "files": [
+    {
+      "path": "plan.md",
+      "bytes": 13068,
+      "sha256": "d857acbb215be192838f6595a2f1eaed61f4ec7002a8c8dfee13930775423fb1"
+    },
+    {
+      "path": "queue.json",
+      "bytes": 2081,
+      "sha256": "414db2c4119693ee21c958849d7eb9a337c11ee88d51d14021bc8c0a8b8e0515"
+    },
+    {
+      "path": "repro_linker.py",
+      "bytes": 12600,
+      "sha256": "4f9c96d0e51ae9d6a67b0c9b101c3dd8f2934de662c7628dd87d1a007f48d099"
+    },
+    {
+      "path": "coordinator-evidence.json",
+      "bytes": 5773,
+      "sha256": "abcc65be6ed1bf1f943c4460cdd6bf0089358c2f617659f2de10437a46b4ab74"
+    }
+  ]
+}
