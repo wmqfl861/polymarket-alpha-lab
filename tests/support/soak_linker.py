@@ -2046,6 +2046,37 @@ class Linker:
         #     start. Any gap is UNKNOWN terminal
         #     preflight_report_not_execution_bound - never waitable, never
         #     auto-retried into a GO.
+        #     Integration note (N0): the N1 wave's mtime freshness probe
+        #     runs FIRST so a stale-by-mtime leftover keeps its documented
+        #     typed reason 'preflight_report_stale' (both are UNKNOWN
+        #     terminal; specific-before-general, nothing weakened).
+        try:
+            report_mtime = report_path.stat().st_mtime
+        except OSError:
+            self._record_check(state, 'UNKNOWN',
+                               'preflight_report_stat_failed',
+                               {'report': str(report_path),
+                                'returncode': proc.returncode})
+            state['_terminal_reason'] = 'preflight_report_stat_failed'
+            self._transition(state, 'UNKNOWN', self.linker_id,
+                             self.now_iso())
+            self.write_state(state)
+            print('UNKNOWN: cannot stat the preflight report; no launch')
+            return EXIT_UNKNOWN, False
+        if report_mtime + REPORT_FRESHNESS_TOLERANCE_S \
+                < preflight_spawned_at:
+            self._record_check(state, 'UNKNOWN', 'preflight_report_stale',
+                               {'report': str(report_path),
+                                'report_age_at_preflight_spawn_s': round(
+                                    preflight_spawned_at - report_mtime, 3),
+                                'returncode': proc.returncode})
+            state['_terminal_reason'] = 'preflight_report_stale'
+            self._transition(state, 'UNKNOWN', self.linker_id,
+                             self.now_iso())
+            self.write_state(state)
+            print('UNKNOWN: GO report predates THIS preflight invocation '
+                  '(stale leftover); no launch')
+            return EXIT_UNKNOWN, False
         exec_block = report.get('execution')
         bound_fields = []
         if report.get('schema') != SCHEMA_PREFLIGHT_REPORT:
