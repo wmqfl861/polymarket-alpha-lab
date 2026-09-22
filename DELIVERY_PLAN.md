@@ -1401,17 +1401,25 @@ DONE，不新增报告框架**。追加分支 `work/linker-safety-n5-c332ca12`�
   CANCELLED（operator_cancel，cancel 退出码 0，未重试）；wait 进程 74784 观察
   CANCELLED 后自行退出；两层 claim／receipt 从未写入（槽位未消费）；原 campaign 与
   三 PID（62420／20372／98500）只读未动。
-- **L1—L9 修复**【引用各修复车道；修复提交 SHA 待集成波回填，占位 `{PENDING}`】：
+- **L1—L9 修复**【引用各修复车道；修复提交 SHA 已由集成波回填（小提交方式）】：
   L1—L4＝N1（`tests/support/soak_linker.py` 单写者：preflight 后重读
   cancel／clock／binding／fresh report、claim 短写拒绝、failed/unknown 回执不升级、
-  两层合计至多一次已接受启动尝试）提交 `{PENDING}`；L5—L6＝N2
+  两层合计至多一次已接受启动尝试）提交 `0f6197d5361ef6ef631be39572946bb466d24f25`
+  （集成 `0018b9f2`；集成波续作调和 `5d170aec`／`d715fee4`）；L5—L6＝N2
   （`tools/soakctl` launcher：封闭 argv＋显式 cwd/env、无 policy bypass、两层
-  最后安全点复查、回执身份；含移除 README Bypass 示例）提交 `{PENDING}`；
+  最后安全点复查、回执身份；含移除 README Bypass 示例）提交
+  `48d350fe497317509707ca9e467070e38662436e`（集成 `825ced15`；linker 侧规格实现
+  `5b3de919`；N5 九用例合规形态翻转 `f23a4425`）；
   L7—L9＝N3（Windows helper 有界记录子补丁：max+1 拒绝、重复键／类型拒绝、
   argtypes/restype 声明、三态结果、64 位句柄、逐次 CloseHandle；子补丁经独立分支
-  交 N1）提交 `{PENDING}`；回归＝N4（`tests/test_soak_linker_review.py` 迁移九反例
+  交 N1）sha256
+  `f9887735e2b7066ec9892cf012587e788be920147176607c373f8ec345cba3b5`（三方整合提交
+  `55e4735b`，逐 hunk 映射见 WorkRoot `evidence\n0\n3-integration-hunk-map.md`）；
+  回归＝N4（`tests/test_soak_linker_review.py` 迁移九反例
   为正确断言＋合法对照；真实 Windows 句柄／权限／preflight-cancel-returncode 子进程
-  组合；Windows 工作流加入 linker 模块，保留原 20＋39 与平台用例）提交 `{PENDING}`。
+  组合；Windows 工作流加入 linker 模块，保留原 20＋39 与平台用例）提交
+  `a3ac5f64411bfa0ad6353e0d25bca8494bd617a7`（集成 `9b4f1228`；套件调和
+  `d715fee4`）。集成分支：`work/linker-safety-n0-d4ebea50`（本 PR 推送序列）。
 - **容量 151552 复用不重做声明**：既有容量证据（排程算术 74×2048=151552＋W4a 有限
   试验 6144）在 SUT 目标字节不变（`b061b7d7`）期间不重做；本轮全部修复仅控制面。
   若受测代码（driver／generator／audit／families／manifest／runtime）实际变更，仅按
@@ -1444,10 +1452,11 @@ DONE，不新增报告框架**。追加分支 `work/linker-safety-n5-c332ca12`�
 ### 本节不能声称的事项（边界声明）
 
 真实模型（`official_cases_run=0`）、用户业务库读写、本机原生 DB 验收、WP-04 人工核验
-结算、完整 151552 容量执行、修复版重 arm 与发射本身、linker 修复的 Windows CI 证明
-均**未发生／未验收**；所有修复提交 SHA 为 `{PENDING}` 占位，以集成波实测回填为准；
-原 soak 时长与旧候选 CI 绿标不转移。常量 `official_cases_run=0`、
-`sandbox_started=false`、`activation_authorized=false`。
+结算、完整 151552 容量执行、修复版重 arm 与发射本身**未发生／未验收**；修复提交 SHA
+已按上方集成波实测回填（本节上一版本中的 `{PENDING}` 占位由集成波小提交替换）；
+本节写作时点 linker 的 Windows CI 证明尚未取得，其结果以集成波 PR67 的新推送实测
+为准，不得由本节预先声称；原 soak 时长与旧候选 CI 绿标不转移。常量
+`official_cases_run=0`、`sandbox_started=false`、`activation_authorized=false`。
 
 **六包状态不变：仅 WP-01／G1 DONE；WP-02／WP-03／WP-05／WP-06 仍 PARTIAL，
 G2—G6 未关闭，V1 仍 1／6。** 本分支为本地提交不推送；除两份文档外无源码／SQL／
