@@ -30,6 +30,7 @@ import time
 from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -831,3 +832,590 @@ def test_t20_binding_rejects_launch_argv_not_carrying_pinned_launcher(synth):
         (synth.control / 'linker-started.json').read_text(encoding='utf-8'))
     assert str(synth.files['launcher']) in receipt['launch_argv']
     assert synth.launch_count() == 1
+
+
+# ==========================================================================
+# fix wave N1 (PAL_RV05_CONTROL_SAFETY_20260922): deterministic injection
+# tests for L1-L4 plus legal controls.
+#
+# These run the linker IN-PROCESS against a lazy fake runner injected at
+# the module's own dependency boundary (``subprocess.run`` replaced by a
+# hook-carrying stand-in, the same injection style the coordinator's
+# repro used): NO real child process is started by this section, and
+# every race counterexample is reproduced with deterministic
+# barrier/hook placement (cancel during preflight, clock crossing during
+# preflight, cancel between claim and launch, cancel during launch,
+# stale GO report, pin drift mid-run, short claim write, old/foreign
+# receipts, rc0 without campaign) - never with random sleeps.
+# ==========================================================================
+
+INPROC_BEFORE = datetime(2026, 9, 23, tzinfo=timezone.utc)
+INPROC_IN = datetime(2026, 9, 24, 3, tzinfo=timezone.utc)
+INPROC_LATE = datetime(2026, 9, 24, 12, 36, 42, tzinfo=timezone.utc)
+INPROC_PAST_DEADLINE = datetime(2026, 9, 28, 1, tzinfo=timezone.utc)
+
+
+def _load_linker_module_inproc():
+    spec = importlib.util.spec_from_file_location(
+        'soak_linker_inproc_under_test', LINKER)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+class InProcSynth:
+    """Single-process synthetic environment with deterministic hooks.
+
+    ``preflight_hook`` runs while the (fake) bound preflight "executes";
+    ``launch_hook`` runs while the (fake) bound launch "executes";
+    ``launch_rc`` / ``make_campaign`` / ``write_report`` shape the launch
+    and report behavior. ``events`` records every stub call."""
+
+    def __init__(self, root: Path):
+        root.mkdir(parents=True)
+        self.root = root
+        self.m = _load_linker_module_inproc()
+        self.control = root / 'control'
+        self.original = root / 'original'
+        pkg = root / 'pkg'
+        self.control.mkdir()
+        self.original.mkdir()
+        pkg.mkdir()
+        pins = {}
+        for name in self.m.PINNED_FILE_FIELDS:
+            path = LINKER if name == 'linker' else pkg / f'{name}.txt'
+            if name != 'linker':
+                path.write_text(f'SYNTHETIC {name}\n', encoding='utf-8')
+            pins[name] = {'path': str(path), 'sha256': sha256_file(path)}
+        self.report_path = self.control / 'preflight-report.json'
+        self.new_root = root / 'planned-root'
+        self.new_campaign = self.new_root / 'campaign'
+        self.binding_path = self.control / 'linker-binding.json'
+        self.launch_argv = [str(pkg / 'powershell.exe'), '-NoProfile',
+                            '-File', pins['launcher']['path'],
+                            '-SpecPath', pins['launch_spec']['path']]
+        self.preflight_argv = [
+            PY, '-I', '-S', '-B', pins['preflight']['path'],
+            '--spec', pins['launch_spec']['path'],
+            '--json-out', str(self.report_path)]
+        self.binding = {
+            'schema': self.m.SCHEMA_BINDING,
+            'task_id': 'PAL_RV05_CONTROL_SAFETY_N1_SYNTH',
+            **pins,
+            'runtime': {'python_exe': PY, 'sha256': sha256_file(PY)},
+            'frozen': {
+                'commit': 'b061b7d7ad51cd21d7a64c84eba0941a1fd08085',
+                'tree': '79ec2d7945f9dd2b492e243521e0c166f8fbebd0'},
+            'original_campaign': str(self.original),
+            'new_campaign_root': str(self.new_root),
+            'new_campaign_dir': str(self.new_campaign),
+            'claim_path': str(self.control / 'linker-claim.json'),
+            'state_path': str(self.control / 'linker-state.json'),
+            'started_receipt_path': str(self.control / 'linker-started.json'),
+            'linker_stop_path': str(self.control / 'linker-stop'),
+            'preflight_report_path': str(self.report_path),
+            'launch_argv': list(self.launch_argv),
+            'preflight_argv': list(self.preflight_argv),
+            'launch_window_utc': {'earliest': '2026-09-24T02:14:50Z',
+                                  'latest': '2026-09-24T12:36:41Z'},
+            'deadline_utc': '2026-09-28T00:36:41Z',
+            'poll_interval_seconds': 300,
+            'evidence_stability_seconds': 900}
+        self.binding_path.write_text(
+            json.dumps(self.binding, indent=2) + '\n', encoding='utf-8')
+        self.events = []
+        self.preflight_hook = None
+        self.launch_hook = None
+        self.launch_rc = 0
+        self.make_campaign = True
+        self.write_report = True
+        # injection boundaries: no real liveness probe, no real classify,
+        # no real child process (lazy fake runner with hooks)
+        self.m._process_start_utc = lambda pid: INPROC_BEFORE
+        self.m.classify_original = \
+            lambda *a, **k: ('OK', 'synthetic_exited_clean', {})
+        self.m.subprocess = SimpleNamespace(
+            run=self._fake_run, SubprocessError=subprocess.SubprocessError)
+        self.linker = self.m.Linker(self.binding_path, INPROC_BEFORE)
+        assert self.linker.cmd_arm() == 0
+        self.linker.synthetic_clock = INPROC_IN
+
+    def _fake_run(self, argv, **kwargs):
+        if list(argv) == self.preflight_argv:
+            self.events.append('preflight')
+            if self.write_report:
+                self.report_path.write_text(json.dumps(
+                    {'schema': 'pal-rv05-preflight-v1', 'overall': 'GO',
+                     'unmet_ids': [], 'checks': []}) + '\n',
+                    encoding='utf-8')
+            if self.preflight_hook:
+                self.preflight_hook()
+            return SimpleNamespace(returncode=0)
+        if list(argv) == self.launch_argv:
+            self.events.append('launch_stub')
+            if self.launch_hook:
+                self.launch_hook()
+            if self.make_campaign:
+                self.new_campaign.mkdir(parents=True, exist_ok=True)
+                (self.new_campaign / 'campaign.json').write_text(
+                    json.dumps({'schema': 'pal-soak-campaign-v1',
+                                'synthetic': True}) + '\n',
+                    encoding='utf-8')
+            return SimpleNamespace(returncode=self.launch_rc)
+        raise AssertionError(
+            f'unexpected subprocess argv {argv!r} (no real command runs)')
+
+    # -- accessors ----------------------------------------------------------
+
+    def cycle(self):
+        return self.linker._cycle('never')
+
+    def state(self) -> dict:
+        return json.loads(
+            (self.control / 'linker-state.json').read_text(encoding='utf-8'))
+
+    def state_value(self) -> str:
+        return self.state()['state']
+
+    def terminal_reason(self) -> str:
+        return (self.state().get('terminal') or {}).get('reason', '')
+
+    def claim_path(self) -> Path:
+        return self.control / 'linker-claim.json'
+
+    def claim_exists(self) -> bool:
+        return self.claim_path().exists()
+
+    def claim_text(self):
+        path = self.claim_path()
+        return path.read_text(encoding='utf-8') if path.exists() else None
+
+    def receipt_path(self) -> Path:
+        return self.control / 'linker-started.json'
+
+    def receipt_text(self):
+        path = self.receipt_path()
+        return path.read_text(encoding='utf-8') if path.exists() else None
+
+    def stop_path(self) -> Path:
+        return self.control / 'linker-stop'
+
+    def launches(self) -> int:
+        return self.events.count('launch_stub')
+
+    def preflights(self) -> int:
+        return self.events.count('preflight')
+
+
+# -- L1: cancel vs launch race ---------------------------------------------
+
+def test_n1_l1_cancel_during_preflight_prevents_launch(tmp_path):
+    """L1 injection: while the bound preflight 'executes', another cancel
+    is fully confirmed (marker + CANCELLED state). The post-preflight
+    gate must see it and stop BEFORE the claim: CANCELLED, no launch,
+    slot NOT consumed."""
+    f = InProcSynth(tmp_path / 'l1-preflight')
+
+    def cancel_during_preflight():
+        other = f.m.Linker(f.binding_path, INPROC_IN)
+        assert other.cmd_cancel('synthetic owner cancellation') == 0
+        assert f.state_value() == 'CANCELLED'
+
+    f.preflight_hook = cancel_during_preflight
+    code, cont = f.cycle()
+    assert (code, cont) == (0, False)
+    state = f.state()
+    assert state['state'] == 'CANCELLED'
+    assert state['terminal']['reason'] == \
+        'operator_cancel_confirmed_during_preflight'
+    assert f.launches() == 0
+    assert not f.claim_exists()          # slot NOT consumed
+    assert f.stop_path().exists()
+    # re-wait: terminal re-report, still no launch
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (0, False)
+    assert f.state_value() == 'CANCELLED'
+    assert f.launches() == 0
+
+
+def test_n1_l1_cancel_between_claim_and_launch_prevents_launch(tmp_path):
+    """L1 boundary B3: a cancel confirmed AFTER the claim write but
+    BEFORE the launch invocation is still before the irreversible
+    boundary - the launch is prevented; the claim stays consumed with a
+    recorded no-launch prevention (CANCELLED, launch_invoked=false), and
+    re-waits re-report CANCELLED (they do NOT degrade to lost-ack)."""
+    f = InProcSynth(tmp_path / 'l1-postclaim')
+    original_write_claim = f.m.Linker.write_claim
+
+    def write_claim_then_cancel(self_l):
+        claim_id = original_write_claim(self_l)
+        # the cancel reads PRECHECK state (CLAIMED not yet persisted) so
+        # it confirms: marker + CANCELLED state - deterministically ahead
+        # of this instance's CLAIMED write
+        other = f.m.Linker(f.binding_path, INPROC_IN)
+        assert other.cmd_cancel('cancel raced ahead of the CLAIMED write') == 0
+        return claim_id
+
+    f.m.Linker.write_claim = write_claim_then_cancel
+    code, cont = f.cycle()
+    assert (code, cont) == (0, False)
+    state = f.state()
+    assert state['state'] == 'CANCELLED'
+    assert state['terminal']['reason'] == \
+        'operator_cancel_confirmed_after_claim'
+    assert state['launch_invoked'] is False
+    assert f.launches() == 0
+    claim = json.loads(f.claim_text())
+    assert state['claim']['claim_id'] == claim['claim_id']
+    assert f.claim_exists()              # slot consumed, bound to record
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (0, False)
+    assert f.state_value() == 'CANCELLED'
+    assert f.launches() == 0
+
+
+def test_n1_l1_cancel_during_launch_cannot_revoke_started(tmp_path):
+    """L1 boundary B4 ('cancel too late' control): a cancel confirmed
+    while the launch child is ALREADY running cannot revoke anything -
+    the launch outcome stands (STARTED for rc0 + evidence) and re-waits
+    stay STARTED with exactly one launch."""
+    f = InProcSynth(tmp_path / 'l1-toolate')
+
+    def late_cancel_marker():
+        f.stop_path().write_text('late cancel during launch\n',
+                                 encoding='utf-8')
+
+    f.launch_hook = late_cancel_marker
+    code, cont = f.cycle()
+    assert (code, cont) == (0, False)
+    assert f.state_value() == 'STARTED'
+    assert f.launches() == 1
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (0, False)
+    assert f.state_value() == 'STARTED'
+    assert f.launches() == 1
+
+
+# -- L2: window/deadline crossed during the elapsed step -------------------
+
+def test_n1_l2_window_crossed_during_preflight(tmp_path):
+    """L2 injection: the clock crosses latest while the preflight runs.
+    The post-preflight gate re-reads the clock FRESH and stops: EXPIRED
+    (window_closed), no claim, no launch."""
+    f = InProcSynth(tmp_path / 'l2-preflight')
+    f.preflight_hook = lambda: setattr(
+        f.linker, 'synthetic_clock', INPROC_LATE)
+    code, cont = f.cycle()
+    assert (code, cont) == (4, False)
+    state = f.state()
+    assert state['state'] == 'EXPIRED'
+    assert state['terminal']['reason'] == 'window_crossed_during_preflight'
+    assert f.launches() == 0
+    assert not f.claim_exists()
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (4, False)
+    assert f.state_value() == 'EXPIRED'
+
+
+def test_n1_l2_window_crossed_after_claim_no_launch(tmp_path):
+    """L2 at boundary B3: latest crossed between the claim and the launch
+    invocation -> EXPIRED with the launch prevented (launch_invoked
+    false, claim consumed) and re-reported on re-wait."""
+    f = InProcSynth(tmp_path / 'l2-postclaim')
+    original_write_claim = f.m.Linker.write_claim
+
+    def write_claim_then_cross(self_l):
+        claim_id = original_write_claim(self_l)
+        f.linker.synthetic_clock = INPROC_LATE
+        return claim_id
+
+    f.m.Linker.write_claim = write_claim_then_cross
+    code, cont = f.cycle()
+    assert (code, cont) == (4, False)
+    state = f.state()
+    assert state['state'] == 'EXPIRED'
+    assert state['terminal']['reason'] == 'window_crossed_after_claim'
+    assert state['launch_invoked'] is False
+    assert f.launches() == 0
+    assert f.claim_exists()
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (4, False)
+    assert f.state_value() == 'EXPIRED'
+    assert f.launches() == 0
+
+
+def test_n1_l2_deadline_crossed_during_preflight(tmp_path):
+    """L2 variant: the TOTAL deadline (not just the window) crossed
+    during the preflight -> EXPIRED at the post-preflight gate."""
+    f = InProcSynth(tmp_path / 'l2-deadline')
+    f.preflight_hook = lambda: setattr(
+        f.linker, 'synthetic_clock', INPROC_PAST_DEADLINE)
+    code, cont = f.cycle()
+    assert (code, cont) == (4, False)
+    state = f.state()
+    assert state['state'] == 'EXPIRED'
+    assert state['terminal']['reason'] == \
+        'past_total_deadline_during_preflight'
+    assert f.launches() == 0
+    assert not f.claim_exists()
+
+
+def test_n1_l2_stale_go_report_rejected(tmp_path):
+    """L2 adjacency ('a previous GO never substitutes the live launch
+    boundary'): this invocation's preflight exits 0 WITHOUT writing the
+    report; a GO report left over from an earlier cycle (old mtime) is
+    rejected as UNKNOWN preflight_report_stale - no claim, no launch."""
+    f = InProcSynth(tmp_path / 'l2-stale-go')
+    f.report_path.write_text(json.dumps(
+        {'schema': 'pal-rv05-preflight-v1', 'overall': 'GO',
+         'unmet_ids': [], 'checks': []}) + '\n', encoding='utf-8')
+    old = time.time() - 3600.0
+    os.utime(f.report_path, (old, old))
+    f.write_report = False
+    code, cont = f.cycle()
+    assert (code, cont) == (5, False)
+    state = f.state()
+    assert state['state'] == 'UNKNOWN'
+    assert state['terminal']['reason'] == 'preflight_report_stale'
+    assert f.launches() == 0
+    assert not f.claim_exists()
+
+
+def test_n1_l2_pin_drift_during_preflight_rejected(tmp_path):
+    """Window-and-pin pass condition: a pinned file changes while the
+    preflight runs -> the post-preflight gate re-verifies pins and stops
+    NO_GO before the claim."""
+    f = InProcSynth(tmp_path / 'l2-pindrift')
+    f.preflight_hook = lambda: Path(
+        f.binding['generator']['path']).write_text(
+        'CHANGED DURING PREFLIGHT\n', encoding='utf-8')
+    code, cont = f.cycle()
+    assert (code, cont) == (2, False)
+    state = f.state()
+    assert state['state'] == 'NO_GO'
+    assert state['terminal']['reason'] == 'binding_drift_at_post_preflight'
+    drifted = state['checks'][-1]['detail']['drifted']
+    assert any(entry.startswith('generator:sha256(') for entry in drifted)
+    assert f.launches() == 0
+    assert not f.claim_exists()
+
+
+# -- L3: receipts record their producing outcome; never upgraded ----------
+
+def test_n1_l3_failed_receipt_never_upgrades_on_rewait(tmp_path):
+    """L3 injection: the launch stub exits rc7 (writes NO_GO + a
+    LAUNCH_FAILED receipt). The next wait must re-report the RECORDED
+    failure - never STARTED, never re-issued, claim/receipt untouched."""
+    f = InProcSynth(tmp_path / 'l3-rc7')
+    f.launch_rc = 7
+    f.make_campaign = False
+    code1, cont1 = f.cycle()
+    assert (code1, cont1) == (2, False)
+    state1 = f.state()
+    assert state1['state'] == 'NO_GO'
+    assert state1['terminal']['reason'] == 'launch_command_nonzero_exit: rc=7'
+    receipt = json.loads(f.receipt_text())
+    assert receipt['outcome'] == 'LAUNCH_FAILED'
+    assert receipt['launch_returncode'] == 7
+    claim_before = sha256_file(f.claim_path())
+    receipt_before = sha256_file(f.receipt_path())
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (2, False)
+    state2 = f.state()
+    assert state2['state'] == 'NO_GO'            # NOT healed to STARTED
+    assert 'receipt-recorded' in json.dumps(state2['checks'][-1])
+    assert f.launches() == 1                     # never re-issued
+    assert sha256_file(f.claim_path()) == claim_before
+    assert sha256_file(f.receipt_path()) == receipt_before
+
+
+def test_n1_l3_legacy_and_foreign_receipts_rejected(tmp_path):
+    """L3 variants: receipts that are legacy (no outcome), foreign
+    (wrong claim/task/schema) or self-inconsistent (outcome STARTED with
+    rc7) are all rejected to UNKNOWN/NO_GO - none is ever accepted as
+    STARTED, and no launch is attempted for any of them."""
+    f = InProcSynth(tmp_path / 'l3-foreign')
+    claim_id = f.linker.write_claim()
+    base = {'schema': f.m.SCHEMA_STARTED_RECEIPT,
+            'task_id': f.binding['task_id'],
+            'claim_id': claim_id,
+            'binding_sha256': sha256_file(f.binding_path),
+            'frozen': dict(f.binding['frozen']),
+            'launch_returncode': 0}
+    variants = {
+        'outcome_missing': (dict(base), 5),
+        'outcome_failed': ({**base, 'outcome': 'LAUNCH_FAILED'}, 2),
+        'outcome_started_rc7': ({**base, 'outcome': 'STARTED',
+                                 'launch_returncode': 7}, 5),
+        'claim_mismatch': ({**base, 'outcome': 'STARTED',
+                            'claim_id': '0' * 32}, 5),
+        'wrong_task': ({**base, 'outcome': 'STARTED',
+                        'task_id': 'SOME_OTHER_TASK'}, 5),
+        'wrong_schema': ({**base, 'outcome': 'STARTED',
+                          'schema': 'pal-rv05-linker-started-receipt-v0'}, 5)}
+    for name, (doc, expected_code) in variants.items():
+        f.receipt_path().write_text(json.dumps(doc) + '\n', encoding='utf-8')
+        code, cont = f.cycle()
+        assert f.state_value() != 'STARTED', name
+        assert code == expected_code, name
+        assert f.launches() == 0, name
+
+
+# -- L4: rc0 is not start evidence -----------------------------------------
+
+def test_n1_l4_rc0_without_campaign_is_unknown(tmp_path):
+    """L4 injection: the launch stub exits 0 but the bound campaign was
+    never created -> outcome LAUNCH_UNKNOWN, state UNKNOWN (never
+    STARTED), and re-waits keep UNKNOWN without a second launch."""
+    f = InProcSynth(tmp_path / 'l4-no-campaign')
+    f.launch_rc = 0
+    f.make_campaign = False
+    code, cont = f.cycle()
+    assert (code, cont) == (5, False)
+    state = f.state()
+    assert state['state'] == 'UNKNOWN'
+    assert 'campaign_json_absent_at_bound_target' in \
+        state['terminal']['reason']
+    receipt = json.loads(f.receipt_text())
+    assert receipt['outcome'] == 'LAUNCH_UNKNOWN'
+    assert receipt['launch_returncode'] == 0
+    assert f.launches() == 1
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (5, False)
+    assert f.state_value() == 'UNKNOWN'
+    assert f.launches() == 1
+
+
+def test_n1_l4_rc0_invalid_or_foreign_campaign_is_unknown(tmp_path):
+    """L4 variants: rc0 with (a) a corrupt campaign.json and (b) a
+    campaign.json carrying a FOREIGN task_id are both insufficient start
+    evidence -> UNKNOWN, never STARTED."""
+    # (a) corrupt campaign.json
+    f = InProcSynth(tmp_path / 'l4-corrupt-json')
+    f.make_campaign = False
+
+    def write_corrupt_campaign():
+        f.new_campaign.mkdir(parents=True, exist_ok=True)
+        (f.new_campaign / 'campaign.json').write_text(
+            '{"schema": "pal-soak-campaign-v1", "reas', encoding='utf-8')
+
+    f.launch_hook = write_corrupt_campaign
+    code, cont = f.cycle()
+    assert (code, cont) == (5, False)
+    state = f.state()
+    assert state['state'] == 'UNKNOWN'
+    assert 'campaign_json_not_valid_record' in state['terminal']['reason']
+    assert f.launches() == 1
+
+    # (b) campaign.json with a foreign task_id
+    g = InProcSynth(tmp_path / 'l4-foreign-task')
+    g.make_campaign = False
+
+    def write_foreign_task_campaign():
+        g.new_campaign.mkdir(parents=True, exist_ok=True)
+        (g.new_campaign / 'campaign.json').write_text(json.dumps(
+            {'schema': 'pal-soak-campaign-v1', 'task_id': 'FOREIGN_TASK'})
+            + '\n', encoding='utf-8')
+
+    g.launch_hook = write_foreign_task_campaign
+    code2, cont2 = g.cycle()
+    assert (code2, cont2) == (5, False)
+    assert g.state_value() == 'UNKNOWN'
+    assert 'campaign_task_mismatch' in g.terminal_reason()
+    assert g.launches() == 1
+
+
+# -- claim full-write confirmation ------------------------------------------
+
+def test_n1_claim_short_write_is_unknown_no_launch(tmp_path):
+    """Claim short-write rejection (B2): a claim write that cannot be
+    confirmed complete (synthetic partial write + failure) leaves a
+    partial file that is PRESERVED, moves the state to UNKNOWN
+    (claim_write_unconfirmed), never launches, and is never re-attempted
+    (later waits adjudicate the corrupted claim to UNKNOWN)."""
+    f = InProcSynth(tmp_path / 'claim-shortwrite')
+    original_write_claim = f.m.Linker.write_claim
+
+    def claim_with_short_write(self_l):
+        real_write = os.write
+
+        def short_write(fd, data):
+            buf = bytes(data)
+            real_write(fd, buf[:max(1, len(buf) // 2)])
+            raise OSError('synthetic short-write failure')
+
+        os.write = short_write
+        try:
+            return original_write_claim(self_l)
+        finally:
+            os.write = real_write
+
+    f.m.Linker.write_claim = claim_with_short_write
+    code, cont = f.cycle()
+    assert (code, cont) == (5, False)
+    state = f.state()
+    assert state['state'] == 'UNKNOWN'
+    assert 'claim_write_unconfirmed' in state['terminal']['reason']
+    assert f.launches() == 0
+    partial = f.claim_path().read_bytes()
+    assert 0 < len(partial)           # partial evidence preserved, not deleted
+    claim_before = sha256_file(f.claim_path())
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (5, False)
+    assert f.state_value() == 'UNKNOWN'
+    assert f.launches() == 0
+    assert sha256_file(f.claim_path()) == claim_before  # never patched
+
+
+# -- legal controls (deterministic, in-process) -----------------------------
+
+def test_n1_control_normal_start_records_boundary_gates(tmp_path):
+    """Legal control: with no cancel, no window crossing and no drift,
+    both boundary gates pass and the normal PRECHECK -> CLAIMED -> STARTED
+    path runs ONCE; the receipt records outcome STARTED, rc0, the
+    boundary-gate log and the campaign evidence; re-wait is idempotent."""
+    f = InProcSynth(tmp_path / 'ctl-normal')
+    code, cont = f.cycle()
+    assert (code, cont) == (0, False)
+    state = f.state()
+    assert state['state'] == 'STARTED'
+    hops = [t['to'] for t in state['transitions']]
+    assert hops == ['ARMED_WAITING', 'PRECHECK', 'CLAIMED', 'STARTED']
+    receipt = json.loads(f.receipt_text())
+    assert receipt['outcome'] == 'STARTED'
+    assert receipt['launch_returncode'] == 0
+    assert receipt['boundary_gate'] == {'post_preflight': 'pass',
+                                        'post_claim': 'pass'}
+    assert receipt['campaign_evidence']['campaign_json_exists'] is True
+    claim = json.loads(f.claim_text())
+    assert receipt['claim_id'] == claim['claim_id']
+    assert f.launches() == 1
+    code2, cont2 = f.cycle()
+    assert (code2, cont2) == (0, False)
+    assert f.state_value() == 'STARTED'
+    assert f.launches() == 1
+
+
+def test_n1_control_before_window_inproc(tmp_path):
+    """Legal control: before the window earliest nothing runs at all -
+    not even the preflight."""
+    f = InProcSynth(tmp_path / 'ctl-before-window')
+    f.linker.synthetic_clock = INPROC_BEFORE
+    code, cont = f.cycle()
+    assert (code, cont) == (0, True)
+    assert f.state_value() == 'ARMED_WAITING'
+    assert f.events == []
+    assert not f.claim_exists()
+
+
+def test_n1_control_cancel_before_cycle_inproc(tmp_path):
+    """Legal control: a cancel confirmed before any preflight runs stops
+    the cycle at the ordinary pre-preflight check with zero stub calls."""
+    f = InProcSynth(tmp_path / 'ctl-cancel-first')
+    assert f.linker.cmd_cancel('stop before anything') == 0
+    code, cont = f.cycle()
+    assert (code, cont) == (0, False)
+    assert f.state_value() == 'CANCELLED'
+    assert f.events == []
+    assert not f.claim_exists()
