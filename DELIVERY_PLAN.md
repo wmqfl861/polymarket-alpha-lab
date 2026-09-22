@@ -1272,3 +1272,103 @@ WP-02／WP-03 仍 PARTIAL，G2—G6 未关闭，V1 仍 1／6；无用户库、�
 先云端构建、搬移与分离自审，再只交接主机能力和获准的来宾准备。原官方六场景仍未运行。
 原生产代码、68SQL、依赖锁及原CI时限保持不变；最终实测在关联PR记录，未通过不合并。
 **G2—G6仍开放，V1仍1/6；不再把全局uv版本或官方镜像缺失当作只读准备不可执行的理由。**
+
+
+## 46. RV05 收口证据追加：操作边界文档与长测证据固化（2026-09-22，G2—G6 全部保持未关闭）
+
+任务 PAL_RV05_CLOSURE_20260922 节点 N5（操作交付与终审准备）。本节只按原 WP 编号
+登记确切证据并交付一份操作边界文档；**不改任何工作包状态，不把任何 G 门改 DONE，
+不新增报告框架**。追加分支 `work/rv05c-n5-e911360c`，基点＝终冻提交
+`15f24d246493cdc114a127c366da537659d8c5d8`（tree `d388d113c0a75bb297bf1d60b13a9237fb31a07a`；
+`n0\src` rev-parse 逐字符一致，工作树干净——2026-09-22 复测）。
+标注：【实测】＝本节点当日亲自运行／只读查询；【引用】＝协调者／SETUP／
+前一任务（PAL_RV05_CAPACITY_20260921）既有记录，本节点未重算。
+
+### WP-02（真实模型与预算）相关
+
+- 无真实模型调用不变：`official_cases_run=0`。
+- uncapped-authz-codec 合成族在 W4a 有限容量试验中被独立审计白名单逐行复核：
+  `rows_whitelist_verified=2046`、`distinct_qualified=2046`、0 去重折叠
+  【引用 WorkRoot `evidence\w4a\capacity-trial\audit-report.json`】。
+  这是对无封顶授权编解码路径的**合成**子输入验证，不是真实模型、提供商身份或费用验收；
+  G2 缺口（真实 CLI 宿主核验、获准真实研究各一次、使用可核对）不变。
+
+### WP-03（任务调度与恢复）相关
+
+- 原 72h 观察（原候选 `d929cc35214996a44008d4bbdd643bc8cc3550ea`）仍在跑：
+  【实测】2026-09-22 定向只读 `Get-Process -Id 62420,20372,98500` 三进程全部存活，
+  StartTime（02:14:47Z／02:19:15Z／05:23:36Z）与 CLOSURE_STATE §5 逐秒一致；
+  原 campaign 与 STOP 只读未触碰。
+- 修正 72h 的持续运行机制已固化接口（一次性 claim-first 启动器、只读预检、
+  closeout 监督、独立审计、严格终审的逐工具 argv/cwd/env），见本节新增
+  [soak 操作边界文档](docs/operations/soak-operations.md)（接口逐项以 `--help` 实跑
+  或源码确认，`--help` 输出存档于 WorkRoot `evidence\closure-n5\`）。
+- 修正 72h 状态＝NOT_STARTED：【实测】`launch-final\` 无 `launch-claim-candidate.json`
+  亦无 `launch-receipt-candidate.json`；最近预检报告 `preflight-last.json`＝NO_GO，
+  红项全部为 5 个时间门类（原退出/关段/稳定/孩子清理/窗口）【实测】。
+- 停机重启组合验收（G3）不因本节推进。
+
+### WP-05（研究到模拟评估）相关
+
+- paper-decimal-fill 合成族在同一试验中白名单复核 2046 行通过
+  【引用同上 audit-report.json】。仅为 Decimal 订单簿／成交 oracle 的合成验证；
+  真实预测、真实输入／费率与结算关联证据仍缺，G5 不变。
+
+### WP-06（操作与发布收尾）相关
+
+- 终冻 `15f24d24` 四个工作流 success【引用协调者下载核验，非本节点重跑】：
+  Windows soak contracts run `35644035861`、Native project distribution run `35644035842`、
+  Research paper bridge run `35644035963`、Offline verification run `35644035980`。
+  其中独立核验了 Windows soak artifact `10660005886`：ZIP 9987 字节，SHA256
+  `fc9c6ce9abfb61c7c674ea86daad14d4f7e5e34c77508adfa1796a6f93ddd3e1`，XML 416 passed／
+  1 skipped；唯一跳过＝整模块 `tests.test_rv05_n5_launch_review_rejection`；两个
+  Windows 专属进程回收用例实际 passed。不据此声称完整 PR 已复审。
+- kit 诊断证据【引用裁决与 PR #67 评论】：kit run `35596758777`，attempt1 job
+  `106323241565`＝520 passed／1 failed，**永久保留**——原失败发生在研究／模拟／
+  结算完成后的 `run_packaged_session_drain`，内层错误在 log/XML 截断，根因未证实
+  （不认定为 initdb 访问冲突或 recipe 超时）；唯一诊断 attempt2 job `106355705018`
+  ＝521 passed／0 failed／0 skipped。证据在 PR #67 评论 `5761394011`、`5761566327`。
+  旧候选绿标不转移给新冻结头。
+- 可复现性缺口（保留不关闭）：`preflight-rv05.py`、`launch-rv05.ps1`、
+  `run_final_review.py`、`README-LAUNCH.md` 不在当前 PR 文件清单；CI 中 N5 模块
+  整模块 skip（本地 39 项通过依赖 5 个 `PAL_RV05_N5_*` 环境变量与本地目录，
+  是本地证据不是干净 Windows 环境证据）。补齐属闭包 N2 待办。
+- 本节新增交付：`docs/operations/soak-operations.md` —— RV05 完整生命周期
+  （UNARMED→ARMED_WAITING→PRECHECK→CLAIMED→STARTED→FINAL_REVIEW_READY，并列
+  CANCELLED／EXPIRED／NO_GO／UNKNOWN）到真实命令的映射、逐工具实测接口、
+  NO_GO 可等待／阻断分类、新 campaign STOP 与原 campaign STOP 的严格区分、
+  以及“不能声称”边界清单（见下）。
+
+### RV05 长测专项证据（跨 WP）
+
+- 冻结身份：【实测】`15f24d24`／tree `d388d113` 与 `n0\src` 一致；
+  运行时 Python sha `bd99dd53…`（`C:\Users\Joyce Gu\pal-fix67-fc555171\runtime\python.exe`，只读）。
+- 容量：W4a 有限试验 **6144 行**（三族 2052／2046／2046，9 份回执，dedup_collapsed=0，
+  distinct_qualified=6144，overall PASS，tool=soak_audit）【引用 audit-report.json】；
+  计划 **151552 槽位**＝74 个 ok-compute 轮 × 2048（三族每轮 684／682／682 →
+  50616／50468／50468，seed 2026092103）为排程算术【引用】。
+  **完整 151552 未执行**（闭包 N1 待办；容量以 CLOSURE_STATE 记录为准）。
+- 合同＋ERRATA 已入冻结树【实测哈希】：回执合同
+  `docs/contracts/soak-subinput-receipt-v1.md`（SHA256 `19416d3a…`＝绑定 pin）与
+  `docs/contracts/ERRATA-001.md`（SHA256 `4372ece7…`）；接线说明
+  `docs/contracts/soak-subinput-wiring-v1.md`。
+- 11＋2 映射【引用 `docs/scenario-map-13-11-2.md`】：原 13 场景＝11 名义（逐字保留）
+  ＋2 设计性故障（fail-nonzero 原历史 10/10 `nonzero_exit`；fail-output-limit 8/8
+  `output_limit`），13=11+2 无遗漏、无删除后冒充。两个故障以合同测试保留
+  （`tests/test_soak_fault_contracts.py` 4 passed；聚焦回归 44 passed；开发首败
+  msvcrt 字节锁 PermissionError 保留于 WorkRoot `evidence\n3\`）。pytest-paper
+  9 failed／pytest-lt03-new 10 failed 为**非设计性**（tzdata／环境），11 清单预验证
+  重跑全绿（paper 431 passed／lt03 53 passed【引用】），原 failed 不回填不改写。
+- 长测后第二次故障合同执行仍欠（README-LAUNCH 步骤 5；预演前执行已记录）。
+
+### 本节不能声称的事项（边界声明）
+
+真实模型（`official_cases_run=0`）、用户业务库读写、本机原生 DB 验收、WP-04 人工核验
+结算、完整 151552 容量执行、单次自动衔接等待模式（ARMED_WAITING 未实现未部署，
+到点操作为人工）、可分发包发布、长测后故障合同与发射本身均**未发生／未验收**；
+原 soak 时长与旧候选 CI 绿标不转移到新候选。常量 `official_cases_run=0`、
+`sandbox_started=false`、`activation_authorized=false`。
+
+**六包状态不变：仅 WP-01／G1 DONE；WP-02／WP-03／WP-05／WP-06 仍 PARTIAL，
+G2—G6 未关闭，V1 仍 1／6。** 本分支为本地提交不推送；无生产源码／SQL／依赖／
+工作流改动。
