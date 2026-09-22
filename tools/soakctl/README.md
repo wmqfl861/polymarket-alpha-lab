@@ -19,7 +19,7 @@ claim-first wrapper that refuses every second launch. Constants everywhere:
 
 | File | Role |
 | --- | --- |
-| `preflight-rv05.py` | read-only 21-check (+5 candidate-binding checks when the spec carries a `binding` section) launch precondition checker; byte-identical copy of the PAL_RV05_CAPACITY_20260921 N5 parameterized preflight (sha256 `93542abb…e762f`) |
+| `preflight-rv05.py` | read-only 21-check (+5 candidate-binding checks when the spec carries a `binding` section) launch precondition checker; descendant of the PAL_RV05_CAPACITY_20260921 N5 parameterized preflight (historical byte-identical copy sha256 `93542abb…e762f`). Control-safety wave (2026-09-22): the argument surface is now exactly `--spec/--json-out/--execution-id` (abbreviations and unknown flags are hard usage errors) and every report carries an additive `execution` provenance block (execution id, spec file digest, argv echo); the 21+5 check ids and their semantics are unchanged |
 | `run_final_review.py` | strict-caliber final reviewer with injectable identity (`--identity-json` / `--expected-*` / `--expect-*-schema`); distributable deltas vs the N5 working copy listed in its module docstring (frozen-tree default = this repo root; private runtime auto-candidate removed; placeholder usage text) |
 | `make_synthetic_terminal.py` | builds synthetic full-pass / snapshot-incomplete campaign copies for validating the reviewer (paths are explicit CLI args; recipe unchanged from the V3 builder) |
 | `launch-rv05.ps1` | one-shot claim-first launcher for the corrected 72h run (fix-wave placement; see "Launcher (one-shot, claim-first)" below) |
@@ -88,7 +88,8 @@ Exit 0 = GO (every check PASS), exit 1 = NO_GO (`unmet_ids` lists the
 failing checks). 21 legacy checks; a spec with a `binding` section adds
 `binding_complete`, `binding_config_digest`, `binding_manifest_digest`,
 `binding_receipt_contract`, `binding_generator_sha`. `--help` prints the
-two-flag synopsis.
+three-flag synopsis (`--spec`, `--json-out`, `--execution-id`;
+abbreviations are rejected).
 
 ### 2. Final-review a finished campaign (read-only)
 
@@ -149,10 +150,13 @@ Distributable parameter surface (the only deltas vs the launch-final copy):
   with placeholder `python_exe`) fails closed as `PREFLIGHT_FAILED`,
   exit 2 — same exit as any non-GO preflight.
 
-Usage (verified by really running it — see "Fix-wave verification" below):
+Usage (verified by really running it — see "N2 control-safety
+verification" below). COMPLIANT INVOCATION FORM (the old
+`-ExecutionPolicy Bypass` example from earlier waves is REMOVED and the
+launcher now refuses it — see "Invocation contract (L6)"):
 
 ```
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/soakctl/launch-rv05.ps1 `
+powershell -NoProfile -ExecutionPolicy RemoteSigned -File tools/soakctl/launch-rv05.ps1 `
   -SpecPath <bound-launch-spec.json> -DryRun
 ```
 
@@ -163,10 +167,57 @@ claim is written, no process is started. Against the AS-SHIPPED template
 the same command exits 2 at the preflight spawn (placeholders), which is
 the expected fail-closed behavior for an unfilled spec.
 
-Exit codes: 0 launched / dry-run OK; 2 preflight not GO, no report, or
-invalid invocation (missing `-SpecPath`); 3 duplicate launch refused;
-4 planned campaign root exists; 5 launched process exited within 8s;
-6 lost-ack (UNKNOWN launch state) refused.
+Exit codes: 0 launched / dry-run OK; 2 preflight not GO, no report,
+invalid invocation (missing `-SpecPath`), policy-bypass invocation
+BLOCKED, spec carries synthetic-hook/policy-bypass tokens, stale/foreign
+preflight report, or a launch-boundary recheck refusal (spec drift /
+pins / window); 3 duplicate launch refused; 4 planned campaign root
+exists; 5 launched process exited within 8s; 6 lost-ack (UNKNOWN launch
+state) refused.
+
+## Invocation contract (L6) and launch-boundary rechecks (control-safety
+wave, PAL_RV05_CONTROL_SAFETY_20260922 node N2)
+
+- **No policy bypass, in any form.** `powershell.exe -ExecutionPolicy <X>`
+  sets `$env:PSExecutionPolicyPreference` for the process; the launcher
+  checks it FIRST and exits 2 with a `BLOCKED: policy-bypass invocation
+  rejected` message for `Bypass` and `Unrestricted` before reading or
+  writing anything. Approved invocation forms are: no `-ExecutionPolicy`
+  switch at all (the host-configured policy governs), or
+  `-ExecutionPolicy RemoteSigned` / `AllSigned`. Equivalent bypass forms
+  (Unblock-File, -EncodedCommand, stdin scripts, alternate interpreters)
+  are equally forbidden. **If the host execution policy rejects this
+  script file, the invocation fails with an execution-policy error before
+  the script body runs: record that BLOCKED outcome as-is and configure
+  an approved policy (an operator action outside this repository) — do
+  not bypass.**
+- **Fresh-result binding (old-GO rejection).** Every invocation deletes
+  any pre-existing preflight report, generates a unique execution id,
+  passes it to the preflight via `--execution-id`, and verifies the
+  consumed report is bound to THIS execution: matching `execution_id`,
+  matching `spec_sha256` (the digest of the exact spec file bytes this
+  invocation read), known report schema, and `generated_at_utc` at/after
+  this invocation's preflight start. A stale GO residue — or a
+  "preflight" that replays a canned GO report — is refused with `REFUSED:
+  preflight report is not bound to this execution` (exit 2).
+- **Launch-boundary rechecks (the last safe point before the irreversible
+  claim).** After the GO gate and the campaign-absent gate, immediately
+  before the unique claim is written, the launcher re-verifies: the spec
+  file is still byte-identical to what this invocation read (no swap
+  between read and use), the pinned toolchain file hashes
+  (python/driver/audit/closeout) still match `spec.frozen`, and the
+  launch window (earliest/latest) is still open at the boundary itself —
+  preflight duration can no longer carry an expired window into a launch
+  (counterexample L2's launcher layer). A dry run prints all three as a
+  `RECHECK PREVIEW` line; a real launch refuses (exit 2) on any
+  mismatch.
+- **Spec hygiene.** A FORMAL spec must not carry synthetic test hooks or
+  bypass forms: `--now-utc`, `--stop-after`, `-executionpolicy bypass` or
+  `-encodedcommand` anywhere in the spec file refuses the invocation
+  (exit 2) before the preflight runs.
+- The preflight's argument surface is exactly
+  `--spec/--json-out/--execution-id`; abbreviated flags (`--exec`) and
+  unknown flags (e.g. a smuggled `--now-utc`) are hard usage errors.
 
 The rejection suite's nine launcher cases now find the launcher at this
 path (or via the optional `PAL_RV05_N5_LAUNCH_DIR` override) and really
@@ -224,6 +275,42 @@ environment without any `PAL_RV05_N5_*` variables); outputs archived under
 4. `pytest -q tests/test_rv05_n5_launch_review_rejection.py` — 39 passed,
    0 skipped, three consecutive sanitized runs green (control-fixture
    timing margin hardened; see the fix-wave evidence for the arithmetic).
+
+## N2 control-safety verification (2026-09-22, PAL_RV05_CONTROL_SAFETY_20260922)
+
+Really executed on the N2 worktree (Windows, Git Bash, sanitized
+environment, branch `work/linker-safety-n2-*`); outputs archived under
+`evidence/n2/` on the controlling host:
+
+1. Compliant live invocations of the launcher:
+   `powershell -NoProfile -ExecutionPolicy RemoteSigned -File
+   tools/soakctl/launch-rv05.ps1` with no `-SpecPath` — USAGE, exit 2;
+   with the AS-SHIPPED template spec + `-DryRun` — fail-closed at the
+   placeholder preflight spawn, exit 2, zero side effects.
+2. Bypass rejection live: the same invocation with
+   `-ExecutionPolicy Bypass` — `BLOCKED: policy-bypass invocation
+   rejected (PSExecutionPolicyPreference=Bypass)`, exit 2, before
+   anything is read or written. (`Unrestricted` is refused the same
+   way; verified in the test suite.)
+3. `pytest -q tests/test_rv05_n2_launch_safety.py` — **16 passed**
+   (policy-bypass refusal for Bypass/Unrestricted; spec synthetic-hook
+   and bypass-token refusal; planted-residue deletion; replayed-GO
+   rejection with everything correct except the execution id; legacy
+   no-execution-block report rejection; compliant RemoteSigned and
+   no-switch dry runs on GO and NO_GO synthetic specs; preflight argv
+   strictness and execution provenance).
+4. `python -m py_compile` on the delivered Python files — OK.
+5. Cross-node note (first failure preserved verbatim in
+   `evidence/n2/n4-suite-cross-impact-first-failure.txt`):
+   `pytest -q tests/test_rv05_n5_launch_review_rejection.py` — **30
+   passed, 9 failed**. The 30 self-contained preflight/reviewer/builder
+   cases pass unchanged; the nine launcher cases in that N4-owned file
+   still invoke the launcher with `-ExecutionPolicy Bypass` and now
+   correctly receive the BLOCKED refusal (exit 2) instead of their old
+   expected outcomes. Those nine cases are N4's to convert to the
+   compliant invocation form in this wave (plan node N4); the identical
+   duplicate-launch / lost-ack semantics are re-proven under the
+   compliant form by the N2 suite above.
 
 ## Boundaries
 
