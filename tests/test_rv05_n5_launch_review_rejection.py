@@ -623,8 +623,13 @@ def require_launcher():
 
 
 def run_launcher(spec_path, *, dry_run=False, timeout=180):
-    args = [LAUNCHER, '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
-            str(LAUNCH_PS1), '-SpecPath', str(spec_path)]
+    # N4/N0 reconciliation (PAL_RV05_CONTROL_SAFETY_20260922): the N2
+    # launcher now refuses policy-bypass invocations by design (first
+    # failure preserved at evidence/n2/n4-suite-cross-impact-first-failure
+    # .txt); these nine cases invoke with the compliant RemoteSigned form
+    # instead. Assertions are unchanged - only the invocation form flips.
+    args = [LAUNCHER, '-NoProfile', '-ExecutionPolicy', 'RemoteSigned',
+            '-File', str(LAUNCH_PS1), '-SpecPath', str(spec_path)]
     if dry_run:
         args.append('-DryRun')
     return subprocess.run(args, capture_output=True, timeout=timeout)
