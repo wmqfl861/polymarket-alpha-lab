@@ -262,6 +262,23 @@ def test_tampered_capture_payload_rejected():
     assert gen.producer_oracle('capture-codec', 0, honest) is True
 
 
+def test_capture_oracle_accepts_dst_boundary_indices_from_first_failure():
+    """Round-182/625 regression (N1 real first failure, 2026-09-22).
+
+    make_run derived endDate as wall-clock +1 day; when that derived wall time
+    crossed the Europe/Berlin spring-forward gap (round 182, global capture
+    index 123962) or the fall-back repeat (round 625, index 426818), ZoneInfo
+    re-resolved the offset while the oracle's fixed-offset run kept the old
+    one, so sub-check (a) deterministically rejected a byte-valid payload
+    (20/20 isolated). endDate is now UTC-normalized for aware clocks, making
+    the encoded bytes a pure function of the instant; the timezone-invariance
+    oracle itself is unchanged and must now accept these exact indices.
+    """
+    for index in (123962, 426818):
+        actual = gen.target_call('capture-codec', index)
+        assert gen.producer_oracle('capture-codec', index, actual) is True
+
+
 def test_tampered_paper_fill_rejected():
     honest = gen.target_call('paper-decimal-fill', 5)
     assert gen.producer_oracle('paper-decimal-fill', 5, honest) is True
