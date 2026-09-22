@@ -137,15 +137,24 @@ control package is fixed; NOT armed by this wave - tests are synthetic):
       ``launch-final\\launch-spec-rv05-candidate.json`` binding +
       ERRATA-001.md);
   preflight_argv -> [runtime, -I, -S, -B, preflight, --spec,
-      launch_spec, --json-out, preflight_report_path];
-  launch_argv -> [powershell, -NoProfile, -ExecutionPolicy, Bypass,
-      -File, launcher, -SpecPath, launch_spec].
+      launch_spec, --json-out, preflight_report_path]
+      (+ ['--execution-id', <fresh per-cycle uuid>] appended at runtime)
+  launch_argv -> [powershell, -NoProfile, -NonInteractive,
+      -ExecutionPolicy, RemoteSigned, -File, launcher, -SpecPath,
+      launch_spec]
 
-  argv/pin cross-checks (fix wave, cross-review M1): preflight_argv[0]
-  must equal runtime.python_exe, preflight_argv must contain the pinned
-  preflight path, and launch_argv must contain the pinned launcher path
-  — an argv that does not invoke the pinned files is rejected at load,
-  so a mis-assembled binding can never call an unpinned script.
+  argv/pin cross-checks (fix wave N2 spec, replacing the older membership
+  cross-checks): the argv lists are validated as STRUCTURED POSITION-EXACT
+  whitelists - the interpreter (the optional pinned ``launch_interpreter``
+  or the canonical System32 WindowsPowerShell default) must be argv[0],
+  the switch set must match an approved form element-for-element with
+  RemoteSigned the only permitted -ExecutionPolicy value, -File must be
+  followed EXACTLY by the pinned launcher and -SpecPath by the pinned
+  launch spec, with nothing after it; the preflight argv is the fixed
+  9-token shape above. -ExecutionPolicy Bypass/Unrestricted, -Command,
+  -EncodedCommand, stdin scripts and synthetic hooks (--now-utc,
+  --stop-after) are rejected outright (L5/L6). Formal child runs get a
+  closed environment and a pinned cwd at both subprocess call sites.
 
 Usage (stdlib only; python -I -S -B):
 
@@ -200,6 +209,7 @@ from hashlib import sha256
 from pathlib import Path
 
 SCHEMA_BINDING = 'pal-rv05-linker-binding-v1'
+SCHEMA_PREFLIGHT_REPORT = 'pal-rv05-preflight-v1'
 SCHEMA_STATE = 'pal-rv05-linker-state-v1'
 SCHEMA_CLAIM = 'pal-rv05-linker-claim-v1'
 SCHEMA_STARTED_RECEIPT = 'pal-rv05-linker-started-receipt-v1'
@@ -681,6 +691,193 @@ def _require_pin(binding, field, must_exist):
     return path, digest
 
 
+# ---------------------------------------------------------------------------
+# structured launch/preflight argv whitelist (fix wave N2 spec, L5/L6).
+# The old string-membership cross-checks ("the pinned path appears somewhere
+# in argv") are REPLACED by position-exact structure validation: WHICH
+# executable runs, WHICH switch set, WHERE -File points, and what may never
+# appear anywhere. A launch_argv that executes an unrelated command while
+# merely MENTIONING the pinned launcher is rejected (L5); -ExecutionPolicy
+# Bypass/Unrestricted and every alternative execution form (-Command,
+# -EncodedCommand, stdin scripts) are rejected outright (L6).
+# ---------------------------------------------------------------------------
+
+# argv[1:1+k] must equal ONE of these, element-for-element, case-sensitive,
+# IN ORDER. RemoteSigned is the ONLY allowed -ExecutionPolicy value.
+APPROVED_LAUNCH_SWITCH_SETS = (
+    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'RemoteSigned',
+     '-File'],
+    ['-NoProfile', '-ExecutionPolicy', 'RemoteSigned', '-File'],
+)
+# Exact case-insensitive TOKEN equality (never substring: a path that merely
+# contains e.g. "bypass" in a filename must not false-positive). Scanned over
+# EVERY token of both argv lists, independent of the positional whitelist.
+FORBIDDEN_TOKENS_CI = frozenset({
+    '-command', '-encodedcommand', '-encodedjavascript', '-stdin',
+    '--now-utc', '--stop-after', 'bypass', 'unrestricted',
+})
+# Formal child runs get a CLOSED environment: the OS/PATH basics a pinned
+# script's own children need, plus TEMP/TMP redirected into the control
+# directory's run-temp. PYTHON* / PAL_RV05_* / test knobs never propagate.
+KEEP_ENV = ('SystemRoot', 'SYSTEMDRIVE', 'ComSpec', 'PATHEXT', 'PATH',
+            'OS', 'WINDIR', 'NUMBER_OF_PROCESSORS',
+            'PROCESSOR_ARCHITECTURE', 'PROCESSOR_IDENTIFIER',
+            'PROCESSOR_LEVEL', 'PROCESSOR_REVISION')
+# Optional binding key: {"path", "sha256"} pin of the PowerShell interpreter
+# a real arm SHOULD carry. Absent -> the canonical System32 WindowsPowerShell
+# host default (recorded choice, existence-checked).
+OPTIONAL_BINDING_KEYS = ('launch_interpreter',)
+# The bound preflight's static argv shape: exactly 9 tokens. The linker
+# appends the per-cycle execution id AT RUNTIME only (never a binding value).
+PREFLIGHT_ARGV_LEN = 9
+
+
+def _norm_ci(path: str) -> str:
+    return os.path.normcase(os.path.normpath(str(path)))
+
+
+def default_launch_interpreter_path() -> str:
+    """Canonical host Windows PowerShell (System32), or the C:\\Windows
+    fallback when SystemRoot is unset OR EMPTY (an empty value would
+    otherwise join into a broken relative path; non-Windows test hosts
+    should pin launch_interpreter explicitly)."""
+    return os.path.join(os.environ.get('SystemRoot') or r'C:\Windows',
+                        r'System32\WindowsPowerShell\v1.0\powershell.exe')
+
+
+def _launch_interpreter_path(binding: dict) -> str:
+    """Resolve the interpreter argv[0] must equal: the OPTIONAL
+    ``launch_interpreter`` pin (validated with _require_pin semantics plus
+    live sha256 match) or, when absent, the canonical System32 default
+    (existence-checked). The choice is deterministic per binding load."""
+    interp = binding.get('launch_interpreter')
+    if interp is not None:
+        path, digest = _require_pin(binding, 'launch_interpreter',
+                                    must_exist=True)
+        live = _sha256_file(Path(path))
+        if live is None or live != digest:
+            raise BindingError(
+                f'launch_interpreter: sha256 drift (pinned {digest}, '
+                f'live {live}); the pinned interpreter changed on disk')
+        return path
+    path = default_launch_interpreter_path()
+    if not Path(path).is_file():
+        raise BindingError(
+            f'launch interpreter missing: {path} (pin launch_interpreter '
+            'explicitly on hosts without the System32 WindowsPowerShell '
+            'default)')
+    return path
+
+
+def validate_launch_argv(binding: dict) -> None:
+    """L5/L6: position-exact launch_argv whitelist. Raises BindingError with
+    the offending contract in the message; returns None when conformant.
+    Re-run cheaply at the START boundary to catch binding drift."""
+    argv = binding['launch_argv']
+    interp_path = _launch_interpreter_path(binding)
+    if _norm_ci(argv[0]) != _norm_ci(interp_path):
+        raise BindingError(
+            f'launch_argv[0] must be the pinned PowerShell interpreter '
+            f'(absolute path: {interp_path}), nothing else (L5: the '
+            'interpreter is the EXECUTED program, not a mentionable '
+            f'string); got {argv[0]!r}')
+    for switches in APPROVED_LAUNCH_SWITCH_SETS:
+        k = len(switches)
+        if argv[1:1 + k] == switches:
+            break
+    else:
+        raise BindingError(
+            'launch_argv switches must be EXACTLY one of '
+            f'{list(APPROVED_LAUNCH_SWITCH_SETS)} (element-for-element, in '
+            'order) - no Bypass/Unrestricted, no -Command/-EncodedCommand, '
+            'no extra or missing switches (L5/L6)')
+    tail = argv[1 + k:]
+    if len(tail) != 3 or tail[1] != '-SpecPath':
+        raise BindingError(
+            'launch_argv: after -File exactly [launcher, -SpecPath, '
+            'launch_spec] is allowed (nothing after the spec path; no '
+            '-DryRun, no second spec, no extra parameters); got tail '
+            f'{tail!r}')
+    if _norm_ci(tail[0]) != _norm_ci(binding['launcher']['path']):
+        raise BindingError(
+            'launch_argv: -File must be followed EXACTLY by the pinned '
+            'launcher path (L5: the launcher must be the EXECUTED script, '
+            'not an unused argument); got '
+            f'{tail[0]!r} != {binding["launcher"]["path"]!r}')
+    if _norm_ci(tail[2]) != _norm_ci(binding['launch_spec']['path']):
+        raise BindingError(
+            'launch_argv: -SpecPath must be followed EXACTLY by the pinned '
+            'launch spec; got '
+            f'{tail[2]!r} != {binding["launch_spec"]["path"]!r}')
+    for key in ('launch_argv', 'preflight_argv'):
+        for tok in binding[key]:
+            if tok.strip().lower() in FORBIDDEN_TOKENS_CI:
+                raise BindingError(
+                    f'{key}: forbidden token {tok!r} (synthetic hook / '
+                    'policy bypass / alternative execution form)')
+
+
+def validate_preflight_argv(binding: dict) -> None:
+    """L5: the bound preflight argv is STATIC and must be exactly
+    [runtime, -I, -S, -B, preflight, --spec, launch_spec, --json-out,
+    preflight_report_path] (length 9; flag positions exact-string; path
+    positions normcase+normpath equal to the pinned values). The old
+    containment checks are subsumed."""
+    argv = binding['preflight_argv']
+    flags = ['-I', '-S', '-B']
+    if len(argv) != PREFLIGHT_ARGV_LEN:
+        raise BindingError(
+            f'preflight_argv: must be exactly {PREFLIGHT_ARGV_LEN} tokens '
+            f'[runtime, -I, -S, -B, preflight, --spec, launch_spec, '
+            '--json-out, report] (the per-cycle --execution-id is appended '
+            f'by the linker at runtime, never a binding value); got {argv!r}')
+    if _norm_ci(argv[0]) != _norm_ci(binding['runtime']['python_exe']):
+        raise BindingError(
+            'preflight_argv[0] must equal runtime.python_exe '
+            f'(got {argv[0]!r})')
+    if argv[1:4] != flags:
+        raise BindingError(
+            f'preflight_argv[1:4] must be exactly {flags} (sanitized '
+            f'interpreter flags); got {argv[1:4]!r}')
+    if _norm_ci(argv[4]) != _norm_ci(binding['preflight']['path']):
+        raise BindingError(
+            'preflight_argv[4] must be EXACTLY the pinned preflight script '
+            f'(got {argv[4]!r} != {binding["preflight"]["path"]!r})')
+    if argv[5] != '--spec' or _norm_ci(argv[6]) != _norm_ci(
+            binding['launch_spec']['path']):
+        raise BindingError(
+            'preflight_argv[5:7] must be exactly [--spec, pinned '
+            f'launch_spec]; got {argv[5:7]!r}')
+    if argv[7] != '--json-out' or _norm_ci(argv[8]) != _norm_ci(
+            binding['preflight_report_path']):
+        raise BindingError(
+            'preflight_argv[7:9] must be exactly [--json-out, pinned '
+            f'preflight_report_path]; got {argv[7:9]!r}')
+
+
+def runtime_preflight_argv(binding: dict, execution_id: str) -> list:
+    """The argv the PRECHECK actually spawns: the validated static 9-token
+    whitelist PLUS this cycle's fresh execution id (32 hex). The id is
+    generated per cycle and is NEVER a binding value; the preflight echoes
+    it inside its report's execution block, binding the report to THIS
+    invocation (fresh-report contract)."""
+    if not isinstance(execution_id, str) or not execution_id:
+        raise Refused('execution_id must be a non-empty string')
+    validate_preflight_argv(binding)
+    return list(binding['preflight_argv']) + ['--execution-id', execution_id]
+
+
+def _sanitized_run_env(temp_dir: Path) -> dict:
+    """Closed child environment (fix wave N2): KEEP_ENV basics + TEMP/TMP
+    pinned into the control run-temp. Nothing else from the parent process
+    - in particular no PYTHON* / PAL_RV05_* / test knobs - propagates into
+    a formal preflight or launch run."""
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    env = {key: os.environ[key] for key in KEEP_ENV if key in os.environ}
+    env['TEMP'] = env['TMP'] = str(temp_dir)
+    return env
+
+
 def load_binding(binding_path: Path) -> dict:
     text = _read_capped(binding_path, 1024 * 1024)
     if text is None or text == 'UNREADABLE':
@@ -704,7 +901,8 @@ def load_binding(binding_path: Path) -> dict:
             f'schema: unknown binding schema {binding.get("schema")!r}; '
             f'this linker accepts exactly {SCHEMA_BINDING!r}')
     missing = [k for k in REQUIRED_KEYS if k not in binding]
-    unknown = [k for k in binding if k not in REQUIRED_KEYS]
+    unknown = [k for k in binding
+               if k not in REQUIRED_KEYS + OPTIONAL_BINDING_KEYS]
     if missing or unknown:
         raise BindingError(
             f'binding field set mismatch (missing={missing}, '
@@ -771,12 +969,12 @@ def load_binding(binding_path: Path) -> dict:
             raise BindingError(f'{key}: placeholder component rejected')
     if binding['preflight_argv'][0] != python_exe:
         raise BindingError('preflight_argv[0] must equal runtime.python_exe')
-    if binding['preflight']['path'] not in binding['preflight_argv']:
-        raise BindingError('preflight_argv must contain the pinned '
-                           'preflight path')
-    if binding['launcher']['path'] not in binding['launch_argv']:
-        raise BindingError('launch_argv must contain the pinned '
-                           'launcher path')
+    # L5/L6 (fix wave N2 spec): the position-exact structured whitelists
+    # REPLACE the string-membership cross-checks. validate_launch_argv also
+    # resolves the optional launch_interpreter pin (or the System32 default)
+    # and validates its live sha256.
+    validate_preflight_argv(binding)
+    validate_launch_argv(binding)
 
     window = binding['launch_window_utc']
     if not isinstance(window, dict) or set(window) != {'earliest', 'latest'}:
@@ -1794,15 +1992,28 @@ class Linker:
         self._transition(state, 'PRECHECK', self.linker_id, self.now_iso())
         self.write_state(state)
         report_path = Path(self.binding['preflight_report_path'])
-        argv = [str(part) for part in self.binding['preflight_argv']]
+        # fix wave N2 (fresh-report contract): this cycle's execution id is
+        # generated HERE (uuid4, never a binding value) and appended to the
+        # validated static preflight argv; the report must echo it back
+        # inside its execution block, binding the consumed verdict to THIS
+        # invocation (a leftover/forged GO from another cycle or run cannot
+        # present a matching id).
+        execution_id = uuid.uuid4().hex
+        argv = runtime_preflight_argv(self.binding, execution_id)
         print(f'PRECHECK: running bound preflight: {" ".join(argv[:8])}...')
         # real wall-clock spawn time: the GO report must be FRESHER than
         # this moment, proving it was produced by THIS invocation
         preflight_spawned_at = time.time()
+        preflight_cycle_started_utc = _dt.datetime.now(_dt.timezone.utc)
         try:
-            proc = subprocess.run(argv, capture_output=True, text=True,
-                                  encoding='utf-8', errors='replace',
-                                  timeout=PREFLIGHT_TIMEOUT_S)
+            proc = subprocess.run(
+                argv, capture_output=True, text=True,
+                encoding='utf-8', errors='replace',
+                timeout=PREFLIGHT_TIMEOUT_S,
+                cwd=str(Path(self.binding['preflight']['path'])
+                        .resolve().parent.parent),
+                env=_sanitized_run_env(
+                    Path(self.binding['state_path']).parent / 'run-temp'))
         except (OSError, subprocess.SubprocessError) as error:
             self._record_check(state, 'UNKNOWN', 'preflight_not_runnable',
                                {'error': f'{type(error).__name__}: {error}'})
@@ -1826,6 +2037,102 @@ class Linker:
             print(f'UNKNOWN: preflight report unreadable/invalid '
                   f'({rreason}); no launch')
             return EXIT_UNKNOWN, False
+        # 9a. execution-bound report verification (fix wave N2 spec
+        #     section 5): the report must prove it was produced by THIS
+        #     cycle's invocation - matching execution id, the pinned spec
+        #     path AND a spec sha256 the linker re-hashes NOW (binding
+        #     unchanged since arm), an argv echo equal to the flags after
+        #     the script, and a generation time at/after this cycle's
+        #     start. Any gap is UNKNOWN terminal
+        #     preflight_report_not_execution_bound - never waitable, never
+        #     auto-retried into a GO.
+        exec_block = report.get('execution')
+        bound_fields = []
+        if report.get('schema') != SCHEMA_PREFLIGHT_REPORT:
+            bound_fields.append('schema')
+        if not isinstance(exec_block, dict):
+            bound_fields.append('execution_block')
+        else:
+            if exec_block.get('execution_id') != execution_id:
+                bound_fields.append('execution_id')
+            if _norm_ci(str(exec_block.get('spec', ''))) != _norm_ci(
+                    self.binding['launch_spec']['path']):
+                bound_fields.append('spec')
+            spec_sha_now = _sha256_file(
+                Path(self.binding['launch_spec']['path']))
+            if exec_block.get('spec_sha256') != spec_sha_now:
+                bound_fields.append('spec_sha256')
+            if list(exec_block.get('argv') or []) != argv[5:]:
+                bound_fields.append('argv_echo')
+        generated = report.get('generated_at_utc')
+        try:
+            generated_utc = parse_utc(str(generated)) \
+                if generated is not None else None
+        except ValueError:
+            generated_utc = None
+        if generated_utc is None:
+            bound_fields.append('generated_at_utc')
+        elif generated_utc + _dt.timedelta(
+                seconds=REPORT_FRESHNESS_TOLERANCE_S) \
+                < preflight_cycle_started_utc:
+            bound_fields.append('generated_at_utc')
+        if bound_fields:
+            self._record_check(
+                state, 'UNKNOWN', 'preflight_report_not_execution_bound',
+                {'failed_fields': bound_fields,
+                 'execution_id': execution_id,
+                 'returncode': proc.returncode})
+            state['_terminal_reason'] = \
+                f'preflight_report_not_execution_bound: {bound_fields}'
+            self._transition(state, 'UNKNOWN', self.linker_id,
+                             self.now_iso())
+            self.write_state(state)
+            print(f'UNKNOWN: preflight report is not bound to this '
+                  f'execution (failed: {bound_fields}); no launch, no '
+                  'retry into a GO')
+            return EXIT_UNKNOWN, False
+        # 9a2. complete-gate-inventory consistency (fix wave N2/plan
+        #      "报告必须绑定本次调用/完整门禁/配置"): a verdict must rest on a
+        #      demonstrated gate set - non-empty checks, every unmet id
+        #      present in the inventory, and a GO with zero non-PASS
+        #      entries. The linker deliberately does NOT hardcode the
+        #      preflight's gate NAMES (they are the preflight owner's
+        #      vocabulary and evolve); it enforces the inventory shape.
+        checks = report.get('checks')
+        unmet_ids = list(report.get('unmet_ids') or [])
+        inventory_defects = []
+        if not isinstance(checks, list) or not checks:
+            inventory_defects.append('empty_or_not_a_list')
+        else:
+            check_ids = {c.get('id') for c in checks
+                         if isinstance(c, dict)}
+            if len(check_ids) != len(
+                    [c for c in checks if isinstance(c, dict)]):
+                inventory_defects.append('duplicate_or_missing_ids')
+            missing_unmet = [i for i in unmet_ids if i not in check_ids]
+            if missing_unmet:
+                inventory_defects.append(f'unmet_not_in_inventory:'
+                                         f'{missing_unmet}')
+            if report.get('overall') == 'GO':
+                non_pass = [c.get('id') for c in checks
+                            if isinstance(c, dict)
+                            and c.get('status') != 'PASS']
+                if non_pass:
+                    inventory_defects.append(f'go_with_non_pass:{non_pass}')
+        if inventory_defects:
+            self._record_check(
+                state, 'NO_GO', 'preflight_report_gate_inventory_invalid',
+                {'defects': inventory_defects})
+            state['_terminal_reason'] = (
+                f'preflight_report_gate_inventory_invalid: '
+                f'{inventory_defects}')
+            self._transition(state, 'NO_GO', self.linker_id,
+                             self.now_iso())
+            self.write_state(state)
+            print(f'NO_GO: preflight report gate inventory incomplete/'
+                  f'inconsistent ({inventory_defects}); a verdict without a '
+                  'demonstrated complete gate set authorizes nothing')
+            return EXIT_NO_GO, False
         if report.get('overall') != 'GO':
             unmet = list(report.get('unmet_ids') or [])
             waitable = {'original_driver_exited',
@@ -1919,14 +2226,39 @@ class Linker:
 
         # 11. START: invoke the bound launch flow (fixed argv) once.
         #     This invocation is THE IRREVOCABLE BOUNDARY (B4).
+        #     fix wave N2: the launch argv structure is RE-validated here
+        #     (cheap; catches binding-file drift between arm and start on
+        #     any axis the pin re-hash cannot express, e.g. argv edits).
+        try:
+            validate_launch_argv(self.binding)
+        except BindingError as error:
+            state['launch_invoked'] = False
+            self._record_check(state, 'NO_GO',
+                               'binding_drift_after_claim_no_launch',
+                               {'error': str(error),
+                                'claim_id': claim_id})
+            state['_terminal_reason'] = \
+                f'binding_drift_after_claim_no_launch: {error}'
+            self._transition(state, 'NO_GO', self.linker_id,
+                             self.now_iso())
+            self.write_state(state)
+            print(f'NO_GO: launch argv re-validation failed after the '
+                  f'claim ({error}); the claim stays consumed, NO launch '
+                  'was invoked, manual adjudication required')
+            return EXIT_NO_GO, False
         argv = [str(part) for part in self.binding['launch_argv']]
         state['launch_invoked'] = True
         self.write_state(state)
         print(f'STARTING: {" ".join(argv[:8])}...')
         try:
-            proc = subprocess.run(argv, capture_output=True, text=True,
-                                  encoding='utf-8', errors='replace',
-                                  timeout=LAUNCH_TIMEOUT_S)
+            proc = subprocess.run(
+                argv, capture_output=True, text=True,
+                encoding='utf-8', errors='replace',
+                timeout=LAUNCH_TIMEOUT_S,
+                cwd=str(Path(self.binding['launcher']['path'])
+                        .resolve().parent.parent),
+                env=_sanitized_run_env(
+                    Path(self.binding['state_path']).parent / 'run-temp'))
         except (OSError, subprocess.SubprocessError) as error:
             self._record_check(state, 'UNKNOWN', 'launch_not_runnable', {
                 'error': f'{type(error).__name__}: {error}',
