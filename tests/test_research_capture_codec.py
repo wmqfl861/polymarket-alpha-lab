@@ -33,7 +33,13 @@ def make_run(condition="fixture", task="task-1", team="crypto_eth", status="comp
     snapshot = GammaMarketSnapshot("market-" + condition, now, json.dumps(dict(
         slug="market-" + condition, conditionId=condition, active=True, closed=False,
         question="Synthetic?", description="Synthetic rules.", outcomes=["Yes", "No"],
-        endDate=(now + timedelta(days=1)).isoformat(),
+        # endDate must be a pure function of the snapshot instant: naive inputs
+        # keep their offset-less text, aware inputs are normalized to UTC first
+        # so wall-clock +1 day can never cross a DST transition and re-resolve
+        # the offset (zone-attached and fixed-offset runs then encode identical
+        # bytes; see the round-182/625 producer-oracle regression test).
+        endDate=((now if now.tzinfo is None else now.astimezone(UTC))
+                 + timedelta(days=1)).isoformat(),
     )).encode())
     evidence = () if status == "intake_blocked" else (ResearchEvidence("s", team, condition,
         "Synthetic source", "SYNTHETIC-PRIVATE-EVIDENCE", "synthetic:source", now),)

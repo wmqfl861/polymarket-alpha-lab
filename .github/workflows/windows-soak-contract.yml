@@ -1,0 +1,169 @@
+name: Windows soak contracts
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/support/soak*.py'
+      - 'tests/test_soak*.py'
+      - 'tests/test_soak_linker.py'
+      - 'tests/test_soak_linker_review.py'
+      - 'tests/test_px02_gap_regressions.py'
+      - 'tests/test_research_cross_module_composition.py'
+      - 'tests/test_research_exec_boundaries.py'
+      - 'tests/test_research_transport_stop_order.py'
+      - 'tests/test_research_paper_settlement_decimal_oracle.py'
+      - 'tests/test_packaged_session_drain_failure_witness.py'
+      - 'tests/test_rv05_n5_launch_review_rejection.py'
+      - 'tools/soakctl/**'
+      - '.github/workflows/windows-soak-contract.yml'
+permissions:
+  contents: read
+concurrency:
+  group: windows-soak-contract-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows-soak-contract:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - name: Install existing locked test dependencies
+        run: uv sync --locked --extra dev --python 3.12
+      - name: Run Windows test-driver contracts, not a long soak or database
+        shell: pwsh
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+          PYTHONUTF8: '1'
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          $TestFiles = @(
+            'tests/test_soak_driver.py',
+            'tests/test_soak_driver_recovery.py',
+            'tests/test_soak_audit.py',
+            'tests/test_soak_closeout.py',
+            'tests/test_soak_okcompute.py',
+            'tests/test_soak_driver_subinput.py',
+            'tests/test_soak_audit_subinputs.py',
+            'tests/test_soak_fault_contracts.py',
+            'tests/test_soak_linker.py',
+            'tests/test_soak_linker_review.py',
+            'tests/test_px02_gap_regressions.py',
+            'tests/test_research_cross_module_composition.py',
+            'tests/test_research_exec_boundaries.py',
+            'tests/test_research_transport_stop_order.py',
+            'tests/test_research_paper_settlement_decimal_oracle.py',
+            'tests/test_packaged_session_drain_failure_witness.py',
+            'tests/test_rv05_n5_launch_review_rejection.py'
+          )
+          .\.venv\Scripts\python.exe -u -m pytest -q -p no:cacheprovider -o junit_family=legacy @TestFiles --junitxml="$env:RUNNER_TEMP/windows-soak.xml" 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP/windows-soak.log"
+          exit $LASTEXITCODE
+      - name: Require both platform-guarded cases to execute and pass
+        if: always()
+        shell: pwsh
+        run: |
+          $Check = @'
+          import os, pathlib, xml.etree.ElementTree as ET
+          report = pathlib.Path(os.environ['RUNNER_TEMP']) / 'windows-soak.xml'
+          root = ET.parse(report).getroot()
+          cases = list(root.iter('testcase'))
+          required = {
+              ('tests.test_soak_driver', 'test_abnormal_exit_recovers_into_a_new_segment_with_new_round_numbers'),
+              ('tests.test_soak_driver_recovery', 'test_controller_killed_mid_child_recovers_per_oracle'),
+          }
+          assert cases, 'missing case inventory'
+          assert not list(root.iter('failure')) and not list(root.iter('error')), 'failed suite'
+          for pair in required:
+              hits = [c for c in cases if (c.get('classname'), c.get('name')) == pair]
+              assert len(hits) == 1, ('missing or duplicate required case', pair)
+              assert hits[0].find('skipped') is None, ('required case skipped', pair)
+          # RV05 N5 rejection suite (PAL_RV05_CLOSURE_20260922 N2): the module
+          # must NEVER skip wholesale - the self-contained cases really run on
+          # this Windows runner from a fresh checkout with synthetic fixtures
+          # and no PAL_RV05_N5_* environment. Launcher-slot cases may skip
+          # individually until node N3 lands tools/soakctl/launch-rv05.ps1;
+          # that allowance is bounded by the >= 30 executed floor below.
+          n5 = [c for c in cases
+                if c.get('classname') == 'tests.test_rv05_n5_launch_review_rejection']
+          assert n5, ('N5 rejection module missing from the inventory '
+                      '(module-level skip is forbidden)')
+          n5_executed = [c for c in n5 if c.find('skipped') is None]
+          assert len(n5_executed) >= 30, (
+              'N5 self-contained rejection cases must actually execute '
+              '(module-level skip or broken self-contained layout)', len(n5_executed))
+          for pair in {
+              ('tests.test_rv05_n5_launch_review_rejection', 'test_preflight_synthetic_go_without_binding'),
+              ('tests.test_rv05_n5_launch_review_rejection', 'test_preflight_binding_complete_still_go'),
+              ('tests.test_rv05_n5_launch_review_rejection', 'test_review_legacy_reviewer_rejects_new_receipt_schema'),
+              ('tests.test_rv05_n5_launch_review_rejection', 'test_identity_json_complete_binding_passes'),
+          }:
+              hits = [c for c in cases if (c.get('classname'), c.get('name')) == pair]
+              assert len(hits) == 1, ('missing or duplicate required N5 case', pair)
+              assert hits[0].find('skipped') is None, ('required N5 case skipped', pair)
+          # RV05 linker safety (PAL_RV05_CONTROL_SAFETY_20260922 N4): the
+          # linker contract modules must actually execute on this Windows
+          # runner - the historical 20 synthetic linker tests were never in
+          # this selection (456 passed with linker_cases=0), and the N4
+          # review module adds the nine-counterexample regressions, legal
+          # controls and the Win32 real-interface/fault-injection groups.
+          # The review module groups its cases in classes, so its junit
+          # classnames are class-qualified (prefix match); the historical
+          # linker module uses top-level functions (exact classname).
+          linker_legacy = [c for c in cases
+                           if c.get('classname') == 'tests.test_soak_linker']
+          assert linker_legacy, ('linker contract module missing from the '
+                                 'inventory (module-level skip is forbidden)')
+          legacy_executed = [c for c in linker_legacy
+                             if c.find('skipped') is None]
+          assert len(legacy_executed) >= 20, (
+              'the 20 historical linker contract cases must actually execute '
+              'on Windows', len(legacy_executed))
+          review = [c for c in cases if (c.get('classname') or '').startswith(
+              'tests.test_soak_linker_review')]
+          assert review, ('linker review module missing from the inventory '
+                          '(module-level skip is forbidden)')
+          review_executed = [c for c in review if c.find('skipped') is None]
+          assert len(review_executed) >= 30, (
+              'linker review cases must actually execute on Windows',
+              len(review_executed))
+          for required_name in {
+              'test_l1_cancel_during_preflight_blocks_launch',
+              'test_l2_window_expired_during_preflight_blocks_launch',
+              'test_l3_nonzero_launch_stays_failed_on_rewait',
+              'test_l4_rc0_without_campaign_is_unknown',
+              'test_l5_unrelated_command_with_pinned_name_rejected',
+              'test_l6_execution_policy_bypass_rejected',
+              'test_l7_oversize_valid_prefix_rejected',
+              'test_l8_openprocess_null_is_unknown',
+              'test_l9_wait_failed_is_unknown',
+              'test_real_alive_process_probed_alive',
+          }:
+              hits = [c for c in review if c.get('name') == required_name]
+              assert len(hits) == 1, ('missing or duplicate required linker '
+                                      'review case', required_name)
+              assert hits[0].find('skipped') is None, (
+                  'required linker review case skipped', required_name)
+          print('BOTH_WINDOWS_OWNERSHIP_CASES_EXECUTED_AND_PASSED')
+          print('N5_REJECTION_SUITE_EXECUTED', len(n5_executed), 'OF', len(n5))
+          '@
+          .\.venv\Scripts\python.exe -I -S -c $Check
+          exit $LASTEXITCODE
+      - name: Verify tracked source unchanged
+        if: always()
+        run: |
+          git diff --check
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: windows-soak-contract-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/windows-soak.log
+            ${{ runner.temp }}/windows-soak.xml
+          retention-days: 7
+          if-no-files-found: error

@@ -2,11 +2,35 @@
 
 Runs with the kit's interpreter/source. A controlled Python exception interrupts
 its real session close; the real OS lease and PostgreSQL read must remain usable.
+
+Failure witness (PAL_RV05_CAPACITY_20260921 / N4): when this drain substep
+fails, one compact closed-field line is printed so a truncated CI traceback
+still leaves the phase, native-command category, 32-bit-hex exit code or fixed
+exception label, monotonic elapsed time and kit category visible. The witness
+is a pure observer: it changes no execution count, timeout, public error text
+or control flow, and its own failure only records a fixed "unavailable"
+marker. Closed whitelist only - never argv, DSN, environment, password-file
+content, raw stderr/stdout, user paths or dumps.
 """
 from pathlib import Path
+import json
 import subprocess
+import time
 
 from polymarket_alpha_lab.project_postgres.files import clean_environment
+
+# Closed witness vocabulary. Emission only ever selects constants from these
+# tuples (membership re-verified by the negative tests); nothing caller- or
+# child-derived is ever printed.
+DRAIN_WITNESS_SCHEMA = 'pal-drain-failure-witness-v1'
+DRAIN_WITNESS_PREFIX = 'drain_failure_witness'
+DRAIN_WITNESS_PHASES = ('drain_child_execution',)
+DRAIN_WITNESS_NATIVE_COMMANDS = ('kit_python_interpreter',)
+DRAIN_WITNESS_KITS = ('project_postgres_distribution_native_kit',)
+DRAIN_WITNESS_KINDS = ('nonzero_exit', 'exception')
+DRAIN_WITNESS_EXCEPTION_LABELS = ('subprocess_timeout', 'os_spawn_error',
+    'unclassified_exception')
+DRAIN_WITNESS_UNAVAILABLE = 'unavailable'
 
 RECIPE = r'''
 from pathlib import Path
@@ -97,7 +121,64 @@ print(json.dumps(dict(status='packaged_session_drain_verified', cases=proof,
 '''
 
 
+def _witness_exit_code_32hex(code) -> str:
+    """Closed 32-bit two's-complement hex form; never a raw or partial code.
+
+    The canonical Windows access-violation form is 0xC0000005 (eight hex
+    digits); the mistyped seven-digit 0xC000005 form must never be produced.
+    """
+    if isinstance(code, bool) or not isinstance(code, int):
+        return DRAIN_WITNESS_UNAVAILABLE
+    return '0x{:08X}'.format(code & 0xFFFFFFFF)
+
+
+def _witness_exception_label(error) -> str:
+    if isinstance(error, subprocess.TimeoutExpired):
+        return 'subprocess_timeout'
+    if isinstance(error, OSError):
+        return 'os_spawn_error'
+    return 'unclassified_exception'
+
+
+def _witness_drain_failure(kind, code, error, started) -> None:
+    """Print one closed-field failure-witness line; never raise or mask.
+
+    Observer only: any failure inside the witness itself degrades to a fixed
+    "unavailable" marker (or to silence if even that cannot be printed) and the
+    original result/exception propagation is left exactly as it was.
+    """
+    try:
+        record = {
+            'schema': DRAIN_WITNESS_SCHEMA,
+            'kit': DRAIN_WITNESS_KITS[0],
+            'phase': DRAIN_WITNESS_PHASES[0],
+            'native_command': DRAIN_WITNESS_NATIVE_COMMANDS[0],
+            'failure_kind': kind,
+            'monotonic_elapsed_seconds': round(time.monotonic() - started, 3),
+        }
+        if kind == 'nonzero_exit':
+            record['exit_code_32hex'] = _witness_exit_code_32hex(code)
+        else:
+            record['exception_label'] = _witness_exception_label(error)
+        line = json.dumps(record, sort_keys=True, separators=(',', ':'))
+    except BaseException:
+        line = '{"diagnostic":"%s","schema":"%s"}' % (
+            DRAIN_WITNESS_UNAVAILABLE, DRAIN_WITNESS_SCHEMA)
+    try:
+        print(DRAIN_WITNESS_PREFIX + ' ' + line, flush=True)
+    except BaseException:
+        pass
+
+
 def run_packaged_session_drain(root, python, cwd):
-    return subprocess.run([str(python), '-I', '-c', RECIPE, str(root)], cwd=cwd,
-        env=clean_environment(), stdin=subprocess.DEVNULL, capture_output=True,
-        text=True, encoding='utf-8', timeout=180, check=False, shell=False)
+    started = time.monotonic()
+    try:
+        result = subprocess.run([str(python), '-I', '-c', RECIPE, str(root)], cwd=cwd,
+            env=clean_environment(), stdin=subprocess.DEVNULL, capture_output=True,
+            text=True, encoding='utf-8', timeout=180, check=False, shell=False)
+    except BaseException as error:
+        _witness_drain_failure('exception', None, error, started)
+        raise
+    if result.returncode != 0:
+        _witness_drain_failure('nonzero_exit', result.returncode, None, started)
+    return result

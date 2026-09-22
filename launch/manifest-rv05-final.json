@@ -1,0 +1,15 @@
+{
+  "scenarios": [
+    {"name": "pytest-protocol", "kind": "pytest", "files": ["tests/test_research_codex_exec.py", "tests/test_research_codex_profile.py", "tests/test_research_codex_profile_review.py", "tests/test_research_claude_exec.py", "tests/test_research_claude_profile.py", "tests/test_research_claude_review.py"]},
+    {"name": "pytest-audit", "kind": "pytest", "files": ["tests/test_research_uncapped.py", "tests/test_research_uncapped_audit.py", "tests/test_research_uncapped_audit_review.py", "tests/test_research_dispatch_rotation.py"]},
+    {"name": "pytest-process", "kind": "pytest", "files": ["tests/test_research_process.py", "tests/test_research_process_review.py", "tests/test_research_codex_process.py"]},
+    {"name": "pytest-paper", "kind": "pytest", "files": ["tests/test_research_paper.py", "tests/test_research_paper_review.py", "tests/test_research_paper_settlement.py", "tests/test_research_paper_settlement_review.py", "tests/test_research_resolution_confirmation.py", "tests/test_research_resolution_confirmation_review.py", "tests/test_research_scope_instants.py", "tests/test_research_record_timezone_codec.py"]},
+    {"name": "pytest-lt01-driver", "kind": "pytest", "files": ["tests/test_soak_driver.py"]},
+    {"name": "pytest-lt02-new", "kind": "pytest", "files": ["tests/test_research_exec_boundaries.py", "tests/test_research_transport_stop_order.py"]},
+    {"name": "pytest-lt03-new", "kind": "pytest", "files": ["tests/test_research_paper_settlement_decimal_oracle.py"]},
+    {"name": "ok-echo", "kind": "process", "code": "import json, sys, hashlib\nraw = sys.stdin.buffer.read()\ndata = json.loads(raw.decode('utf-8'))\nprint(json.dumps({'echo_round': data['round'], 'echo_seed': data['sub_seed'],\n                  'stdin_sha256': hashlib.sha256(raw).hexdigest(),\n                  'stdin_bytes': len(raw)}))\n"},
+    {"name": "ok-compute", "kind": "subinput", "module": "tests.support.soak_okcompute", "planned_rows": 2048, "families": ["capture-codec", "paper-decimal-fill", "uncapped-authz-codec"]},
+    {"name": "ok-unicode", "kind": "process", "code": "import json, sys\ndata = json.loads(sys.stdin.buffer.read().decode('utf-8'))\nprobe = {'cjk': '中文样本数据', 'emoji': '🚀📈', 'combining': 'éclair',\n         'rtl': 'مرحبا', 'shapes': '◐◓◑◒'}\nencoded = json.dumps(probe, ensure_ascii=False)\nassert json.loads(encoded) == probe\nprint(json.dumps({'echo_round': data['round'], 'echo_seed': data['sub_seed'],\n                  'unicode_roundtrip': True,\n                  'chars': sum(len(value) for value in probe.values())}))\n"},
+    {"name": "ok-sleep-2s", "kind": "process", "code": "import json, sys, time\ndata = json.loads(sys.stdin.buffer.read().decode('utf-8'))\ntime.sleep(2)\nprint(json.dumps({'echo_round': data['round'], 'echo_seed': data['sub_seed'],\n                  'slept_seconds': 2}))\n"}
+  ]
+}
