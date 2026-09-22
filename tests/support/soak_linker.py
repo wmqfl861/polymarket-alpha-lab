@@ -77,6 +77,12 @@ control package is fixed; NOT armed by this wave - tests are synthetic):
   launch_argv -> [powershell, -NoProfile, -ExecutionPolicy, Bypass,
       -File, launcher, -SpecPath, launch_spec].
 
+  argv/pin cross-checks (fix wave, cross-review M1): preflight_argv[0]
+  must equal runtime.python_exe, preflight_argv must contain the pinned
+  preflight path, and launch_argv must contain the pinned launcher path
+  — an argv that does not invoke the pinned files is rejected at load,
+  so a mis-assembled binding can never call an unpinned script.
+
 Usage (stdlib only; python -I -S -B):
 
   soak_linker.py arm    --binding B.json [--now-utc T]
@@ -480,6 +486,9 @@ def load_binding(binding_path: Path) -> dict:
     if binding['preflight']['path'] not in binding['preflight_argv']:
         raise BindingError('preflight_argv must contain the pinned '
                            'preflight path')
+    if binding['launcher']['path'] not in binding['launch_argv']:
+        raise BindingError('launch_argv must contain the pinned '
+                           'launcher path')
 
     window = binding['launch_window_utc']
     if not isinstance(window, dict) or set(window) != {'earliest', 'latest'}:

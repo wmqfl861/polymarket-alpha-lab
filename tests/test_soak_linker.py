@@ -192,6 +192,7 @@ class Synth:
             'preflight_report_path': str(self.report_path),
             'launch_argv': [PY, '-I', '-S', '-B',
                             str(self.pkg / 'launch-fake.py'),
+                            '--launcher', str(self.files['launcher']),
                             '--campaign', str(self.new_campaign)],
             'preflight_argv': [PY, '-I', '-S', '-B',
                                str(self.files['preflight']),
@@ -794,4 +795,39 @@ def test_t19_wait_requires_arm_and_single_subprocess_shape(synth):
     # one shot: further wait is idempotent, never a second launch
     rc4, out4 = synth.wait(IN2)
     assert rc4 == 0, out4
+    assert synth.launch_count() == 1
+
+
+def test_t20_binding_rejects_launch_argv_not_carrying_pinned_launcher(synth):
+    """launch_argv/pin cross-check (fix wave, cross-review M1): an argv
+    that invokes an UNPINNED launcher file is rejected at arm (exit 7)
+    before any state exists — a mis-assembled binding can never call an
+    unpinned script. The unmutated binding (which carries the pinned
+    launcher path inside launch_argv) is the legal control every other
+    arming test exercises."""
+    drifted = synth.pkg / 'launch-drifted.ps1'
+    drifted.write_text('# drifted launcher stand-in (exists; unpinned)\n',
+                       encoding='utf-8')
+
+    def drift_argv(binding):
+        binding['launch_argv'] = [
+            PY, '-I', '-S', '-B', str(synth.pkg / 'launch-fake.py'),
+            '--launcher', str(drifted),
+            '--campaign', str(synth.new_campaign)]
+    rc, out = synth.arm(binding_path=synth.write_binding(drift_argv))
+    assert rc == 7, out
+    assert 'launch_argv' in out
+    assert 'launcher' in out
+    assert not (synth.control / 'linker-state.json').exists()
+
+    # legal control: the same environment with the pinned launcher path
+    # back inside launch_argv arms fine and the started receipt carries it
+    synth.write_binding()
+    synth.original_exited_clean()
+    assert synth.arm()[0] == 0
+    rc2, out2 = synth.wait(IN1)
+    assert rc2 == 0, out2
+    receipt = json.loads(
+        (synth.control / 'linker-started.json').read_text(encoding='utf-8'))
+    assert str(synth.files['launcher']) in receipt['launch_argv']
     assert synth.launch_count() == 1

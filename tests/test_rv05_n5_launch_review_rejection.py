@@ -26,20 +26,19 @@ checkout, and every fixture is generated inside pytest tmp_path:
 The five environment variables remain as OPTIONAL overrides for binding
 the tools under test to other copies (values used verbatim when set):
 
-  PAL_RV05_N5_LAUNCH_DIR        dir with preflight-rv05.py (+ the launcher
-                               slot: launch-rv05.ps1)
+  PAL_RV05_N5_LAUNCH_DIR        dir with preflight-rv05.py + launch-rv05.ps1
   PAL_RV05_N5_REVIEW_DIR        dir with run_final_review.py
   PAL_RV05_N5_FROZEN_TREE       repo root with tests/support/soak_*.py
   PAL_RV05_N5_PYTHON            python.exe used to run the tools
   (PAL_RV05_N5_REHEARSAL_DIR is no longer consulted - the fixture is
    always generated; the name is accepted and ignored for compatibility.)
 
-Launcher integration slot (node N3): the launcher script launch-rv05.ps1
-is NOT part of the N2 delivery. The launcher cases below look for it at
-tools/soakctl/launch-rv05.ps1 (or $PAL_RV05_N5_LAUNCH_DIR/launch-rv05.ps1)
-and skip INDIVIDUALLY - never at module level - with an explicit reason
-while the slot is unfilled, so the other 30 cases always really execute.
-On non-Windows (no powershell) the same cases skip with a platform reason.
+Launcher (fix wave 2026-09-22): the launcher script launch-rv05.ps1 ships
+in this delivery at tools/soakctl/launch-rv05.ps1, so the nine launcher
+cases below really execute on Windows. They still skip INDIVIDUALLY -
+never at module level - with an explicit reason when the file is absent
+from a checkout (or PAL_RV05_N5_LAUNCH_DIR override) or on non-Windows
+(no powershell).
 
 Covered contracts (unchanged from the N5 original):
 
@@ -116,8 +115,8 @@ for _required in (PREFLIGHT_PY, REVIEW_PY, DRIVER_FILE, AUDIT_FILE,
             f'missing from this checkout: {_required} (broken delivery; '
             f'not skippable - check tools/soakctl/ and tests/support/)')
 
-# N3 integration slot: absent until the launcher lands; the launcher cases
-# skip individually (see require_launcher) instead of skipping the module.
+# Launcher location: ships in this delivery (fix wave); the launcher cases
+# skip individually (see require_launcher) when absent or off-Windows.
 LAUNCH_PS1 = (LAUNCH_DIR or SOAKCTL) / 'launch-rv05.ps1'
 
 LEGACY_PREFLIGHT_IDS = [
@@ -351,7 +350,20 @@ def control(tmp_path_factory):
     all-passing 10+-round single-segment campaign closed complete. This is
     the self-contained replacement for the old RV-04 rehearsal fixture
     copy; the driver runs only synthetic scenarios and cleans up after
-    itself. It is a test fixture build, not a soak launch."""
+    itself. It is a test fixture build, not a soak launch.
+
+    Timing margin (cross-review H1 fix): the driver closes the segment
+    only once BOTH minimum_valid_rounds TOTAL rounds have run AND
+    max_wall_seconds have elapsed, and rounds are paced by their own
+    duration whenever a round outlasts the 0.25 s period (a pytest-child
+    round costs ~1-3 s on a loaded host). With minimum_valid_rounds == the
+    >= 10 passed-round assertion the margin was ZERO: a single failed
+    round anywhere dropped the campaign below the review gate
+    (--min-distinct-inputs 10) and errored all 16 control-dependent cases.
+    Now the campaign runs 20 total rounds minimum (>= 10 passed tolerates
+    a 50 % failure rate) with a 10 s wall floor, so >= 10 passed holds
+    with real margin while the fixture still exercises a genuine complete
+    driver campaign."""
     drv = frozen_driver()
     base = tmp_path_factory.mktemp('n5ctl')
     target = base / 'synthetic_case.py'
@@ -372,7 +384,7 @@ def control(tmp_path_factory):
         'per_round_log_bytes': 1048576, 'max_stdout_bytes': 1048576,
         'max_stderr_bytes': 65536, 'max_evidence_bytes': 536870912,
         'max_repro_files': 100, 'minimum_volume_free_bytes': 0,
-        'minimum_valid_rounds': 10, 'max_wall_seconds': 2.5, 'workers': 1,
+        'minimum_valid_rounds': 20, 'max_wall_seconds': 10.0, 'workers': 1,
         'candidate': {'label': 'n5-rejection-selftest'},
         'scenario_manifest': str(manifest),
     }
@@ -589,11 +601,11 @@ def test_preflight_nogo_regression_legacy_window(synth, tmp_path):
 # --------------------------------------------------------------------------
 # launcher: duplicate-launch and lost-ack rejections (no launch ever occurs)
 # --------------------------------------------------------------------------
-# N3 INTEGRATION SLOT: these nine cases need launch-rv05.ps1, which is NOT
-# part of the N2 delivery (the launcher belongs to node N3). They look for
-# it at tools/soakctl/launch-rv05.ps1 (or $PAL_RV05_N5_LAUNCH_DIR) and skip
-# INDIVIDUALLY with an explicit reason until N3 lands it - the module never
-# skips wholesale, so the 30 self-contained cases above always really run.
+# These nine cases need launch-rv05.ps1, which ships in this delivery at
+# tools/soakctl/launch-rv05.ps1 (fix-wave placement; or the
+# $PAL_RV05_N5_LAUNCH_DIR override). They skip INDIVIDUALLY with an
+# explicit reason when it is absent from a checkout - the module never
+# skips wholesale, so the self-contained cases above always really run.
 # On non-Windows platforms (no powershell) the same cases skip with a
 # platform reason: the launcher is a Windows powershell script.
 

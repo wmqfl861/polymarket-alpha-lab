@@ -8,10 +8,11 @@ ships with placeholders only, and the 39-item N5 rejection test suite is
 self-contained (fixtures generated in pytest `tmp_path`, no environment
 variables required).
 
-What this package is NOT: it is not an execution authorization, not a
-launcher, and not a soak. The preflight is a READ-ONLY precondition
-checker; the final reviewer is a READ-ONLY terminal-state adjudicator.
-Constants everywhere: `official_cases_run=0`, `sandbox_started=false`,
+What this package is NOT: it is not an execution authorization and not a
+soak. The preflight is a READ-ONLY precondition checker; the final reviewer
+is a READ-ONLY terminal-state adjudicator; the launcher is a one-shot
+claim-first wrapper that refuses every second launch. Constants everywhere:
+`official_cases_run=0`, `sandbox_started=false`,
 `activation_authorized=false`. Phase 1 paper-only/report-only/readonly.
 
 ## Contents
@@ -21,10 +22,10 @@ Constants everywhere: `official_cases_run=0`, `sandbox_started=false`,
 | `preflight-rv05.py` | read-only 21-check (+5 candidate-binding checks when the spec carries a `binding` section) launch precondition checker; byte-identical copy of the PAL_RV05_CAPACITY_20260921 N5 parameterized preflight (sha256 `93542abb…e762f`) |
 | `run_final_review.py` | strict-caliber final reviewer with injectable identity (`--identity-json` / `--expected-*` / `--expect-*-schema`); distributable deltas vs the N5 working copy listed in its module docstring (frozen-tree default = this repo root; private runtime auto-candidate removed; placeholder usage text) |
 | `make_synthetic_terminal.py` | builds synthetic full-pass / snapshot-incomplete campaign copies for validating the reviewer (paths are explicit CLI args; recipe unchanged from the V3 builder) |
+| `launch-rv05.ps1` | one-shot claim-first launcher for the corrected 72h run (fix-wave placement; see "Launcher (one-shot, claim-first)" below) |
 | `launch-spec-template.json` | launch-spec skeleton for binding a future candidate; PLACEHOLDER values only — no real commits, hashes, PIDs or host paths |
 | `identity-template.json` | `--identity-json` skeleton for the reviewer; PLACEHOLDER values only |
 | `README.md` | this file |
-| *(N3 integration slot)* `launch-rv05.ps1` | **NOT in this delivery** — the launcher belongs to node N3 and is expected at this exact path; see "Launcher integration slot" below |
 
 Related tracked files (already in the repository, not part of this
 directory): `launch/config-rv05-final-template.json` (bound-config
@@ -121,17 +122,56 @@ python -I -B tools/soakctl/make_synthetic_terminal.py \
 Writes `synth-b-fullpass/` and `synth-b2-incomplete/` copies; exit 0 when
 the full-pass copy passes its integrity spot checks.
 
-## Launcher integration slot (node N3)
+## Launcher (one-shot, claim-first; fix-wave placement 2026-09-22)
 
-`launch-rv05.ps1` is deliberately NOT in this delivery: the launcher
-script is owned by node N3 (single-file write ownership; the Windows
-workflow yml and everything else here belong to N2). The expected
-landing path is `tools/soakctl/launch-rv05.ps1`, next to this README.
-The rejection suite's launcher cases discover it there (or via the
-optional `PAL_RV05_N5_LAUNCH_DIR` override) and skip individually —
-never module-wide — while the slot is unfilled. Once N3 lands the
-launcher, a fresh Windows checkout runs all 39 cases with zero
-environment setup.
+`tools/soakctl/launch-rv05.ps1` is the distributable placement of the
+corrected-72h one-shot launcher (previously WorkRoot-local only). The
+claim/receipt one-shot semantics are unchanged from the frozen V3/
+launch-final lineage: after the read-only preflight reaches GO and the
+planned campaign root is confirmed absent, a UNIQUE claim is written
+atomically BEFORE any directory creation or process start; if no completed
+receipt follows the claim, the launch state stays LOST-ACK/UNKNOWN (exit 6)
+— no automatic second launch, no claim recovery, no receipt rewrite. A
+valid completed receipt (v1 or v2, dry_run=false) refuses any second real
+launch (exit 3) before the preflight even runs. The script never touches
+the original campaign or any historical PID, never stops/kills/scans
+processes, and never runs the closeout (it only records the follow-up
+command in the receipt).
+
+Distributable parameter surface (the only deltas vs the launch-final copy):
+
+- `-SpecPath` is REQUIRED — there is no default (no host/personal path
+  ships in the file). Fill a copy of `launch-spec-template.json` per
+  candidate and pass it explicitly.
+- A RELATIVE `-SpecPath` resolves against this repository's root (the
+  script's grandparent directory), not the caller's working directory.
+- A preflight that cannot even be spawned (e.g. an unfilled template spec
+  with placeholder `python_exe`) fails closed as `PREFLIGHT_FAILED`,
+  exit 2 — same exit as any non-GO preflight.
+
+Usage (verified by really running it — see "Fix-wave verification" below):
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/soakctl/launch-rv05.ps1 `
+  -SpecPath <bound-launch-spec.json> -DryRun
+```
+
+`-DryRun` performs and prints everything except the launch: the read-only
+preflight still runs, the exact launch command / campaign / STOP / receipt
+paths are printed, nothing is created under the planned campaign root, no
+claim is written, no process is started. Against the AS-SHIPPED template
+the same command exits 2 at the preflight spawn (placeholders), which is
+the expected fail-closed behavior for an unfilled spec.
+
+Exit codes: 0 launched / dry-run OK; 2 preflight not GO, no report, or
+invalid invocation (missing `-SpecPath`); 3 duplicate launch refused;
+4 planned campaign root exists; 5 launched process exited within 8s;
+6 lost-ack (UNKNOWN launch state) refused.
+
+The rejection suite's nine launcher cases now find the launcher at this
+path (or via the optional `PAL_RV05_N5_LAUNCH_DIR` override) and really
+execute on Windows; on non-Windows they skip individually with a platform
+reason (never module-wide).
 
 ## Reproducible verification (what N2 actually ran, 2026-09-22)
 
@@ -162,6 +202,28 @@ The Windows CI workflow (`.github/workflows/windows-soak-contract.yml`)
 runs this suite on every PR touching it or `tools/soakctl/**` and asserts
 the module never skips wholesale (≥ 30 executed N5 cases, four named
 cases must run unskipped).
+
+## Fix-wave verification (2026-09-22, launcher placement + H1/M1)
+
+Really executed on the integration worktree (Windows, Git Bash, sanitized
+environment without any `PAL_RV05_N5_*` variables); outputs archived under
+`evidence/closure-fixwave/` on the controlling host:
+
+1. `launch-rv05.ps1` with no `-SpecPath` — USAGE message, exit 2, nothing
+   else runs.
+2. `launch-rv05.ps1 -SpecPath tools/soakctl/launch-spec-template.json
+   -DryRun`, invoked from the repo root AND from a different working
+   directory with the same relative path — both resolve the spec against
+   the repository root (identical absolute `--spec` path printed), fail
+   closed at the placeholder preflight spawn, exit 2, zero side effects.
+3. `launch-rv05.ps1 -SpecPath <filled NO_GO synthetic spec> -DryRun` —
+   read-only preflight runs and reports NO_GO, the full dry-run plan is
+   printed, exit 2, and only the spec-directed `preflight-last.json`
+   exists afterwards (no claim, no receipt, nothing under the planned
+   campaign root).
+4. `pytest -q tests/test_rv05_n5_launch_review_rejection.py` — 39 passed,
+   0 skipped, three consecutive sanitized runs green (control-fixture
+   timing margin hardened; see the fix-wave evidence for the arithmetic).
 
 ## Boundaries
 
