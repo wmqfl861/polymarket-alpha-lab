@@ -1372,3 +1372,83 @@ WP-02／WP-03 仍 PARTIAL，G2—G6 未关闭，V1 仍 1／6；无用户库、�
 **六包状态不变：仅 WP-01／G1 DONE；WP-02／WP-03／WP-05／WP-06 仍 PARTIAL，
 G2—G6 未关闭，V1 仍 1／6。** 本分支为本地提交不推送；无生产源码／SQL／依赖／
 工作流改动。
+
+
+## 47. RV05 控制安全轮证据追加：九反例、旧 arm 撤销与 SUT／控制身份分离（2026-09-22，G2—G6 全部保持未关闭）
+
+任务 PAL_RV05_CONTROL_SAFETY_20260922 节点 N5（既有操作交付与终审准备：文档纠偏与
+交付清单）。本节只按原 WP 编号登记本轮证据；**不改任何工作包状态，不把任何 G 门改
+DONE，不新增报告框架**。追加分支 `work/linker-safety-n5-c332ca12`，基点＝集成分支提交
+`b061b7d7ad51cd21d7a64c84eba0941a1fd08085`（tree
+`79ec2d7945f9dd2b492e243521e0c166f8fbebd0`，【实测】本节点 rev-parse 一致）。
+标注沿用 §46 口径：本节【实测】＝本节点 2026-09-22 只读查询（rev-parse／源码读取／
+证据文件读取）；【引用】＝协调者／CANCEL 车道／SETUP／各修复车道既有记录，本节点未重算。
+§46 中"ARMED_WAITING 未实现未部署"等表述已被本节事实取代（历史节保留原文不改）。
+
+### 控制安全轮跨 WP 前置事实（证据清单见 WorkRoot `evidence\n5\DELIVERY-CHECKLIST.md`）
+
+- **九反例复现**【引用 WorkRoot `assets\` + `evidence\historical-repro.json`，证据
+  存在与内容本节点【实测】读取】：2026-09-22T05:36Z，`repro_linker.py` 对旧控制包
+  linker（SHA256 `1e1edfd4a90d5f57ab0e4845859e18ed3a30b9f6dd14a4ed3d2d084fe6709965`）
+  退出码 **3**，**9/9 反例复现、5 项对照通过**（RC 3／9／5）。反例：L1
+  cancel_during_preflight、L2 expired_during_preflight、L3
+  failed_receipt_heals_to_started、L4 zero_exit_missing_campaign_started、L5
+  unpinned_command_membership、L6 execution_policy_bypass_accepted、L7
+  oversize_prefix_accepted、L8 openprocess_null_reported_dead、L9
+  wait_failed_reported_dead。RED＝历史缺陷存在的证明，**不是**软件验收。
+- **旧 arm 撤销**【引用 `C:\Users\Joyce Gu\pal-rv05-caaa8b5b\evidence\control-safety-cancel\`】：
+  旧 arm 2026-09-22T04:26:39Z（ARMED_WAITING）经七项前置核对后于 05:35:29Z
+  CANCELLED（operator_cancel，cancel 退出码 0，未重试）；wait 进程 74784 观察
+  CANCELLED 后自行退出；两层 claim／receipt 从未写入（槽位未消费）；原 campaign 与
+  三 PID（62420／20372／98500）只读未动。
+- **L1—L9 修复**【引用各修复车道；修复提交 SHA 待集成波回填，占位 `{PENDING}`】：
+  L1—L4＝N1（`tests/support/soak_linker.py` 单写者：preflight 后重读
+  cancel／clock／binding／fresh report、claim 短写拒绝、failed/unknown 回执不升级、
+  两层合计至多一次已接受启动尝试）提交 `{PENDING}`；L5—L6＝N2
+  （`tools/soakctl` launcher：封闭 argv＋显式 cwd/env、无 policy bypass、两层
+  最后安全点复查、回执身份；含移除 README Bypass 示例）提交 `{PENDING}`；
+  L7—L9＝N3（Windows helper 有界记录子补丁：max+1 拒绝、重复键／类型拒绝、
+  argtypes/restype 声明、三态结果、64 位句柄、逐次 CloseHandle；子补丁经独立分支
+  交 N1）提交 `{PENDING}`；回归＝N4（`tests/test_soak_linker_review.py` 迁移九反例
+  为正确断言＋合法对照；真实 Windows 句柄／权限／preflight-cancel-returncode 子进程
+  组合；Windows 工作流加入 linker 模块，保留原 20＋39 与平台用例）提交 `{PENDING}`。
+- **容量 151552 复用不重做声明**：既有容量证据（排程算术 74×2048=151552＋W4a 有限
+  试验 6144）在 SUT 目标字节不变（`b061b7d7`）期间不重做；本轮全部修复仅控制面。
+  若受测代码（driver／generator／audit／families／manifest／runtime）实际变更，仅按
+  受影响范围重冻重验；旧 soak 时长不转移。Windows 当前证据 456 passed 且
+  linker_cases=0，linker 的 Windows 实测证明必须**新增**（N4），不得假设。
+- **SUT／控制身份分离原则**：新控制包将**分别绑定 SUT_SHA 与 CONTROL_SHA**（另
+  CONFIG_SHA／RUNTIME 身份由 N0 出具）；控制包变更不触碰 SUT 身份；绑定禁
+  Bypass／合成时钟（--now-utc 等）／占位符／身份漂移；修复版重 arm 遵守
+  `evidence\n5\DELIVERY-CHECKLIST.md` 所列前置（旧 wait 真实身份退出、两层槽位
+  未消费、新控制通过真实门禁、单一在跑 linker、窗口
+  2026-09-24T02:14:50Z–12:36:41Z，错过即 NOT_STARTED 无第三次长测）。
+
+### 分 WP 登记
+
+- **WP-02（真实模型与预算）**：无变化。`official_cases_run=0` 不变；本轮无真实模型、
+  凭据、行情或订单操作。
+- **WP-03（任务调度与恢复）**：原 72h 观察仍在跑且只读未动【引用 cancel 证据 05:36–
+  05:37Z 复核：三 PID 存活、身份不变、driver.log 正常滚动】；修正 72h 的衔接器控制面
+  进入修复轮（旧 arm 已撤销，修复版待重 arm）；发射不变量统一为"至多一次已接受启动
+  尝试；确认丢失可能 UNKNOWN"。
+- **WP-04（结算闭环）**：不涉及。无结算／确认操作。
+- **WP-05（研究到模拟评估）**：W4a 6144 行证据不变；容量复用声明见上（151552 不重做，
+  完整执行仍属长测轮，不在本轮）。
+- **WP-06（操作与发布收尾）**：本轮交付＝`docs/operations/soak-operations.md` 纠偏
+  （废弃 Bypass 示例、§2.2 ARMED_WAITING 新版本记录、新增 §2.5 控制安全轮记录、
+  全局措辞更正）＋本节＋WorkRoot `evidence\n5\DELIVERY-CHECKLIST.md`。可分发包修复
+  （README Bypass 移除、argv 结构校验）属 N2／集成波；Windows linker CI 用例清单属
+  N4／集成波，均不在本分支完成，本节不代其声称。
+
+### 本节不能声称的事项（边界声明）
+
+真实模型（`official_cases_run=0`）、用户业务库读写、本机原生 DB 验收、WP-04 人工核验
+结算、完整 151552 容量执行、修复版重 arm 与发射本身、linker 修复的 Windows CI 证明
+均**未发生／未验收**；所有修复提交 SHA 为 `{PENDING}` 占位，以集成波实测回填为准；
+原 soak 时长与旧候选 CI 绿标不转移。常量 `official_cases_run=0`、
+`sandbox_started=false`、`activation_authorized=false`。
+
+**六包状态不变：仅 WP-01／G1 DONE；WP-02／WP-03／WP-05／WP-06 仍 PARTIAL，
+G2—G6 未关闭，V1 仍 1／6。** 本分支为本地提交不推送；除两份文档外无源码／SQL／
+依赖／工作流改动。
