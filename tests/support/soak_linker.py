@@ -189,6 +189,7 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import math
 import os
 import re
 import subprocess
@@ -315,29 +316,89 @@ def _sha256_file(path: Path) -> str | None:
 
 
 def _read_capped(path: Path, max_bytes: int = RECORD_MAX_BYTES):
-    """Bounded binary read -> bytes | None(absent) | 'UNREADABLE'."""
+    """Bounded binary read -> bytes | None(absent) | 'UNREADABLE' |
+    'OVER_LIMIT'.
+
+    Reads max_bytes PLUS ONE probe byte: a file larger than the cap is
+    REJECTED as 'OVER_LIMIT', never truncated-and-parsed. Without the
+    probe, a legal JSON prefix of exactly max_bytes followed by an
+    illegal tail was silently truncated to the prefix and accepted as
+    the complete record (L7)."""
     try:
         with open(path, 'rb') as handle:
-            return handle.read(max_bytes)
+            raw = handle.read(max_bytes + 1)
     except FileNotFoundError:
         return None
     except OSError:
         return 'UNREADABLE'
+    if len(raw) > max_bytes:
+        return 'OVER_LIMIT'
+    return raw
+
+
+def _reject_record_duplicate_keys(pairs):
+    seen = {}
+    for key, value in pairs:
+        if key in seen:
+            raise ValueError(f'duplicate JSON key: {key}')
+        seen[key] = value
+    return seen
+
+
+def _reject_nonstandard_constant(name):
+    # json calls this only for NaN / Infinity / -Infinity literals.
+    raise ValueError(f'non-standard numeric constant rejected: {name}')
+
+
+def _reject_nonfinite_floats(doc):
+    # Strict JSON has no non-finite numbers; a legal-looking exponent
+    # such as 1e999 parses to float inf and is rejected after the fact.
+    stack = [doc]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, float):
+            if not math.isfinite(node):
+                raise ValueError('non-finite float value rejected')
+        elif isinstance(node, dict):
+            stack.extend(node.values())
+        elif isinstance(node, list):
+            stack.extend(node)
+    return doc
 
 
 def _read_json_record(path: Path):
     """-> (doc | None, reason) with reason in {'', 'absent', 'unreadable',
-    'invalid'}; never raises. Distinguishes absent from unreadable so a
-    permission problem stays UNKNOWN instead of looking like a clean exit."""
+    'over_limit', 'invalid'}; never raises. Distinguishes absent from
+    unreadable so a permission problem stays UNKNOWN instead of looking
+    like a clean exit. Strict parse (L7): duplicate keys at any depth,
+    NaN/Infinity/-Infinity constants, non-finite floats and non-object
+    top levels are 'invalid' (a non-object doc would otherwise crash
+    read_state with AttributeError). 'over_limit' is its own reason so
+    an over-cap file can never be laundered into absent/invalid
+    handling."""
     raw = _read_capped(path)
     if raw is None:
         return None, 'absent'
     if raw == 'UNREADABLE':
         return None, 'unreadable'
+    if raw == 'OVER_LIMIT':
+        return None, 'over_limit'
     try:
-        return json.loads(raw.decode('utf-8')), ''
-    except (ValueError, UnicodeDecodeError):
+        text = raw.decode('utf-8')
+    except UnicodeDecodeError:
         return None, 'invalid'
+    try:
+        doc = json.loads(
+            text,
+            object_pairs_hook=_reject_record_duplicate_keys,
+            parse_constant=_reject_nonstandard_constant)
+        _reject_nonfinite_floats(doc)
+    except (ValueError, RecursionError):
+        # RecursionError: pathological nesting depth in the C scanner.
+        return None, 'invalid'
+    if not isinstance(doc, dict):
+        return None, 'invalid'
+    return doc, ''
 
 
 def _atomic_write_json(path: Path, doc) -> None:
@@ -360,26 +421,183 @@ def _looks_like_placeholder(value) -> bool:
     return any(p.search(text) for p in _PLACEHOLDER_PATTERNS)
 
 
+# Win32 constants for the read-only process probes (full ABI below).
+_WIN_SYNCHRONIZE = 0x00100000
+_WIN_QUERY_LIMITED = 0x1000
+_WIN_WAIT_OBJECT_0 = 0
+_WIN_WAIT_TIMEOUT = 258
+_WIN_WAIT_FAILED = 0xFFFFFFFF
+_WIN_ERROR_ACCESS_DENIED = 5
+_WIN_ERROR_INVALID_PARAMETER = 87
+
+_WIN_ABI = None  # lazy (kernel32, FILETIME-class) with the ABI applied
+
+
+def _win_kernel32():
+    """-> (kernel32, FILETIME class); kernel32 loaded with
+    use_last_error=True and the COMPLETE ctypes ABI declared for every
+    Win32 function used (OpenProcess / WaitForSingleObject / CloseHandle
+    / GetProcessTimes / GetLastError).
+
+    Undeclared restype defaults to C int: a 64-bit HANDLE return would
+    be truncated and WAIT_FAILED (0xFFFFFFFF) would arrive as -1.
+    use_last_error=True + ctypes.get_last_error() is the race-free
+    GetLastError snapshot (a later direct GetLastError call can observe
+    a clobbered slot); GetLastError is still ABI-declared for
+    completeness."""
+    global _WIN_ABI
+    if _WIN_ABI is None:
+        import ctypes
+
+        class _FT(ctypes.Structure):
+            _fields_ = [('lo', ctypes.c_uint32), ('hi', ctypes.c_uint32)]
+
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32.OpenProcess.argtypes = [ctypes.c_uint32,  # access
+                                         ctypes.c_int,     # inherit
+                                         ctypes.c_uint32]  # pid
+        kernel32.OpenProcess.restype = ctypes.c_void_p      # HANDLE, 64-bit
+        kernel32.WaitForSingleObject.argtypes = [ctypes.c_void_p,
+                                                 ctypes.c_uint32]
+        kernel32.WaitForSingleObject.restype = ctypes.c_uint32  # unsigned
+        kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+        kernel32.CloseHandle.restype = ctypes.c_int
+        kernel32.GetProcessTimes.argtypes = [
+            ctypes.c_void_p, ctypes.POINTER(_FT), ctypes.POINTER(_FT),
+            ctypes.POINTER(_FT), ctypes.POINTER(_FT)]
+        kernel32.GetProcessTimes.restype = ctypes.c_int
+        kernel32.GetLastError.argtypes = []
+        kernel32.GetLastError.restype = ctypes.c_uint32
+        _WIN_ABI = (kernel32, _FT)
+    return _WIN_ABI
+
+
+def _win_classify_openprocess_error(code: int) -> str:
+    """Reason for an OpenProcess NULL. Every failure shape -> unknown."""
+    if code == _WIN_ERROR_ACCESS_DENIED:
+        return (f'openprocess_access_denied({_WIN_ERROR_ACCESS_DENIED}): '
+                'permission unknown; no elevation attempted')
+    if code == _WIN_ERROR_INVALID_PARAMETER:
+        return (f'openprocess_invalid_parameter'
+                f'({_WIN_ERROR_INVALID_PARAMETER}): possibly nonexistent '
+                'pid; NOT trusted exit evidence')
+    return f'openprocess_null:gle={code}'
+
+
+def _win_liveness(pid, dll=None, get_error=None):
+    """Windows tri-state liveness for ONE pid -> (state, reason) with
+    state in {'alive', 'dead', 'unknown'}.
+
+    ONLY WaitForSingleObject == WAIT_OBJECT_0 (the process object is
+    signaled) proves exit; WAIT_TIMEOUT (258) means alive. OpenProcess
+    NULL (classified by GetLastError; access denied stays a permission
+    unknown and is NEVER escalated - this probe does not raise
+    privileges), WAIT_FAILED, unexpected codes and call errors are all
+    unknown: a failed query can never fabricate an exit (L8/L9).
+
+    Handle ownership: the handle OpenProcess returned is closed exactly
+    once (finally); a NULL is never closed; a failed wait does NOT free
+    the handle, so the close still runs; a CloseHandle failure is
+    recorded without a second attempt. dll/get_error are the injection
+    seam for tests (fakes record calls)."""
+    if type(pid) is not int or pid <= 0:
+        return 'unknown', 'invalid_pid'
+    real_dll = dll is None
+    if dll is None:
+        dll, _ft = _win_kernel32()
+    if get_error is None:
+        import ctypes
+        get_error = (ctypes.get_last_error if real_dll
+                     else (lambda: getattr(dll, 'last_error', 0)))
+    try:
+        handle = dll.OpenProcess(_WIN_SYNCHRONIZE, 0, pid)
+    except OSError as error:
+        return 'unknown', f'openprocess_error:{error}'
+    if not handle:
+        try:
+            code = int(get_error())
+        except (TypeError, ValueError):
+            code = -1
+        return 'unknown', _win_classify_openprocess_error(code)
+    try:
+        status = dll.WaitForSingleObject(handle, 0)
+        if status == _WIN_WAIT_TIMEOUT:
+            return 'alive', 'wait_timeout(258)'
+        if status == _WIN_WAIT_OBJECT_0:
+            return 'dead', 'wait_object_0(0): process object signaled'
+        if status == _WIN_WAIT_FAILED:
+            try:
+                code = int(get_error())
+            except (TypeError, ValueError):
+                code = -1
+            return 'unknown', f'wait_failed(0xFFFFFFFF):gle={code}'
+        return 'unknown', f'wait_unexpected:{status!r}'
+    except OSError as error:
+        return 'unknown', f'wait_error:{error}'
+    finally:
+        try:
+            dll.CloseHandle(handle)
+        except OSError:
+            pass
+
+
+def _win_start_utc(pid, dll=None, get_error=None):
+    """Windows creation time for ONE pid -> aware UTC datetime | None
+    (unknown). Full ABI; OpenProcess NULL or a failed GetProcessTimes
+    is unknown (never a fabricated timestamp); same no-elevation and
+    single-close rules as _win_liveness."""
+    if type(pid) is not int or pid <= 0:
+        return None
+    import ctypes
+    real_dll = dll is None
+    if dll is None:
+        dll, ft_class = _win_kernel32()
+    else:
+        class _FT(ctypes.Structure):  # injection-seam FILETIME
+            _fields_ = [('lo', ctypes.c_uint32), ('hi', ctypes.c_uint32)]
+        ft_class = _FT
+    if get_error is None:
+        get_error = (ctypes.get_last_error if real_dll
+                     else (lambda: getattr(dll, 'last_error', 0)))
+    try:
+        handle = dll.OpenProcess(_WIN_QUERY_LIMITED, 0, pid)
+    except OSError:
+        return None
+    if not handle:
+        return None  # any error code stays unknown; no elevation
+    try:
+        creation, exit_t, kernel_t, user_t = (ft_class(), ft_class(),
+                                              ft_class(), ft_class())
+        ok = dll.GetProcessTimes(handle, creation, exit_t,
+                                 kernel_t, user_t)
+        if not ok:
+            return None
+        total = (creation.hi << 32) | creation.lo
+        if total == 0:
+            return None
+        unix = total / 1e7 - 11644473600.0
+        return _dt.datetime.fromtimestamp(unix, _dt.timezone.utc)
+    except (OSError, AttributeError, TypeError):
+        return None
+    finally:
+        try:
+            dll.CloseHandle(handle)
+        except OSError:
+            pass
+
+
 def _pid_alive(pid) -> bool | None:
     """Read-only liveness probe for ONE recorded PID (same contract as the
     frozen driver's helper; None = unknown)."""
     if type(pid) is not int or pid <= 0:
         return None
     if os.name == 'nt':
-        try:
-            import ctypes
-            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-            handle = kernel32.OpenProcess(0x00100000, False, pid)
-            if not handle:
-                return False
-            try:
-                status = kernel32.WaitForSingleObject(
-                    ctypes.c_void_p(handle), 0)
-                return status == 258
-            finally:
-                kernel32.CloseHandle(ctypes.c_void_p(handle))
-        except OSError:
-            return None
+        state, _reason = _win_liveness(pid)
+        if state == 'alive':
+            return True
+        if state == 'dead':
+            return False
+        return None
     try:
         os.kill(pid, 0)
         return True
@@ -401,33 +619,7 @@ def _process_start_utc(pid) -> _dt.datetime | None:
     if type(pid) is not int or pid <= 0:
         return None
     if os.name == 'nt':
-        try:
-            import ctypes
-
-            class _FT(ctypes.Structure):
-                _fields_ = [('lo', ctypes.c_uint32), ('hi', ctypes.c_uint32)]
-
-            kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-            handle = kernel32.OpenProcess(0x1000, False, pid)
-            if not handle:
-                return None
-            try:
-                creation, exit_t, kernel_t, user_t = (_FT(), _FT(), _FT(),
-                                                      _FT())
-                if not kernel32.GetProcessTimes(
-                        ctypes.c_void_p(handle),
-                        ctypes.byref(creation), ctypes.byref(exit_t),
-                        ctypes.byref(kernel_t), ctypes.byref(user_t)):
-                    return None
-                total = (creation.hi << 32) | creation.lo
-                if total == 0:
-                    return None
-                unix = total / 1e7 - 11644473600.0
-                return _dt.datetime.fromtimestamp(unix, _dt.timezone.utc)
-            finally:
-                kernel32.CloseHandle(ctypes.c_void_p(handle))
-        except OSError:
-            return None
+        return _win_start_utc(pid)
     try:
         fields = Path(f'/proc/{pid}/stat').read_text(
             encoding='utf-8').rsplit(')', 1)[1].split()
@@ -493,9 +685,16 @@ def load_binding(binding_path: Path) -> dict:
     text = _read_capped(binding_path, 1024 * 1024)
     if text is None or text == 'UNREADABLE':
         raise BindingError(f'binding manifest unreadable: {binding_path}')
+    if text == 'OVER_LIMIT':
+        # over-limit probe: a 1 MiB+ manifest is rejected, never
+        # truncated to a legal prefix and parsed (L7).
+        raise BindingError(f'binding manifest exceeds the 1 MiB '
+                           f'bounded-read limit: {binding_path}')
     try:
         binding = json.loads(text.decode('utf-8'),
-                             object_pairs_hook=_no_duplicate_keys)
+                             object_pairs_hook=_no_duplicate_keys,
+                             parse_constant=_reject_nonstandard_constant)
+        _reject_nonfinite_floats(binding)
     except (ValueError, UnicodeDecodeError) as error:
         raise BindingError(f'binding manifest invalid JSON: {error}') from error
     if not isinstance(binding, dict):
@@ -663,7 +862,7 @@ def classify_original(campaign: Path, stability_seconds: int, now: _dt.datetime)
     lock, lock_reason = _read_json_record(lock_path)
     if lock_reason == 'absent':
         pass  # released on clean exit (driver _release_lock unlinks) -> fall through
-    elif lock_reason in ('unreadable', 'invalid'):
+    elif lock_reason in ('unreadable', 'invalid', 'over_limit'):
         return 'UNKNOWN', f'lock_{lock_reason}', {
             'driver_lock': f'present but {lock_reason}',
             'note': 'cannot confirm the original run state; UNKNOWN, no '
@@ -731,7 +930,7 @@ def classify_original(campaign: Path, stability_seconds: int, now: _dt.datetime)
             scanned_segments += 1
             close = seg / 'segment-close.json'
             doc, reason = _read_json_record(close)
-            if reason in ('unreadable', 'invalid'):
+            if reason in ('unreadable', 'invalid', 'over_limit'):
                 corrupted.append(f'{seg.name}/segment-close.json:{reason}')
             elif reason == 'absent':
                 unclosed.append(seg.name)
@@ -753,7 +952,7 @@ def classify_original(campaign: Path, stability_seconds: int, now: _dt.datetime)
                     continue
                 scanned_rounds += 1
                 record, rreason = _read_json_record(rd / 'round.json')
-                if rreason in ('unreadable', 'invalid'):
+                if rreason in ('unreadable', 'invalid', 'over_limit'):
                     corrupted.append(f'{rd}/round.json:{rreason}')
                     continue
                 if rreason == 'absent':
@@ -845,10 +1044,16 @@ class Linker:
         doc, reason = _read_json_record(self.state_path)
         if reason == 'unreadable':
             raise Refused('state file exists but is unreadable - manual '
-                         'adjudication required')
+                          'adjudication required')
+        if reason == 'over_limit':
+            # an over-cap state file must NOT fall through to "not
+            # armed" (which would permit a re-arm over it); it stays a
+            # manual-adjudication refusal.
+            raise Refused('state file exceeds the 64 KiB bounded-record '
+                          'limit - manual adjudication required')
         if reason == 'invalid':
             raise Refused('state file is not valid JSON - manual '
-                         'adjudication required')
+                          'adjudication required')
         return doc
 
     def read_state(self) -> dict:
@@ -1014,7 +1219,7 @@ class Linker:
             return None, 'no_claim_no_receipt'
         if reason == 'absent':
             return None, 'receipt_absent_after_claim'
-        if reason in ('unreadable', 'invalid'):
+        if reason in ('unreadable', 'invalid', 'over_limit'):
             return None, f'receipt_{reason}'
         defect = self._receipt_identity_defect(doc, claim)
         if defect:
@@ -1473,6 +1678,9 @@ class Linker:
         # 4. operator cancel (linker-OWN marker; campaigns untouched)
         if self.stop_path.exists():
             note = ''
+            # existence is the operative (conservative) fact; the note
+            # is cosmetic. isinstance(bytes) excludes the sentinels,
+            # so an over-limit or unreadable marker still cancels.
             raw = _read_capped(self.stop_path, 4096)
             if isinstance(raw, bytes):
                 note = raw.decode('utf-8', 'replace')[:200].strip()
@@ -1606,7 +1814,7 @@ class Linker:
             return EXIT_UNKNOWN, False
         report, rreason = _read_json_record(report_path)
         if proc.returncode != 0 or rreason in ('unreadable', 'invalid',
-                                               'absent') \
+                                               'over_limit', 'absent') \
                 or not isinstance(report, dict):
             self._record_check(state, 'UNKNOWN',
                                f'preflight_report_invalid:{rreason}',
