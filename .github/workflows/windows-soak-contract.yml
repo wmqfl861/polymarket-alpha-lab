@@ -5,6 +5,8 @@ on:
     paths:
       - 'tests/support/soak*.py'
       - 'tests/test_soak*.py'
+      - 'tests/test_soak_linker.py'
+      - 'tests/test_soak_linker_review.py'
       - 'tests/test_px02_gap_regressions.py'
       - 'tests/test_research_cross_module_composition.py'
       - 'tests/test_research_exec_boundaries.py'
@@ -49,6 +51,8 @@ jobs:
             'tests/test_soak_driver_subinput.py',
             'tests/test_soak_audit_subinputs.py',
             'tests/test_soak_fault_contracts.py',
+            'tests/test_soak_linker.py',
+            'tests/test_soak_linker_review.py',
             'tests/test_px02_gap_regressions.py',
             'tests/test_research_cross_module_composition.py',
             'tests/test_research_exec_boundaries.py',
@@ -101,6 +105,49 @@ jobs:
               hits = [c for c in cases if (c.get('classname'), c.get('name')) == pair]
               assert len(hits) == 1, ('missing or duplicate required N5 case', pair)
               assert hits[0].find('skipped') is None, ('required N5 case skipped', pair)
+          # RV05 linker safety (PAL_RV05_CONTROL_SAFETY_20260922 N4): the
+          # linker contract modules must actually execute on this Windows
+          # runner - the historical 20 synthetic linker tests were never in
+          # this selection (456 passed with linker_cases=0), and the N4
+          # review module adds the nine-counterexample regressions, legal
+          # controls and the Win32 real-interface/fault-injection groups.
+          # The review module groups its cases in classes, so its junit
+          # classnames are class-qualified (prefix match); the historical
+          # linker module uses top-level functions (exact classname).
+          linker_legacy = [c for c in cases
+                           if c.get('classname') == 'tests.test_soak_linker']
+          assert linker_legacy, ('linker contract module missing from the '
+                                 'inventory (module-level skip is forbidden)')
+          legacy_executed = [c for c in linker_legacy
+                             if c.find('skipped') is None]
+          assert len(legacy_executed) >= 20, (
+              'the 20 historical linker contract cases must actually execute '
+              'on Windows', len(legacy_executed))
+          review = [c for c in cases if (c.get('classname') or '').startswith(
+              'tests.test_soak_linker_review')]
+          assert review, ('linker review module missing from the inventory '
+                          '(module-level skip is forbidden)')
+          review_executed = [c for c in review if c.find('skipped') is None]
+          assert len(review_executed) >= 30, (
+              'linker review cases must actually execute on Windows',
+              len(review_executed))
+          for required_name in {
+              'test_l1_cancel_during_preflight_blocks_launch',
+              'test_l2_window_expired_during_preflight_blocks_launch',
+              'test_l3_nonzero_launch_stays_failed_on_rewait',
+              'test_l4_rc0_without_campaign_is_unknown',
+              'test_l5_unrelated_command_with_pinned_name_rejected',
+              'test_l6_execution_policy_bypass_rejected',
+              'test_l7_oversize_valid_prefix_rejected',
+              'test_l8_openprocess_null_is_unknown',
+              'test_l9_wait_failed_is_unknown',
+              'test_real_alive_process_probed_alive',
+          }:
+              hits = [c for c in review if c.get('name') == required_name]
+              assert len(hits) == 1, ('missing or duplicate required linker '
+                                      'review case', required_name)
+              assert hits[0].find('skipped') is None, (
+                  'required linker review case skipped', required_name)
           print('BOTH_WINDOWS_OWNERSHIP_CASES_EXECUTED_AND_PASSED')
           print('N5_REJECTION_SUITE_EXECUTED', len(n5_executed), 'OF', len(n5))
           '@
