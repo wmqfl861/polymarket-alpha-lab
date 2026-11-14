@@ -422,6 +422,7 @@ print(json.dumps(out, ensure_ascii=True, allow_nan=False))
 # never zero; the emit itself can never mask or replace the business
 # exception.
 _SEED_FAILURE_DIAGNOSTICS = r'''
+from collections import deque as _deque
 import json as _json
 from pathlib import Path as _Path
 import re as _re
@@ -460,14 +461,17 @@ def _seed_diag_file(filename, root):
 
 
 def _seed_diag_frames(tb, root):
-    """Innermost first and bounded: the decisive bind frame is innermost."""
-    frames = []
-    while tb is not None and len(frames) < 8:
+    """Innermost first and bounded: walk the FULL chain and keep the
+    innermost (tail) 8 frames (codex DECISION 3 / R03-fix REV3).  tb
+    runs outermost-first, so a bounded head slice would drop the
+    decisive bind frame on long chains."""
+    frames = _deque(maxlen=8)
+    while tb is not None:
         code = tb.tb_frame.f_code
         frames.append([_seed_diag_file(code.co_filename, root),
                        code.co_name, tb.tb_lineno])
         tb = tb.tb_next
-    return frames
+    return list(reversed(frames))
 
 
 def _seed_diag_chain(exc):
@@ -1040,6 +1044,72 @@ def _observe_old_seed_exit(rig) -> None:
     print('OLD_SEED_AFTER_CHILD_EXIT OWNER_UNKNOWN', 'tcp=' + tcp, 'tcp6=' + tcp6)
 
 
+def _seed_wait_local_time_wait(value):
+    """Local TIME_WAIT count from one _old_seed_tcp_counts result."""
+    if value == 'UNAVAILABLE':
+        return None
+    return json.loads(value).get('local', {}).get('TIME_WAIT', 0)
+
+
+def _wait_for_seed_port_ready(rig, *, budget_s=90.0, interval_s=1.0,
+                              _clock=None, _sleep=None):
+    """Bounded readiness wait (codex DECISION 4): proceed with the one
+    original seed run only once the task port has no local TIME_WAIT.
+
+    UNKNOWN ('UNAVAILABLE') is never treated as zero; timeout and
+    indeterminate /proc input fail honestly via pytest.fail before any
+    seed child is started.  Only the task port is queried; the two
+    snapshot lines are whitelisted evidence (counts, port, elapsed)."""
+    clock = _clock or time.monotonic
+    sleep = _sleep or time.sleep
+    port = rig['port']
+
+    def snapshot():
+        return (_old_seed_tcp_counts(Path('/proc/net/tcp'), port),
+                _old_seed_tcp_counts(Path('/proc/net/tcp6'), port))
+
+    started = clock()
+    tcp, tcp6 = snapshot()
+    print(f'OLD_SEED_WAIT_BEFORE port={port} tcp={tcp} tcp6={tcp6} '
+          f'monotonic_ns={time.monotonic_ns()}')
+    deadline = started + budget_s
+    while True:
+        left = _seed_wait_local_time_wait(tcp)
+        left6 = _seed_wait_local_time_wait(tcp6)
+        if left is None or left6 is None:
+            pytest.fail('OLD_SEED_WAIT_UNAVAILABLE port=' + str(port)
+                        + ' waited_s=' + format(clock() - started, '.3f')
+                        + ' tcp=' + str(tcp) + ' tcp6=' + str(tcp6)
+                        + ' (UNKNOWN is never treated as zero; seed not '
+                          'started)')
+        if left == 0 and left6 == 0:
+            break
+        if clock() >= deadline:
+            pytest.fail('OLD_SEED_WAIT_TIMEOUT port=' + str(port)
+                        + ' budget_s=' + str(budget_s)
+                        + ' waited_s=' + format(clock() - started, '.3f')
+                        + ' tcp=' + str(tcp) + ' tcp6=' + str(tcp6)
+                        + ' (local TIME_WAIT did not clear; seed not '
+                          'started)')
+        sleep(interval_s)
+        tcp, tcp6 = snapshot()
+    print(f'OLD_SEED_WAIT_AFTER port={port} tcp={tcp} tcp6={tcp6} '
+          f'elapsed_s={format(clock() - started, ".3f")}')
+
+
+def _echo_seed_child_stderr(result):
+    """Verbatim child stderr echo before the failing assertion (codex C).
+
+    Called from _old_payload's seed failure branch BEFORE the provenance
+    assert, so the missing-marker mode (which raises inside _old_payload)
+    still shows the full child stderr despite pytest assertion
+    truncation.  Same source text as _stderr_text(result); success paths
+    never print."""
+    print('OLD_SEED_CHILD_STDERR_BEGIN')
+    print(_stderr_text(result))
+    print('OLD_SEED_CHILD_STDERR_END')
+
+
 def _old_payload(rig, name: str, text: str, *arguments, timeout: int = 900):
     payload = _payload_file(rig, name, text)
     result = _run([rig['python'], '-I', '-B', '-c', _OLD_RUNNER, str(rig['old_source']),
@@ -1047,6 +1117,7 @@ def _old_payload(rig, name: str, text: str, *arguments, timeout: int = 900):
     if name == 'seed.py':
         try:
             if result.returncode != 0 or 'PAYLOAD_SOURCE_OK' not in _stderr_text(result):
+                _echo_seed_child_stderr(result)
                 _observe_old_seed_exit(rig)
         except BaseException:
             pass  # Observation cannot replace the existing provenance assertion.
@@ -1087,6 +1158,7 @@ def initialize_and_seed_with_old_source(rig) -> None:
     assert _blocked_reason(refused) == 'project_postgres_existing_data_not_reinitialized'
     status = _old_cli(rig, '--root', str(original), 'status')
     assert _json_stdout(status)['status'] == 'stopped'
+    _wait_for_seed_port_ready(rig)
     seeded = _old_payload(rig, 'seed.py', _SEED_PAYLOAD, str(original), str(rig['port']))
     assert seeded.returncode == 0, _stderr_text(seeded)
     records = _json_stdout(seeded)
@@ -2179,3 +2251,239 @@ def test_seed_payload_invalid_port_marks_port_unavailable(
     assert isinstance(failure, _FakeProjectDatabaseError)
     line = _seed_diag_marker(err)
     assert 'tcp=PORT_UNAVAILABLE' in line and 'tcp6=PORT_UNAVAILABLE' in line
+
+
+# ----------------------------------------------------------------------------
+# R03-fix: bounded pre-seed TIME_WAIT readiness wait, verbatim failure echo
+# (offline probes; no native bind, no SQL, no PG).
+# ----------------------------------------------------------------------------
+
+
+class _FakeClock:
+    def __init__(self, values):
+        self._values = iter(values)
+
+    def __call__(self):
+        return next(self._values)
+
+
+def _seed_wait_clean():
+    return b'sl local_address rem_address st\n'
+
+
+def _seed_wait_clean6():
+    return b'sl local_address remote_address st\n'
+
+
+def _seed_wait_busy(count):
+    rows = ['sl local_address rem_address st']
+    for index in range(count):
+        rows.append('0: 0100007F:9C40 0100007F:9C4' + str(index % 10)
+                    + ' 06 PRIVATE_SENTINEL')
+    return ('\n'.join(rows) + '\n').encode('ascii')
+
+
+def _seed_wait_proc(monkeypatch, script):
+    """Serve scripted /proc/net/tcp{,6} contents to Path.open in order."""
+    import io
+    served = iter(script)
+    real_open = Path.open
+
+    def opened(path, mode='rb', *args, **kwargs):
+        text = str(path)
+        if text.startswith('/proc/net/tcp'):
+            suffix, content = next(served)
+            assert text == '/proc/net/' + suffix, text
+            return io.BytesIO(content)
+        return real_open(path, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, 'open', opened)
+
+
+def _seed_wait_rig():
+    return _Rig(port=40000)
+
+
+def test_seed_wait_zero_proceeds_immediately(monkeypatch, capsys):
+    _seed_wait_proc(monkeypatch, [('tcp', _seed_wait_clean()),
+                                  ('tcp6', _seed_wait_clean6())])
+    sleeps = []
+
+    def fake_sleep(seconds):
+        sleeps.append(seconds)
+
+    _wait_for_seed_port_ready(_seed_wait_rig(), _clock=_FakeClock([0.0, 0.0]),
+                              _sleep=fake_sleep)
+    assert sleeps == []
+    out = capsys.readouterr().out
+    assert 'OLD_SEED_WAIT_BEFORE port=40000' in out
+    assert 'OLD_SEED_WAIT_AFTER port=40000' in out
+    assert 'elapsed_s=0.000' in out
+    assert 'tcp={"local":{},"peer":{}}' in out
+
+
+def test_seed_wait_clears_after_polling(monkeypatch, capsys):
+    _seed_wait_proc(monkeypatch, [
+        ('tcp', _seed_wait_busy(1)), ('tcp6', _seed_wait_clean6()),
+        ('tcp', _seed_wait_busy(1)), ('tcp6', _seed_wait_clean6()),
+        ('tcp', _seed_wait_clean()), ('tcp6', _seed_wait_clean6()),
+    ])
+    sleeps = []
+
+    def fake_sleep(seconds):
+        sleeps.append(seconds)
+
+    _wait_for_seed_port_ready(
+        _seed_wait_rig(), _clock=_FakeClock([0.0, 1.0, 2.0, 3.0]),
+        _sleep=fake_sleep)
+    assert sleeps == [1.0, 1.0]
+    out = capsys.readouterr().out
+    assert out.count('OLD_SEED_WAIT_BEFORE') == 1
+    assert 'elapsed_s=3.000' in out
+    assert 'tcp={"local":{"TIME_WAIT":1},"peer":{"TIME_WAIT":1}}' in out
+    assert 'PRIVATE_SENTINEL' not in out and '0100007F' not in out
+
+
+def test_seed_wait_timeout_fails_with_diagnostics(monkeypatch, capsys):
+    _seed_wait_proc(monkeypatch, [
+        ('tcp', _seed_wait_busy(3)), ('tcp6', _seed_wait_clean6()),
+    ])
+    sleeps = []
+
+    def fake_sleep(seconds):
+        sleeps.append(seconds)
+
+    with pytest.raises(pytest.fail.Exception, match='OLD_SEED_WAIT_TIMEOUT'):
+        _wait_for_seed_port_ready(
+            _seed_wait_rig(), _clock=_FakeClock([0.0, 100.0, 100.0]),
+            _sleep=fake_sleep)
+    assert sleeps == []
+    out = capsys.readouterr().out
+    assert 'OLD_SEED_WAIT_BEFORE' in out and 'OLD_SEED_WAIT_AFTER' not in out
+
+
+def test_seed_wait_unavailable_initial_fails_never_zero(monkeypatch, capsys):
+    _seed_wait_proc(monkeypatch, [('tcp', b'garbage\n'),
+                                  ('tcp6', _seed_wait_clean6())])
+    with pytest.raises(pytest.fail.Exception,
+                       match='OLD_SEED_WAIT_UNAVAILABLE'):
+        _wait_for_seed_port_ready(
+            _seed_wait_rig(), _clock=_FakeClock([0.0, 0.0]),
+            _sleep=lambda seconds: None)
+    out = capsys.readouterr().out
+    assert 'tcp=UNAVAILABLE' in out
+
+
+def test_seed_wait_unavailable_mid_poll_fails(monkeypatch, capsys):
+    _seed_wait_proc(monkeypatch, [
+        ('tcp', _seed_wait_busy(1)), ('tcp6', _seed_wait_clean6()),
+        ('tcp', b'partial'), ('tcp6', _seed_wait_clean6()),
+    ])
+    with pytest.raises(pytest.fail.Exception,
+                       match='OLD_SEED_WAIT_UNAVAILABLE'):
+        _wait_for_seed_port_ready(
+            _seed_wait_rig(), _clock=_FakeClock([0.0, 1.0, 1.0]),
+            _sleep=lambda seconds: None)
+
+
+def test_echo_seed_child_stderr_verbatim_on_failure(capsys):
+    import subprocess
+    result = subprocess.CompletedProcess(
+        [], 1, b'', b'OLD_SEED_FIRST_FAILURE_ERRNO=98\nsynthetic traceback')
+    _echo_seed_child_stderr(result)
+    out = capsys.readouterr().out
+    assert 'OLD_SEED_CHILD_STDERR_BEGIN\n' in out
+    assert 'OLD_SEED_CHILD_STDERR_END\n' in out
+    segment = out.split('OLD_SEED_CHILD_STDERR_BEGIN\n', 1)[1]
+    segment = segment.split('\nOLD_SEED_CHILD_STDERR_END', 1)[0]
+    assert segment == 'OLD_SEED_FIRST_FAILURE_ERRNO=98\nsynthetic traceback'
+
+
+def test_old_payload_echoes_before_provenance_assert(monkeypatch, tmp_path,
+                                                     capsys):
+    import subprocess
+    calls = []
+
+    def fake_payload_file(rig, name, text):
+        return tmp_path / name
+
+    def fake_run(args, cwd, timeout=900):
+        calls.append('run')
+        return subprocess.CompletedProcess(
+            args, 1, b'',
+            b'OLD_SEED_FIRST_FAILURE_ERRNO=98\nrunner traceback detail')
+
+    def fake_observe(rig):
+        calls.append('observe')
+
+    monkeypatch.setattr(sys.modules[__name__], '_payload_file',
+                        fake_payload_file)
+    monkeypatch.setattr(sys.modules[__name__], '_run', fake_run)
+    monkeypatch.setattr(sys.modules[__name__], '_observe_old_seed_exit',
+                        fake_observe)
+    rig = _Rig(python='python3', old_source=tmp_path, payloads=tmp_path,
+               neutral=tmp_path, base=tmp_path, original=tmp_path,
+               port=40000)
+    with pytest.raises(AssertionError):
+        _old_payload(rig, 'seed.py', _SEED_PAYLOAD, str(tmp_path), '40000')
+    out = capsys.readouterr().out
+    assert out.index('OLD_SEED_CHILD_STDERR_BEGIN') < out.index(
+        'OLD_SEED_CHILD_STDERR_END')
+    segment = out.split('OLD_SEED_CHILD_STDERR_BEGIN\n', 1)[1]
+    segment = segment.split('\nOLD_SEED_CHILD_STDERR_END', 1)[0]
+    assert segment == 'OLD_SEED_FIRST_FAILURE_ERRNO=98\nrunner traceback detail'
+    assert calls == ['run', 'observe']
+
+
+def test_old_payload_success_has_no_echo(monkeypatch, tmp_path, capsys):
+    import subprocess
+
+    def fake_payload_file(rig, name, text):
+        return tmp_path / name
+
+    def fake_run(args, cwd, timeout=900):
+        return subprocess.CompletedProcess(
+            args, 0, b'{"status": "ok"}', b'PAYLOAD_SOURCE_OK\n')
+
+    monkeypatch.setattr(sys.modules[__name__], '_payload_file',
+                        fake_payload_file)
+    monkeypatch.setattr(sys.modules[__name__], '_run', fake_run)
+    rig = _Rig(python='python3', old_source=tmp_path, payloads=tmp_path,
+               neutral=tmp_path, base=tmp_path, original=tmp_path,
+               port=40000)
+    result = _old_payload(rig, 'seed.py', _SEED_PAYLOAD, str(tmp_path),
+                          '40000')
+    assert result.returncode == 0
+    out = capsys.readouterr().out
+    assert 'OLD_SEED_CHILD_STDERR_BEGIN' not in out
+
+
+def test_seed_diag_frames_keeps_innermost_eight(monkeypatch, tmp_path):
+    monkeypatch.syspath_prepend(str(tmp_path))
+    server = str(tmp_path / 'src/polymarket_alpha_lab'
+                 '/project_postgres/server.py')
+    source = ('def _seed_raise_target(depth):\n'
+              '    if depth <= 0:\n'
+              '        raise OSError(98, "PRIVATE_SENTINEL")\n'
+              '    return _seed_raise_target(depth - 1)\n')
+    namespace = {}
+    exec(compile(source, server, 'exec'), namespace)
+    try:
+        namespace['_seed_raise_target'](11)
+    except OSError as error:
+        failure = error
+    else:
+        raise AssertionError('deep synthetic chain did not raise')
+    depth = 0
+    traceback = failure.__traceback__
+    while traceback is not None:
+        depth += 1
+        traceback = traceback.tb_next
+    assert depth == 13  # 12 invocation frames plus this test frame
+    diag = _seed_diag_exec()
+    frames = diag['_seed_diag_frames'](failure.__traceback__, tmp_path)
+    assert len(frames) == 8
+    assert frames[0][1] == '_seed_raise_target' and frames[0][2] == 3
+    assert frames[1][2] == 4 and frames[7][2] == 4
+    assert all(frame[0] == 'src/polymarket_alpha_lab/project_postgres'
+               '/server.py' for frame in frames)
