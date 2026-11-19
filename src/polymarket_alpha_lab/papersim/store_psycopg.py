@@ -249,11 +249,12 @@ def decision_time_evidence(conn, candidate_id: int) -> dict | None:
 
 _CANDIDATE_INSERT = ('INSERT INTO papersim.candidates (scan_id, candidate_key, legacy_source_id, '
                      'condition_id, market_id, market_slug, yes_token_id, no_token_id, side, '
-                     'market_kind, market_type, team, binding_version, model_name, model_version, '
-                     'median_probability, variant_quotes, input_payload, snapshot_refs, order_book, '
-                     'book_fetched_at, conclusion, gate_report, rejection_reasons, evaluated_at, '
-                     'is_legacy) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,'
-                     '%s,%s,%s::jsonb,%s,%s,%s,%s::jsonb,%s,%s) RETURNING candidate_id')
+                     'market_kind, market_type, event_key, event_start_at, team, binding_version, '
+                     'model_name, model_version, median_probability, variant_quotes, '
+                     'input_payload, snapshot_refs, order_book, book_fetched_at, conclusion, '
+                     'gate_report, rejection_reasons, evaluated_at, is_legacy) VALUES '
+                     '(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,'
+                     '%s,%s,%s::jsonb,%s,%s,%s::jsonb,%s,%s,%s) RETURNING candidate_id')
 
 _EVIDENCE_INSERT = ('INSERT INTO papersim.candidate_price_evidence (evidence_key, candidate_id, '
                     'evidence_role, observed_at, model_probability, market_ref_kind, market_ref, '
@@ -348,7 +349,8 @@ def _read_back_event_keys(cursor, scan_id: int) -> tuple:
 def _candidate_params(scan_id: int, candidate) -> tuple:
     return (scan_id, candidate.candidate_key, candidate.legacy_source_id, candidate.condition_id,
             candidate.market_id, candidate.market_slug, candidate.yes_token_id, candidate.no_token_id,
-            candidate.side, candidate.market_kind, candidate.market_type, candidate.team,
+            candidate.side, candidate.market_kind, candidate.market_type, candidate.event_key,
+            candidate.event_start_at, candidate.team,
             candidate.binding_version, candidate.model_name, candidate.model_version,
             candidate.median_probability, candidate.variant_quotes, candidate.input_payload,
             candidate.snapshot_refs, candidate.order_book, candidate.book_fetched_at,

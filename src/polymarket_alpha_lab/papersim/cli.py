@@ -556,9 +556,13 @@ def _cmd_validate_dsn() -> int:
 #: realization (recorded gross PnL, win/loss label, EXITED/VOIDED
 #: classification) instead of being recomputed as held-to-natural-settlement,
 #: and legacy fills no longer obtain book-walk provenance for free.
+#: FX-26 (N-1): the candidates statement also selects c.event_key so the
+#: loader can cluster interval estimates by match; NULL keys keep the
+#: frozen market-key fallback unchanged.
 _EVAL_CANDIDATES_SQL = (
     "SELECT c.candidate_id, c.candidate_key, c.conclusion, c.side, c.market_type, "
-    "c.market_kind, c.model_name, c.model_version, c.evaluated_at, c.condition_id, "
+    "c.market_kind, c.event_key, c.model_name, c.model_version, c.evaluated_at, "
+    "c.condition_id, "
     "c.market_id, c.market_slug, s.gate_version, e.stake, e.price, e.fee_category, "
     "(c.order_book is not null) AS has_order_book, "
     "st.classification, st.win_loss, st.exit_price, st.proceeds, st.pnl_gross, "
@@ -754,7 +758,9 @@ def _evaluation_candidates_from_store(conn) -> tuple:
             decision_time=row["evaluated_at"],
             settled_time=settled_at,
             close_price=close_price,
-            match_key=None,
+            # FX-26 (N-1): cluster by the stored match key when present;
+            # NULL keeps the frozen market-key fallback bit-for-bit.
+            match_key=row["event_key"],
         ))
     return tuple(built)
 

@@ -26,6 +26,7 @@ import pytest
 
 from polymarket_alpha_lab.papersim import migrations as pm
 from polymarket_alpha_lab.papersim import store
+from tests.papersim_fx26_catalog import write_frozen_fx26_catalog
 
 ROOT = Path(__file__).resolve().parents[1]
 ENABLED = os.environ.get('POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES') == '1'
@@ -1011,14 +1012,14 @@ def _queue_row(app, model_name):
     return rows[0]
 
 
-def _view_catalog_tree(tree_root):
-    """Copy the live papersim migration directory into a synthetic repo tree."""
+def _view_catalog_tree(tree_root, *, source=ROOT):
+    """Copy a papersim migration directory into a synthetic repo tree."""
     import shutil
-    directory = ROOT / 'database/papersim/migrations'
-    (tree_root / 'database/papersim/migrations').mkdir(parents=True)
+    directory = Path(source) / 'database' / 'papersim' / 'migrations'
+    (tree_root / 'database' / 'papersim' / 'migrations').mkdir(parents=True)
     entries = []
     for path in sorted(directory.glob('*.sql')):
-        shutil.copyfile(path, tree_root / 'database/papersim/migrations' / path.name)
+        shutil.copyfile(path, tree_root / 'database' / 'papersim' / 'migrations' / path.name)
         entries.append({'name': path.name,
                         'sha256': sha256(path.read_bytes()).hexdigest(),
                         'transaction_wrapper': True})
@@ -1032,10 +1033,15 @@ def _write_manifest(tree_root, entries):
     return tree_root
 
 
-def test_old_migration_and_v1_faces_are_pinned_unchanged():
+def test_old_migration_and_v1_faces_are_pinned_unchanged(tmp_path):
     import json
+    # FX-26 re-anchor (fix-list rule 0.3): the four-entry history pin now
+    # reads the frozen pre-FX26 catalog tree; the current FIVE-entry live
+    # manifest is proven in tests/test_papersim_fx26_migrations.py.
+    tree = write_frozen_fx26_catalog(tmp_path / 'frozen')
     manifest = json.loads(
-        (ROOT / 'database/papersim/migrations.lock.json').read_text(encoding='utf-8'))
+        (tree / 'database' / 'papersim' / 'migrations.lock.json')
+        .read_text(encoding='utf-8'))
     entries = manifest['migrations']
     # Manifest pin 3 -> 4 entries after the V2R3 rebase onto integrated
     # main: [M1, M1, S0 operations, V2 reporting views] (the M1 pair and
@@ -1045,7 +1051,7 @@ def test_old_migration_and_v1_faces_are_pinned_unchanged():
         '20261115000100_papersim_v2_core.sql',
         '20261116000000_papersim_m2_operations.sql',
         REPORTING_VIEWS_MIGRATION]
-    directory = ROOT / 'database/papersim/migrations'
+    directory = tree / 'database' / 'papersim' / 'migrations'
     for item, (name, pinned) in zip(entries[:2], M1_PAPERSIM_DIGESTS, strict=True):
         assert item['name'] == name and item['sha256'] == pinned
         assert sha256((directory / name).read_bytes()).hexdigest() == pinned
@@ -1074,10 +1080,15 @@ def test_reporting_views_catalog_red_conditions(tmp_path):
 @NATIVE
 def test_reporting_views_apply_matrix_incremental_and_idempotent(tmp_path):
     import shutil
+    # FX-26 re-anchor (fix-list rule 0.3): the four-entry apply matrix runs
+    # against the frozen pre-FX26 catalog tree; the current five-entry live
+    # manifest has its own apply proof in tests/test_papersim_fx26_
+    # migrations.py.
+    frozen_tree = write_frozen_fx26_catalog(tmp_path / 'frozen')
     owner_dsn, app_dsn = _fresh_views_database(
-        expected={'applied': 4, 'pending_before': 4})
+        repo_root=frozen_tree, expected={'applied': 4, 'pending_before': 4})
     owner = connect(owner_dsn, autocommit=False)
-    assert pm.apply_pending_migrations(owner, ROOT) == {'applied': 0, 'pending_before': 0}
+    assert pm.apply_pending_migrations(owner, frozen_tree) == {'applied': 0, 'pending_before': 0}
     owner.close()
     app = connect(app_dsn)
     listed = [row['table_name'] for row in _rows(
@@ -1113,9 +1124,9 @@ def test_reporting_views_apply_matrix_incremental_and_idempotent(tmp_path):
     inc_owner_dsn, _ = _fresh_views_database(
         repo_root=tree, expected={'applied': 2, 'pending_before': 2})
     owner = connect(inc_owner_dsn, autocommit=False)
-    assert pm.apply_pending_migrations(owner, ROOT) == {'applied': 2, 'pending_before': 2}
-    assert pm.apply_pending_migrations(owner, ROOT) == {'applied': 0, 'pending_before': 0}
-    status = pm.migration_status(owner, ROOT)
+    assert pm.apply_pending_migrations(owner, frozen_tree) == {'applied': 2, 'pending_before': 2}
+    assert pm.apply_pending_migrations(owner, frozen_tree) == {'applied': 0, 'pending_before': 0}
+    status = pm.migration_status(owner, frozen_tree)
     assert status['applied'] == [
         '20261115000000_papersim_bootstrap.sql',
         '20261115000100_papersim_v2_core.sql',
@@ -1127,9 +1138,13 @@ def test_reporting_views_apply_matrix_incremental_and_idempotent(tmp_path):
 
 @NATIVE
 def test_reporting_views_survive_a_failed_fourth_migration(tmp_path):
-    tree, entries = _view_catalog_tree(tmp_path / 'repo')
+    # FX-26 re-anchor: the "failed follow-up migration" matrix builds on
+    # the frozen four-entry catalog (the synthetic 20261117* timestamp
+    # must stay the tail entry; the live catalog has since grown past it).
+    frozen_tree = write_frozen_fx26_catalog(tmp_path / 'frozen')
+    tree, entries = _view_catalog_tree(tmp_path / 'repo', source=frozen_tree)
     # Synthetic follow-up migration keeps its 20261117* timestamp so it
-    # still appends after the live four-entry catalog tail (M1 pair, S0
+    # still appends after the four-entry catalog tail (M1 pair, S0
     # operations, V2 reporting views).
     failing = tree / 'database/papersim/migrations/20261117000000_views_fail.sql'
     failing.write_text('begin;\ncreate table papersim.boom (x int);\nselect 1 / 0;\ncommit;\n',
@@ -1138,7 +1153,7 @@ def test_reporting_views_survive_a_failed_fourth_migration(tmp_path):
                     'sha256': sha256(failing.read_bytes()).hexdigest(),
                     'transaction_wrapper': True})
     _write_manifest(tree, entries)
-    owner_dsn, _ = _fresh_views_database()
+    owner_dsn, _ = _fresh_views_database(repo_root=frozen_tree)
     owner = connect(owner_dsn, autocommit=False)
     with pytest.raises(pm.PapersimMigrationError, match='papersim_migration_apply_failed'):
         pm.apply_pending_migrations(owner, tree)
