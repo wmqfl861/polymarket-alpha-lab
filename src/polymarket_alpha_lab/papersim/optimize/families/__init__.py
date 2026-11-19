@@ -21,6 +21,9 @@ __all__ = ["ModelFamily", "iter_family_ids"]
 
 _FAMILY_MODULES: dict[str, str] = {
     "club-soccer-frozen": "soccer_frozen",
+    # MO-5 lanes each add their own key on their own branch; the
+    # three-way merge of these lines is owned by the coordinator.
+    "club-soccer-recalib": "soccer_recalib",
 }
 
 
