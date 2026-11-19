@@ -1,13 +1,15 @@
 """M2 full papersim catalog proofs (S0, M2 plan sections 3.1 and 6.3).
 
-Offline: the current manifest lists exactly four migrations (the frozen
-two M1 entries byte-identical to their published hashes, plus the M2
-operations migration and, since M3/V2, the reporting-views migration),
-the directory glob matches, and the frozen M1 fixture stays
-self-consistent. Native (opt-in disposable cluster): full apply from an
-empty face, upgrade from the M1 nine-table face with M1 rows unchanged,
-M2 drift stop with receipt rollback, append protection and the new
-uniqueness contracts.
+FX-26 re-anchor (fix-list rule 0.3): these are the frozen FOUR-ENTRY
+history proofs. The offline manifest/glob/hash checks and the native
+empty-face/upgrade proofs run against the frozen pre-FX26 catalog tree
+(``tests/papersim_fx26_catalog.py``) with their assertions unchanged;
+the current FIVE-entry live manifest and its native apply proofs live in
+``tests/test_papersim_fx26_migrations.py``. The frozen M1 fixture stays
+self-consistent. Native (opt-in disposable cluster): full apply of the
+frozen tree from an empty face, upgrade from the M1 nine-table face with
+M1 rows unchanged, M2 drift stop with receipt rollback, append
+protection and the new uniqueness contracts.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -21,6 +23,7 @@ import uuid
 import pytest
 
 from polymarket_alpha_lab.papersim import migrations as pm
+from tests.papersim_fx26_catalog import write_frozen_fx26_catalog
 from tests.papersim_m1_catalog import M1_MIGRATIONS, write_frozen_m1_catalog
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,17 +51,26 @@ def at(minutes: int) -> datetime:
 # Offline full-catalog contract
 # ---------------------------------------------------------------------------
 
-def test_full_manifest_lists_the_frozen_m1_pair_plus_the_m2_entry():
-    manifest = json.loads(MANIFEST_PATH.read_text(encoding='utf-8'))
+def test_full_manifest_lists_the_frozen_m1_pair_plus_the_m2_entry(tmp_path):
+    # FX-26: anchored to the frozen four-entry pre-FX26 tree; the live
+    # five-entry manifest is proven in tests/test_papersim_fx26_migrations.py.
+    tree = write_frozen_fx26_catalog(tmp_path / 'frozen')
+    directory = tree / 'database' / 'papersim' / 'migrations'
+    manifest = json.loads((tree / 'database' / 'papersim' / 'migrations.lock.json')
+                          .read_text(encoding='utf-8'))
     assert [(entry['name'], entry['sha256']) for entry in manifest['migrations']] \
         == list(FULL_CATALOG)
     assert [name for name, _ in FULL_CATALOG] == sorted(path.name for path
-                                                        in CATALOG_DIR.glob('*.sql'))
+                                                        in directory.glob('*.sql'))
     assert all(entry['transaction_wrapper'] is True for entry in manifest['migrations'])
 
 
-def test_full_catalog_hashes_match_file_bytes_and_strip_wrappers():
-    catalog = pm.papersim_migration_catalog(ROOT)
+def test_full_catalog_hashes_match_file_bytes_and_strip_wrappers(tmp_path):
+    # FX-26: anchored to the frozen four-entry pre-FX26 tree; the live
+    # five-entry catalog is proven in tests/test_papersim_fx26_migrations.py.
+    tree = write_frozen_fx26_catalog(tmp_path / 'frozen')
+    directory = tree / 'database' / 'papersim' / 'migrations'
+    catalog = pm.papersim_migration_catalog(tree)
     # Full-catalog inventory count 3 -> 4 (M3/V2 option 1: the fourth
     # managed migration 20261116000010_papersim_reporting_views.sql).
     assert len(catalog) == 4
@@ -66,7 +78,7 @@ def test_full_catalog_hashes_match_file_bytes_and_strip_wrappers():
                                                                       strict=True):
         assert name == expected_name
         assert digest == expected_digest
-        assert digest == sha256((CATALOG_DIR / name).read_bytes()).hexdigest()
+        assert digest == sha256((directory / name).read_bytes()).hexdigest()
         assert 'begin;' not in body.lower() and 'commit;' not in body.lower()
         assert not pm.FORBIDDEN_BODY_TOKENS.search(body)
 
@@ -166,15 +178,60 @@ def _seed_one_scan(app_dsn, *, accepted=False):
     return app, result, candidate
 
 
+def _seed_one_m1_scan_row(app_dsn):
+    """One accepted scan seeded via M1-era column SQL (FX-26 note).
+
+    ``_seed_one_scan`` walks ``record_scan``, whose candidate INSERT grew
+    the FX-26 ``event_key``/``event_start_at`` columns -- columns an M1
+    face does not have. The upgrade proof seeds its pre-upgrade row with
+    the M1 column set directly so the seed stays schema-accurate for the
+    face under test; every downstream assertion is unchanged.
+    """
+    app = _connect(app_dsn)
+    scan_key = 'm1-seed-' + uuid.uuid4().hex[:10]
+    with app.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO papersim.scan_runs (scan_key, scan_payload_sha256, team, "
+            "started_at, finished_at, code_commit, schema_version, gate_version, "
+            "operator, params) VALUES (%s, %s, 'crypto_eth', %s, %s, %s, 1, 'g1', "
+            "'unattended', '{\"seed\": true}'::jsonb) RETURNING scan_id",
+            (scan_key, 'f' * 64, at(0), at(6), 'c' * 40))
+        scan_id = cursor.fetchone()[0]
+        cursor.execute(
+            "INSERT INTO papersim.candidates (scan_id, candidate_key, side, "
+            "market_kind, team, model_name, model_version, input_payload, "
+            "conclusion, gate_report, evaluated_at, market_slug) VALUES "
+            "(%s, 'c-seed', 'YES', 'terminal', 'crypto_eth', 'gbm', 'r19', "
+            "'{}'::jsonb, 'ACCEPTED', '{}'::jsonb, %s, %s) RETURNING candidate_id",
+            (scan_id, at(5), 'mkt-seed'))
+        candidate_id = cursor.fetchone()[0]
+        cursor.execute(
+            "INSERT INTO papersim.entries (candidate_id, stake, price, shares, "
+            "fee_category, fee_rate, entry_fee, fee_source, tier, entered_at) "
+            "VALUES (%s, 250, 0.56, 446.4286, 'crypto', 0.07, 10.08, 'schedule', "
+            "'standard', %s) RETURNING entry_id", (candidate_id, at(6)))
+        entry_id = cursor.fetchone()[0]
+        cursor.execute(
+            "INSERT INTO papersim.bankroll_events (event_key, occurred_at, currency, "
+            "amount, reason, entry_id, scan_id) VALUES (%s, %s, 'USD', -260.08, "
+            "'SCAN_ENTRY', %s, %s)",
+            (f'entry:{entry_id}:cash', at(6), entry_id, scan_id))
+    app.close()
+    return {'scan_id': scan_id}
+
+
 @NATIVE
-def test_native_full_catalog_applies_from_an_empty_face():
+def test_native_full_catalog_applies_from_an_empty_face(tmp_path):
     owner_dsn = _fresh_managed_database()
     owner = _connect(owner_dsn, autocommit=False)
-    result = pm.apply_pending_migrations(owner, ROOT)
+    # FX-26: applies the frozen four-entry pre-FX26 tree; the live
+    # five-entry apply is proven in tests/test_papersim_fx26_migrations.py.
+    frozen_tree = write_frozen_fx26_catalog(tmp_path / 'frozen', repo_root=ROOT)
+    result = pm.apply_pending_migrations(owner, frozen_tree)
     # Fresh-apply inventory count 3 -> 4 migrations (M3/V2 option 1).
     assert result == {'applied': 4, 'pending_before': 4}
     assert _ledger(owner) == [(name, digest) for name, digest, _ in
-                              pm.papersim_migration_catalog(ROOT)]
+                              pm.papersim_migration_catalog(frozen_tree)]
     assert len(_papersim_tables(owner)) == 13
     with owner.cursor() as cursor:
         # Independent assertion: exactly the three designated reporting
@@ -201,14 +258,19 @@ def test_native_upgrade_from_the_m1_nine_table_face_preserves_m1_rows(tmp_path):
     assert len(_papersim_tables(owner)) == 9
     owner.commit()
     app_dsn = owner_dsn.replace('user=pal_owner', 'user=pal_app')
-    app, seeded, _ = _seed_one_scan(app_dsn, accepted=True)
+    seeded = _seed_one_m1_scan_row(app_dsn)
     entry_id = None
+    app = _connect(app_dsn)
     with app.cursor() as cursor:
         cursor.execute('SELECT entry_id FROM papersim.entries')
         entry_id = cursor.fetchone()[0]
     app.close()
     owner = _connect(owner_dsn, autocommit=False)
-    result = pm.apply_pending_migrations(owner, ROOT)
+    # FX-26: the upgrade target is the frozen four-entry pre-FX26 tree;
+    # the live five-entry upgrade is proven in tests/test_papersim_fx26_
+    # migrations.py.
+    frozen_tree = write_frozen_fx26_catalog(tmp_path / 'frozen', repo_root=ROOT)
+    result = pm.apply_pending_migrations(owner, frozen_tree)
     # From the frozen M1 pair the full catalog now adds exactly the two
     # post-M1 migrations (M2 operations + the M3/V2 reporting views).
     assert result == {'applied': 2, 'pending_before': 2}

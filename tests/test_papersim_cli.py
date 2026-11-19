@@ -324,10 +324,13 @@ class _StubStoreConn:
 
     def _execute(self, sql):
         if sql.startswith("SELECT c.candidate_id"):
+            # FX-26: the candidates statement now selects c.event_key right
+            # after market_kind; stub rows without the key read as NULL
+            # (the legacy-row shape), exactly like the real column.
             columns = ["candidate_id", "candidate_key", "conclusion", "side",
-                       "market_type", "market_kind", "model_name", "model_version",
-                       "evaluated_at", "condition_id", "market_id", "market_slug",
-                       "gate_version", "stake", "price", "fee_category",
+                       "market_type", "market_kind", "event_key", "model_name",
+                       "model_version", "evaluated_at", "condition_id", "market_id",
+                       "market_slug", "gate_version", "stake", "price", "fee_category",
                        "has_order_book", "classification", "win_loss",
                        "exit_price", "proceeds", "pnl_gross", "fee_total",
                        "pnl_net", "confirmed_at"]

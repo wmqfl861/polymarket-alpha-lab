@@ -20,6 +20,11 @@
       "name": "20261116000010_papersim_reporting_views.sql",
       "sha256": "87b802b547f1ffc1d25fa3c8cb401ef643fc5a34f35e6450e5bc56261af1a293",
       "transaction_wrapper": true
+    },
+    {
+      "name": "20261119173000_papersim_candidate_event_keys.sql",
+      "sha256": "e29507cec4a5199d85877a33003b487a8c7bc917c42fc561607dfe5419ca45ce",
+      "transaction_wrapper": true
     }
   ]
 }

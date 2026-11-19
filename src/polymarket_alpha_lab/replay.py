@@ -422,6 +422,7 @@ def bind_candidate(request: EntryRequest, decision: EntryDecision, *,
                    market_id: str | None = None, market_slug: str | None = None,
                    condition_id: str | None = None, yes_token_id: str | None = None,
                    no_token_id: str | None = None, market_type: str | None = None,
+                   event_key: str | None = None, event_start_at: datetime | None = None,
                    model_name: str = 'soccer', model_version: str | None = None,
                    median_probability=None, variant_quotes: str | list = '[]',
                    snapshot_refs: tuple[str, ...] | list = (),
@@ -436,6 +437,11 @@ def bind_candidate(request: EntryRequest, decision: EntryDecision, *,
     the decision-time observation paired with the same market reference
     and side; ``snapshot_refs`` cite registered raw bytes. Rejected
     candidates bind identically (their reasons are the record).
+    ``event_key``/``event_start_at`` (FX-26) carry the pure
+    :func:`~polymarket_alpha_lab.papersim.store.candidate_event_key`
+    product and the adapter-parsed game start (or crypto expiry); both
+    default to ``None`` so a caller without the inputs leaves the
+    columns NULL and evaluation keeps the market-key fallback.
     """
     market_ref = (market_id if market_ref_kind == 'market_id' else
                   condition_id if market_ref_kind == 'condition_id' else
@@ -463,7 +469,8 @@ def bind_candidate(request: EntryRequest, decision: EntryDecision, *,
         evaluated_at=evaluated_at,
         condition_id=condition_id, market_id=market_id or request.market_id,
         market_slug=market_slug, yes_token_id=yes_token_id, no_token_id=no_token_id,
-        market_type=market_type, binding_version=1,
+        market_type=market_type, event_key=event_key,
+        event_start_at=event_start_at, binding_version=1,
         median_probability=None if median_probability is None
         else Decimal(str(median_probability)),
         variant_quotes=variant_quotes,
