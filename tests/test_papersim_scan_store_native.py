@@ -79,7 +79,12 @@ def _fresh_managed_database() -> str:
         cursor.execute(sql.bootstrap_sql(uuid.uuid4().hex, 'b' * 64, system_id))
     bootstrap.close()
     owner = _connect(owner_dsn, autocommit=False)
-    assert pm.apply_pending_migrations(owner, ROOT) == {'applied': 5, 'pending_before': 5}
+    # MO-2 land: the managed catalog grew to six entries; assert
+    # against the live catalog length (the m2_store_native precedent)
+    # instead of pinning a count that every future migration bumps.
+    assert pm.apply_pending_migrations(owner, ROOT) == {
+        'applied': len(pm.papersim_migration_catalog(ROOT)),
+        'pending_before': len(pm.papersim_migration_catalog(ROOT))}
     owner.commit()
     owner.close()
     return owner_dsn.replace('user=pal_owner', 'user=pal_app')
