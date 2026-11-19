@@ -627,6 +627,14 @@ class ScanRunRecord:
     operator: str = 'unattended'
     params: str = '{}'
     is_legacy: bool = False
+    # B1 (05 section 2): the stable scheduling identity of an unattended
+    # scan (papersim.scan_runs.operation_key, unique in the M2 S0
+    # migration). Deliberately NOT part of ``key()`` above and NOT in
+    # the hand-written ``payload_sha256`` field lists -- the scan
+    # identity stays team|started_at|code_commit|gate_version|
+    # schema_version|params_hash; this column only prevents one
+    # scheduled operation from writing two scans.
+    operation_key: str | None = None
 
     def validate(self) -> 'ScanRunRecord':
         _require_text(self.team, 'team')
@@ -645,6 +653,7 @@ class ScanRunRecord:
         if not self.is_legacy and self.code_commit is None:
             _fail('papersim_code_commit_required')
         _require_json_payload(self.params, 'params')
+        _optional_text(self.operation_key, 'operation_key')
         return self
 
     def key(self) -> str:
@@ -815,6 +824,120 @@ def bankroll_check_key(as_of, code_commit, event_watermark) -> str:
     day = _require_timestamp(as_of, 'as_of').astimezone(UTC).strftime('%Y%m%d')
     return '|'.join(('bc', day, _require_commit40(code_commit, 'code_commit'),
                      str(event_watermark)))
+
+
+#: Control-rule names the B1 admission wiring writes (FX-17 lane rules;
+#: the latch reader folds by these prefixes, see ``store_psycopg.latched_pauses``).
+QUEUE_CONTROL_RULE_FX17 = 'fx17_cross_league'
+QUEUE_CONTROL_RULE_BLUEPRINT = 'blueprint_universal'
+
+
+@dataclass(frozen=True)
+class QueueControlSubmission:
+    """One ``papersim.queue_control_events`` row (the FX-17 pause latch).
+
+    Rows are append-only evidence (immutable triggers on the table): a
+    restart never clears them and only a reviewed RESUME row may follow
+    a pause.  B1 writes PAUSE rows only -- a RESUME is a human action
+    and therefore always carries ``reviewed_by`` (the table enforces
+    it).  Idempotency: ``queue_control_key`` includes ``observed_at``,
+    so two scans tripping the same rule append two distinct evidence
+    rows by design; the latch reader folds any number of rows per queue.
+    """
+
+    queue_id: str = ''
+    control_kind: str = ''
+    rule: str = ''
+    rule_version: str = ''
+    metrics: str | dict = '{}'
+    evidence_watermark: str | dict = '{}'
+    reason: str | None = None
+    reviewed_by: str | None = None
+    observed_at: datetime | None = None
+    scan_id: int | None = None
+
+    def validate(self) -> 'QueueControlSubmission':
+        if self.control_kind not in QUEUE_CONTROL_KINDS:
+            _fail('papersim_control_kind_invalid')
+        _require_text(self.queue_id, 'queue_id')
+        _require_text(self.rule, 'rule')
+        _require_text(self.rule_version, 'rule_version')
+        _require_timestamp(self.observed_at, 'observed_at')
+        _require_json_payload(self.metrics, 'metrics')
+        _require_json_payload(self.evidence_watermark, 'evidence_watermark')
+        if self.control_kind == 'RESUME' and not _clean_control_text(self.reviewed_by):
+            _fail('papersim_resume_requires_reviewer')
+        if type(self.scan_id) is not int and self.scan_id is not None:
+            _fail('papersim_scan_id_invalid')
+        return self
+
+    def key(self) -> str:
+        return queue_control_key(self.queue_id, self.control_kind, self.rule,
+                                 self.rule_version, self.observed_at)
+
+
+def _clean_control_text(value):
+    if value is None:
+        return None
+    if type(value) is not str or not value.strip():
+        _fail('papersim_control_reviewer_invalid')
+    return value.strip()
+
+
+@dataclass(frozen=True)
+class CommandRunEventSubmission:
+    """One ``papersim.command_run_events`` receipt row (B1 run-scan, FX-03).
+
+    The scheduling identity (operation key + attempt + phase) is stable
+    across retries: a retry may never mint a fresh identity from the
+    current clock.  ``code_commit`` carries the verified worktree HEAD
+    of the running code (the scan refuses to start on a dirty worktree,
+    so every receipt row records a real commit).
+    """
+
+    operation_key: str = ''
+    attempt: int = 1
+    phase: str = ''
+    command: str = ''
+    queue_id: str | None = None
+    scheduled_for: datetime | None = None
+    occurred_at: datetime | None = None
+    code_commit: str | None = None
+    config_digest: str | None = None
+    input_evidence: str | list = '[]'
+    output_evidence: str | list = '[]'
+    error_code: str | None = None
+    scan_id: int | None = None
+
+    def validate(self) -> 'CommandRunEventSubmission':
+        if self.phase not in COMMAND_PHASES:
+            _fail('papersim_phase_invalid')
+        _require_text(self.operation_key, 'operation_key')
+        _require_text(self.command, 'command')
+        if type(self.attempt) is not int or self.attempt < 1:
+            _fail('papersim_attempt_invalid')
+        _require_timestamp(self.occurred_at, 'occurred_at')
+        _optional_timestamp(self.scheduled_for, 'scheduled_for')
+        _optional_text(self.queue_id, 'queue_id')
+        _optional_text(self.error_code, 'error_code')
+        if self.code_commit is not None and not (type(self.code_commit) is str
+                                                 and len(self.code_commit) == 40
+                                                 and all(c in '0123456789abcdef'
+                                                         for c in self.code_commit)):
+            _fail('papersim_code_commit_invalid')
+        if self.config_digest is not None and not (type(self.config_digest) is str
+                                                   and len(self.config_digest) == 64
+                                                   and all(c in '0123456789abcdef'
+                                                           for c in self.config_digest)):
+            _fail('papersim_config_digest_invalid')
+        _require_json_list(self.input_evidence, 'input_evidence')
+        _require_json_list(self.output_evidence, 'output_evidence')
+        if type(self.scan_id) is not int and self.scan_id is not None:
+            _fail('papersim_scan_id_invalid')
+        return self
+
+    def key(self) -> str:
+        return command_run_event_key(self.operation_key, self.attempt, self.phase)
 
 
 def bankroll_identity_difference(cash_total, deployed_total, initial_and_adjustments,

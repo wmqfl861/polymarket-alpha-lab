@@ -831,6 +831,49 @@ def _cmd_replay(args) -> int:
     return 0
 
 
+def _cmd_run_scan(args) -> int:
+    # B1 (05 section 2 / 80.8): every heavy import stays inside the
+    # function body so the CLI startup module count is untouched
+    # (FX-20; tests/test_init_lazy_imports.py pins the limit).
+    import datetime as _datetime
+
+    from polymarket_alpha_lab.papersim import scan
+    from polymarket_alpha_lab.papersim.optimize.provider import FrozenBaselineProvider
+
+    try:
+        config_path = Path(args.config)
+        try:
+            document = json.loads(config_path.read_text(encoding="utf-8"))
+        except OSError as error:
+            raise ValueError(f"papersim_scan_config_unreadable: {config_path}") from error
+        config = scan.config_from_mapping(document)
+        records = scan.load_pack_records(config, base_dir=config_path.parent)
+        connection = _open_readonly_connection(args, label="PAPERSIM_SCAN_PG_DSN")
+        try:
+            # Same-file reuse of the evaluate loader (B1 plan D6/F-2):
+            # ONE metric implementation feeds both the evaluate command
+            # and the pause admission wiring -- no second SQL face.
+            evaluation_candidates = _evaluation_candidates_from_store(connection)
+            result = scan.run_scan(
+                config,
+                records,
+                conn=connection,
+                repo_root=args.repo_root,
+                provider=FrozenBaselineProvider(),
+                now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
+                evaluation_candidates=evaluation_candidates,
+                operation_key=args.operation_key,
+                attempt=args.attempt,
+            )
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"run-scan: FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, sort_keys=True, allow_nan=False))
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="papersim",
@@ -922,6 +965,51 @@ def _build_parser() -> argparse.ArgumentParser:
         "--repo-root", default=".",
         help="repository root of the managed instance (default: .)",
     )
+    run_scan_parser = subparsers.add_parser(
+        "run-scan",
+        help="B1 paper scan: candidates, entries and cash events in one atomic write",
+        description=(
+            "Run one paper scan (plan 05 section 2 / DELIVERY_PLAN 80.8): "
+            "refuse a dirty worktree (FX-03), consult the model-spec "
+            "provider once per lineage (empty registry = frozen baseline, "
+            "bit-identical output), evaluate the FX-17 pause admission, "
+            "decide every prepared market through decide_entry with FX-26 "
+            "event-key binding, and write run row + candidates + entries + "
+            "cash legs in ONE transaction. Markets come from prepared "
+            "pack files named by the scan config; live adapter wiring "
+            "arrives with the adapter lane. Paper-only: no order, "
+            "account or credential surface."
+        ),
+    )
+    run_scan_parser.add_argument(
+        "--config", required=True,
+        help="scan config JSON (team, operator, queues with league scope, "
+             "data-source version and prepared-market pack paths)",
+    )
+    run_scan_source = run_scan_parser.add_mutually_exclusive_group(required=True)
+    run_scan_source.add_argument(
+        "--managed", action="store_true",
+        help="write through the project-private managed application instance",
+    )
+    run_scan_source.add_argument(
+        "--dsn",
+        help="explicit DSN for an isolated/throwaway cluster "
+             "(validated by the single audited local DSN validator)",
+    )
+    run_scan_parser.add_argument(
+        "--repo-root", default=".",
+        help="repository root for the clean-worktree commit check and the "
+             "managed instance (default: .)",
+    )
+    run_scan_parser.add_argument(
+        "--operation-key", default=None,
+        help="stable scheduling identity of this unattended run (default: "
+             "run-scan|<team>|<started UTC stamp>|b1)",
+    )
+    run_scan_parser.add_argument(
+        "--attempt", type=int, default=1,
+        help="attempt number of this operation for the run receipts (default: 1)",
+    )
     return parser
 
 
@@ -939,6 +1027,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_evaluate(args)
     if args.command == "replay":
         return _cmd_replay(args)
+    if args.command == "run-scan":
+        return _cmd_run_scan(args)
     parser.error(f"unknown command {args.command!r}")  # pragma: no cover
     raise AssertionError("unreachable")  # pragma: no cover
 
