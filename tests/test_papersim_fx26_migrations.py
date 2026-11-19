@@ -1,5 +1,16 @@
 """FX-26 full papersim catalog proofs (2026-11-19 fix-list FX-26 / N-1).
 
+MO-2 re-anchor (fix-list rule 0.3): these are the frozen FIVE-ENTRY
+FX-26-era history proofs. The two offline manifest/glob/hash checks
+and the two native empty-face/upgrade proofs run against the frozen
+pre-MO2 catalog tree (``tests/papersim_mo2_catalog.py``) with their
+assertions unchanged; the current SIX-entry live manifest and its
+native apply proofs live in ``tests/test_papersim_mo2_migrations.py``.
+The remaining two native proofs (columns/index and check contract)
+keep applying the live ROOT catalog: they assert FX-26 column
+behaviour on whatever face the repository builds, which the MO-2
+migration extends without touching papersim.candidates.
+
 Offline: the CURRENT manifest lists exactly five migrations -- the frozen
 four-entry pre-FX26 history (byte-identical on its own frozen tree,
 proven with unchanged assertions in ``tests/test_papersim_m2_migrations.py``)
@@ -22,6 +33,7 @@ import pytest
 
 from polymarket_alpha_lab.papersim import migrations as pm
 from tests.papersim_fx26_catalog import FX26_FROZEN_CATALOG, write_frozen_fx26_catalog
+from tests.papersim_mo2_catalog import write_frozen_mo2_catalog
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_DIR = ROOT / 'database' / 'papersim' / 'migrations'
@@ -39,25 +51,43 @@ NATIVE = pytest.mark.skipif(not ENABLED or not OWNER_DSN,
 # Offline current-catalog contract
 # ---------------------------------------------------------------------------
 
-def test_live_manifest_lists_the_frozen_four_history_plus_the_fx26_entry():
-    manifest = json.loads(MANIFEST_PATH.read_text(encoding='utf-8'))
+def test_live_manifest_lists_the_frozen_four_history_plus_the_fx26_entry(tmp_path):
+    # MO-2 re-anchor: this WAS the live five-entry manifest proof; it now
+    # runs against the frozen pre-MO2 five-entry tree with the assertions
+    # unchanged. Originally proved: the live manifest lists exactly the
+    # frozen four-entry history plus the FX-26 entry. Still proves that,
+    # byte for byte, on the frozen tree; the live six-entry manifest is
+    # proven in tests/test_papersim_mo2_migrations.py.
+    tree = write_frozen_mo2_catalog(tmp_path / 'repo')
+    manifest = json.loads(
+        (tree / 'database' / 'papersim' / 'migrations.lock.json').read_text(encoding='utf-8'))
     assert [(entry['name'], entry['sha256']) for entry in manifest['migrations']] \
         == list(FULL_CATALOG)
     assert [name for name, _ in FULL_CATALOG] == sorted(path.name for path
-                                                        in CATALOG_DIR.glob('*.sql'))
+                                                        in (tree / 'database' / 'papersim'
+                                                            / 'migrations').glob('*.sql'))
     assert all(entry['transaction_wrapper'] is True for entry in manifest['migrations'])
 
 
-def test_live_catalog_hashes_match_file_bytes_and_strip_wrappers():
-    catalog = pm.papersim_migration_catalog(ROOT)
-    # Current full-catalog inventory count 4 -> 5 (FX-26: the fifth
-    # managed migration 20261119173000_papersim_candidate_event_keys.sql).
+def test_live_catalog_hashes_match_file_bytes_and_strip_wrappers(tmp_path):
+    # MO-2 re-anchor: this WAS the live catalog proof; it now runs
+    # against the frozen pre-MO2 five-entry tree with the assertions
+    # unchanged. Originally proved: the live catalog counts exactly five
+    # migrations, every entry hash matches the file bytes, wrappers
+    # strip and forbidden tokens stay out. Still proves that, on the
+    # frozen tree; the live six-entry catalog is proven in
+    # tests/test_papersim_mo2_migrations.py.
+    tree = write_frozen_mo2_catalog(tmp_path / 'repo')
+    catalog = pm.papersim_migration_catalog(tree)
+    # FX-26-era full-catalog inventory count: 5 managed migrations
+    # (the fifth was 20261119173000_papersim_candidate_event_keys.sql).
     assert len(catalog) == 5
+    directory = tree / 'database' / 'papersim' / 'migrations'
     for (name, digest, body), (expected_name, expected_digest) in zip(catalog, FULL_CATALOG,
                                                                       strict=True):
         assert name == expected_name
         assert digest == expected_digest
-        assert digest == sha256((CATALOG_DIR / name).read_bytes()).hexdigest()
+        assert digest == sha256((directory / name).read_bytes()).hexdigest()
         assert 'begin;' not in body.lower() and 'commit;' not in body.lower()
         assert not pm.FORBIDDEN_BODY_TOKENS.search(body)
 
@@ -150,14 +180,20 @@ def _seed_one_pre_fx26_scan(app_dsn):
 
 
 @NATIVE
-def test_native_full_catalog_applies_from_an_empty_face():
+def test_native_full_catalog_applies_from_an_empty_face(tmp_path):
+    # MO-2 re-anchor: this WAS the live empty-face apply proof; it now
+    # applies the frozen pre-MO2 five-entry tree. Originally proved: the
+    # repository catalog applies five migrations from an empty face and
+    # the ledger matches. Still proves that, on the frozen tree; the
+    # live six-entry apply proof is in tests/test_papersim_mo2_migrations.py.
+    frozen_tree = write_frozen_mo2_catalog(tmp_path / 'frozen')
     owner_dsn = _fresh_managed_database()
     owner = _connect(owner_dsn, autocommit=False)
-    result = pm.apply_pending_migrations(owner, ROOT)
-    # Current fresh-apply inventory count 4 -> 5 migrations (FX-26).
+    result = pm.apply_pending_migrations(owner, frozen_tree)
+    # FX-26-era fresh-apply inventory count: 5 migrations.
     assert result == {'applied': 5, 'pending_before': 5}
     assert _ledger(owner) == [(name, digest) for name, digest, _ in
-                              pm.papersim_migration_catalog(ROOT)]
+                              pm.papersim_migration_catalog(frozen_tree)]
     owner.close()
 
 
@@ -173,9 +209,14 @@ def test_native_upgrade_from_the_frozen_four_entry_face_preserves_rows(tmp_path)
     app_dsn = owner_dsn.replace('user=pal_owner', 'user=pal_app')
     written = _seed_one_pre_fx26_scan(app_dsn)
     owner = _connect(owner_dsn, autocommit=False)
-    result = pm.apply_pending_migrations(owner, ROOT)
-    # From the frozen four-entry face the current catalog adds exactly the
-    # FX-26 migration, nothing else.
+    # MO-2 re-anchor: the upgrade target is the frozen pre-MO2 five-entry
+    # tree, so this still proves exactly what it proved before MO-2:
+    # from the frozen four-entry face the FX-26-era catalog adds exactly
+    # the FX-26 migration, nothing else, and pre-FX26 rows survive with
+    # NULL event keys. (Upgrading to the live tree now adds two more
+    # migrations; that proof belongs to test_papersim_mo2_migrations.py.)
+    frozen_tree = write_frozen_mo2_catalog(tmp_path / 'upgrade-target')
+    result = pm.apply_pending_migrations(owner, frozen_tree)
     assert result == {'applied': 1, 'pending_before': 1}
     owner.commit()
     owner.close()

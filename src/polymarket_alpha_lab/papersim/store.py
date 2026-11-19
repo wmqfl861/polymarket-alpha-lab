@@ -1155,3 +1155,526 @@ class BankrollCheckResult:
     identity_difference: Decimal
     tolerance: Decimal
     passed: bool
+
+
+# ---------------------------------------------------------------------------
+# MO-2 model registry (docs/handoffs/2026-11-19-audit-optimizer/04
+# section 9; 05 node MO-2). Same two-layer idempotency as the M2
+# operations block above: a stable writer-side scheduling identity and
+# exact content comparison. Same key + same content returns the
+# original row; same key + changed content is a conflict; nothing is
+# ever updated. Every idempotency-key material below -- including the
+# effective_at/decided_at/occurred_at time fields -- comes from the
+# submitted decision/event record, NEVER from the writing clock: a
+# retry may not mint a fresh identity from now() (the
+# command_run_event_key discipline above and the bankroll_check_key
+# day-of-as_of precedent).
+# ---------------------------------------------------------------------------
+
+#: Optimization-run outcomes (04 section 3: exactly four).
+OPTIMIZATION_OUTCOMES = ('CANDIDATE_REGISTERED', 'NO_IMPROVEMENT',
+                         'INSUFFICIENT_DATA', 'RUN_FAILED')
+#: Promotion-decision classes and conclusions (04 section 9).
+DECISION_CLASSES = ('FORWARD', 'ROLLBACK', 'MANUAL')
+DECISION_CONCLUSIONS = ('PROMOTE', 'PROMOTE_PENDING_CONFIRM', 'CONTINUE',
+                        'RETIRE', 'ROLLBACK', 'HOLD', 'BLOCKED')
+#: Role tokens (04 section 3) and model-spec sources (04 section 9).
+ROLE_TOKENS = ('ACTIVE', 'BASELINE', 'CANDIDATE', 'GUARD', 'RETIRED')
+SPEC_SOURCES = ('frozen_baseline', 'optimizer', 'manual')
+#: Roles a shadow prediction may be made under (never the active spec).
+SHADOW_ROLES = ('BASELINE', 'CANDIDATE', 'GUARD')
+#: Optimizer control kinds and scopes (04 sections 9 and 11).
+OPTIMIZER_CONTROL_KINDS = ('FREEZE', 'UNFREEZE')
+OPTIMIZER_CONTROL_SCOPES = ('GLOBAL', 'LINEAGE')
+
+
+def _utc_stamp_field(value, name: str) -> str:
+    """utc_stamp with the caller's field name in the error code."""
+    return _require_timestamp(value, name).astimezone(UTC).strftime('%Y%m%d%H%M%S')
+
+
+def normalize_json_number(value):
+    """jsonb round-trip normalization (plan review P3-4).
+
+    psycopg may hand back ``Decimal`` for jsonb numbers when a custom
+    loads hook is configured; ``ModelSpec`` identity needs int/float.
+    The spelling decides, exactly like ``json.loads``: a decimal with a
+    fraction point or exponent becomes float (``8.0`` stays a FLOAT,
+    never flips to int 8), a plain integer spelling becomes int.
+    Containers recurse. Without this, a decimal spelling flip could
+    change a rebuilt spec's canonical text (``i:8`` vs ``f:8.0``).
+    """
+
+    if isinstance(value, Decimal):
+        text = str(value)
+        if '.' in text or 'e' in text or 'E' in text:
+            return float(value)
+        return int(value)
+    if isinstance(value, dict):
+        return {key: normalize_json_number(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [normalize_json_number(item) for item in value]
+    return value
+
+
+def optimization_run_key(family, data_cutoff, rule_version, random_seed,
+                         search_space_text) -> str:
+    """Writer-side idempotency key for ``papersim.optimization_runs``.
+
+    One run is the identity family + data cutoff + rule version + seed +
+    search-space digest. ``data_cutoff`` is the run's FIXED knowledge
+    cutoff taken from the submitted run record, never the writing
+    clock: a retry may not mint a fresh identity from now().
+    """
+    if type(random_seed) is not int:
+        _fail('papersim_random_seed_invalid')
+    space = _require_json_payload(search_space_text, 'search_space')
+    return '|'.join(('or', _require_text(family, 'family'),
+                     _utc_stamp_field(data_cutoff, 'data_cutoff'),
+                     _require_text(rule_version, 'rule_version'),
+                     str(random_seed), sha256(space.encode('utf-8')).hexdigest()))
+
+
+def promotion_decision_key(lineage, decision_class, candidate_spec_sha256,
+                           rule_version, look_number) -> str:
+    """Writer-side idempotency key for ``papersim.promotion_decisions``.
+
+    The decision identity is lineage + class + candidate + rule version
+    + look number -- all fields of the submitted decision record; the
+    decision time never enters the key, so a re-submitted identical
+    judgement returns the original row instead of a fresh one.
+    """
+    if decision_class not in DECISION_CLASSES:
+        _fail('papersim_decision_class_invalid')
+    if type(look_number) is not int or look_number < 1:
+        _fail('papersim_look_number_invalid')
+    candidate = candidate_spec_sha256 or ''
+    if candidate:
+        _optional_hash64(candidate, 'candidate_spec_sha256')
+    return '|'.join(('pd', _require_text(lineage, 'lineage'), decision_class,
+                     candidate, _require_text(rule_version, 'rule_version'),
+                     str(look_number)))
+
+
+def model_role_event_key(lineage, spec_sha256, role, effective_at) -> str:
+    """Writer-side idempotency key for ``papersim.model_role_events``.
+
+    One role change is lineage + spec + role + effective_at. The
+    effective time is the event's OWN recorded effect time from the
+    submitted batch, never the writing clock; the two handover events
+    of one promotion share effective_at but differ in spec/role, so a
+    replayed handover finds both original rows. Actor and reason are
+    content, not identity: same key with changed content is a conflict.
+    """
+    if role not in ROLE_TOKENS:
+        _fail('papersim_role_invalid')
+    return '|'.join(('mre', _require_text(lineage, 'lineage'),
+                     _optional_hash64(spec_sha256, 'spec_sha256'), role,
+                     _utc_stamp_field(effective_at, 'effective_at')))
+
+
+def shadow_prediction_key(candidate_id, spec_sha256, predicted_at) -> str:
+    """Writer-side idempotency key for ``papersim.shadow_predictions``.
+
+    Candidate row + spec + the scan-recorded prediction time (from the
+    submitted shadow record, never the writing clock). The writer is
+    MO-7; MO-2 pins the identity contract only.
+    """
+    if type(candidate_id) is not int:
+        _fail('papersim_candidate_id_invalid')
+    return '|'.join(('sp', str(candidate_id),
+                     _optional_hash64(spec_sha256, 'spec_sha256'),
+                     _utc_stamp_field(predicted_at, 'predicted_at')))
+
+
+def optimizer_control_key(scope_target, control_kind, actor, occurred_at) -> str:
+    """Writer-side idempotency key for ``papersim.optimizer_control_events``.
+
+    ``scope_target`` is the lineage for a LINEAGE-scoped event or
+    ``GLOBAL``. ``occurred_at`` is the event's recorded effect time
+    taken from the submitted control record, never the writing clock.
+    """
+    if control_kind not in OPTIMIZER_CONTROL_KINDS:
+        _fail('papersim_optimizer_control_kind_invalid')
+    return '|'.join(('oce', _require_text(scope_target, 'scope_target'),
+                     control_kind, _require_text(actor, 'actor'),
+                     _utc_stamp_field(occurred_at, 'occurred_at')))
+
+
+@dataclass(frozen=True)
+class ModelSpecSubmission:
+    """One model-spec row for ``papersim.model_specs`` (MO-2, 04 section 9).
+
+    Pure scalar shape -- deliberately NOT holding a ``ModelSpec`` so
+    ``papersim.store`` never imports the optimize subpackage (the
+    import-purity contract of ``tests/test_papersim_optimize_spec.py``
+    pins what ``import papersim`` loads). The writer-side expansion of
+    a ``ModelSpec`` into this shape lives in ``store_psycopg``.
+    Identity contract: ``spec_sha256`` MUST equal the SHA-256 of the
+    UTF-8 bytes of ``canonical_text`` (the MO-1 canonical text; the
+    database re-derives the same digest with
+    ``convert_to(canonical_text, 'UTF8')``), ``model_version`` MUST be
+    the legacy alias when ``legacy_model_version`` is set and otherwise
+    ``procedure_version + '+' + spec_sha256[:12]``.
+    """
+
+    spec_sha256: str = ''
+    canonical_text: str = ''
+    family: str = ''
+    procedure_version: str = ''
+    model_version: str = ''
+    legacy_model_version: str | None = None
+    params: str = '{}'
+    envelope: str = '[]'
+    data_contract: str = ''
+    source: str = 'frozen_baseline'
+    parent_spec_sha256: str | None = None
+    optimization_id: int | None = None
+    code_commit: str = ''
+
+    def validate(self) -> 'ModelSpecSubmission':
+        _optional_hash64(self.spec_sha256, 'spec_sha256')
+        _require_text(self.canonical_text, 'canonical_text')
+        if sha256(self.canonical_text.encode('utf-8')).hexdigest() != self.spec_sha256:
+            _fail('papersim_spec_canonical_mismatch')
+        _require_text(self.family, 'family')
+        _require_text(self.procedure_version, 'procedure_version')
+        _require_text(self.model_version, 'model_version')
+        _optional_text(self.legacy_model_version, 'legacy_model_version')
+        _require_json_payload(self.params, 'params')
+        _require_json_list(self.envelope, 'envelope')
+        _require_text(self.data_contract, 'data_contract')
+        if self.source not in SPEC_SOURCES:
+            _fail('papersim_spec_source_invalid')
+        _optional_hash64(self.parent_spec_sha256, 'parent_spec_sha256')
+        if self.optimization_id is not None \
+                and (type(self.optimization_id) is not int or self.optimization_id < 1):
+            _fail('papersim_optimization_id_invalid')
+        _require_commit40(self.code_commit, 'code_commit')
+        expected = self.legacy_model_version if self.legacy_model_version is not None \
+            else f'{self.procedure_version}+{self.spec_sha256[:12]}'
+        if self.model_version != expected:
+            _fail('papersim_model_version_inconsistent')
+        return self
+
+    def comparison(self) -> dict:
+        return {'canonical_text': self.canonical_text, 'family': self.family,
+                'procedure_version': self.procedure_version,
+                'model_version': self.model_version,
+                'legacy_model_version': self.legacy_model_version,
+                'params': self.params, 'envelope': self.envelope,
+                'data_contract': self.data_contract, 'source': self.source,
+                'parent_spec_sha256': self.parent_spec_sha256,
+                'optimization_id': self.optimization_id,
+                'code_commit': self.code_commit}
+
+
+@dataclass(frozen=True)
+class OptimizationRunSubmission:
+    """One optimization run row (MO-2, 04 sections 3 and 9).
+
+    ``active_specs`` maps lineage -> spec sha256 of the ACTIVE spec at
+    run time; it stays plain JSON (no FK, the
+    candidate_marks.snapshot_sha256 pattern) and the writer proves each
+    referenced spec exists inside the same transaction, exactly like
+    the record_scan snapshot_refs proof.
+    """
+
+    family: str = ''
+    data_cutoff: datetime | None = None
+    lineages: str | list = '[]'
+    dataset_summary: str | dict = '{}'
+    snapshot_refs: str | list = '[]'
+    search_space: str | dict = '{}'
+    rule_version: str = ''
+    random_seed: int = 0
+    trial_count: int = 0
+    budget: str | dict = '{}'
+    active_specs: str | dict = '{}'
+    outcome: str = 'RUN_FAILED'
+    scorecard: str | dict = '{}'
+    artifacts_sha256: str | None = None
+    code_commit: str = ''
+
+    def validate(self) -> 'OptimizationRunSubmission':
+        _require_text(self.family, 'family')
+        _require_timestamp(self.data_cutoff, 'data_cutoff')
+        lineages = json.loads(_require_json_list(self.lineages, 'lineages'))
+        if not lineages or not all(type(name) is str and name for name in lineages):
+            _fail('papersim_lineages_invalid')
+        _require_json_payload(self.dataset_summary, 'dataset_summary')
+        references = json.loads(_require_json_list(self.snapshot_refs, 'snapshot_refs'))
+        for reference in references:
+            _optional_hash64(reference, 'snapshot_ref')
+        _require_json_payload(self.search_space, 'search_space')
+        _require_text(self.rule_version, 'rule_version')
+        if type(self.random_seed) is not int:
+            _fail('papersim_random_seed_invalid')
+        if type(self.trial_count) is not int or self.trial_count < 0:
+            _fail('papersim_trial_count_invalid')
+        _require_json_payload(self.budget, 'budget')
+        active = json.loads(_require_json_payload(self.active_specs, 'active_specs'))
+        if not isinstance(active, dict) \
+                or not all(type(name) is str for name in active) \
+                or not all(name in set(lineages) for name in active):
+            _fail('papersim_active_specs_invalid')
+        for digest in active.values():
+            _optional_hash64(digest, 'active_spec_sha256')
+        if self.outcome not in OPTIMIZATION_OUTCOMES:
+            _fail('papersim_outcome_invalid')
+        _require_json_payload(self.scorecard, 'scorecard')
+        _optional_hash64(self.artifacts_sha256, 'artifacts_sha256')
+        _require_commit40(self.code_commit, 'code_commit')
+        return self
+
+    def key(self) -> str:
+        return optimization_run_key(self.family, self.data_cutoff, self.rule_version,
+                                    self.random_seed, self.search_space)
+
+    def comparison(self) -> dict:
+        return {'family': self.family, 'lineages': self.lineages,
+                'data_cutoff': self.data_cutoff,
+                'dataset_summary': self.dataset_summary,
+                'snapshot_refs': self.snapshot_refs,
+                'search_space': self.search_space,
+                'rule_version': self.rule_version, 'random_seed': self.random_seed,
+                'trial_count': self.trial_count, 'budget': self.budget,
+                'active_specs': self.active_specs, 'outcome': self.outcome,
+                'scorecard': self.scorecard,
+                'artifacts_sha256': self.artifacts_sha256,
+                'code_commit': self.code_commit}
+
+
+@dataclass(frozen=True)
+class PromotionDecisionSubmission:
+    """One promotion-decision row (MO-2, 04 section 9).
+
+    A BLOCKED conclusion must carry its block reason and no other
+    conclusion may (mirrored by the database CHECK); ``decided_at`` is
+    part of the content, never of the idempotency key.
+    """
+
+    lineage: str = ''
+    decision_class: str = 'FORWARD'
+    candidate_spec_sha256: str | None = None
+    active_spec_sha256: str = ''
+    rule_version: str = ''
+    look_number: int = 1
+    evidence_watermark: str | dict = '{}'
+    metrics: str | dict = '{}'
+    conclusion: str = 'HOLD'
+    block_reason: str | None = None
+    decided_by: str = ''
+    decided_at: datetime | None = None
+
+    def validate(self) -> 'PromotionDecisionSubmission':
+        _require_text(self.lineage, 'lineage')
+        if self.decision_class not in DECISION_CLASSES:
+            _fail('papersim_decision_class_invalid')
+        _optional_hash64(self.candidate_spec_sha256, 'candidate_spec_sha256')
+        _optional_hash64(self.active_spec_sha256, 'active_spec_sha256')
+        _require_text(self.rule_version, 'rule_version')
+        if type(self.look_number) is not int or self.look_number < 1:
+            _fail('papersim_look_number_invalid')
+        _require_json_payload(self.evidence_watermark, 'evidence_watermark')
+        _require_json_payload(self.metrics, 'metrics')
+        if self.conclusion not in DECISION_CONCLUSIONS:
+            _fail('papersim_conclusion_invalid')
+        _optional_text(self.block_reason, 'block_reason')
+        if (self.conclusion == 'BLOCKED') != (self.block_reason is not None):
+            _fail('papersim_block_reason_invalid')
+        _require_text(self.decided_by, 'decided_by')
+        _require_timestamp(self.decided_at, 'decided_at')
+        return self
+
+    def key(self) -> str:
+        return promotion_decision_key(self.lineage, self.decision_class,
+                                      self.candidate_spec_sha256, self.rule_version,
+                                      self.look_number)
+
+    def comparison(self) -> dict:
+        return {'lineage': self.lineage, 'decision_class': self.decision_class,
+                'candidate_spec_sha256': self.candidate_spec_sha256,
+                'active_spec_sha256': self.active_spec_sha256,
+                'rule_version': self.rule_version, 'look_number': self.look_number,
+                'evidence_watermark': self.evidence_watermark,
+                'metrics': self.metrics, 'conclusion': self.conclusion,
+                'block_reason': self.block_reason, 'decided_by': self.decided_by,
+                'decided_at': self.decided_at}
+
+
+@dataclass(frozen=True)
+class RoleEventSubmission:
+    """One role-change event row (MO-2, 04 section 9).
+
+    ``effective_at`` is the event's own recorded effect time (key
+    material, never the writing clock). A CANDIDATE registration must
+    carry its forward plan (pre-registration, design section 5
+    measure 7; mirrored by the database CHECK).
+    """
+
+    lineage: str = ''
+    spec_sha256: str = ''
+    role: str = 'ACTIVE'
+    effective_at: datetime | None = None
+    reason: str = ''
+    forward_plan: str | dict | None = None
+    decision_id: int | None = None
+    actor: str = ''
+    code_commit: str = ''
+
+    def validate(self) -> 'RoleEventSubmission':
+        _require_text(self.lineage, 'lineage')
+        _optional_hash64(self.spec_sha256, 'spec_sha256')
+        if self.role not in ROLE_TOKENS:
+            _fail('papersim_role_invalid')
+        _require_timestamp(self.effective_at, 'effective_at')
+        _require_text(self.reason, 'reason')
+        if self.forward_plan is not None:
+            _require_json_payload(self.forward_plan, 'forward_plan')
+        if self.role == 'CANDIDATE' and self.forward_plan is None:
+            _fail('papersim_forward_plan_required')
+        if self.decision_id is not None \
+                and (type(self.decision_id) is not int or self.decision_id < 1):
+            _fail('papersim_decision_id_invalid')
+        _require_text(self.actor, 'actor')
+        _require_commit40(self.code_commit, 'code_commit')
+        return self
+
+    def key(self) -> str:
+        return model_role_event_key(self.lineage, self.spec_sha256, self.role,
+                                    self.effective_at)
+
+    def comparison(self) -> dict:
+        return {'lineage': self.lineage, 'spec_sha256': self.spec_sha256,
+                'role': self.role, 'effective_at': self.effective_at,
+                'reason': self.reason,
+                'forward_plan': None if self.forward_plan is None
+                                else _require_json_payload(self.forward_plan, 'forward_plan'),
+                'decision_id': self.decision_id, 'actor': self.actor,
+                'code_commit': self.code_commit}
+
+
+@dataclass(frozen=True)
+class RoleEventBatch:
+    """One transaction's role events of ONE lineage (MO-2, 05 node MO-2).
+
+    The batch IS the transaction unit the pure registry validates: a
+    promotion handover is exactly [old active -> GUARD, candidate ->
+    ACTIVE] in one batch (plus RETIRED of a previous guard first when
+    present). The writer applies the whole batch in one database
+    transaction after the prior-state check.
+    """
+
+    events: tuple[RoleEventSubmission, ...] = ()
+
+    def validate(self) -> 'RoleEventBatch':
+        if not self.events:
+            _fail('papersim_role_event_batch_empty')
+        lineages = {event.lineage for event in self.events}
+        if len(lineages) != 1:
+            _fail('papersim_role_event_batch_lineage_invalid')
+        stamps = {event.effective_at for event in self.events}
+        if len(stamps) != 1:
+            _fail('papersim_role_event_batch_time_invalid')
+        for event in self.events:
+            event.validate()
+        return self
+
+
+@dataclass(frozen=True)
+class ShadowPredictionSubmission:
+    """One shadow-prediction row (MO-2 identity contract; writer is MO-7).
+
+    Hangs on the ACTIVE candidate row of the same market and scan;
+    ``probability`` is closed-interval [0,1] like a mark, the
+    hypothetical fill price stays open-interval like a quote.
+    """
+
+    candidate_id: int = 0
+    spec_sha256: str = ''
+    role_at_prediction: str = 'BASELINE'
+    probability: Decimal | float | int | None = None
+    variant_quotes: str | list = '[]'
+    refusal_reason: str | None = None
+    gate_pass: bool = False
+    gate_reason: str | None = None
+    hypothetical_fill_price: Decimal | float | int | None = None
+    predicted_at: datetime | None = None
+
+    def validate(self) -> 'ShadowPredictionSubmission':
+        if type(self.candidate_id) is not int:
+            _fail('papersim_candidate_id_invalid')
+        _optional_hash64(self.spec_sha256, 'spec_sha256')
+        if self.role_at_prediction not in SHADOW_ROLES:
+            _fail('papersim_shadow_role_invalid')
+        _optional_probability_closed(self.probability, 'probability')
+        _require_json_list(self.variant_quotes, 'variant_quotes')
+        _optional_text(self.refusal_reason, 'refusal_reason')
+        if type(self.gate_pass) is not bool:
+            _fail('papersim_gate_pass_invalid')
+        _optional_text(self.gate_reason, 'gate_reason')
+        _optional_interval_open(self.hypothetical_fill_price,
+                                'hypothetical_fill_price')
+        if self.refusal_reason is not None and self.probability is not None:
+            _fail('papersim_shadow_refusal_conflict')
+        _require_timestamp(self.predicted_at, 'predicted_at')
+        return self
+
+    def key(self) -> str:
+        return shadow_prediction_key(self.candidate_id, self.spec_sha256,
+                                     self.predicted_at)
+
+    def comparison(self) -> dict:
+        return {'candidate_id': self.candidate_id, 'spec_sha256': self.spec_sha256,
+                'role_at_prediction': self.role_at_prediction,
+                'probability': self.probability, 'variant_quotes': self.variant_quotes,
+                'refusal_reason': self.refusal_reason, 'gate_pass': self.gate_pass,
+                'gate_reason': self.gate_reason,
+                'hypothetical_fill_price': self.hypothetical_fill_price,
+                'predicted_at': self.predicted_at}
+
+
+@dataclass(frozen=True)
+class OptimizerControlEventSubmission:
+    """One optimizer freeze/unfreeze row (MO-2, 04 sections 9 and 11).
+
+    Scope is GLOBAL or one lineage. An UNFREEZE can never be decided by
+    an automatic rule -- checked here (application layer), checked in
+    the pure registry and enforced again by the database CHECK; three
+    layers, one rule. ``occurred_at`` is key material from the record,
+    never the writing clock.
+    """
+
+    scope: str = 'GLOBAL'
+    lineage: str | None = None
+    control_kind: str = 'FREEZE'
+    reason: str = ''
+    actor: str = ''
+    occurred_at: datetime | None = None
+
+    def validate(self) -> 'OptimizerControlEventSubmission':
+        if self.scope not in OPTIMIZER_CONTROL_SCOPES:
+            _fail('papersim_control_scope_invalid')
+        if (self.scope == 'LINEAGE') != (self.lineage is not None):
+            _fail('papersim_control_scope_lineage_invalid')
+        if self.lineage is not None:
+            _require_text(self.lineage, 'lineage')
+        if self.control_kind not in OPTIMIZER_CONTROL_KINDS:
+            _fail('papersim_optimizer_control_kind_invalid')
+        _require_text(self.reason, 'reason')
+        _require_text(self.actor, 'actor')
+        if self.control_kind == 'UNFREEZE' and self.actor.startswith('auto:'):
+            _fail('papersim_unfreeze_actor_invalid')
+        _require_timestamp(self.occurred_at, 'occurred_at')
+        return self
+
+    def key(self) -> str:
+        return optimizer_control_key(self.lineage if self.scope == 'LINEAGE'
+                                     else 'GLOBAL', self.control_kind, self.actor,
+                                     self.occurred_at)
+
+    def comparison(self) -> dict:
+        return {'scope': self.scope, 'lineage': self.lineage,
+                'control_kind': self.control_kind, 'reason': self.reason,
+                'actor': self.actor, 'occurred_at': self.occurred_at}

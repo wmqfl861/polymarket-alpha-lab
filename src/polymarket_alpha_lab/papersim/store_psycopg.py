@@ -39,6 +39,7 @@ in-repo basis is docs/paper-sim/design/README.md (FX-28).
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import datetime
 from decimal import Decimal
 import json
@@ -807,3 +808,564 @@ def latched_pauses(conn) -> dict:
                 stop[queue] = True
     return {queue: (review.get(queue, False), stop.get(queue, False))
             for queue in sorted(set(review) | set(stop))}
+
+# ---------------------------------------------------------------------------
+# MO-2 model registry writes and reads (04 section 9; 05 node MO-2).
+# Same two-layer idempotency as the blocks above: stable writer-side
+# key + exact content comparison; nothing is ever updated. The optimize
+# subpackage is imported INSIDE functions only -- store_psycopg sits on
+# the CLI's database path and the import-purity / startup-module-set
+# contracts of tests/test_papersim_optimize_spec.py must not see
+# optimize modules at import time.
+# ---------------------------------------------------------------------------
+
+from polymarket_alpha_lab.papersim.store import (  # noqa: E402  (MO-2 append block)
+    ModelSpecSubmission,
+    OptimizationRunSubmission,
+    OptimizerControlEventSubmission,
+    PromotionDecisionSubmission,
+    RoleEventBatch,
+    RoleEventSubmission,
+    model_role_event_key,
+    normalize_json_number,
+    _require_json_payload,
+)
+
+_SPEC_COLUMNS = ('canonical_text, family, procedure_version, model_version, '
+                 'legacy_model_version, params, envelope, data_contract, source, '
+                 'parent_spec_sha256, optimization_id, code_commit')
+_SPEC_INSERT = ('INSERT INTO papersim.model_specs (spec_sha256, ' + _SPEC_COLUMNS
+                + ') VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s,%s,%s,%s) '
+                  'RETURNING 1')
+
+_RUN_COLUMNS = ('family, lineages, data_cutoff, dataset_summary, snapshot_refs, '
+                'search_space, rule_version, random_seed, trial_count, budget, '
+                'active_specs, outcome, scorecard, artifacts_sha256, code_commit')
+_RUN_INSERT = ('INSERT INTO papersim.optimization_runs (optimization_key, '
+               + _RUN_COLUMNS + ') VALUES (%s,%s,%s::jsonb,%s,%s::jsonb,%s::jsonb,'
+                 '%s::jsonb,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s::jsonb,%s,%s) '
+                 'RETURNING optimization_id')
+
+_PROMOTION_COLUMNS = ('lineage, decision_class, candidate_spec_sha256, '
+                     'active_spec_sha256, rule_version, look_number, '
+                     'evidence_watermark, metrics, conclusion, block_reason, '
+                     'decided_by, decided_at')
+_PROMOTION_INSERT = ('INSERT INTO papersim.promotion_decisions (decision_key, '
+                    + _PROMOTION_COLUMNS + ') VALUES (%s,%s,%s,%s,%s,%s,%s,'
+                      '%s::jsonb,%s::jsonb,%s,%s,%s,%s) RETURNING decision_id')
+
+_ROLE_EVENT_COLUMNS = ('lineage, spec_sha256, role, effective_at, reason, '
+                       'forward_plan, decision_id, actor, code_commit')
+_ROLE_EVENT_INSERT = ('INSERT INTO papersim.model_role_events (role_event_key, '
+                      + _ROLE_EVENT_COLUMNS + ') VALUES (%s,%s,%s,%s,%s,%s,'
+                        '%s::jsonb,%s,%s,%s) RETURNING role_event_id')
+
+_CONTROL_COLUMNS = ('scope, lineage, control_kind, reason, actor, occurred_at')
+_CONTROL_INSERT = ('INSERT INTO papersim.optimizer_control_events '
+                   '(optimizer_control_key, ' + _CONTROL_COLUMNS + ') '
+                   'VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING optimizer_control_id')
+
+
+def _json_like(value):
+    """Normalize one comparison operand: JSON text parses, structures stay.
+
+    jsonb columns come back from psycopg as dict/list (auto-loaded)
+    while the submission side carries canonical JSON text -- parsing
+    the text makes the comparison value-level (key-order free) instead
+    of string-level.
+    """
+
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except ValueError:
+            return value
+    return value
+
+
+def _compare_stored_row(stored: dict, expected: dict, code: str) -> None:
+    """Content comparison over mixed jsonb/datetime/text columns."""
+
+    for column, value in expected.items():
+        left = _json_like(stored[column])
+        right = _json_like(value)
+        if isinstance(left, (dict, list)) or isinstance(right, (dict, list)):
+            if left != right:
+                raise PapersimStoreError(code)
+        elif _normalize(left) != _normalize(right):
+            raise PapersimStoreError(code)
+
+
+def _plain_json(value):
+    """Recursively turn deep-frozen spec containers into plain JSON types.
+
+    ``ModelSpec.__post_init__`` wraps every nested mapping in
+    ``MappingProxyType``; ``json.dumps`` refuses proxies, so the writer
+    unfolds them (and tuples) into plain dicts/lists first.
+    """
+
+    if isinstance(value, Mapping):
+        return {key: _plain_json(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_plain_json(item) for item in value]
+    return value
+
+
+def _spec_submission_from_spec(spec, *, source, code_commit,
+                               parent_spec_sha256=None, optimization_id=None):
+    """Expand one ``optimize.spec.ModelSpec`` into a :class:`ModelSpecSubmission`.
+
+    The scalar expansion is the ONLY place a ModelSpec meets the store
+    layer, keeping ``papersim.store`` free of optimize imports.
+    """
+
+    from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec  # noqa: F401
+
+    if not isinstance(spec, ModelSpec):
+        raise PapersimStoreError('papersim_spec_object_invalid')
+    return ModelSpecSubmission(
+        spec_sha256=spec.spec_sha256(),
+        canonical_text=spec.canonical_json(),
+        family=spec.family,
+        procedure_version=spec.procedure_version,
+        model_version=spec.model_version(),
+        legacy_model_version=spec.legacy_model_version,
+        params=json.dumps(_plain_json(spec.params), sort_keys=True,
+                          separators=(',', ':')),
+        envelope=json.dumps(_plain_json(spec.envelope), sort_keys=True,
+                            separators=(',', ':')),
+        data_contract=spec.data_contract,
+        source=source,
+        parent_spec_sha256=parent_spec_sha256,
+        optimization_id=optimization_id,
+        code_commit=code_commit)
+
+
+def register_model_spec(conn, spec, *, source, code_commit,
+                        parent_spec_sha256=None, optimization_id=None) -> dict:
+    """Register one model spec; the content hash IS the idempotency key.
+
+    Same digest + same content returns the original row
+    (``inserted=False``); same digest with any changed column is a
+    ``papersim_model_spec_conflict``. The database additionally
+    re-derives the digest from ``canonical_text`` (UTF-8), so a forged
+    (digest, text) pair cannot land even through raw SQL.
+    """
+
+    submission = _spec_submission_from_spec(
+        spec, source=source, code_commit=code_commit,
+        parent_spec_sha256=parent_spec_sha256, optimization_id=optimization_id)
+    submission.validate()
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT ' + _SPEC_COLUMNS + ' FROM papersim.model_specs '
+                       'WHERE spec_sha256 = %s', (submission.spec_sha256,))
+        columns = _SPEC_COLUMNS.replace(' ', '').split(',')
+        row = cursor.fetchone()
+        if row is None:
+            cursor.execute(_SPEC_INSERT, (submission.spec_sha256,) + tuple(
+                submission.comparison()[name] for name in columns))
+            cursor.fetchone()
+            return {'spec_sha256': submission.spec_sha256, 'inserted': True}
+        stored = dict(zip(columns, row, strict=True))
+        _compare_stored_row(stored, submission.comparison(),
+                            'papersim_model_spec_conflict')
+        return {'spec_sha256': submission.spec_sha256, 'inserted': False}
+
+
+def record_optimization_run(conn, submission: OptimizationRunSubmission) -> dict:
+    """Append one optimization run row (idempotent on the run key).
+
+    ``snapshot_refs`` and the spec digests inside ``active_specs`` are
+    proven to exist inside the same transaction -- the same pattern as
+    the record_scan snapshot proof; no FK crosses runs and specs (a
+    run references MANY specs and its own row may not exist yet when
+    those specs were written).
+    """
+
+    submission.validate()
+    key = submission.key()
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT optimization_id, ' + _RUN_COLUMNS
+                       + ' FROM papersim.optimization_runs WHERE optimization_key = %s',
+                       (key,))
+        columns = ['optimization_id'] + _RUN_COLUMNS.replace(' ', '').split(',')
+        row = cursor.fetchone()
+        if row is not None:
+            stored = dict(zip(columns, row, strict=True))
+            _compare_stored_row(stored, submission.comparison(),
+                                'papersim_optimization_run_conflict')
+            return {'optimization_id': int(stored['optimization_id']),
+                    'optimization_key': key, 'inserted': False}
+        references = _json_like(submission.snapshot_refs)
+        if references:
+            cursor.execute('SELECT content_sha256 FROM papersim.snapshots '
+                           'WHERE content_sha256 = ANY(%s)', (references,))
+            present = {r[0] for r in cursor.fetchall()}
+            if any(reference not in present for reference in references):
+                raise PapersimStoreError('papersim_snapshot_ref_missing')
+        active = _json_like(submission.active_specs)
+        if active:
+            cursor.execute('SELECT spec_sha256 FROM papersim.model_specs '
+                           'WHERE spec_sha256 = ANY(%s)', (list(active.values()),))
+            present = {r[0] for r in cursor.fetchall()}
+            if any(digest not in present for digest in active.values()):
+                raise PapersimStoreError('papersim_active_spec_missing')
+        columns = _RUN_COLUMNS.replace(' ', '').split(',')
+        values = submission.comparison()
+        cursor.execute(_RUN_INSERT, (key,) + tuple(
+            _require_json_payload(values[name], name)
+            if name in ('lineages', 'dataset_summary', 'snapshot_refs',
+                        'search_space', 'budget', 'active_specs', 'scorecard')
+            else values[name] for name in columns))
+        return {'optimization_id': int(cursor.fetchone()[0]),
+                'optimization_key': key, 'inserted': True}
+
+
+def record_promotion_decision(conn, submission: PromotionDecisionSubmission) -> dict:
+    """Append one promotion decision row (idempotent on the decision key)."""
+
+    submission.validate()
+    key = submission.key()
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT decision_id, ' + _PROMOTION_COLUMNS
+                       + ' FROM papersim.promotion_decisions WHERE decision_key = %s',
+                       (key,))
+        columns = ['decision_id'] + _PROMOTION_COLUMNS.replace(' ', '').split(',')
+        row = cursor.fetchone()
+        if row is not None:
+            stored = dict(zip(columns, row, strict=True))
+            _compare_stored_row(stored, submission.comparison(),
+                                'papersim_promotion_decision_conflict')
+            return {'decision_id': int(stored['decision_id']),
+                    'decision_key': key, 'inserted': False}
+        columns = _PROMOTION_COLUMNS.replace(' ', '').split(',')
+        values = submission.comparison()
+        cursor.execute(_PROMOTION_INSERT, (key,) + tuple(
+            _require_json_payload(values[name], name)
+            if name in ('evidence_watermark', 'metrics') else values[name]
+            for name in columns))
+        return {'decision_id': int(cursor.fetchone()[0]), 'decision_key': key,
+                'inserted': True}
+
+
+def _submission_to_registry_event(submission: RoleEventSubmission):
+    """Convert one store RoleEventSubmission into a registry RoleEvent."""
+
+    from polymarket_alpha_lab.papersim.optimize.registry import RoleEvent
+
+    plan = submission.forward_plan
+    if plan is not None:
+        plan = json.loads(plan) if isinstance(plan, str) else dict(plan)
+    return RoleEvent(lineage=submission.lineage,
+                     spec_sha256=submission.spec_sha256, role=submission.role,
+                     effective_at=submission.effective_at,
+                     reason=submission.reason, forward_plan=plan,
+                     decision_id=submission.decision_id, actor=submission.actor,
+                     code_commit=submission.code_commit)
+
+
+def _row_to_role_event(row):
+    from polymarket_alpha_lab.papersim.optimize.registry import RoleEvent
+
+    return RoleEvent(lineage=row[0], spec_sha256=row[1], role=row[2],
+                     effective_at=row[3], reason=row[4], forward_plan=row[5],
+                     decision_id=row[6], actor=row[7], code_commit=row[8],
+                     role_event_id=row[9])
+
+
+_ROLE_EVENT_SELECT = ('SELECT lineage, spec_sha256, role, effective_at, reason, '
+                      'forward_plan, decision_id, actor, code_commit, role_event_id '
+                      'FROM papersim.model_role_events')
+
+
+def load_all_role_events(conn) -> dict:
+    """All role events grouped per lineage into writer-transaction batches.
+
+    Rows arrive ordered by ``(lineage, effective_at, role_event_id)``
+    and consecutive events of one lineage sharing ``effective_at``
+    reform one batch (the writer wrote them in one transaction). The
+    pure registry folds the returned structure; an EMPTY registry
+    yields ``{}`` which the caller maps to all-baseline fallback.
+    """
+
+    from polymarket_alpha_lab.papersim.optimize.registry import (
+        group_events_by_lineage,
+    )
+
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(_ROLE_EVENT_SELECT + ' ORDER BY lineage, effective_at, '
+                       'role_event_id')
+        events = [_row_to_role_event(row) for row in cursor.fetchall()]
+    return group_events_by_lineage([[event] for event in events])
+
+
+def load_lineage_roles(conn, lineage: str):
+    """The folded role view of ONE lineage, or ``None`` when it is empty.
+
+    ``None`` is the registry-empty / lineage-unknown signal: the
+    caller (the MO-7 provider) falls back to the family baseline and
+    records the fallback -- a registry failure never stops a scan
+    (04 section 11).
+    """
+
+    from polymarket_alpha_lab.papersim.optimize.registry import derive_lineage_roles
+
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(_ROLE_EVENT_SELECT + ' WHERE lineage = %s '
+                       'ORDER BY effective_at, role_event_id', (lineage,))
+        events = [_row_to_role_event(row) for row in cursor.fetchall()]
+    if not events:
+        return None
+    batches = []
+    current = []
+    stamp = None
+    for event in events:
+        if current and event.effective_at != stamp:
+            batches.append(current)
+            current = []
+        current.append(event)
+        stamp = event.effective_at
+    if current:
+        batches.append(current)
+    return derive_lineage_roles(batches)
+
+
+def record_role_events(conn, batch: RoleEventBatch) -> dict:
+    """Write one transaction's role events atomically (MO-2, 05).
+
+    The batch IS the promotion-handover transaction unit: the prior
+    state is loaded and validated by the pure registry FIRST, then all
+    events insert inside ONE database transaction -- a handover can
+    never land as half a pair. Idempotent replay: when every key of
+    the batch already exists with identical content the original ids
+    return (``inserted=False``); a PARTIAL replay is a conflict.
+
+    Concurrency window (plan review P3): the prior check is not
+    mutually exclusive -- two concurrent writers could both read the
+    same prior and each validate a legal batch, breaching a cap (e.g.
+    two different candidate registrations meeting MAX_CANDIDATES=2).
+    The registered mitigation is the optimizer's single-writer rhythm
+    (role events come from the scheduled decide/apply nodes, MO-8) --
+    do NOT call this function from concurrent contexts; an advisory
+    lock can be added if a second writer ever appears.
+    """
+
+    from polymarket_alpha_lab.papersim.optimize.registry import (
+        derive_lineage_roles,
+        validate_role_event_batch,
+    )
+
+    batch.validate()
+    lineage = batch.events[0].lineage
+    with conn.transaction():
+        cursor = conn.cursor()
+        keys = [event.key() for event in batch.events]
+        cursor.execute('SELECT role_event_key FROM papersim.model_role_events '
+                       'WHERE role_event_key = ANY(%s)', (keys,))
+        present = {row[0] for row in cursor.fetchall()}
+        if present:
+            if len(present) != len(keys):
+                raise PapersimStoreError('papersim_role_event_partial_replay')
+            ids = {}
+            for event in batch.events:
+                cursor.execute('SELECT role_event_id, ' + _ROLE_EVENT_COLUMNS
+                               + ' FROM papersim.model_role_events '
+                               'WHERE role_event_key = %s', (event.key(),))
+                columns = ['role_event_id'] \
+                    + _ROLE_EVENT_COLUMNS.replace(' ', '').split(',')
+                row = cursor.fetchone()
+                stored = dict(zip(columns, row, strict=True))
+                _compare_stored_row(stored, event.comparison(),
+                                    'papersim_role_event_conflict')
+                ids[event.role] = int(stored['role_event_id'])
+            return {'lineage': lineage, 'role_event_ids': ids, 'inserted': False}
+        prior = load_lineage_roles(conn, lineage)
+        registry_events = [_submission_to_registry_event(event)
+                           for event in batch.events]
+        validate_role_event_batch(prior, registry_events)
+        ids = {}
+        for event in batch.events:
+            columns = _ROLE_EVENT_COLUMNS.replace(' ', '').split(',')
+            values = event.comparison()
+            cursor.execute(_ROLE_EVENT_INSERT, (event.key(),) + tuple(
+                _require_json_payload(values[name], name)
+                if name == 'forward_plan' else values[name]
+                for name in columns))
+            ids[event.role] = int(cursor.fetchone()[0])
+    return {'lineage': lineage, 'role_event_ids': ids, 'inserted': True}
+
+
+def record_optimizer_control_event(
+        conn, submission: OptimizerControlEventSubmission) -> dict:
+    """Append one freeze/unfreeze row (idempotent on the control key)."""
+
+    submission.validate()
+    key = submission.key()
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT optimizer_control_id, ' + _CONTROL_COLUMNS
+                       + ' FROM papersim.optimizer_control_events '
+                       'WHERE optimizer_control_key = %s', (key,))
+        columns = ['optimizer_control_id'] + _CONTROL_COLUMNS.replace(' ', '').split(',')
+        row = cursor.fetchone()
+        if row is not None:
+            stored = dict(zip(columns, row, strict=True))
+            _compare_stored_row(stored, submission.comparison(),
+                                'papersim_optimizer_control_conflict')
+            return {'optimizer_control_id': int(stored['optimizer_control_id']),
+                    'optimizer_control_key': key, 'inserted': False}
+        cursor.execute(_CONTROL_INSERT, (key,) + tuple(
+            submission.comparison()[name]
+            for name in _CONTROL_COLUMNS.replace(' ', '').split(',')))
+        return {'optimizer_control_id': int(cursor.fetchone()[0]),
+                'optimizer_control_key': key, 'inserted': True}
+
+
+def load_model_spec(conn, spec_sha256: str):
+    """Rebuild the ``ModelSpec`` of one row; identity must round-trip.
+
+    Returns ``None`` when the digest is unknown (the caller falls back
+    to the baseline). The rebuilt spec's ``spec_sha256()`` MUST equal
+    the primary key -- the spelling-flip guard of plan review P3-4.
+    """
+
+    from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
+
+    cursor = conn.cursor()
+    cursor.execute('SELECT ' + _SPEC_COLUMNS + ' FROM papersim.model_specs '
+                   'WHERE spec_sha256 = %s', (spec_sha256,))
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    columns = _SPEC_COLUMNS.replace(' ', '').split(',')
+    stored = dict(zip(columns, row, strict=True))
+    params = normalize_json_number(stored['params'])
+    envelope = tuple(normalize_json_number(item) for item in stored['envelope'])
+    spec = ModelSpec(family=stored['family'],
+                     procedure_version=stored['procedure_version'],
+                     params=params, envelope=envelope,
+                     data_contract=stored['data_contract'],
+                     legacy_model_version=stored['legacy_model_version'])
+    if spec.spec_sha256() != spec_sha256:
+        raise PapersimStoreError('papersim_model_spec_roundtrip_mismatch')
+    return spec
+
+
+def load_optimization_runs(conn, family: str | None = None) -> list[dict]:
+    """Read optimization runs (newest first), optionally one family."""
+
+    cursor = conn.cursor()
+    if family is None:
+        cursor.execute('SELECT optimization_id, optimization_key, ' + _RUN_COLUMNS
+                       + ' FROM papersim.optimization_runs '
+                       'ORDER BY optimization_id DESC')
+    else:
+        cursor.execute('SELECT optimization_id, optimization_key, ' + _RUN_COLUMNS
+                       + ' FROM papersim.optimization_runs WHERE family = %s '
+                       'ORDER BY optimization_id DESC', (family,))
+    columns = ['optimization_id', 'optimization_key'] \
+        + _RUN_COLUMNS.replace(' ', '').split(',')
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
+def load_promotion_decisions(conn, lineage: str | None = None) -> list[dict]:
+    """Read promotion decisions (newest first), optionally one lineage."""
+
+    cursor = conn.cursor()
+    if lineage is None:
+        cursor.execute('SELECT decision_id, decision_key, ' + _PROMOTION_COLUMNS
+                       + ' FROM papersim.promotion_decisions '
+                       'ORDER BY decision_id DESC')
+    else:
+        cursor.execute('SELECT decision_id, decision_key, ' + _PROMOTION_COLUMNS
+                       + ' FROM papersim.promotion_decisions WHERE lineage = %s '
+                       'ORDER BY decision_id DESC', (lineage,))
+    columns = ['decision_id', 'decision_key'] + _PROMOTION_COLUMNS.replace(' ', '').split(',')
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
+def registry_freeze_state(conn) -> dict:
+    """The effective freeze state: global plus per-lineage.
+
+    A lineage is frozen when the GLOBAL state is frozen or its own
+    latest LINEAGE event is a FREEZE. Read-only folding of the control
+    log; the MO-8 decide node consults this before any handover.
+    """
+
+    cursor = conn.cursor()
+    cursor.execute('SELECT scope, lineage, control_kind FROM '
+                   'papersim.optimizer_control_events '
+                   'ORDER BY occurred_at, optimizer_control_id')
+    global_frozen = False
+    frozen_lineages: set[str] = set()
+    for scope, lineage, control_kind in cursor.fetchall():
+        if scope == 'GLOBAL':
+            global_frozen = control_kind == 'FREEZE'
+        else:
+            if control_kind == 'FREEZE':
+                frozen_lineages.add(lineage)
+            else:
+                frozen_lineages.discard(lineage)
+    return {'global_frozen': global_frozen,
+            'frozen_lineages': sorted(frozen_lineages)}
+
+
+def initialize_registry(conn, *, families, actor: str, code_commit: str,
+                        effective_at) -> dict:
+    """Write every family's baseline spec and initial roles; idempotent.
+
+    One lineage at a time (each in its own transaction): when a
+    ``role='BASELINE'`` row already exists for the lineage the stored
+    digest must equal the family's current ``baseline_spec()`` digest
+    -- equal means SKIP (the idempotent path), different means
+    ``papersim_registry_init_conflict`` (the code re-identified the
+    baseline; never silently rewritten, a human decides). A fresh
+    lineage registers the spec row (``source='frozen_baseline'``) and
+    the initialization pair ``[BASELINE, ACTIVE]`` of the same digest.
+    The ``optimize init`` CLI wiring is MO-6; MO-2 provides the
+    function only.
+    """
+
+    from polymarket_alpha_lab.papersim.optimize.registry import lineage_id
+
+    if not isinstance(families, (list, tuple)) or not families:
+        raise PapersimStoreError('papersim_registry_init_families_invalid')
+    report = {}
+    for family in families:
+        baseline = family.baseline_spec()
+        for target in family.targets():
+            lineage = lineage_id(family.family_id, target)
+            with conn.transaction():
+                cursor = conn.cursor()
+                cursor.execute("SELECT spec_sha256 FROM papersim.model_role_events "
+                               "WHERE lineage = %s AND role = 'BASELINE'",
+                               (lineage,))
+                row = cursor.fetchone()
+                if row is not None:
+                    if row[0] != baseline.spec_sha256():
+                        raise PapersimStoreError('papersim_registry_init_conflict')
+                    report[lineage] = {'state': 'skipped',
+                                       'spec_sha256': row[0]}
+                    continue
+                register_model_spec(conn, baseline, source='frozen_baseline',
+                                    code_commit=code_commit)
+                batch = RoleEventBatch(events=(
+                    RoleEventSubmission(lineage=lineage,
+                                        spec_sha256=baseline.spec_sha256(),
+                                        role='BASELINE', effective_at=effective_at,
+                                        reason='registry initialization',
+                                        actor=actor, code_commit=code_commit),
+                    RoleEventSubmission(lineage=lineage,
+                                        spec_sha256=baseline.spec_sha256(),
+                                        role='ACTIVE', effective_at=effective_at,
+                                        reason='registry initialization',
+                                        actor=actor, code_commit=code_commit)))
+                record_role_events(conn, batch)
+                report[lineage] = {'state': 'initialized',
+                                   'spec_sha256': baseline.spec_sha256()}
+    return report

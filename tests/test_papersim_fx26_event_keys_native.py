@@ -23,6 +23,7 @@ import uuid
 import pytest
 
 from polymarket_alpha_lab.papersim import migrations as pm
+from tests.papersim_mo2_catalog import write_frozen_mo2_catalog
 from polymarket_alpha_lab.papersim import store
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,7 +67,18 @@ def _fresh_managed_database() -> str:
         cursor.execute(sql.bootstrap_sql(uuid.uuid4().hex, 'b' * 64, system_id))
     bootstrap.close()
     owner = _connect(owner_dsn, autocommit=False)
-    assert pm.apply_pending_migrations(owner, ROOT) == {'applied': 5, 'pending_before': 5}
+    # MO-2 re-anchor (fix-list rule 0.3): this WAS the live-catalog apply
+    # (five entries at FX-26 time); it now applies the frozen pre-MO2
+    # five-entry tree with the assertion unchanged. Originally proved:
+    # the repository catalog applies five migrations and the FX-26
+    # columns/round-trip/idempotency/evaluation behaviour holds on that
+    # face. Still proves exactly that on the frozen tree; the live
+    # six-entry apply proof is in tests/test_papersim_mo2_migrations.py.
+    import tempfile
+    with tempfile.TemporaryDirectory() as frozen_tmp:
+        frozen_tree = write_frozen_mo2_catalog(Path(frozen_tmp) / 'repo')
+        assert pm.apply_pending_migrations(owner, frozen_tree) == {
+            'applied': 5, 'pending_before': 5}
     owner.commit()
     owner.close()
     return owner_dsn.replace('user=pal_owner', 'user=pal_app')
