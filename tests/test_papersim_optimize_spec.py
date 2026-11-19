@@ -336,7 +336,7 @@ def test_soccer_frozen_family_shape() -> None:
     assert spec.data_contract == DATA_CONTRACT
     assert SOCCER_FROZEN.targets() == TARGETS == ("over_under", "btts", "team_total")
     assert "match_winner" not in SOCCER_FROZEN.targets()  # suspended in r23
-    assert iter_family_ids() == ("club-soccer-frozen",)
+    assert iter_family_ids() == ("club-soccer-frozen", "club-soccer-recalib")
 
 
 def test_soccer_frozen_baseline_spec_is_immutable_and_stable() -> None:
