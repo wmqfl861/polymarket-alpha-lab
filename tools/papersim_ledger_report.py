@@ -62,11 +62,11 @@ from typing import Any, Callable
 # Repo/package bootstrap: prefer the installed package; fall back to the
 # worktree's src/ so the script also runs from a plain checkout.
 try:
-    from polymarket_alpha_lab.papersim import fees, ledger
+    from polymarket_alpha_lab.papersim import fees, ledger, legacy_settlement
 except ImportError:  # pragma: no cover - exercised only outside the venv
     _SRC = Path(__file__).resolve().parents[1] / "src"
     sys.path.insert(0, str(_SRC))
-    from polymarket_alpha_lab.papersim import fees, ledger
+    from polymarket_alpha_lab.papersim import fees, ledger, legacy_settlement
 
 # Read-only session flag: every connection this tool opens refuses writes
 # at the server, on top of the script itself issuing SELECTs only.
@@ -76,7 +76,8 @@ _PG_READONLY_OPTIONS = "-c default_transaction_read_only=on"
 # resolutions; unresolved decisions keep outcome/pnl NULL).
 _PG_SELECT_SQL = (
     "select d.id, d.market_id, d.team, d.market_type, d.side, "
-    "d.stake, d.price, r.outcome, r.pnl "
+    "d.stake, d.price, d.ts, d.shares, r.ts as resolution_ts, "
+    "r.outcome, r.pnl, r.payoff, r.evidence "
     "from public.decisions d "
     "left join public.resolutions r on r.market_id = d.market_id "
     "order by d.id"
@@ -105,36 +106,68 @@ def load_rows_json(path: Path) -> list[dict[str, Any]]:
     return data
 
 
-def load_rows_csv(decisions_csv: Path, resolutions_csv: Path) -> list[dict[str, Any]]:
-    """Join a ``\\copy`` decisions/resolutions CSV pair into ledger rows.
+def _bind_resolutions(
+    decisions: list[dict[str, Any]],
+    resolutions: dict[str, dict[str, Any]],
+    duplicate_markets: frozenset[str] = frozenset(),
+) -> list[dict[str, Any]]:
+    by_market: dict[str, list[dict[str, Any]]] = {}
+    for row in decisions:
+        by_market.setdefault(row["market_id"], []).append(row)
+    blocked = {}
+    allocations = {}
+    for market_id, market_rows in by_market.items():
+        if market_id not in resolutions:
+            continue
+        try:
+            if market_id in duplicate_markets:
+                raise legacy_settlement.LegacyResolutionError(
+                    "papersim_legacy_resolution_duplicate", market_id, market_rows
+                )
+            allocations[market_id] = legacy_settlement.attribute_resolution(
+                market_id, market_rows, resolutions[market_id]
+            )
+        except legacy_settlement.LegacyResolutionError as error:
+            blocked[market_id] = str(error)
 
-    The resolution is joined per ``market_id`` exactly like the read-only
-    PG query; decisions without a resolution row stay unresolved
-    (``outcome=None``) and are excluded by the aggregation.
-    """
+    rows = []
+    for row in decisions:
+        market_id = row["market_id"]
+        resolution = resolutions.get(market_id, {})
+        output = {
+            key: row.get(key) for key in
+            ("id", "market_id", "team", "market_type", "side", "stake", "price")
+        }
+        if market_id in blocked:
+            output.update(outcome=None, pnl=None, settlement_issue=blocked[market_id])
+        else:
+            pooled_pnl = allocations.get(market_id)
+            pnl = resolution.get("pnl") if pooled_pnl is None else pooled_pnl[str(row["id"])]
+            output.update(outcome=resolution.get("outcome"), pnl=pnl)
+        rows.append(output)
+    return rows
+
+
+def load_rows_csv(decisions_csv: Path, resolutions_csv: Path) -> list[dict[str, Any]]:
+    """Attribute resolutions in a ``\\copy`` CSV pair to the decisions they cover."""
     resolutions: dict[str, dict[str, Any]] = {}
+    duplicate_markets: set[str] = set()
     with resolutions_csv.open(newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
             market_id = (row.get("market_id") or "").strip()
             if market_id:
+                if market_id in resolutions:
+                    duplicate_markets.add(market_id)
                 resolutions[market_id] = row
-    rows: list[dict[str, Any]] = []
     with decisions_csv.open(newline="", encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            market_id = (row.get("market_id") or "").strip()
-            resolution = resolutions.get(market_id, {})
-            rows.append(
-                {
-                    "id": row.get("id"),
-                    "team": row.get("team"),
-                    "market_type": row.get("market_type"),
-                    "side": row.get("side"),
-                    "stake": _optional_float(row.get("stake")),
-                    "price": _optional_float(row.get("price")),
-                    "outcome": resolution.get("outcome"),
-                    "pnl": _optional_float(resolution.get("pnl")),
-                }
-            )
+        decisions = list(csv.DictReader(handle))
+    for row in decisions:
+        row["market_id"] = (row.get("market_id") or "").strip()
+    rows = _bind_resolutions(decisions, resolutions, frozenset(duplicate_markets))
+    for row in rows:
+        row.pop("market_id")  # Preserve the CSV loader's decision-shaped result.
+        for field in ("stake", "price", "pnl"):
+            row[field] = _optional_float(row[field])
     return rows
 
 
@@ -155,9 +188,18 @@ def load_rows_pg(connect: Callable[..., Any]) -> list[dict[str, Any]]:
         with connection:
             cursor = connection.execute(_PG_SELECT_SQL)
             columns = [desc.name for desc in cursor.description]
-            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+            decisions = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
     finally:
         connection.close()
+    resolutions = {
+        row["market_id"]: {
+            "ts": row.get("resolution_ts"), "outcome": row["outcome"],
+            "pnl": row["pnl"], "payoff": row.get("payoff"),
+            "evidence": row.get("evidence"),
+        }
+        for row in decisions if row["outcome"] is not None
+    }
+    return _bind_resolutions(decisions, resolutions)
 
 
 def _build_connect() -> Callable[..., Any]:
@@ -214,6 +256,7 @@ def render_report(
     source_label: str,
     mode: str,
     pnl_source: str,
+    settlement_issues: tuple[str, ...] = (),
 ) -> str:
     """Format one LedgerPerformance as the deterministic text report."""
     lines = [
@@ -229,10 +272,10 @@ def render_report(
         "charging is not verifiable from the repo.",
     ]
     if pnl_source == ledger.PNL_SOURCE_RECORDED:
-        lines.append(
-            "gross basis: recorded per-row pnl as exported (market-level "
-            "joins are not re-allocated here; FX-09 will own allocation)"
-        )
+        if mode == "ledger-json":
+            lines.append("gross basis: recorded per-row pnl as exported")
+        else:
+            lines.append("gross basis: recorded pnl with verified shared resolutions allocated once")
     else:
         lines.append(
             "gross basis: per-entry recomputed (V-6 primary); EXITED rows "
@@ -273,6 +316,13 @@ def render_report(
         f"{team} -> {category} ({rate:.2f})"
         for team, category, rate in performance.team_classification
     ]
+    if settlement_issues:
+        lines += [
+            "",
+            f"ambiguous settlements excluded: entries={len(settlement_issues)} "
+            f"markets={len(set(settlement_issues))}",
+            *sorted(set(settlement_issues)),
+        ]
     return "\n".join(lines)
 
 
@@ -355,12 +405,16 @@ def main(argv: list[str] | None = None) -> int:
     pnl_source = (
         default_source if args.pnl_source == "auto" else args.pnl_source
     )
-    performance = ledger.queue_performance(rows, pnl_source=pnl_source)
+    eligible = [row for row in rows if "settlement_issue" not in row]
+    settlement_issues = tuple(row["settlement_issue"] for row in rows
+                              if "settlement_issue" in row)
+    performance = ledger.queue_performance(eligible, pnl_source=pnl_source)
     print(render_report(
         performance,
         source_label=source_label,
         mode=mode,
         pnl_source=pnl_source,
+        settlement_issues=settlement_issues,
     ))
     return 0
 

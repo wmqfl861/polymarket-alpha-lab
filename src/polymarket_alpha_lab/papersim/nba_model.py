@@ -32,18 +32,18 @@ Model (round-46 feasibility design §4):
   weight 1 and the game ``k`` back has weight ``2**(-k/half_life)``,
   the same ``exp2(-age/half_life)`` weighting as ``recalib``'s
   day-based decay with games as the age unit.
-- NO PEEKING (ratings): a fixture's ratings use only games STRICTLY
-  BEFORE the barrier date (``before_date``, or every game when None).
+- Date cutoff: a fixture uses only games strictly before ``before_date``
+  for both ratings and calibration (every game when None).
 - Expected points: see the frozen derivation below.
-- HCA: league-average home margin over the snapshot's home rows
+- HCA: league-average home margin over the eligible home rows
   (reported on every prediction); applied +hca/2 home / -hca/2 away so
   the full effect lands on the margin and none on the total.
 - B2B: flat points penalty on the fatigued side; both-b2b leaves the
-  margin unchanged and cuts the total by 2x penalty. Fit from snapshot
-  data when at least B2B_FIT_MIN_GAMES team-games sit on each side
+  margin unchanged and cuts the total by 2x penalty. Fit from eligible
+  rows when at least B2B_FIT_MIN_GAMES team-games sit on each side
   (league-average offensive output difference, clamped to
   B2B_PENALTY_CLAMP); otherwise the documented assumption
-  DEFAULT_B2B_PENALTY = -2.0 pts.
+  DEFAULT_B2B_PENALTY = 2.0 pts.
 - Rest differential: OPTIONAL (``use_rest_adjustment=False`` default).
   When enabled and both rest counts are known, adds
   REST_POINTS_PER_DAY per day of differential (capped at
@@ -73,10 +73,10 @@ Expected-points derivation (frozen V1 arithmetic, do not tune):
 3. ``pts = pace_est * exp_ortg / 100`` by the ORtg definition.
 
 Sigma treatment: sigma is fit PER HALF-LIFE from walk-forward
-residuals. For every snapshot game whose two team rows are both present
-(the adapter emits both sides), the model re-predicts it using only
-games strictly before its date (same barrier semantics as fixture
-ratings, HCA + B2B included, rest off, no injuries) and records
+residuals. For each eligible game with both team rows present, the
+model re-predicts it using team ratings from strictly earlier dates
+and the league context fitted for the fixture. It uses the game's
+B2B flags, with rest and injury adjustments disabled, and records
 actual-minus-predicted margin and total. With at least
 MIN_RESIDUAL_GAMES residuals, sigma is the sample std (ddof=1) clamped
 into SIGMA_MARGIN_CLAMP (10.5-13.5, feasibility target 11.5-12.5) and
@@ -97,11 +97,10 @@ cannot differentiate (all EWMAs coincide) and the rating-side spread
 collapses to zero — the envelope only quantifies the dimensions swept,
 exactly like soccer's pair-level stub warning.
 
-Causality boundary: team ratings are strictly causal (only games
-strictly before the barrier date). League means, HCA, the B2B fit and
-sigma are snapshot-level calibration computed from every game in the
-snapshot — the snapshot is the information set. For fully causal
-backtests, pass ``before_date`` AND a snapshot truncated at that date.
+Causality boundary: pass the fixture date as ``before_date`` to bound
+team ratings, league means, HCA, the B2B fit and sigma to games before
+that date. The caller supplies the fixture's rest and B2B values and
+any explicit injury multipliers available at prediction time.
 
 Fail-closed semantics (mirrors ``xg.pair_lambdas``'s cross-league
 guard): ``team_ratings`` / ``fixture_prediction`` return ``None`` for a
@@ -190,8 +189,7 @@ class NbaFixture:
     """One fixture to predict (frozen prediction input).
 
     ``rest_*``/``b2b_*`` describe each side entering THIS game; the
-    snapshot's per-game rest/B2B fields feed only the sigma walk and
-    the B2B fit.
+    snapshot's per-game B2B flags feed the sigma walk and the B2B fit.
     """
 
     home: str
@@ -218,7 +216,7 @@ class NbaTeamRatings:
 
 @dataclass(frozen=True)
 class NbaLeagueContext:
-    """Snapshot-level calibration (see the causality boundary note).
+    """League calibration for the selected team-game rows.
 
     ``ortg`` / ``drtg`` are possession-weighted league means, ``pace``
     the mean team-game possessions, ``hca`` the mean home-row margin,
@@ -494,7 +492,7 @@ def _team_games(teams: Mapping, team: str) -> list[_GameRow] | None:
 
 
 def league_context(snapshot: object) -> NbaLeagueContext:
-    """Snapshot-level league calibration (see causality boundary note).
+    """League calibration over every game in the supplied snapshot.
 
     Walks and validates every team-game row: possession-weighted league
     ORtg/DRtg means, mean team-game pace, mean home-row margin (HCA),
@@ -507,6 +505,10 @@ def league_context(snapshot: object) -> NbaLeagueContext:
     rows: list[_GameRow] = []
     for team in teams:
         rows.extend(_team_games(teams, team) or [])
+    return _league_context_from_rows(rows)
+
+
+def _league_context_from_rows(rows: Sequence[_GameRow]) -> NbaLeagueContext:
     if not rows:
         raise ValueError("snapshot contains no games; league context undefined")
     poss_sum = math.fsum(row.poss for row in rows)
@@ -555,26 +557,24 @@ def _check_half_life(half_life: float) -> None:
 def _ratings_from_rows(
     rows: Sequence[_GameRow],
     team: str,
-    barrier: date | None,
     half_life: float,
     before_date: str | None,
 ) -> NbaTeamRatings | None:
-    """EWMA ratings over the games strictly before ``barrier``."""
-    usable = [row for row in rows if barrier is None or row.date < barrier]
-    if not usable:
+    """EWMA ratings over a team's selected chronological rows."""
+    if not rows:
         return None
-    count = len(usable)
+    count = len(rows)
     weights = [
         math.exp2(-(count - 1 - index) / half_life) for index in range(count)
     ]
     weight_sum = math.fsum(weights)
     return NbaTeamRatings(
         team=team,
-        ortg=math.fsum(w * row.ortg for w, row in zip(weights, usable))
+        ortg=math.fsum(w * row.ortg for w, row in zip(weights, rows))
         / weight_sum,
-        drtg=math.fsum(w * row.drtg for w, row in zip(weights, usable))
+        drtg=math.fsum(w * row.drtg for w, row in zip(weights, rows))
         / weight_sum,
-        pace=math.fsum(w * row.poss for w, row in zip(weights, usable))
+        pace=math.fsum(w * row.poss for w, row in zip(weights, rows))
         / weight_sum,
         games=count,
         effective_games=weight_sum,
@@ -612,7 +612,9 @@ def team_ratings(
     rows = _team_games(teams, team)
     if rows is None:
         return None
-    return _ratings_from_rows(rows, team, barrier, half_life, before_date)
+    if barrier is not None:
+        rows = [row for row in rows if row.date < barrier]
+    return _ratings_from_rows(rows, team, half_life, before_date)
 
 
 # ---------------------------------------------------------------------------
@@ -785,10 +787,10 @@ def _sigma_pass(
 ) -> _SigmaFit:
     """Walk-forward margin/total residual sigma for one half-life.
 
-    Dates act as barriers: all predictions for a date use only strictly
-    earlier dates, then every row of that date updates the states. The
-    historical prediction mirrors fixture semantics exactly (HCA + B2B
-    from the game rows, rest off, injury stub neutral).
+    Dates act as barriers for ratings: all predictions for a date use
+    strictly earlier ratings, then that date's rows update the states.
+    Each prediction uses the fixture's fitted league context and that
+    game's B2B flags, with rest and injury adjustments disabled.
     """
     decay = math.exp2(-1.0 / half_life)
     state: dict[str, list[float]] = {}
@@ -933,9 +935,10 @@ def fixture_prediction(
     Returns ``None`` — never a number — whenever either team is missing
     from the snapshot or has no game strictly before ``before_date``
     (the soft refusal; ask :func:`refusal_reason` for the explicit
-    reason). Any malformed row or non-finite value anywhere raises
-    ``ValueError``. Pure function: no network, no I/O, no mutation of
-    the snapshot; identical inputs give identical outputs.
+    reason). Ratings and calibration use only games strictly before
+    that date, or all games when it is None. Malformed rows or non-finite
+    outputs raise ``ValueError``. The prediction is deterministic and
+    leaves the snapshot untouched.
     """
     _validate_fixture(fixture)
     if not isinstance(use_rest_adjustment, bool):
@@ -950,9 +953,23 @@ def fixture_prediction(
         else None
     )
     mult_home, mult_away = _resolve_multipliers(injury_multipliers, fixture)
-    context = league_context(snapshot)
-    by_team = {team: _team_games(teams, team) for team in teams}
+    by_team = {team: _team_games(teams, team) or [] for team in teams}
+    # Check full-snapshot pair integrity before selecting the eligible dates.
     paired_by_date, rows_by_date = _pair_games(by_team)
+    if barrier is not None:
+        rows_by_date = {
+            day: rows for day, rows in rows_by_date.items() if day < barrier
+        }
+        paired_by_date = {
+            day: pairs for day, pairs in paired_by_date.items() if day in rows_by_date
+        }
+        by_team = {
+            team: [row for row in rows if row.date in rows_by_date]
+            for team, rows in by_team.items()
+        }
+    context = _league_context_from_rows(
+        [row for rows in by_team.values() for row in rows]
+    )
     sigma_fits = {
         half_life: _sigma_pass(rows_by_date, paired_by_date, half_life, context)
         for half_life in SWEEP_HALF_LIVES
@@ -960,10 +977,10 @@ def fixture_prediction(
     ratings_by_half_life = {
         half_life: (
             _ratings_from_rows(
-                by_team[fixture.home], fixture.home, barrier, half_life, before_date
+                by_team[fixture.home], fixture.home, half_life, before_date
             ),
             _ratings_from_rows(
-                by_team[fixture.away], fixture.away, barrier, half_life, before_date
+                by_team[fixture.away], fixture.away, half_life, before_date
             ),
         )
         for half_life in SWEEP_HALF_LIVES

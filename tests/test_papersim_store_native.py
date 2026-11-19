@@ -670,8 +670,8 @@ def test_legacy_import_executes_idempotently_and_conserves(
                        'ORDER BY e.legacy_source_id')
         rows = cursor.fetchall()
         assert [(row[1], row[2], row[3]) for row in rows] == [
-            (Decimal('743.79'), Decimal('25.46'), Decimal('718.33')),
-            (Decimal('561.41'), Decimal('19.08'), Decimal('542.33'))]
+            (Decimal('706.11'), Decimal('25.46'), Decimal('680.65')),
+            (Decimal('599.09'), Decimal('19.08'), Decimal('580.01'))]
         # 8.3-6: label semantics survive the round trip through SQL.
         cursor.execute('SELECT o.outcome, o.outcome_detail FROM papersim.market_outcomes o '
                        'JOIN papersim.settlements s ON s.source_outcome_id = o.outcome_id '

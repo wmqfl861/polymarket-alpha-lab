@@ -1,0 +1,43 @@
+{
+  "prediction_rows": 3435,
+  "original_wp_replayed_rows": 30,
+  "max_abs_wp_moneyline_probability_difference": 1.1102230246251565e-16,
+  "unique_event_source_market_rows": true,
+  "true_pregame_cutoffs_verified": true,
+  "current_season_same_dk_line_assertions": true,
+  "terminal_binary_outcomes_match_token_order_and_nba_final": 881,
+  "rule_scope_checked_against_contract_description": {
+    "2024-25|PM-NBA-final-score-diagnostic|ml": 160,
+    "2025-26|PM-NBA-final-score-diagnostic|spread": 157,
+    "2025-26|PM-NBA-final-score-diagnostic|total": 156,
+    "2025-26|PM-explicit-full-game-OT|ml": 156,
+    "2026-27|PM-NBA-final-score-diagnostic|spread": 85,
+    "2026-27|PM-NBA-final-score-diagnostic|total": 81,
+    "2026-27|PM-explicit-full-game-OT|ml": 86
+  },
+  "no_selection_on_actual_overtime": true,
+  "optimized_predictions_confined_to_holdout": true,
+  "all_game_inputs_hashed": true,
+  "all_paired_market_inputs_hashed": true,
+  "scoreboard_bytes_hashed": true,
+  "scoreboard_asof": "2026-11-19T02:25:00.000300+00:00",
+  "scoreboard_planned_freeze_utc": "2026-11-19T02:25:00+00:00",
+  "by_partition": {
+    "2024-25|PM-NBA-final-score-diagnostic|ml": 160,
+    "2024-25|all_game_ml|ml": 1104,
+    "2025-26|PM-NBA-final-score-diagnostic|spread": 157,
+    "2025-26|PM-NBA-final-score-diagnostic|total": 156,
+    "2025-26|PM-explicit-full-game-OT|ml": 156,
+    "2025-26|all_game_ml|ml": 1106,
+    "2026-27|DK-postfinal-close-proxy|ml": 86,
+    "2026-27|DK-postfinal-close-proxy|spread": 86,
+    "2026-27|DK-postfinal-close-proxy|total": 86,
+    "2026-27|PM-NBA-final-score-diagnostic|spread": 85,
+    "2026-27|PM-NBA-final-score-diagnostic|total": 81,
+    "2026-27|PM-explicit-full-game-OT|ml": 86,
+    "2026-27|all_game_ml|ml": 86
+  },
+  "predictions_byte_equal_to_rule_checked_prior_run": true,
+  "all_metrics_equal_to_prior_rule_checked_run": true,
+  "repo_nba_model_and_espn_adapter_tests_passed": 99
+}

@@ -10,6 +10,8 @@ re-run, CHECK rejection, managed-face conservation) live in
 ``tests/test_papersim_store_native.py`` on the disposable native cluster.
 """
 
+from dataclasses import replace
+from datetime import timedelta
 from decimal import ROUND_HALF_EVEN, Decimal
 import importlib.util
 import json
@@ -148,17 +150,80 @@ def test_market_kind_touch_rule(importer):
 # ---------------------------------------------------------------------------
 
 
-def test_market_level_pnl_allocated_by_recorded_shares_once(plan):
+def test_market_level_proceeds_allocated_by_recorded_shares_once(plan):
     rows = {row.legacy_decision_id: row for row in plan.settlements
             if row.market_id == "3866000"}
     assert set(rows) == {1, 14}
-    # Registered deviation: the design section 1.3 illustration reads
-    # "743.68 + 561.52" but its own section 7.4 method (recorded shares
-    # 1456/1099 of 2555, half-even cents, last entry takes the remainder)
-    # yields 743.79 + 561.41 — still exactly 1305.20 with no residual.
-    assert rows[1].pnl_gross == Decimal("743.79")
-    assert rows[14].pnl_gross == Decimal("561.41")
+    assert rows[1].proceeds == Decimal("1456.11")
+    assert rows[14].proceeds == Decimal("1099.09")
+    assert rows[1].pnl_gross == Decimal("706.11")  # stake=750.00
+    assert rows[14].pnl_gross == Decimal("599.09")  # stake=500.00
     assert rows[1].pnl_gross + rows[14].pnl_gross == Decimal("1305.20")
+
+
+@pytest.mark.parametrize(
+    ("change", "reason"),
+    [
+        ("earlier", "precedes_entry"),
+        ("partial_evidence", "evidence_conflict"),
+        ("replaced_void", "evidence_conflict"),
+        ("opposing_side", "direction_conflict"),
+        ("partial_payout", "amounts_unverified"),
+        ("swapped_shares", "amounts_unverified"),
+        ("position_exit", "exit_attribution_unverified"),
+    ],
+)
+def test_market_row_must_cover_all_decisions_before_import(importer, change, reason):
+    snapshot = importer.load_snapshot(SNAPSHOT_DIR)
+    market_id = "3866000"
+    resolution = next(row for row in snapshot.resolutions if row["market_id"] == market_id)
+    decisions = snapshot.decisions
+    if change == "earlier":
+        decisions = tuple(
+            dict(row, ts=resolution["ts"] + timedelta(seconds=1))
+            if row["id"] == 14 else row for row in decisions
+        )
+    elif change == "partial_evidence":
+        resolution = dict(resolution, evidence="Settles decision #14.")
+    elif change == "replaced_void":
+        resolution = dict(resolution, evidence="#14 re-entry. #1 was previously voided.")
+    elif change == "opposing_side":
+        decisions = tuple(
+            dict(row, side="NO") if row["id"] == 14 else row for row in decisions
+        )
+    elif change == "partial_payout":
+        resolution = dict(resolution, pnl=Decimal("598.90"), payoff=Decimal("1098.90"))
+    elif change == "swapped_shares":
+        swapped = {1: Decimal("1099"), 14: Decimal("1456")}
+        decisions = tuple(
+            dict(row, shares=swapped[row["id"]]) if row["id"] in swapped else row
+            for row in decisions
+        )
+    elif change == "position_exit":
+        resolution = dict(resolution, outcome="EXITED")
+    resolutions = tuple(
+        resolution if row["market_id"] == market_id else row for row in snapshot.resolutions
+    )
+    with pytest.raises(importer.PapersimImportError) as error:
+        importer.build_import_plan(replace(snapshot, decisions=decisions, resolutions=resolutions))
+    message = str(error.value)
+    assert f"papersim_legacy_resolution_{reason}" in message
+    assert "market_id='3866000' decision_ids=['1', '14']" in message
+
+
+def test_pooled_position_label_can_use_unit_payoff(importer):
+    snapshot = importer.load_snapshot(SNAPSHOT_DIR)
+    resolutions = tuple(
+        dict(row, outcome="win", payoff=Decimal("1"))
+        if row["market_id"] == "3866000" else row for row in snapshot.resolutions
+    )
+    plan = importer.build_import_plan(replace(snapshot, resolutions=resolutions))
+    settled = [row for row in plan.settlements if row.market_id == "3866000"]
+    assert [(row.win_loss, row.pnl_gross) for row in settled] == [
+        ("win", Decimal("706.11")), ("win", Decimal("599.09")),
+    ]
+    market = next(row for row in plan.outcomes if row.market_id == "3866000")
+    assert market.outcome == "UNKNOWN"
 
 
 def test_settlement_pnl_gross_conserves_resolutions_exactly(
@@ -353,6 +418,27 @@ def _write_minimal_snapshot(directory: Path, decisions: str,
     return directory
 
 
+@pytest.mark.parametrize("evidence", [
+    "Combined #1 and #2",
+    "Decision #102 was not voided.",
+])
+def test_same_share_count_keeps_different_entry_costs(evidence, importer, tmp_path):
+    snapshot_dir = _write_minimal_snapshot(
+        tmp_path,
+        decisions=(
+            "1,2026-10-10 13:00:00+00,m-cost,q1,YES,0.2,100,20.00,,,,,,,,crypto_eth,0.6,crypto_daily\n"
+            "2,2026-10-10 14:00:00+00,m-cost,q1,YES,0.8,100,80.00,,,,,,,,crypto_eth,0.6,crypto_daily\n"
+        ),
+        resolutions=f"m-cost,2026-10-20 00:00:00+00,YES,200.00,100.00,{evidence}\n",
+        bankroll="2026-10-10 12:00:00+00,1000.00,0.00,initial\n",
+    )
+    plan = importer.build_import_plan(importer.load_snapshot(snapshot_dir))
+    assert [(row.proceeds, row.pnl_gross) for row in plan.settlements] == [
+        (Decimal("100.00"), Decimal("80.00")),
+        (Decimal("100.00"), Decimal("20.00")),
+    ]
+
+
 def test_invalid_shares_markets_are_reported_insufficient(importer, tmp_path):
     directory = _write_minimal_snapshot(
         tmp_path,
@@ -492,3 +578,65 @@ def test_cli_snapshot_dir_override(importer, tmp_path, capsys):
     out = capsys.readouterr().out
     assert "rows: decisions=1 resolutions=1 bankroll=1" in out
     assert "total 150.00" in out
+
+
+def test_cli_blocks_a_settlement_before_a_single_decision(importer, tmp_path, capsys):
+    directory = _write_minimal_snapshot(
+        tmp_path,
+        decisions="1,2026-10-20 00:01:00+00,m-early,q1,YES,0.5,100,"
+                  "50.00,,,,,,,,crypto_eth,0.6,crypto_daily\n",
+        resolutions="m-early,2026-10-20 00:00:00+00,YES,100.00,50.00,e1\n",
+        bankroll="2026-10-10 13:39:29+00,9950.00,50.00,round-1\n",
+    )
+    assert importer.main(["--snapshot-dir", str(directory)]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "papersim_legacy_resolution_precedes_entry" in captured.err
+    assert "market_id='m-early' decision_ids=['1']" in captured.err
+
+
+@pytest.mark.parametrize(
+    ("evidence", "blocked"),
+    [
+        ("Settles decision #102 only.", True),
+        ("Applies to decision #102.", True),
+        ("This settlement is for decision #102 only.", True),
+        ("Settlement applies only to decision #102.", True),
+        ("Only decision #102 was settled.", True),
+        ("The only decision that was settled was #102.", True),
+        ("Resolution for decisions #101 and #102.", True),
+        ("This settlement does not settle decision #101.", True),
+        ("Decision #101 was not settled.", True),
+        ("Decision #101 hasn't been settled.", True),
+        ("This settlement is not for decision #101.", True),
+        ("This settlement does not apply to decision #101.", True),
+        ("Settles decision #101. Decision #101 was not settled.", True),
+        ("Settles decision #101. Same fixture as open #102 and #103.", False),
+        ("Only decision #101 was settled. Compare previous market from decision #102.", False),
+        ("Compare previous market from decision #102.", False),
+        ("This settlement does not settle decision #102.", False),
+        ("Decision #102 was not settled. Settles decision #101.", False),
+        ("Same fixture as open #102 and #103.", False),
+        ("Match confirmed by the published final score.", False),
+        ("", False),
+    ],
+)
+def test_single_decision_import_requires_consistent_explicit_attribution(
+    evidence, blocked, importer, tmp_path, capsys,
+):
+    directory = _write_minimal_snapshot(
+        tmp_path,
+        decisions="101,2026-10-10 12:00:00+00,m-one,q1,YES,0.5,100,"
+                  "50.00,,,,,,,,crypto_eth,0.6,crypto_daily\n",
+        resolutions=f"m-one,2026-10-20 00:00:00+00,YES,100.00,50.00,{evidence}\n",
+        bankroll="2026-10-10 11:00:00+00,1000.00,0.00,initial\n",
+    )
+    assert importer.main(["--snapshot-dir", str(directory)]) == (2 if blocked else 0)
+    captured = capsys.readouterr()
+    if blocked:
+        assert captured.out == ""
+        assert "papersim_legacy_resolution_evidence_conflict" in captured.err
+        assert "market_id='m-one' decision_ids=['101']" in captured.err
+    else:
+        assert "total 50.00" in captured.out
+        assert captured.err == ""

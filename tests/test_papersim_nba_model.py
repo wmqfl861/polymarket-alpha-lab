@@ -473,17 +473,24 @@ def test_variant_envelope_degenerate_half_life_dimension() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_injury_stub_multipliers() -> None:
-    plain = nb.fixture_prediction(BASE, fixture())
+@pytest.mark.parametrize("before_date", [None, "2026-01-04"])
+def test_injury_stub_multipliers(before_date: str | None) -> None:
+    plain = nb.fixture_prediction(BASE, fixture(), before_date=before_date)
     assert plain is not None
     identity = nb.fixture_prediction(
-        BASE, fixture(), injury_multipliers={"AAA": 1.0, "BBB": 1.0}
+        BASE,
+        fixture(),
+        before_date=before_date,
+        injury_multipliers={"AAA": 1.0, "BBB": 1.0},
     )
     assert identity is not None
     assert identity.exp_pts_home == pytest.approx(plain.exp_pts_home, abs=1e-12)
     assert identity.exp_pts_away == pytest.approx(plain.exp_pts_away, abs=1e-12)
     adjusted = nb.fixture_prediction(
-        BASE, fixture(), injury_multipliers={"AAA": 1.1, "BBB": 0.9}
+        BASE,
+        fixture(),
+        before_date=before_date,
+        injury_multipliers={"AAA": 1.1, "BBB": 0.9},
     )
     assert adjusted is not None
     assert adjusted.exp_pts_home == pytest.approx(113.5 * 1.1, abs=1e-12)
@@ -537,6 +544,61 @@ def test_fixture_prediction_barrier_changes_prediction() -> None:
     assert full.exp_margin != pytest.approx(partial.exp_margin, abs=1e-9)
 
 
+@pytest.mark.parametrize("late_date", ["2026-02-17", "2026-02-18"])
+@pytest.mark.parametrize("use_rest_adjustment", [False, True])
+def test_fixture_prediction_cutoff_matches_truncated_snapshot(
+    late_date: str, use_rest_adjustment: bool
+) -> None:
+    before_date = "2026-02-17"
+    target = fixture(rest_home=1, rest_away=4, b2b_home=True)
+    extreme = {
+        "poss": 135,
+        "ortg_home": 150,
+        "drtg_away": 150,
+        "ortg_away": 60,
+        "drtg_home": 60,
+        "b2b_home": True,
+        "b2b_away": True,
+    }
+    full = build_snapshot(
+        [
+            *_b2b_games(103, 106),
+            (late_date, "AAA", "BBB", 203, 81, extreme),
+            (late_date, "CCC", "DDD", 200, 80, extreme),
+        ],
+        injuries={"AAA": [{"player": "Example", "status": "Out", "date": late_date}]},
+    )
+    expected = nb.fixture_prediction(
+        B2B_SNAP, target, use_rest_adjustment=use_rest_adjustment
+    )
+    assert expected is not None
+    assert expected.b2b_penalty == 3.0
+    assert expected.b2b_penalty_fitted
+    assert expected.sigma_margin_residuals == expected.sigma_total_residuals == 15
+
+    truncated = nb.fixture_prediction(
+        B2B_SNAP,
+        target,
+        before_date=before_date,
+        use_rest_adjustment=use_rest_adjustment,
+    )
+    historical = nb.fixture_prediction(
+        full,
+        target,
+        before_date=before_date,
+        use_rest_adjustment=use_rest_adjustment,
+    )
+    assert truncated == expected
+    assert historical == expected
+    assert historical.total_line_prob(221.5) == expected.total_line_prob(221.5)
+
+    forward = nb.fixture_prediction(full, target, use_rest_adjustment=use_rest_adjustment)
+    assert forward is not None
+    assert forward.league_pace > expected.league_pace
+    assert forward.b2b_penalty == 0.0
+    assert forward.sigma_margin_residuals == expected.sigma_margin_residuals + 1
+
+
 def test_game_row_validation_errors() -> None:
     first_game = lambda snap: snap["teams"]["AAA"]["games"][0]
     cases = [
@@ -562,18 +624,24 @@ def test_game_row_validation_errors() -> None:
                 nb.team_ratings(snap, "AAA")
 
 
-def test_paired_game_integrity_errors() -> None:
+@pytest.mark.parametrize("before_date", [None, "2026-01-03"])
+def test_paired_game_integrity_errors(before_date: str | None) -> None:
     def duplicate_home_row(snap):
-        snap["teams"]["AAA"]["games"].append(dict(snap["teams"]["AAA"]["games"][0]))
+        games = snap["teams"]["AAA"]["games"]
+        games.append(dict(games[-1]))
 
     with pytest.raises(ValueError, match="duplicate"):
-        nb.fixture_prediction(mutated(duplicate_home_row), fixture())
+        nb.fixture_prediction(
+            mutated(duplicate_home_row), fixture(), before_date=before_date
+        )
 
     def inconsistent_scores(snap):
-        snap["teams"]["BBB"]["games"][0]["pts"] = 111  # AAA row says opp 110
+        snap["teams"]["BBB"]["games"][-1]["pts"] = 110  # AAA row says opp 109
 
     with pytest.raises(ValueError, match="inconsistent"):
-        nb.fixture_prediction(mutated(inconsistent_scores), fixture())
+        nb.fixture_prediction(
+            mutated(inconsistent_scores), fixture(), before_date=before_date
+        )
 
 
 def test_snapshot_structure_validation() -> None:

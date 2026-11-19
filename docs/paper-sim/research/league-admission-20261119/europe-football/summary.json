@@ -1,0 +1,585 @@
+{
+  "retrieved_utc": "2026-11-19T01:57:47+00:00",
+  "wp_p4_archive_sha256": "51d7da0e6dd09176b8c6141ba1fd99dc7e63e0995ea4a354f6b5fc1c41ce7899",
+  "supplemental_france_forecasts_sha256": "3216049e34abd561696dc5b54ad6656bb96832af247db659f2a59abfc20ec405",
+  "timing": "T-60 min, tolerance 10 min, 1X2 legs within 5 min",
+  "leagues": {
+    "EPL": {
+      "1X2": {
+        "archive_matches": 70,
+        "n": 59,
+        "blocks": 7,
+        "excluded": {
+          "model_cutoff_after_T-60": 11
+        },
+        "logloss": {
+          "market": 1.015690796774636,
+          "production10": 1.0497353758729357,
+          "recalibrated": 1.0464106259243737
+        },
+        "raw_mad_pct_points": {
+          "production10": 6.669493513115071,
+          "recalibrated": 6.464914806645676
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.03404457909829969,
+            "ci95": [
+              -0.024053433427787513,
+              0.10102749022479102
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.030719829149737657,
+            "ci95": [
+              -0.02566043687686115,
+              0.09899891214359897
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": -0.0033247499485620385,
+            "ci95": [
+              -0.024004140757981216,
+              0.017040654209299167
+            ]
+          }
+        }
+      },
+      "O2.5": {
+        "archive_matches": 70,
+        "n": 59,
+        "blocks": 7,
+        "excluded": {
+          "model_cutoff_after_T-60": 11
+        },
+        "logloss": {
+          "market": 0.7112826390030715,
+          "production10": 0.7284412151563036,
+          "recalibrated": 0.6871981395038105
+        },
+        "raw_mad_pct_points": {
+          "production10": 5.091451797344638,
+          "recalibrated": 5.852813320872766
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.01715857615323205,
+            "ci95": [
+              -0.025503747557452047,
+              0.05444287818810573
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": -0.02408449949926099,
+            "ci95": [
+              -0.05544272511660471,
+              0.010259729042875797
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": -0.041243075652493036,
+            "ci95": [
+              -0.08450551227371275,
+              0.006635744008182918
+            ]
+          }
+        }
+      }
+    },
+    "La_liga": {
+      "1X2": {
+        "archive_matches": 30,
+        "n": 27,
+        "blocks": 3,
+        "excluded": {
+          "model_cutoff_after_T-60": 3
+        },
+        "logloss": {
+          "market": 0.9277715097117966,
+          "production10": 0.9705589033106233,
+          "recalibrated": 0.9984339131269963
+        },
+        "raw_mad_pct_points": {
+          "production10": 8.010389752818858,
+          "recalibrated": 8.92309069942172
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.04278739359882679,
+            "ci95": [
+              -0.02939478278518828,
+              0.11558763876824191
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.07066240341519972,
+            "ci95": [
+              0.012543959405180086,
+              0.13091039784702066
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": 0.02787500981637293,
+            "ci95": [
+              0.015322759078778737,
+              0.04193874219036837
+            ]
+          }
+        }
+      },
+      "O2.5": {
+        "archive_matches": 30,
+        "n": 27,
+        "blocks": 3,
+        "excluded": {
+          "model_cutoff_after_T-60": 3
+        },
+        "logloss": {
+          "market": 0.554555680636437,
+          "production10": 0.5792772604963481,
+          "recalibrated": 0.6118587308987143
+        },
+        "raw_mad_pct_points": {
+          "production10": 6.587360028690448,
+          "recalibrated": 6.202710536683477
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.024721579859911053,
+            "ci95": [
+              -0.01342145244200841,
+              0.0705853190281365
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.05730305026227731,
+            "ci95": [
+              0.036447865899403666,
+              0.07620144940125935
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": 0.03258147040236626,
+            "ci95": [
+              0.005616130373122851,
+              0.07268128792817735
+            ]
+          }
+        }
+      }
+    },
+    "Bundesliga": {
+      "1X2": {
+        "archive_matches": 54,
+        "n": 48,
+        "blocks": 6,
+        "excluded": {
+          "model_cutoff_after_T-60": 6
+        },
+        "logloss": {
+          "market": 1.0032064058620218,
+          "production10": 1.0087241010674461,
+          "recalibrated": 1.0131304891863502
+        },
+        "raw_mad_pct_points": {
+          "production10": 5.293402650540012,
+          "recalibrated": 5.689771292264671
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.00551769520542433,
+            "ci95": [
+              -0.037836198228219466,
+              0.053716894136212695
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.009924083324328347,
+            "ci95": [
+              -0.03746071194103239,
+              0.07006378838790762
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": 0.004406388118904019,
+            "ci95": [
+              -0.014285724008044474,
+              0.024174069173795665
+            ]
+          }
+        }
+      },
+      "O2.5": {
+        "archive_matches": 54,
+        "n": 48,
+        "blocks": 6,
+        "excluded": {
+          "model_cutoff_after_T-60": 6
+        },
+        "logloss": {
+          "market": 0.6062750542131008,
+          "production10": 0.637627014505363,
+          "recalibrated": 0.6294896095571607
+        },
+        "raw_mad_pct_points": {
+          "production10": 4.9163715234950365,
+          "recalibrated": 6.036862092425959
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.031351960292262185,
+            "ci95": [
+              0.006301567451342691,
+              0.05168682682850848
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.023214555344059834,
+            "ci95": [
+              -0.007480629267840056,
+              0.05522147915135873
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": -0.008137404948202347,
+            "ci95": [
+              -0.03454265289402853,
+              0.016775704409449938
+            ]
+          }
+        }
+      }
+    },
+    "Serie_A": {
+      "1X2": {
+        "archive_matches": 80,
+        "n": 71,
+        "blocks": 8,
+        "excluded": {
+          "model_cutoff_after_T-60": 8,
+          "kickoff_mismatch": 1
+        },
+        "logloss": {
+          "market": 0.9371783269620702,
+          "production10": 0.9628731620531965,
+          "recalibrated": 0.9750510936216483
+        },
+        "raw_mad_pct_points": {
+          "production10": 4.8121332611137415,
+          "recalibrated": 5.509666174599674
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.025694835091126394,
+            "ci95": [
+              -0.014175637806174332,
+              0.06276872670134098
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.03787276665957813,
+            "ci95": [
+              0.0011185477739860386,
+              0.07567668138053965
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": 0.012177931568451738,
+            "ci95": [
+              -0.0023296556715605857,
+              0.02175487523022355
+            ]
+          }
+        }
+      },
+      "O2.5": {
+        "archive_matches": 80,
+        "n": 71,
+        "blocks": 8,
+        "excluded": {
+          "model_cutoff_after_T-60": 8,
+          "kickoff_mismatch": 1
+        },
+        "logloss": {
+          "market": 0.6746632078040933,
+          "production10": 0.6550214473225425,
+          "recalibrated": 0.705977365556468
+        },
+        "raw_mad_pct_points": {
+          "production10": 5.536653598600815,
+          "recalibrated": 5.775011212277603
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": -0.019641760481550773,
+            "ci95": [
+              -0.049943530607340435,
+              0.012193969680470594
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.03131415775237461,
+            "ci95": [
+              0.0035598900588550905,
+              0.056487622484108616
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": 0.05095591823392538,
+            "ci95": [
+              0.015742217559606062,
+              0.08463855502317735
+            ]
+          }
+        }
+      }
+    },
+    "Championship": {
+      "1X2": {
+        "archive_matches": 72,
+        "n": 52,
+        "blocks": 6,
+        "excluded": {
+          "model_cutoff_after_T-60": 20
+        },
+        "logloss": {
+          "market": 0.9778249260008179,
+          "production10": 1.015509534794291,
+          "recalibrated": 1.0191575343072892
+        },
+        "raw_mad_pct_points": {
+          "production10": 5.303287793047024,
+          "recalibrated": 5.425640162880686
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.03768460879347306,
+            "ci95": [
+              -0.026715890467327866,
+              0.09202909703870216
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.04133260830647135,
+            "ci95": [
+              -0.03229519381925562,
+              0.10246887271401556
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": 0.0036479995129982882,
+            "ci95": [
+              -0.013511948973764216,
+              0.014392020830444345
+            ]
+          }
+        }
+      },
+      "O2.5": {
+        "archive_matches": 72,
+        "n": 52,
+        "blocks": 6,
+        "excluded": {
+          "model_cutoff_after_T-60": 20
+        },
+        "logloss": {
+          "market": 0.6554572345209124,
+          "production10": 0.6590733770933047,
+          "recalibrated": 0.6657973527646176
+        },
+        "raw_mad_pct_points": {
+          "production10": 5.4020595554549375,
+          "recalibrated": 4.794348276473628
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.0036161425723922357,
+            "ci95": [
+              -0.03690301224523446,
+              0.03640172162416543
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.010340118243705147,
+            "ci95": [
+              -0.026188057927915013,
+              0.03983579560021132
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": 0.006723975671312912,
+            "ci95": [
+              0.0023635361429370956,
+              0.011380005673744458
+            ]
+          }
+        }
+      }
+    },
+    "Eredivisie": {
+      "1X2": {
+        "archive_matches": 54,
+        "n": 47,
+        "blocks": 6,
+        "excluded": {
+          "model_cutoff_after_T-60": 6,
+          "unsynchronized_legs": 1
+        },
+        "logloss": {
+          "market": 1.0412064171793558,
+          "production10": 1.0738870228071122,
+          "recalibrated": 1.0454552857066934
+        },
+        "raw_mad_pct_points": {
+          "production10": 7.439343938944286,
+          "recalibrated": 6.47662319254975
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.03268060562775631,
+            "ci95": [
+              -0.050652110093320275,
+              0.13290454296754226
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.004248868527337683,
+            "ci95": [
+              -0.06225272006905091,
+              0.07918568668513327
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": -0.02843173710041862,
+            "ci95": [
+              -0.06507611713863856,
+              0.011390179907138833
+            ]
+          }
+        }
+      },
+      "O2.5": {
+        "archive_matches": 54,
+        "n": 48,
+        "blocks": 6,
+        "excluded": {
+          "model_cutoff_after_T-60": 6
+        },
+        "logloss": {
+          "market": 0.6529388501942672,
+          "production10": 0.6485857761465141,
+          "recalibrated": 0.6419955316623969
+        },
+        "raw_mad_pct_points": {
+          "production10": 5.566488566676933,
+          "recalibrated": 5.064371122795759
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": -0.004353074047753047,
+            "ci95": [
+              -0.055082082420863966,
+              0.044742172184504964
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": -0.01094331853187036,
+            "ci95": [
+              -0.05672922956013759,
+              0.035904108902331845
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": -0.006590244484117313,
+            "ci95": [
+              -0.02198467035041442,
+              0.009006832839752198
+            ]
+          }
+        }
+      }
+    },
+    "Ligue_1": {
+      "1X2": {
+        "archive_matches": 72,
+        "n": 65,
+        "blocks": 8,
+        "excluded": {
+          "model_cutoff_after_T-60": 7
+        },
+        "logloss": {
+          "market": 0.9171514977289209,
+          "production10": 0.9560460725051674,
+          "recalibrated": 0.9679063101940322
+        },
+        "raw_mad_pct_points": {
+          "production10": 6.859590890362553,
+          "recalibrated": 6.354306063746493
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.0388945747762465,
+            "ci95": [
+              0.006879386737989049,
+              0.07543564461164294
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.05075481246511123,
+            "ci95": [
+              0.016930568324707927,
+              0.08279116354574997
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": 0.011860237688864732,
+            "ci95": [
+              -0.020346782969986526,
+              0.044207837173249886
+            ]
+          }
+        }
+      },
+      "O2.5": {
+        "archive_matches": 72,
+        "n": 65,
+        "blocks": 8,
+        "excluded": {
+          "model_cutoff_after_T-60": 7
+        },
+        "logloss": {
+          "market": 0.664966410667012,
+          "production10": 0.6758316490183819,
+          "recalibrated": 0.6700438044061535
+        },
+        "raw_mad_pct_points": {
+          "production10": 5.416107172625625,
+          "recalibrated": 5.862076461997832
+        },
+        "paired": {
+          "production10_minus_market": {
+            "delta": 0.010865238351369913,
+            "ci95": [
+              -0.019239440793031592,
+              0.043689051562940874
+            ]
+          },
+          "recalibrated_minus_market": {
+            "delta": 0.005077393739141544,
+            "ci95": [
+              -0.05114307052714298,
+              0.054610930956259726
+            ]
+          },
+          "recalibrated_minus_production10": {
+            "delta": -0.005787844612228368,
+            "ci95": [
+              -0.04110908313232194,
+              0.03189347762744049
+            ]
+          }
+        }
+      }
+    }
+  }
+}

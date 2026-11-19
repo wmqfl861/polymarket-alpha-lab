@@ -6,3 +6,7 @@
 # MANIFEST.sha256): no EOL conversion, no whitespace checks.
 docs/paper-sim/server-mirror/** -text -whitespace
 docs/paper-sim/ledger-snapshots/** -text -whitespace
+
+# The league-admission manifest covers exact bytes, including the CSV writer's CRLF.
+docs/paper-sim/research/league-admission-20261119/** -text
+docs/paper-sim/research/league-admission-20261119/**/*.csv whitespace=trailing-space,space-before-tab,cr-at-eol

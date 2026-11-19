@@ -901,6 +901,91 @@ def test_report_tool_csv_mode_recomputed_default(tmp_path, report_tool, capsys):
     assert "crypto_eth" not in out
 
 
+@pytest.mark.parametrize("pnl_source", ["recorded", "recomputed"])
+def test_report_excludes_ambiguous_market_and_displays_reason(
+    tmp_path, report_tool, capsys, pnl_source,
+):
+    decisions = tmp_path / "decisions.csv"
+    resolutions = tmp_path / "resolutions.csv"
+    decisions.write_text(
+        "id,ts,market_id,team,market_type,side,stake,price,shares\n"
+        "74,2026-11-15 08:13:09+00,6509633,sports_nba,MONEYLINE,YES,150,.59,254.24\n"
+        "78,2026-11-15 16:20:37+00,6509633,sports_nba,MONEYLINE,YES,50,.60,83.33\n"
+        "80,2026-11-15 08:00:00+00,m-ok,sports_soccer,btts,YES,100,.50,200\n",
+        encoding="utf-8",
+    )
+    resolutions.write_text(
+        "market_id,ts,outcome,payoff,pnl,evidence\n"
+        "6509633,2026-11-15 14:31:29+00,win,83.33,33.33,Re-entry #78; old #74 VOIDED.\n"
+        "m-ok,2026-11-15 23:00:00+00,YES,200,100,Evidence\n",
+        encoding="utf-8",
+    )
+    assert report_tool.main([
+        "--decisions-csv", str(decisions), "--resolutions-csv", str(resolutions),
+        "--pnl-source", pnl_source,
+    ]) == 0
+    out = capsys.readouterr().out
+    assert "entries counted: 1" in out
+    assert "unresolved/open excluded: 0" in out
+    assert "gross pnl: 100.00" in out
+    assert "ambiguous settlements excluded: entries=2 markets=1" in out
+    assert "papersim_legacy_resolution_precedes_entry" in out
+    assert "market_id='6509633' decision_ids=['74', '78']" in out
+    assert "sports_nba" not in out
+
+
+def test_report_csv_allocates_verified_recorded_market_pnl_once(report_tool):
+    source = ROOT / "docs" / "paper-sim" / "ledger-snapshots" / "2026-11-12"
+    rows = report_tool.load_rows_csv(source / "decisions.csv", source / "resolutions.csv")
+    by_id = {row["id"]: row for row in rows}
+    assert by_id["1"]["pnl"] == pytest.approx(706.11)
+    assert by_id["14"]["pnl"] == pytest.approx(599.09)
+    assert all("settlement_issue" not in row for row in rows)
+    recorded = ledger.queue_performance(rows, pnl_source=ledger.PNL_SOURCE_RECORDED)
+    assert recorded.gross_pnl == pytest.approx(3768.33)
+
+
+@pytest.mark.parametrize("evidence", [
+    "Settles decision #102 only.",
+    "This settlement is for decision #102 only.",
+    "Settlement applies only to decision #102.",
+    "Only decision #102 was settled.",
+    "This settlement does not settle decision #101.",
+    "Decision #101 was not settled.",
+    "Settles decision #101. Decision #101 was not settled.",
+])
+def test_report_excludes_only_the_inconsistent_single_decision_attribution(
+    evidence, tmp_path, report_tool, capsys,
+):
+    decisions = tmp_path / "decisions.csv"
+    resolutions = tmp_path / "resolutions.csv"
+    decisions.write_text(
+        "id,market_id,team,market_type,side,stake,price\n"
+        "101,m-wrong,sports_soccer,btts,YES,50,.50\n"
+        "103,m-context,sports_soccer,btts,YES,80,.50\n"
+        "104,m-blank,sports_soccer,btts,YES,40,.50\n"
+        "105,m-other,sports_soccer,btts,YES,30,.50\n",
+        encoding="utf-8",
+    )
+    resolutions.write_text(
+        "market_id,outcome,payoff,pnl,evidence\n"
+        f"m-wrong,YES,100,50,{evidence}\n"
+        "m-context,YES,160,80,Compare previous market from decision #102.\n"
+        "m-blank,YES,80,40,\n"
+        "m-other,YES,60,30,This settlement does not settle decision #102.\n",
+        encoding="utf-8",
+    )
+    assert report_tool.main([
+        "--decisions-csv", str(decisions), "--resolutions-csv", str(resolutions),
+    ]) == 0
+    out = capsys.readouterr().out
+    assert "entries counted: 3" in out
+    assert "gross pnl: 150.00" in out
+    assert "ambiguous settlements excluded: entries=1 markets=1" in out
+    assert ("papersim_legacy_resolution_evidence_conflict: "
+            "market_id='m-wrong' decision_ids=['101']") in out
+
+
 def test_report_tool_pg_mode_is_read_only_join(report_tool, monkeypatch):
     captured: dict[str, object] = {}
 
@@ -909,12 +994,20 @@ def test_report_tool_pg_mode_is_read_only_join(report_tool, monkeypatch):
             type("Col", (), {"name": name})()
             for name in (
                 "id", "market_id", "team", "market_type", "side",
-                "stake", "price", "outcome", "pnl",
+                "stake", "price", "ts", "shares", "resolution_ts", "outcome",
+                "pnl", "payoff", "evidence",
             )
         ]
 
         def fetchall(self):
-            return [(1, "m1", "sports_soccer", "ou_over", "YES", 250.0, 0.56, "YES", 196.43)]
+            return [
+                (1, "m1", "sports_soccer", "ou_over", "YES", 250.0, 0.56,
+                 "2026-10-01T12:00:00+00:00", 446.43, "2026-10-01T13:00:00+00:00",
+                 "YES", 196.43, 446.43, "e1"),
+                (2, "m2", "sports_soccer", "ou_over", "YES", 100.0, 0.50,
+                 "2026-10-01T14:00:00+00:00", 200, "2026-10-01T13:00:00+00:00",
+                 "YES", 100.00, 200, "e2"),
+            ]
 
     class _Connection:
         def __enter__(self):
@@ -942,16 +1035,18 @@ def test_report_tool_pg_mode_is_read_only_join(report_tool, monkeypatch):
     sql = str(captured["sql"]).lower()
     assert sql.strip().startswith("select")
     assert "left join public.resolutions" in sql
+    assert "r.ts as resolution_ts" in sql
     assert "update" not in sql and "insert" not in sql and "delete" not in sql
     # Session is forced read-only at connect time.
     assert str(captured["kwargs"].get("options", "")).find("default_transaction_read_only=on") >= 0
-    assert rows == [
-        {
-            "id": 1, "market_id": "m1", "team": "sports_soccer",
-            "market_type": "ou_over", "side": "YES", "stake": 250.0,
-            "price": 0.56, "outcome": "YES", "pnl": 196.43,
-        }
-    ]
+    assert rows[0] == {
+        "id": 1, "market_id": "m1", "team": "sports_soccer",
+        "market_type": "ou_over", "side": "YES", "stake": 250.0,
+        "price": 0.56, "outcome": "YES", "pnl": 196.43,
+    }
+    assert rows[1]["outcome"] is rows[1]["pnl"] is None
+    assert "papersim_legacy_resolution_precedes_entry" in rows[1]["settlement_issue"]
+    assert "market_id='m2' decision_ids=['2']" in rows[1]["settlement_issue"]
     # The connection is explicitly closed (review P3#4).
     assert captured.get("closed") is True
 

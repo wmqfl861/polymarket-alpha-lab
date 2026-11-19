@@ -9,8 +9,8 @@ for the coordinator's review, plus a pretip shadow-recorder subcommand.
 What it does (paper-only, read-only inputs, no DB writes, no entries):
 
 - Gate A (data integrity): reload the snapshot through the adapter's
-  fail-closed validator, optionally rebuild from the retained raw cache
-  (results.csv + world.tsv) and compare matches/Elo tables.
+  fail-closed validator and optionally rebuild from frozen sources.
+  Refreshed snapshots use the manifest from ``intl_data --evidence-json``.
 - Walk-forward (gate D mirror): incremental strictly-causal Elo replay
   over the full corpus; every UEFA Nations League match 2018-2026 (762
   matches), optionally UEFA Euro 2024 + FIFA World Cup 2026 finals and
@@ -20,8 +20,8 @@ What it does (paper-only, read-only inputs, no DB writes, no entries):
   log-loss vs (a) the model, (b) a tournament-mean-total Poisson
   baseline, (c) a coin; per-competition tables; nine-variant spread
   audit; slope sweep {0.40, 0.47, 0.55} (REPORT only); median-vs-variant
-  comparison.  A self-check re-derives sampled predictions through
-  ``intl_model.fixture_prediction`` on truncated snapshots and asserts
+  comparison. A self-check re-derives sampled predictions through
+  ``intl_model.fixture_prediction`` on the full snapshot and asserts
   equality with the fast path.
 - Gate B (totals calibration): mean-total bias, O2.5 probability
   calibration + reliability bins, Pearson r(expected goal difference,
@@ -40,6 +40,8 @@ What it does (paper-only, read-only inputs, no DB writes, no entries):
   model-vs-market rows to a CSV whose columns mirror the NBA shadow
   JSON fields (label/tip_utc/game/model.*/market_ml.*/model_vs_market.*
   /final_score.*), idempotent per (kickoff, fixture).
+- ``totals-replay`` compares the 2.5-goal tournament-mean baseline and
+  the matchup model on the same completed fixtures, with a date barrier.
 
 Usage (ops host, the big compute)::
 
@@ -49,14 +51,22 @@ Usage (ops host, the big compute)::
         --board ~/paper-sim/round47/board.json \
         --out-dir  ~/paper-sim/review/wp_intl_validation
 
+    python3 wp_intl_validate.py validate \
+        --snapshot frozen-intl.json --cache-dir frozen-inputs \
+        --refresh-evidence frozen-intl-evidence.json --skip-pm --out-dir review
+
     python3 wp_intl_validate.py shadow \
         --snapshot ~/paper-sim/intl/snapshot_20261112.json \
         --date-lo 2026-11-14 --date-hi 2026-11-14 \
         --csv ~/paper-sim/review/wp_intl_validation/shadow_nl_2026.csv
 
-``--skip-pm`` disables the networked Polymarket part of validate.
+    python3 wp_intl_validate.py totals-replay \
+        --snapshot ~/paper-sim/intl/snapshot_20261117_refreshed.json \
+        --date-lo 2024-01-01 --date-hi 2026-11-17
+
+``--skip-pm`` disables networked closings. A supplied local board is still checked.
 Sibling-module deployment: when ``polymarket_alpha_lab/papersim/
-{intl_model,intl_data,soccer_model,xg,league_strength}.py`` sit next to
+{intl_model,intl_totals,intl_data,soccer_model,xg,league_strength}.py`` sit next to
 this file (standalone server dir), they are imported from there;
 otherwise the installed package is used (local worktree).
 
@@ -69,6 +79,8 @@ decided here.
 from __future__ import annotations
 
 import argparse
+import csv
+import fcntl
 import json
 import math
 import re
@@ -78,7 +90,8 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from collections import Counter
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -88,9 +101,7 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 if (_HERE / "polymarket_alpha_lab" / "papersim" / "intl_model.py").is_file():
     sys.path.insert(0, str(_HERE))
-    from polymarket_alpha_lab.papersim import intl_data, intl_model, soccer_model
-else:  # local worktree: package importable from src/ (PYTHONPATH or install)
-    from polymarket_alpha_lab.papersim import intl_data, intl_model, soccer_model
+from polymarket_alpha_lab.papersim import intl_data, intl_model, intl_totals, soccer_model
 
 #: Log-loss clip floor (degenerate baseline probabilities).
 _EPS = 1e-12
@@ -125,6 +136,9 @@ FRIENDLY_FROM = "2024-01-01"
 _ROOT_SUFFIX_RE = re.compile(
     r" - (More Markets|Exact Score|Halftime Result|First Team to Score"
     r"|Second Half Result|Total Corners)$"
+)
+_OBSERVATION_FIELDS = (
+    "quoteObservedAt", "quote_observed_at", "observedAt", "observed_at", "observed_utc",
 )
 
 #: Polymarket display name -> martj42 corpus name (verified against the
@@ -332,7 +346,7 @@ def family_root(title: str) -> str:
     return root
 
 
-def parse_kickoff(raw: object) -> datetime | None:
+def parse_kickoff(raw: object, *, require_timezone: bool = False) -> datetime | None:
     """Parse Gamma gameStartTime ("2024-11-15 19:45:00+00" / ISO-Z)."""
     text = str(raw or "").strip()
     if not text:
@@ -345,6 +359,8 @@ def parse_kickoff(raw: object) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
+        if require_timezone:
+            return None
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)
 
@@ -367,7 +383,7 @@ def classify_ml_market(question: str, home_pm: str, away_pm: str) -> str | None:
     return None
 
 
-def event_fixture(event: dict) -> dict | None:
+def event_fixture(event: dict, *, strict: bool = False) -> dict | None:
     """(kickoff, root, home_pm, away_pm, event_id) for an NL fixture event."""
     root = family_root(event.get("title") or "")
     if " vs. " not in root:
@@ -376,11 +392,13 @@ def event_fixture(event: dict) -> dict | None:
     home_pm, away_pm = home_pm.strip(), away_pm.strip()
     if not home_pm or not away_pm:
         return None
-    kickoffs = [
-        parse_kickoff(m.get("gameStartTime"))
-        for m in event.get("markets") or []
-        if m.get("gameStartTime")
+    kickoff_values = [
+        payload["gameStartTime"] for payload in [event, *(event.get("markets") or [])]
+        if payload.get("gameStartTime") is not None
     ]
+    kickoffs = [parse_kickoff(raw, require_timezone=strict) for raw in kickoff_values]
+    if strict and (None in kickoffs or len(set(kickoffs)) != 1):
+        return None
     kickoffs = [k for k in kickoffs if k is not None]
     if not kickoffs:
         return None
@@ -439,8 +457,116 @@ def fetch_event_detail(event_id: str) -> dict | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _market_probability(raw: object) -> float | None:
+    if isinstance(raw, bool):
+        return None
+    try:
+        price = float(raw)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return price if 0.0 <= price <= 1.0 else None
+
+
+def _contract_identity(market: dict) -> tuple[str, list[str]] | None:
+    condition = market.get("conditionId")
+    if not isinstance(condition, str) or re.fullmatch(r"0x[0-9a-f]{64}", condition) is None:
+        return None
+    try:
+        tokens = _load_json_list(market.get("clobTokenIds"))
+    except (TypeError, ValueError):
+        return None
+    if (
+        len(tokens) != 2 or len(set(tokens)) != 2
+        or not all(re.fullmatch(r"[1-9][0-9]*", token) for token in tokens)
+    ):
+        return None
+    return condition, tokens
+
+
+def _moneyline_yes_outcome(market: dict) -> tuple[int, str, str] | None:
+    """Return the index, condition and token of the Yes outcome."""
+    identity = _contract_identity(market)
+    if identity is None:
+        return None
+    labels = [label.strip().casefold() for label in _prices_list(market.get("outcomes"))]
+    if sorted(labels) != ["no", "yes"]:
+        return None
+    index = labels.index("yes")
+    condition, tokens = identity
+    return index, condition, tokens[index]
+
+
+def _paired_outcome_price(market: dict, index: int) -> float | None:
+    prices = [_market_probability(value) for value in _prices_list(market.get("outcomePrices"))]
+    if len(prices) != 2 or None in prices:
+        return None
+    return prices[index]
+
+
+def _regular_time_rules(raw: object) -> bool:
+    """Require a standalone regulation-time scope without a conflicting period."""
+    rules = " ".join(str(raw or "").casefold().split())
+    return bool(
+        re.search(
+            r"(?:^|[.!?] )this market refers (?:only )?to the outcome within the "
+            r"(?:first )?90 minutes of (?:regular|regulation) play plus stoppage time\.(?= |$)",
+            rules,
+        )
+        and not re.search(
+            r"\b(?:extra[ -]time|overtime|penalt(?:y|ies) shoot[ -]?outs?|spot kicks"
+            r"|(?:first|second|1st|2nd|opening|closing)[ \-–‐‑]+half|half[ \-–‐‑]?time"
+            r"|(?:first|second|third|fourth|[1-4](?:st|nd|rd|th))[ -]+(?:quarter|period)"
+            r"|(?:quarter|period)[ -]+[1-4]"
+            r"|(?:first|last|opening|closing|final)[ -]+[0-8]?\d[ -]+minutes?)\b",
+            rules,
+        )
+    )
+
+
+def _full_match_over_index(market: dict, root: str) -> int | None:
+    """Find the Over token only for a verified regular-time O/U 2.5 contract."""
+    question = str(market.get("question") or "").strip().casefold()
+    if (
+        question != f"{root}: O/U 2.5".casefold()
+        or market.get("sportsMarketType") != "totals"
+        or str(market.get("line")) not in {"2.5", "2.50"}
+        or not _regular_time_rules(market.get("description"))
+    ):
+        return None
+    home, _, away = root.partition(" vs. ")
+    teams = re.escape(f"{home} and {away}".casefold())
+    rules = " ".join(str(market.get("description") or "").casefold().split())
+    over_claims = re.findall(
+        rf'will resolve to "over" if {teams} combine to score (\d+) or more goals in this game\.',
+        rules,
+    )
+    under_claims = re.findall(
+        r'if the combined total is less than (\d+)(?: goals)?, this market will resolve to "under"\.',
+        rules,
+    )
+    if over_claims != ["3"] or under_claims != ["3"]:
+        return None
+    if _contract_identity(market) is None:
+        return None
+    try:
+        outcomes = [norm(label) for label in _load_json_list(market.get("outcomes"))]
+    except (TypeError, ValueError):
+        return None
+    if sorted(outcomes) != ["over", "under"]:
+        return None
+    return outcomes.index("over")
+
+
+def _source_observed_at(market: dict) -> datetime | None:
+    for key in _OBSERVATION_FIELDS:
+        raw = market.get(key)
+        if raw is not None:
+            return parse_kickoff(raw, require_timezone=True)
+    return None
+
+
 def closing_yes_price(token: str, kickoff_epoch: int) -> dict:
-    """Last prices-history point strictly at/before kickoff for one token."""
+    """Last valid prices-history point strictly before kickoff for one token."""
     query = urllib.parse.urlencode(
         {
             "market": token,
@@ -451,15 +577,23 @@ def closing_yes_price(token: str, kickoff_epoch: int) -> dict:
     )
     payload = _get_json(f"{_CLOB_BASE}/prices-history?{query}")
     history = (payload or {}).get("history") or []
-    before = [p for p in history if float(p["t"]) <= kickoff_epoch]
+    before = []
+    for point in history:
+        try:
+            observed_at = float(point["t"])
+            price = _market_probability(point["p"])
+        except (KeyError, TypeError, ValueError, OverflowError):
+            continue
+        if math.isfinite(observed_at) and 0 < observed_at < kickoff_epoch and price is not None:
+            before.append((observed_at, price))
     if not before:
         return {"price": None, "points": len(history), "last_t": None}
-    last = before[-1]
+    observed_at, price = max(before, key=lambda entry: entry[0])
     return {
-        "price": float(last["p"]),
+        "price": price,
         "points": len(history),
-        "last_t": int(float(last["t"])),
-        "minutes_before": (kickoff_epoch - int(float(last["t"]))) / 60.0,
+        "last_t": observed_at,
+        "minutes_before": (kickoff_epoch - observed_at) / 60.0,
     }
 
 
@@ -731,8 +865,83 @@ def run_walk_forward(
     return records, predictions, info
 
 
+def totals_replay(
+    snapshot: dict, *, tournament: str, date_lo: str, date_hi: str,
+) -> dict:
+    """Score both O2.5 forecasts on the same completed matches."""
+    research = intl_totals.IntlTotalsResearch(snapshot)
+    sample_dates: list[str] = []
+    outcomes: list[int] = []
+    baseline: list[float] = []
+    shadow: list[float] = []
+    fallbacks: Counter[str] = Counter()
+    tournament_prior_missing = 0
+    for row in snapshot["matches"]:
+        if row["tournament"] != tournament or not date_lo <= row["date"] <= date_hi:
+            continue
+        fixture = intl_model.IntlFixture(row["home"], row["away"], row["date"], row["neutral"])
+        quote = research.predict(fixture, tournament=tournament)
+        sample_dates.append(fixture.date)
+        outcomes.append(int(row["home_goals"] + row["away_goals"] >= 3))
+        baseline.append(quote.baseline_over25)
+        shadow.append(quote.p_over25)
+        if quote.fallback_reason is not None:
+            fallbacks[quote.fallback_reason] += 1
+        if not quote.tournament_matches:
+            tournament_prior_missing += 1
+
+    n = len(outcomes)
+
+    def scores(probabilities: list[float]) -> dict:
+        if not n:
+            return {"brier": None, "log_loss_nats": None, "log_loss_clipped": 0}
+        log_loss, clipped = binary_log_loss(probabilities, outcomes)
+        return {
+            "brier": _mean([(probability - actual) ** 2
+                            for probability, actual in zip(probabilities, outcomes)]),
+            "log_loss_nats": log_loss,
+            "log_loss_clipped": clipped,
+        }
+
+    specific_count = n - sum(fallbacks.values())
+    return {
+        "tournament": tournament,
+        "line": 2.5,
+        "fixed_elo_slope_evidence": {
+            "slope": intl_model.DEFAULT_SLOPE,
+            "reference_fit": "2018–2026 UEFA Nations League",
+            "interpretation": (
+                "Time-ordered replay. The reference fit overlaps the default example window, "
+                "so the replay does not establish independent validation of the fixed slope."
+            ),
+        },
+        "window_inclusive": [date_lo, date_hi],
+        "sample_dates": [min(sample_dates), max(sample_dates)] if n else [],
+        "outcomes_basis": "snapshot scores (no separate regular-time score field)",
+        "paired_matches": n,
+        "over25_outcomes": sum(outcomes),
+        "baseline": {
+            "version": intl_totals.BASELINE_VERSION,
+            "global_fallback_total": intl_model.GLOBAL_FALLBACK_TOTAL,
+            "global_fallback_matches": tournament_prior_missing,
+            **scores(baseline),
+        },
+        "shadow": {
+            "version": intl_totals.SHADOW_VERSION,
+            "matchup_estimates": specific_count,
+            "matchup_coverage": specific_count / n if n else None,
+            "fallback_counts": dict(fallbacks),
+            "recent_days": intl_totals.RECENT_DAYS,
+            "max_recent_matches": intl_totals.MAX_RECENT_MATCHES,
+            "min_recent_matches_per_team": intl_totals.MIN_RECENT_MATCHES,
+            "prior_matches": intl_totals.PRIOR_MATCHES,
+            **scores(shadow),
+        },
+    }
+
+
 # ---------------------------------------------------------------------------
-# self-check: fast path vs intl_model.fixture_prediction on truncated snapshots
+# self-check: fast path vs intl_model.fixture_prediction
 # ---------------------------------------------------------------------------
 
 
@@ -741,30 +950,21 @@ def self_check(
 ) -> dict:
     """Assert the incremental engine equals the frozen model code path.
 
-    For each sampled record the snapshot is truncated at the fixture date
-    and ``intl_model.fixture_prediction`` runs on it (its replay + its
-    per-tournament totals are then strictly causal by construction); the
-    1X2 triple and O2.5 must agree to 1e-9.
+    The 1X2 triple and O2.5 must agree to 1e-9 when the normal prediction
+    entry point receives the full snapshot, including later results.
     """
     rows = []
     mismatches = 0
-    matches = snapshot["matches"]
     for record in samples:
         date = record["date"]
-        truncated = [m for m in matches if m["date"] < date]
-        mini = {
-            "generated_at": snapshot["generated_at"],
-            "teams": snapshot["teams"],
-            "matches": truncated,
-        }
         fixture = intl_model.IntlFixture(
             home=record["home"], away=record["away"], date=date,
             neutral=record["neutral"],
         )
         prediction = intl_model.fixture_prediction(
-            mini, fixture, tournament=record["tournament"]
+            snapshot, fixture, tournament=record["tournament"]
         )
-        if prediction is None:
+        if prediction is None or prediction.ratings_stale:
             rows.append({"date": date, "fixture": f"{record['home']} v {record['away']}",
                          "result": "REFUSED"})
             mismatches += 1
@@ -1008,12 +1208,117 @@ def calibration_bins(records: list[dict]) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def gate_a_integrity(snapshot_path: Path, snapshot: dict, cache_dir: Path | None) -> dict:
+_REFRESH_INPUTS = ("results", "world", "latest", "teams", "tournaments")
+
+
+def _refresh_source_paths(
+    cache_dir: Path, evidence: dict, results_csv_path: Path | None,
+) -> dict[str, Path]:
+    paths = {}
+    for key in _REFRESH_INPUTS:
+        name = evidence["sources"][key]["file"]
+        if Path(name).name != name:
+            raise ValueError(f"invalid refresh evidence filename for {key}: {name!r}")
+        paths[key] = (
+            results_csv_path if key == "results" and results_csv_path is not None
+            else cache_dir / name
+        )
+    return paths
+
+
+def _rebuild_from_refresh_evidence(
+    snapshot_path: Path,
+    snapshot: dict,
+    evidence_path: Path,
+    cache_dir: Path,
+    *,
+    results_csv_path: Path | None,
+    espn_scoreboards: list[Path],
+) -> tuple[bool, dict]:
+    """Rebuild the refreshed snapshot against its frozen input manifest."""
+    with evidence_path.open("r", encoding="utf-8") as handle:
+        expected = json.load(handle)
+    if expected["generated_at"] != snapshot["generated_at"]:
+        raise ValueError("refresh evidence generation time does not match --snapshot")
+    if "snapshot_sha256" in expected and expected["snapshot_sha256"] != _sha256(snapshot_path):
+        raise ValueError("snapshot SHA-256 does not match refresh evidence")
+    if type(expected["exclude_late_espn_kickoffs"]) is not bool:
+        raise ValueError("refresh evidence must specify a boolean ESPN kickoff exclusion policy")
+    paths = _refresh_source_paths(cache_dir, expected, results_csv_path)
+    for key, path in paths.items():
+        if not path.is_file():
+            raise FileNotFoundError(f"refresh input {key} missing: {path}")
+        recorded_sha = expected["sources"][key]["sha256"]
+        if _sha256(path) != recorded_sha:
+            raise ValueError(f"refresh input {key} SHA-256 does not match refresh evidence")
+
+    expected_espn = expected["espn_scoreboards"]
+    expected_by_name = {item["file"]: item["sha256"] for item in expected_espn}
+    actual_by_name = {path.name: _sha256(path) for path in espn_scoreboards if path.is_file()}
+    if len(actual_by_name) != len(espn_scoreboards) or actual_by_name != expected_by_name:
+        raise ValueError("ESPN scoreboard paths/SHA-256 do not match refresh evidence")
+    espn_paths = {path.name: path for path in espn_scoreboards}
+
+    refreshed, rebuilt = intl_data.build_refreshed_snapshot(
+        paths["results"],
+        paths["world"],
+        latest_tsv=paths["latest"],
+        teams_tsv=paths["teams"],
+        tournaments_tsv=paths["tournaments"],
+        cutoff_date=expected["cutoff_utc_date_exclusive"],
+        espn_scoreboards=[espn_paths[item["file"]] for item in expected_espn],
+        exclude_late_espn_kickoffs=expected["exclude_late_espn_kickoffs"],
+    )
+    for key, value in rebuilt.items():
+        if key == "generated_at":
+            continue
+        if key == "sources":
+            saved = {name: source["sha256"] for name, source in expected[key].items()}
+            value = {name: source["sha256"] for name, source in value.items()}
+        else:
+            saved = expected[key]
+        if value != saved:
+            raise ValueError(f"rebuilt refresh evidence differs for {key}")
+    equal = (
+        refreshed["source"] == snapshot["source"]
+        and refreshed["matches"] == snapshot["matches"]
+        and refreshed["teams"] == snapshot["teams"]
+        and refreshed["elo_history"] == snapshot["elo_history"]
+    )
+    proof = {
+        "evidence_path": str(evidence_path),
+        "evidence_sha256": _sha256(evidence_path),
+        "cutoff_utc_date_exclusive": rebuilt["cutoff_utc_date_exclusive"],
+        "date_basis": rebuilt["date_basis"],
+        "seed_match_count": rebuilt["seed_match_count"],
+        "supplement_match_count": rebuilt["supplement_match_count"],
+        "match_count": rebuilt["match_count"],
+        "exclude_late_espn_kickoffs": rebuilt["exclude_late_espn_kickoffs"],
+        "espn_kickoff_excluded_count": rebuilt["espn_kickoff_excluded_count"],
+        "sources": rebuilt["sources"],
+        "espn_scoreboards": rebuilt["espn_scoreboards"],
+    }
+    if "model_date_shifted_count" in rebuilt:
+        proof["model_date_shifted_count"] = rebuilt["model_date_shifted_count"]
+    return equal, proof
+
+
+def gate_a_integrity(
+    snapshot_path: Path,
+    snapshot: dict,
+    cache_dir: Path | None,
+    *,
+    refresh_evidence_path: Path | None = None,
+    results_csv_path: Path | None = None,
+    espn_scoreboards: list[Path] | None = None,
+) -> dict:
+    espn_scoreboards = espn_scoreboards or []
     matches = snapshot["matches"]
     dates = [m["date"] for m in matches]
     nl = [m for m in matches if m["tournament"] == NL_TOURNAMENT]
     result = {
         "snapshot_path": str(snapshot_path),
+        "snapshot_sha256": _sha256(snapshot_path),
         "reload_validation": "pass (load_intl_snapshot accepted)",
         "source": snapshot["source"],
         "generated_at": snapshot["generated_at"],
@@ -1022,10 +1327,30 @@ def gate_a_integrity(snapshot_path: Path, snapshot: dict, cache_dir: Path | None
         "elo_checkpoints": len(snapshot["elo_history"]),
         "date_range": [dates[0], dates[-1]],
         "nl_matches": len(nl),
-        "nl_date_range": [nl[0]["date"], nl[-1]["date"]],
+        "nl_date_range": [nl[0]["date"], nl[-1]["date"]] if nl else [],
     }
     rebuild_equal = None
-    if cache_dir is not None:
+    rebuild_mode = None
+    if refresh_evidence_path is not None:
+        rebuild_mode = "refresh evidence"
+        if cache_dir is None:
+            rebuild_equal = "cannot reproduce refreshed snapshot without --cache-dir"
+        else:
+            try:
+                rebuild_equal, result["refresh"] = _rebuild_from_refresh_evidence(
+                    snapshot_path,
+                    snapshot,
+                    refresh_evidence_path,
+                    cache_dir,
+                    results_csv_path=results_csv_path,
+                    espn_scoreboards=espn_scoreboards,
+                )
+            except Exception as exc:  # noqa: BLE001 - report evidence gaps, do not crash
+                rebuild_equal = f"refreshed rebuild unavailable: {exc}"
+    elif results_csv_path is not None or espn_scoreboards:
+        rebuild_equal = "refresh inputs require --refresh-evidence"
+    elif cache_dir is not None:
+        rebuild_mode = "legacy two-source rebuild"
         results_csv = cache_dir / "results.csv"
         world_tsv = cache_dir / "world.tsv"
         if not results_csv.is_file() or not world_tsv.is_file():
@@ -1044,6 +1369,7 @@ def gate_a_integrity(snapshot_path: Path, snapshot: dict, cache_dir: Path | None
             except Exception as exc:  # noqa: BLE001 - report, don't crash
                 rebuild_equal = f"rebuild failed: {exc}"
     result["rebuild_from_cache_equal"] = rebuild_equal
+    result["rebuild_mode"] = rebuild_mode
     checks = [
         result["teams"] >= 300,
         result["matches"] >= 49000,
@@ -1244,7 +1570,7 @@ def collect_nov2024_closings(
 
     Enumerates closed NL events from Gamma (paginated tag sweep), parses
     the three moneyline questions per event, pulls each outcome token's
-    prices-history closing (last point at/before kickoff), devigs the
+    prices-history closing (last point before kickoff), devigs the
     triple, and compares against the walk-forward model quote (requested
     prediction at the event's UTC date). O/U 2.5 markets are searched in
     the same events; the R47 dust finding is expected to leave totals-MAD
@@ -1288,9 +1614,9 @@ def collect_nov2024_closings(
             market = markets.get(side)
             if market is None:
                 continue
-            token_list = _load_json_list(market.get("clobTokenIds") or "[]")
-            if token_list:
-                tokens[side] = token_list[0]
+            outcome = _moneyline_yes_outcome(market)
+            if outcome is not None:
+                tokens[side] = outcome[2]
         missing = [s for s in ("home", "draw", "away") if s not in tokens]
         if missing:
             failures.append({"game": game, "reason": f"missing ML markets {missing}"})
@@ -1311,6 +1637,9 @@ def collect_nov2024_closings(
             continue
         raw = {s: prices[s] for s in ("home", "draw", "away")}  # type: ignore[union-attr]
         overround = sum(raw.values())
+        if overround <= 0.0:
+            failures.append({"game": game, "reason": "pre-kickoff ML prices have zero overround"})
+            continue
         devig = {s: raw[s] / overround for s in raw}
         model = {"home": quote["p_home"], "draw": quote["p_draw"], "away": quote["p_away"]}
         for side in ("home", "draw", "away"):
@@ -1325,31 +1654,32 @@ def collect_nov2024_closings(
                 "abs_dev_raw": abs(model[side] - raw[side]),
                 "minutes_before_kickoff": history_meta[side].get("minutes_before"),
                 "event_id": fixture["event_id"],
+                "token": tokens[side],
             })
         # O/U 2.5 in the same event family (expected dust per R47)
-        ou_market = next(
-            (
-                m for m in fixture["event"].get("markets") or []
-                if str(m.get("question") or "").rstrip().lower().endswith("o/u 2.5")
-            ),
-            None,
-        )
-        if ou_market is not None:
-            token_list = _load_json_list(ou_market.get("clobTokenIds") or "[]")
-            if token_list:
-                result = closing_yes_price(token_list[0], kickoff_epoch)
-                if result["price"] is not None:
-                    totals_rows.append({
-                        "date": date,
-                        "game": game,
-                        "pm_raw": result["price"],
-                        "pm_devig": None,
-                        "model": quote["p_over25"],
-                        "abs_dev": abs(quote["p_over25"] - result["price"]),
-                        "minutes_before_kickoff": result.get("minutes_before"),
-                        "event_id": fixture["event_id"],
-                    })
-                time.sleep(0.35)
+        over_tokens = set()
+        for market in fixture["event"].get("markets") or []:
+            over_index = _full_match_over_index(market, fixture["root"])
+            if (
+                over_index is not None
+                and parse_kickoff(market.get("gameStartTime"), require_timezone=True)
+                == fixture["kickoff"]
+            ):
+                over_tokens.add(_load_json_list(market["clobTokenIds"])[over_index])
+        if len(over_tokens) == 1:
+            result = closing_yes_price(over_tokens.pop(), kickoff_epoch)
+            if result["price"] is not None:
+                totals_rows.append({
+                    "date": date,
+                    "game": game,
+                    "pm_raw": result["price"],
+                    "pm_devig": None,
+                    "model": quote["p_over25"],
+                    "abs_dev": abs(quote["p_over25"] - result["price"]),
+                    "minutes_before_kickoff": result.get("minutes_before"),
+                    "event_id": fixture["event_id"],
+                })
+            time.sleep(0.35)
     overrounds = [
         sum(r["pm_raw"] for r in rows if r["game"] == game)
         for game in sorted({r["game"] for r in rows})
@@ -1363,67 +1693,134 @@ def collect_nov2024_closings(
     return rows, totals_rows, {"failures": failures, "meta": meta}
 
 
+def _board_market_quote(
+    market: dict, outcome: tuple[int, str, str], generated: datetime, kickoff: datetime,
+) -> tuple[float, datetime, str, str] | None:
+    """Return a selected outcome's price and identity from an observed Gamma quote."""
+    observed = _source_observed_at(market)
+    if (
+        observed is None or not observed <= generated < kickoff
+        or not _valid_source_times(market, generated, kickoff)
+        or _true(market.get("closed")) or _started(market)
+        or parse_kickoff(market.get("gameStartTime"), require_timezone=True) != kickoff
+    ):
+        return None
+    index, condition, token = outcome
+    price = _paired_outcome_price(market, index)
+    if price is None:
+        return None
+    return price, observed, condition, token
+
+
+def _board_market_evidence(
+    markets: list, home: str, away: str, generated: datetime, kickoff: datetime,
+) -> dict[str, list[tuple[float, datetime, str, str]]]:
+    """Recognize verified full-time pricing for ML and full-match O/U 2.5."""
+    quotes: dict[str, list[tuple[float, datetime, str, str]]] = {}
+    for market in markets:
+        if not isinstance(market, dict):
+            continue
+        side = None
+        outcome = None
+        index = _full_match_over_index(market, f"{home} vs. {away}")
+        if index is not None:
+            side = "over"
+            outcome = (index, market["conditionId"], _load_json_list(market["clobTokenIds"])[index])
+        elif market.get("sportsMarketType") == "moneyline":
+            rules = str(market.get("description") or "")
+            participant_clause = f"between {home} and {away}".casefold()
+            if participant_clause not in rules.casefold() or not _regular_time_rules(rules):
+                continue
+            question = str(market.get("question") or "")
+            side = classify_ml_market(question, home, away)
+            if side == "draw" and not all(norm(team) in norm(question) for team in (home, away)):
+                continue
+            outcome = _moneyline_yes_outcome(market)
+        if side is not None and outcome is not None:
+            quote = _board_market_quote(market, outcome, generated, kickoff)
+            if quote is not None:
+                quotes.setdefault(side, []).append(quote)
+    return quotes
+
+
 def collect_pretip_board(
-    board_path: Path, predictions: dict[str, dict], known_teams: set[str]
+    board_path: Path, predictions: dict[str, dict], known_teams: set[str],
 ) -> tuple[list[dict], list[dict], list[dict]]:
-    """Model-vs-board pretip rows for the Nov-12-2026 NL slate."""
-    with open(board_path, "r", encoding="utf-8") as handle:
+    """Compare board quotes carrying contract details and a pre-kickoff observation.
+
+    Use the fixture's market_evidence list of frozen Gamma markets. Each
+    market includes its observed_utc (or equivalent observed timestamp),
+    kickoff, rules, type, condition and outcome tokens. Legacy board
+    aggregate prices lack this evidence.
+    """
+    with board_path.open("r", encoding="utf-8") as handle:
         board = json.load(handle)
     rows: list[dict] = []
     totals_rows: list[dict] = []
     failures: list[dict] = []
-    games = board.get("soccer", {}).get("nations_league_nov12", [])
-    for game in games:
+    generated = parse_kickoff(board.get("generated_utc"), require_timezone=True)
+    for game in board.get("soccer", {}).get("nations_league_nov12", []):
         fixture = str(game.get("fixture") or "")
-        if " vs. " not in fixture:
+        home_pm, separator, away_pm = fixture.partition(" vs. ")
+        if not separator:
             continue
-        home_pm, _, away_pm = fixture.partition(" vs. ")
-        home = pm_to_martj42(home_pm.strip(), known_teams)
-        away = pm_to_martj42(away_pm.strip(), known_teams)
-        kickoff = str(game.get("kickoff_utc") or "")
-        date = kickoff[:10] or "2026-11-12"
+        kickoff = parse_kickoff(game.get("kickoff_utc"), require_timezone=True)
+        if kickoff is None or generated is None or generated >= kickoff or _started(game):
+            failures.append({"game": fixture, "reason": "board capture is not verified before kickoff"})
+            continue
+        markets = game.get("market_evidence")
+        if not isinstance(markets, list) or not markets:
+            failures.append({"game": fixture, "reason": "missing frozen market and observation evidence"})
+            continue
+        home_pm, away_pm = home_pm.strip(), away_pm.strip()
+        home = pm_to_martj42(home_pm, known_teams)
+        away = pm_to_martj42(away_pm, known_teams)
         if home is None or away is None:
             failures.append({"game": fixture, "reason": "name mapping failed"})
             continue
+        date = kickoff.date().isoformat()
         key = f"{date}|{home}|{away}"
         quote = predictions.get(key)
         if quote is None or quote.get("refused"):
             failures.append({"game": fixture, "reason": f"no prediction ({key})"})
             continue
-        prices = game.get("ml_yes_prices") or {}
-        raw = {
-            "home": prices.get("home"),
-            "draw": prices.get("draw"),
-            "away": prices.get("away"),
-        }
-        if any(v is None for v in raw.values()):
-            failures.append({"game": fixture, "reason": f"missing ML prices {raw}"})
-            continue
-        overround = sum(raw.values())
+        evidence = _board_market_evidence(markets, home_pm, away_pm, generated, kickoff)
         model = {"home": quote["p_home"], "draw": quote["p_draw"], "away": quote["p_away"]}
-        for side in ("home", "draw", "away"):
-            rows.append({
-                "date": date,
-                "game": fixture,
-                "side": side,
-                "pm_raw": raw[side],
-                "pm_devig": raw[side] / overround,
-                "model": model[side],
-                "abs_dev": abs(model[side] - raw[side] / overround),
-                "abs_dev_raw": abs(model[side] - raw[side]),
-                "board_generated_utc": board.get("generated_utc"),
+        ml = [evidence.get(side, []) for side in model]
+        if all(len(side_quotes) == 1 for side_quotes in ml):
+            prices = {side: side_quotes[0] for side, side_quotes in zip(model, ml)}
+            conditions = {item[2] for item in prices.values()}
+            tokens = {item[3] for item in prices.values()}
+            overround = sum(item[0] for item in prices.values())
+            if len(conditions) == len(tokens) == 3 and overround > 0:
+                for side, (price, observed, condition, token) in prices.items():
+                    rows.append({
+                        "date": date, "game": fixture, "side": side,
+                        "pm_raw": price, "pm_devig": price / overround, "model": model[side],
+                        "abs_dev": abs(model[side] - price / overround),
+                        "abs_dev_raw": abs(model[side] - price),
+                        "board_generated_utc": generated.isoformat(),
+                        "market_observed_utc": observed.isoformat(),
+                        "condition_id": condition, "token": token,
+                    })
+            else:
+                failures.append({"game": fixture, "reason": "board ML conditions or overround are invalid"})
+        else:
+            failures.append({"game": fixture, "reason": "board lacks three uniquely priced pre-kickoff ML contracts"})
+        over = evidence.get("over", [])
+        if len(over) != 1:
+            failures.append({
+                "game": fixture, "reason": "board lacks one uniquely priced pre-kickoff full-match O/U 2.5 contract",
             })
-        ou25 = game.get("ou25_yes_price")
-        if ou25 is not None:
-            totals_rows.append({
-                "date": date,
-                "game": fixture,
-                "pm_raw": ou25,
-                "pm_devig": None,
-                "model": quote["p_over25"],
-                "abs_dev": abs(quote["p_over25"] - ou25),
-                "board_generated_utc": board.get("generated_utc"),
-            })
+            continue
+        price, observed, condition, token = over[0]
+        totals_rows.append({
+            "date": date, "game": fixture, "pm_raw": price, "pm_devig": None,
+            "model": quote["p_over25"], "abs_dev": abs(quote["p_over25"] - price),
+            "board_generated_utc": generated.isoformat(),
+            "market_observed_utc": observed.isoformat(),
+            "condition_id": condition, "token": token,
+        })
     return rows, totals_rows, failures
 
 
@@ -1474,7 +1871,10 @@ def write_report(out_dir: Path, results: dict) -> Path:
     lines.append("## Gate A - data integrity")
     lines.append("")
     lines.append(f"- reload through `load_intl_snapshot`: {gate_a['reload_validation']}")
-    lines.append(f"- rebuild from raw cache byte-equal (matches + final Elo): {gate_a.get('rebuild_from_cache_equal')}")
+    lines.append(f"- rebuild from frozen inputs ({gate_a['rebuild_mode']}): {gate_a['rebuild_from_cache_equal']}")
+    if "refresh" in gate_a:
+        lines.append(f"- refresh cutoff (exclusive): {gate_a['refresh']['cutoff_utc_date_exclusive']}")
+        lines.append(f"- late ESPN kickoffs excluded: {gate_a['refresh']['espn_kickoff_excluded_count']}")
     lines.append(f"- **{'PASS' if gate_a['passed'] else 'FAIL'}**")
     lines.append("")
 
@@ -1652,8 +2052,8 @@ def write_report(out_dir: Path, results: dict) -> Path:
 # shadow recorder (NBA-shadow-compatible CSV rows)
 # ---------------------------------------------------------------------------
 
-#: CSV columns mirror the NBA shadow JSON field paths (round47/nba_shadow_rows.json).
-SHADOW_COLUMNS = [
+#: Historical columns mirror the NBA shadow JSON field paths.
+LEGACY_SHADOW_COLUMNS = [
     "label", "recorded_utc", "tip_utc", "game", "home", "away", "home_disp", "away_disp",
     "date", "state_at_scan", "neutral", "tournament", "snapshot", "both_teams_rated",
     "model.p_home", "model.p_draw", "model.p_away",
@@ -1679,15 +2079,315 @@ SHADOW_COLUMNS = [
     "final_score.brier_1x2", "final_score.log_loss_1x2", "final_score.o25_outcome",
 ]
 
+SHADOW_EVIDENCE_COLUMNS = [
+    "model_totals_shadow.version", "model_totals_shadow.baseline_version",
+    "model_totals_shadow.p_over_2p5", "model_totals_shadow.p_under_2p5",
+    "model_totals_shadow.baseline_p_over_2p5", "model_totals_shadow.lambda_home",
+    "model_totals_shadow.lambda_away", "model_totals_shadow.home_recent_matches",
+    "model_totals_shadow.away_recent_matches", "model_totals_shadow.tournament_matches",
+    "model_totals_shadow.fallback_reason", "market_ou25.condition_id",
+    "market_ou25.response_received_utc", "market_ou25.observed_utc",
+    "model.neutral_assumed", "model.neutral_source",
+]
+SHADOW_V1_COLUMNS = LEGACY_SHADOW_COLUMNS + SHADOW_EVIDENCE_COLUMNS[:-2]
+SHADOW_COLUMNS = LEGACY_SHADOW_COLUMNS + SHADOW_EVIDENCE_COLUMNS
 
-def _first_number(value: object) -> float | None:
+_STARTED_STATES = {
+    "started", "live", "inplay", "inprogress", "playing", "halftime", "ht",
+    "firsthalf", "secondhalf", "1h", "2h", "extratime", "penalties",
+    "fulltime", "ft", "ended", "complete", "completed", "finished", "final",
+    "postponed", "suspended", "abandoned", "canceled", "cancelled", "closed",
+}
+
+
+def _prices_list(raw: object) -> list[str]:
     try:
-        parsed = json.loads(value or "[]") if isinstance(value, str) else value
-        if isinstance(parsed, list) and parsed:
-            return float(parsed[0])
-    except (TypeError, ValueError, json.JSONDecodeError):
-        return None
-    return None
+        return _load_json_list(raw)
+    except (TypeError, ValueError):
+        return []
+
+
+def _true(raw: object) -> bool:
+    return str(raw).strip().casefold() in {"true", "1"}
+
+
+def _started(payload: dict) -> bool:
+    return any(_true(payload.get(key)) for key in (
+        "live", "isLive", "inPlay", "isInPlay", "inProgress", "isInProgress",
+        "started", "hasStarted", "isStarted", "ended", "hasEnded", "isEnded",
+        "postponed", "canceled", "cancelled",
+    )) or any(
+        norm(payload.get(key)).replace(" ", "").removeprefix("status") in _STARTED_STATES
+        for key in ("status", "gameStatus", "sportsStatus", "period")
+    )
+
+
+def _valid_source_times(payload: dict, received: datetime, kickoff: datetime) -> bool:
+    for key in (*_OBSERVATION_FIELDS, "updatedAt", "updated_at"):
+        raw = payload.get(key)
+        if raw is not None:
+            stamp = parse_kickoff(raw, require_timezone=True)
+            if stamp is None or stamp > received or stamp >= kickoff:
+                return False
+    return True
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _fixture_is_open(event: dict) -> bool:
+    return (
+        not _true(event.get("closed"))
+        and not _started(event)
+        and not any(_started(market) for market in event.get("markets") or [])
+    )
+
+
+def _shadow_venue(members: list[dict]) -> tuple[bool | None, str | None]:
+    values = set()
+    for member in members:
+        for event in (member["event"], member.get("detail") or {}):
+            for payload in [event, *(event.get("markets") or [])]:
+                for key in ("neutral", "neutralSite", "neutralVenue"):
+                    value = payload.get(key)
+                    if type(value) is bool:
+                        values.add(value)
+    if len(values) > 1:
+        return None, "conflicting Gamma venue status"
+    return next(iter(values), None), None
+
+
+def _shadow_identity_keys(event: dict) -> set[tuple[str, str]]:
+    keys = set()
+    for market in event.get("markets") or []:
+        condition = market.get("conditionId")
+        if isinstance(condition, str) and condition:
+            keys.add(("condition", condition))
+    if event.get("id") is not None:
+        keys.add(("event", str(event["id"])))
+    return keys
+
+
+def _shadow_market_samples(
+    members: list[dict], root: str, kickoff: datetime, discovered_at: datetime,
+) -> tuple[list[tuple[dict, datetime]], str | None]:
+    if any(
+        not _fixture_is_open(member["event"])
+        or not _valid_source_times(member["event"], discovered_at, kickoff)
+        for member in members
+    ):
+        return [], "discovery has started, closed or invalid source timestamps"
+    flagship = next((member for member in members if member["title"] == root), members[0])
+    quote_events = [flagship] + [
+        member for member in members if member is not flagship and any(
+            _full_match_over_index(market, root) is not None
+            for market in member["event"].get("markets") or []
+        )
+    ]
+    samples = []
+    previous_receipt = discovered_at
+    for member in quote_events:
+        started_at = _utc_now()
+        if not previous_receipt <= started_at < kickoff:
+            return [], "detail request outside the pre-kickoff window"
+        try:
+            detail = fetch_event_detail(member["event_id"])
+        except RuntimeError:
+            detail = None  # Timed discovery is still available when the read fails.
+        received = _utc_now()
+        if not started_at <= received < kickoff:
+            return [], "detail response outside the pre-kickoff window"
+        previous_receipt = received
+        event = member["event"]
+        markets_at = discovered_at
+        if detail is not None:
+            event = {**event, **detail}
+            parsed = event_fixture(event, strict=True)
+            if (
+                parsed is None or parsed["kickoff"] != kickoff or parsed["root"] != root
+                or parsed["event_id"] != member["event_id"]
+                or not _fixture_is_open(event)
+                or not _valid_source_times(detail, received, kickoff)
+            ):
+                return [], "detail has started, closed or invalid fixture or source timestamps"
+            member["detail"] = detail
+            if detail.get("markets"):
+                markets_at = received
+            else:
+                event = member["event"]
+        samples.extend(
+            (market, markets_at) for market in event.get("markets") or []
+            if not _true(market.get("closed"))
+            and parse_kickoff(
+                market.get("gameStartTime") or event.get("gameStartTime"), require_timezone=True
+            ) == kickoff
+            and _valid_source_times(market, markets_at, kickoff)
+        )
+    return samples, None
+
+
+def _shadow_csv_index(handle) -> tuple[list[str] | None, set[tuple[str, str]]]:
+    reader = csv.DictReader(handle)
+    fields = reader.fieldnames
+    if fields is not None and fields not in (SHADOW_COLUMNS, SHADOW_V1_COLUMNS, LEGACY_SHADOW_COLUMNS):
+        raise ValueError("unrecognized international shadow CSV header")
+    return fields, {(row["tip_utc"], row["game"]) for row in reader}
+
+
+def _append_shadow_rows(
+    path: Path, rows: list[dict], skipped: list[dict],
+) -> int:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
+    with path.open("a+", encoding="utf-8", newline="") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        handle.seek(0)
+        fields, existing = _shadow_csv_index(handle)
+        writer = csv.DictWriter(handle, fieldnames=fields or SHADOW_COLUMNS, extrasaction="ignore")
+        if fields is None:
+            writer.writeheader()
+        for row in rows:
+            key = (row["tip_utc"], row["game"])
+            if key in existing:
+                skipped.append({"kickoff": key[0], "game": key[1], "reason": "already recorded"})
+                continue
+            writer.writerow(row)
+            existing.add(key)
+            written += 1
+    return written
+
+
+def _shadow_model_fields(
+    prediction: intl_model.IntlPrediction, totals: intl_totals.IntlTotalsQuote,
+) -> dict:
+    legacy_over25 = prediction.over_line_prob(2.5)
+    return {
+        "both_teams_rated": "True",
+        "model.p_home": round(prediction.p_home, 5),
+        "model.p_draw": round(prediction.p_draw, 5),
+        "model.p_away": round(prediction.p_away, 5),
+        "model.p_home_variant_spread_cents": round(100 * prediction.p_home_variant_spread, 2),
+        "model.p_draw_variant_spread_cents": round(100 * prediction.p_draw_variant_spread, 2),
+        "model.p_away_variant_spread_cents": round(100 * prediction.p_away_variant_spread, 2),
+        "model.p_over_2p5": round(legacy_over25.p_over, 5),
+        "model.p_over_2p5_variant_spread_cents": round(100 * legacy_over25.variant_spread, 2),
+        "model.btts": round(prediction.btts, 5),
+        "model.lambda_home": round(prediction.lambda_home, 4),
+        "model.lambda_away": round(prediction.lambda_away, 4),
+        "model.total_base": round(prediction.total_base, 4),
+        "model.elo_home": round(prediction.elo_home, 2),
+        "model.elo_away": round(prediction.elo_away, 2),
+        "model.games_home": prediction.games_home,
+        "model.games_away": prediction.games_away,
+        "model.rating_source": prediction.rating_source,
+        "model.variant_p_home": json.dumps({
+            variant.spec.name: round(variant.outputs.home_win, 5) for variant in prediction.variants
+        }),
+        "model_totals_shadow.version": intl_totals.SHADOW_VERSION,
+        "model_totals_shadow.baseline_version": intl_totals.BASELINE_VERSION,
+        "model_totals_shadow.p_over_2p5": round(totals.p_over25, 5),
+        "model_totals_shadow.p_under_2p5": round(totals.p_under25, 5),
+        "model_totals_shadow.baseline_p_over_2p5": round(totals.baseline_over25, 5),
+        "model_totals_shadow.lambda_home": round(totals.lambda_home, 4),
+        "model_totals_shadow.lambda_away": round(totals.lambda_away, 4),
+        "model_totals_shadow.home_recent_matches": totals.home_recent_matches,
+        "model_totals_shadow.away_recent_matches": totals.away_recent_matches,
+        "model_totals_shadow.tournament_matches": totals.tournament_matches,
+        "model_totals_shadow.fallback_reason": totals.fallback_reason,
+    }
+
+
+def _shadow_market_fields(
+    root: str, samples: list[tuple[dict, datetime]], prediction: intl_model.IntlPrediction,
+) -> tuple[dict, list[str]]:
+    def reported_sum(key: str) -> float:
+        values = []
+        for market, _ in samples:
+            try:
+                value = float(market.get(key) or 0.0)
+            except (TypeError, ValueError, OverflowError):
+                continue
+            if math.isfinite(value):
+                values.append(value)
+        return round(sum(values), 2)
+
+    fields = {"liquidity_sum": reported_sum("liquidityNum"), "vol24_sum": reported_sum("volume24hr")}
+    failures = []
+    home, _, away = root.partition(" vs. ")
+    ml = {}
+    totals = {}
+    for market, received in samples:
+        side = classify_ml_market(market.get("question") or "", home, away)
+        if side is not None:
+            ml.setdefault(side, market)
+        index = _full_match_over_index(market, root)
+        if index is not None:
+            token = _load_json_list(market["clobTokenIds"])[index]
+            key = (market["conditionId"], token)
+            if key not in totals or received > totals[key][1]:
+                totals[key] = (market, received, index)
+
+    model = {"home": prediction.p_home, "draw": prediction.p_draw, "away": prediction.p_away}
+    raw = {}
+    for side, probability in model.items():
+        market = ml.get(side)
+        if market is None:
+            failures.append(f"no pre-kickoff ML market for {side}")
+            continue
+        outcome = _moneyline_yes_outcome(market)
+        if outcome is None:
+            failures.append(f"invalid binary ML contract for {side}")
+            continue
+        index, _, token = outcome
+        price = _paired_outcome_price(market, index)
+        if price is None:
+            failures.append(f"no valid Yes price for {side}")
+            continue
+        fields[f"market_ml.prices.{side}"] = price
+        if index == 0:  # Gamma's scalar bid/ask refers to the first outcome.
+            fields[f"market_ml.bid.{side}"] = _market_probability(market.get("bestBid"))
+            fields[f"market_ml.ask.{side}"] = _market_probability(market.get("bestAsk"))
+        fields[f"market_ml.volume.{side}"] = market.get("volume")
+        fields[f"market_ml.tokens.{side}"] = token
+        raw[side] = price
+        fields[f"model_vs_market.cents.{side}"] = round(100 * (probability - price), 2)
+    if len(raw) == len(model) and sum(raw.values()) > 0.0:
+        overround = sum(raw.values())
+        for side, probability in model.items():
+            fields[f"model_vs_market.devig_cents.{side}"] = round(
+                100 * (probability - raw[side] / overround), 2,
+            )
+
+    if len(totals) != 1:
+        failures.append(
+            "no verified pre-kickoff full-match O/U 2.5 market"
+            if not totals else "ambiguous full-match O/U 2.5 contracts"
+        )
+        return fields, failures
+
+    (condition, token), (market, received, index) = next(iter(totals.items()))
+    prices = _prices_list(market.get("outcomePrices"))
+    over_price = _market_probability(prices[index]) if len(prices) == 2 else None
+    observed = _source_observed_at(market)
+    fields.update({
+        "market_ou25.yes": over_price,  # Historical field for the selected Over outcome.
+        "market_ou25.volume": market.get("volume"),
+        "market_ou25.token": token,
+        "market_ou25.condition_id": condition,
+        "market_ou25.response_received_utc": received.isoformat(),
+        "market_ou25.observed_utc": observed.isoformat() if observed is not None else None,
+    })
+    if index == 0:  # Gamma's scalar bid/ask refers to the first outcome.
+        fields["market_ou25.bid"] = _market_probability(market.get("bestBid"))
+        fields["market_ou25.ask"] = _market_probability(market.get("bestAsk"))
+    if over_price is not None:
+        fields["model_vs_market.cents.over_2p5"] = round(
+            100 * (prediction.over_line_prob(2.5).p_over - over_price), 2,
+        )
+    else:
+        failures.append("verified full-match O/U 2.5 market lacks a valid Over price")
+    return fields, failures
 
 
 def record_shadow_rows(
@@ -1699,211 +2399,139 @@ def record_shadow_rows(
     date_hi: str,
     dry_run: bool = False,
 ) -> dict:
-    """Discover NL fixtures on PM for the date window; append pretip rows.
+    """Capture replay-model and Gamma observations strictly before kickoff.
 
-    Idempotent per (tip_utc, game): rows already present in the CSV are
-    skipped, so the coordinator can rerun a matchday safely. Prices come
-    from fresh Gamma event details (outcomePrices + bestBid/bestAsk at
-    scan time); the model quote comes from
-    ``intl_model.fixture_prediction`` on the full snapshot (the deployed
-    shadow path: ratings replay strictly before the fixture date).
+    The Gamma response receipt is measured independently of any quote timestamp
+    provided by the source. Appends are idempotent by kickoff and fixture.
+    Legacy CSVs retain their existing columns; the JSON summary carries the
+    newer totals evidence with either CSV header or in dry-run mode.
     """
-    import csv as _csv
+    existing = set()
+    if csv_path.is_file():
+        with csv_path.open(encoding="utf-8", newline="") as handle:
+            fcntl.flock(handle, fcntl.LOCK_SH)
+            _, existing = _shadow_csv_index(handle)
+
+    discovery_started = _utc_now()
+    snapshot_at = parse_kickoff(snapshot["generated_at"], require_timezone=True)
+    if snapshot_at is None or snapshot_at > discovery_started:
+        raise ValueError("shadow snapshot creation time must precede market collection")
+    events = gamma_nl_events(closed=False)
+    discovered_at = _utc_now()
+
+    families: dict[tuple[datetime, str], list[dict]] = {}
+    identity_starts: dict[tuple[str, str], set[datetime]] = {}
+    failures: list[dict] = []
+    for event in events:
+        parsed = event_fixture(event, strict=True)
+        if parsed is None:
+            if " vs. " in family_root(event.get("title") or ""):
+                failures.append({"game": event.get("title"), "reason": "missing or invalid gameStartTime"})
+            continue
+        kickoff = parsed["kickoff"]
+        for identity in _shadow_identity_keys(event):
+            identity_starts.setdefault(identity, set()).add(kickoff)
+        if date_lo <= kickoff.date().isoformat() <= date_hi:
+            parsed["event"] = event
+            families.setdefault((kickoff, parsed["root"]), []).append(parsed)
 
     known_teams = set(snapshot["teams"])
-    events = gamma_nl_events(closed=False)
-    families: dict[tuple[str, str], list[dict]] = {}
-    for event in events:
-        parsed = event_fixture(event)
-        if parsed is None:
-            continue
-        if not (date_lo <= parsed["kickoff"].date().isoformat() <= date_hi):
-            continue
-        parsed["event"] = event  # raw payload for embedded-market fallback
-        parsed["title_raw"] = str(event.get("title") or "")
-        families.setdefault((parsed["kickoff"].isoformat(), parsed["root"]), []).append(parsed)
-    existing: set[tuple[str, str]] = set()
-    if csv_path.is_file():
-        with open(csv_path, "r", encoding="utf-8", newline="") as handle:
-            for row in _csv.DictReader(handle):
-                existing.add((row.get("tip_utc", ""), row.get("game", "")))
+    matchday_starts = Counter((kickoff.date(), game) for kickoff, game in families)
     rows: list[dict] = []
     skipped: list[dict] = []
-    failures: list[dict] = []
-    for (kickoff_iso, root), members in sorted(families.items()):
-        game = root
+    research = None
+    for (kickoff, game), members in sorted(families.items()):
+        kickoff_iso = kickoff.isoformat()
         if (kickoff_iso, game) in existing:
             skipped.append({"game": game, "kickoff": kickoff_iso, "reason": "already recorded"})
             continue
-        home_pm, _, away_pm = root.partition(" vs. ")
-        home = pm_to_martj42(home_pm, known_teams)
-        away = pm_to_martj42(away_pm, known_teams)
-        kickoff = datetime.fromisoformat(kickoff_iso)
-        date = kickoff.date().isoformat()
-        base = {
-            "label": "INTL-SHADOW-MONITORING-ONLY - NO ENTRY (out-of-sample evidence, gate-E live bar)",
-            "recorded_utc": datetime.now(timezone.utc).isoformat(),
+        if matchday_starts[(kickoff.date(), game)] > 1 or any(
+            len(identity_starts[key]) > 1
+            for member in members for key in _shadow_identity_keys(member["event"])
+        ):
+            failures.append({"game": game, "reason": "conflicting fixture kickoff times"})
+            continue
+        if not discovery_started <= discovered_at < kickoff:
+            failures.append({"game": game, "reason": "discovery outside the pre-kickoff window"})
+            continue
+        home_disp, _, away_disp = game.partition(" vs. ")
+        home = pm_to_martj42(home_disp, known_teams)
+        away = pm_to_martj42(away_disp, known_teams)
+        if home is None or away is None:
+            failures.append({"game": game, "reason": "name mapping failed"})
+            continue
+        samples, rejection = _shadow_market_samples(members, game, kickoff, discovered_at)
+        if rejection is not None:
+            failures.append({"game": game, "reason": rejection})
+            continue
+        if not samples:
+            failures.append({"game": game, "reason": "no valid pre-kickoff market payload"})
+            continue
+        neutral, venue_failure = _shadow_venue(members)
+        if venue_failure is not None:
+            failures.append({"game": game, "reason": venue_failure})
+            continue
+        fixture = intl_model.IntlFixture(
+            home, away, kickoff.date().isoformat(), neutral=False if neutral is None else neutral,
+        )
+        prediction = intl_model.fixture_prediction(snapshot, fixture, tournament=NL_TOURNAMENT)
+        if prediction is None or prediction.ratings_stale:
+            failures.append({"game": game, "reason": "strictly prior replay ratings required"})
+            continue
+        if research is None:
+            research = intl_totals.IntlTotalsResearch(snapshot)
+        totals = research.predict(fixture, tournament=NL_TOURNAMENT)
+
+        fields, market_failures = _shadow_market_fields(game, samples, prediction)
+        recorded_at = _utc_now()
+        latest_receipt = max(received for _, received in samples)
+        if not latest_receipt <= recorded_at < kickoff:
+            failures.append({"game": game, "reason": "collection ended outside the pre-kickoff window"})
+            continue
+        failures.extend({"game": game, "reason": reason} for reason in market_failures)
+        rows.append({
+            "label": "INTL-SHADOW-MONITORING-ONLY - NO ENTRY (pre-kickoff Gamma capture)",
+            "recorded_utc": recorded_at.isoformat(),
             "tip_utc": kickoff_iso,
             "game": game,
-            "home_disp": home_pm.strip(),
-            "away_disp": away_pm.strip(),
-            "date": date,
+            "home": home,
+            "away": away,
+            "home_disp": home_disp,
+            "away_disp": away_disp,
+            "date": fixture.date,
             "state_at_scan": "pre",
-            "neutral": "False",
+            "neutral": None if neutral is None else str(neutral),
+            "model.neutral_assumed": False if neutral is None else None,
+            "model.neutral_source": "home-field assumption" if neutral is None else "Gamma",
             "tournament": NL_TOURNAMENT,
             "snapshot": f"{snapshot_path} (generated {snapshot['generated_at']})",
-            "gamma_event_ids": json.dumps([m["event_id"] for m in members]),
-        }
-        if home is None or away is None:
-            base.update({"home": home_pm, "away": away_pm, "both_teams_rated": "False"})
-            failures.append({"game": game, "reason": "name mapping failed"})
-            rows.append(base)
-            continue
-        base.update({"home": home, "away": away})
-        prediction = intl_model.fixture_prediction(
-            snapshot,
-            intl_model.IntlFixture(home=home, away=away, date=date, neutral=False),
-            tournament=NL_TOURNAMENT,
-        )
-        if prediction is None:
-            base["both_teams_rated"] = "False"
-            failures.append({"game": game, "reason": "model refusal"})
-            rows.append(base)
-            continue
-        base["both_teams_rated"] = "True"
-        base.update({
-            "model.p_home": round(prediction.p_home, 5),
-            "model.p_draw": round(prediction.p_draw, 5),
-            "model.p_away": round(prediction.p_away, 5),
-            "model.p_home_variant_spread_cents": round(100 * prediction.p_home_variant_spread, 2),
-            "model.p_draw_variant_spread_cents": round(100 * prediction.p_draw_variant_spread, 2),
-            "model.p_away_variant_spread_cents": round(100 * prediction.p_away_variant_spread, 2),
-            "model.p_over_2p5": round(prediction.over_line_prob(2.5).p_over, 5),
-            "model.p_over_2p5_variant_spread_cents": round(
-                100 * prediction.over_line_prob(2.5).variant_spread, 2
-            ),
-            "model.btts": round(prediction.btts, 5),
-            "model.lambda_home": round(prediction.lambda_home, 4),
-            "model.lambda_away": round(prediction.lambda_away, 4),
-            "model.total_base": round(prediction.total_base, 4),
-            "model.elo_home": round(prediction.elo_home, 2),
-            "model.elo_away": round(prediction.elo_away, 2),
-            "model.games_home": prediction.games_home,
-            "model.games_away": prediction.games_away,
-            "model.rating_source": prediction.rating_source,
-            "model.variant_p_home": json.dumps({
-                v.spec.name: round(v.outputs.home_win, 5) for v in prediction.variants
-            }),
+            "gamma_event_ids": json.dumps([member["event_id"] for member in members]),
+            **_shadow_model_fields(prediction, totals),
+            **fields,
         })
-        # flagship event = the family member whose title IS the fixture root
-        # (sub-market events like "- More Markets" carry higher ids and no ML)
-        flagship = next(
-            (m for m in members if m["title_raw"] == root), members[0]
-        )
-        detail = None
-        try:
-            detail = fetch_event_detail(flagship["event_id"])
-        except Exception:  # noqa: BLE001 - fall back to sweep-embedded markets
-            detail = None
-        markets = (detail or {}).get("markets") or []
-        if not any(
-            classify_ml_market(m.get("question") or "", home_pm, away_pm)
-            for m in markets
-        ):
-            markets = (flagship.get("event") or {}).get("markets") or []
-        liquidity_sum = 0.0
-        vol24_sum = 0.0
-        for market in markets:
-            try:
-                liquidity_sum += float(market.get("liquidityNum") or 0.0)
-                vol24_sum += float(market.get("volume24hr") or 0.0)
-            except (TypeError, ValueError):
-                pass
-        base["liquidity_sum"] = round(liquidity_sum, 2)
-        base["vol24_sum"] = round(vol24_sum, 2)
-        for side, pm_name in (("home", home_pm), ("away", away_pm), ("draw", None)):
-            market = None
-            for candidate in markets:
-                if classify_ml_market(
-                    candidate.get("question") or "", home_pm, away_pm
-                ) == side:
-                    market = candidate
-                    break
-            if market is None:
-                failures.append({"game": game, "reason": f"no ML market for {side}"})
-                continue
-            token_list = _load_json_list(market.get("clobTokenIds") or "[]")
-            base[f"market_ml.prices.{side}"] = _first_number(market.get("outcomePrices"))
-            base[f"market_ml.bid.{side}"] = market.get("bestBid")
-            base[f"market_ml.ask.{side}"] = market.get("bestAsk")
-            base[f"market_ml.volume.{side}"] = market.get("volume")
-            if token_list:
-                base[f"market_ml.tokens.{side}"] = token_list[0]
-        ou_market = next(
-            (
-                m for m in markets
-                if str(m.get("question") or "").rstrip().lower().endswith("o/u 2.5")
-            ),
-            None,
-        )
-        if ou_market is None:
-            # the O/U ladder lives in sibling family events (boards47 pattern)
-            for member in members:
-                for candidate in (member.get("event") or {}).get("markets") or []:
-                    if str(candidate.get("question") or "").rstrip().lower().endswith("o/u 2.5"):
-                        ou_market = candidate
-                        break
-                if ou_market is not None:
-                    break
-        if ou_market is not None:
-            token_list = _load_json_list(ou_market.get("clobTokenIds") or "[]")
-            base["market_ou25.yes"] = _first_number(ou_market.get("outcomePrices"))
-            base["market_ou25.bid"] = ou_market.get("bestBid")
-            base["market_ou25.ask"] = ou_market.get("bestAsk")
-            base["market_ou25.volume"] = ou_market.get("volume")
-            if token_list:
-                base["market_ou25.token"] = token_list[0]
-        model = {
-            "home": prediction.p_home,
-            "draw": prediction.p_draw,
-            "away": prediction.p_away,
-        }
-        for side in ("home", "draw", "away"):
-            price = base.get(f"market_ml.prices.{side}")
-            if price is not None:
-                base[f"model_vs_market.cents.{side}"] = round(100 * (model[side] - price), 2)
-        raw = [base.get(f"market_ml.prices.{s}") for s in ("home", "draw", "away")]
-        if all(v is not None for v in raw):
-            total = sum(raw)
-            for side in ("home", "draw", "away"):
-                base[f"model_vs_market.devig_cents.{side}"] = round(
-                    100 * (model[side] - float(base[f"market_ml.prices.{side}"]) / total), 2
-                )
-        if base.get("market_ou25.yes") is not None:
-            base["model_vs_market.cents.over_2p5"] = round(
-                100 * (float(base["model.p_over_2p5"]) - float(base["market_ou25.yes"])), 2
-            )
-        rows.append(base)
-    written = 0
-    if not dry_run and rows:
-        csv_path.parent.mkdir(parents=True, exist_ok=True)
-        new_file = not csv_path.is_file()
-        with open(csv_path, "a", encoding="utf-8", newline="") as handle:
-            writer = _csv.DictWriter(handle, fieldnames=SHADOW_COLUMNS, extrasaction="ignore")
-            if new_file:
-                writer.writeheader()
-            for row in rows:
-                writer.writerow(row)
-                written += 1
+
+    written = _append_shadow_rows(csv_path, rows, skipped) if rows and not dry_run else 0
     return {
         "window": [date_lo, date_hi],
         "fixtures_found": len(families),
-        "rows_recorded": written if not dry_run else 0,
+        "rows_recorded": written,
         "rows_prepared": len(rows),
         "skipped_existing": skipped,
         "failures": failures,
         "dry_run": dry_run,
         "csv": str(csv_path),
+        "totals_shadow": [
+            {
+                "game": row["game"],
+                "tip_utc": row["tip_utc"],
+                "recorded_utc": row["recorded_utc"],
+                "neutral": row["neutral"],
+                "market_ou25.token": row.get("market_ou25.token"),
+                "market_ou25.yes": row.get("market_ou25.yes"),
+                **{column: row.get(column) for column in SHADOW_EVIDENCE_COLUMNS},
+            }
+            for row in rows
+        ],
     }
 
 
@@ -1992,12 +2620,36 @@ def main(argv: list[str] | None = None) -> int:
 
     validate_parser = subparsers.add_parser("validate", help="full gate A-E validation run")
     validate_parser.add_argument("--snapshot", required=True, help="intl snapshot JSON path")
-    validate_parser.add_argument("--cache-dir", default=None, help="raw cache dir (results.csv + world.tsv) for the gate-A rebuild")
-    validate_parser.add_argument("--board", default=None, help="round47 board.json (Nov-12 pretip prices)")
+    validate_parser.add_argument(
+        "--cache-dir", type=Path,
+        help="frozen raw inputs for gate A (results.csv/world.tsv for a legacy snapshot)",
+    )
+    validate_parser.add_argument(
+        "--refresh-evidence", type=Path,
+        help="intl_data --evidence-json output with the refreshed snapshot's cutoff and source hashes",
+    )
+    validate_parser.add_argument(
+        "--results-csv", type=Path,
+        help="explicit frozen seed CSV path if separate from --cache-dir",
+    )
+    validate_parser.add_argument(
+        "--espn-scoreboard", type=Path, action="append", default=[],
+        help="explicit frozen ESPN scoreboard path from refresh evidence (repeatable)",
+    )
+    validate_parser.add_argument(
+        "--board", type=Path,
+        help="frozen Nov-12 board with per-market Gamma contracts and strictly pre-kickoff observations",
+    )
     validate_parser.add_argument("--out-dir", required=True, help="review output dir (report.md, results.json)")
-    validate_parser.add_argument("--skip-pm", action="store_true", help="skip the networked Polymarket part (gate E -> INSUFFICIENT)")
+    validate_parser.add_argument(
+        "--skip-pm", action="store_true",
+        help="skip networked Polymarket closings and still check any supplied local board",
+    )
     validate_parser.add_argument("--self-check-samples", type=int, default=12)
-    validate_parser.add_argument("--revision", default="uncommitted WP-INTL-2 modules (intl_data + intl_model)")
+    validate_parser.add_argument(
+        "--revision", default="uncommitted WP-INTL-2 modules (intl_data + intl_model)",
+        help="exact Git commit under validation, recorded in the report",
+    )
 
     shadow_parser = subparsers.add_parser("shadow", help="record pretip model-vs-market rows for an NL matchday")
     shadow_parser.add_argument("--snapshot", required=True, help="intl snapshot JSON path")
@@ -2006,7 +2658,31 @@ def main(argv: list[str] | None = None) -> int:
     shadow_parser.add_argument("--csv", required=True, help="shadow CSV path (append; idempotent per fixture)")
     shadow_parser.add_argument("--dry-run", action="store_true", help="prepare rows but do not write")
 
+    totals_parser = subparsers.add_parser(
+        "totals-replay", help="compare causal O2.5 forecasts using result data only",
+    )
+    totals_parser.add_argument("--snapshot", required=True, type=Path, help="intl snapshot JSON path")
+    totals_parser.add_argument("--date-lo", required=True, type=date.fromisoformat)
+    totals_parser.add_argument("--date-hi", required=True, type=date.fromisoformat)
+    totals_parser.add_argument("--tournament", default=NL_TOURNAMENT)
+
     args = parser.parse_args(argv)
+
+    if args.command == "totals-replay":
+        if args.date_hi < args.date_lo or not args.tournament.strip():
+            totals_parser.error("require an increasing date window and a nonempty tournament")
+        snapshot = intl_data.load_intl_snapshot(str(args.snapshot))
+        report = totals_replay(
+            snapshot, tournament=args.tournament,
+            date_lo=args.date_lo.isoformat(), date_hi=args.date_hi.isoformat(),
+        )
+        report["snapshot"] = {
+            "path": str(args.snapshot),
+            "sha256": _sha256(args.snapshot),
+            "generated_at": snapshot["generated_at"],
+        }
+        print(json.dumps(report, indent=2, sort_keys=True, allow_nan=False))
+        return 0
 
     if args.command == "shadow":
         snapshot = intl_data.load_intl_snapshot(args.snapshot)
@@ -2027,8 +2703,10 @@ def main(argv: list[str] | None = None) -> int:
     nl_teams = _nl_team_set(snapshot)
 
     # -- gate A
-    cache_dir = Path(args.cache_dir) if args.cache_dir else None
-    gate_a = gate_a_integrity(snapshot_path, snapshot, cache_dir)
+    gate_a = gate_a_integrity(
+        snapshot_path, snapshot, args.cache_dir, refresh_evidence_path=args.refresh_evidence,
+        results_csv_path=args.results_csv, espn_scoreboards=args.espn_scoreboard,
+    )
 
     # -- walk-forward (the compute)
     closed_events: list[dict] = []
@@ -2038,11 +2716,13 @@ def main(argv: list[str] | None = None) -> int:
             closed_events = gamma_nl_events(
                 closed=True, end_min="2024-11-01", end_max="2024-12-05"
             )
-            requested = _build_requested(
-                known_teams, Path(args.board) if args.board else None, closed_events
-            )
         except Exception as exc:  # noqa: BLE001 - PM enumeration is best-effort
             print(f"WARN: PM request enumeration failed ({exc}); gate E will be INSUFFICIENT")
+    try:
+        requested = _build_requested(known_teams, args.board, closed_events)
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        print(f"WARN: board prediction request enumeration failed ({exc})")
+        requested = _build_requested(known_teams, None, closed_events)
     records, requested_predictions, info = run_walk_forward(
         snapshot["matches"], nl_teams, requested=requested
     )
@@ -2079,16 +2759,18 @@ def main(argv: list[str] | None = None) -> int:
                 predictions, known_teams, events=closed_events
             )
             totals_rows.extend(nov_totals)
-            if args.board and Path(args.board).is_file():
-                board_pretip, board_totals, board_failures = collect_pretip_board(
-                    Path(args.board), predictions, known_teams
-                )
-                pretip_rows.extend(board_pretip)
-                totals_rows.extend(board_totals)
-                gate_e_notes.setdefault("failures", []).extend(board_failures)
         except Exception as exc:  # noqa: BLE001 - report, don't crash the backtest
             gate_e_notes = {"error": f"PM collection failed: {exc}"}
             closing_rows, pretip_rows, totals_rows = [], [], []
+    if args.board is not None:
+        try:
+            pretip_rows, board_totals, board_failures = collect_pretip_board(
+                args.board, predictions, known_teams,
+            )
+            totals_rows.extend(board_totals)
+            gate_e_notes["board_failures"] = board_failures
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            gate_e_notes["board_error"] = str(exc)
     overround_mean = (gate_e_notes.get("meta") or {}).get("overround_mean")
     if overround_mean is not None:
         gate_e_notes["mean_overround"] = overround_mean
@@ -2155,10 +2837,10 @@ def main(argv: list[str] | None = None) -> int:
 
     kill_tripped = gate_d["entry_bar_1p5c"]["kill_bar_tripped_research_only"]
     # Shadow cohort = record-only out-of-sample evidence: it proceeds on
-    # model quality (A+D) and a non-failing market gate, independent of the
+    # model quality (A+D) and a passing market gate, independent of the
     # ENTRY kill bar, which governs eligibility (March 2027 at the earliest).
     shadow_confirmed = (
-        gates["A"] == "PASS" and gates["D"] == "PASS" and gates["E"] != "FAIL"
+        gates["A"] == gates["D"] == gates["E"] == "PASS"
     )
     verdict_notes = [
         f"Walk-forward n = {unl_metrics['n']} NL matches (2018-2026, all cycles pooled; per-cycle tables above); "
@@ -2182,7 +2864,7 @@ def main(argv: list[str] | None = None) -> int:
         f"O2.5 {slope['median_beats_all_over25']} (it is robust - within a few tenths of a cent of the "
         "best variant - but does not dominate).",
         f"Shadow status for the Nov 14-17 NL games: cohort {'CONFIRMED' if shadow_confirmed else 'NOT confirmed'} "
-        f"(requires A PASS, D PASS, E not FAIL - recording evidence only, never entry). Entry stays deferred: "
+        f"(requires A, D and E PASS for confirmation). Entry stays deferred: "
         "earliest March 2027 per the feasibility calendar, and now conditional on the totals family clearing "
         "the 1.5c bar somewhere it currently does not; international 1X2 remains research-only.",
         "Promotion is NOT decided by this harness: these are the coordinator's gate inputs; "
@@ -2195,13 +2877,16 @@ def main(argv: list[str] | None = None) -> int:
             "harness": "tools/wp_intl_validate.py (WP-INTL-3)",
             "revision": args.revision,
             "snapshot_path": str(snapshot_path),
-            "snapshot_sha256": _sha256(snapshot_path),
+            "snapshot_sha256": gate_a["snapshot_sha256"],
             "paper_only": True,
             "intl_mw_research_only": intl_model.INTL_MW_RESEARCH_ONLY,
             "params": {
                 "skip_pm": args.skip_pm,
-                "board": args.board,
-                "cache_dir": args.cache_dir,
+                "board": str(args.board) if args.board is not None else None,
+                "cache_dir": str(args.cache_dir) if args.cache_dir is not None else None,
+                "refresh_evidence": str(args.refresh_evidence) if args.refresh_evidence is not None else None,
+                "results_csv": str(args.results_csv) if args.results_csv is not None else None,
+                "espn_scoreboards": [str(path) for path in args.espn_scoreboard],
             },
         },
         "gate_a": gate_a,

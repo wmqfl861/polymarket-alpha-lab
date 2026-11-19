@@ -33,7 +33,9 @@ calling the module), e.g. ``We(100) = 1/(10^(-0.25)+1) =
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import time
 import urllib.error
 from pathlib import Path
@@ -590,8 +592,8 @@ class _Response:
     def __init__(self, body: bytes):
         self._body = body
 
-    def read(self) -> bytes:
-        return self._body
+    def read(self, size: int) -> bytes:
+        return self._body[:size]
 
     def __enter__(self):
         return self
@@ -749,3 +751,292 @@ def test_fetch_politeness_and_retry(monkeypatch: pytest.MonkeyPatch, tmp_path: P
     with pytest.raises(intl_data.IntlDataError, match="giving up"):
         intl_data.fetch_intl_results(cache_dir=tmp_path / "dead")
     assert failed_calls == [intl_data.RESULTS_URL] * intl_data.FETCH_ATTEMPTS
+
+
+TEAMS_TSV = (
+    "CZ\tCzechia\nIE\tIreland\nBA\tBosnia and Herzegovina\tBosnia-Herzegovina\n"
+    "CH\tSwitzerland\nTR\tTurkey\tTürkiye\n"
+)
+TOURNAMENTS_TSV = (
+    "F\tFriendly\nFT\tFriendly tournament\nENA\tEuropean Nations League A\n"
+    "SZP\tSaenz Pena Cup\nSZP\tPresident Roque Saenz Peña Cup\n"
+)
+
+
+def _latest_row(
+    day: str, home: str, away: str, hg: int | str = 2, ag: int = 1,
+    tournament: str = "ENA", venue: str = "",
+) -> str:
+    return "\t".join([*day.split("-"), home, away, str(hg), str(ag), tournament, venue])
+
+
+def _refresh_inputs(tmp_path: Path, seed_rows: list[str], latest_rows: list[str]) -> None:
+    _write_results_csv(tmp_path, seed_rows)
+    _write_world_tsv(tmp_path)
+    for name, text in (
+        ("latest.tsv", "\n".join(latest_rows) + "\n"),
+        ("en.teams.tsv", TEAMS_TSV),
+        ("en.tournaments.tsv", TOURNAMENTS_TSV),
+    ):
+        (tmp_path / name).write_text(text, encoding="utf-8")
+
+
+def _refresh(tmp_path: Path, *, cutoff_date: str = "2026-11-17", **kwargs) -> tuple[dict, dict]:
+    return intl_data.build_refreshed_snapshot(
+        tmp_path / "results.csv", tmp_path / "World.tsv",
+        latest_tsv=tmp_path / "latest.tsv", teams_tsv=tmp_path / "en.teams.tsv",
+        tournaments_tsv=tmp_path / "en.tournaments.tsv", cutoff_date=cutoff_date,
+        min_teams=2, **kwargs,
+    )
+
+
+def _espn_event(
+    event_id: str, kickoff: str, home: str, away: str, scores: tuple[int, int] = (2, 1),
+) -> dict:
+    return {
+        "id": event_id, "date": kickoff,
+        "status": {"type": {"completed": True, "name": "STATUS_FULL_TIME"}},
+        "competitions": [{"competitors": [
+            {"homeAway": "home", "team": {"displayName": home}, "score": str(scores[0])},
+            {"homeAway": "away", "team": {"displayName": away}, "score": str(scores[1])},
+        ]}],
+    }
+
+
+def test_refresh_merges_by_calendar_date_and_reports_overlap(tmp_path: Path) -> None:
+    _refresh_inputs(tmp_path, [
+        _row("2026-10-06", "Czech Republic", "Republic of Ireland", 1, 0, neutral="TRUE"),
+        _row("2026-11-17", "Czech Republic", "Republic of Ireland", 2, 1),
+        _row("2026-11-18", "Turkey", "Bosnia and Herzegovina", 3, 1),
+    ], [
+        _latest_row("2026-11-18", "UNKNOWN", "CZ", hg="bad"),
+        _latest_row("2026-11-17", "CZ", "IE", 9, 8),
+        _latest_row("2026-11-16", "TR", "BA", tournament="FT"),
+        _latest_row("2026-11-15", "CZ", "IE", venue="CH"),
+        _latest_row("2026-11-15", "IE", "CZ", 1, 2, venue="CH"),
+        _latest_row("2026-10-06", "IE", "CZ", 0, 1, tournament="F", venue="CH"),
+        _latest_row("2026-10-06", "CZ", "IE", 4, 0, tournament="F", venue="CH"),
+        _latest_row("2026-10-06", "CZ", "TR", tournament="F"),
+    ])
+    old = intl_data.build_snapshot(tmp_path / "results.csv", tmp_path / "World.tsv", min_teams=2)
+    snapshot, evidence = _refresh(tmp_path)
+    matches = snapshot["matches"]
+    assert matches == [
+        old["matches"][0],
+        _match_dict("2026-11-15", "Czech Republic", "Republic of Ireland", 2, 1,
+                    tournament="UEFA Nations League", neutral=True, venue=None),
+        _match_dict("2026-11-16", "Turkey", "Bosnia and Herzegovina", 2, 1, venue=None),
+    ]
+    assert evidence["date_basis"] == "source_fixture_calendar_date"
+    assert evidence["generated_at"] == snapshot["generated_at"]
+    assert evidence["seed_latest_fixture_date"] == "2026-11-18"
+    assert evidence["seed_latest_included_fixture_date"] == "2026-10-06"
+    assert evidence["latest_included_fixture_date"] == "2026-11-16"
+    assert evidence["seed_input_count"] == 3
+    assert evidence["seed_match_count"] == 1
+    assert evidence["latest_cutoff_excluded_count"] == 2
+    assert evidence["supplement_match_count"] == evidence["elo_source_only_count"] == 2
+    assert evidence["seed_overlap_duplicate_count"] == 1
+    assert evidence["seed_overlap_unmatched_count"] == 1
+    assert evidence["seed_overlap_conflict_count"] == 1
+    assert evidence["seed_overlap_conflicts"][0]["fields"] == [["score"]]
+    assert evidence["latest_duplicate_count"] == 1
+    assert evidence["neutral_reverse_duplicate_count"] == 2
+    assert evidence["sources"]["latest"] == {
+        "url": intl_data.LATEST_URL, "file": "latest.tsv",
+        "sha256": hashlib.sha256((tmp_path / "latest.tsv").read_bytes()).hexdigest(),
+    }
+    path = intl_data.write_snapshot(snapshot, tmp_path / "snapshot.json", min_teams=2)
+    assert intl_data.load_intl_snapshot(str(path), min_teams=2) == snapshot
+
+
+@pytest.mark.parametrize(("bad_row", "error"), [
+    (_latest_row("2026-11-15", "IE", "CZ", 1, 2), "non_neutral_orientation"),
+    (_latest_row("2026-11-15", "CZ", "IE", 3, 2), "score"),
+    (_latest_row("2026-11-15", "CZ", "IE", tournament="F"), "tournament"),
+    (_latest_row("2026-11-15", "CZ", "IE", venue="CH"), "neutral"),
+    (_latest_row("2026-11-15", "UNKNOWN", "IE"), "unknown home team code"),
+    (_latest_row("2026-11-15", "CZ", "IE", venue="UNKNOWN"), "unknown venue code"),
+    (_latest_row("2026-11-15", "CZ", "IE", tournament="UNKNOWN"), "unknown tournament code"),
+    (_latest_row("2026-11-15", "CZ", "IE", tournament="SZP"), "ambiguous tournament code"),
+    (_latest_row("2026-11-15", "CZ", "IE", hg="2.1"), "whole nonnegative goals"),
+    (_latest_row("2026-11-32", "CZ", "IE"), "malformed fixture date"),
+])
+def test_refresh_rejects_unresolved_supplement(tmp_path: Path, bad_row: str, error: str) -> None:
+    _refresh_inputs(tmp_path, [
+        _row("2026-10-06", "Czech Republic", "Republic of Ireland", 1, 0),
+    ], [_latest_row("2026-11-15", "CZ", "IE"), bad_row])
+    with pytest.raises(intl_data.IntlDataSchemaError, match=error):
+        _refresh(tmp_path)
+
+
+def test_refresh_checks_meaning_of_mapped_tournament_code(tmp_path: Path) -> None:
+    _refresh_inputs(tmp_path, [
+        _row("2026-10-06", "Czech Republic", "Republic of Ireland", 1, 0),
+    ], [_latest_row("2026-11-15", "CZ", "IE")])
+    (tmp_path / "en.tournaments.tsv").write_text("ENA\tFriendly\n", encoding="utf-8")
+    with pytest.raises(intl_data.IntlDataSchemaError, match="catalog mapping lacks"):
+        _refresh(tmp_path)
+
+
+def test_refresh_checks_espn_scores_and_known_late_kickoffs(tmp_path: Path) -> None:
+    _refresh_inputs(tmp_path, [
+        _row("2026-10-06", "Czech Republic", "Republic of Ireland", 1, 0),
+    ], [
+        _latest_row("2026-11-16", "CZ", "IE"),
+        _latest_row("2026-11-16", "TR", "BA", tournament="F"),
+    ])
+    scoreboard = tmp_path / "scoreboard.json"
+    event = _espn_event("1234", "2026-11-16T20:00:00-04:00", "Ireland", "Czechia", scores=(1, 2))
+    payload = {"leagues": [{"slug": "uefa.nations"}], "events": [event]}
+    scoreboard.write_text(json.dumps(payload), encoding="utf-8")
+    base, _ = _refresh(tmp_path)
+    snapshot, evidence = _refresh(tmp_path, espn_scoreboards=[scoreboard])
+    assert snapshot["matches"] == base["matches"]
+    assert evidence["espn_score_verified_count"] == evidence["elo_source_only_count"] == 1
+    score = evidence["espn_kickoffs_at_or_after_cutoff"][0]["espn_score_evidence"]
+    assert score["kickoff_utc"] == "2026-11-17T00:00:00+00:00"
+    assert score["date_delta_days"] == 1
+    assert score["orientation_reversed"] is True
+    assert score["scoreboard_sha256"] == evidence["espn_scoreboards"][0]["sha256"]
+
+    filtered, filtered_evidence = _refresh(
+        tmp_path, espn_scoreboards=[scoreboard], exclude_late_espn_kickoffs=True,
+    )
+    assert filtered_evidence["espn_kickoff_excluded_count"] == 1
+    assert filtered_evidence["model_date_shifted_count"] == 0  # Included matches only.
+    assert filtered_evidence["espn_score_verified_count"] == 0
+    excluded = filtered_evidence["espn_kickoffs_at_or_after_cutoff"][0]
+    assert excluded["source_fixture_date"] == "2026-11-16"
+    assert excluded["model_fixture_date"] == excluded["match"]["date"] == "2026-11-17"
+    assert filtered["matches"] == [base["matches"][0], base["matches"][2]]
+
+    event["competitions"][0]["competitors"][0]["score"] = "5"
+    scoreboard.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(intl_data.IntlDataSchemaError, match="ESPN event 1234: score conflict"):
+        _refresh(tmp_path, espn_scoreboards=[scoreboard])
+    event["status"]["type"]["completed"] = False
+    scoreboard.write_text(json.dumps(payload), encoding="utf-8")
+    _, incomplete = _refresh(tmp_path, espn_scoreboards=[scoreboard])
+    assert incomplete["espn_score_verified_count"] == 0
+    assert incomplete["elo_source_only_count"] == 2
+
+
+def test_refresh_models_utc_date_before_each_fixture_cutoff(tmp_path: Path) -> None:
+    _refresh_inputs(tmp_path, [
+        _row("2026-10-06", "Czech Republic", "Republic of Ireland", 1, 0),
+    ], [
+        _latest_row("2026-11-12", "CZ", "IE"),
+        _latest_row("2026-11-12", "BA", "CH", tournament="F"),
+        _latest_row("2026-11-12", "TR", "CH"),
+    ])
+    scoreboard = tmp_path / "scoreboard.json"
+    scoreboard.write_text(json.dumps({
+        "leagues": [{"slug": "uefa.nations"}],
+        "events": [
+            _espn_event("111", "2026-11-13T00:30:00Z", "Czechia", "Ireland"),
+            _espn_event("222", "2026-11-11T23:30:00Z", "Turkey", "Switzerland"),
+        ],
+    }), encoding="utf-8")
+    source, source_evidence = _refresh(tmp_path, espn_scoreboards=[scoreboard])
+    assert source_evidence["date_basis"] == "source_fixture_calendar_date"
+    assert "model_date_shifted_count" not in source_evidence
+    assert source["matches"][1]["date"] == "2026-11-12"
+
+    use_utc_dates = dict(espn_scoreboards=[scoreboard], exclude_late_espn_kickoffs=True)
+    full, evidence = _refresh(tmp_path, **use_utc_dates)
+    assert evidence["date_basis"] == "max_source_fixture_and_verified_espn_utc_kickoff_date"
+    assert evidence["seed_date_basis"] == "source_fixture_calendar_date"
+    assert evidence["model_date_shifted_count"] == 1
+    assert evidence["latest_included_fixture_date"] == "2026-11-13"
+    assert evidence["latest_included_source_fixture_date"] == "2026-11-12"
+    unknown, earlier, moved = evidence["supplement_matches"]
+    assert unknown["source_fixture_date"] == unknown["model_fixture_date"] == "2026-11-12"
+    assert unknown["model_fixture_date_basis"] == "source_fixture_calendar_date"
+    assert earlier["model_fixture_date"] == "2026-11-12"
+    assert earlier["espn_score_evidence"]["kickoff_utc"] == "2026-11-11T23:30:00+00:00"
+    assert moved["model_fixture_date_basis"] == evidence["date_basis"]
+    assert moved["source_fixture_date"] == "2026-11-12"
+    assert moved["model_fixture_date"] == "2026-11-13"
+    assert full["matches"] == [source["matches"][0], unknown["match"], earlier["match"], moved["match"]]
+
+    for fixture_date, expected_match_count in (("2026-11-12", 1), ("2026-11-13", 3), ("2026-11-14", 4)):
+        snapshot, _ = _refresh(tmp_path, cutoff_date=fixture_date, **use_utc_dates)
+        assert len(snapshot["matches"]) == expected_match_count
+        for field in ("matches", "elo_history"):
+            assert snapshot[field] == [row for row in full[field] if row["date"] < fixture_date]
+
+
+def test_refresh_rejects_duplicate_fixtures_after_espn_date_shift(tmp_path: Path) -> None:
+    _refresh_inputs(tmp_path, [
+        _row("2026-10-06", "Czech Republic", "Republic of Ireland", 1, 0),
+    ], [
+        _latest_row("2026-11-12", "CZ", "IE"),
+        _latest_row("2026-11-13", "CZ", "IE", tournament="F"),
+    ])
+    scoreboard = tmp_path / "scoreboard.json"
+    scoreboard.write_text(json.dumps({
+        "leagues": [{"slug": "uefa.nations"}],
+        "events": [_espn_event("111", "2026-11-13T00:30:00Z", "Czechia", "Ireland")],
+    }), encoding="utf-8")
+    source, _ = _refresh(tmp_path, espn_scoreboards=[scoreboard])
+    assert len(source["matches"]) == 3
+    with pytest.raises(intl_data.IntlDataSchemaError, match="duplicate fixture .* after applying ESPN UTC kickoff dates"):
+        _refresh(tmp_path, espn_scoreboards=[scoreboard], exclude_late_espn_kickoffs=True)
+
+
+def test_refresh_cli_expires_raw_cache_and_can_replay_offline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+) -> None:
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    seed = [_row("2026-10-06", f"Team {n}", f"Team {n + 1}", 1, 0) for n in range(0, 100, 2)]
+    results = (RESULTS_HEADER_LINE + "\n" + "\n".join(seed) + "\n").encode()
+    latest = (_latest_row("2026-11-16", "CZ", "IE") + "\n").encode()
+    for path in ("results.csv", "world.tsv", "latest.tsv", "en.teams.tsv", "en.tournaments.tsv"):
+        stale = raw / path
+        stale.write_bytes(b"stale invalid payload")
+        last_day = time.time() - 86400
+        os.utime(stale, (last_day, last_day))
+
+    _no_spacing(monkeypatch)
+    calls = _install_urlopen(monkeypatch, [
+        results, WORLD_TSV_BYTES, latest, TEAMS_TSV.encode(), TOURNAMENTS_TSV.encode(),
+    ])
+    output = tmp_path / "snapshot.json"
+    cli = ["--before-date", "2026-11-17", "--out", str(output), "--evidence-json"]
+    assert intl_data.main(cli + ["--cache-dir", str(raw)]) == 0
+    normal = json.loads(capsys.readouterr().out)
+    assert calls == [
+        intl_data.RESULTS_URL, intl_data.WORLD_URL, intl_data.LATEST_URL,
+        intl_data.TEAMS_URL, intl_data.TOURNAMENTS_URL,
+    ]
+    assert normal["match_count"] == 51
+    assert normal["supplement_match_count"] == 1
+    assert intl_data.load_intl_snapshot(str(output))["matches"][-1]["date"] == "2026-11-16"
+    assert intl_data.main(cli + ["--cache-dir", str(raw)]) == 0  # five cache hits
+    capsys.readouterr()
+    assert intl_data.main(cli + ["--source-dir", str(raw)]) == 0
+    offline = json.loads(capsys.readouterr().out)
+    assert len(calls) == 5
+    assert offline.keys() == normal.keys()
+    assert all(value == normal[key] for key, value in offline.items() if key != "generated_at")
+
+    previous_output = output.read_bytes()
+    (raw / "latest.tsv").write_text(_latest_row("2026-11-16", "CZ", "IE", hg="-1"))
+    with pytest.raises(intl_data.IntlDataSchemaError, match="whole nonnegative goals"):
+        intl_data.main(cli + ["--source-dir", str(raw)])
+    assert output.read_bytes() == previous_output
+
+
+def test_eloratings_catalog_fetch_rejects_oversized_payload(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _no_spacing(monkeypatch)
+    calls = _install_urlopen(monkeypatch, [
+        WORLD_TSV_BYTES, LATEST_TSV_BYTES, b"x" * (intl_data._ELO_TSV_MAX_BYTES + 1),
+    ])
+    with pytest.raises(intl_data.IntlDataSchemaError, match="source exceeds"):
+        intl_data.fetch_eloratings_current(cache_dir=tmp_path, include_catalogs=True)
+    assert calls == [intl_data.WORLD_URL, intl_data.LATEST_URL, intl_data.TEAMS_URL]
+    assert not (tmp_path / "en.teams.tsv").exists()

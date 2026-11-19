@@ -1,0 +1,1335 @@
+{
+  "leagues": {
+    "Basketball Champions League": {
+      "source_games": 1082,
+      "first_date": "2018-10-09",
+      "last_date": "2026-11-18",
+      "warmup_season": 2018,
+      "early_train_games": 410,
+      "tuning_games": 288,
+      "winner_candidate": {
+        "step": 36,
+        "home_adv": 35,
+        "carry": 0.8,
+        "margin_bonus": true,
+        "scale": 1.25,
+        "validation_brier": 0.22631554151245434
+      },
+      "total_candidate": {
+        "window": 20,
+        "penalty": 400.0,
+        "validation_rmse": 16.070795751974277,
+        "intercept": 0.3115376371219132,
+        "coefficients": [
+          0.02394646742209193,
+          0.4233237239791754,
+          0.2160214548639615,
+          -0.15097659882079925,
+          0.24350695272144038,
+          0.2888325555037029
+        ]
+      },
+      "margin_candidate": {
+        "window": 10,
+        "penalty": 1.0,
+        "validation_rmse": 14.080176128495694,
+        "intercept": 2.5622467101634823,
+        "coefficients": [
+          0.3763062547675873,
+          0.5137829055665736,
+          -0.5582328955734359,
+          0.0,
+          3.188227981452515
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 96,
+        "first_date": "2025-10-07",
+        "last_date": "2025-12-17",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.22518714743055032,
+          "log_loss": 0.6413334223529102,
+          "accuracy": 0.5416666666666666,
+          "ece_5": 0.1718850434802948
+        },
+        "winner_candidate": {
+          "brier": 0.20454731501141774,
+          "log_loss": 0.5968337882509175,
+          "accuracy": 0.6770833333333334,
+          "ece_5": 0.09751707066188699
+        },
+        "winner_delta_brier_95_ci": [
+          -0.03495066121888598,
+          -0.003906600643493662
+        ],
+        "totals_baseline": {
+          "mae": 15.754666666666665,
+          "rmse": 19.324604127036256,
+          "bias": -4.624749999999999
+        },
+        "totals_candidate": {
+          "mae": 15.527725880448225,
+          "rmse": 18.924072525553633,
+          "bias": -3.846275972551542
+        },
+        "totals_delta_mae_95_ci": [
+          -0.8234403733479191,
+          0.32690615275381196
+        ],
+        "margin_baseline": {
+          "mae": 11.84718164882967,
+          "rmse": 14.245114220665625,
+          "bias": -0.7077876561318881
+        },
+        "margin_candidate": {
+          "mae": 10.93431251152507,
+          "rmse": 13.386301084026039,
+          "bias": -0.1363129147816965
+        },
+        "margin_delta_mae_95_ci": [
+          -1.3735781012930615,
+          -0.445656966257039
+        ]
+      },
+      "current": {
+        "games": 64,
+        "first_date": "2026-10-06",
+        "last_date": "2026-11-18",
+        "overtime_known_or_detected": 64,
+        "overtime_games": 3,
+        "winner_baseline": {
+          "brier": 0.21862256623647702,
+          "log_loss": 0.628388055379207,
+          "accuracy": 0.65625,
+          "ece_5": 0.05331119555288933
+        },
+        "winner_candidate": {
+          "brier": 0.21392518893206164,
+          "log_loss": 0.6152763339302867,
+          "accuracy": 0.625,
+          "ece_5": 0.11432037254475658
+        },
+        "winner_delta_brier_95_ci": [
+          -0.019180341219498884,
+          0.014944154068170571
+        ],
+        "totals_baseline": {
+          "mae": 14.051749999999998,
+          "rmse": 17.260576467777664,
+          "bias": -3.9594999999999985
+        },
+        "totals_candidate": {
+          "mae": 14.11255594463518,
+          "rmse": 17.3924535805326,
+          "bias": -3.578406598095786
+        },
+        "totals_delta_mae_95_ci": [
+          -0.3547133902571607,
+          0.5001521682377126
+        ],
+        "margin_baseline": {
+          "mae": 12.031754904016749,
+          "rmse": 15.434111961026504,
+          "bias": -0.18167211578935033
+        },
+        "margin_candidate": {
+          "mae": 12.06207182060914,
+          "rmse": 15.443247990724236,
+          "bias": 0.8242377410933954
+        },
+        "margin_delta_mae_95_ci": [
+          -0.6959422728635545,
+          0.9187091500852382
+        ]
+      }
+    },
+    "EuroCup": {
+      "source_games": 1637,
+      "first_date": "2018-10-02",
+      "last_date": "2026-11-18",
+      "warmup_season": 2018,
+      "early_train_games": 542,
+      "tuning_games": 586,
+      "winner_candidate": {
+        "step": 36,
+        "home_adv": 35,
+        "carry": 0.5,
+        "margin_bonus": true,
+        "scale": 1.25,
+        "validation_brier": 0.20942545378127433
+      },
+      "total_candidate": {
+        "window": 20,
+        "penalty": 80.0,
+        "validation_rmse": 17.60875550164897,
+        "intercept": -2.4325650282106155,
+        "coefficients": [
+          -0.24876387858960577,
+          0.7401773674815267,
+          0.6732005449418768,
+          0.28850274582149954,
+          0.13924262133174137,
+          0.19580717865177766
+        ]
+      },
+      "margin_candidate": {
+        "window": 20,
+        "penalty": 10.0,
+        "validation_rmse": 12.805488596720675,
+        "intercept": 1.7808463061803321,
+        "coefficients": [
+          0.361915874860879,
+          0.32877689226451745,
+          -0.3419875999633006,
+          0.0,
+          3.587549629002592
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 195,
+        "first_date": "2025-09-30",
+        "last_date": "2026-04-28",
+        "overtime_known_or_detected": 195,
+        "overtime_games": 9,
+        "winner_baseline": {
+          "brier": 0.22190477262366506,
+          "log_loss": 0.6351532895405669,
+          "accuracy": 0.6512820512820513,
+          "ece_5": 0.05837654725955305
+        },
+        "winner_candidate": {
+          "brier": 0.21455492831865913,
+          "log_loss": 0.6184821981405006,
+          "accuracy": 0.6820512820512821,
+          "ece_5": 0.031391028436624925
+        },
+        "winner_delta_brier_95_ci": [
+          -0.016875142590479363,
+          0.003940052816688916
+        ],
+        "totals_baseline": {
+          "mae": 15.952758974358975,
+          "rmse": 19.81422037079845,
+          "bias": -2.640799999999998
+        },
+        "totals_candidate": {
+          "mae": 14.416615244711018,
+          "rmse": 18.052767361423175,
+          "bias": -0.48582644699638844
+        },
+        "totals_delta_mae_95_ci": [
+          -2.409409394278212,
+          -0.6053036666635877
+        ],
+        "margin_baseline": {
+          "mae": 12.134620048914528,
+          "rmse": 15.096865009947308,
+          "bias": 0.5959560869291222
+        },
+        "margin_candidate": {
+          "mae": 11.757956086257515,
+          "rmse": 14.333334455036871,
+          "bias": 0.677177250539339
+        },
+        "margin_delta_mae_95_ci": [
+          -0.9222767468087901,
+          0.18818077483623036
+        ]
+      },
+      "current": {
+        "games": 128,
+        "first_date": "2026-09-29",
+        "last_date": "2026-11-18",
+        "overtime_known_or_detected": 128,
+        "overtime_games": 4,
+        "winner_baseline": {
+          "brier": 0.2232877285604693,
+          "log_loss": 0.6386023931842424,
+          "accuracy": 0.6796875,
+          "ece_5": 0.03427926261018987
+        },
+        "winner_candidate": {
+          "brier": 0.21624954229469773,
+          "log_loss": 0.623255814684311,
+          "accuracy": 0.671875,
+          "ece_5": 0.11460700610116031
+        },
+        "winner_delta_brier_95_ci": [
+          -0.02292104072619643,
+          0.006527974997229166
+        ],
+        "totals_baseline": {
+          "mae": 13.153656250000001,
+          "rmse": 17.622193418385805,
+          "bias": 2.1438437499999976
+        },
+        "totals_candidate": {
+          "mae": 12.967934866679226,
+          "rmse": 17.20944421934777,
+          "bias": 1.3326991492014895
+        },
+        "totals_delta_mae_95_ci": [
+          -0.6728588368833581,
+          0.18443919435224038
+        ],
+        "margin_baseline": {
+          "mae": 10.998681104661317,
+          "rmse": 13.906324715817092,
+          "bias": 0.24009754021111007
+        },
+        "margin_candidate": {
+          "mae": 10.544122769657502,
+          "rmse": 13.373211827176416,
+          "bias": -0.11165863264684317
+        },
+        "margin_delta_mae_95_ci": [
+          -0.9851906451509299,
+          -0.012091868870840052
+        ]
+      }
+    },
+    "EuroLeague": {
+      "source_games": 2650,
+      "first_date": "2018-10-11",
+      "last_date": "2026-11-18",
+      "warmup_season": 2018,
+      "early_train_games": 879,
+      "tuning_games": 989,
+      "winner_candidate": {
+        "step": 24,
+        "home_adv": 95,
+        "carry": 0.8,
+        "margin_bonus": true,
+        "scale": 1.0,
+        "validation_brier": 0.2117908988475974
+      },
+      "total_candidate": {
+        "window": 20,
+        "penalty": 1.0,
+        "validation_rmse": 16.33328259610549,
+        "intercept": -0.1463146582984255,
+        "coefficients": [
+          -0.23025191275386767,
+          0.739102494711574,
+          0.767142380743478,
+          0.028378340347731727,
+          0.3280202967511721,
+          -0.03598788152734304
+        ]
+      },
+      "margin_candidate": {
+        "window": 20,
+        "penalty": 80.0,
+        "validation_rmse": 11.662122880224059,
+        "intercept": -3.319239721650152,
+        "coefficients": [
+          0.3127680289587586,
+          0.24979133616734478,
+          -0.06789605289024471,
+          4.763983906628698,
+          2.5293943192172583
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 402,
+        "first_date": "2025-09-30",
+        "last_date": "2026-05-24",
+        "overtime_known_or_detected": 402,
+        "overtime_games": 17,
+        "winner_baseline": {
+          "brier": 0.22188157599814115,
+          "log_loss": 0.6336468973646466,
+          "accuracy": 0.6169154228855721,
+          "ece_5": 0.04895997626688012
+        },
+        "winner_candidate": {
+          "brier": 0.2196604128460701,
+          "log_loss": 0.627789237138509,
+          "accuracy": 0.6293532338308457,
+          "ece_5": 0.03776498264077792
+        },
+        "winner_delta_brier_95_ci": [
+          -0.006373884451252492,
+          0.0020145056623267505
+        ],
+        "totals_baseline": {
+          "mae": 14.662616915422884,
+          "rmse": 18.574029569475794,
+          "bias": -1.2596716417910445
+        },
+        "totals_candidate": {
+          "mae": 14.266558546940075,
+          "rmse": 17.996772600492385,
+          "bias": 0.35993568261002956
+        },
+        "totals_delta_mae_95_ci": [
+          -0.8347762416943832,
+          0.06235032028619472
+        ],
+        "margin_baseline": {
+          "mae": 9.153724974233823,
+          "rmse": 11.634215222777794,
+          "bias": -0.5444785542459286
+        },
+        "margin_candidate": {
+          "mae": 9.06769388769478,
+          "rmse": 11.593320543294398,
+          "bias": 0.36641026220657175
+        },
+        "margin_delta_mae_95_ci": [
+          -0.21924125198102304,
+          0.04887325371976274
+        ]
+      },
+      "current": {
+        "games": 120,
+        "first_date": "2026-09-24",
+        "last_date": "2026-11-18",
+        "overtime_known_or_detected": 120,
+        "overtime_games": 7,
+        "winner_baseline": {
+          "brier": 0.22502300361313782,
+          "log_loss": 0.639842893973084,
+          "accuracy": 0.6083333333333333,
+          "ece_5": 0.06714558943285776
+        },
+        "winner_candidate": {
+          "brier": 0.22189021594374342,
+          "log_loss": 0.6315509306950506,
+          "accuracy": 0.6083333333333333,
+          "ece_5": 0.07728511766853068
+        },
+        "winner_delta_brier_95_ci": [
+          -0.012557572205033283,
+          0.006690111324509296
+        ],
+        "totals_baseline": {
+          "mae": 15.811300000000001,
+          "rmse": 20.12849004769111,
+          "bias": -0.9446333333333382
+        },
+        "totals_candidate": {
+          "mae": 15.165836693288608,
+          "rmse": 19.27536894811024,
+          "bias": 0.20950071618998412
+        },
+        "totals_delta_mae_95_ci": [
+          -1.2550416543047187,
+          0.07920787416826151
+        ],
+        "margin_baseline": {
+          "mae": 9.295608610892025,
+          "rmse": 11.044164936676175,
+          "bias": -0.4053872351451259
+        },
+        "margin_candidate": {
+          "mae": 9.202485677686688,
+          "rmse": 10.916147570475506,
+          "bias": 0.3949067697595499
+        },
+        "margin_delta_mae_95_ci": [
+          -0.35767056658845214,
+          0.2054146026130671
+        ]
+      }
+    },
+    "France Pro A": {
+      "source_games": 2409,
+      "first_date": "2018-09-21",
+      "last_date": "2026-10-18",
+      "warmup_season": 2018,
+      "early_train_games": 865,
+      "tuning_games": 920,
+      "winner_candidate": {
+        "step": 24,
+        "home_adv": 65,
+        "carry": 0.5,
+        "margin_bonus": true,
+        "scale": 1.25,
+        "validation_brier": 0.20714860932801232
+      },
+      "total_candidate": {
+        "window": 20,
+        "penalty": 1.0,
+        "validation_rmse": 17.517492039355623,
+        "intercept": 0.1506514820358637,
+        "coefficients": [
+          -0.07687958667497209,
+          0.7440064138807713,
+          0.7043687917862499,
+          0.07322577374237876,
+          0.023354189820396068,
+          0.058969017355222246
+        ]
+      },
+      "margin_candidate": {
+        "window": 20,
+        "penalty": 80.0,
+        "validation_rmse": 12.813754652825613,
+        "intercept": 1.1791761781208394,
+        "coefficients": [
+          0.2597950329169824,
+          0.23414906279830253,
+          -0.13852270073105385,
+          0.0,
+          4.042194352104882
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 266,
+        "first_date": "2025-09-26",
+        "last_date": "2026-06-23",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.20478917303721716,
+          "log_loss": 0.5981786211114717,
+          "accuracy": 0.6954887218045113,
+          "ece_5": 0.0774731507256666
+        },
+        "winner_candidate": {
+          "brier": 0.20247199472232152,
+          "log_loss": 0.5927385781938641,
+          "accuracy": 0.706766917293233,
+          "ece_5": 0.039058806485106325
+        },
+        "winner_delta_brier_95_ci": [
+          -0.007039999078154736,
+          0.0022503050834083147
+        ],
+        "totals_baseline": {
+          "mae": 13.439593984962407,
+          "rmse": 17.140865285534513,
+          "bias": -2.1865413533834572
+        },
+        "totals_candidate": {
+          "mae": 12.94284453595144,
+          "rmse": 16.48547690592018,
+          "bias": -0.08749829195733266
+        },
+        "totals_delta_mae_95_ci": [
+          -0.9673082789673134,
+          0.02797185279308528
+        ],
+        "margin_baseline": {
+          "mae": 11.400565442159118,
+          "rmse": 14.61345587053226,
+          "bias": -0.2532435798547251
+        },
+        "margin_candidate": {
+          "mae": 11.017708626563364,
+          "rmse": 14.206209384586622,
+          "bias": 0.5775116572187479
+        },
+        "margin_delta_mae_95_ci": [
+          -0.6670963683022814,
+          -0.11177822332252074
+        ]
+      },
+      "current": {
+        "games": 32,
+        "first_date": "2026-09-25",
+        "last_date": "2026-10-18",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.18756518617711704,
+          "log_loss": 0.562092646457756,
+          "accuracy": 0.75,
+          "ece_5": 0.1300147036337881
+        },
+        "winner_candidate": {
+          "brier": 0.1827542615881862,
+          "log_loss": 0.5506497921642859,
+          "accuracy": 0.71875,
+          "ece_5": 0.17751678525718628
+        },
+        "winner_delta_brier_95_ci": [
+          -0.0089191376675361,
+          -0.001215176059032514
+        ],
+        "totals_baseline": {
+          "mae": 15.875125,
+          "rmse": 19.206792431324914,
+          "bias": 2.649874999999998
+        },
+        "totals_candidate": {
+          "mae": 15.843846639538253,
+          "rmse": 19.445207206066893,
+          "bias": 2.3627277899198837
+        },
+        "totals_delta_mae_95_ci": [
+          -1.1719277388784022,
+          0.745741502105254
+        ],
+        "margin_baseline": {
+          "mae": 9.058169144845802,
+          "rmse": 11.974919698032366,
+          "bias": -2.541353086232173
+        },
+        "margin_candidate": {
+          "mae": 9.258837537944911,
+          "rmse": 12.029329391834404,
+          "bias": -1.963203795324378
+        },
+        "margin_delta_mae_95_ci": [
+          0.03202301933930203,
+          0.3635234021579432
+        ]
+      }
+    },
+    "France Pro B": {
+      "source_games": 2661,
+      "first_date": "2018-10-12",
+      "last_date": "2026-10-17",
+      "warmup_season": 2018,
+      "early_train_games": 847,
+      "tuning_games": 1049,
+      "winner_candidate": {
+        "step": 24,
+        "home_adv": 95,
+        "carry": 0.5,
+        "margin_bonus": true,
+        "scale": 1.0,
+        "validation_brier": 0.22063905396913952
+      },
+      "total_candidate": {
+        "window": 20,
+        "penalty": 80.0,
+        "validation_rmse": 17.220015965263975,
+        "intercept": -0.5525405979675297,
+        "coefficients": [
+          -0.19009040945205904,
+          0.7367447613824943,
+          0.7749348943006046,
+          -0.037338082858976614,
+          0.4413394250392173,
+          -0.06293453688797943
+        ]
+      },
+      "margin_candidate": {
+        "window": 20,
+        "penalty": 80.0,
+        "validation_rmse": 12.061386592470352,
+        "intercept": 1.3850025793874476,
+        "coefficients": [
+          0.33926494758993914,
+          0.4906770033929908,
+          -0.1006101882646994,
+          0.0,
+          2.1615739755300036
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 401,
+        "first_date": "2025-09-18",
+        "last_date": "2026-06-18",
+        "overtime_known_or_detected": 400,
+        "overtime_games": 24,
+        "winner_baseline": {
+          "brier": 0.22194335024153586,
+          "log_loss": 0.6340163078323058,
+          "accuracy": 0.6359102244389028,
+          "ece_5": 0.04663332926015859
+        },
+        "winner_candidate": {
+          "brier": 0.222448369477085,
+          "log_loss": 0.6346950632581094,
+          "accuracy": 0.628428927680798,
+          "ece_5": 0.04930651486506541
+        },
+        "winner_delta_brier_95_ci": [
+          -0.003812572694541588,
+          0.004847204119313629
+        ],
+        "totals_baseline": {
+          "mae": 12.849576059850374,
+          "rmse": 16.35598405428545,
+          "bias": -0.4723790523690785
+        },
+        "totals_candidate": {
+          "mae": 12.736290608562756,
+          "rmse": 16.261805947294203,
+          "bias": -0.14870298802759732
+        },
+        "totals_delta_mae_95_ci": [
+          -0.4555954067130612,
+          0.22821856025446763
+        ],
+        "margin_baseline": {
+          "mae": 9.905797412732237,
+          "rmse": 12.495087705578507,
+          "bias": 0.37355934411306974
+        },
+        "margin_candidate": {
+          "mae": 9.885405091412226,
+          "rmse": 12.500523187382983,
+          "bias": 0.773099000848307
+        },
+        "margin_delta_mae_95_ci": [
+          -0.18763671039209248,
+          0.14368239799997093
+        ]
+      },
+      "current": {
+        "games": 41,
+        "first_date": "2026-09-25",
+        "last_date": "2026-10-17",
+        "overtime_known_or_detected": 39,
+        "overtime_games": 5,
+        "winner_baseline": {
+          "brier": 0.23162343274749134,
+          "log_loss": 0.6585395186600195,
+          "accuracy": 0.7073170731707317,
+          "ece_5": 0.1338644457555874
+        },
+        "winner_candidate": {
+          "brier": 0.21807073869530694,
+          "log_loss": 0.6304685585017782,
+          "accuracy": 0.7073170731707317,
+          "ece_5": 0.09488569735582279
+        },
+        "winner_delta_brier_95_ci": [
+          -0.022989770053728275,
+          -0.0009560718353545586
+        ],
+        "totals_baseline": {
+          "mae": 13.430243902439027,
+          "rmse": 18.307803246356922,
+          "bias": -4.096585365853659
+        },
+        "totals_candidate": {
+          "mae": 13.792244181349036,
+          "rmse": 17.993333737060308,
+          "bias": -2.2097769069582784
+        },
+        "totals_delta_mae_95_ci": [
+          -0.5695842489744216,
+          1.5486066307025357
+        ],
+        "margin_baseline": {
+          "mae": 9.327337107476305,
+          "rmse": 11.409870041056253,
+          "bias": -2.9224612696760794
+        },
+        "margin_candidate": {
+          "mae": 9.032456293578868,
+          "rmse": 11.015838341773089,
+          "bias": -2.830644303391396
+        },
+        "margin_delta_mae_95_ci": [
+          -0.6219112156248503,
+          0.04275198456392183
+        ]
+      }
+    },
+    "Germany BBL": {
+      "source_games": 2549,
+      "first_date": "2018-09-28",
+      "last_date": "2026-10-11",
+      "warmup_season": 2018,
+      "early_train_games": 871,
+      "tuning_games": 969,
+      "winner_candidate": {
+        "step": 36,
+        "home_adv": 65,
+        "carry": 0.5,
+        "margin_bonus": true,
+        "scale": 1.25,
+        "validation_brier": 0.20006378434098893
+      },
+      "total_candidate": {
+        "window": 10,
+        "penalty": 80.0,
+        "validation_rmse": 18.209508870330378,
+        "intercept": 0.46883219596537506,
+        "coefficients": [
+          0.10144545298753913,
+          0.3953697294644642,
+          0.8788179832292237,
+          -0.026791829063057444,
+          -0.13701874915158818,
+          0.02808047513001831
+        ]
+      },
+      "margin_candidate": {
+        "window": 20,
+        "penalty": 1.0,
+        "validation_rmse": 13.055449667276598,
+        "intercept": 0.5142353991448081,
+        "coefficients": [
+          0.3563592910684648,
+          0.44679412953919245,
+          0.11161270447906588,
+          0.0,
+          2.765377804046002
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 338,
+        "first_date": "2025-09-26",
+        "last_date": "2026-06-21",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.22264281176356054,
+          "log_loss": 0.6351104949134045,
+          "accuracy": 0.6390532544378699,
+          "ece_5": 0.010688973935761245
+        },
+        "winner_candidate": {
+          "brier": 0.22084906543263597,
+          "log_loss": 0.6318892439142207,
+          "accuracy": 0.6301775147928994,
+          "ece_5": 0.0417955862924508
+        },
+        "winner_delta_brier_95_ci": [
+          -0.008722387800791476,
+          0.005873744742198221
+        ],
+        "totals_baseline": {
+          "mae": 14.090674556213015,
+          "rmse": 18.064182099804885,
+          "bias": -0.48381065088757536
+        },
+        "totals_candidate": {
+          "mae": 13.505493238624345,
+          "rmse": 17.288841890558498,
+          "bias": 0.06815067123834853
+        },
+        "totals_delta_mae_95_ci": [
+          -1.1374088365819048,
+          -0.023041919189477008
+        ],
+        "margin_baseline": {
+          "mae": 11.417467287372798,
+          "rmse": 14.31000095576902,
+          "bias": 0.9019086622398745
+        },
+        "margin_candidate": {
+          "mae": 11.196212016091879,
+          "rmse": 14.054669052533523,
+          "bias": 0.2764468379954091
+        },
+        "margin_delta_mae_95_ci": [
+          -0.4766133476260937,
+          0.0686087027142611
+        ]
+      },
+      "current": {
+        "games": 43,
+        "first_date": "2026-09-18",
+        "last_date": "2026-10-11",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.23192866891984235,
+          "log_loss": 0.6558608447148838,
+          "accuracy": 0.6046511627906976,
+          "ece_5": 0.16860725277106878
+        },
+        "winner_candidate": {
+          "brier": 0.23362374527739826,
+          "log_loss": 0.6601069461709348,
+          "accuracy": 0.6046511627906976,
+          "ece_5": 0.1456777828138466
+        },
+        "winner_delta_brier_95_ci": [
+          -0.013425558745924203,
+          0.009586176187110692
+        ],
+        "totals_baseline": {
+          "mae": 12.754976744186047,
+          "rmse": 16.549778780225996,
+          "bias": -3.1309767441860488
+        },
+        "totals_candidate": {
+          "mae": 12.000172459502696,
+          "rmse": 15.979100622642077,
+          "bias": -1.9402719873494763
+        },
+        "totals_delta_mae_95_ci": [
+          -1.2394607390350443,
+          -0.01356500155722696
+        ],
+        "margin_baseline": {
+          "mae": 13.7612692201388,
+          "rmse": 18.15016103134552,
+          "bias": -3.060960170004945
+        },
+        "margin_candidate": {
+          "mae": 13.838073479780759,
+          "rmse": 18.31299334563854,
+          "bias": -3.864695325470666
+        },
+        "margin_delta_mae_95_ci": [
+          -0.9621584094182242,
+          0.7999194252424728
+        ]
+      }
+    },
+    "Italy Serie A": {
+      "source_games": 2043,
+      "first_date": "2018-10-06",
+      "last_date": "2026-10-18",
+      "warmup_season": 2018,
+      "early_train_games": 686,
+      "tuning_games": 802,
+      "winner_candidate": {
+        "step": 12,
+        "home_adv": 65,
+        "carry": 0.8,
+        "margin_bonus": true,
+        "scale": 1.25,
+        "validation_brier": 0.20930329328797317
+      },
+      "total_candidate": {
+        "window": 20,
+        "penalty": 1.0,
+        "validation_rmse": 17.133004641568984,
+        "intercept": -1.4773170421671118,
+        "coefficients": [
+          0.018665695064243298,
+          0.5293250168833289,
+          0.8542507038755556,
+          0.0951671606745435,
+          0.3471689166382398,
+          0.12487055854348936
+        ]
+      },
+      "margin_candidate": {
+        "window": 20,
+        "penalty": 80.0,
+        "validation_rmse": 12.243001078686964,
+        "intercept": 0.6580793345265823,
+        "coefficients": [
+          0.32938821423095954,
+          0.4169778012380652,
+          0.028815406815615268,
+          0.0,
+          4.0171665475764256
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 253,
+        "first_date": "2025-10-04",
+        "last_date": "2026-06-18",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.21066740147364355,
+          "log_loss": 0.612122331721763,
+          "accuracy": 0.6956521739130435,
+          "ece_5": 0.060540778971965116
+        },
+        "winner_candidate": {
+          "brier": 0.20448305023065047,
+          "log_loss": 0.5994090930922813,
+          "accuracy": 0.7154150197628458,
+          "ece_5": 0.054483858415510567
+        },
+        "winner_delta_brier_95_ci": [
+          -0.010439733916401255,
+          -0.0019806399408199902
+        ],
+        "totals_baseline": {
+          "mae": 13.317169960474308,
+          "rmse": 16.864469289808007,
+          "bias": -0.41645849802371343
+        },
+        "totals_candidate": {
+          "mae": 13.832163759799528,
+          "rmse": 17.242216828880483,
+          "bias": 0.266135487111425
+        },
+        "totals_delta_mae_95_ci": [
+          0.11772269680464315,
+          0.882828227571956
+        ],
+        "margin_baseline": {
+          "mae": 8.801091219050667,
+          "rmse": 11.343468675010694,
+          "bias": -0.6085903060895523
+        },
+        "margin_candidate": {
+          "mae": 8.877165116611682,
+          "rmse": 11.350127246969434,
+          "bias": -0.37650632261629663
+        },
+        "margin_delta_mae_95_ci": [
+          -0.0958469199539371,
+          0.23649467802724378
+        ]
+      },
+      "current": {
+        "games": 32,
+        "first_date": "2026-09-26",
+        "last_date": "2026-10-18",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.21384787005126432,
+          "log_loss": 0.6155908162021129,
+          "accuracy": 0.6875,
+          "ece_5": 0.12139059602863604
+        },
+        "winner_candidate": {
+          "brier": 0.21387861788377946,
+          "log_loss": 0.6110474976373302,
+          "accuracy": 0.6875,
+          "ece_5": 0.08088591776361319
+        },
+        "winner_delta_brier_95_ci": [
+          -0.009113625786139355,
+          0.01087973373858444
+        ],
+        "totals_baseline": {
+          "mae": 12.546249999999997,
+          "rmse": 15.463771823200183,
+          "bias": -3.325749999999992
+        },
+        "totals_candidate": {
+          "mae": 11.666273191274936,
+          "rmse": 14.65417315066269,
+          "bias": -2.8592964622733383
+        },
+        "totals_delta_mae_95_ci": [
+          -1.6230570334577568,
+          -0.1368965839923657
+        ],
+        "margin_baseline": {
+          "mae": 10.39594311770373,
+          "rmse": 13.11076920637998,
+          "bias": 0.01794547130455193
+        },
+        "margin_candidate": {
+          "mae": 10.334776003613511,
+          "rmse": 13.059695726890201,
+          "bias": 0.2636975987513328
+        },
+        "margin_delta_mae_95_ci": [
+          -0.5079186122830733,
+          0.4246149110935731
+        ]
+      }
+    },
+    "Spain ACB": {
+      "source_games": 2590,
+      "first_date": "2018-09-27",
+      "last_date": "2026-10-18",
+      "warmup_season": 2018,
+      "early_train_games": 926,
+      "tuning_games": 976,
+      "winner_candidate": {
+        "step": 24,
+        "home_adv": 65,
+        "carry": 0.8,
+        "margin_bonus": true,
+        "scale": 1.25,
+        "validation_brier": 0.19011848399825446
+      },
+      "total_candidate": {
+        "window": 20,
+        "penalty": 1.0,
+        "validation_rmse": 17.25116685307163,
+        "intercept": -2.71204229124358,
+        "coefficients": [
+          0.23110019763113565,
+          0.6516606102559778,
+          0.5591549854222361,
+          0.42391099773441826,
+          0.05931190516430716,
+          0.12666780109112574
+        ]
+      },
+      "margin_candidate": {
+        "window": 20,
+        "penalty": 10.0,
+        "validation_rmse": 12.018139928473687,
+        "intercept": 1.4370173518345224,
+        "coefficients": [
+          0.2744471243939418,
+          0.3067166281234925,
+          -0.3316259113456702,
+          0.0,
+          3.0709973880282977
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 327,
+        "first_date": "2025-10-04",
+        "last_date": "2026-06-24",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.20705406738359636,
+          "log_loss": 0.6010181748271919,
+          "accuracy": 0.6666666666666666,
+          "ece_5": 0.031232382437941346
+        },
+        "winner_candidate": {
+          "brier": 0.2052718317799044,
+          "log_loss": 0.5997866868939564,
+          "accuracy": 0.6666666666666666,
+          "ece_5": 0.03801041852554511
+        },
+        "winner_delta_brier_95_ci": [
+          -0.011239937318170523,
+          0.006985669068611277
+        ],
+        "totals_baseline": {
+          "mae": 13.788244648318042,
+          "rmse": 17.829480447835696,
+          "bias": -1.8476941896024455
+        },
+        "totals_candidate": {
+          "mae": 13.402256113757382,
+          "rmse": 17.361222840745935,
+          "bias": -0.9442141648998442
+        },
+        "totals_delta_mae_95_ci": [
+          -0.7591549593963928,
+          0.025173459258845305
+        ],
+        "margin_baseline": {
+          "mae": 10.211344626770103,
+          "rmse": 12.93724972616978,
+          "bias": -0.6870668236618288
+        },
+        "margin_candidate": {
+          "mae": 10.174406911676954,
+          "rmse": 12.820751427460113,
+          "bias": -0.29363307461987836
+        },
+        "margin_delta_mae_95_ci": [
+          -0.24742667419362582,
+          0.1735956108242748
+        ]
+      },
+      "current": {
+        "games": 36,
+        "first_date": "2026-09-26",
+        "last_date": "2026-10-18",
+        "overtime_known_or_detected": 0,
+        "overtime_games": 0,
+        "winner_baseline": {
+          "brier": 0.2242698950435993,
+          "log_loss": 0.6412989960066304,
+          "accuracy": 0.5833333333333334,
+          "ece_5": 0.1029501835183095
+        },
+        "winner_candidate": {
+          "brier": 0.22223732157018272,
+          "log_loss": 0.6463291716808678,
+          "accuracy": 0.5555555555555556,
+          "ece_5": 0.07962618464595031
+        },
+        "winner_delta_brier_95_ci": [
+          -0.019670577808584253,
+          0.03151796270187196
+        ],
+        "totals_baseline": {
+          "mae": 18.669444444444444,
+          "rmse": 21.880856808330577,
+          "bias": -8.341888888888885
+        },
+        "totals_candidate": {
+          "mae": 17.78088735065751,
+          "rmse": 20.62703947644367,
+          "bias": -4.208304470366089
+        },
+        "totals_delta_mae_95_ci": [
+          -2.395234410617388,
+          0.6181202230435159
+        ],
+        "margin_baseline": {
+          "mae": 11.530034676779936,
+          "rmse": 14.003756478448231,
+          "bias": -3.1124486230697923
+        },
+        "margin_candidate": {
+          "mae": 11.013159807589993,
+          "rmse": 13.337465526379225,
+          "bias": -2.484518105481348
+        },
+        "margin_delta_mae_95_ci": [
+          -1.025710761338314,
+          0.05182406909354113
+        ]
+      }
+    },
+    "VTB United League": {
+      "source_games": 1767,
+      "first_date": "2018-10-05",
+      "last_date": "2026-11-18",
+      "warmup_season": 2018,
+      "early_train_games": 416,
+      "tuning_games": 837,
+      "winner_candidate": {
+        "step": 24,
+        "home_adv": 35,
+        "carry": 0.8,
+        "margin_bonus": true,
+        "scale": 1.25,
+        "validation_brier": 0.1643310854703228
+      },
+      "total_candidate": {
+        "window": 20,
+        "penalty": 80.0,
+        "validation_rmse": 16.352064584996334,
+        "intercept": -1.7045462821713029,
+        "coefficients": [
+          0.1371316425591002,
+          0.7120651558546501,
+          0.3345755310990401,
+          -0.04382839323469521,
+          0.26611664798008305,
+          0.07205886236114835
+        ]
+      },
+      "margin_candidate": {
+        "window": 10,
+        "penalty": 10.0,
+        "validation_rmse": 13.014702354848078,
+        "intercept": -0.1643997127154,
+        "coefficients": [
+          0.3316173507303108,
+          0.30056341488607347,
+          0.03489088401909706,
+          0.0,
+          4.7369159522905955
+        ]
+      },
+      "prediction_time": "00:00 UTC on archived game date",
+      "holdout": {
+        "games": 254,
+        "first_date": "2025-09-28",
+        "last_date": "2026-06-12",
+        "overtime_known_or_detected": 254,
+        "overtime_games": 13,
+        "winner_baseline": {
+          "brier": 0.15588849926658116,
+          "log_loss": 0.4823530540810892,
+          "accuracy": 0.8031496062992126,
+          "ece_5": 0.09380404781487187
+        },
+        "winner_candidate": {
+          "brier": 0.14094382391814392,
+          "log_loss": 0.4374728746864112,
+          "accuracy": 0.7913385826771654,
+          "ece_5": 0.04431898125755324
+        },
+        "winner_delta_brier_95_ci": [
+          -0.022665110336729435,
+          -0.006926917330039496
+        ],
+        "totals_baseline": {
+          "mae": 13.158125984251967,
+          "rmse": 16.5425427879079,
+          "bias": 0.8161732283464566
+        },
+        "totals_candidate": {
+          "mae": 13.158027816287929,
+          "rmse": 16.46347269252947,
+          "bias": 0.5331308985198403
+        },
+        "totals_delta_mae_95_ci": [
+          -0.47855046427733156,
+          0.4621746247526094
+        ],
+        "margin_baseline": {
+          "mae": 11.24670395250788,
+          "rmse": 14.893935980211452,
+          "bias": 1.6168314169875877
+        },
+        "margin_candidate": {
+          "mae": 10.17135686871366,
+          "rmse": 13.382045646250498,
+          "bias": 0.23654578644715643
+        },
+        "margin_delta_mae_95_ci": [
+          -1.7353062701219606,
+          -0.39331258992995394
+        ]
+      },
+      "current": {
+        "games": 55,
+        "first_date": "2026-09-25",
+        "last_date": "2026-11-18",
+        "overtime_known_or_detected": 55,
+        "overtime_games": 2,
+        "winner_baseline": {
+          "brier": 0.12968683064408257,
+          "log_loss": 0.4277428831159503,
+          "accuracy": 0.8727272727272727,
+          "ece_5": 0.16022319668262316
+        },
+        "winner_candidate": {
+          "brier": 0.1076020883086104,
+          "log_loss": 0.35603388216426496,
+          "accuracy": 0.8727272727272727,
+          "ece_5": 0.08454216742352585
+        },
+        "winner_delta_brier_95_ci": [
+          -0.03240123909485088,
+          -0.012202151609312314
+        ],
+        "totals_baseline": {
+          "mae": 15.932072727272727,
+          "rmse": 19.260504998571555,
+          "bias": -5.991272727272727
+        },
+        "totals_candidate": {
+          "mae": 16.03256696196032,
+          "rmse": 19.178042752275093,
+          "bias": -4.032043365194739
+        },
+        "totals_delta_mae_95_ci": [
+          -0.6103947904718512,
+          1.0709779976004465
+        ],
+        "margin_baseline": {
+          "mae": 13.091191721770036,
+          "rmse": 16.293818432142555,
+          "bias": -1.6516930466362432
+        },
+        "margin_candidate": {
+          "mae": 10.518261282518433,
+          "rmse": 13.77311055483414,
+          "bias": -2.374290564749781
+        },
+        "margin_delta_mae_95_ci": [
+          -4.577741476500301,
+          -0.6683329145491271
+        ]
+      }
+    }
+  },
+  "rejected": [
+    {
+      "league": "Germany BBL",
+      "reason": "invalid or forfeited final score",
+      "games": 1
+    },
+    {
+      "league": "Italy Serie A",
+      "reason": "invalid or forfeited final score",
+      "games": 4
+    },
+    {
+      "league": "VTB United League",
+      "reason": "invalid or forfeited final score",
+      "games": 1
+    }
+  ]
+}

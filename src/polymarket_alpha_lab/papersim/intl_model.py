@@ -53,12 +53,11 @@ nl_elo_feasibility.md`` §4 and probe artifact ``elo_fit_out.txt``):
   to slightly more than ``total`` — a documented safety clamp, not a
   calibrated decomposition).
 - Total expectation: per-tournament mean of ``home_goals + away_goals``
-  over the snapshot's matches of that tournament (the probe's NL mean
+  over earlier matches of that tournament (the probe's NL mean
   total is 2.51 and H/D/A base rates 0.42/0.25/0.32 — international
   soccer is a LOW-scoring environment, so club-soccer priors ~2.7-2.9
   must not leak in). :data:`GLOBAL_FALLBACK_TOTAL` = 2.6 applies when
-  no tournament context is given or the tournament has no snapshot
-  matches.
+  no tournament context is given or the tournament has no strictly prior matches.
 - Score grid: REUSED, not mirrored. ``soccer_model.score_grid`` /
   ``variant_outputs`` are pure ``(lh, la, rho, max_goals)`` functions
   with no xG-snapshot coupling, so this module imports them (with
@@ -93,26 +92,22 @@ gates can honor the ban mechanically. Entry-eligible V1 families are
 totals / BTTS / exact-score (exact-score as a research family first),
 mirroring the conservative totals-first entry policy already in force.
 
-Causality boundary: Elo ratings for a dated fixture replay only matches
-STRICTLY BEFORE the fixture date. The per-tournament totals table and the
-``teams{}`` table are snapshot-level calibration (the snapshot is the
-information set); for fully causal backtests pass a snapshot truncated at
-the fixture date. STALENESS CAVEAT on the fallback path: when a team is
-absent from ``matches`` its rating comes from the ``teams{}`` CURRENT Elo —
-a value dated at ``generated_at`` which, for a fixture dated in the past,
-includes information after the fixture (current-rating leakage); acceptable
-for the near-term shadow use case, never for honest backtests. Ratings
-provenance is per-fixture and NEVER mixed (both teams replay, or both use
+Causality boundary: replay Elo and each fixture's tournament total use
+only matches strictly before the fixture date. The descriptive
+``tournament_totals`` table summarizes the whole snapshot. When either
+team lacks replay history and the current ``teams{}`` table covers both,
+the compatibility query returns a quote marked ``ratings_stale=True``.
+Table Elo is dated at ``generated_at`` and can include information after
+the fixture. Backtests and the pre-kickoff shadow recorder require replay
+ratings. Ratings provenance is per-fixture (both teams replay, or both use
 the current table): the replay scale starts at base 1500 and differs from
 the site table by a roughly uniform offset (probe: mean abs 62 Elo pts), so
 a mixed-pair difference would inject that offset into every quote.
 
 Fail-closed semantics (mirrors ``xg.pair_lambdas`` / ``nba_model``):
 :func:`fixture_prediction` returns ``None`` — never a number — when a team
-is unknown (neither in ``matches`` nor in ``teams{}``), the replay pairing
-is unresolvable (one side appears only in matches while the opponent has
-none, and the table cannot cover both), or the replay path has no
-strictly-prior match for either side (empty history); the explicit reason
+is unknown (neither in ``matches`` nor in ``teams{}``) or the table cannot
+cover both teams when one or both lack strictly prior matches. The explicit reason
 is available through :func:`refusal_reason`. Any malformed row, unknown
 snapshot shape or non-finite value raises ``ValueError`` (hard fail, never
 a silent NaN).
@@ -204,8 +199,8 @@ TOTAL_SOURCE_FALLBACK = "global_fallback"
 class IntlFixture:
     """One fixture to predict (frozen prediction input).
 
-    ``date`` is the causality barrier: ratings use only snapshot matches
-    strictly before it. ``neutral=True`` excludes the home advantage from
+    ``date`` is the barrier for replay ratings and tournament totals.
+    ``neutral=True`` excludes the home advantage from
     the Elo->goals bridge (the replay engine's venue effect enters through
     each historical match's own ``neutral`` flag instead).
     """
@@ -578,6 +573,23 @@ def _elo_expected(diff: float) -> float:
     return 1.0 / (1.0 + 10.0 ** (-diff / 400.0))
 
 
+def _elo_delta(row: _MatchRow, rating_home: float, rating_away: float) -> float:
+    advantage = 0.0 if row.neutral else HOME_ADVANTAGE
+    expected = _elo_expected(rating_home + advantage - rating_away)
+    margin = row.home_goals - row.away_goals
+    if margin > 0:
+        result = 1.0
+    elif margin == 0:
+        result = 0.5
+    else:
+        result = 0.0
+    return (
+        k_factor(row.tournament)
+        * goal_difference_multiplier(abs(margin))
+        * (result - expected)
+    )
+
+
 def _replay_elos(
     rows: Sequence[_MatchRow],
     home: str,
@@ -599,19 +611,7 @@ def _replay_elos(
             break
         rating_home = ratings.setdefault(row.home, ELO_BASE)
         rating_away = ratings.setdefault(row.away, ELO_BASE)
-        advantage = 0.0 if row.neutral else HOME_ADVANTAGE
-        expected = _elo_expected(rating_home + advantage - rating_away)
-        if row.home_goals > row.away_goals:
-            result = 1.0
-        elif row.home_goals == row.away_goals:
-            result = 0.5
-        else:
-            result = 0.0
-        delta = (
-            k_factor(row.tournament)
-            * goal_difference_multiplier(abs(row.home_goals - row.away_goals))
-            * (result - expected)
-        )
+        delta = _elo_delta(row, rating_home, rating_away)
         ratings[row.home] = rating_home + delta
         ratings[row.away] = rating_away - delta
         if row.home in games:
@@ -624,10 +624,6 @@ def _replay_elos(
         games[home],
         games[away],
     )
-
-
-def _appears(rows: Sequence[_MatchRow], team: str) -> bool:
-    return any(row.home == team or row.away == team for row in rows)
 
 
 def _table_elo(teams: Mapping, team: str) -> float:
@@ -737,13 +733,16 @@ def tournament_mean_total(snapshot: object, tournament: str) -> TournamentTotal 
 def _resolve_total(
     rows: Sequence[_MatchRow],
     tournament: str | None,
+    barrier: date,
 ) -> tuple[float, str, int]:
-    """(total_base, source tag, corpus size) for the fixture context."""
+    """(total_base, source tag, corpus size) strictly before the fixture."""
     if tournament is None:
         return GLOBAL_FALLBACK_TOTAL, TOTAL_SOURCE_FALLBACK, 0
     total = 0.0
     count = 0
     for row in rows:
+        if row.date >= barrier:
+            break
         if row.tournament == tournament:
             total += row.home_goals + row.away_goals
             count += 1
@@ -757,7 +756,7 @@ def _resolve_total(
 # ---------------------------------------------------------------------------
 
 
-def _validate_fixture(fixture: object) -> None:
+def _validate_fixture(fixture: object) -> date:
     if not isinstance(fixture, IntlFixture):
         raise TypeError(f"fixture must be IntlFixture, got {type(fixture)!r}")
     for name in ("home", "away"):
@@ -766,9 +765,10 @@ def _validate_fixture(fixture: object) -> None:
             raise ValueError(f"fixture.{name} must be a nonempty string")
     if fixture.home == fixture.away:
         raise ValueError("fixture home and away teams must differ")
-    _parse_date(fixture.date, "fixture.date")
+    barrier = _parse_date(fixture.date, "fixture.date")
     if type(fixture.neutral) is not bool:
         raise ValueError(f"fixture.neutral must be a boolean, got {fixture.neutral!r}")
+    return barrier
 
 
 def _validate_tournament_arg(tournament: object) -> None:
@@ -782,42 +782,23 @@ def _resolve_ratings(
     teams: Mapping,
     rows: Sequence[_MatchRow],
     fixture: IntlFixture,
+    barrier: date,
 ) -> tuple[float, float, int, int, str, bool] | str:
-    """Ratings for the fixture, or a refusal reason string.
-
-    Provenance is per-fixture and never mixed (module docstring): both
-    teams replay when both appear in ``matches`` (refusing when either
-    has no strictly-prior match — empty history); otherwise both resolve
-    through the current-table fallback (refusing when a team cannot be
-    rated at all).
-    """
-    barrier = _parse_date(fixture.date, "fixture.date")
-    home_in = _appears(rows, fixture.home)
-    away_in = _appears(rows, fixture.away)
-    for label, team, appears in (
-        ("home", fixture.home, home_in),
-        ("away", fixture.away, away_in),
-    ):
-        if not appears and team not in teams:
-            return (
-                f"{label} team {team!r} is missing from the snapshot "
-                f"(neither matches nor the teams table)"
-            )
-    if home_in and away_in:
-        elo_home, elo_away, games_home, games_away = _replay_elos(
-            rows, fixture.home, fixture.away, barrier
-        )
-        if games_home == 0:
-            return (
-                f"home team {fixture.home!r} has no matches strictly "
-                f"before {fixture.date}"
-            )
-        if games_away == 0:
-            return (
-                f"away team {fixture.away!r} has no matches strictly "
-                f"before {fixture.date}"
-            )
+    """Causal replay ratings or a stale compatibility quote from the table."""
+    elo_home, elo_away, games_home, games_away = _replay_elos(
+        rows, fixture.home, fixture.away, barrier
+    )
+    if games_home and games_away:
         return elo_home, elo_away, games_home, games_away, RATING_SOURCE_REPLAY, False
+    for label, team, games in (
+        ("home", fixture.home, games_home),
+        ("away", fixture.away, games_away),
+    ):
+        if not games and team not in teams:
+            return (
+                f"{label} team {team!r} has no matches strictly before {fixture.date} "
+                "and is missing from the snapshot's teams table"
+            )
     for label, team in (("home", fixture.home), ("away", fixture.away)):
         if team not in teams:
             return (
@@ -845,10 +826,10 @@ def refusal_reason(
     from here; only the fail-closed rating refusals that make
     :func:`fixture_prediction` return ``None`` are reported as strings.
     """
-    _validate_fixture(fixture)
+    barrier = _validate_fixture(fixture)
     teams = _snapshot_envelope(snapshot)
     rows = _validated_matches(snapshot.get("matches"))
-    resolved = _resolve_ratings(teams, rows, fixture)
+    resolved = _resolve_ratings(teams, rows, fixture, barrier)
     if isinstance(resolved, str):
         return resolved
     return None
@@ -866,20 +847,20 @@ def fixture_prediction(
     (unknown team, unresolvable provenance, empty replay history; ask
     :func:`refusal_reason` for the explicit reason). Any malformed row or
     non-finite value anywhere raises ``ValueError``. ``tournament``
-    selects the per-tournament mean-total calibration; None (or an
-    unknown tournament) falls back to :data:`GLOBAL_FALLBACK_TOTAL`. Pure
+    selects the mean total of strictly prior matches in that tournament.
+    A missing tournament history falls back to :data:`GLOBAL_FALLBACK_TOTAL`. Pure
     function: no network, no I/O, no mutation of the snapshot; identical
     inputs give identical outputs.
     """
-    _validate_fixture(fixture)
+    barrier = _validate_fixture(fixture)
     _validate_tournament_arg(tournament)
     teams = _snapshot_envelope(snapshot)
     rows = _validated_matches(snapshot.get("matches"))
-    resolved = _resolve_ratings(teams, rows, fixture)
+    resolved = _resolve_ratings(teams, rows, fixture, barrier)
     if isinstance(resolved, str):
         return None
     elo_home, elo_away, games_home, games_away, source, stale = resolved
-    total_base, total_source, corpus = _resolve_total(rows, tournament)
+    total_base, total_source, corpus = _resolve_total(rows, tournament, barrier)
     if not total_base > 0.0:
         raise ValueError(
             f"tournament {tournament!r} has a degenerate mean total "

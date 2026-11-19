@@ -1,0 +1,50 @@
+{
+  "all_forecast_cutoffs_strictly_before_kickoff": true,
+  "archived_fixture_count": 5117,
+  "changed_holdout_scores_leave_frozen_parameters_and_tuning_file_byte_identical": true,
+  "derived_outputs_reproduced_byte_for_byte": [
+    "frozen_parameters.json",
+    "tuning.csv",
+    "metrics.csv",
+    "metrics.json",
+    "outcome_metrics.csv",
+    "holdout_predictions.csv"
+  ],
+  "football_data_brazil_2026_crosscheck": {
+    "archive_day_minus_football_data_day": {
+      "0": 315,
+      "1": 26
+    },
+    "betexplorer_extra_fixture": {
+      "ag": 1,
+      "away": "Santos",
+      "day": "2026-11-18",
+      "hg": 0,
+      "home": "Coritiba",
+      "id": "nFe3yH7c",
+      "league": "bra",
+      "phase": "Main",
+      "season": 2026,
+      "source_url": "https://www.betexplorer.com/football/brazil/serie-a/results/",
+      "url": "https://www.betexplorer.com/football/brazil/serie-a/coritiba-santos/nFe3yH7c/"
+    },
+    "shared_fixtures_same_home_away_and_regulation_score": 341,
+    "source_sha256": "1ce2325b8fa519ec0371983ff5c629d73a2626b3f8cb1f2f3bf1add40d365211",
+    "url": "https://www.football-data.co.uk/new/BRA.csv"
+  },
+  "full_bookmaker_quote_groups": 63027,
+  "holdout_fixture_count": 1150,
+  "number_of_fixture_fetch_errors": 0,
+  "number_of_price_fetch_errors": 0,
+  "prediction_market_rows": 6900,
+  "qualified_quote_legs": 139596,
+  "quotes_with_age_between_one_minute_and_24_hours_verified": true,
+  "same_day_and_one_day_old_scores_excluded_from_rating_verification": true,
+  "score_distribution_crosscheck": {
+    "absolute_error_max": 2.1011747897148325e-11,
+    "market_distributions": 360,
+    "rate_and_rho_combinations": 60,
+    "worktree_function": "polymarket_alpha_lab.papersim.soccer_model.variant_outputs",
+    "worktree_head": "80475c850c410b0efaa2e4387fa8532677e5a317"
+  }
+}

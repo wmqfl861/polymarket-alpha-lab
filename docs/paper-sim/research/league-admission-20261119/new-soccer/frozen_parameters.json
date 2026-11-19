@@ -1,0 +1,162 @@
+{
+  "asean": {
+    "first_date": "2024-08-21",
+    "history_hash": "305c28578e2000e28ff0c333be4227c4d6ace66c151b722e8590062f6b9baf67",
+    "holdout_start": "2026-01-01",
+    "models": {
+      "1x2": {
+        "brier": 0.5722122783814633,
+        "log_loss": 0.9561521305189982,
+        "parameters": {
+          "half_life": 600,
+          "pace": 1.0,
+          "rho": -0.15,
+          "team_power": 1.0,
+          "team_prior": 6
+        }
+      },
+      "ou2.5": {
+        "brier": 0.18666077378540408,
+        "log_loss": 0.5621835788251112,
+        "parameters": {
+          "half_life": 600,
+          "pace": 1.1,
+          "rho": 0.0,
+          "team_power": 1.0,
+          "team_prior": 14
+        }
+      }
+    },
+    "tuning_n": 18,
+    "tuning_start": "2025-07-01",
+    "warmup_n": 30
+  },
+  "bra": {
+    "first_date": "2022-04-09",
+    "history_hash": "2dc1c3c8c8f7ff4ea4419a0d65c2325b3d85673344f67e20d1fbc7f7ac853c49",
+    "holdout_start": "2026-01-01",
+    "models": {
+      "1x2": {
+        "brier": 0.6032033754147873,
+        "log_loss": 1.0076868853663241,
+        "parameters": {
+          "half_life": 600,
+          "pace": 1.0,
+          "rho": 0.0,
+          "team_power": 1.0,
+          "team_prior": 6
+        }
+      },
+      "ou2.5": {
+        "brier": 0.2495290324157843,
+        "log_loss": 0.6922175510535208,
+        "parameters": {
+          "half_life": 300,
+          "pace": 1.0,
+          "rho": 0.0,
+          "team_power": 0.0,
+          "team_prior": 14
+        }
+      }
+    },
+    "tuning_n": 760,
+    "tuning_start": "2024-01-01",
+    "warmup_n": 760
+  },
+  "col": {
+    "first_date": "2023-02-03",
+    "history_hash": "5ec93a7b518bcbdfddaef4413638cd3dbba23f99affc36668031c65f4e7a173f",
+    "holdout_start": "2026-01-01",
+    "models": {
+      "1x2": {
+        "brier": 0.5875139873000418,
+        "log_loss": 0.9859290085725126,
+        "parameters": {
+          "half_life": 600,
+          "pace": 1.0,
+          "rho": 0.0,
+          "team_power": 1.0,
+          "team_prior": 6
+        }
+      },
+      "ou2.5": {
+        "brier": 0.2407262225717075,
+        "log_loss": 0.6743111474826706,
+        "parameters": {
+          "half_life": 600,
+          "pace": 1.0,
+          "rho": 0.0,
+          "team_power": 1.0,
+          "team_prior": 30
+        }
+      }
+    },
+    "tuning_n": 303,
+    "tuning_start": "2025-01-01",
+    "warmup_n": 605
+  },
+  "uru": {
+    "first_date": "2023-02-04",
+    "history_hash": "11fe5ca643adef459ca424fdca83bdd333e4e00af7b246c0b2410ed860f1a1f2",
+    "holdout_start": "2026-01-01",
+    "models": {
+      "1x2": {
+        "brier": 0.5991962013098093,
+        "log_loss": 1.003852017223824,
+        "parameters": {
+          "half_life": 600,
+          "pace": 1.0,
+          "rho": -0.08,
+          "team_power": 1.0,
+          "team_prior": 6
+        }
+      },
+      "ou2.5": {
+        "brier": 0.23922336765394422,
+        "log_loss": 0.6716482944935622,
+        "parameters": {
+          "half_life": 600,
+          "pace": 1.0,
+          "rho": 0.0,
+          "team_power": 1.0,
+          "team_prior": 14
+        }
+      }
+    },
+    "tuning_n": 296,
+    "tuning_start": "2025-01-01",
+    "warmup_n": 591
+  },
+  "uzb": {
+    "first_date": "2023-03-03",
+    "history_hash": "db1ca3f817f27177d19a369785ad56b73a72f24a4262b0078d2a6177a9a3f007",
+    "holdout_start": "2026-01-01",
+    "models": {
+      "1x2": {
+        "brier": 0.6067086493052662,
+        "log_loss": 1.011923476342305,
+        "parameters": {
+          "half_life": 300,
+          "pace": 1.0,
+          "rho": 0.0,
+          "team_power": 1.0,
+          "team_prior": 6
+        }
+      },
+      "ou2.5": {
+        "brier": 0.24918925712504145,
+        "log_loss": 0.6915452982016496,
+        "parameters": {
+          "half_life": 300,
+          "pace": 1.0,
+          "rho": 0.0,
+          "team_power": 0.0,
+          "team_prior": 14
+        }
+      }
+    },
+    "tuning_n": 240,
+    "tuning_start": "2025-01-01",
+    "warmup_n": 364
+  }
+}

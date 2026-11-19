@@ -1,0 +1,2618 @@
+{
+  "polymarket_api": "https://clob.polymarket.com/batch-prices-history",
+  "polymarket_reference": "both token prices within 15 minutes before earliest available tip-minus-60 minutes",
+  "sportsbook_ml_reference": "historical results-page average closes with no individual observation clock",
+  "sportsbook_pro_b_totals_diagnostic": "archived closing line last updated within 15 min before tip-minus-60, overtime wording unverified, all available regulation and OT games included",
+  "leagues": {
+    "EuroLeague": {
+      "gamma_events": 101,
+      "clob": {
+        "moneyline": {
+          "listings": 101,
+          "listed_unique_events": 101,
+          "statuses": {
+            "diagnostic: overtime wording unverified": 97,
+            "source tip times differ by more than 15 min": 1,
+            "two-sided timestamps or complement check failed": 1,
+            "scoreboard fixture played on a different UTC date": 1,
+            "no fresh two-sided CLOB price history": 1
+          },
+          "accepted_anchor_basis": {},
+          "accepted_rule_wording": {},
+          "accepted_overtime_status": {},
+          "settlement_check": {
+            "1": 99,
+            "": 2
+          }
+        },
+        "total": {
+          "listings": 80,
+          "listed_unique_events": 80,
+          "statuses": {
+            "matched price history": 78,
+            "source tip times differ by more than 15 min": 1,
+            "two-sided timestamps or complement check failed": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 78
+          },
+          "accepted_rule_wording": {
+            "1": 78
+          },
+          "accepted_overtime_status": {
+            "0": 72,
+            "1": 6
+          },
+          "settlement_check": {
+            "1": 79,
+            "": 1
+          },
+          "all": {
+            "rows": 78,
+            "unique_games": 78,
+            "baseline_p": {
+              "brier": 0.27282124960556126,
+              "log_loss": 0.7414560814004486,
+              "accuracy": 0.46153846153846156,
+              "ece_5": 0.08069984036810918
+            },
+            "candidate_p": {
+              "brier": 0.2500476188929925,
+              "log_loss": 0.6939502632229958,
+              "accuracy": 0.5256410256410257,
+              "ece_5": 0.029146003833336865
+            },
+            "market_p": {
+              "brier": 0.23544423076923074,
+              "log_loss": 0.6628552012188355,
+              "accuracy": 0.5897435897435898,
+              "ece_5": 0.04782051282051282
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.04652345008471451,
+              0.014736118554466604
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.0032057134406381694,
+              0.033342581375292085
+            ]
+          },
+          "current": {
+            "rows": 78,
+            "unique_games": 78,
+            "baseline_p": {
+              "brier": 0.27282124960556126,
+              "log_loss": 0.7414560814004486,
+              "accuracy": 0.46153846153846156,
+              "ece_5": 0.08069984036810918
+            },
+            "candidate_p": {
+              "brier": 0.2500476188929925,
+              "log_loss": 0.6939502632229958,
+              "accuracy": 0.5256410256410257,
+              "ece_5": 0.029146003833336865
+            },
+            "market_p": {
+              "brier": 0.23544423076923074,
+              "log_loss": 0.6628552012188355,
+              "accuracy": 0.5897435897435898,
+              "ece_5": 0.04782051282051282
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.04652345008471451,
+              0.014736118554466604
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.0032057134406381694,
+              0.033342581375292085
+            ]
+          }
+        },
+        "spread": {
+          "listings": 80,
+          "listed_unique_events": 80,
+          "statuses": {
+            "matched price history": 78,
+            "source tip times differ by more than 15 min": 1,
+            "two-sided timestamps or complement check failed": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 78
+          },
+          "accepted_rule_wording": {
+            "1": 78
+          },
+          "accepted_overtime_status": {
+            "0": 72,
+            "1": 6
+          },
+          "settlement_check": {
+            "1": 79,
+            "": 1
+          },
+          "all": {
+            "rows": 78,
+            "unique_games": 78,
+            "baseline_p": {
+              "brier": 0.2622134256999279,
+              "log_loss": 0.7179839963808742,
+              "accuracy": 0.44871794871794873,
+              "ece_5": 0.07332428690208437
+            },
+            "candidate_p": {
+              "brier": 0.26457294035094747,
+              "log_loss": 0.7236202075762056,
+              "accuracy": 0.5,
+              "ece_5": 0.10087456510683174
+            },
+            "market_p": {
+              "brier": 0.2511564102564103,
+              "log_loss": 0.6954633547572625,
+              "accuracy": 0.5384615384615384,
+              "ece_5": 0.07923076923076924
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.01001869308995934,
+              0.01319308303929038
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.022825846791260634,
+              0.039392881175624145
+            ]
+          },
+          "current": {
+            "rows": 78,
+            "unique_games": 78,
+            "baseline_p": {
+              "brier": 0.2622134256999279,
+              "log_loss": 0.7179839963808742,
+              "accuracy": 0.44871794871794873,
+              "ece_5": 0.07332428690208437
+            },
+            "candidate_p": {
+              "brier": 0.26457294035094747,
+              "log_loss": 0.7236202075762056,
+              "accuracy": 0.5,
+              "ece_5": 0.10087456510683174
+            },
+            "market_p": {
+              "brier": 0.2511564102564103,
+              "log_loss": 0.6954633547572625,
+              "accuracy": 0.5384615384615384,
+              "ece_5": 0.07923076923076924
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.01001869308995934,
+              0.01319308303929038
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.022825846791260634,
+              0.039392881175624145
+            ]
+          }
+        }
+      },
+      "sportsbook": {
+        "moneyline": {
+          "holdout": {
+            "rows": 364,
+            "unique_games": 364,
+            "baseline_p": {
+              "brier": 0.22146762069680284,
+              "log_loss": 0.6327891328872246,
+              "accuracy": 0.6181318681318682,
+              "ece_5": 0.05018046348819692
+            },
+            "candidate_p": {
+              "brier": 0.21963412032980234,
+              "log_loss": 0.6278070140041939,
+              "accuracy": 0.6318681318681318,
+              "ece_5": 0.03633924006154754
+            },
+            "market_p": {
+              "brier": 0.21678769031507023,
+              "log_loss": 0.6205883039161604,
+              "accuracy": 0.6291208791208791,
+              "ece_5": 0.04070450249633371
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.006215378550559846,
+              0.0024977240517424205
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.0039512487436622265,
+              0.009432123096494964
+            ]
+          },
+          "current": {
+            "rows": 60,
+            "unique_games": 60,
+            "baseline_p": {
+              "brier": 0.23085722810712145,
+              "log_loss": 0.6525590439756453,
+              "accuracy": 0.5833333333333334,
+              "ece_5": 0.09942594866523145
+            },
+            "candidate_p": {
+              "brier": 0.232820184805544,
+              "log_loss": 0.6563268669572456,
+              "accuracy": 0.5666666666666667,
+              "ece_5": 0.10325714838781681
+            },
+            "market_p": {
+              "brier": 0.23063451271047342,
+              "log_loss": 0.650669820200876,
+              "accuracy": 0.5833333333333334,
+              "ece_5": 0.12463859168810952
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.0028420883327056738,
+              0.009587889724489016
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.019125518753819806,
+              0.02349686294396108
+            ]
+          }
+        }
+      },
+      "diagnostics": {
+        "clob_moneyline_unknown_overtime_wording": {
+          "rows": 97,
+          "unique_games": 97,
+          "baseline_p": {
+            "brier": 0.22854754037097047,
+            "log_loss": 0.647466127080747,
+            "accuracy": 0.6082474226804123,
+            "ece_5": 0.06100369513814438
+          },
+          "candidate_p": {
+            "brier": 0.2261885982464547,
+            "log_loss": 0.6418685820299246,
+            "accuracy": 0.6185567010309279,
+            "ece_5": 0.08128359680197894
+          },
+          "market_p": {
+            "brier": 0.23048195876288657,
+            "log_loss": 0.6515692560521412,
+            "accuracy": 0.6185567010309279,
+            "ece_5": 0.11402061855670102
+          },
+          "candidate_minus_baseline_p_brier_95_ci": [
+            -0.013939683864585009,
+            0.009145786962309934
+          ],
+          "candidate_minus_market_p_brier_95_ci": [
+            -0.03437497119706479,
+            0.021169002462438045
+          ],
+          "overtime_observed": {
+            "0": 91,
+            "1": 6
+          }
+        }
+      }
+    },
+    "EuroCup": {
+      "gamma_events": 128,
+      "clob": {
+        "moneyline": {
+          "listings": 128,
+          "listed_unique_events": 128,
+          "statuses": {
+            "matched price history": 128
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 128
+          },
+          "accepted_rule_wording": {
+            "1": 128
+          },
+          "accepted_overtime_status": {
+            "0": 124,
+            "1": 4
+          },
+          "settlement_check": {
+            "1": 128
+          },
+          "all": {
+            "rows": 128,
+            "unique_games": 128,
+            "baseline_p": {
+              "brier": 0.22328772856046933,
+              "log_loss": 0.6386023931842426,
+              "accuracy": 0.6796875,
+              "ece_5": 0.03427926261018987
+            },
+            "candidate_p": {
+              "brier": 0.21624954229469773,
+              "log_loss": 0.623255814684311,
+              "accuracy": 0.671875,
+              "ece_5": 0.11460700610116031
+            },
+            "market_p": {
+              "brier": 0.18125804083593228,
+              "log_loss": 0.5455349957361396,
+              "accuracy": 0.7421875,
+              "ece_5": 0.041430736940298515
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.02320495796612222,
+              0.0063902784439301375
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.008291984449041627,
+              0.05743614770961906
+            ]
+          },
+          "current": {
+            "rows": 128,
+            "unique_games": 128,
+            "baseline_p": {
+              "brier": 0.22328772856046933,
+              "log_loss": 0.6386023931842426,
+              "accuracy": 0.6796875,
+              "ece_5": 0.03427926261018987
+            },
+            "candidate_p": {
+              "brier": 0.21624954229469773,
+              "log_loss": 0.623255814684311,
+              "accuracy": 0.671875,
+              "ece_5": 0.11460700610116031
+            },
+            "market_p": {
+              "brier": 0.18125804083593228,
+              "log_loss": 0.5455349957361396,
+              "accuracy": 0.7421875,
+              "ece_5": 0.041430736940298515
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.02320495796612222,
+              0.0063902784439301375
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.008291984449041627,
+              0.05743614770961906
+            ]
+          }
+        },
+        "total": {
+          "listings": 128,
+          "listed_unique_events": 128,
+          "statuses": {
+            "matched price history": 127,
+            "no fresh two-sided CLOB price history": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 127
+          },
+          "accepted_rule_wording": {
+            "1": 127
+          },
+          "accepted_overtime_status": {
+            "0": 124,
+            "1": 3
+          },
+          "settlement_check": {
+            "1": 128
+          },
+          "all": {
+            "rows": 127,
+            "unique_games": 127,
+            "baseline_p": {
+              "brier": 0.25842627454171163,
+              "log_loss": 0.7110412960614729,
+              "accuracy": 0.5196850393700787,
+              "ece_5": 0.062136744555418955
+            },
+            "candidate_p": {
+              "brier": 0.25445828691154504,
+              "log_loss": 0.7024257735291801,
+              "accuracy": 0.5275590551181102,
+              "ece_5": 0.06419375350547354
+            },
+            "market_p": {
+              "brier": 0.25319527559055116,
+              "log_loss": 0.7005249314547797,
+              "accuracy": 0.5039370078740157,
+              "ece_5": 0.038740157480314966
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.014662711592767533,
+              0.0038025926580169764
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.009930334431910243,
+              0.013882245632936264
+            ]
+          },
+          "current": {
+            "rows": 127,
+            "unique_games": 127,
+            "baseline_p": {
+              "brier": 0.25842627454171163,
+              "log_loss": 0.7110412960614729,
+              "accuracy": 0.5196850393700787,
+              "ece_5": 0.062136744555418955
+            },
+            "candidate_p": {
+              "brier": 0.25445828691154504,
+              "log_loss": 0.7024257735291801,
+              "accuracy": 0.5275590551181102,
+              "ece_5": 0.06419375350547354
+            },
+            "market_p": {
+              "brier": 0.25319527559055116,
+              "log_loss": 0.7005249314547797,
+              "accuracy": 0.5039370078740157,
+              "ece_5": 0.038740157480314966
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.014662711592767533,
+              0.0038025926580169764
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.009930334431910243,
+              0.013882245632936264
+            ]
+          }
+        },
+        "spread": {
+          "listings": 128,
+          "listed_unique_events": 128,
+          "statuses": {
+            "matched price history": 127,
+            "no fresh two-sided CLOB price history": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 127
+          },
+          "accepted_rule_wording": {
+            "1": 127
+          },
+          "accepted_overtime_status": {
+            "0": 124,
+            "1": 3
+          },
+          "settlement_check": {
+            "1": 128
+          },
+          "all": {
+            "rows": 127,
+            "unique_games": 127,
+            "baseline_p": {
+              "brier": 0.2774540901030273,
+              "log_loss": 0.7614300782022871,
+              "accuracy": 0.5039370078740157,
+              "ece_5": 0.12617069629853878
+            },
+            "candidate_p": {
+              "brier": 0.2641179470698252,
+              "log_loss": 0.7277164834566161,
+              "accuracy": 0.5433070866141733,
+              "ece_5": 0.11076563198814625
+            },
+            "market_p": {
+              "brier": 0.23856535433070863,
+              "log_loss": 0.6699277626660803,
+              "accuracy": 0.6299212598425197,
+              "ece_5": 0.05976377952755907
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.032214271669485595,
+              0.0012679167184434306
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.00591919464170632,
+              0.055291286030596604
+            ]
+          },
+          "current": {
+            "rows": 127,
+            "unique_games": 127,
+            "baseline_p": {
+              "brier": 0.2774540901030273,
+              "log_loss": 0.7614300782022871,
+              "accuracy": 0.5039370078740157,
+              "ece_5": 0.12617069629853878
+            },
+            "candidate_p": {
+              "brier": 0.2641179470698252,
+              "log_loss": 0.7277164834566161,
+              "accuracy": 0.5433070866141733,
+              "ece_5": 0.11076563198814625
+            },
+            "market_p": {
+              "brier": 0.23856535433070863,
+              "log_loss": 0.6699277626660803,
+              "accuracy": 0.6299212598425197,
+              "ece_5": 0.05976377952755907
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.032214271669485595,
+              0.0012679167184434306
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.00591919464170632,
+              0.055291286030596604
+            ]
+          }
+        }
+      },
+      "sportsbook": {
+        "moneyline": {
+          "holdout": {
+            "rows": 195,
+            "unique_games": 195,
+            "baseline_p": {
+              "brier": 0.22190477262366506,
+              "log_loss": 0.6351532895405669,
+              "accuracy": 0.6512820512820513,
+              "ece_5": 0.058376547259553054
+            },
+            "candidate_p": {
+              "brier": 0.2145549283186591,
+              "log_loss": 0.6184821981405006,
+              "accuracy": 0.6820512820512821,
+              "ece_5": 0.031391028436624925
+            },
+            "market_p": {
+              "brier": 0.19827582603074928,
+              "log_loss": 0.5828487312575734,
+              "accuracy": 0.7333333333333333,
+              "ece_5": 0.05075898266849333
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.016875142590479363,
+              0.003940052816688917
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.0013569390392805395,
+              0.030063070756591866
+            ]
+          },
+          "current": {
+            "rows": 46,
+            "unique_games": 46,
+            "baseline_p": {
+              "brier": 0.21941814946392144,
+              "log_loss": 0.6321154356386665,
+              "accuracy": 0.7391304347826086,
+              "ece_5": 0.16125836939013702
+            },
+            "candidate_p": {
+              "brier": 0.23382871320986026,
+              "log_loss": 0.6612381538797528,
+              "accuracy": 0.6521739130434783,
+              "ece_5": 0.25338065398949244
+            },
+            "market_p": {
+              "brier": 0.1888720174902016,
+              "log_loss": 0.5586170279528836,
+              "accuracy": 0.717391304347826,
+              "ece_5": 0.1444337079014623
+            },
+            "candidate_minus_baseline_p_brier_95_ci": null,
+            "candidate_minus_market_p_brier_95_ci": null
+          }
+        }
+      },
+      "diagnostics": {}
+    },
+    "Basketball Champions League": {
+      "gamma_events": 144,
+      "clob": {
+        "moneyline": {
+          "listings": 144,
+          "listed_unique_events": 144,
+          "statuses": {
+            "matched price history": 61,
+            "two-sided timestamps or complement check failed": 1,
+            "source tip times differ by more than 15 min": 2,
+            "scoreboard fixture missing or ambiguous": 80
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 61
+          },
+          "accepted_rule_wording": {
+            "1": 61
+          },
+          "accepted_overtime_status": {
+            "0": 58,
+            "1": 3
+          },
+          "settlement_check": {
+            "1": 62,
+            "": 82
+          },
+          "all": {
+            "rows": 61,
+            "unique_games": 61,
+            "baseline_p": {
+              "brier": 0.2134510209649936,
+              "log_loss": 0.6177556241202637,
+              "accuracy": 0.6721311475409836,
+              "ece_5": 0.06405543788821734
+            },
+            "candidate_p": {
+              "brier": 0.20401559931982133,
+              "log_loss": 0.5941223205415506,
+              "accuracy": 0.6557377049180327,
+              "ece_5": 0.13223731799821922
+            },
+            "market_p": {
+              "brier": 0.1941320860655738,
+              "log_loss": 0.5619436988094884,
+              "accuracy": 0.7377049180327869,
+              "ece_5": 0.0992377049180328
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.023343565392331594,
+              0.008825203014811342
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.02768672927380527,
+              0.04004970374754107
+            ]
+          },
+          "current": {
+            "rows": 61,
+            "unique_games": 61,
+            "baseline_p": {
+              "brier": 0.2134510209649936,
+              "log_loss": 0.6177556241202637,
+              "accuracy": 0.6721311475409836,
+              "ece_5": 0.06405543788821734
+            },
+            "candidate_p": {
+              "brier": 0.20401559931982133,
+              "log_loss": 0.5941223205415506,
+              "accuracy": 0.6557377049180327,
+              "ece_5": 0.13223731799821922
+            },
+            "market_p": {
+              "brier": 0.1941320860655738,
+              "log_loss": 0.5619436988094884,
+              "accuracy": 0.7377049180327869,
+              "ece_5": 0.0992377049180328
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.023343565392331594,
+              0.008825203014811342
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.02768672927380527,
+              0.04004970374754107
+            ]
+          }
+        }
+      },
+      "sportsbook": {
+        "moneyline": {
+          "current": {
+            "rows": 64,
+            "unique_games": 64,
+            "baseline_p": {
+              "brier": 0.21862256623647702,
+              "log_loss": 0.628388055379207,
+              "accuracy": 0.65625,
+              "ece_5": 0.05331119555288933
+            },
+            "candidate_p": {
+              "brier": 0.21392518893206164,
+              "log_loss": 0.6152763339302867,
+              "accuracy": 0.625,
+              "ece_5": 0.11432037254475658
+            },
+            "market_p": {
+              "brier": 0.20297291972116602,
+              "log_loss": 0.5873535945313432,
+              "accuracy": 0.6875,
+              "ece_5": 0.06422228075315435
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.019180341219498884,
+              0.014944154068170571
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.02431132209999538,
+              0.038274069684379936
+            ]
+          }
+        }
+      },
+      "diagnostics": {}
+    },
+    "Spain ACB": {
+      "gamma_events": 269,
+      "clob": {
+        "moneyline": {
+          "listings": 268,
+          "listed_unique_events": 268,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 72,
+            "matched price history": 172,
+            "source tip times differ by more than 15 min": 21,
+            "two-sided timestamps or complement check failed": 3
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 172
+          },
+          "accepted_rule_wording": {
+            "1": 172
+          },
+          "accepted_overtime_status": {
+            "unknown": 172
+          },
+          "settlement_check": {
+            "": 93,
+            "1": 175
+          },
+          "all": {
+            "rows": 172,
+            "unique_games": 172,
+            "baseline_p": {
+              "brier": 0.22017099238784457,
+              "log_loss": 0.6304749165126262,
+              "accuracy": 0.6104651162790697,
+              "ece_5": 0.03103916014633834
+            },
+            "candidate_p": {
+              "brier": 0.22197895324382336,
+              "log_loss": 0.6423325434855712,
+              "accuracy": 0.6046511627906976,
+              "ece_5": 0.049499727124526646
+            },
+            "market_p": {
+              "brier": 0.21831917005813956,
+              "log_loss": 0.6248767909892297,
+              "accuracy": 0.6511627906976745,
+              "ece_5": 0.061473837209302315
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.00993263858343992,
+              0.014187832828646758
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.013540207372609412,
+              0.02038919242007183
+            ]
+          },
+          "holdout": {
+            "rows": 144,
+            "unique_games": 144,
+            "baseline_p": {
+              "brier": 0.21697226085390897,
+              "log_loss": 0.6231228453459072,
+              "accuracy": 0.6180555555555556,
+              "ece_5": 0.04166827711491943
+            },
+            "candidate_p": {
+              "brier": 0.218583748049299,
+              "log_loss": 0.6328949190227472,
+              "accuracy": 0.6180555555555556,
+              "ece_5": 0.05590377069670853
+            },
+            "market_p": {
+              "brier": 0.2167353975694445,
+              "log_loss": 0.6200076136870837,
+              "accuracy": 0.6527777777777778,
+              "ece_5": 0.05169097222222222
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.011206649752666997,
+              0.015280621204237774
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.015812515664264448,
+              0.019332782510852818
+            ]
+          },
+          "current": {
+            "rows": 28,
+            "unique_games": 28,
+            "baseline_p": {
+              "brier": 0.23662161170522783,
+              "log_loss": 0.6682855682271814,
+              "accuracy": 0.5714285714285714,
+              "ece_5": 0.12380708584043812
+            },
+            "candidate_p": {
+              "brier": 0.23944000852994857,
+              "log_loss": 0.6908688978658083,
+              "accuracy": 0.5357142857142857,
+              "ece_5": 0.1264579961711546
+            },
+            "market_p": {
+              "brier": 0.22646428571428573,
+              "log_loss": 0.6499182742574092,
+              "accuracy": 0.6428571428571429,
+              "ece_5": 0.115
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.029435638738978292,
+              0.03726198230770205
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.041006961307006734,
+              0.04199147086439731
+            ]
+          }
+        },
+        "total": {
+          "listings": 71,
+          "listed_unique_events": 71,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 34,
+            "matched price history": 36,
+            "source tip times differ by more than 15 min": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 36
+          },
+          "accepted_rule_wording": {
+            "1": 36
+          },
+          "accepted_overtime_status": {
+            "unknown": 36
+          },
+          "settlement_check": {
+            "": 35,
+            "1": 36
+          },
+          "all": {
+            "rows": 36,
+            "unique_games": 36,
+            "baseline_p": {
+              "brier": 0.2520546063458934,
+              "log_loss": 0.6966579927158941,
+              "accuracy": 0.4722222222222222,
+              "ece_5": 0.08550397507994476
+            },
+            "candidate_p": {
+              "brier": 0.2234761134359212,
+              "log_loss": 0.638947125020612,
+              "accuracy": 0.6388888888888888,
+              "ece_5": 0.02060931301875716
+            },
+            "market_p": {
+              "brier": 0.24716388888888885,
+              "log_loss": 0.6903095945021778,
+              "accuracy": 0.6388888888888888,
+              "ece_5": 0.10555555555555556
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.06783180224162982,
+              0.0054930245947385934
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.058943110846175636,
+              0.01816827900454441
+            ]
+          },
+          "holdout": {
+            "rows": 14,
+            "unique_games": 14,
+            "baseline_p": {
+              "brier": 0.2419001954811427,
+              "log_loss": 0.6749325585178912,
+              "accuracy": 0.5,
+              "ece_5": 0.21555939593373438
+            },
+            "candidate_p": {
+              "brier": 0.23041568843803864,
+              "log_loss": 0.6533776159873579,
+              "accuracy": 0.7142857142857143,
+              "ece_5": 0.18917893118648427
+            },
+            "market_p": {
+              "brier": 0.26894107142857143,
+              "log_loss": 0.7400806174757414,
+              "accuracy": 0.5714285714285714,
+              "ece_5": 0.15607142857142858
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.023733754238135164,
+              0.005743224857540044
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.06643754884227747,
+              -0.003197578952668041
+            ]
+          },
+          "current": {
+            "rows": 22,
+            "unique_games": 22,
+            "baseline_p": {
+              "brier": 0.25851650416891636,
+              "log_loss": 0.7104832690237142,
+              "accuracy": 0.45454545454545453,
+              "ece_5": 0.27708975663410423
+            },
+            "candidate_p": {
+              "brier": 0.21906002025275556,
+              "log_loss": 0.6297640853145011,
+              "accuracy": 0.5909090909090909,
+              "ece_5": 0.1541109229675472
+            },
+            "market_p": {
+              "brier": 0.23330568181818176,
+              "log_loss": 0.6586371253371828,
+              "accuracy": 0.6818181818181818,
+              "ece_5": 0.22886363636363635
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.0996680720140263,
+              0.010719839498727035
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.07126018122428436,
+              0.05117079436290882
+            ]
+          }
+        },
+        "spread": {
+          "listings": 71,
+          "listed_unique_events": 71,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 34,
+            "matched price history": 36,
+            "source tip times differ by more than 15 min": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 36
+          },
+          "accepted_rule_wording": {
+            "1": 36
+          },
+          "accepted_overtime_status": {
+            "unknown": 36
+          },
+          "settlement_check": {
+            "": 35,
+            "1": 36
+          },
+          "all": {
+            "rows": 36,
+            "unique_games": 36,
+            "baseline_p": {
+              "brier": 0.2834163361702589,
+              "log_loss": 0.7611056342443954,
+              "accuracy": 0.3333333333333333,
+              "ece_5": 0.13249330428112457
+            },
+            "candidate_p": {
+              "brier": 0.26426719515693203,
+              "log_loss": 0.7211594181859166,
+              "accuracy": 0.3888888888888889,
+              "ece_5": 0.09446238291174885
+            },
+            "market_p": {
+              "brier": 0.25137569444444435,
+              "log_loss": 0.6949162071574871,
+              "accuracy": 0.5833333333333334,
+              "ece_5": 0.12208333333333334
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.03784835290619653,
+              -0.0017395857887025667
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.009115375647104516,
+              0.031155535040787358
+            ]
+          },
+          "holdout": {
+            "rows": 14,
+            "unique_games": 14,
+            "baseline_p": {
+              "brier": 0.307701913018319,
+              "log_loss": 0.8185068239640503,
+              "accuracy": 0.35714285714285715,
+              "ece_5": 0.3421059693366279
+            },
+            "candidate_p": {
+              "brier": 0.3069479618244732,
+              "log_loss": 0.8156520584740701,
+              "accuracy": 0.2857142857142857,
+              "ece_5": 0.3548407973133077
+            },
+            "market_p": {
+              "brier": 0.28125,
+              "log_loss": 0.7564519633053152,
+              "accuracy": 0.35714285714285715,
+              "ece_5": 0.3485714285714286
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.015794247999116922,
+              0.005058092462747965
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.007928222591143343,
+              0.04989004408828787
+            ]
+          },
+          "current": {
+            "rows": 22,
+            "unique_games": 22,
+            "baseline_p": {
+              "brier": 0.2679618781760388,
+              "log_loss": 0.7245776044227968,
+              "accuracy": 0.3181818181818182,
+              "ece_5": 0.27777722360238494
+            },
+            "candidate_p": {
+              "brier": 0.23710670727758762,
+              "log_loss": 0.6610277380025461,
+              "accuracy": 0.45454545454545453,
+              "ece_5": 0.26518627769441006
+            },
+            "market_p": {
+              "brier": 0.23236477272727268,
+              "log_loss": 0.6557570896088692,
+              "accuracy": 0.7272727272727273,
+              "ece_5": 0.21840909090909089
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.05425379985847784,
+              -0.007456541938424362
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.025429976146834156,
+              0.02758411687001929
+            ]
+          }
+        }
+      },
+      "sportsbook": {
+        "moneyline": {
+          "holdout": {
+            "rows": 326,
+            "unique_games": 326,
+            "baseline_p": {
+              "brier": 0.20734660481913147,
+              "log_loss": 0.6016140596746374,
+              "accuracy": 0.6656441717791411,
+              "ece_5": 0.03030304666053144
+            },
+            "candidate_p": {
+              "brier": 0.20555832148453676,
+              "log_loss": 0.6003774894415167,
+              "accuracy": 0.6656441717791411,
+              "ece_5": 0.03915302404253093
+            },
+            "market_p": {
+              "brier": 0.1982787228995126,
+              "log_loss": 0.5803804702809476,
+              "accuracy": 0.7024539877300614,
+              "ece_5": 0.02262350828313245
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.011283306686010694,
+              0.007026475799411286
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.004052934452347639,
+              0.019966846997541334
+            ]
+          },
+          "current": {
+            "rows": 36,
+            "unique_games": 36,
+            "baseline_p": {
+              "brier": 0.2242698950435993,
+              "log_loss": 0.6412989960066304,
+              "accuracy": 0.5833333333333334,
+              "ece_5": 0.1029501835183095
+            },
+            "candidate_p": {
+              "brier": 0.22223732157018272,
+              "log_loss": 0.6463291716808678,
+              "accuracy": 0.5555555555555556,
+              "ece_5": 0.07962618464595031
+            },
+            "market_p": {
+              "brier": 0.21385462581856993,
+              "log_loss": 0.6151106847906646,
+              "accuracy": 0.6666666666666666,
+              "ece_5": 0.13223749110288516
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.019670577808584253,
+              0.03151796270187196
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.028990892860812495,
+              0.03060771933640171
+            ]
+          }
+        }
+      },
+      "diagnostics": {}
+    },
+    "Germany BBL": {
+      "gamma_events": 189,
+      "clob": {
+        "moneyline": {
+          "listings": 188,
+          "listed_unique_events": 188,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 50,
+            "matched price history": 134,
+            "source tip times differ by more than 15 min": 2,
+            "two-sided timestamps or complement check failed": 2
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 134
+          },
+          "accepted_rule_wording": {
+            "1": 134
+          },
+          "accepted_overtime_status": {
+            "unknown": 134
+          },
+          "settlement_check": {
+            "": 52,
+            "1": 136
+          },
+          "all": {
+            "rows": 134,
+            "unique_games": 134,
+            "baseline_p": {
+              "brier": 0.2100054642680332,
+              "log_loss": 0.6078229742066708,
+              "accuracy": 0.6716417910447762,
+              "ece_5": 0.06009843763873783
+            },
+            "candidate_p": {
+              "brier": 0.20622299652554132,
+              "log_loss": 0.5966132970639355,
+              "accuracy": 0.6492537313432836,
+              "ece_5": 0.0912802945264745
+            },
+            "market_p": {
+              "brier": 0.20535143656716418,
+              "log_loss": 0.5897096518357287,
+              "accuracy": 0.6343283582089553,
+              "ece_5": 0.07603731343283582
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.012558247191528878,
+              0.00545402971021553
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.009668143306149549,
+              0.01044533020967663
+            ]
+          },
+          "holdout": {
+            "rows": 97,
+            "unique_games": 97,
+            "baseline_p": {
+              "brier": 0.20081130483059656,
+              "log_loss": 0.5881694826167502,
+              "accuracy": 0.7010309278350515,
+              "ece_5": 0.051887671775119784
+            },
+            "candidate_p": {
+              "brier": 0.19452631084080257,
+              "log_loss": 0.5706598231909933,
+              "accuracy": 0.6701030927835051,
+              "ece_5": 0.06377219272419007
+            },
+            "market_p": {
+              "brier": 0.1959040463917526,
+              "log_loss": 0.5695045949897515,
+              "accuracy": 0.6494845360824743,
+              "ece_5": 0.061432989690721654
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.015649184349976312,
+              0.0049127875614318256
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.012568466866197215,
+              0.010579754567856888
+            ]
+          },
+          "current": {
+            "rows": 37,
+            "unique_games": 37,
+            "baseline_p": {
+              "brier": 0.23410907144185372,
+              "log_loss": 0.6593469926991651,
+              "accuracy": 0.5945945945945946,
+              "ece_5": 0.1598943756071862
+            },
+            "candidate_p": {
+              "brier": 0.23688728061796469,
+              "log_loss": 0.6646534853254323,
+              "accuracy": 0.5945945945945946,
+              "ece_5": 0.171521354913578
+            },
+            "market_p": {
+              "brier": 0.23011891891891892,
+              "log_loss": 0.6426796657292366,
+              "accuracy": 0.5945945945945946,
+              "ece_5": 0.11432432432432432
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.01690163991482048,
+              0.013944381571191477
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.01773023868566215,
+              0.018044573379491467
+            ]
+          }
+        },
+        "total": {
+          "listings": 80,
+          "listed_unique_events": 80,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 38,
+            "matched price history": 41,
+            "source tip times differ by more than 15 min": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 41
+          },
+          "accepted_rule_wording": {
+            "1": 41
+          },
+          "accepted_overtime_status": {
+            "unknown": 41
+          },
+          "settlement_check": {
+            "": 39,
+            "1": 41
+          },
+          "all": {
+            "rows": 41,
+            "unique_games": 41,
+            "baseline_p": {
+              "brier": 0.2193483773483276,
+              "log_loss": 0.6297087546224215,
+              "accuracy": 0.6585365853658537,
+              "ece_5": 0.12705221657229288
+            },
+            "candidate_p": {
+              "brier": 0.21269442620979423,
+              "log_loss": 0.61869445201355,
+              "accuracy": 0.7804878048780488,
+              "ece_5": 0.14498783291936543
+            },
+            "market_p": {
+              "brier": 0.24277195121951223,
+              "log_loss": 0.6809457593812084,
+              "accuracy": 0.6829268292682927,
+              "ece_5": 0.08560975609756097
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.03273033884707183,
+              0.027159459374948246
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.06957076440893731,
+              -0.0013407664604410613
+            ]
+          },
+          "holdout": {
+            "rows": 8,
+            "unique_games": 8,
+            "baseline_p": {
+              "brier": 0.18729265124999514,
+              "log_loss": 0.5647111640570954,
+              "accuracy": 0.75,
+              "ece_5": 0.23521514551365183
+            },
+            "candidate_p": {
+              "brier": 0.18148808692886473,
+              "log_loss": 0.5535582735695486,
+              "accuracy": 1.0,
+              "ece_5": 0.19012913251732516
+            },
+            "market_p": {
+              "brier": 0.19109062500000001,
+              "log_loss": 0.5695267056455029,
+              "accuracy": 0.875,
+              "ece_5": 0.09812500000000002
+            },
+            "candidate_minus_baseline_p_brier_95_ci": null,
+            "candidate_minus_market_p_brier_95_ci": null
+          },
+          "current": {
+            "rows": 33,
+            "unique_games": 33,
+            "baseline_p": {
+              "brier": 0.22711946246307482,
+              "log_loss": 0.6454657462746218,
+              "accuracy": 0.6363636363636364,
+              "ece_5": 0.17401324404796556
+            },
+            "candidate_p": {
+              "brier": 0.22025959936880743,
+              "log_loss": 0.6344850407272472,
+              "accuracy": 0.7272727272727273,
+              "ece_5": 0.13404448756228426
+            },
+            "market_p": {
+              "brier": 0.2553007575757576,
+              "log_loss": 0.7079564390747126,
+              "accuracy": 0.6363636363636364,
+              "ece_5": 0.13015151515151516
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.03189994233826363,
+              0.021321430036182372
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.0914551995588763,
+              -0.0052351208490222
+            ]
+          }
+        },
+        "spread": {
+          "listings": 80,
+          "listed_unique_events": 80,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 38,
+            "matched price history": 41,
+            "source tip times differ by more than 15 min": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 41
+          },
+          "accepted_rule_wording": {
+            "1": 41
+          },
+          "accepted_overtime_status": {
+            "unknown": 41
+          },
+          "settlement_check": {
+            "": 39,
+            "1": 41
+          },
+          "all": {
+            "rows": 41,
+            "unique_games": 41,
+            "baseline_p": {
+              "brier": 0.25053336218514066,
+              "log_loss": 0.6969456804465416,
+              "accuracy": 0.5609756097560976,
+              "ece_5": 0.06110531371633761
+            },
+            "candidate_p": {
+              "brier": 0.24046521750806396,
+              "log_loss": 0.6762563296106475,
+              "accuracy": 0.5609756097560976,
+              "ece_5": 0.062471741579858554
+            },
+            "market_p": {
+              "brier": 0.2365359756097561,
+              "log_loss": 0.6644887597670527,
+              "accuracy": 0.5365853658536586,
+              "ece_5": 0.057682926829268295
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.03311317293913556,
+              0.00782105103333923
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.010281456466914779,
+              0.020335858505554236
+            ]
+          },
+          "holdout": {
+            "rows": 8,
+            "unique_games": 8,
+            "baseline_p": {
+              "brier": 0.19391685086980642,
+              "log_loss": 0.5770807887781259,
+              "accuracy": 0.75,
+              "ece_5": 0.3040013129499006
+            },
+            "candidate_p": {
+              "brier": 0.1731240756064158,
+              "log_loss": 0.5343104756601764,
+              "accuracy": 0.875,
+              "ece_5": 0.2814055820448442
+            },
+            "market_p": {
+              "brier": 0.18826874999999998,
+              "log_loss": 0.5656733140282678,
+              "accuracy": 0.75,
+              "ece_5": 0.3
+            },
+            "candidate_minus_baseline_p_brier_95_ci": null,
+            "candidate_minus_market_p_brier_95_ci": null
+          },
+          "current": {
+            "rows": 33,
+            "unique_games": 33,
+            "baseline_p": {
+              "brier": 0.2642585770494641,
+              "log_loss": 0.726003836002521,
+              "accuracy": 0.5151515151515151,
+              "ece_5": 0.14159923685355114
+            },
+            "candidate_p": {
+              "brier": 0.2567903428175544,
+              "log_loss": 0.7106674457198527,
+              "accuracy": 0.48484848484848486,
+              "ece_5": 0.13157190902462026
+            },
+            "market_p": {
+              "brier": 0.24823712121212121,
+              "log_loss": 0.6884440193400914,
+              "accuracy": 0.48484848484848486,
+              "ece_5": 0.06257575757575759
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.0334148941698204,
+              0.013140170120008876
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.007105361087869695,
+              0.028481655752223063
+            ]
+          }
+        }
+      },
+      "sportsbook": {
+        "moneyline": {
+          "holdout": {
+            "rows": 338,
+            "unique_games": 338,
+            "baseline_p": {
+              "brier": 0.22264281176356054,
+              "log_loss": 0.6351104949134045,
+              "accuracy": 0.6390532544378699,
+              "ece_5": 0.010688973935761245
+            },
+            "candidate_p": {
+              "brier": 0.22084906543263597,
+              "log_loss": 0.6318892439142207,
+              "accuracy": 0.6301775147928994,
+              "ece_5": 0.0417955862924508
+            },
+            "market_p": {
+              "brier": 0.2158295815225522,
+              "log_loss": 0.6165659901327024,
+              "accuracy": 0.621301775147929,
+              "ece_5": 0.03644610847126233
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.008722387800791476,
+              0.005873744742198221
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.0017204762335410006,
+              0.012115149745407554
+            ]
+          },
+          "current": {
+            "rows": 43,
+            "unique_games": 43,
+            "baseline_p": {
+              "brier": 0.23192866891984235,
+              "log_loss": 0.6558608447148838,
+              "accuracy": 0.6046511627906976,
+              "ece_5": 0.16860725277106878
+            },
+            "candidate_p": {
+              "brier": 0.23362374527739826,
+              "log_loss": 0.6601069461709348,
+              "accuracy": 0.6046511627906976,
+              "ece_5": 0.1456777828138466
+            },
+            "market_p": {
+              "brier": 0.22048486852754426,
+              "log_loss": 0.6212532917937487,
+              "accuracy": 0.5813953488372093,
+              "ece_5": 0.12469238284906849
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.013425558745924203,
+              0.009586176187110692
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.016881251629500958,
+              0.03730656225061259
+            ]
+          }
+        }
+      },
+      "diagnostics": {}
+    },
+    "Italy Serie A": {
+      "gamma_events": 206,
+      "clob": {
+        "moneyline": {
+          "listings": 205,
+          "listed_unique_events": 205,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 37,
+            "matched price history": 119,
+            "diagnostic: game start unverified outside Polymarket": 16,
+            "source tip times differ by more than 15 min": 32,
+            "two-sided timestamps or complement check failed": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 119
+          },
+          "accepted_rule_wording": {
+            "1": 119
+          },
+          "accepted_overtime_status": {
+            "unknown": 119
+          },
+          "settlement_check": {
+            "": 69,
+            "1": 136
+          },
+          "all": {
+            "rows": 119,
+            "unique_games": 119,
+            "baseline_p": {
+              "brier": 0.21197157607734993,
+              "log_loss": 0.6154288026334911,
+              "accuracy": 0.7142857142857143,
+              "ece_5": 0.08128569031443034
+            },
+            "candidate_p": {
+              "brier": 0.20871539390938473,
+              "log_loss": 0.6090291506754669,
+              "accuracy": 0.7058823529411765,
+              "ece_5": 0.04999786624959776
+            },
+            "market_p": {
+              "brier": 0.1996741596638655,
+              "log_loss": 0.5851293723630424,
+              "accuracy": 0.6890756302521008,
+              "ece_5": 0.05777310924369748
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.008476159388360363,
+              0.002089761947980427
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.0057672509454666865,
+              0.023045059462863633
+            ]
+          },
+          "holdout": {
+            "rows": 91,
+            "unique_games": 91,
+            "baseline_p": {
+              "brier": 0.21201059232144073,
+              "log_loss": 0.6167663888813284,
+              "accuracy": 0.7142857142857143,
+              "ece_5": 0.10115636387524589
+            },
+            "candidate_p": {
+              "brier": 0.2077255060552236,
+              "log_loss": 0.6099153329229742,
+              "accuracy": 0.7032967032967034,
+              "ece_5": 0.08960177526164752
+            },
+            "market_p": {
+              "brier": 0.20024670329670324,
+              "log_loss": 0.5889069157954551,
+              "accuracy": 0.7142857142857143,
+              "ece_5": 0.05725274725274725
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.01000820351292404,
+              0.0020330700158939833
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.00824475720892794,
+              0.022295336871377705
+            ]
+          },
+          "current": {
+            "rows": 28,
+            "unique_games": 28,
+            "baseline_p": {
+              "brier": 0.21184477328405496,
+              "log_loss": 0.6110816473280198,
+              "accuracy": 0.7142857142857143,
+              "ece_5": 0.07221617462084012
+            },
+            "candidate_p": {
+              "brier": 0.21193252943540836,
+              "log_loss": 0.6061490583710694,
+              "accuracy": 0.7142857142857143,
+              "ece_5": 0.07895296434697154
+            },
+            "market_p": {
+              "brier": 0.1978133928571429,
+              "log_loss": 0.5728523562077018,
+              "accuracy": 0.6071428571428571,
+              "ece_5": 0.10410714285714286
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.010051834755925736,
+              0.010227347058632505
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.0195403462720219,
+              0.05174994843087795
+            ]
+          }
+        },
+        "total": {
+          "listings": 64,
+          "listed_unique_events": 64,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 29,
+            "matched price history": 35
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 35
+          },
+          "accepted_rule_wording": {
+            "1": 35
+          },
+          "accepted_overtime_status": {
+            "unknown": 35
+          },
+          "settlement_check": {
+            "": 29,
+            "1": 35
+          },
+          "all": {
+            "rows": 35,
+            "unique_games": 35,
+            "baseline_p": {
+              "brier": 0.22131872918749304,
+              "log_loss": 0.6335674054779551,
+              "accuracy": 0.7714285714285715,
+              "ece_5": 0.1377955394703011
+            },
+            "candidate_p": {
+              "brier": 0.22014084278418344,
+              "log_loss": 0.631692517472313,
+              "accuracy": 0.6571428571428571,
+              "ece_5": 0.12456561694681594
+            },
+            "market_p": {
+              "brier": 0.22449642857142854,
+              "log_loss": 0.6414102273449352,
+              "accuracy": 0.7428571428571429,
+              "ece_5": 0.15557142857142858
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.0194327856286244,
+              0.018077378276281416
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.023820687663500446,
+              0.012486876381738649
+            ]
+          },
+          "holdout": {
+            "rows": 7,
+            "unique_games": 7,
+            "baseline_p": {
+              "brier": 0.2105733864389999,
+              "log_loss": 0.6136312186093527,
+              "accuracy": 0.8571428571428571,
+              "ece_5": 0.33805544971052054
+            },
+            "candidate_p": {
+              "brier": 0.2263275030906682,
+              "log_loss": 0.6457202474065763,
+              "accuracy": 0.7142857142857143,
+              "ece_5": 0.23255618900695035
+            },
+            "market_p": {
+              "brier": 0.22722857142857147,
+              "log_loss": 0.6472436338533087,
+              "accuracy": 0.7142857142857143,
+              "ece_5": 0.19714285714285715
+            },
+            "candidate_minus_baseline_p_brier_95_ci": null,
+            "candidate_minus_market_p_brier_95_ci": null
+          },
+          "current": {
+            "rows": 28,
+            "unique_games": 28,
+            "baseline_p": {
+              "brier": 0.22400506487461633,
+              "log_loss": 0.6385514521951057,
+              "accuracy": 0.75,
+              "ece_5": 0.11599724171603425
+            },
+            "candidate_p": {
+              "brier": 0.21859417770756231,
+              "log_loss": 0.6281855849887472,
+              "accuracy": 0.6428571428571429,
+              "ece_5": 0.09756797393178232
+            },
+            "market_p": {
+              "brier": 0.22381339285714286,
+              "log_loss": 0.6399518757178421,
+              "accuracy": 0.75,
+              "ece_5": 0.14517857142857143
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.027542509893689487,
+              0.01777792821603494
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.03324081494702503,
+              0.016127111132560778
+            ]
+          }
+        },
+        "spread": {
+          "listings": 65,
+          "listed_unique_events": 65,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 29,
+            "matched price history": 36
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 36
+          },
+          "accepted_rule_wording": {
+            "1": 36
+          },
+          "accepted_overtime_status": {
+            "unknown": 36
+          },
+          "settlement_check": {
+            "": 29,
+            "1": 36
+          },
+          "all": {
+            "rows": 36,
+            "unique_games": 36,
+            "baseline_p": {
+              "brier": 0.21914978794260542,
+              "log_loss": 0.6228605608220136,
+              "accuracy": 0.5833333333333334,
+              "ece_5": 0.054972036248934035
+            },
+            "candidate_p": {
+              "brier": 0.21069411528389428,
+              "log_loss": 0.6050426073547874,
+              "accuracy": 0.6944444444444444,
+              "ece_5": 0.0636852914079117
+            },
+            "market_p": {
+              "brier": 0.23563819444444448,
+              "log_loss": 0.6664753071775853,
+              "accuracy": 0.6388888888888888,
+              "ece_5": 0.045972222222222234
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.02760937574774384,
+              0.006859271556597958
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.05231432318539187,
+              0.005480189905993396
+            ]
+          },
+          "holdout": {
+            "rows": 8,
+            "unique_games": 8,
+            "baseline_p": {
+              "brier": 0.2507254136499546,
+              "log_loss": 0.6932030311753603,
+              "accuracy": 0.375,
+              "ece_5": 0.26716462626462933
+            },
+            "candidate_p": {
+              "brier": 0.2458682687479632,
+              "log_loss": 0.6808445802313723,
+              "accuracy": 0.5,
+              "ece_5": 0.2655869017901974
+            },
+            "market_p": {
+              "brier": 0.21783125,
+              "log_loss": 0.6224203413295071,
+              "accuracy": 0.625,
+              "ece_5": 0.245
+            },
+            "candidate_minus_baseline_p_brier_95_ci": null,
+            "candidate_minus_market_p_brier_95_ci": null
+          },
+          "current": {
+            "rows": 28,
+            "unique_games": 28,
+            "baseline_p": {
+              "brier": 0.2101281805976485,
+              "log_loss": 0.6027627121496286,
+              "accuracy": 0.6428571428571429,
+              "ece_5": 0.09744609054907073
+            },
+            "candidate_p": {
+              "brier": 0.2006443571513032,
+              "log_loss": 0.5833849008186204,
+              "accuracy": 0.75,
+              "ece_5": 0.09304175298988361
+            },
+            "market_p": {
+              "brier": 0.24072589285714283,
+              "log_loss": 0.6790624402770362,
+              "accuracy": 0.6428571428571429,
+              "ece_5": 0.12910714285714286
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.028299767416075403,
+              0.0029731650175023067
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.07191875723275237,
+              -0.02454841102605129
+            ]
+          }
+        }
+      },
+      "sportsbook": {
+        "moneyline": {
+          "holdout": {
+            "rows": 253,
+            "unique_games": 253,
+            "baseline_p": {
+              "brier": 0.21066740147364355,
+              "log_loss": 0.612122331721763,
+              "accuracy": 0.6956521739130435,
+              "ece_5": 0.060540778971965116
+            },
+            "candidate_p": {
+              "brier": 0.20448305023065047,
+              "log_loss": 0.5994090930922813,
+              "accuracy": 0.7154150197628458,
+              "ece_5": 0.054483858415510567
+            },
+            "market_p": {
+              "brier": 0.19616993380136982,
+              "log_loss": 0.5788736561208622,
+              "accuracy": 0.7075098814229249,
+              "ece_5": 0.055862772114017564
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.010439733916401255,
+              -0.0019806399408199902
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.0008200864825566743,
+              0.015773037217096313
+            ]
+          },
+          "current": {
+            "rows": 32,
+            "unique_games": 32,
+            "baseline_p": {
+              "brier": 0.21384787005126432,
+              "log_loss": 0.6155908162021129,
+              "accuracy": 0.6875,
+              "ece_5": 0.12139059602863604
+            },
+            "candidate_p": {
+              "brier": 0.21387861788377946,
+              "log_loss": 0.6110474976373302,
+              "accuracy": 0.6875,
+              "ece_5": 0.08088591776361319
+            },
+            "market_p": {
+              "brier": 0.20268373267231876,
+              "log_loss": 0.5876604372290563,
+              "accuracy": 0.625,
+              "ece_5": 0.15206269128187008
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.009113625786139355,
+              0.01087973373858444
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.018074657417921004,
+              0.05006008210397469
+            ]
+          }
+        }
+      },
+      "diagnostics": {
+        "clob_moneyline_gamma_only_start": {
+          "rows": 16,
+          "unique_games": 16,
+          "baseline_p": {
+            "brier": 0.2587956289327487,
+            "log_loss": 0.7089835792663153,
+            "accuracy": 0.5,
+            "ece_5": 0.13270166635472042
+          },
+          "candidate_p": {
+            "brier": 0.2646445149919641,
+            "log_loss": 0.7199963082491005,
+            "accuracy": 0.4375,
+            "ece_5": 0.14608745299707632
+          },
+          "market_p": {
+            "brier": 0.28545,
+            "log_loss": 0.7727261003675316,
+            "accuracy": 0.375,
+            "ece_5": 0.14687499999999998
+          },
+          "candidate_minus_baseline_p_brier_95_ci": [
+            -0.009860596639943691,
+            0.02324641427988757
+          ],
+          "candidate_minus_market_p_brier_95_ci": [
+            -0.06330571033067507,
+            0.020517918868408987
+          ],
+          "overtime_observed": {
+            "unknown": 16
+          }
+        }
+      }
+    },
+    "France Pro A": {
+      "gamma_events": 223,
+      "clob": {
+        "moneyline": {
+          "listings": 222,
+          "listed_unique_events": 222,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 36,
+            "matched price history": 183,
+            "source tip times differ by more than 15 min": 2,
+            "two-sided timestamps or complement check failed": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 183
+          },
+          "accepted_rule_wording": {
+            "1": 183
+          },
+          "accepted_overtime_status": {
+            "unknown": 183
+          },
+          "settlement_check": {
+            "": 38,
+            "1": 184
+          },
+          "all": {
+            "rows": 183,
+            "unique_games": 183,
+            "baseline_p": {
+              "brier": 0.20444172633620383,
+              "log_loss": 0.5977864996959166,
+              "accuracy": 0.6939890710382514,
+              "ece_5": 0.06676773959409989
+            },
+            "candidate_p": {
+              "brier": 0.20225089421974846,
+              "log_loss": 0.5936426703296445,
+              "accuracy": 0.6994535519125683,
+              "ece_5": 0.054854409055197444
+            },
+            "market_p": {
+              "brier": 0.18372575819672132,
+              "log_loss": 0.5446513175750327,
+              "accuracy": 0.726775956284153,
+              "ece_5": 0.03301366120218579
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.00797644196195999,
+              0.0037950758520329695
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.006618093856457757,
+              0.030248219905180736
+            ]
+          },
+          "holdout": {
+            "rows": 151,
+            "unique_games": 151,
+            "baseline_p": {
+              "brier": 0.20801821166793086,
+              "log_loss": 0.6053507599847984,
+              "accuracy": 0.6821192052980133,
+              "ece_5": 0.05336440946648383
+            },
+            "candidate_p": {
+              "brier": 0.20638263093637096,
+              "log_loss": 0.6027537438481312,
+              "accuracy": 0.695364238410596,
+              "ece_5": 0.05681719437813702
+            },
+            "market_p": {
+              "brier": 0.1889737665562914,
+              "log_loss": 0.5547682839109455,
+              "accuracy": 0.7152317880794702,
+              "ece_5": 0.053023178807947026
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.008499490796103794,
+              0.005689200789654759
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.0037791521683135116,
+              0.031158381067995226
+            ]
+          },
+          "current": {
+            "rows": 32,
+            "unique_games": 32,
+            "baseline_p": {
+              "brier": 0.18756518617711704,
+              "log_loss": 0.562092646457756,
+              "accuracy": 0.75,
+              "ece_5": 0.1300147036337881
+            },
+            "candidate_p": {
+              "brier": 0.1827542615881862,
+              "log_loss": 0.5506497921642859,
+              "accuracy": 0.71875,
+              "ece_5": 0.17751678525718628
+            },
+            "market_p": {
+              "brier": 0.15896171875000004,
+              "log_loss": 0.49691188267744413,
+              "accuracy": 0.78125,
+              "ece_5": 0.16734374999999999
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.008919137667536098,
+              -0.001215176059032514
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.009892646956075763,
+              0.04444803261947823
+            ]
+          }
+        },
+        "total": {
+          "listings": 76,
+          "listed_unique_events": 76,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 34,
+            "matched price history": 41,
+            "source tip times differ by more than 15 min": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 41
+          },
+          "accepted_rule_wording": {
+            "1": 41
+          },
+          "accepted_overtime_status": {
+            "unknown": 41
+          },
+          "settlement_check": {
+            "": 35,
+            "1": 41
+          },
+          "all": {
+            "rows": 41,
+            "unique_games": 41,
+            "baseline_p": {
+              "brier": 0.27618542998752194,
+              "log_loss": 0.7521004897481586,
+              "accuracy": 0.4878048780487805,
+              "ece_5": 0.11537555886435827
+            },
+            "candidate_p": {
+              "brier": 0.2521570306853744,
+              "log_loss": 0.700563118555113,
+              "accuracy": 0.5609756097560976,
+              "ece_5": 0.06310700275521848
+            },
+            "market_p": {
+              "brier": 0.23808170731707318,
+              "log_loss": 0.6673726739083332,
+              "accuracy": 0.5609756097560976,
+              "ece_5": 0.08268292682926831
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.07320326938638311,
+              0.007170847923798371
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.02081645923698243,
+              0.0520335004831958
+            ]
+          },
+          "holdout": {
+            "rows": 9,
+            "unique_games": 9,
+            "baseline_p": {
+              "brier": 0.324132113984619,
+              "log_loss": 0.8544670412698167,
+              "accuracy": 0.3333333333333333,
+              "ece_5": 0.28676053192616924
+            },
+            "candidate_p": {
+              "brier": 0.21611336405686107,
+              "log_loss": 0.6220022397197215,
+              "accuracy": 0.6666666666666666,
+              "ece_5": 0.09904534958213838
+            },
+            "market_p": {
+              "brier": 0.22927777777777777,
+              "log_loss": 0.6511698077832024,
+              "accuracy": 0.7777777777777778,
+              "ece_5": 0.18444444444444444
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.1694132580490363,
+              -0.03929855874121798
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.06160503886091071,
+              0.0417038517242256
+            ]
+          },
+          "current": {
+            "rows": 32,
+            "unique_games": 32,
+            "baseline_p": {
+              "brier": 0.26270042511333835,
+              "log_loss": 0.7233098971326922,
+              "accuracy": 0.53125,
+              "ece_5": 0.10864622562464651
+            },
+            "candidate_p": {
+              "brier": 0.2622943119246437,
+              "log_loss": 0.7226583657275669,
+              "accuracy": 0.53125,
+              "ece_5": 0.10871235185010009
+            },
+            "market_p": {
+              "brier": 0.2405578125,
+              "log_loss": 0.6719297300060263,
+              "accuracy": 0.5,
+              "ece_5": 0.094375
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.03596346003458312,
+              0.023336507905794363
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.018274828402371927,
+              0.06887374122571013
+            ]
+          }
+        },
+        "spread": {
+          "listings": 76,
+          "listed_unique_events": 76,
+          "statuses": {
+            "scoreboard fixture missing or ambiguous": 34,
+            "matched price history": 41,
+            "source tip times differ by more than 15 min": 1
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 41
+          },
+          "accepted_rule_wording": {
+            "1": 41
+          },
+          "accepted_overtime_status": {
+            "unknown": 41
+          },
+          "settlement_check": {
+            "": 35,
+            "1": 41
+          },
+          "all": {
+            "rows": 41,
+            "unique_games": 41,
+            "baseline_p": {
+              "brier": 0.25594761813476624,
+              "log_loss": 0.7100233417881915,
+              "accuracy": 0.5121951219512195,
+              "ece_5": 0.09767576618644448
+            },
+            "candidate_p": {
+              "brier": 0.2583970691800427,
+              "log_loss": 0.7144309478898951,
+              "accuracy": 0.5609756097560976,
+              "ece_5": 0.08683388970561536
+            },
+            "market_p": {
+              "brier": 0.2524823170731707,
+              "log_loss": 0.6986725608439108,
+              "accuracy": 0.5609756097560976,
+              "ece_5": 0.09524390243902439
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.007432806111841635,
+              0.020044499386665894
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.02232138090068471,
+              0.03376977279041955
+            ]
+          },
+          "holdout": {
+            "rows": 9,
+            "unique_games": 9,
+            "baseline_p": {
+              "brier": 0.2210668045579338,
+              "log_loss": 0.6314442511004742,
+              "accuracy": 0.5555555555555556,
+              "ece_5": 0.3199108187034115
+            },
+            "candidate_p": {
+              "brier": 0.2553486506068499,
+              "log_loss": 0.7035571395247053,
+              "accuracy": 0.5555555555555556,
+              "ece_5": 0.33651280858540866
+            },
+            "market_p": {
+              "brier": 0.21168888888888893,
+              "log_loss": 0.6137124278293697,
+              "accuracy": 0.7777777777777778,
+              "ece_5": 0.27999999999999997
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              0.011045905647848683,
+              0.06067937846603842
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.016786888546743067,
+              0.07765270169338012
+            ]
+          },
+          "current": {
+            "rows": 32,
+            "unique_games": 32,
+            "baseline_p": {
+              "brier": 0.2657578469532504,
+              "log_loss": 0.7321237110441119,
+              "accuracy": 0.5,
+              "ece_5": 0.21512199318671643
+            },
+            "candidate_p": {
+              "brier": 0.25925443690375316,
+              "log_loss": 0.7174892064926048,
+              "accuracy": 0.5625,
+              "ece_5": 0.19868769378176349
+            },
+            "market_p": {
+              "brier": 0.26395546875,
+              "log_loss": 0.7225675982542505,
+              "accuracy": 0.5,
+              "ece_5": 0.18921875000000002
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.013397119943806837,
+              -0.0016364170265842116
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.03881588849764238,
+              0.018506867627502074
+            ]
+          }
+        }
+      },
+      "sportsbook": {
+        "moneyline": {
+          "holdout": {
+            "rows": 261,
+            "unique_games": 261,
+            "baseline_p": {
+              "brier": 0.2078873331986226,
+              "log_loss": 0.6053809133534719,
+              "accuracy": 0.6896551724137931,
+              "ece_5": 0.0770912396165138
+            },
+            "candidate_p": {
+              "brier": 0.2060298063139109,
+              "log_loss": 0.6016103734511058,
+              "accuracy": 0.7011494252873564,
+              "ece_5": 0.03750258825147576
+            },
+            "market_p": {
+              "brier": 0.19049615730824287,
+              "log_loss": 0.5630984538039177,
+              "accuracy": 0.7126436781609196,
+              "ece_5": 0.040138607657112815
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.006687582019972805,
+              0.002849001623351248
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.007129224006068483,
+              0.02439982369438947
+            ]
+          },
+          "current": {
+            "rows": 32,
+            "unique_games": 32,
+            "baseline_p": {
+              "brier": 0.18756518617711704,
+              "log_loss": 0.562092646457756,
+              "accuracy": 0.75,
+              "ece_5": 0.1300147036337881
+            },
+            "candidate_p": {
+              "brier": 0.1827542615881862,
+              "log_loss": 0.5506497921642859,
+              "accuracy": 0.71875,
+              "ece_5": 0.17751678525718628
+            },
+            "market_p": {
+              "brier": 0.16342714701191563,
+              "log_loss": 0.5096713346342081,
+              "accuracy": 0.78125,
+              "ece_5": 0.22390254032861057
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.0089191376675361,
+              -0.001215176059032514
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              0.007078785259681533,
+              0.032081677163518146
+            ]
+          }
+        }
+      },
+      "diagnostics": {}
+    },
+    "France Pro B": {
+      "gamma_events": 0,
+      "clob": {},
+      "sportsbook": {
+        "moneyline": {
+          "holdout": {
+            "rows": 400,
+            "unique_games": 400,
+            "baseline_p": {
+              "brier": 0.22167549009075413,
+              "log_loss": 0.6334700450255332,
+              "accuracy": 0.6375,
+              "ece_5": 0.0453157590643425
+            },
+            "candidate_p": {
+              "brier": 0.22194197594919574,
+              "log_loss": 0.6336434599943902,
+              "accuracy": 0.63,
+              "ece_5": 0.047799969467107704
+            },
+            "market_p": {
+              "brier": 0.2153905590798513,
+              "log_loss": 0.6188249462419136,
+              "accuracy": 0.6275,
+              "ece_5": 0.025351140523682904
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.003969029236005571,
+              0.004576894824585402
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.00050535716060523,
+              0.014439864963870215
+            ]
+          },
+          "current": {
+            "rows": 39,
+            "unique_games": 39,
+            "baseline_p": {
+              "brier": 0.23695723958024636,
+              "log_loss": 0.6696502940106854,
+              "accuracy": 0.6923076923076923,
+              "ece_5": 0.12241648047723509
+            },
+            "candidate_p": {
+              "brier": 0.22402628639699493,
+              "log_loss": 0.6430840725201482,
+              "accuracy": 0.6923076923076923,
+              "ece_5": 0.08338722581715718
+            },
+            "market_p": {
+              "brier": 0.23492705805847977,
+              "log_loss": 0.6616794719525372,
+              "accuracy": 0.6410256410256411,
+              "ece_5": 0.14063321293387882
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.022989770053728275,
+              0.0003116496600823321
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.01943808398029506,
+              0.0017834630873778785
+            ]
+          }
+        }
+      },
+      "diagnostics": {
+        "sportsbook_totals_unknown_overtime_wording": {
+          "holdout": {
+            "rows": 23,
+            "unique_games": 23,
+            "baseline_p": {
+              "brier": 0.27263864668327725,
+              "log_loss": 0.7394301584762328,
+              "accuracy": 0.43478260869565216,
+              "ece_5": 0.19409864272401314
+            },
+            "candidate_p": {
+              "brier": 0.270336119834142,
+              "log_loss": 0.7347643963253041,
+              "accuracy": 0.4782608695652174,
+              "ece_5": 0.17665331092726005
+            },
+            "market_p": {
+              "brier": 0.2469858117644014,
+              "log_loss": 0.6871022949344353,
+              "accuracy": 0.4782608695652174,
+              "ece_5": 0.15046148820331195
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.03966346251486372,
+              0.03343770868174891
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.007981953313628476,
+              0.05271915701263106
+            ],
+            "overtime_observed": {
+              "0": 21,
+              "1": 2
+            }
+          },
+          "current": {
+            "rows": 5,
+            "unique_games": 5,
+            "baseline_p": {
+              "brier": 0.19775992710704088,
+              "log_loss": 0.5863422328474336,
+              "accuracy": 0.8,
+              "ece_5": 0.26206648294975327
+            },
+            "candidate_p": {
+              "brier": 0.18489085453215984,
+              "log_loss": 0.5603055639385827,
+              "accuracy": 0.8,
+              "ece_5": 0.26371078623480126
+            },
+            "market_p": {
+              "brier": 0.22998077906004027,
+              "log_loss": 0.652968661831246,
+              "accuracy": 0.6,
+              "ece_5": 0.0974848438901735
+            },
+            "candidate_minus_baseline_p_brier_95_ci": null,
+            "candidate_minus_market_p_brier_95_ci": null,
+            "overtime_observed": {
+              "0": 4,
+              "1": 1
+            }
+          }
+        }
+      }
+    },
+    "VTB United League": {
+      "gamma_events": 120,
+      "clob": {
+        "moneyline": {
+          "listings": 119,
+          "listed_unique_events": 119,
+          "statuses": {
+            "matched price history": 86,
+            "scoreboard fixture missing or ambiguous": 20,
+            "source tip times differ by more than 15 min": 13
+          },
+          "accepted_anchor_basis": {
+            "earliest independent/Gamma tip": 86
+          },
+          "accepted_rule_wording": {
+            "1": 86
+          },
+          "accepted_overtime_status": {
+            "0": 82,
+            "1": 4
+          },
+          "settlement_check": {
+            "1": 86,
+            "": 33
+          },
+          "all": {
+            "rows": 86,
+            "unique_games": 86,
+            "baseline_p": {
+              "brier": 0.12832399524123075,
+              "log_loss": 0.4193097678101569,
+              "accuracy": 0.872093023255814,
+              "ece_5": 0.09857506951436236
+            },
+            "candidate_p": {
+              "brier": 0.11483727917479251,
+              "log_loss": 0.37101306826540514,
+              "accuracy": 0.8488372093023255,
+              "ece_5": 0.08044766305287639
+            },
+            "market_p": {
+              "brier": 0.105976125,
+              "log_loss": 0.3546890072263339,
+              "accuracy": 0.8604651162790697,
+              "ece_5": 0.05871511627906976
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.023096448654876013,
+              -0.005150564579475427
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.004448631878296229,
+              0.02063927205425678
+            ]
+          },
+          "holdout": {
+            "rows": 49,
+            "unique_games": 49,
+            "baseline_p": {
+              "brier": 0.14387435393026465,
+              "log_loss": 0.45021756732478524,
+              "accuracy": 0.8367346938775511,
+              "ece_5": 0.0627088308027356
+            },
+            "candidate_p": {
+              "brier": 0.1391785844841121,
+              "log_loss": 0.4286198246828241,
+              "accuracy": 0.7755102040816326,
+              "ece_5": 0.08576857964640813
+            },
+            "market_p": {
+              "brier": 0.13068610714285714,
+              "log_loss": 0.4099767138982259,
+              "accuracy": 0.8163265306122449,
+              "ece_5": 0.050051020408163255
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.01652120206186038,
+              0.004636072608216726
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.009723216278399279,
+              0.02503634951321724
+            ]
+          },
+          "current": {
+            "rows": 37,
+            "unique_games": 37,
+            "baseline_p": {
+              "brier": 0.10773027697737499,
+              "log_loss": 0.37837781710159485,
+              "accuracy": 0.918918918918919,
+              "ece_5": 0.17742621105732828
+            },
+            "candidate_p": {
+              "brier": 0.08260149646785582,
+              "log_loss": 0.2947230394963907,
+              "accuracy": 0.9459459459459459,
+              "ece_5": 0.1049016600126498
+            },
+            "market_p": {
+              "brier": 0.07325209459459461,
+              "log_loss": 0.28147015244463897,
+              "accuracy": 0.918918918918919,
+              "ece_5": 0.10575675675675676
+            },
+            "candidate_minus_baseline_p_brier_95_ci": [
+              -0.037814608386132216,
+              -0.01571292111446039
+            ],
+            "candidate_minus_market_p_brier_95_ci": [
+              -0.00965662957069657,
+              0.022281504249712758
+            ]
+          }
+        }
+      },
+      "sportsbook": {},
+      "diagnostics": {}
+    }
+  }
+}

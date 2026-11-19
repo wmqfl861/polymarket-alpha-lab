@@ -150,11 +150,11 @@ VERDICT_NOT_ASSESSABLE = "NOT_ASSESSABLE"
 VERDICT_NOT_ASSESSABLE_M1 = "NOT_ASSESSABLE_M1"
 
 _MAX_DT = datetime.max.replace(tzinfo=timezone.utc)
-_COUNTED_OUTCOMES = (
+_TRADE_NATURAL_OUTCOMES = (
     *ledger.NATURAL_OUTCOMES,
     *ledger.SETTLED_LABEL_OUTCOMES,
-    ledger.EXITED_OUTCOME,
 )
+_COUNTED_OUTCOMES = (*_TRADE_NATURAL_OUTCOMES, ledger.EXITED_OUTCOME)
 _ALLOWED_OUTCOMES = (*_COUNTED_OUTCOMES, ledger.VOIDED_OUTCOME, None)
 _ALLOWED_SIDES = ("YES", "NO", "YES-basket", "NO-basket")
 
@@ -1172,9 +1172,12 @@ def _evaluate_queue(
     )
     roi, roi_rows = _roi_metrics(counted, pnl_basis)
 
-    natural = [c for c in entered if c.outcome in ledger.NATURAL_OUTCOMES]
+    natural = [c for c in counted if c.outcome in _TRADE_NATURAL_OUTCOMES]
     hits = sum(
-        1 for c in natural if natural_hit(str(c.side), str(c.outcome))
+        c.outcome == ledger.WIN_OUTCOME
+        if c.outcome in ledger.SETTLED_LABEL_OUTCOMES
+        else natural_hit(str(c.side), str(c.outcome))
+        for c in natural
     )
     fills = FillMetrics(
         natural_settled=len(natural),

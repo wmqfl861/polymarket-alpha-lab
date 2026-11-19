@@ -27,6 +27,7 @@ import copy
 import pytest
 
 from polymarket_alpha_lab.papersim import intl_model as im
+from polymarket_alpha_lab.papersim import intl_totals
 from polymarket_alpha_lab.papersim.soccer_model import RHO_DC, score_grid
 
 # ---------------------------------------------------------------------------
@@ -338,6 +339,74 @@ def test_mixed_provenance_and_unresolvable_pair() -> None:
     assert im.fixture_prediction(bad, fixture()) is None
     reason = im.refusal_reason(bad, fixture())
     assert reason is not None and "AAA" in reason and "cannot be rated" in reason
+
+
+@pytest.mark.parametrize("extra_day", ["2026-01-10", "2026-01-11"])
+def test_prediction_and_shadow_ignore_same_day_and_later_totals(extra_day) -> None:
+    tournament = "UEFA Nations League"
+    dated = fixture(date="2026-01-10")
+    prior = match_row("2026-01-01", "AAA", "BBB", 2, 0, tournament)
+    complete = snap([prior, match_row(extra_day, "AAA", "BBB", 10, 0, tournament)])
+    truncated = snap([prior])
+    baseline = im.fixture_prediction(truncated, dated, tournament=tournament)
+    assert baseline is not None
+    assert baseline.total_base == 2.0
+    assert baseline.over_line_prob(2.5).p_over == pytest.approx(0.323323, abs=1e-6)
+    assert im.fixture_prediction(complete, dated, tournament=tournament) == baseline
+    assert (
+        intl_totals.IntlTotalsResearch(complete).predict(dated, tournament=tournament)
+        == intl_totals.IntlTotalsResearch(truncated).predict(dated, tournament=tournament)
+    )
+
+
+def test_future_replay_membership_cannot_remove_stale_compatibility_quote() -> None:
+    dated = fixture(date="2026-01-10")
+    prior = match_row("2026-01-01", "AAA", "CCC", 1, 0)
+    same_day = match_row(dated.date, "AAA", "BBB", 2, 1)
+    teams = {"AAA": {"elo": 1550.0}, "BBB": {"elo": 1500.0}}
+    quote = im.fixture_prediction(snap([prior], teams), dated)
+    assert quote is not None and quote.ratings_stale
+    assert im.fixture_prediction(snap([prior, same_day], teams), dated) == quote
+
+
+def test_shadow_distinguishes_matchup_goal_tendencies_at_equal_elo() -> None:
+    tournament = "UEFA Nations League"
+    prior = []
+    for day in range(1, 7):
+        stamp = f"2026-01-{day:02d}"
+        prior.extend([
+            match_row(stamp, "AAA", "BBB", 3, 3, tournament, neutral=True),
+            match_row(stamp, "CCC", "DDD", 0, 0, tournament, neutral=True),
+        ])
+    research = intl_totals.IntlTotalsResearch(snap(prior))
+    fixtures = [
+        fixture(home="AAA", away="BBB", date="2026-01-10", neutral=True),
+        fixture(home="CCC", away="DDD", date="2026-01-10", neutral=True),
+    ]
+    high, low = [research.predict(game, tournament=tournament) for game in fixtures]
+    assert high.baseline_total == low.baseline_total == 3.0
+    assert high.p_over25 > high.baseline_over25 == low.baseline_over25 > low.p_over25
+    augmented = intl_totals.IntlTotalsResearch(snap(prior + [
+        match_row("2026-01-10", "AAA", "BBB", 0, 0, tournament),
+        match_row("2026-01-11", "CCC", "DDD", 10, 0, tournament),
+    ]))
+    for game, quote in zip(fixtures, (high, low)):
+        assert augmented.predict(game, tournament=tournament) == quote
+        assert 0.0 < quote.p_over25 < 1.0
+        assert 0.0 < quote.p_under25 < 1.0
+        assert quote.p_over25 + quote.p_under25 == 1.0
+        assert quote.fallback_reason is None
+        assert quote.home_recent_matches == quote.away_recent_matches == 6
+
+
+def test_shadow_without_history_uses_prior_and_ignores_current_table() -> None:
+    dated = fixture()
+    quote = intl_totals.IntlTotalsResearch(TABLE_SNAP).predict(dated, tournament="Cup X")
+    assert quote.p_over25 == quote.baseline_over25
+    assert quote.baseline_total == im.GLOBAL_FALLBACK_TOTAL
+    assert quote.home_recent_matches == quote.away_recent_matches == quote.tournament_matches == 0
+    assert quote.fallback_reason == "insufficient_recent_matches"
+    assert intl_totals.IntlTotalsResearch(snap([])).predict(dated, tournament="Cup X") == quote
 
 
 # ---------------------------------------------------------------------------

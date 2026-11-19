@@ -152,17 +152,6 @@ from polymarket_alpha_lab.papersim.nba_model import (
     team_ratings as nba_team_ratings,
 )
 
-from polymarket_alpha_lab.papersim.intl_data import (
-    compute_elo_history,
-    load_intl_snapshot,
-)
-from polymarket_alpha_lab.papersim.intl_model import (
-    INTL_MW_RESEARCH_ONLY,
-    IntlFixture,
-    IntlPrediction,
-    fixture_prediction as intl_fixture_prediction,
-)
-
 from polymarket_alpha_lab.papersim.ledger import (
     DEFAULT_PAPERSIM_PG_DSN,
     EXITED_OUTCOME,
@@ -271,6 +260,14 @@ from polymarket_alpha_lab.papersim.xg import (
 )
 
 _MAIN_ATTR = "cli_main"
+_INTL_EXPORTS = {
+    "compute_elo_history": ("intl_data", "compute_elo_history"),
+    "load_intl_snapshot": ("intl_data", "load_intl_snapshot"),
+    "INTL_MW_RESEARCH_ONLY": ("intl_model", "INTL_MW_RESEARCH_ONLY"),
+    "IntlFixture": ("intl_model", "IntlFixture"),
+    "IntlPrediction": ("intl_model", "IntlPrediction"),
+    "intl_fixture_prediction": ("intl_model", "fixture_prediction"),
+}
 
 
 def __getattr__(name: str):
@@ -283,7 +280,19 @@ def __getattr__(name: str):
         from polymarket_alpha_lab.papersim.cli import main
 
         return main
+    if name in _INTL_EXPORTS or name in {"intl_data", "intl_model"}:
+        from importlib import import_module
+
+        module_name, attr = _INTL_EXPORTS.get(name, (name, None))
+        module = import_module(f".{module_name}", __name__)
+        value = module if attr is None else getattr(module, attr)
+        globals()[name] = value
+        return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | _INTL_EXPORTS.keys() | {"intl_data", "intl_model"})
 
 
 __all__ = [

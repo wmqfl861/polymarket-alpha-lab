@@ -312,6 +312,27 @@ def test_exited_rows_counted_for_roi_but_not_natural_scoring():
     assert q.roi.exit_fees > 0.0
 
 
+@pytest.mark.parametrize(("win", "loss"), [("win", "loss"), ("YES", "NO"), ("YES", "loss")])
+def test_natural_hit_rate_includes_trade_labels_and_market_tokens(win, loss):
+    rows = [
+        mk(candidate_id="w", market_key="winner", outcome=win),
+        mk(candidate_id="l", market_key="loser", outcome=loss, recorded_pnl=-100.0),
+        mk(candidate_id="x", market_key="exit", outcome="EXITED",
+           natural_outcome="YES", recorded_pnl=-10.0),
+        mk(candidate_id="v", market_key="void", outcome="VOIDED",
+           natural_outcome="YES", recorded_pnl=0.0),
+        mk(candidate_id="u", market_key="open", outcome=None,
+           natural_outcome="YES", recorded_pnl=None),
+    ]
+    q = ev.evaluate_queues(rows).queues[0]
+    assert q.fills.natural_settled == 2
+    assert q.fills.hits == 1
+    assert q.fills.hit_rate == 0.5
+    assert q.scoring.markets_scored == 3 + sum(
+        outcome in ledger.NATURAL_OUTCOMES for outcome in (win, loss)
+    )
+
+
 def test_recomputed_basis_uses_public_settlement_arithmetic():
     rows = [
         mk(candidate_id="r1", stake=250.0, fill_price=0.56, side="YES",
@@ -443,7 +464,9 @@ def test_natural_outcome_feeds_scoring_independently_of_trade_labels():
     # all counted ROI rows; exits stay excluded from natural hit counts.
     assert q.roi.counted == 4
     assert q.counts.exited == 2
-    assert q.fills.natural_settled == 0
+    assert q.fills.natural_settled == 2
+    assert q.fills.hits == 1
+    assert q.fills.hit_rate == 0.5
 
 
 def test_natural_outcome_must_be_a_natural_resolution():

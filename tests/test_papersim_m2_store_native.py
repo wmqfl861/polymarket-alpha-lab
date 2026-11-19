@@ -3,7 +3,7 @@
 Runs only inside the disposable native cluster environment. Per M2 plan
 section 6.3 item 4 every test builds its OWN one-shot managed database
 (never sharing rows with the M1 module faces or sibling tests), applies
-the full three-entry catalog and proves the transactional contracts of
+the current complete catalog and proves the transactional contracts of
 ``mark_capture_upsert``, ``settlement_record`` and ``bankroll_daily_check``
 against real PostgreSQL: atomic cash legs, idempotent re-runs,
 changed-content conflicts, the one-close rules, the P3-9 close time-order
@@ -70,7 +70,8 @@ def m2_face():
     bootstrap.close()
     owner = connect(owner_dsn)
     result = pm.apply_pending_migrations(owner, ROOT)
-    assert result['applied'] == 3  # the full M2 catalog, fresh face
+    assert result['applied'] == len(pm.papersim_migration_catalog(ROOT))
+    assert pm.migration_status(owner, ROOT)['pending'] == []
     owner.close()
     app_dsn = owner_dsn.replace('user=pal_owner', 'user=pal_app')
     return owner_dsn, app_dsn

@@ -1,0 +1,2136 @@
+{
+  "repo": "/home/ubuntu/test-sandbox/projects/pal-optimization-20261118",
+  "repo_revision": "80475c850c410b0efaa2e4387fa8532677e5a317",
+  "baseline_sources_sha256": {
+    "tools/wp_nba_validate.py": "9f44c39b5427559759d66e575a40bc9af84b7a26274f79ea8be6f7799089235e",
+    "src/polymarket_alpha_lab/papersim/nba_model.py": "2395b7bbdf504ec170eff2632dc7f2ad5cfa9baccd2546129eeb50cb6090a5ea",
+    "src/polymarket_alpha_lab/papersim/espn_nba.py": "ccb13459e7e8c0b386f39b478c9dd43922789781aa82b9fe32bd337f9d71b948"
+  },
+  "target_rule": {
+    "ml": "home win",
+    "spread": "actual home margin > line",
+    "total": "actual points from both teams > line",
+    "pushes": "excluded from binary scoring"
+  },
+  "market_rule_cohorts": {
+    "PM-explicit-full-game-OT": "final score including overtime is explicit in contract; binary terminal agrees with NBA final score",
+    "PM-NBA-final-score-diagnostic": "full-game contract does not expressly include OT; binary terminal agrees with NBA final score",
+    "DK-postfinal-close-proxy": "retained ESPN DraftKings close archive fields without price timestamps"
+  },
+  "feature_rule": "same-season prior days only, eight earlier games each team; no market quotes, teammate injuries, or final season summaries",
+  "season_results": {
+    "2024-25": {
+      "same_season_formal_wp_metrics": {
+        "A": {
+          "games": 1230,
+          "teams": 30,
+          "dates": [
+            "2024-10-22",
+            "2025-04-13"
+          ],
+          "counts_per_team": {
+            "ATL": 82,
+            "BOS": 82,
+            "NO": 82,
+            "CHI": 82,
+            "CLE": 82,
+            "DAL": 82,
+            "DEN": 82,
+            "DET": 82,
+            "GS": 82,
+            "HOU": 82,
+            "IND": 82,
+            "LAC": 82,
+            "LAL": 82,
+            "MIA": 82,
+            "MIL": 82,
+            "MIN": 82,
+            "BKN": 82,
+            "NY": 82,
+            "ORL": 82,
+            "PHI": 82,
+            "PHX": 82,
+            "POR": 82,
+            "SAC": 82,
+            "SA": 82,
+            "OKC": 82,
+            "UTAH": 82,
+            "WSH": 82,
+            "TOR": 82,
+            "MEM": 82,
+            "CHA": 82
+          },
+          "snapshot_validated": true,
+          "base_espn_snapshot_rebuilt_equal": null,
+          "historical_schedule_boxscore_crosschecked": true,
+          "team_game_possessions_mean": 101.95336585365854,
+          "team_game_possessions_94_102_share": 0.4691056910569106
+        },
+        "B": {
+          "n": 1104,
+          "pearson_exp_total_vs_actual": {
+            "r": 0.39558039015896923,
+            "p": 8.029493980012899e-44
+          },
+          "spearman_exp_total_vs_actual": {
+            "rho": 0.38281886673946297,
+            "p": 7.503616579316847e-41
+          },
+          "pearson_exp_margin_vs_actual": {
+            "r": 0.468274243479439,
+            "p": 1.0248675050217698e-63
+          },
+          "spearman_exp_margin_vs_actual_rho": 0.4663213624712558,
+          "mean_abs_total_error_pts": 14.846551002108741,
+          "mean_abs_margin_error_pts": 11.213815369671103,
+          "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+          "passed": true
+        },
+        "C": {
+          "teams": 30,
+          "spearman_ewma_ortg_vs_win_pct": {
+            "rho": 0.8398543992996561,
+            "p": 2.2557506314332655e-10
+          },
+          "spearman_ewma_net_vs_win_pct": {
+            "rho": 0.9167518960508189,
+            "p": 3.6686401334817775e-16
+          },
+          "spearman_ewma_ortg_vs_actual_net": 0.8580645161290322,
+          "spearman_ewma_net_vs_actual_net": 0.9532814238042269,
+          "bar": "Spearman rho(EWMA net rating, win%) >= 0.5 over 30 teams",
+          "passed": true
+        },
+        "D": {
+          "passed": true,
+          "n": 1104,
+          "min_n": 20
+        },
+        "E": {
+          "mad_max": 0.06,
+          "dk_postfinal_proxy_n": 0,
+          "dk_postfinal_proxy_mad": null,
+          "pm_strict_n": 0,
+          "pm_strict_mad": null,
+          "pm_diagnostic_n": 160,
+          "pm_diagnostic_mad": 0.09233405765448496,
+          "dk_proxy_at_mad_bar": null,
+          "pm_strict_at_mad_bar": null
+        },
+        "retest_bar_whole_season_same_season_games": {
+          "n": 1104,
+          "min_n": 90,
+          "attained": true
+        },
+        "formal_note": "WP gate E keeps the historical DK proxy separate. Strict PM comparison requires both price timestamps and explicit final score including overtime rules."
+      },
+      "splits": {
+        "train": {
+          "n": 358,
+          "dates": [
+            "2024-11-06",
+            "2024-12-31"
+          ]
+        },
+        "tune": {
+          "n": 330,
+          "dates": [
+            "2025-01-01",
+            "2025-02-13"
+          ]
+        },
+        "holdout": {
+          "n": 416,
+          "dates": [
+            "2025-02-19",
+            "2025-04-13"
+          ]
+        }
+      },
+      "model_selection": {
+        "margin": {
+          "fit": {
+            "intercept": 0.4673228870333881,
+            "slope": 0.7069662585151057,
+            "residual_sigma": 13.492470095695587,
+            "ridge": 800.0
+          },
+          "weight": 0.75,
+          "tune_losses": {
+            "0.0": 0.6310373130474645,
+            "0.25": 0.6292158677691313,
+            "0.5": 0.6281209724627898,
+            "0.75": 0.6278777065834948,
+            "1.0": 0.6284540754723086
+          }
+        },
+        "total": {
+          "fit": {
+            "intercept": 71.44767639587934,
+            "slope": 0.6835913524812649,
+            "residual_sigma": 19.565392390773255,
+            "ridge": 512.0
+          },
+          "weight": 0.0,
+          "tune_losses": {
+            "0.0": 4.2730163683635105,
+            "0.25": 4.274763438816866,
+            "0.5": 4.278157740285096,
+            "0.75": 4.283107031552219,
+            "1.0": 4.28952845928712
+          }
+        }
+      },
+      "baseline_all_eligible": {
+        "all_game_ml": {
+          "ml": {
+            "n": 1104,
+            "pushes": 0,
+            "dates": [
+              "2024-11-06",
+              "2025-04-13"
+            ],
+            "over_or_home_rate": 0.5434782608695652,
+            "variant_spread": {
+              "max": 0.20475521909050448,
+              "fraction_gt_6c": 0.33967391304347827
+            },
+            "baseline": {
+              "brier": 0.20793601699028108,
+              "log_loss": 0.6016862781176299,
+              "accuracy": 0.6612318840579711
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599282,
+              "accuracy": 0.5434782608695652
+            },
+            "home_always": {
+              "brier": 0.45652173913043476,
+              "log_loss": 12.61417191295213,
+              "accuracy": 0.5434782608695652
+            },
+            "favorite_flip_vs_market": null
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "DK-postfinal-close-proxy": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-explicit-full-game-OT": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-NBA-final-score-diagnostic": {
+          "ml": {
+            "n": 160,
+            "pushes": 0,
+            "dates": [
+              "2025-02-20",
+              "2025-04-13"
+            ],
+            "over_or_home_rate": 0.49375,
+            "variant_spread": {
+              "max": 0.19865382659554615,
+              "fraction_gt_6c": 0.5375
+            },
+            "baseline": {
+              "brier": 0.1974214342345257,
+              "log_loss": 0.5781176534036049,
+              "accuracy": 0.71875
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599464,
+              "accuracy": 0.49375
+            },
+            "optimized": {
+              "brier": 0.20118686918219225,
+              "log_loss": 0.5879879233408845,
+              "accuracy": 0.70625
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              -0.0015309267253191777,
+              0.02058983804271197
+            ],
+            "market": {
+              "brier": 0.17977609375,
+              "log_loss": 0.5402290885478002,
+              "accuracy": 0.75
+            },
+            "baseline_vs_market_mad": 0.09233405765448496,
+            "baseline_minus_market_log_loss_ci95": [
+              0.007870227274046935,
+              0.06950161977495732
+            ],
+            "optimized_vs_market_mad": 0.10423753923769116,
+            "optimized_minus_market_log_loss_ci95": [
+              0.01310846249758387,
+              0.08358734986837944
+            ],
+            "home_always": {
+              "brier": 0.50625,
+              "log_loss": 13.988215639184,
+              "accuracy": 0.49375
+            },
+            "favorite_flip_vs_market": 21
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        }
+      },
+      "chronological_holdout": {
+        "all_game_ml": {
+          "ml": {
+            "n": 416,
+            "pushes": 0,
+            "dates": [
+              "2025-02-19",
+              "2025-04-13"
+            ],
+            "over_or_home_rate": 0.5384615384615384,
+            "variant_spread": {
+              "max": 0.20475521909050448,
+              "fraction_gt_6c": 0.5264423076923077
+            },
+            "baseline": {
+              "brier": 0.19479645295773843,
+              "log_loss": 0.5722674455338684,
+              "accuracy": 0.7043269230769231
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599467,
+              "accuracy": 0.5384615384615384
+            },
+            "optimized": {
+              "brier": 0.19797578948694988,
+              "log_loss": 0.5811586843439815,
+              "accuracy": 0.7043269230769231
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.0024673196808883318,
+              0.014841863420966009
+            ],
+            "home_always": {
+              "brier": 0.46153846153846156,
+              "log_loss": 12.752789186720479,
+              "accuracy": 0.5384615384615384
+            },
+            "favorite_flip_vs_market": null
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "DK-postfinal-close-proxy": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-explicit-full-game-OT": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-NBA-final-score-diagnostic": {
+          "ml": {
+            "n": 160,
+            "pushes": 0,
+            "dates": [
+              "2025-02-20",
+              "2025-04-13"
+            ],
+            "over_or_home_rate": 0.49375,
+            "variant_spread": {
+              "max": 0.19865382659554615,
+              "fraction_gt_6c": 0.5375
+            },
+            "baseline": {
+              "brier": 0.1974214342345257,
+              "log_loss": 0.5781176534036049,
+              "accuracy": 0.71875
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599464,
+              "accuracy": 0.49375
+            },
+            "optimized": {
+              "brier": 0.20118686918219225,
+              "log_loss": 0.5879879233408845,
+              "accuracy": 0.70625
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              -0.0015309267253191777,
+              0.02058983804271197
+            ],
+            "market": {
+              "brier": 0.17977609375,
+              "log_loss": 0.5402290885478002,
+              "accuracy": 0.75
+            },
+            "baseline_vs_market_mad": 0.09233405765448496,
+            "baseline_minus_market_log_loss_ci95": [
+              0.007870227274046935,
+              0.06950161977495732
+            ],
+            "optimized_vs_market_mad": 0.10423753923769116,
+            "optimized_minus_market_log_loss_ci95": [
+              0.01310846249758387,
+              0.08358734986837944
+            ],
+            "home_always": {
+              "brier": 0.50625,
+              "log_loss": 13.988215639184,
+              "accuracy": 0.49375
+            },
+            "favorite_flip_vs_market": 21
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        }
+      },
+      "holdout_point_fit": {
+        "margin": {
+          "baseline_mae": 11.028582734146418,
+          "optimized_mae": 11.218332320665182,
+          "baseline_r": 0.5313214090221355,
+          "optimized_r": 0.5313214090221355
+        },
+        "total": {
+          "baseline_mae": 14.433263857699368,
+          "optimized_mae": 14.433263857699368,
+          "baseline_r": 0.3734298517897514,
+          "optimized_r": 0.3734298517897514
+        }
+      },
+      "games_sha256": "a71489ae2ee8a3afddd4c8520ce4e93b3005c399590cae83791e493f215a902d",
+      "prices_sha256": "11a9ba5efd29fcf9eeec37b773c9463f9b5f19341207a6c193e1b7b2c8ec0728",
+      "games_source": {
+        "retrieved_at": "2026-11-19T01:54:32.830906+00:00",
+        "season": "2024-25",
+        "sources": {
+          "box_inputs": "https://www.basketball-reference.com/teams/{Basketball Reference abbreviation}/{year}/gamelog/",
+          "schedule": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{ESPN team id}/schedule?season={year}&seasontype=2"
+        }
+      },
+      "market_source": {
+        "cohort": "earliest-listed-line",
+        "counts": {
+          "ml": 160
+        },
+        "eligible_in_window": 416,
+        "market_from": "2025-02-16",
+        "pregame_minutes_before_tip": [
+          5,
+          25
+        ],
+        "retrieved_at": "2026-11-19T02:10:57.553574+00:00",
+        "season": "2024-25",
+        "selected": 160,
+        "settlement_by_market": {
+          "NBA-final-score-OT-not-explicit": {
+            "ml": 160
+          },
+          "explicit-full-game-including-OT": {}
+        },
+        "sources": {
+          "contracts": "https://gamma-api.polymarket.com",
+          "prices": "https://clob.polymarket.com/prices-history"
+        },
+        "missing_reasons": {
+          "spread no matching market contract": 160,
+          "total no matching market contract": 158,
+          "total unexpected totals outcomes": 2
+        }
+      }
+    },
+    "2025-26": {
+      "same_season_formal_wp_metrics": {
+        "A": {
+          "games": 1230,
+          "teams": 30,
+          "dates": [
+            "2025-10-21",
+            "2026-04-12"
+          ],
+          "counts_per_team": {
+            "ATL": 82,
+            "BOS": 82,
+            "NO": 82,
+            "CHI": 82,
+            "CLE": 82,
+            "DAL": 82,
+            "DEN": 82,
+            "DET": 82,
+            "GS": 82,
+            "HOU": 82,
+            "IND": 82,
+            "LAC": 82,
+            "LAL": 82,
+            "MIA": 82,
+            "MIL": 82,
+            "MIN": 82,
+            "BKN": 82,
+            "NY": 82,
+            "ORL": 82,
+            "PHI": 82,
+            "PHX": 82,
+            "POR": 82,
+            "SAC": 82,
+            "SA": 82,
+            "OKC": 82,
+            "UTAH": 82,
+            "WSH": 82,
+            "TOR": 82,
+            "MEM": 82,
+            "CHA": 82
+          },
+          "snapshot_validated": true,
+          "base_espn_snapshot_rebuilt_equal": null,
+          "historical_schedule_boxscore_crosschecked": true,
+          "team_game_possessions_mean": 102.55403252032521,
+          "team_game_possessions_94_102_share": 0.43821138211382116
+        },
+        "B": {
+          "n": 1106,
+          "pearson_exp_total_vs_actual": {
+            "r": 0.31613248486954376,
+            "p": 1.5745653464880287e-27
+          },
+          "spearman_exp_total_vs_actual": {
+            "rho": 0.3100137903703014,
+            "p": 1.8146782338535287e-26
+          },
+          "pearson_exp_margin_vs_actual": {
+            "r": 0.47364627755069105,
+            "p": 1.5908379381585505e-65
+          },
+          "spearman_exp_margin_vs_actual_rho": 0.4837893753192292,
+          "mean_abs_total_error_pts": 15.194676651204734,
+          "mean_abs_margin_error_pts": 11.510277088604218,
+          "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+          "passed": true
+        },
+        "C": {
+          "teams": 30,
+          "spearman_ewma_ortg_vs_win_pct": {
+            "rho": 0.8472165609401886,
+            "p": 9.45104831672903e-11
+          },
+          "spearman_ewma_net_vs_win_pct": {
+            "rho": 0.920267831178985,
+            "p": 1.386434427955177e-16
+          },
+          "spearman_ewma_ortg_vs_actual_net": 0.8918798665183537,
+          "spearman_ewma_net_vs_actual_net": 0.9701890989988876,
+          "bar": "Spearman rho(EWMA net rating, win%) >= 0.5 over 30 teams",
+          "passed": true
+        },
+        "D": {
+          "passed": true,
+          "n": 1106,
+          "min_n": 20
+        },
+        "E": {
+          "mad_max": 0.06,
+          "dk_postfinal_proxy_n": 0,
+          "dk_postfinal_proxy_mad": null,
+          "pm_strict_n": 156,
+          "pm_strict_mad": 0.08455365105668919,
+          "pm_diagnostic_n": 0,
+          "pm_diagnostic_mad": null,
+          "dk_proxy_at_mad_bar": null,
+          "pm_strict_at_mad_bar": false
+        },
+        "retest_bar_whole_season_same_season_games": {
+          "n": 1106,
+          "min_n": 90,
+          "attained": true
+        },
+        "formal_note": "WP gate E keeps the historical DK proxy separate. Strict PM comparison requires both price timestamps and explicit final score including overtime rules."
+      },
+      "splits": {
+        "train": {
+          "n": 372,
+          "dates": [
+            "2025-11-07",
+            "2025-12-31"
+          ]
+        },
+        "tune": {
+          "n": 323,
+          "dates": [
+            "2026-01-01",
+            "2026-02-12"
+          ]
+        },
+        "holdout": {
+          "n": 411,
+          "dates": [
+            "2026-02-19",
+            "2026-04-12"
+          ]
+        }
+      },
+      "model_selection": {
+        "margin": {
+          "fit": {
+            "intercept": 0.12133883483339147,
+            "slope": 0.6507574454091528,
+            "residual_sigma": 13.676017971257693,
+            "ridge": 800.0
+          },
+          "weight": 1.0,
+          "tune_losses": {
+            "0.0": 0.6533604909960048,
+            "0.25": 0.6502791585893671,
+            "0.5": 0.6481537332791033,
+            "0.75": 0.6470695864658516,
+            "1.0": 0.6470234423306254
+          }
+        },
+        "total": {
+          "fit": {
+            "intercept": 77.44752904952281,
+            "slope": 0.6708825955660029,
+            "residual_sigma": 19.845842915189365,
+            "ridge": 512.0
+          },
+          "weight": 0.25,
+          "tune_losses": {
+            "0.0": 4.351242584969446,
+            "0.25": 4.349842631083537,
+            "0.5": 4.350461265071512,
+            "0.75": 4.352982804970121,
+            "1.0": 4.357294657900077
+          }
+        }
+      },
+      "baseline_all_eligible": {
+        "all_game_ml": {
+          "ml": {
+            "n": 1106,
+            "pushes": 0,
+            "dates": [
+              "2025-11-07",
+              "2026-04-12"
+            ],
+            "over_or_home_rate": 0.5479204339963833,
+            "variant_spread": {
+              "max": 0.21655734367488866,
+              "fraction_gt_6c": 0.3399638336347197
+            },
+            "baseline": {
+              "brier": 0.20195960011900668,
+              "log_loss": 0.5917441586878918,
+              "accuracy": 0.6844484629294756
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599282,
+              "accuracy": 0.5479204339963833
+            },
+            "home_always": {
+              "brier": 0.45207956600361665,
+              "log_loss": 12.491430035214826,
+              "accuracy": 0.5479204339963833
+            },
+            "favorite_flip_vs_market": null
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "DK-postfinal-close-proxy": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-explicit-full-game-OT": {
+          "ml": {
+            "n": 156,
+            "pushes": 0,
+            "dates": [
+              "2026-02-19",
+              "2026-04-12"
+            ],
+            "over_or_home_rate": 0.5448717948717948,
+            "variant_spread": {
+              "max": 0.17860122369347375,
+              "fraction_gt_6c": 0.44871794871794873
+            },
+            "baseline": {
+              "brier": 0.1660621641552861,
+              "log_loss": 0.509844198745628,
+              "accuracy": 0.7692307692307693
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599464,
+              "accuracy": 0.5448717948717948
+            },
+            "optimized": {
+              "brier": 0.18044232216399028,
+              "log_loss": 0.5465381680539145,
+              "accuracy": 0.7884615384615384
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.01525055988433756,
+              0.054186394126697006
+            ],
+            "market": {
+              "brier": 0.1512571939102564,
+              "log_loss": 0.46733094886638527,
+              "accuracy": 0.7884615384615384
+            },
+            "baseline_vs_market_mad": 0.08455365105668919,
+            "baseline_minus_market_log_loss_ci95": [
+              0.010179586020077014,
+              0.0726753743271985
+            ],
+            "optimized_vs_market_mad": 0.11736537871742854,
+            "optimized_minus_market_log_loss_ci95": [
+              0.04406752920059281,
+              0.11258741451212281
+            ],
+            "home_always": {
+              "brier": 0.4551282051282051,
+              "log_loss": 12.575667114682771,
+              "accuracy": 0.5448717948717948
+            },
+            "favorite_flip_vs_market": 17
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-NBA-final-score-diagnostic": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 157,
+            "pushes": 0,
+            "dates": [
+              "2026-02-19",
+              "2026-04-12"
+            ],
+            "over_or_home_rate": 0.4585987261146497,
+            "variant_spread": {
+              "max": 0.21445963252433237,
+              "fraction_gt_6c": 0.46496815286624205
+            },
+            "baseline": {
+              "brier": 0.26188918597102456,
+              "log_loss": 0.7190509636123869,
+              "accuracy": 0.5222929936305732
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599464,
+              "accuracy": 0.4585987261146497
+            },
+            "optimized": {
+              "brier": 0.2810080540670788,
+              "log_loss": 0.7605860734911258,
+              "accuracy": 0.45222929936305734
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.008801824301405355,
+              0.07245527245326941
+            ],
+            "market": {
+              "brier": 0.24631624203821656,
+              "log_loss": 0.68676610356064,
+              "accuracy": 0.5859872611464968
+            },
+            "baseline_vs_market_mad": 0.09060220929877974,
+            "baseline_minus_market_log_loss_ci95": [
+              -0.006292965590596723,
+              0.07159859581933542
+            ],
+            "optimized_vs_market_mad": 0.12241410414466897,
+            "optimized_minus_market_log_loss_ci95": [
+              0.025006734845382073,
+              0.12311681343503787
+            ]
+          },
+          "total": {
+            "n": 156,
+            "pushes": 0,
+            "dates": [
+              "2026-02-19",
+              "2026-04-12"
+            ],
+            "over_or_home_rate": 0.5512820512820513,
+            "variant_spread": {
+              "max": 0.1933456373325716,
+              "fraction_gt_6c": 0.46153846153846156
+            },
+            "baseline": {
+              "brier": 0.24831269540232603,
+              "log_loss": 0.68972054671642,
+              "accuracy": 0.5512820512820513
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599464,
+              "accuracy": 0.5512820512820513
+            },
+            "optimized": {
+              "brier": 0.246729566687661,
+              "log_loss": 0.6864978132570836,
+              "accuracy": 0.5448717948717948
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              -0.009613889892532942,
+              0.0030465798847941566
+            ],
+            "market": {
+              "brier": 0.24242536057692307,
+              "log_loss": 0.678246790319748,
+              "accuracy": 0.5705128205128205
+            },
+            "baseline_vs_market_mad": 0.07248738126515661,
+            "baseline_minus_market_log_loss_ci95": [
+              -0.01936680051790872,
+              0.04030232617303276
+            ],
+            "optimized_vs_market_mad": 0.06897094720759468,
+            "optimized_minus_market_log_loss_ci95": [
+              -0.021167087294390336,
+              0.03638908799266292
+            ]
+          }
+        }
+      },
+      "chronological_holdout": {
+        "all_game_ml": {
+          "ml": {
+            "n": 411,
+            "pushes": 0,
+            "dates": [
+              "2026-02-19",
+              "2026-04-12"
+            ],
+            "over_or_home_rate": 0.5717761557177615,
+            "variant_spread": {
+              "max": 0.21655734367488866,
+              "fraction_gt_6c": 0.48418491484184917
+            },
+            "baseline": {
+              "brier": 0.17342842188957117,
+              "log_loss": 0.5243390535125858,
+              "accuracy": 0.7493917274939172
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599467,
+              "accuracy": 0.5717761557177615
+            },
+            "optimized": {
+              "brier": 0.1855886472223345,
+              "log_loss": 0.5566033934968236,
+              "accuracy": 0.7664233576642335
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.022125830339855344,
+              0.04135804706511377
+            ],
+            "home_always": {
+              "brier": 0.4282238442822384,
+              "log_loss": 11.832271556859942,
+              "accuracy": 0.5717761557177615
+            },
+            "favorite_flip_vs_market": null
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "DK-postfinal-close-proxy": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-explicit-full-game-OT": {
+          "ml": {
+            "n": 156,
+            "pushes": 0,
+            "dates": [
+              "2026-02-19",
+              "2026-04-12"
+            ],
+            "over_or_home_rate": 0.5448717948717948,
+            "variant_spread": {
+              "max": 0.17860122369347375,
+              "fraction_gt_6c": 0.44871794871794873
+            },
+            "baseline": {
+              "brier": 0.1660621641552861,
+              "log_loss": 0.509844198745628,
+              "accuracy": 0.7692307692307693
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599464,
+              "accuracy": 0.5448717948717948
+            },
+            "optimized": {
+              "brier": 0.18044232216399028,
+              "log_loss": 0.5465381680539145,
+              "accuracy": 0.7884615384615384
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.01525055988433756,
+              0.054186394126697006
+            ],
+            "market": {
+              "brier": 0.1512571939102564,
+              "log_loss": 0.46733094886638527,
+              "accuracy": 0.7884615384615384
+            },
+            "baseline_vs_market_mad": 0.08455365105668919,
+            "baseline_minus_market_log_loss_ci95": [
+              0.010179586020077014,
+              0.0726753743271985
+            ],
+            "optimized_vs_market_mad": 0.11736537871742854,
+            "optimized_minus_market_log_loss_ci95": [
+              0.04406752920059281,
+              0.11258741451212281
+            ],
+            "home_always": {
+              "brier": 0.4551282051282051,
+              "log_loss": 12.575667114682771,
+              "accuracy": 0.5448717948717948
+            },
+            "favorite_flip_vs_market": 17
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-NBA-final-score-diagnostic": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 157,
+            "pushes": 0,
+            "dates": [
+              "2026-02-19",
+              "2026-04-12"
+            ],
+            "over_or_home_rate": 0.4585987261146497,
+            "variant_spread": {
+              "max": 0.21445963252433237,
+              "fraction_gt_6c": 0.46496815286624205
+            },
+            "baseline": {
+              "brier": 0.26188918597102456,
+              "log_loss": 0.7190509636123869,
+              "accuracy": 0.5222929936305732
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599464,
+              "accuracy": 0.4585987261146497
+            },
+            "optimized": {
+              "brier": 0.2810080540670788,
+              "log_loss": 0.7605860734911258,
+              "accuracy": 0.45222929936305734
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.008801824301405355,
+              0.07245527245326941
+            ],
+            "market": {
+              "brier": 0.24631624203821656,
+              "log_loss": 0.68676610356064,
+              "accuracy": 0.5859872611464968
+            },
+            "baseline_vs_market_mad": 0.09060220929877974,
+            "baseline_minus_market_log_loss_ci95": [
+              -0.006292965590596723,
+              0.07159859581933542
+            ],
+            "optimized_vs_market_mad": 0.12241410414466897,
+            "optimized_minus_market_log_loss_ci95": [
+              0.025006734845382073,
+              0.12311681343503787
+            ]
+          },
+          "total": {
+            "n": 156,
+            "pushes": 0,
+            "dates": [
+              "2026-02-19",
+              "2026-04-12"
+            ],
+            "over_or_home_rate": 0.5512820512820513,
+            "variant_spread": {
+              "max": 0.1933456373325716,
+              "fraction_gt_6c": 0.46153846153846156
+            },
+            "baseline": {
+              "brier": 0.24831269540232603,
+              "log_loss": 0.68972054671642,
+              "accuracy": 0.5512820512820513
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599464,
+              "accuracy": 0.5512820512820513
+            },
+            "optimized": {
+              "brier": 0.246729566687661,
+              "log_loss": 0.6864978132570836,
+              "accuracy": 0.5448717948717948
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              -0.009613889892532942,
+              0.0030465798847941566
+            ],
+            "market": {
+              "brier": 0.24242536057692307,
+              "log_loss": 0.678246790319748,
+              "accuracy": 0.5705128205128205
+            },
+            "baseline_vs_market_mad": 0.07248738126515661,
+            "baseline_minus_market_log_loss_ci95": [
+              -0.01936680051790872,
+              0.04030232617303276
+            ],
+            "optimized_vs_market_mad": 0.06897094720759468,
+            "optimized_minus_market_log_loss_ci95": [
+              -0.021167087294390336,
+              0.03638908799266292
+            ]
+          }
+        }
+      },
+      "holdout_point_fit": {
+        "margin": {
+          "baseline_mae": 11.40333203271131,
+          "optimized_mae": 12.089765731445034,
+          "baseline_r": 0.585339644031333,
+          "optimized_r": 0.585339644031333
+        },
+        "total": {
+          "baseline_mae": 14.577120974806753,
+          "optimized_mae": 14.54025768271158,
+          "baseline_r": 0.40807168394046545,
+          "optimized_r": 0.4080716839404654
+        }
+      },
+      "games_sha256": "893f998ea4cd6ef45b20c575f96675d325ca4b9e1a185f3299d52a125a8eb136",
+      "prices_sha256": "7da514961bf3e9f17a49d809d371469a9ce93d84d03580cd4493a454c2c3c8e3",
+      "games_source": {
+        "retrieved_at": "2026-11-19T01:50:48.289155+00:00",
+        "season": "2025-26",
+        "sources": {
+          "box_inputs": "https://www.basketball-reference.com/teams/{Basketball Reference abbreviation}/{year}/gamelog/",
+          "schedule": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/{ESPN team id}/schedule?season={year}&seasontype=2"
+        }
+      },
+      "market_source": {
+        "cohort": "earliest-listed-line",
+        "counts": {
+          "ml": 156,
+          "spread": 157,
+          "total": 156
+        },
+        "eligible_in_window": 411,
+        "market_from": "2026-02-16",
+        "pregame_minutes_before_tip": [
+          5,
+          25
+        ],
+        "retrieved_at": "2026-11-19T02:10:59.547408+00:00",
+        "season": "2025-26",
+        "selected": 160,
+        "settlement_by_market": {
+          "NBA-final-score-OT-not-explicit": {
+            "spread": 157,
+            "total": 156
+          },
+          "explicit-full-game-including-OT": {
+            "ml": 156
+          }
+        },
+        "sources": {
+          "contracts": "https://gamma-api.polymarket.com",
+          "prices": "https://clob.polymarket.com/prices-history"
+        },
+        "missing_reasons": {
+          "ml no matching market contract": 1,
+          "spread no matching market contract": 1,
+          "total no matching market contract": 1,
+          "ml pregame token observations over 5 minutes apart": 3,
+          "spread pregame token observations over 5 minutes apart": 2,
+          "total pregame token observations over 5 minutes apart": 3
+        }
+      }
+    },
+    "2026-27": {
+      "same_season_formal_wp_metrics": {
+        "A": {
+          "games": 210,
+          "teams": 30,
+          "dates": [
+            "2026-10-20",
+            "2026-11-17"
+          ],
+          "counts_per_team": {
+            "ATL": 14,
+            "BOS": 14,
+            "NO": 15,
+            "CHI": 13,
+            "CLE": 15,
+            "DAL": 14,
+            "DEN": 12,
+            "DET": 13,
+            "GS": 14,
+            "HOU": 15,
+            "IND": 14,
+            "LAC": 13,
+            "LAL": 15,
+            "MIA": 14,
+            "MIL": 14,
+            "MIN": 15,
+            "BKN": 13,
+            "NY": 14,
+            "ORL": 13,
+            "PHI": 15,
+            "PHX": 13,
+            "POR": 14,
+            "SAC": 13,
+            "SA": 15,
+            "OKC": 14,
+            "UTAH": 15,
+            "WSH": 15,
+            "TOR": 14,
+            "MEM": 14,
+            "CHA": 14
+          },
+          "snapshot_validated": true,
+          "base_espn_snapshot_rebuilt_equal": true,
+          "historical_schedule_boxscore_crosschecked": false,
+          "team_game_possessions_mean": 102.38780952380952,
+          "team_game_possessions_94_102_share": 0.4166666666666667
+        },
+        "B": {
+          "n": 86,
+          "pearson_exp_total_vs_actual": {
+            "r": 0.20459114929819955,
+            "p": 0.05867860416747882
+          },
+          "spearman_exp_total_vs_actual": {
+            "rho": 0.23147961716800783,
+            "p": 0.031729203378280245
+          },
+          "pearson_exp_margin_vs_actual": {
+            "r": 0.36105364789330935,
+            "p": 0.0005718473658355347
+          },
+          "spearman_exp_margin_vs_actual_rho": 0.3544453576289403,
+          "mean_abs_total_error_pts": 15.131698150544725,
+          "mean_abs_margin_error_pts": 13.818215517819214,
+          "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+          "passed": false
+        },
+        "C": {
+          "teams": 30,
+          "spearman_ewma_ortg_vs_win_pct": {
+            "rho": 0.8544698225627596,
+            "p": 3.790910018129782e-11
+          },
+          "spearman_ewma_net_vs_win_pct": {
+            "rho": 0.9349245971963424,
+            "p": 1.2141272815363353e-18
+          },
+          "spearman_ewma_ortg_vs_actual_net": 0.8456062291434928,
+          "spearman_ewma_net_vs_actual_net": 0.9933259176863182,
+          "bar": "Spearman rho(EWMA net rating, win%) >= 0.5 over 30 teams",
+          "passed": true
+        },
+        "D": {
+          "passed": true,
+          "n": 86,
+          "min_n": 20
+        },
+        "E": {
+          "mad_max": 0.06,
+          "dk_postfinal_proxy_n": 86,
+          "dk_postfinal_proxy_mad": 0.11044451767917628,
+          "pm_strict_n": 86,
+          "pm_strict_mad": 0.1073048144964117,
+          "pm_diagnostic_n": 0,
+          "pm_diagnostic_mad": null,
+          "dk_proxy_at_mad_bar": false,
+          "pm_strict_at_mad_bar": false
+        },
+        "retest_bar_whole_season_same_season_games": {
+          "n": 86,
+          "min_n": 90,
+          "attained": false
+        },
+        "formal_note": "WP gate E keeps the historical DK proxy separate. Strict PM comparison requires both price timestamps and explicit final score including overtime rules."
+      },
+      "splits": {
+        "train": {
+          "n": 30,
+          "dates": [
+            "2026-11-04",
+            "2026-11-09"
+          ]
+        },
+        "tune": {
+          "n": 20,
+          "dates": [
+            "2026-11-10",
+            "2026-11-12"
+          ]
+        },
+        "holdout": {
+          "n": 36,
+          "dates": [
+            "2026-11-13",
+            "2026-11-17"
+          ]
+        }
+      },
+      "model_selection": {
+        "margin": {
+          "fit": {
+            "intercept": 0.7499651360130569,
+            "slope": 0.8638198835613832,
+            "residual_sigma": 18.408356566346647,
+            "ridge": 800.0
+          },
+          "weight": 0.0,
+          "tune_losses": {
+            "0.0": 0.5509495135966932,
+            "0.25": 0.5554707408065805,
+            "0.5": 0.5609110413009947,
+            "0.75": 0.5667631732114212,
+            "1.0": 0.5727026328885592
+          }
+        },
+        "total": {
+          "fit": {
+            "intercept": 162.64841288852642,
+            "slope": 0.28356208700928803,
+            "residual_sigma": 17.47341932764801,
+            "ridge": 512.0
+          },
+          "weight": 0.75,
+          "tune_losses": {
+            "0.0": 4.466436024843766,
+            "0.25": 4.452314901305428,
+            "0.5": 4.44410404243658,
+            "0.75": 4.4426395054164525,
+            "1.0": 4.449023725276035
+          }
+        }
+      },
+      "baseline_all_eligible": {
+        "all_game_ml": {
+          "ml": {
+            "n": 86,
+            "pushes": 0,
+            "dates": [
+              "2026-11-04",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5,
+            "variant_spread": {
+              "max": 0.07816013137469138,
+              "fraction_gt_6c": 0.09302325581395349
+            },
+            "baseline": {
+              "brier": 0.2053526214424649,
+              "log_loss": 0.6143603021105862,
+              "accuracy": 0.6976744186046512
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599457,
+              "accuracy": 0.5
+            },
+            "home_always": {
+              "brier": 0.5,
+              "log_loss": 13.815521618947178,
+              "accuracy": 0.5
+            },
+            "favorite_flip_vs_market": null
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "DK-postfinal-close-proxy": {
+          "ml": {
+            "n": 86,
+            "pushes": 0,
+            "dates": [
+              "2026-11-04",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5,
+            "variant_spread": {
+              "max": 0.07816013137469138,
+              "fraction_gt_6c": 0.09302325581395349
+            },
+            "baseline": {
+              "brier": 0.2053526214424649,
+              "log_loss": 0.6143603021105862,
+              "accuracy": 0.6976744186046512
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599457,
+              "accuracy": 0.5
+            },
+            "market": {
+              "brier": 0.18609812199646314,
+              "log_loss": 0.5550451296589075,
+              "accuracy": 0.7558139534883721
+            },
+            "baseline_vs_market_mad": 0.11044451767917628,
+            "baseline_minus_market_log_loss_ci95": [
+              0.015455271560706179,
+              0.0961714103846899
+            ],
+            "home_always": {
+              "brier": 0.5,
+              "log_loss": 13.815521618947178,
+              "accuracy": 0.5
+            },
+            "favorite_flip_vs_market": 9
+          },
+          "spread": {
+            "n": 86,
+            "pushes": 0,
+            "dates": [
+              "2026-11-04",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5116279069767442,
+            "variant_spread": {
+              "max": 0.08392419110259386,
+              "fraction_gt_6c": 0.08139534883720931
+            },
+            "baseline": {
+              "brier": 0.30066002327752533,
+              "log_loss": 0.8108261703648451,
+              "accuracy": 0.46511627906976744
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599457,
+              "accuracy": 0.5116279069767442
+            },
+            "market": {
+              "brier": 0.2500078811067727,
+              "log_loss": 0.6931633485430098,
+              "accuracy": 0.5465116279069767
+            },
+            "baseline_vs_market_mad": 0.14029511678877832,
+            "baseline_minus_market_log_loss_ci95": [
+              0.05400603866406499,
+              0.18127910558491306
+            ]
+          },
+          "total": {
+            "n": 86,
+            "pushes": 0,
+            "dates": [
+              "2026-11-04",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5348837209302325,
+            "variant_spread": {
+              "max": 0.07431304084470303,
+              "fraction_gt_6c": 0.023255813953488372
+            },
+            "baseline": {
+              "brier": 0.28964316570416193,
+              "log_loss": 0.7814506351008308,
+              "accuracy": 0.43023255813953487
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599457,
+              "accuracy": 0.5348837209302325
+            },
+            "market": {
+              "brier": 0.24950747117304994,
+              "log_loss": 0.6921620558715627,
+              "accuracy": 0.5232558139534884
+            },
+            "baseline_vs_market_mad": 0.10613566959665678,
+            "baseline_minus_market_log_loss_ci95": [
+              0.03167700467026054,
+              0.1469517238016709
+            ]
+          }
+        },
+        "PM-explicit-full-game-OT": {
+          "ml": {
+            "n": 86,
+            "pushes": 0,
+            "dates": [
+              "2026-11-04",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5,
+            "variant_spread": {
+              "max": 0.07816013137469138,
+              "fraction_gt_6c": 0.09302325581395349
+            },
+            "baseline": {
+              "brier": 0.2053526214424649,
+              "log_loss": 0.6143603021105862,
+              "accuracy": 0.6976744186046512
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599457,
+              "accuracy": 0.5
+            },
+            "market": {
+              "brier": 0.18379941860465118,
+              "log_loss": 0.5492415718700091,
+              "accuracy": 0.7558139534883721
+            },
+            "baseline_vs_market_mad": 0.1073048144964117,
+            "baseline_minus_market_log_loss_ci95": [
+              0.021129565839384846,
+              0.10173082597836217
+            ],
+            "home_always": {
+              "brier": 0.5,
+              "log_loss": 13.815521618947178,
+              "accuracy": 0.5
+            },
+            "favorite_flip_vs_market": 9
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-NBA-final-score-diagnostic": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 85,
+            "pushes": 0,
+            "dates": [
+              "2026-11-04",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5176470588235295,
+            "variant_spread": {
+              "max": 0.08392419110259386,
+              "fraction_gt_6c": 0.08235294117647059
+            },
+            "baseline": {
+              "brier": 0.30273976795144153,
+              "log_loss": 0.8152615870081642,
+              "accuracy": 0.4588235294117647
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599456,
+              "accuracy": 0.5176470588235295
+            },
+            "market": {
+              "brier": 0.24944382352941177,
+              "log_loss": 0.6920320657374457,
+              "accuracy": 0.5176470588235295
+            },
+            "baseline_vs_market_mad": 0.1405410262636577,
+            "baseline_minus_market_log_loss_ci95": [
+              0.06148949517326341,
+              0.18710288103030834
+            ]
+          },
+          "total": {
+            "n": 81,
+            "pushes": 0,
+            "dates": [
+              "2026-11-04",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5308641975308642,
+            "variant_spread": {
+              "max": 0.07431304084470303,
+              "fraction_gt_6c": 0.024691358024691357
+            },
+            "baseline": {
+              "brier": 0.29184519099188966,
+              "log_loss": 0.7864466861892708,
+              "accuracy": 0.43209876543209874
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599456,
+              "accuracy": 0.5308641975308642
+            },
+            "market": {
+              "brier": 0.25210648148148146,
+              "log_loss": 0.6973619901978257,
+              "accuracy": 0.3950617283950617
+            },
+            "baseline_vs_market_mad": 0.10977503176566786,
+            "baseline_minus_market_log_loss_ci95": [
+              0.02250852070660839,
+              0.15517038986515608
+            ]
+          }
+        }
+      },
+      "chronological_holdout": {
+        "all_game_ml": {
+          "ml": {
+            "n": 36,
+            "pushes": 0,
+            "dates": [
+              "2026-11-13",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5277777777777778,
+            "variant_spread": {
+              "max": 0.07816013137469138,
+              "fraction_gt_6c": 0.1111111111111111
+            },
+            "baseline": {
+              "brier": 0.248022101750296,
+              "log_loss": 0.7460045567777122,
+              "accuracy": 0.6666666666666666
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599447,
+              "accuracy": 0.5277777777777778
+            },
+            "optimized": {
+              "brier": 0.248022101750296,
+              "log_loss": 0.7460045567777122,
+              "accuracy": 0.6666666666666666
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.0,
+              0.0
+            ],
+            "home_always": {
+              "brier": 0.4722222222222222,
+              "log_loss": 13.047992640116842,
+              "accuracy": 0.5277777777777778
+            },
+            "favorite_flip_vs_market": null
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "DK-postfinal-close-proxy": {
+          "ml": {
+            "n": 36,
+            "pushes": 0,
+            "dates": [
+              "2026-11-13",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5277777777777778,
+            "variant_spread": {
+              "max": 0.07816013137469138,
+              "fraction_gt_6c": 0.1111111111111111
+            },
+            "baseline": {
+              "brier": 0.248022101750296,
+              "log_loss": 0.7460045567777122,
+              "accuracy": 0.6666666666666666
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599447,
+              "accuracy": 0.5277777777777778
+            },
+            "optimized": {
+              "brier": 0.248022101750296,
+              "log_loss": 0.7460045567777122,
+              "accuracy": 0.6666666666666666
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.0,
+              0.0
+            ],
+            "market": {
+              "brier": 0.23556271818998045,
+              "log_loss": 0.6674603941113731,
+              "accuracy": 0.6666666666666666
+            },
+            "baseline_vs_market_mad": 0.11337046921100596,
+            "baseline_minus_market_log_loss_ci95": [
+              0.04250657336278151,
+              0.1442610286828435
+            ],
+            "optimized_vs_market_mad": 0.11337046921100596,
+            "optimized_minus_market_log_loss_ci95": [
+              0.04250657336278151,
+              0.1442610286828435
+            ],
+            "home_always": {
+              "brier": 0.4722222222222222,
+              "log_loss": 13.047992640116842,
+              "accuracy": 0.5277777777777778
+            },
+            "favorite_flip_vs_market": 2
+          },
+          "spread": {
+            "n": 36,
+            "pushes": 0,
+            "dates": [
+              "2026-11-13",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5,
+            "variant_spread": {
+              "max": 0.08392419110259386,
+              "fraction_gt_6c": 0.08333333333333333
+            },
+            "baseline": {
+              "brier": 0.30575358250475526,
+              "log_loss": 0.8220149330265024,
+              "accuracy": 0.4444444444444444
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599447,
+              "accuracy": 0.5
+            },
+            "optimized": {
+              "brier": 0.30575358250475526,
+              "log_loss": 0.8220149330265024,
+              "accuracy": 0.4444444444444444
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.0,
+              0.0
+            ],
+            "market": {
+              "brier": 0.2516553828684955,
+              "log_loss": 0.6964594185110212,
+              "accuracy": 0.4722222222222222
+            },
+            "baseline_vs_market_mad": 0.14626866719965814,
+            "baseline_minus_market_log_loss_ci95": [
+              0.060325469044138234,
+              0.18859464449384256
+            ],
+            "optimized_vs_market_mad": 0.14626866719965814,
+            "optimized_minus_market_log_loss_ci95": [
+              0.060325469044138234,
+              0.18859464449384256
+            ]
+          },
+          "total": {
+            "n": 36,
+            "pushes": 0,
+            "dates": [
+              "2026-11-13",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5555555555555556,
+            "variant_spread": {
+              "max": 0.07431304084470303,
+              "fraction_gt_6c": 0.05555555555555555
+            },
+            "baseline": {
+              "brier": 0.28142466741315114,
+              "log_loss": 0.7643586868204806,
+              "accuracy": 0.4166666666666667
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599447,
+              "accuracy": 0.5555555555555556
+            },
+            "optimized": {
+              "brier": 0.2478984183092637,
+              "log_loss": 0.691021950368174,
+              "accuracy": 0.5277777777777778
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              -0.13911464222119588,
+              -0.0005147165843391297
+            ],
+            "market": {
+              "brier": 0.2512687418159232,
+              "log_loss": 0.6956850492763418,
+              "accuracy": 0.4444444444444444
+            },
+            "baseline_vs_market_mad": 0.087543864751176,
+            "baseline_minus_market_log_loss_ci95": [
+              0.02608923060863004,
+              0.11996953096993415
+            ],
+            "optimized_vs_market_mad": 0.0693939792452257,
+            "optimized_minus_market_log_loss_ci95": [
+              -0.0606614473611897,
+              0.05106818848274208
+            ]
+          }
+        },
+        "PM-explicit-full-game-OT": {
+          "ml": {
+            "n": 36,
+            "pushes": 0,
+            "dates": [
+              "2026-11-13",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5277777777777778,
+            "variant_spread": {
+              "max": 0.07816013137469138,
+              "fraction_gt_6c": 0.1111111111111111
+            },
+            "baseline": {
+              "brier": 0.248022101750296,
+              "log_loss": 0.7460045567777122,
+              "accuracy": 0.6666666666666666
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599447,
+              "accuracy": 0.5277777777777778
+            },
+            "optimized": {
+              "brier": 0.248022101750296,
+              "log_loss": 0.7460045567777122,
+              "accuracy": 0.6666666666666666
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.0,
+              0.0
+            ],
+            "market": {
+              "brier": 0.235325,
+              "log_loss": 0.6674825315793586,
+              "accuracy": 0.6666666666666666
+            },
+            "baseline_vs_market_mad": 0.11144892668530211,
+            "baseline_minus_market_log_loss_ci95": [
+              0.03947675495611795,
+              0.14316316984172434
+            ],
+            "optimized_vs_market_mad": 0.11144892668530211,
+            "optimized_minus_market_log_loss_ci95": [
+              0.03947675495611795,
+              0.14316316984172434
+            ],
+            "home_always": {
+              "brier": 0.4722222222222222,
+              "log_loss": 13.047992640116842,
+              "accuracy": 0.5277777777777778
+            },
+            "favorite_flip_vs_market": 2
+          },
+          "spread": {
+            "n": 0,
+            "pushes": 0
+          },
+          "total": {
+            "n": 0,
+            "pushes": 0
+          }
+        },
+        "PM-NBA-final-score-diagnostic": {
+          "ml": {
+            "n": 0,
+            "pushes": 0
+          },
+          "spread": {
+            "n": 36,
+            "pushes": 0,
+            "dates": [
+              "2026-11-13",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5,
+            "variant_spread": {
+              "max": 0.08392419110259386,
+              "fraction_gt_6c": 0.08333333333333333
+            },
+            "baseline": {
+              "brier": 0.30575358250475526,
+              "log_loss": 0.8220149330265024,
+              "accuracy": 0.4444444444444444
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599447,
+              "accuracy": 0.5
+            },
+            "optimized": {
+              "brier": 0.30575358250475526,
+              "log_loss": 0.8220149330265024,
+              "accuracy": 0.4444444444444444
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              0.0,
+              0.0
+            ],
+            "market": {
+              "brier": 0.25100277777777774,
+              "log_loss": 0.6951552713178629,
+              "accuracy": 0.5277777777777778
+            },
+            "baseline_vs_market_mad": 0.14850803018655517,
+            "baseline_minus_market_log_loss_ci95": [
+              0.060461588330739995,
+              0.19198615336876448
+            ],
+            "optimized_vs_market_mad": 0.14850803018655517,
+            "optimized_minus_market_log_loss_ci95": [
+              0.060461588330739995,
+              0.19198615336876448
+            ]
+          },
+          "total": {
+            "n": 33,
+            "pushes": 0,
+            "dates": [
+              "2026-11-13",
+              "2026-11-17"
+            ],
+            "over_or_home_rate": 0.5454545454545454,
+            "variant_spread": {
+              "max": 0.07431304084470303,
+              "fraction_gt_6c": 0.06060606060606061
+            },
+            "baseline": {
+              "brier": 0.28359471315640294,
+              "log_loss": 0.7695027517301088,
+              "accuracy": 0.42424242424242425
+            },
+            "coin": {
+              "brier": 0.25,
+              "log_loss": 0.6931471805599448,
+              "accuracy": 0.5454545454545454
+            },
+            "optimized": {
+              "brier": 0.24499972023822458,
+              "log_loss": 0.6853686390565449,
+              "accuracy": 0.5454545454545454
+            },
+            "optimized_minus_baseline_log_loss_ci95": [
+              -0.1527957371426483,
+              -0.006450621377061199
+            ],
+            "market": {
+              "brier": 0.2533765151515151,
+              "log_loss": 0.6998983043897761,
+              "accuracy": 0.2727272727272727
+            },
+            "baseline_vs_market_mad": 0.09148218630954259,
+            "baseline_minus_market_log_loss_ci95": [
+              0.030309925836152142,
+              0.11616280517678942
+            ],
+            "optimized_vs_market_mad": 0.07417099716527045,
+            "optimized_minus_market_log_loss_ci95": [
+              -0.08342934581470976,
+              0.0544460366062012
+            ]
+          }
+        }
+      },
+      "holdout_point_fit": {
+        "margin": {
+          "baseline_mae": 13.89098254507048,
+          "optimized_mae": 13.89098254507048,
+          "baseline_r": 0.25536225556796716,
+          "optimized_r": 0.25536225556796716
+        },
+        "total": {
+          "baseline_mae": 14.988231633969779,
+          "optimized_mae": 14.212571786394724,
+          "baseline_r": 0.28888178495431166,
+          "optimized_r": 0.28888178495431127
+        }
+      },
+      "games_sha256": "f0f6e063661db7769a4f69633d12e4d721ce39b3d8647613d433ebc670ef077d",
+      "prices_sha256": "c22740b1213dc964a4a672cbf07eb20c7f79a57e6225c5080183398f94efce00",
+      "games_source": {
+        "base_games": 210,
+        "base_schedule_cache": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T143330Z/nba/nba-cache",
+        "base_snapshot_date": "2026-11-18T14:38:13.677174+00:00",
+        "base_snapshot_rebuilt_equal": true,
+        "base_snapshot_sha256": "38ed76ed08332f1a38a5133f98437cdad7a2dfacfeb72b208d2ede3957f2c1cf",
+        "prior_scan_rows": 194,
+        "prior_scan_rows_min8": 86,
+        "prior_scan_sha256": "b7e687f046c543464944e6351bba4d2077d36095f90dd021319a9cb63485d8f7",
+        "retrieved_at": "2026-11-19T02:25:00.000300+00:00",
+        "scoreboard": {
+          "captured_utc": "2026-11-19T02:25:00.000300+00:00",
+          "events": [
+            {
+              "completed": false,
+              "espn_id": "401910007",
+              "game": "MEM @ CLE",
+              "start_utc": "2026-11-19T00:00Z",
+              "status": "STATUS_IN_PROGRESS"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910008",
+              "game": "HOU @ IND",
+              "start_utc": "2026-11-19T00:00Z",
+              "status": "STATUS_IN_PROGRESS"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910009",
+              "game": "MIL @ MIA",
+              "start_utc": "2026-11-19T00:00Z",
+              "status": "STATUS_IN_PROGRESS"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910010",
+              "game": "PHI @ ORL",
+              "start_utc": "2026-11-19T00:00Z",
+              "status": "STATUS_IN_PROGRESS"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910011",
+              "game": "CHI @ BKN",
+              "start_utc": "2026-11-19T00:30Z",
+              "status": "STATUS_IN_PROGRESS"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910012",
+              "game": "WSH @ TOR",
+              "start_utc": "2026-11-19T00:30Z",
+              "status": "STATUS_IN_PROGRESS"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910013",
+              "game": "DET @ NO",
+              "start_utc": "2026-11-19T01:00Z",
+              "status": "STATUS_HALFTIME"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910014",
+              "game": "ATL @ OKC",
+              "start_utc": "2026-11-19T01:00Z",
+              "status": "STATUS_IN_PROGRESS"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910016",
+              "game": "GS @ DAL",
+              "start_utc": "2026-11-19T01:00Z",
+              "status": "STATUS_HALFTIME"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910015",
+              "game": "BOS @ DEN",
+              "start_utc": "2026-11-19T02:30Z",
+              "status": "STATUS_SCHEDULED"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910017",
+              "game": "UTAH @ LAL",
+              "start_utc": "2026-11-19T03:00Z",
+              "status": "STATUS_SCHEDULED"
+            },
+            {
+              "completed": false,
+              "espn_id": "401910018",
+              "game": "PHX @ SAC",
+              "start_utc": "2026-11-19T03:00Z",
+              "status": "STATUS_SCHEDULED"
+            }
+          ],
+          "finals_missing_verified_box_score": [],
+          "planned_freeze_utc": "2026-11-19T02:25:00+00:00",
+          "raw_sha256": "98c3dd4a98da872f0d0c822bc497e859f9e2d1cc469d3f2ce9ff3c055bee2dc8",
+          "source_url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20261118&limit=100"
+        },
+        "season": "2026-27",
+        "sources": {
+          "box_scores": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event={espn_event_id}",
+          "draftkings": "ESPN pickcenter close fields from finals, no quote-time fields"
+        }
+      },
+      "market_source": {
+        "cohort": "same-DK-line",
+        "counts": {
+          "ml": 86,
+          "spread": 85,
+          "total": 81
+        },
+        "eligible_in_window": 86,
+        "market_from": null,
+        "pregame_minutes_before_tip": [
+          5,
+          25
+        ],
+        "retrieved_at": "2026-11-19T02:25:02.687881+00:00",
+        "season": "2026-27",
+        "selected": 86,
+        "settlement_by_market": {
+          "NBA-final-score-OT-not-explicit": {
+            "spread": 85,
+            "total": 81
+          },
+          "explicit-full-game-including-OT": {
+            "ml": 86
+          }
+        },
+        "sources": {
+          "contracts": "https://gamma-api.polymarket.com",
+          "prices": "https://clob.polymarket.com/prices-history"
+        },
+        "missing_reasons": {
+          "total no matching market contract": 5,
+          "spread no matching market contract": 1
+        }
+      }
+    }
+  }
+}

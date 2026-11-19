@@ -1,0 +1,703 @@
+{
+  "utc_verified": "2026-11-18T23:39:35.771087+00:00",
+  "scores_verified_both_sources": 34,
+  "new_espn_full_time_confirmations": 8,
+  "by_day": {
+    "2026-11-14": 8,
+    "2026-11-15": 8,
+    "2026-11-16": 10,
+    "2026-11-17": 8
+  },
+  "old_o25": {
+    "n": 34,
+    "model_o25_log_loss": 0.7079311834439033,
+    "market_o25_log_loss": 0.6385273717921874
+  },
+  "market_pregame_lead_hours": [
+    12.645372670277776,
+    90.38579577055556
+  ],
+  "scope": "Score audit and old archived pregame prices; no re-fit, no market close or formal promotion decision.",
+  "records": [
+    {
+      "date": "2026-11-14",
+      "fixture": "Kosovo vs. Israel",
+      "scores_by_team": {
+        "Kosovo": 0,
+        "Israel": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:16.658387+00:00",
+      "archived_tip_utc": "2026-11-14T14:00:00+00:00",
+      "lead_hours": 12.645372670277776,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.5,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.6931471805599453,
+      "kickoff": "2026-11-14T14:00:00+00:00",
+      "espn_event_id": "401861163",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261114.json"
+    },
+    {
+      "date": "2026-11-14",
+      "fixture": "Georgia vs. Hungary",
+      "scores_by_team": {
+        "Georgia": 0,
+        "Hungary": 2
+      },
+      "recorded_utc": "2026-11-14T01:21:18.050760+00:00",
+      "archived_tip_utc": "2026-11-14T17:00:00+00:00",
+      "lead_hours": 15.6449859,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.385,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.4861330111756192,
+      "kickoff": "2026-11-14T17:00:00+00:00",
+      "espn_event_id": "401861164",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261114.json"
+    },
+    {
+      "date": "2026-11-14",
+      "fixture": "Norway vs. Wales",
+      "scores_by_team": {
+        "Norway": 3,
+        "Wales": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:19.327729+00:00",
+      "archived_tip_utc": "2026-11-14T17:00:00+00:00",
+      "lead_hours": 15.64463118638889,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.695,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.363843433417345,
+      "kickoff": "2026-11-14T17:00:00+00:00",
+      "espn_event_id": "401861165",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261114.json"
+    },
+    {
+      "date": "2026-11-14",
+      "fixture": "Austria vs. Republic of Ireland",
+      "scores_by_team": {
+        "Austria": 1,
+        "Republic of Ireland": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:20.709139+00:00",
+      "archived_tip_utc": "2026-11-14T19:45:00+00:00",
+      "lead_hours": 18.39424746138889,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.535,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.7657178733947808,
+      "kickoff": "2026-11-14T19:45:00+00:00",
+      "espn_event_id": "401861170",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261114.json"
+    },
+    {
+      "date": "2026-11-14",
+      "fixture": "Northern Ireland vs. Ukraine",
+      "scores_by_team": {
+        "Northern Ireland": 1,
+        "Ukraine": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:21.885656+00:00",
+      "archived_tip_utc": "2026-11-14T19:45:00+00:00",
+      "lead_hours": 18.393920651111113,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.365,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.4541302800894454,
+      "kickoff": "2026-11-14T19:45:00+00:00",
+      "espn_event_id": "401861169",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261114.json"
+    },
+    {
+      "date": "2026-11-14",
+      "fixture": "Portugal vs. Denmark",
+      "scores_by_team": {
+        "Portugal": 1,
+        "Denmark": 4
+      },
+      "recorded_utc": "2026-11-14T01:21:23.198365+00:00",
+      "archived_tip_utc": "2026-11-14T19:45:00+00:00",
+      "lead_hours": 18.39355600972222,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.635,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.4541302800894454,
+      "kickoff": "2026-11-14T19:45:00+00:00",
+      "espn_event_id": "401861167",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261114.json"
+    },
+    {
+      "date": "2026-11-14",
+      "fixture": "Romania vs. Poland",
+      "scores_by_team": {
+        "Romania": 2,
+        "Poland": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:24.515347+00:00",
+      "archived_tip_utc": "2026-11-14T19:45:00+00:00",
+      "lead_hours": 18.393190181388892,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.545,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.6069694843188929,
+      "kickoff": "2026-11-14T19:45:00+00:00",
+      "espn_event_id": "401861168",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261114.json"
+    },
+    {
+      "date": "2026-11-14",
+      "fixture": "Sweden vs. Bosnia and Herzegovina",
+      "scores_by_team": {
+        "Sweden": 3,
+        "Bosnia and Herzegovina": 2
+      },
+      "recorded_utc": "2026-11-14T01:21:25.946568+00:00",
+      "archived_tip_utc": "2026-11-14T19:45:00+00:00",
+      "lead_hours": 18.39279262,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.615,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.4861330111756192,
+      "kickoff": "2026-11-14T19:45:00+00:00",
+      "espn_event_id": "401861166",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261114.json"
+    },
+    {
+      "date": "2026-11-15",
+      "fixture": "Cyprus vs. Montenegro",
+      "scores_by_team": {
+        "Cyprus": 1,
+        "Montenegro": 4
+      },
+      "recorded_utc": "2026-11-14T01:21:27.245058+00:00",
+      "archived_tip_utc": "2026-11-15T14:00:00+00:00",
+      "lead_hours": 36.64243192833333,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.45999999999999996,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.7765287894989964,
+      "kickoff": "2026-11-15T14:00:00+00:00",
+      "espn_event_id": "401861172",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261115.json"
+    },
+    {
+      "date": "2026-11-15",
+      "fixture": "Latvia vs. Armenia",
+      "scores_by_team": {
+        "Latvia": 0,
+        "Armenia": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:28.452382+00:00",
+      "archived_tip_utc": "2026-11-15T14:00:00+00:00",
+      "lead_hours": 36.64209656055556,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.525,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.7444404749474959,
+      "kickoff": "2026-11-15T14:00:00+00:00",
+      "espn_event_id": "401861171",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261115.json"
+    },
+    {
+      "date": "2026-11-15",
+      "fixture": "Belarus vs. Albania",
+      "scores_by_team": {
+        "Albania": 2,
+        "Belarus": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:29.788912+00:00",
+      "archived_tip_utc": "2026-11-15T17:00:00+00:00",
+      "lead_hours": 39.64172530222223,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.425,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.5533852381847867,
+      "kickoff": "2026-11-15T17:00:00+00:00",
+      "espn_event_id": "401861173",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261115.json"
+    },
+    {
+      "date": "2026-11-15",
+      "fixture": "Finland vs. San Marino",
+      "scores_by_team": {
+        "Finland": 7,
+        "San Marino": 2
+      },
+      "recorded_utc": "2026-11-14T01:21:31.196748+00:00",
+      "archived_tip_utc": "2026-11-15T17:00:00+00:00",
+      "lead_hours": 39.64133423666667,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.61665,
+      "market_over25_midpoint": 0.615,
+      "model_o25_log_loss": 0.4834536769701399,
+      "market_o25_log_loss": 0.4861330111756192,
+      "kickoff": "2026-11-15T17:00:00+00:00",
+      "espn_event_id": "401861174",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261115.json"
+    },
+    {
+      "date": "2026-11-15",
+      "fixture": "Belgium vs. Italy",
+      "scores_by_team": {
+        "Belgium": 4,
+        "Italy": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:32.587380+00:00",
+      "archived_tip_utc": "2026-11-15T19:45:00+00:00",
+      "lead_hours": 42.39094795,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.595,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.5191938734365074,
+      "kickoff": "2026-11-15T19:45:00+00:00",
+      "espn_event_id": "401861176",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261115.json"
+    },
+    {
+      "date": "2026-11-15",
+      "fixture": "Croatia vs. Czechia",
+      "scores_by_team": {
+        "Croatia": 2,
+        "Czech Republic": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:33.790303+00:00",
+      "archived_tip_utc": "2026-11-15T19:45:00+00:00",
+      "lead_hours": 42.39061380472223,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.56,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.579818495252942,
+      "kickoff": "2026-11-15T19:45:00+00:00",
+      "espn_event_id": "401861178",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261115.json"
+    },
+    {
+      "date": "2026-11-15",
+      "fixture": "France vs. Türkiye",
+      "scores_by_team": {
+        "France": 2,
+        "Turkey": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:35.596442+00:00",
+      "archived_tip_utc": "2026-11-15T19:45:00+00:00",
+      "lead_hours": 42.390112099444444,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45752,
+      "market_over25_midpoint": 0.725,
+      "model_o25_log_loss": 0.7819346793750763,
+      "market_o25_log_loss": 0.32158362412746233,
+      "kickoff": "2026-11-15T19:45:00+00:00",
+      "espn_event_id": "401861177",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261115.json"
+    },
+    {
+      "date": "2026-11-15",
+      "fixture": "Spain vs. England",
+      "scores_by_team": {
+        "Spain": 2,
+        "England": 3
+      },
+      "recorded_utc": "2026-11-14T01:21:36.754040+00:00",
+      "archived_tip_utc": "2026-11-15T19:45:00+00:00",
+      "lead_hours": 42.389790544444445,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.585,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.5361434317502807,
+      "kickoff": "2026-11-15T19:45:00+00:00",
+      "espn_event_id": "401861175",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261115.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Faroe Islands vs. Moldova",
+      "scores_by_team": {
+        "Faroe Islands": 1,
+        "Moldova": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:38.094016+00:00",
+      "archived_tip_utc": "2026-11-16T15:00:00+00:00",
+      "lead_hours": 61.639418328888894,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.55,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.7985076962177717,
+      "kickoff": "2026-11-16T15:00:00+00:00",
+      "espn_event_id": "401861180",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Kazakhstan vs. Slovakia",
+      "scores_by_team": {
+        "Kazakhstan": 2,
+        "Slovakia": 2
+      },
+      "recorded_utc": "2026-11-14T01:21:39.597798+00:00",
+      "archived_tip_utc": "2026-11-16T15:00:00+00:00",
+      "lead_hours": 61.63900061166667,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.55,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.5978370007556204,
+      "kickoff": "2026-11-16T15:00:00+00:00",
+      "espn_event_id": "401861181",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Estonia vs. Bulgaria",
+      "scores_by_team": {
+        "Estonia": 2,
+        "Bulgaria": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:40.935070+00:00",
+      "archived_tip_utc": "2026-11-16T17:00:00+00:00",
+      "lead_hours": 63.63862914722222,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.5449999999999999,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.6069694843188931,
+      "kickoff": "2026-11-16T17:00:00+00:00",
+      "espn_event_id": "401861183",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Iceland vs. Luxembourg",
+      "scores_by_team": {
+        "Iceland": 3,
+        "Luxembourg": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:42.122524+00:00",
+      "archived_tip_utc": "2026-11-16T17:00:00+00:00",
+      "lead_hours": 63.63829929888889,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.535,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.6254885320861304,
+      "kickoff": "2026-11-16T17:00:00+00:00",
+      "espn_event_id": "401861182",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Lithuania vs. Liechtenstein",
+      "scores_by_team": {
+        "Lithuania": 2,
+        "Liechtenstein": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:43.476839+00:00",
+      "archived_tip_utc": "2026-11-16T17:00:00+00:00",
+      "lead_hours": 63.637923100277774,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45898,
+      "market_over25_midpoint": 0.54,
+      "model_o25_log_loss": 0.7787486428556715,
+      "market_o25_log_loss": 0.616186139423817,
+      "kickoff": "2026-11-16T17:00:00+00:00",
+      "espn_event_id": "401861184",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Germany vs. Netherlands",
+      "scores_by_team": {
+        "Germany": 5,
+        "Netherlands": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:44.862257+00:00",
+      "archived_tip_utc": "2026-11-16T19:45:00+00:00",
+      "lead_hours": 66.38753826194444,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.675,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.3930425881096072,
+      "kickoff": "2026-11-16T19:45:00+00:00",
+      "espn_event_id": "401861185",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Gibraltar vs. Malta",
+      "scores_by_team": {
+        "Gibraltar": 1,
+        "Malta": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:46.095342+00:00",
+      "archived_tip_utc": "2026-11-16T19:45:00+00:00",
+      "lead_hours": 66.38719573833333,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.55,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.7985076962177717,
+      "kickoff": "2026-11-16T19:45:00+00:00",
+      "espn_event_id": "401861179",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Greece vs. Serbia",
+      "scores_by_team": {
+        "Greece": 1,
+        "Serbia": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:47.439260+00:00",
+      "archived_tip_utc": "2026-11-16T19:45:00+00:00",
+      "lead_hours": 66.38682242777777,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.565,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.8324092478934528,
+      "kickoff": "2026-11-16T19:45:00+00:00",
+      "espn_event_id": "401861188",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "North Macedonia vs. Slovenia",
+      "scores_by_team": {
+        "North Macedonia": 0,
+        "Slovenia": 3
+      },
+      "recorded_utc": "2026-11-14T01:21:48.652069+00:00",
+      "archived_tip_utc": "2026-11-16T19:45:00+00:00",
+      "lead_hours": 66.38648553638889,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.405,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.9038682118755978,
+      "kickoff": "2026-11-16T19:45:00+00:00",
+      "espn_event_id": "401861187",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-16",
+      "fixture": "Switzerland vs. Scotland",
+      "scores_by_team": {
+        "Switzerland": 4,
+        "Scotland": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:49.998105+00:00",
+      "archived_tip_utc": "2026-11-16T19:45:00+00:00",
+      "lead_hours": 66.3861116375,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.46499999999999997,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.7657178733947808,
+      "kickoff": "2026-11-16T19:45:00+00:00",
+      "espn_event_id": "401861186",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-soccer-refresh-20261117/espn-unl-20261116.json"
+    },
+    {
+      "date": "2026-11-17",
+      "fixture": "Bosnia and Herzegovina vs. Romania",
+      "scores_by_team": {
+        "Bosnia and Herzegovina": 2,
+        "Romania": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:51.135226+00:00",
+      "archived_tip_utc": "2026-11-17T19:45:00+00:00",
+      "lead_hours": 90.38579577055556,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.475,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.7444404749474959,
+      "kickoff": "2026-11-17T19:45:00+00:00",
+      "espn_event_id": "401861196",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T233641Z/espn-unl-17.json"
+    },
+    {
+      "date": "2026-11-17",
+      "fixture": "Denmark vs. Norway",
+      "scores_by_team": {
+        "Denmark": 2,
+        "Norway": 3
+      },
+      "recorded_utc": "2026-11-14T01:21:52.403206+00:00",
+      "archived_tip_utc": "2026-11-17T19:45:00+00:00",
+      "lead_hours": 90.38544355388889,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.43499999999999994,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.832409247893453,
+      "kickoff": "2026-11-17T19:45:00+00:00",
+      "espn_event_id": "401861194",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T233641Z/espn-unl-17.json"
+    },
+    {
+      "date": "2026-11-17",
+      "fixture": "Hungary vs. Northern Ireland",
+      "scores_by_team": {
+        "Hungary": 1,
+        "Northern Ireland": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:53.589644+00:00",
+      "archived_tip_utc": "2026-11-17T19:45:00+00:00",
+      "lead_hours": 90.38511398777779,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.5499999999999999,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.7985076962177715,
+      "kickoff": "2026-11-17T19:45:00+00:00",
+      "espn_event_id": "401861191",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T233641Z/espn-unl-17.json"
+    },
+    {
+      "date": "2026-11-17",
+      "fixture": "Israel vs. Austria",
+      "scores_by_team": {
+        "Austria": 1,
+        "Israel": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:54.949694+00:00",
+      "archived_tip_utc": "2026-11-17T19:45:00+00:00",
+      "lead_hours": 90.3847361961111,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.585,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.8794767587514387,
+      "kickoff": "2026-11-17T19:45:00+00:00",
+      "espn_event_id": "401861193",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T233641Z/espn-unl-17.json"
+    },
+    {
+      "date": "2026-11-17",
+      "fixture": "Poland vs. Sweden",
+      "scores_by_team": {
+        "Poland": 1,
+        "Sweden": 1
+      },
+      "recorded_utc": "2026-11-14T01:21:56.138742+00:00",
+      "archived_tip_utc": "2026-11-17T19:45:00+00:00",
+      "lead_hours": 90.38440590500001,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.54,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.7765287894989964,
+      "kickoff": "2026-11-17T19:45:00+00:00",
+      "espn_event_id": "401861195",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T233641Z/espn-unl-17.json"
+    },
+    {
+      "date": "2026-11-17",
+      "fixture": "Republic of Ireland vs. Kosovo",
+      "scores_by_team": {
+        "Republic of Ireland": 3,
+        "Kosovo": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:57.377519+00:00",
+      "archived_tip_utc": "2026-11-17T19:45:00+00:00",
+      "lead_hours": 90.38406180027779,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.605,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.5025268209512956,
+      "kickoff": "2026-11-17T19:45:00+00:00",
+      "espn_event_id": "401861192",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T233641Z/espn-unl-17.json"
+    },
+    {
+      "date": "2026-11-17",
+      "fixture": "Ukraine vs. Georgia",
+      "scores_by_team": {
+        "Ukraine": 1,
+        "Georgia": 0
+      },
+      "recorded_utc": "2026-11-14T01:21:58.657186+00:00",
+      "archived_tip_utc": "2026-11-17T19:45:00+00:00",
+      "lead_hours": 90.38370633722222,
+      "espn_confirmed": true,
+      "o25_occurred": false,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.535,
+      "model_o25_log_loss": 0.6116224946357688,
+      "market_o25_log_loss": 0.7657178733947808,
+      "kickoff": "2026-11-17T19:45:00+00:00",
+      "espn_event_id": "401861190",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T233641Z/espn-unl-17.json"
+    },
+    {
+      "date": "2026-11-17",
+      "fixture": "Wales vs. Portugal",
+      "scores_by_team": {
+        "Wales": 2,
+        "Portugal": 3
+      },
+      "recorded_utc": "2026-11-14T01:21:59.966597+00:00",
+      "archived_tip_utc": "2026-11-17T19:45:00+00:00",
+      "lead_hours": 90.38334261194444,
+      "espn_confirmed": true,
+      "o25_occurred": true,
+      "model_over25": 0.45753,
+      "market_over25_midpoint": 0.525,
+      "model_o25_log_loss": 0.781912822645935,
+      "market_o25_log_loss": 0.6443570163905132,
+      "kickoff": "2026-11-17T19:45:00+00:00",
+      "espn_event_id": "401861189",
+      "espn_file": "/home/ubuntu/test-sandbox/tmp/polymarket-sports-20261118T233641Z/espn-unl-17.json"
+    }
+  ]
+}

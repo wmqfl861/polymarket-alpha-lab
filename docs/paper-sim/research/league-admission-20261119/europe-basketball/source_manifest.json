@@ -1,0 +1,374 @@
+{
+  "cutoff_utc": "2026-11-19T00:00:00+00:00",
+  "file": "frozen_inputs.tar.gz",
+  "archive_bytes": 4976831,
+  "archive_sha256": "5be4093d9c8f013d0ccd568cdfa685b423269f50e766c5183fa1ec154b69ddce",
+  "files": {
+    "BCL-BE-2026.md": {
+      "source": "https://r.jina.ai/https://www.betexplorer.com/basketball/europe/champions-league/results/",
+      "bytes": 42743,
+      "sha256": "a63569e2ce6582c72ef70c9d8e40d353de6f609b7953115e9e4ca307bde7a3f1"
+    },
+    "BCL-teams-2026.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208962/teams",
+      "bytes": 18436,
+      "sha256": "33fd756697d1f7048ff96145d5f3dafc828bc69cc2c6a174156bf903e97be613"
+    },
+    "BCL-teams-2027.md": {
+      "source": "https://r.jina.ai/https://www.championsleague.basketball/en/teams",
+      "bytes": 23492,
+      "sha256": "a4fe39d5bdcc994a401421812adc5985264e20cfcf7141ba0e7104e34271b5f1"
+    },
+    "E2018.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2018/games",
+      "bytes": 651427,
+      "sha256": "9378c39b471a64be59afa7fb8ef9b6f912bfb563cab0a2a490afb778e4f981fb"
+    },
+    "E2019.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2019/games",
+      "bytes": 672009,
+      "sha256": "a9f5ccc8ddfd2ab58c0ad29be8da4dc99a82dd8c49d2d861016daee60820e4ea"
+    },
+    "E2020.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2020/games",
+      "bytes": 831405,
+      "sha256": "12d18a66d5e93f6a47354b90de9efdb74f2f0292f64cbc22c0fada8880e2b3da"
+    },
+    "E2021.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2021/games",
+      "bytes": 813156,
+      "sha256": "68f710cf5ff39c745411b1d2f9187e0d73988456a034ff40cf73e5c30944b146"
+    },
+    "E2022.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2022/games",
+      "bytes": 821403,
+      "sha256": "19dd895f249c852c674882be1ce2c1079b1122a7d0bf7767994a8818544f485e"
+    },
+    "E2023.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2023/games",
+      "bytes": 833212,
+      "sha256": "0ec2583e32408e2ae4bc407caf76644d209d45634d5e621882d7bed69e0d8fff"
+    },
+    "E2024.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2024/games",
+      "bytes": 828412,
+      "sha256": "2ffb03caaee2a2505cf5f46c296a433b4ded645fb1ee284d6b6e6656a3d279fd"
+    },
+    "E2025.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2025/games",
+      "bytes": 1007102,
+      "sha256": "5aa4937a6915219985ae2eab1a30bbecf670c16c87f13d4ce5f83a1f6874950e"
+    },
+    "E2026.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/E/seasons/E2026/games",
+      "bytes": 742131,
+      "sha256": "1999618719b70de0576fce25166e50f6a37334b9eb18e7b39821e6568fb40d39"
+    },
+    "FIBA-2019.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208046/games",
+      "bytes": 105438,
+      "sha256": "46159ebc49183fcc23f9ac891c3eec432c1f04b177adf129b16742c3502b6aff"
+    },
+    "FIBA-2020.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208136/games",
+      "bytes": 105396,
+      "sha256": "35fd096f11e283201a76d52635e3bd43629db2d5b0b0d12f24a502bf0c6b88c1"
+    },
+    "FIBA-2021.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208247/games",
+      "bytes": 49269,
+      "sha256": "d0ddb8afc0595b908bd23b44e055504d2e06f8aaa6337e87e8911b65b211fc57"
+    },
+    "FIBA-2022.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208407/games",
+      "bytes": 45476,
+      "sha256": "2f5d3e29c3e89866885d91c7c1a583e01b442758db6879a8926e78b1f0735b17"
+    },
+    "FIBA-2023.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208494/games",
+      "bytes": 48973,
+      "sha256": "3a7822d17521958a56bbd66d02980ef30f08655a3a042510c9f59a9a4bf4d379"
+    },
+    "FIBA-2024.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208737/games",
+      "bytes": 45065,
+      "sha256": "62ddbdf6e848db08478868c513f034b98b0b4e5ec06307754d34260126dc5024"
+    },
+    "FIBA-2025.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208850/games",
+      "bytes": 49209,
+      "sha256": "35c87156501969611d2d405fbd3b40c80ff3ad3181bfa0667c0f373775d1c3a8"
+    },
+    "FIBA-2026.md": {
+      "source": "https://r.jina.ai/https://www.fiba.basketball/en/history/112-fiba-mens-european-club-competitions-tier-1/208962/games",
+      "bytes": 49044,
+      "sha256": "2d11f9e6eb0ac5746eec11cbe1ff74623c31777db98e4a13c7ffcfaebe4c95c3"
+    },
+    "U2018.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2018/games",
+      "bytes": 471184,
+      "sha256": "d4305b3dc36747a13242df021721133c98d8a0cca575209bfecbafea06041d65"
+    },
+    "U2019.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2019/games",
+      "bytes": 405045,
+      "sha256": "0db6ca1195fd8ae5ccef7a79762c42fc59af7b12252e5a7c0f15dd82142c4908"
+    },
+    "U2020.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2020/games",
+      "bytes": 462435,
+      "sha256": "94637f9bed914ad608c58c42c301e6f96f4d75609b3bb61cee076715f38f668c"
+    },
+    "U2021.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2021/games",
+      "bytes": 493452,
+      "sha256": "b8dad19b9f66066db8be3577ac0f2e1df5226417595b9d42bdd3eb7fe5c7e490"
+    },
+    "U2022.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2022/games",
+      "bytes": 484385,
+      "sha256": "59fb74555e997e0bb9c31c2f9424ec63c57eec0f6685ab127a56a90dc7c1c50a"
+    },
+    "U2023.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2023/games",
+      "bytes": 479637,
+      "sha256": "2aaead95ae95915b60b58c916fdbef895f9b122fe56b9653c791a293f4fef94b"
+    },
+    "U2024.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2024/games",
+      "bytes": 482197,
+      "sha256": "f868c319f8d41e2aebaea17cfac2d6c8d8aadad82d331a530c57d869706c7c25"
+    },
+    "U2025.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2025/games",
+      "bytes": 480861,
+      "sha256": "f1446e0537cb110b6c4b498ce62a4c9d2f8efe48ddcb4e6649713dd96840d4c0"
+    },
+    "U2026.json": {
+      "source": "https://api-live.euroleague.net/v2/competitions/U/seasons/U2026/games",
+      "bytes": 456837,
+      "sha256": "3f70808e04db5863b570630f12a1ba3c1862f8175651a628f3bc429b0c2995b8"
+    },
+    "VTB-api-2026.json": {
+      "source": "https://api.vtb-league.com/v2/leagues/vtb/seasons/2026/matches?limit=1000",
+      "bytes": 727713,
+      "sha256": "c8a34d360db2fa09328395197514c2538e7ee71cdccd13ccc06194b38561e1a3"
+    },
+    "VTB-api-2027.json": {
+      "source": "https://api.vtb-league.com/v2/leagues/vtb/seasons/2027/matches?limit=1000",
+      "bytes": 353760,
+      "sha256": "7f97df69999a6e82f37aa3746d94b13b053a94b3cb6f871affde63a235e993a0"
+    },
+    "VTB-info-2019.json": {
+      "source": "https://org.infobasket.su/Comp/GetCalendar/?format=json&comps=30051",
+      "bytes": 440818,
+      "sha256": "ad2d3db114ba1a41ea27d3fb200e4819ba9132a97b1f4abf691fcaffd999f8af"
+    },
+    "VTB-info-2020.json": {
+      "source": "https://org.infobasket.su/Comp/GetCalendar/?format=json&comps=32984",
+      "bytes": 223395,
+      "sha256": "c5d03aee93f009e74ce5742cd4d7fc0add2974a8dafac2ae1bc479a75b5437ad"
+    },
+    "VTB-info-2021.json": {
+      "source": "https://org.infobasket.su/Comp/GetCalendar/?format=json&comps=34829",
+      "bytes": 322550,
+      "sha256": "b1d28f1921a45e96111173c56460e77745371d954afb94deb54ae689013b7a7b"
+    },
+    "VTB-info-2022.json": {
+      "source": "https://org.infobasket.su/Comp/GetCalendar/?format=json&comps=37492",
+      "bytes": 263528,
+      "sha256": "5a9c4b7503b0c0bd3698bdeb1ea582317650022120bf4bc95ca1a1b123b01779"
+    },
+    "VTB-info-2023.json": {
+      "source": "https://org.infobasket.su/Comp/GetCalendar/?format=json&comps=39799",
+      "bytes": 552042,
+      "sha256": "6ab37c6e2e67f3821f3086f7cb463a736e56e87383d914e9c22c3205d0838830"
+    },
+    "VTB-info-2024.json": {
+      "source": "https://org.infobasket.su/Comp/GetCalendar/?format=json&comps=42729",
+      "bytes": 777982,
+      "sha256": "16957fe0bcf612d7fd930e659cddd76958dc72f5f71d51297c4584c567afc031"
+    },
+    "VTB-info-2025.json": {
+      "source": "https://org.infobasket.su/Comp/GetCalendar/?format=json&comps=46399",
+      "bytes": 761553,
+      "sha256": "67b942fac0840f0f5406100ac4996c5a0302569e2cf0f034bbd6dd289e14fd42"
+    },
+    "VTB-infoseasons.json": {
+      "source": "https://org.infobasket.su/Comp/GetSeasonsForTag?format=json&tag=vtb",
+      "bytes": 1904,
+      "sha256": "53dc3e3a7793b61e1bb26c5ea26d0e92c94d33b3c33acdea841479cbaadcd259"
+    },
+    "clock_inputs/club_basketball_verified_clocks.csv": {
+      "source": "BetExplorer SportsEvent JSON-LD on match URLs recorded in rows",
+      "bytes": 149771,
+      "sha256": "3699ba531de6dc183641aa481e4d427d15ed38de7288b6893c7a2210bede3c44"
+    },
+    "clock_inputs/germany_bbl_bcl_verified_clocks.csv": {
+      "source": "BetExplorer SportsEvent JSON-LD on match URLs recorded in rows",
+      "bytes": 35239,
+      "sha256": "aee54a85b59156d9b38547fdf20b7436fc806a66814469f7d14db1a47be81572"
+    },
+    "european-odds.zip": {
+      "source": "https://www.kaggle.com/api/v1/datasets/download/archangel0x01/european-club-basketball-results-and-odds?datasetVersionNumber=3",
+      "original_archive_sha256": "3f1a8c1357dccb192f5db7c1430f5dbed38541b0ced6f52106eee4746e629e45",
+      "original_members": {
+        "games.csv": {
+          "bytes": 4205947,
+          "sha256": "490e01384d509a5a5bb3351f068463f429f53b8a80d54eb81ae618e4ae9bd491"
+        },
+        "closing_odds.csv": {
+          "bytes": 11144736,
+          "sha256": "fc30f8734fdcba3afa36762d93759bf8507d36c22729b32ad86cb5348e147928"
+        }
+      },
+      "bytes": 1983362,
+      "sha256": "1656396cdcc109bb0371040432dd00cee00e04d85ea7a2c01cfb0b38e6a419ae"
+    },
+    "gamma-bkbbl-queries.json": {
+      "source": "capture metadata",
+      "bytes": 316,
+      "sha256": "4fae7ca75c1994f754e2eca44e6271cfce019939c50a6c6efcff5f3a0c9f1cad"
+    },
+    "gamma-bkbbl.json": {
+      "source": "gamma-bkbbl-queries.json",
+      "bytes": 2454013,
+      "sha256": "7a889e866e24506f274c82f8abeaa4ebd26f00c35eb6f6113689e04fd86fd0ed"
+    },
+    "gamma-bkcl-queries.json": {
+      "source": "capture metadata",
+      "bytes": 316,
+      "sha256": "743e265179fd9f741d7f25c7941cb36906e362e82ca1f31196c5d6d582084022"
+    },
+    "gamma-bkcl.json": {
+      "source": "gamma-bkcl-queries.json",
+      "bytes": 1288485,
+      "sha256": "ffc9b595dcfe8063d1f03ba4a573d6c1b923e964c1c9e641f0bcfcdd305b80f8"
+    },
+    "gamma-bkeurocup-queries.json": {
+      "source": "capture metadata",
+      "bytes": 316,
+      "sha256": "0b072157c6e8a71f1d617a5f719e248ab7bf553c4c8d47057908a7f5583255d0"
+    },
+    "gamma-bkeurocup.json": {
+      "source": "gamma-bkeurocup-queries.json",
+      "bytes": 2269214,
+      "sha256": "23c6d67d69420dbe3d2f7284142014c9b90e0cfae05836f76e8b8316da2a0901"
+    },
+    "gamma-bkfr1-queries.json": {
+      "source": "capture metadata",
+      "bytes": 474,
+      "sha256": "a46f3cbf5e486932b782408177dab973119c2f8234451fc83b47b96b885aa8c8"
+    },
+    "gamma-bkfr1.json": {
+      "source": "gamma-bkfr1-queries.json",
+      "bytes": 2683371,
+      "sha256": "31028075bcfdd5ce28ec80e91e80fcc5a1dc366891177c5f20e01234a12d0852"
+    },
+    "gamma-bkfr2-queries.json": {
+      "source": "capture metadata",
+      "bytes": 157,
+      "sha256": "b6cc8d39d78642ec262569340b7c69bd80b05446f2d12f70c8ef81268446dabe"
+    },
+    "gamma-bkfr2.json": {
+      "source": "gamma-bkfr2-queries.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "gamma-bkligend-queries.json": {
+      "source": "capture metadata",
+      "bytes": 474,
+      "sha256": "1d704eb9a77e1b7afeeab27c0d106feae01bb76c1db06ed48d20a01a5c757ad6"
+    },
+    "gamma-bkligend.json": {
+      "source": "gamma-bkligend-queries.json",
+      "bytes": 3057099,
+      "sha256": "0b7d25bd5039ae6afae5ee9c285eb12d2ab97dc56020885821b093d36862c05a"
+    },
+    "gamma-bkseriea-queries.json": {
+      "source": "capture metadata",
+      "bytes": 473,
+      "sha256": "71c38cb30332e0015ba9651535c4a432b0997fe492c41fe83d5c8657fbd7b212"
+    },
+    "gamma-bkseriea.json": {
+      "source": "gamma-bkseriea-queries.json",
+      "bytes": 2489212,
+      "sha256": "d53606fed80191e96596881990f8524885f0d7464f848c2f4bf8fc7595c14e3f"
+    },
+    "gamma-bkvtb-queries.json": {
+      "source": "capture metadata",
+      "bytes": 316,
+      "sha256": "fa2ee12a7a9cdf608989bb54b24d2da6a7ff3db63eb89065b8dcb6c76fb6322d"
+    },
+    "gamma-bkvtb.json": {
+      "source": "gamma-bkvtb-queries.json",
+      "bytes": 1129967,
+      "sha256": "188ad47684c004d2a191ab7898fdf6a31e0ef4eee68018ad995758c8908e5c2a"
+    },
+    "gamma-euroleague-queries.json": {
+      "source": "capture metadata",
+      "bytes": 790,
+      "sha256": "cfb36fc1b396b92561f52b251ecce2a049443a9e6a96edebc1238f74d1fbaaa0"
+    },
+    "gamma-euroleague.json": {
+      "source": "gamma-euroleague-queries.json",
+      "bytes": 1612078,
+      "sha256": "aab998a1fb9b41b8771118a3a217fc46163af712860e1ff754cd84d33e61a64a"
+    },
+    "polymarket-sports.json": {
+      "source": "https://gamma-api.polymarket.com/sports",
+      "bytes": 157541,
+      "sha256": "71436e5d8bc4bda4479c181ac6eeafe7b8a491b9c1153c0454194584346826e5"
+    },
+    "prices-bkbbl-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 268956,
+      "sha256": "23ba24daf383a04d9d7f73b4debe198b71858cb3ea0fe3c74285921e32140e34"
+    },
+    "prices-bkcl-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 115683,
+      "sha256": "4db914e44f8514d390bd0c21f4ba94bb85a0c2b29c0850a108e96d23ba8af574"
+    },
+    "prices-bkeurocup-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 305240,
+      "sha256": "4036ce080314bcdfa9004db68af98400f3af763acca4b1aef737b04362a8ddbb"
+    },
+    "prices-bkfr1-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 285873,
+      "sha256": "bcd73e4d45b874146f08d03cbd5903013d3083ca329df6414bedd852cbbe5d7b"
+    },
+    "prices-bkfr2-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "prices-bkligend-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 315135,
+      "sha256": "f0a5d1e6128f87266b0668064a78c8443f9239d4496e52528662042a6dff59d5"
+    },
+    "prices-bkseriea-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 256029,
+      "sha256": "483562e22a001f24fee743872ea76b08ed6c7153d4e4667d19f8df243f791ce3"
+    },
+    "prices-bkvtb-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 92752,
+      "sha256": "c297b45cb333ee519a055f754dd22135815ca7bda80383ee5de93f96ea1c5fa1"
+    },
+    "prices-euroleague-extended.json": {
+      "source": "https://clob.polymarket.com/batch-prices-history",
+      "bytes": 203656,
+      "sha256": "97aebaffedacba0b620ad37222c0c4381d43cf81e0ffa4e59f5b3983957269b2"
+    },
+    "source-urls.json": {
+      "source": "capture metadata",
+      "bytes": 4252,
+      "sha256": "13faf7616e0dffe747d0625c1ea838eaa3d32f63716112021a2cdf42ec17094d"
+    }
+  }
+}

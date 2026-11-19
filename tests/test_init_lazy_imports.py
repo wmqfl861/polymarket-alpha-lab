@@ -40,6 +40,25 @@ import polymarket_alpha_lab as lab
 
 STARTUP_MODULE_LIMIT = 20
 
+
+def test_papersim_lazy_international_submodules_keep_existing_attributes() -> None:
+    assert _run_python(
+        """
+        import sys
+        import polymarket_alpha_lab.papersim as papersim
+
+        for name, export in (("intl_data", "load_intl_snapshot"), ("intl_model", "IntlFixture")):
+            qualified = f"{papersim.__name__}.{name}"
+            assert qualified not in sys.modules
+            assert name in dir(papersim)
+            assert qualified not in sys.modules
+            module = getattr(papersim, name)
+            assert module is sys.modules[qualified]
+            assert getattr(papersim, export) is getattr(module, export)
+        print("ok")
+        """
+    ).strip() == "ok"
+
 EXPECTED_EXPORT_COUNT = 369
 EXPECTED_PROVIDER_COUNT = 76
 EXPECTED_SUBMODULE_ATTRIBUTE_COUNT = 134

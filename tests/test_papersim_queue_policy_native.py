@@ -110,10 +110,20 @@ def unique_slug() -> str:
     return 'fx17-' + uuid.uuid4().hex[:12]
 
 
+def candidates_for_scans(conn, *scans):
+    """Read all fixture candidates even when another native test used this face."""
+    from polymarket_alpha_lab.papersim import cli
+    candidate_ids = {str(candidate_id) for scan in scans
+                     for candidate_id in scan['candidate_ids'].values()}
+    rows = tuple(row for row in cli._evaluation_candidates_from_store(conn)
+                 if row.candidate_id in candidate_ids)
+    assert {row.candidate_id for row in rows} == candidate_ids
+    return rows
+
+
 @NATIVE
 def test_store_metrics_to_pause_decision_chain(managed_face):
     store_psycopg = adapter()
-    from polymarket_alpha_lab.papersim import cli
     from polymarket_alpha_lab.papersim import evaluation as ev
     from polymarket_alpha_lab.papersim import queue_policy as qp
     from polymarket_alpha_lab.papersim import store
@@ -164,7 +174,7 @@ def test_store_metrics_to_pause_decision_chain(managed_face):
     assert result_b['inserted'] is True
 
     # The audited store -> evaluation read path, then the C1 decision.
-    rows = cli._evaluation_candidates_from_store(app)
+    rows = candidates_for_scans(app, result_a, result_b)
     report = ev.evaluate_queues(rows)
     by_model = {queue.queue.model_key: queue for queue in report.queues}
     assert 'gbm:r19' in by_model and 'gbm:r20' in by_model
@@ -220,7 +230,6 @@ def test_store_metrics_to_auto_stop_recommendation(managed_face):
     chain: the universal rule recommends auto-stop for BOTH scopes (it
     is not an FX-17 branch and is not scope-gated)."""
     store_psycopg = adapter()
-    from polymarket_alpha_lab.papersim import cli
     from polymarket_alpha_lab.papersim import evaluation as ev
     from polymarket_alpha_lab.papersim import queue_policy as qp
     from polymarket_alpha_lab.papersim import store
@@ -256,10 +265,8 @@ def test_store_metrics_to_auto_stop_recommendation(managed_face):
                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
                 (entry_id, 'NATURAL', 'loss', 0, -250, Decimal('10.08'),
                  Decimal('-260.08'), 'c1-native', at(80)))
-    candidates = cli._evaluation_candidates_from_store(app)
+    candidates = candidates_for_scans(app, result)
     report = ev.evaluate_queues(candidates)
-    # The module face is shared with the first test: select this test's
-    # queue by model key instead of positional order.
     queue = {q.queue.model_key: q for q in report.queues}['gbm:r31']
     assert (queue.counts.entered, queue.counts.settled) == (40, 40)
     assert queue.drawdown.max_drawdown == pytest.approx(40 * 257.7, rel=1e-6)

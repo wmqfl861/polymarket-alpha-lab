@@ -1,0 +1,152 @@
+{
+  "asean-2024": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/asia/asean-club-championship-2024-2025/results/?stage=l4WViVJO": 30
+    }
+  },
+  "asean-2025": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/asia/asean-club-championship-2025-2026/results/?stage=UDIg6wTF": 30
+    }
+  },
+  "asean-2026": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/asia/asean-club-championship/results/?stage=GGNnVGid": 9
+    }
+  },
+  "bra-2022": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/brazil/serie-a-2022/results/": 380
+    }
+  },
+  "bra-2023": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/brazil/serie-a-2023/results/": 380
+    }
+  },
+  "bra-2024": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/brazil/serie-a-betano-2024/results/": 380
+    }
+  },
+  "bra-2025": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/brazil/serie-a-betano-2025/results/": 380
+    }
+  },
+  "bra-2026": {
+    "exclusions": {
+      "at_or_after_data_cutoff": 3
+    },
+    "sources": {
+      "https://www.betexplorer.com/football/brazil/serie-a/results/": 342
+    }
+  },
+  "col-2023": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/colombia/primera-b-2023/results/?stage=25RHd7FJ": 128,
+      "https://www.betexplorer.com/football/colombia/primera-b-2023/results/?stage=byDmiows": 128,
+      "https://www.betexplorer.com/football/colombia/primera-b-2023/results/?stage=f36dkP7g": 24,
+      "https://www.betexplorer.com/football/colombia/primera-b-2023/results/?stage=xCT8lqNa": 24
+    }
+  },
+  "col-2024": {
+    "exclusions": {
+      "non_regulation_or_unplayed": 3
+    },
+    "sources": {
+      "https://www.betexplorer.com/football/colombia/primera-b-2024/results/?stage=ANMJGhFf": 126,
+      "https://www.betexplorer.com/football/colombia/primera-b-2024/results/?stage=ImQREWq7": 24,
+      "https://www.betexplorer.com/football/colombia/primera-b-2024/results/?stage=dvPVDjaD": 24,
+      "https://www.betexplorer.com/football/colombia/primera-b-2024/results/?stage=nqxGJEpr": 127
+    }
+  },
+  "col-2025": {
+    "exclusions": {
+      "non_regulation_or_unplayed": 1
+    },
+    "sources": {
+      "https://www.betexplorer.com/football/colombia/primera-b-2025/results/?stage=EuclBJW4": 127,
+      "https://www.betexplorer.com/football/colombia/primera-b-2025/results/?stage=QNO49c1H": 128,
+      "https://www.betexplorer.com/football/colombia/primera-b-2025/results/?stage=Wzf57yWT": 24,
+      "https://www.betexplorer.com/football/colombia/primera-b-2025/results/?stage=YqtX2evo": 24
+    }
+  },
+  "col-2026": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/colombia/primera-b/results/?stage=ABbJaDVs": 120,
+      "https://www.betexplorer.com/football/colombia/primera-b/results/?stage=KYeFdatm": 20,
+      "https://www.betexplorer.com/football/colombia/primera-b/results/?stage=dCErdVU6": 120,
+      "https://www.betexplorer.com/football/colombia/primera-b/results/?stage=jJ5q2LIP": 24
+    }
+  },
+  "uru-2023": {
+    "exclusions": {
+      "non_regulation_or_unplayed": 1
+    },
+    "sources": {
+      "https://www.betexplorer.com/football/uruguay/primera-division-2023/results/?stage=2DPo6801": 56,
+      "https://www.betexplorer.com/football/uruguay/primera-division-2023/results/?stage=COWY8AGr": 119,
+      "https://www.betexplorer.com/football/uruguay/primera-division-2023/results/?stage=tbyw8UVl": 120
+    }
+  },
+  "uru-2024": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/uruguay/primera-division-2024/results/?stage=OMU6kJra": 120,
+      "https://www.betexplorer.com/football/uruguay/primera-division-2024/results/?stage=tbu2jaTh": 120,
+      "https://www.betexplorer.com/football/uruguay/primera-division-2024/results/?stage=z5dNmcDB": 56
+    }
+  },
+  "uru-2025": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/uruguay/liga-auf-uruguaya-2025/results/?stage=EHh6juUm": 120,
+      "https://www.betexplorer.com/football/uruguay/liga-auf-uruguaya-2025/results/?stage=QaKMlJb0": 56,
+      "https://www.betexplorer.com/football/uruguay/liga-auf-uruguaya-2025/results/?stage=Wh31iLEs": 120
+    }
+  },
+  "uru-2026": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/uruguay/liga-auf-uruguaya/results/?stage=d8rWCt1C": 56,
+      "https://www.betexplorer.com/football/uruguay/liga-auf-uruguaya/results/?stage=fexyMpvQ": 120,
+      "https://www.betexplorer.com/football/uruguay/liga-auf-uruguaya/results/?stage=jRN6GO1m": 112
+    }
+  },
+  "uzb-2023": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/uzbekistan/super-league-2023/results/?stage=YLazWFZT": 182
+    }
+  },
+  "uzb-2024": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/uzbekistan/super-league-2024/results/?stage=KhG7D4Ep": 182
+    }
+  },
+  "uzb-2025": {
+    "exclusions": {},
+    "sources": {
+      "https://www.betexplorer.com/football/uzbekistan/super-league-2025/results/?stage=AXDbDQXS": 240
+    }
+  },
+  "uzb-2026": {
+    "exclusions": {
+      "non_regulation_or_unplayed": 1
+    },
+    "sources": {
+      "https://www.betexplorer.com/football/uzbekistan/super-league/results/": 215
+    }
+  }
+}

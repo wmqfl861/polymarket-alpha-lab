@@ -1,0 +1,17 @@
+{
+  "frozen_input_files_verified": 71,
+  "game_rows": 3083,
+  "market_rows": 2374,
+  "strict_contracts": 1600,
+  "strict_independent_matches": 961,
+  "excluded_italy_clock_conflicts_may_10": 7,
+  "excluded_zaragoza_granada_clock_conflicts": 1,
+  "offline_reproduction_sha256": {
+    "game_predictions.csv": "cc9cc0813c26c0711805ede87e860783ee96c63bc5efede314174bb4fe1493c1",
+    "prediction_metrics.json": "dba48075bc68d7e43391996ea3904aeab5585168aadb2d9b20ff54b75ceb2f62",
+    "polymarket_market_replay.csv": "d5d63a7a48490a3c3f18f7f928ec78c84cb4f579e97e4f8a87ee3517308695b1",
+    "market_metrics.json": "9fec606d539948595475b30cb37e9751d936152e98dc2dad1fb866167a94e3f3",
+    "sportsbook_closing_moneyline_comparison.csv": "2b6cb819b134dea6199ea5804b488bbaa261e00086e87a47db683918bbf4c87e",
+    "sportsbook_france_pro_b_timed_totals.csv": "88eb4d807689d7cda6ae1afeafdd38391f6eed2217ee74046015af9baa96174b"
+  }
+}

@@ -18,18 +18,14 @@ Semantics pinned by the reviewed design:
   a discipline exit with NO market_outcomes row (the settlement carries
   classification ``EXIT``); ``VOIDED`` refunds the stake (proceeds equal to
   stake, pnl 0, no fees).
-- Market-level resolution amounts are allocated by the legacy RECORDED
-  shares exactly once (section 7.4): every entry except the last (by legacy
-  id ascending) receives ``round_half_even(market_pnl * shares_i /
-  total_shares, 2)``; the last entry receives ``market_pnl - sum(previous
-  rounded values)`` so per-cent residuals land deterministically and the
-  per-market sum is conserved exactly. Markets with missing, non-finite,
-  non-positive or all-zero shares are NOT allocated: their settlements are
-  skipped and reported as INSUFFICIENT — never zero-filled. (Registered
-  deviation: the design section 1.3 illustration "743.68 + 561.52" is an
-  arithmetic slip; its own section 7.4 method yields 743.79 + 561.41 for
-  the 1456/1099 shares of market 3866000, still summing to 1305.20 with no
-  residual.)
+- A market-keyed resolution must follow every decision it covers. Shared
+  resolutions also require compatible directions, settlement evidence, and
+  aggregate costs and shares. Allocate verified pooled proceeds by legacy
+  recorded shares in ascending decision id, round each result to cents, and
+  give the last entry the remainder. Subtract each decision's own stake
+  from its proceeds to derive P&L. Verified full losses use each decision's
+  stake and verified voids refund each stake. Single-entry markets missing
+  positive recorded shares remain INSUFFICIENT.
 - Fees are back-computed ESTIMATES (``fee_source='estimated'``): entry leg
   ``stake * rate * (1 - price)``; ``EXITED`` rows add the sell leg
   ``shares * rate * exit_price * (1 - exit_price)`` at the exit price
@@ -81,11 +77,11 @@ from typing import Any, Callable
 # Repo/package bootstrap: prefer the installed package; fall back to the
 # worktree's src/ so the script also runs from a plain checkout.
 try:
-    from polymarket_alpha_lab.papersim import fees, ledger, store
+    from polymarket_alpha_lab.papersim import fees, ledger, legacy_settlement, store
 except ImportError:  # pragma: no cover - exercised only outside the venv
     _SRC = Path(__file__).resolve().parents[1] / "src"
     sys.path.insert(0, str(_SRC))
-    from polymarket_alpha_lab.papersim import fees, ledger, store
+    from polymarket_alpha_lab.papersim import fees, ledger, legacy_settlement, store
 
 SNAPSHOT_DIRECTORY = Path("docs/paper-sim/ledger-snapshots/2026-11-12")
 DEFAULT_SNAPSHOT_DIR = Path(__file__).resolve().parents[1] / SNAPSHOT_DIRECTORY
@@ -125,7 +121,7 @@ VOIDED_LABEL = "VOIDED"
 
 
 class PapersimImportError(ValueError):
-    """Fixed public error codes only; never provider output or credentials."""
+    """Fixed public error codes with optional legacy record identifiers."""
 
 
 def _fail(code: str):
@@ -483,13 +479,40 @@ def build_import_plan(snapshot: LegacySnapshot) -> ImportPlan:
     produce byte-identical plans (the dry-run double-run proof).
     """
     decisions = snapshot.decisions
-    resolutions = {row["market_id"]: row for row in snapshot.resolutions}
-    if len(resolutions) != len(snapshot.resolutions):
-        _fail("papersim_import_resolution_duplicate")
-
     ids = [row["id"] for row in decisions]
     if len(set(ids)) != len(ids):
         _fail("papersim_import_decision_duplicate")
+
+    decisions_by_market: dict[str, list[dict]] = {}
+    for row in decisions:
+        decisions_by_market.setdefault(row["market_id"], []).append(row)
+    resolutions: dict[str, dict] = {}
+    for row in snapshot.resolutions:
+        market_id = row["market_id"]
+        if market_id in resolutions:
+            _fail(str(legacy_settlement.LegacyResolutionError(
+                "papersim_import_resolution_duplicate", market_id,
+                decisions_by_market.get(market_id, []))))
+        resolutions[market_id] = row
+
+    insufficient: list[str] = []
+    allocations: dict[int, Decimal] = {}
+    for market_id in sorted(decisions_by_market.keys() & resolutions.keys()):
+        market_rows = decisions_by_market[market_id]
+        resolution = resolutions[market_id]
+        try:
+            pooled_pnl = legacy_settlement.attribute_resolution(
+                market_id, market_rows, resolution)
+        except legacy_settlement.LegacyResolutionError as error:
+            _fail(str(error))
+        if pooled_pnl is not None:
+            allocations.update((int(key), pnl) for key, pnl in pooled_pnl.items())
+            continue
+        row, = market_rows
+        if row["shares"] is None or row["shares"] <= 0:
+            insufficient.append(market_id)
+            continue
+        allocations[row["id"]] = resolution["pnl"]
 
     # --- synthetic legacy scan identity (deterministic, idempotent) -------
     started_at = min(row["ts"] for row in decisions)
@@ -553,31 +576,6 @@ def build_import_plan(snapshot: LegacySnapshot) -> ImportPlan:
             price_evidence=(), entry=entry))
         fee_rate_by_id[row["id"]] = rate
     submission = store.ScanSubmission(scan=scan, candidates=tuple(candidates))
-
-    # --- per-market allocation (recorded shares; exactly once) ------------
-    decisions_by_market: dict[str, list[dict]] = {}
-    for row in decisions:
-        decisions_by_market.setdefault(row["market_id"], []).append(row)
-    insufficient: list[str] = []
-    allocations: dict[int, Decimal] = {}  # legacy decision id -> pnl_gross
-    for market_id in sorted(decisions_by_market):
-        if market_id not in resolutions:
-            continue  # unresolved market: entry stays open, no settlement
-        market_rows = sorted(decisions_by_market[market_id],
-                             key=lambda row: row["id"])
-        recorded = [row["shares"] for row in market_rows]
-        if any(shares is None or shares <= 0 for shares in recorded) or \
-                sum(recorded) <= 0:
-            insufficient.append(market_id)
-            continue
-        market_pnl = resolutions[market_id]["pnl"]
-        total_shares = sum(recorded)
-        allocated = Decimal("0.00")
-        for row, shares in zip(market_rows[:-1], recorded[:-1], strict=True):
-            part = _cents(market_pnl * shares / total_shares)
-            allocations[row["id"]] = part
-            allocated += part
-        allocations[market_rows[-1]["id"]] = market_pnl - allocated
 
     # --- market_outcomes + settlements -------------------------------------
     outcomes = []
@@ -1092,16 +1090,20 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
         return 2
 
-    if args.from_legacy_db:
-        store_psycopg = _adapter()
+    try:
+        if args.from_legacy_db:
+            store_psycopg = _adapter()
 
-        def connect_legacy():
-            return store_psycopg.connect_legacy_readonly(ledger.papersim_dsn())
+            def connect_legacy():
+                return store_psycopg.connect_legacy_readonly(ledger.papersim_dsn())
 
-        snapshot = load_snapshot_from_legacy_face(connect_legacy)
-    else:
-        snapshot = load_snapshot(args.snapshot_dir)
-    plan = build_import_plan(snapshot)
+            snapshot = load_snapshot_from_legacy_face(connect_legacy)
+        else:
+            snapshot = load_snapshot(args.snapshot_dir)
+        plan = build_import_plan(snapshot)
+    except PapersimImportError as error:
+        print(f"papersim legacy import blocked: {error}", file=sys.stderr)
+        return 2
     print(render_report(plan))
 
     if args.register_baseline:
