@@ -12,6 +12,10 @@ writer copies the two files from the live repository, verifies every byte
 against the pinned digests and materializes a minimal repo tree holding
 exactly the frozen catalog. If an M1 file ever drifts, the pinned-hash
 assertion fails loudly instead of silently re-blessing new bytes.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from hashlib import sha256

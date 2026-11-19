@@ -1,6 +1,6 @@
 """Papersim-managed migration catalog, applier and command line.
 
-This module owns the papersim-dedicated catalog (design 2026-11-15 v2,
+This module owns the papersim-dedicated catalog (09D design v2,
 section 3): ``database/papersim/migrations/`` plus its parent lock manifest
 ``database/papersim/migrations.lock.json`` (format
 ``papersim-migrations-v1``). It deliberately reuses the audited V1
@@ -22,6 +22,10 @@ papersim connector), and every raw DSN passes the single audited
 ``validate_local_postgres_dsn`` there before connecting. Corrections are
 always NEW migrations appended with a fresh timestamp; published files and
 manifest entries are never edited in place.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -163,7 +167,7 @@ def migration_status(conn, repo_root: Path) -> dict:
 def apply_pending_migrations(conn, repo_root: Path, *, lock_key: int = PAPERSIM_LOCK_KEY) -> dict:
     """Apply the verified pending tail; one transaction per migration.
 
-    Per migration (design section 2.6): BEGIN; statement/lock timeouts;
+    Per migration (09D v2 section 2.6): BEGIN; statement/lock timeouts;
     ``pg_advisory_xact_lock(PAPERSIM_LOCK_KEY)``; RE-READ the history under
     the lock (READ COMMITTED sees concurrently committed receipts and skips
     them idempotently); execute the body; insert the receipt; COMMIT. Any

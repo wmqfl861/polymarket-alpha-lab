@@ -2,12 +2,16 @@
 
 Everything here is offline and read-only: the importer's dry run is a pure
 function of the archived repo snapshot
-(``docs/paper-sim/ledger-snapshots/2026-11-12``), so the design section 7/
+(``docs/paper-sim/ledger-snapshots/2026-11-12``), so the 09D v2 section 7/
 section 8.3 acceptance numbers (allocation, conservation, net identity,
 label semantics, idempotent double runs and the authorization gate) are
 pinned without any database. The DB-side proofs (real insert, idempotent
 re-run, CHECK rejection, managed-face conservation) live in
 ``tests/test_papersim_store_native.py`` on the disposable native cluster.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from dataclasses import replace
@@ -146,7 +150,7 @@ def test_market_kind_touch_rule(importer):
 
 
 # ---------------------------------------------------------------------------
-# Allocation and conservation (8.3 item 4; design 7.4)
+# Allocation and conservation (09D v2 8.3 item 4; 09D v2 7.4)
 # ---------------------------------------------------------------------------
 
 
@@ -399,7 +403,7 @@ def test_natural_outcomes_align_win_loss_by_side(plan):
 
 
 # ---------------------------------------------------------------------------
-# INSUFFICIENT markets are never zero-filled (design 7.4)
+# INSUFFICIENT markets are never zero-filled (09D v2 7.4)
 # ---------------------------------------------------------------------------
 
 

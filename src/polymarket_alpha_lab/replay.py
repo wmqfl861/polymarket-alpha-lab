@@ -1,6 +1,6 @@
 """FX-12 candidate binding and forensic replay of paper decisions.
 
-Two faces of one contract (M1 plan section 3 FX-12, items 2 and 3):
+Two faces of one contract (M1 plan section 3 FX-12 items 2-3; node chain: DELIVERY_PLAN.md 78.1):
 
 RECORD SIDE -- binding. :func:`bind_candidate` turns one
 :class:`~polymarket_alpha_lab.papersim.pipeline.EntryRequest` plus its
@@ -41,6 +41,10 @@ never opens a connection itself.
 Paper boundary: binding and replay are paper-evidence operations only
 (``paper_only``/``report_only``/``readonly``); they grant no execution
 authorization and never touch an order.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

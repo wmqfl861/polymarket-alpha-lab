@@ -1,0 +1,93 @@
+diff --git a/src/polymarket_alpha_lab/papersim/pipeline.py b/src/polymarket_alpha_lab/papersim/pipeline.py
+index 06e8e58a..5dd0f6cd 100644
+--- a/src/polymarket_alpha_lab/papersim/pipeline.py
++++ b/src/polymarket_alpha_lab/papersim/pipeline.py
+@@ -1164,6 +1164,19 @@ def _validate_crossbridge(
+         if _numeric(kappa) is None:
+             reasons.append(REASON_BRIDGE_INVALID)
+             return reasons, False, None
++    # Pure kappa-table rule (review P2-1 fix, same semantics as the
++    # league-key kappa checks above): EVERY bridge value -- including
++    # any key outside the fixture's two leagues -- must be a finite
++    # real number. A non-numeric extra (e.g. a "note" annotation) or a
++    # numeric STRING is invalid bridge evidence and is rejected here,
++    # BEFORE bridge_fingerprint's float() conversion can raise out of
++    # decide_entry; an exception never escapes, the decision records
++    # bridge_invalid instead. Numeric extras stay valid when the
++    # fingerprint covers the same table.
++    for value in bridge.values():
++        if _numeric(value) is None:
++            reasons.append(REASON_BRIDGE_INVALID)
++            return reasons, False, None
+     if request.bridge_fingerprint is None:
+         reasons.append(REASON_BRIDGE_FINGERPRINT_MISSING)
+         return reasons, False, None
+diff --git a/tests/test_papersim_pipeline.py b/tests/test_papersim_pipeline.py
+index 6826093b..306229e6 100644
+--- a/tests/test_papersim_pipeline.py
++++ b/tests/test_papersim_pipeline.py
+@@ -45,6 +45,7 @@ from polymarket_alpha_lab.papersim.crypto_model import (
+ )
+ from polymarket_alpha_lab.papersim.pipeline import (
+     STEP_ORDER,
++    EntryDecision,
+     EntryRequest,
+     bridge_fingerprint,
+     decide_entry,
+@@ -503,6 +504,56 @@ def test_bridge_fingerprint_is_stable_and_order_independent():
+     assert bridge_fingerprint(a) != bridge_fingerprint({"bundesliga": 0.0, "ligue_1": 0.0})
+ 
+ 
++def test_bridge_with_non_numeric_extra_key_rejected_not_crash():
++    """Review P2-1: a bridge carrying a non-numeric extra key (the
++    reviewer's ``"note": "wp-p2a"`` reproduction) must be rejected as
++    invalid bridge evidence -- the ValueError from the fingerprint's
++    float() conversion must NEVER escape decide_entry."""
++
++    bridge = {
++        HOF_LEAGUE: math.log(1.25),
++        LYO_LEAGUE: 0.0,
++        "note": "wp-p2a",
++    }
++    # A non-None fingerprint is what drives the flow INTO the
++    # bridge_fingerprint computation (the reviewer's reproduction).
++    decision = decide_entry(_hof_request(bridge=bridge, bridge_fingerprint="0" * 64))
++    assert isinstance(decision, EntryDecision)
++    assert decision.accepted is False
++    assert "bridge_invalid" in decision.reasons
++    assert "cross_league_bridge" in decision.reasons  # bridge_ok stays False
++    step = next(s for s in decision.steps if s.step == "cross_league_mw")
++    assert step.status == "fail"
++
++
++def test_bridge_with_extra_numeric_key_and_matching_fingerprint_accepted():
++    """Extra NUMERIC keys are tolerated when the fingerprint covers the
++    same table (pure kappa-table semantics: numbers anywhere, strings
++    nowhere)."""
++
++    bridge = {HOF_LEAGUE: math.log(1.25), LYO_LEAGUE: 0.0, "epl": 0.1}
++    decision = decide_entry(
++        _hof_request(bridge=bridge, bridge_fingerprint=bridge_fingerprint(bridge))
++    )
++    assert decision.accepted is True, decision.reasons
++    assert decision.bridge_sha256 == bridge_fingerprint(bridge)
++
++
++def test_bridge_with_numeric_string_extra_key_rejected():
++    """Numeric-STRING values anywhere in the bridge are invalid kappa
++    evidence (uniform pure-kappa-table rule; this deliberately closes
++    the P3-2-recorded permissiveness where an extra numeric-string key
++    slipped through the fingerprint's float() conversion)."""
++
++    bridge = {HOF_LEAGUE: math.log(1.25), LYO_LEAGUE: 0.0, "epl": "0.1"}
++    decision = decide_entry(
++        _hof_request(bridge=bridge, bridge_fingerprint="0" * 64)
++    )
++    assert isinstance(decision, EntryDecision)
++    assert decision.accepted is False
++    assert "bridge_invalid" in decision.reasons
++
++
+ # ---------------------------------------------------------------------------
+ # Fee category handling (FX-06 / R06 acceptance)
+ # ---------------------------------------------------------------------------

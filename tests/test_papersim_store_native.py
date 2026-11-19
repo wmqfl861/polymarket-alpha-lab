@@ -4,9 +4,13 @@ Runs only inside the disposable native cluster environment (the CI
 throwaway papersim partition or an explicitly assembled local cluster).
 Never touches a business cluster: the environment DSNs point at the
 one-shot assembled managed face (roles ``pal_owner``/``pal_app``,
-database ``polymarket_alpha_lab``, V1 bootstrap applied). Covers design
+database ``polymarket_alpha_lab``, V1 bootstrap applied). Covers 09D v2
 section 8.2 items B7-B20 plus the D-CONN allowlist pin and the managed
 DSN equivalence proof.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from datetime import UTC, datetime, timedelta
@@ -71,7 +75,7 @@ def managed_face():
 
 
 def outcome(**overrides):
-    # The design 4.4 idempotency key is condition_id|market_id|source_kind|
+    # The 09D v2 4.4 idempotency key is condition_id|market_id|source_kind|
     # source_ref|observed_at (no slug): slug-only markets therefore keep a
     # per-market source reference, like a real close-event id.
     identity = (overrides.get('market_slug') or overrides.get('market_id')
@@ -604,7 +608,7 @@ def test_single_direction_fk_and_min_evidence_id_decision_rule(managed_face):
 
 # ---------------------------------------------------------------------------
 # FX-09L: legacy import DB proofs and settlement cash-ledger proofs
-# (design 8.3 items 3-10; the offline dry-run contracts live in
+# (09D v2 8.3 items 3-10; the offline dry-run contracts live in
 # tests/test_papersim_import_legacy.py)
 # ---------------------------------------------------------------------------
 
@@ -704,7 +708,7 @@ def test_legacy_import_executes_idempotently_and_conserves(
                            match='papersim_mutation_rejected'):
             owner.execute('UPDATE papersim.settlements SET pnl_net = pnl_net')
     owner.close()
-    # Idempotent re-run: nothing new, same mapping (design 7.5).
+    # Idempotent re-run: nothing new, same mapping (09D v2 7.5).
     target = store_psycopg.connect_explicit(
         app_dsn, label='PAPERSIM_MIGRATIONS_PG_DSN')
     try:
@@ -912,7 +916,7 @@ def test_legacy_face_is_unchanged_by_import_and_registration(
 
 
 # ---------------------------------------------------------------------------
-# M3/V2 reporting views (design m3-v1-views-design 2026-11-15; M3 plan
+# M3/V2 reporting views (M3 V2 views design (original missing); M3 plan
 # section 7.2 verification matrix). Every proof below builds its OWN
 # one-shot managed database, so nothing here depends on the shared
 # managed_face fixture or on module ordering; the pre-existing tests in
@@ -1315,7 +1319,7 @@ def test_win_loss_labels_count_as_natural_settlements():
         app, 'SELECT natural_hit FROM papersim.candidate_scoring_view '
              'ORDER BY candidate_id')]
     # The market-level result is UNKNOWN (recorded_label), so the
-    # per-candidate natural_hit stays a three-valued gap (design section
+    # per-candidate natural_hit stays a three-valued gap (09D v2 section
     # 4.2 / vector A-3); the settlement-side statistics above carry the
     # 2/1/0.5 truth. An unknown market result is never guessed.
     assert hits == [None, None]
@@ -1509,7 +1513,7 @@ def test_net_concentration_counterexample_and_undefined_when_negative():
     price = Decimal('0.6817148572467722')
     # Unquantized recorded amounts keep the seeded book equal to the
     # P2-02 anchor arithmetic (quantizing here would drift the net share
-    # by ~1e-9, outside the 1e-9 design tolerance).
+    # by ~1e-9, outside the 1e-9 09D v2 tolerance).
     gross_each = Decimal(250) / price - Decimal(250)
     fee_each = Decimal(250) * Decimal('0.05') * (Decimal(1) - price)
     rows = [candidate(

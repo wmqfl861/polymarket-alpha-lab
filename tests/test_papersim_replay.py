@@ -1,6 +1,6 @@
 """FX-12 replay tests: binding, same-result replay and tamper forensics.
 
-Before/after proof (M1 plan section 3 FX-12, item 4): a synthetic scan
+Before/after proof (M1 plan section 3 FX-12 item 4; DELIVERY_PLAN.md 78.1): a synthetic scan
 containing an ACCEPTED, several REJECTED and two CONSTRUCTION_FAILED
 candidates is recorded through the real binding helpers and replays
 with the SAME result; one tampered byte, a missing snapshot, a wrong
@@ -11,6 +11,10 @@ offline suite drives the pipeline with an in-memory stub speaking
 exactly the SELECT surface of ``polymarket_alpha_lab.replay`` (plus
 the snapshot face); the opt-in native lane at the bottom proves the
 full PostgreSQL round trip and that replay writes nothing.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from datetime import UTC, datetime, timedelta

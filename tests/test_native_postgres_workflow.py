@@ -14,6 +14,10 @@ FX-07 (2026-11-12) makes the real-Postgres matrix actually run: a push-to-main
 trigger with database-facing path filters, a weekly (never daily) schedule,
 and a fourth Linux-only ``papersim`` partition whose opt-in DB tests receive a
 one-shot loopback cluster assembled from the same pinned PG18 prefix.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 from collections import Counter
 import json
@@ -108,7 +112,8 @@ CLAUDE_PROBE_FILES = ('tests/test_claude_cli_probe.py', 'tests/test_claude_cli_p
 # Final CLI node (2026-11-15): test_papersim_cli.py joins the papersim
 # native partition (the evaluate/replay subcommands have opt-in real-
 # cluster assertions); the precise one-line matrix append is pinned here.
-# M1 final review P2-03 (2026-11-15): the two FX-12 native proof files
+# M1 final review P2-03 (2026-11-15; receipt in repo:
+# docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log): the two FX-12 native proof files
 # join the same partition (register/verify+append-only guard and the
 # full record/replay round trip incl. tampered-snapshot rejection) so
 # the four native proofs actually execute on the Linux matrix. Include the

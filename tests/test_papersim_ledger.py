@@ -9,6 +9,10 @@ explicitly provided and validates, and otherwise skips with an explicit
 label; these tests never touch the live paper_sim cluster or any
 ``~/pal-artifacts`` path by default. Password material is never read,
 printed or committed here.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from dataclasses import fields
@@ -411,7 +415,7 @@ def test_papersim_dsn_never_reads_or_creates_password_file(monkeypatch, tmp_path
 
 
 def test_record_entry_builds_pure_entry_event():
-    # FX-09L (design section 5.9): the former P0 stub is completed as a
+    # FX-09L (09D v2 section 5.9): the former P0 stub is completed as a
     # PURE contract. The frozen field order stays asserted and construction
     # adds no I/O, no persistence, no clock read, no default fee category
     # and no rounding.
@@ -490,7 +494,7 @@ def test_record_entry_builds_pure_entry_event():
 
 
 def test_mark_to_market_is_the_raw_per_share_delta():
-    # FX-09L (design section 5.9): delta = exit_bid - entry_price, per
+    # FX-09L (09D v2 section 5.9): delta = exit_bid - entry_price, per
     # share of the held side, raw float subtraction (no rounding, no share
     # multiplication); the entry price keeps the open interval (0, 1) and
     # the mark/exit bid uses the CLOSED interval [0, 1] (settle_exit rule).
@@ -1065,7 +1069,7 @@ def test_report_tool_requires_exactly_one_source(report_tool):
 def test_report_tool_production_connect_routes_through_the_adapter(
     report_tool, monkeypatch,
 ):
-    # FX-09L (design 6.2 L3): the production --from-pg connect is built by
+    # FX-09L (09D v2 6.2 L3): the production --from-pg connect is built by
     # the single allowlisted adapter; a fake injected into sys.modules keeps
     # this an offline proof (the real adapter imports psycopg at module
     # level, which must never happen in the offline suite).

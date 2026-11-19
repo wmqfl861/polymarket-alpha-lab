@@ -48,6 +48,10 @@ Usage::
 
     # 3) read-only SELECT against PAPERSIM_PG_DSN:
     python tools/papersim_ledger_report.py --from-pg
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -205,7 +209,7 @@ def load_rows_pg(connect: Callable[..., Any]) -> list[dict[str, Any]]:
 def _build_connect() -> Callable[..., Any]:
     """Build the production connect through the single papersim adapter.
 
-    FX-09L convergence (design 2026-11-15 v2, section 6.2 L3): the
+    FX-09L convergence (09D design v2 section 6.2 L3): the
     production ``--from-pg`` path no longer hand-rolls a ``psycopg``
     connect or a password-file read. It delegates to
     ``papersim.store_psycopg.connect_legacy_readonly`` — the one

@@ -1,0 +1,9 @@
+M1 SYNTHESIS: FAIL (first failure recorded)
+Traceback (most recent call last):
+  File "/tmp/m1-synth-glue/m1_synth.py", line 671, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/tmp/m1-synth-glue/m1_synth.py", line 649, in main
+    amounts = [Decimal(line.rsplit('net ', 1)[1]) for line in allocations]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]

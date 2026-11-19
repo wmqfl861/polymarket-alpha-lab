@@ -28,7 +28,7 @@ Network boundary: only :func:`fetch_team_schedule`,
 sharing one module-wide polite-spacing guard (:data:`SLEEP_S` = 1.2 s
 between any two requests). No credentials, no cookies, paper-only.
 
-M2 A4 bounded-read boundary (m2-plan-formal.md section 2.5): every
+M2 A4 bounded-read boundary (M2 plan section 2.5): every
 network call now reads its body through
 :func:`polymarket_alpha_lab.public_http.read_public_body` (declared
 framing enforced, body capped at :data:`_RESPONSE_READ_LIMIT_DEFAULT`
@@ -100,6 +100,10 @@ disagreeing between schedule and summary, per-team game counts above
 :data:`MAX_GAMES_PER_TEAM`, duplicate game dates, or a team table that
 does not match the expected 30 NBA teams. Nothing is returned in that
 case; an :class:`EspnNbaSchemaError` names the offending condition.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -331,7 +335,7 @@ def _polite_pause(budget: FetchBudget | None = None) -> None:
     """Sleep the remainder of :data:`SLEEP_S` since the last request.
 
     With a shared budget the spacing sleep is additionally clamped to
-    the remaining round time (m2-plan section 2.5: every wait stays
+    the remaining round time (M2 plan section 2.5: every wait stays
     inside the round budget).
     """
     global _last_fetch_monotonic
@@ -353,7 +357,7 @@ def _http_get_json(
 ) -> object:
     """One HTTPS GET returning parsed JSON (raises on transport/JSON errors).
 
-    M2 A4 bounded read (m2-plan section 2.5): the body comes through
+    M2 A4 bounded read (M2 plan section 2.5): the body comes through
     :func:`polymarket_alpha_lab.public_http.read_public_body` — declared
     framing enforced, body capped at ``budget.next_response_read_limit()``
     (:data:`_RESPONSE_READ_LIMIT_DEFAULT` without a budget) — and both
@@ -488,7 +492,7 @@ def _cached_fetch_json(
 ) -> dict:
     """Read-through cache around :func:`_fetch_json` (cache hit = no network).
 
-    LEGACY ops path (frozen-surface boundary, m2-plan section 2.5): a
+    LEGACY ops path (frozen-surface boundary, M2 plan section 2.5): a
     non-``None`` ``cache_path`` is only ever supplied by the legacy
     WP-NBA-1 backfill tooling/CLI. M2 rounds pass ``cache_dir=None``
     end to end, so this wrapper performs zero disk writes for them. A

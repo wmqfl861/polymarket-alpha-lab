@@ -26,7 +26,7 @@ only, and both share one module-wide polite-spacing guard
 (:data:`SLEEP_S` = 1.3 s between any two requests, matching the Phase
 1 fetch policy). No credentials, no cookies, paper-only.
 
-M2 A4 bounded-read boundary (m2-plan-formal.md section 2.5): every
+M2 A4 bounded-read boundary (M2 plan section 2.5): every
 network call now reads its body through
 :func:`polymarket_alpha_lab.public_http.read_public_body` (declared
 framing enforced, body capped at :data:`_RESPONSE_READ_LIMIT_DEFAULT`
@@ -63,6 +63,10 @@ fall back to league-average multipliers. Championship snapshots are
 therefore sanctioned for the totals-family channels (O/U, BTTS, team
 totals) through the standard domestic 10-variant path; 1X2 stays
 deprioritized under the frozen domestic match_winner policy.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -244,7 +248,7 @@ def _polite_pause(budget: FetchBudget | None = None) -> None:
     """Sleep the remainder of :data:`SLEEP_S` since the last request.
 
     With a shared budget the spacing sleep is additionally clamped to
-    the remaining round time (m2-plan section 2.5: every wait stays
+    the remaining round time (M2 plan section 2.5: every wait stays
     inside the round budget).
     """
     global _last_fetch_monotonic
@@ -266,7 +270,7 @@ def _http_get_json(
 ) -> object:
     """One HTTPS GET returning parsed JSON (raises on transport/JSON errors).
 
-    M2 A4 bounded read (m2-plan section 2.5): the body comes through
+    M2 A4 bounded read (M2 plan section 2.5): the body comes through
     :func:`polymarket_alpha_lab.public_http.read_public_body` — declared
     framing enforced, body capped at ``budget.next_response_read_limit()``
     (:data:`_RESPONSE_READ_LIMIT_DEFAULT` without a budget) — and both

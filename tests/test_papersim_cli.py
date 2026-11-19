@@ -15,6 +15,10 @@ unauthorized DSN rejected by the single audited validator before any
 connection). Every test here is read-only: no network, no database
 connection, no writes outside a temp dir. The opt-in native lane at the
 bottom proves both subcommands against a real disposable cluster.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -420,7 +424,8 @@ def test_evaluate_reads_the_store_with_selects_only(monkeypatch, capsys) -> None
 
 
 # ---------------------------------------------------------------------------
-# evaluate / replay -- settlement-ledger wiring (M1 final review P2-01)
+# evaluate / replay -- settlement-ledger wiring (M1 final review P2-01;
+# receipt in repo: docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log)
 # ---------------------------------------------------------------------------
 
 

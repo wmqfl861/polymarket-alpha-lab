@@ -1,0 +1,29 @@
+# FX-10 self-review (self-review, accurately labeled — NOT an independent review)
+
+Scope: exactly two files, append-only (numstat 295/0 and 420/0).
+1. Frozen surface: 18 original defs AST-source-identical vs ca16ac47
+   (frozen-bytes.out); SoccerCandidate untouched; SWEEPS/SWEEP_NAMES untouched;
+   package __init__ untouched -> selfcheck bytes frozen 1623B / 791f9f95,
+   before==after cmp equal; 194 package exports unchanged.
+2. Bitwise parity: kind=total/side=over path calls the same fixture_variants
+   + over_probability generator as candidate_from_variants; four frozen r23
+   fixtures equal at frozen lines AND all four at 2.5 (dataclass ==).
+3. Reuse: every kind quotes per variant through the frozen helpers
+   (over_probability / both_teams_to_score / team_total_over / MatchOutputs
+   fields / cover_probability); reverse = exact 1.0 - p per variant.
+4. Half-ball only: 2*line must be an odd integer (LINEAGE_EPS tolerance);
+   integer/quarter/NaN/inf/bool/non-numeric all raise ValueError — explicit
+   failure semantics for FX-08/09; no fallback to over_under_quote anywhere
+   (absent from the new code path entirely).
+5. match_winner: per-outcome medians, no renormalization (docstring + test).
+6. spread: quote-only; gates.suspension_policy keeps FLAGGED_ONLY/eligible
+   False — tested, entry rejection unchanged.
+7. Bridge provenance: bridge_consulted only when leagues differ AND bridge
+   supplied (the only path pair_lambdas consults); bridge_source keeps the
+   exact table for FX-08 hashing; same-league ignores bridge (quotes equal).
+8. Validation order is kind -> side vocabulary -> line -> team_side, fixed
+   vocabulary table _GENERIC_SIDES; all messages name the offending input.
+9. Paper-only/read-only: pure computation, no I/O, no network, no DB.
+Findings: none blocking. Known cosmetic nit: the docstring simple-table row
+for match_winner spans two lines (renders as a wrapped row in some docutils
+versions; no doc build in gates).

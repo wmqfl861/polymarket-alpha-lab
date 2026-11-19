@@ -1,4 +1,4 @@
-"""A1 tests: Polymarket public-interface adapter (m2-plan section 6.2).
+"""A1 tests: Polymarket public-interface adapter (M2 plan section 6.2).
 
 All offline and synthetic: responses come from
 ``tests/fixtures/papersim/m2/polymarket.json`` plus generated pages,
@@ -6,7 +6,7 @@ served through a fake opener that returns real ``http.client``
 responses over in-memory wire bytes, with an injected fixed clock. No
 socket is ever opened, no database touched, no file written.
 
-Pins (plan section 2.2 and the A0/A1 row of section 6.2):
+Pins (M2 plan section 2.2 and the A0/A1 row of section 6.2):
 
 - unpermitted calls are denied before any transport is constructed or
   called (zero network), with the contract's NETWORK_DENIED result;
@@ -26,6 +26,10 @@ Pins (plan section 2.2 and the A0/A1 row of section 6.2):
 - single-market slug reads prefer the existing bounded
   ``GammaResearchReader`` when the budget admits its fixed cap, and
   fall back to the adapter's exact-limit bounded GET otherwise.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

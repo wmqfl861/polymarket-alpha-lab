@@ -2,13 +2,13 @@
 
 This module is deliberately I/O free: it builds idempotency keys, validates
 row shapes against the managed schema's CHECK contracts, applies the
-scoring-association semantics (design 2026-11-15 v2, sections 4.4, 4.5 and
+scoring-association semantics (09D design v2 sections 4.4, 4.5 and
 4.2-7) and prepares the data the transactional adapter in
 ``store_psycopg`` writes. Durable persistence is project-private native
 PostgreSQL only (Project Iron Rule 1); nothing here opens connections,
 reads clocks or falls back to file journals.
 
-Key semantics pinned here (design section 4):
+Key semantics pinned here (09D v2 section 4):
 
 - ``UNKNOWN`` means "observed but not final" or "no observation at all"
   for a market outcome: it never carries a confirmation time and never
@@ -23,6 +23,10 @@ Key semantics pinned here (design section 4):
 - Evidence time order: ``CLOSE.observed_at >= DECISION.observed_at`` and
   ``DECISION.observed_at <= scan_runs.finished_at``; violations reject the
   whole scan transaction with ``papersim_evidence_time_order_invalid``.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -173,7 +177,7 @@ def _require_json_list(value, name: str) -> str:
 
 
 def utc_stamp(value: datetime) -> str:
-    """Second-resolution UTC stamp used by the idempotency keys (section 4.4)."""
+    """Second-resolution UTC stamp used by the idempotency keys (09D v2 section 4.4)."""
     return _require_timestamp(value, 'observed_at').astimezone(UTC).strftime('%Y%m%d%H%M%S')
 
 
@@ -235,7 +239,7 @@ def validate_reversal(reason, reverses_event_id) -> None:
 
 
 def natural_alignment(side, outcome) -> bool:
-    """Mirror the fixed calibration hit rule (design section 4.3-4).
+    """Mirror the fixed calibration hit rule (09D v2 section 4.3-4).
 
     YES/YES-basket sides align with an equal natural outcome; NO/NO-basket
     sides align with the natural NO (basket legs resolve on the natural NO).
@@ -317,7 +321,7 @@ def decision_time_observation(evidence_rows):
 
 
 def decision_price_status(decision_row) -> str:
-    """'AVAILABLE' or 'INSUFFICIENT' for the decision-time price (section 4.5)."""
+    """'AVAILABLE' or 'INSUFFICIENT' for the decision-time price (09D v2 section 4.5)."""
     if decision_row is None:
         return 'INSUFFICIENT'
     if all(decision_row.get(column) is None for column in ('last', 'mid', 'bid', 'ask')):
@@ -680,7 +684,7 @@ class ScanSubmission:
 
 # ---------------------------------------------------------------------------
 # M2 closed-loop operations (S0; M2 plan sections 3.1, 3.2, 3.5, 3.6, 5.3).
-# Idempotency is two-layered (plan section 3.2): a stable scheduling
+# Idempotency is two-layered (M2 plan section 3.2): a stable scheduling
 # identity (operation key / mark identity / check identity) and exact
 # content comparison. Same key + same content returns the original row;
 # same key + changed content is a conflict; nothing is ever updated.

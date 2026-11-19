@@ -1,6 +1,6 @@
 """M2 A3 Understat adapter: bounded public league fetch + pure xG snapshot assembly.
 
-Single responsibility (m2-plan-formal.md section 2.4, FX-15 A3): fetch one
+Single responsibility (M2 plan section 2.4, FX-15 A3): fetch one
 league/season block from Understat's public league-data endpoint through the
 shared A0 budget/permission contracts, validate it with the recovery-mirror
 invariants, and assemble validated blocks plus preserved historical blocks
@@ -28,7 +28,7 @@ validation patterns:
 - a failure never promotes partial data: failed fetches keep their raw
   evidence but carry no value, and assembly refuses non-success blocks.
 
-The following mirror behaviors are deliberately NOT migrated (m2-plan
+The following mirror behaviors are deliberately NOT migrated (M2 plan
 section 2.4 "迁移时去掉"):
 
 - fixed round numbers, the fixed ``2026-11-01`` target day, fixed per-league
@@ -48,6 +48,10 @@ snapshot provenance keeps cross-source scale differences visible. M2's
 PostgreSQL (owned by later nodes); this module only provides the fetch and
 the pure assembly functions, and old file pointers remain explicit,
 read-only historical inputs via :class:`UnderstatPriorBlock`.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -121,7 +125,7 @@ __all__ = [
 #: this adapter never emits or accepts another source's blocks.
 SOURCE_KIND = "understat"
 
-#: Closed supported-league set (Understat Big-5; m2-plan A3 scope).
+#: Closed supported-league set (Understat Big-5; M2 plan A3 scope).
 UNDERSTAT_LEAGUES = ("EPL", "La_liga", "Serie_A", "Bundesliga", "Ligue_1")
 
 UNDERSTAT_ORIGIN = "https://understat.com"

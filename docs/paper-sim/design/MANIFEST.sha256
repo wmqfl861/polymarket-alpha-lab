@@ -1,0 +1,48 @@
+# MANIFEST.sha256 - FX-28 surviving server evidence (verbatim archive)
+# Source: server m0 startup workspace evidence/ (host aliased; address not in repo)
+# Observed and hashed: 2026-11-20 (UTC). Rows: sha256  path (sha256sum -c format)
+# 44 files, zero redactions (scan found no real hits; see README section 4.1)
+15db00fb1f75f0284c5b8df8e3e86736e58512b889bbb75cc1591d84fd32b597  server-evidence/m1-09l/native-run-rerun.log
+45621f5f6182d4278958d135f24258cc836d114c07dba13e6a3306ac722fcd04  server-evidence/m1-fx08/added-lines.txt
+2ba8c9b22bf4219db9d09b379b05fd42a44d5ef9e7d0fb7254d64b95f74e265f  server-evidence/m1-fx08/baseline-full.out
+19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061  server-evidence/m1-fx08/full.exit
+bf62ac324b99332b184dc0a9893ad35a7510e94ffb8f41fdafd2e048de946426  server-evidence/m1-fx08/full.out
+90f4b1661465fcfcd8a6c75366e2cb70bab8106a72533d535453f75ab337ab7b  server-evidence/m1-fx08/full.started
+19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061  server-evidence/m1-fx08/full2.exit
+424dd652b622398aabba1252120d8bb76aa6c5dfdf4f3177cbe0d58cc41cbed2  server-evidence/m1-fx08/full2.out
+41936c50d9dffa05aca579ca54418cbd128e698ed2b250a212f11c510a01972b  server-evidence/m1-fx08/full2.started
+09c596ebc2a098b033c398af2947ddfafb914d74209825969ae2b17613d3a22f  server-evidence/m1-fx08/green.out
+64692575f896536255bbdc08be07c9b9fc88331785341a823a44d116b5a43cc3  server-evidence/m1-fx08/green2.out
+0867dbab083bfc44c3737481337d2f145f739683c005ce155ee3e354fca12359  server-evidence/m1-fx08/neighbors.out
+a3c9708a2dcc3459969b27d431810a230dc4b2090563d160d2e0b682ef7f9f43  server-evidence/m1-fx08/neighbors2.out
+a729ece96e40d9430a5836d22d784cd47f2a18d520007057e0ffab63547b7ed9  server-evidence/m1-fx08/p2-1-delta.diff
+609635825dbf2736239c069fef64c04ec8abec3aff06f0e04201cf5100329b88  server-evidence/m1-fx08/red.out
+872169900fa15a92de0c824b743e51f8ad822bf0c5295d79ab45cad3b657ba02  server-evidence/m1-fx08/red.timestamp
+5a7cbdd414671a12da5f028c49dfb2ff344e57c345f5fcdb512711429361ddb6  server-evidence/m1-fx08/red2.out
+9ea417780bbf41ca1e90eb83fa0efbdfa070f73cc117391a58efb7f07139442f  server-evidence/m1-fx08/red2.timestamp
+b568bb9dfa1706a4cb9192145fd298624a779ecd0d717060421cd566406baf76  server-evidence/m1-fx08/secret-scan.txt
+04ed26b131c89806a0d64b4c9e409b3a45f8b29d12a7d776f0f0c0f199c02738  server-evidence/m1-fx08/secret-scan2.txt
+791f9f95d52abfa442c51fdf701ce5c2dd04e51d7cdce2d904f73ee4ac02dd54  server-evidence/m1-fx08/selfcheck-after.out
+791f9f95d52abfa442c51fdf701ce5c2dd04e51d7cdce2d904f73ee4ac02dd54  server-evidence/m1-fx08/selfcheck-after2.out
+791f9f95d52abfa442c51fdf701ce5c2dd04e51d7cdce2d904f73ee4ac02dd54  server-evidence/m1-fx08/selfcheck-before.out
+8cb94ca75e5088454c2014e377d3d340f89a595ca3cf1376f71fd0fc47156c6d  server-evidence/m1-fx10/added-lines.txt
+696227df94519be09bb5b273aabe5d0fb64ef0992af77c5f7a368d90bcb5eae9  server-evidence/m1-fx10/commit.txt
+bbd705684a2106a80fcd2006843dd9f4448b86a445506f6b8dabb20a139ba94f  server-evidence/m1-fx10/focused.out
+5c97b795d0b0539330fd99497a3058bfefc69980587f1a1a84f90fb47aa30f27  server-evidence/m1-fx10/frozen-bytes.out
+befef1ceeedf1af3cd32c5b01e7ecd5baa5c30d118d8bcf243e5f9b6ae913d9f  server-evidence/m1-fx10/green3.out
+8fedf1548adbea066b1b2402f7a8bc8e9dc70e8e2a44c871279b00fa1069d947  server-evidence/m1-fx10/red.out
+54b24896e83745d5ca7e9b4a60a7dbabbea8aa58f37809c605708e9bf2845aa3  server-evidence/m1-fx10/secret-scan.out
+791f9f95d52abfa442c51fdf701ce5c2dd04e51d7cdce2d904f73ee4ac02dd54  server-evidence/m1-fx10/selfcheck-after.out
+791f9f95d52abfa442c51fdf701ce5c2dd04e51d7cdce2d904f73ee4ac02dd54  server-evidence/m1-fx10/selfcheck-before.out
+791f9f95d52abfa442c51fdf701ce5c2dd04e51d7cdce2d904f73ee4ac02dd54  server-evidence/m1-fx10/selfcheck-postcommit.out
+0315b43a44f34f0eb69ff549278d4ed5139a487c717aac4b62720304a8bd4bb3  server-evidence/m1-fx10/selfreview.txt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  server-evidence/m1-fx10/verify-full.err
+84fd7e5f96964f1026d9033a900d225ffc7cc947ea9b62b071d79e66a69c1469  server-evidence/m1-fx10/verify-full.out
+a6819ee6041e3931529a07303f70b7782a825aec35085a25e046dd3334e3e1d7  server-evidence/m1-synthesis/attempt2-import-dryrun-1.txt
+37d861e521100e8c87edbf91dcab80c8b78e532e5fb5d23b0114f86e5eda30d7  server-evidence/m1-synthesis/attempt2-run.log
+80f261b2558050d15a4d3cd9249ad70e21ed7fbc1187ff2836a01c771699af9e  server-evidence/m1-synthesis/attempts.txt
+769037ae3567359379e7446fa60f911172021822e62805172bd9e8cb34a1fd51  server-evidence/m1-synthesis/cleanup.json
+60c41083ee325134e19c7f9af08899aeb7b9a054ea8583160108ff9585755edf  server-evidence/m1-synthesis/codegraph.txt
+95cfdc2eb3caa8b105053e5956cbae9b50a1339cd40d6dd8626a16caaefa0c22  server-evidence/m1-synthesis/run-meta.json
+bb685306a8842f2d80ed52b109caa924084d086a08afe48ee57de44466b093ec  server-evidence/m1-synthesis/synthesis-evidence.json
+e8323c64b2d2b912b9f61d898a87429c90f29054f65c5c6f0435e68f70919ae5  server-evidence/m1-synthesis/synthesis-run.log

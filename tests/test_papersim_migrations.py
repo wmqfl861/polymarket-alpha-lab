@@ -16,6 +16,10 @@ M1 migration history runs against the frozen TWO-entry M1 catalog
 manifest (every post-M1 migration, currently the M2 operations and the
 M3/V2 reporting-views entries) is proven in
 ``tests/test_papersim_m2_migrations.py``.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from hashlib import sha256
