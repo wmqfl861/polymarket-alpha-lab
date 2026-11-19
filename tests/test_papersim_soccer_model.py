@@ -19,6 +19,10 @@ Three layers:
   REJECTED by the frozen gates with the true 6.09c spread reproduced,
   while the pair-level ``over_under_quote`` stub (documented NOT
   gate-safe) collapses the same sweep to ten identical quotes.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -706,7 +710,7 @@ def test_bou_lee_public_builder_to_gate_rejected_for_variant_spread(
 
 
 # ---------------------------------------------------------------------------
-# FX-10 (M1 plan §3): generic candidate construction across market kinds.
+# FX-10 (M1 plan §3; FX-10 node chain: DELIVERY_PLAN.md 78.1): generic candidate construction across market kinds.
 #
 # ``candidate_for_market`` must reproduce the frozen
 # ``candidate_from_variants`` over-side output bit-for-bit on the four

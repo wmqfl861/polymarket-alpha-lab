@@ -8,6 +8,10 @@ self-consistent. Native (opt-in disposable cluster): full apply from an
 empty face, upgrade from the M1 nine-table face with M1 rows unchanged,
 M2 drift stop with receipt rollback, append protection and the new
 uniqueness contracts.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from datetime import UTC, datetime, timedelta

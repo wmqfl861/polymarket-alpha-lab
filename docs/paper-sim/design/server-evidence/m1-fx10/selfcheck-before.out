@@ -1,0 +1,12 @@
+papersim selfcheck (read-only: no network, no database, no writes)
+[PASS] module-imports - 6 modules imported (crypto_model, gates, ledger, risk_policy, soccer_model, xg); 194 package exports resolve (ledger.record_entry/mark_to_market remain frozen stubs by design)
+[PASS] crypto-r19:ETH-2000 - A=0.4449 (want 0.4449) B=0.4788 (want 0.4788) |dA|=8.06e-06 |dB|=3.52e-05 horizon=1595.12h
+[PASS] crypto-r19:ETH-2250 - A=0.8654 (want 0.8654) B=0.8795 (want 0.8795) |dA|=1.26e-05 |dB|=2.53e-05 horizon=1595.12h
+[PASS] crypto-r19:BTC-65k - A=0.1008 (want 0.1008) B=0.1119 (want 0.1119) |dA|=2.67e-05 |dB|=2.33e-05 horizon=1595.12h
+[PASS] soccer-r23:BRE-FOR_O2.5 - median=0.6342 (want 0.6342) range=0.6235..0.6446 (want 0.6235..0.6446) variants_1e-4=True lambdas=(1.894, 1.364) (want 1.894, 1.364)
+[PASS] soccer-r23:HUL-IPS_O2.5 - median=0.6130 (want 0.613) range=0.5899..0.6488 (want 0.5899..0.6488) variants_1e-4=True lambdas=(1.801, 1.366) (want 1.801, 1.366)
+[PASS] soccer-r23:CHE-MUN_O3.5 - median=0.4514 (want 0.4514) range=0.4306..0.4668 (want 0.4306..0.4668) variants_1e-4=True lambdas=(1.819, 1.624) (want 1.819, 1.624)
+[PASS] soccer-r23:BOU-LEE_O2.5 - median=0.6096 (want 0.6096) range=0.5714..0.6323 (want 0.5714..0.6323) variants_1e-4=True lambdas=(1.890, 1.260) (want 1.89, 1.26)
+[PASS] no-bridge-path:HOF-LYO - match_lambdas=None fixture_variants=None cross-league match_winner policy=ELIGIBLE_DEPRIORITIZED
+[PASS] gate-arithmetic:#48 - ask walk best/vwap=0.56/0.56 depth_near2c=16076 exec=+7.4c gross / +6.2c net (fee 1.23c @ 0.56) worst=+6.3c spread=2.11c gates=pass net_gates=pass
+selfcheck: PASS (10/10 checks)

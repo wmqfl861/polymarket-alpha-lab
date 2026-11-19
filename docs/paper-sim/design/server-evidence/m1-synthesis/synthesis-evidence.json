@@ -1,0 +1,786 @@
+{
+  "all_steps_passed": true,
+  "first_failure": null,
+  "meta": {
+    "cleanup_record": "cleanup.json (written by the wrapper after cluster stop)",
+    "code_commit": "ebe542e0b07ac255fd5800e841418f1f8bc2070c",
+    "disposable_cluster": {
+      "dsn_labels": [
+        "PAPERSIM_MIGRATIONS_PG_DSN (owner)",
+        "PAPERSIM_EVALUATION_PG_DSN / PAPERSIM_REPLAY_PG_DSN (app)",
+        "PAPERSIM_PG_DSN (legacy readonly face)"
+      ],
+      "mode": "one-shot /tmp cluster, random port, socket trust DSNs through validate_local_postgres_dsn; 55432 untouched",
+      "port": 28079
+    },
+    "finished_at": "2026-11-15T17:03:13.541791+00:00",
+    "kind": "M1 synthesis one-shot integration verification (M1 plan section 6)",
+    "started_at": "2026-11-15T17:02:59.946770+00:00",
+    "steps_planned": [
+      "s1_scan_record",
+      "s2_replay",
+      "s3_evaluation",
+      "s4_cli",
+      "s5_import_dryrun"
+    ],
+    "worktree": "/home/ubuntu/pal-m0-startup-20261113-yx2fyoje/worktrees/m1-synthesis"
+  },
+  "steps": {
+    "s1_scan_record": {
+      "fx10_construction": {
+        "constructor": "soccer_model.candidate_for_market",
+        "frozen_case_median": 0.6342,
+        "kind": "total",
+        "line": 2.5,
+        "median_matches_frozen_case": true,
+        "model_median": 0.6342013609573762,
+        "side": "over"
+      },
+      "migrations": {
+        "applied_count": 2,
+        "status": {
+          "applied": [
+            "20261115000000_papersim_bootstrap.sql",
+            "20261115000100_papersim_v2_core.sql"
+          ],
+          "pending": []
+        }
+      },
+      "readback": {
+        "bankroll_events": [
+          {
+            "amount": -255.5,
+            "reason": "SCAN_ENTRY"
+          },
+          {
+            "amount": -261.1143,
+            "reason": "SCAN_ENTRY"
+          },
+          {
+            "amount": -153.6,
+            "reason": "SCAN_ENTRY"
+          }
+        ],
+        "candidates": [
+          {
+            "candidate_key": "k-soccer48-accepted",
+            "conclusion": "ACCEPTED",
+            "market_kind": "other",
+            "median_probability": 0.6342013609573762,
+            "rejection_reasons": [],
+            "side": "YES"
+          },
+          {
+            "candidate_key": "k-stale-rejected",
+            "conclusion": "REJECTED",
+            "market_kind": "other",
+            "median_probability": 0.6342013609573762,
+            "rejection_reasons": [
+              "stale_book"
+            ],
+            "side": "YES"
+          },
+          {
+            "candidate_key": "k-crypto-terminal-rejected",
+            "conclusion": "REJECTED",
+            "market_kind": "terminal",
+            "median_probability": null,
+            "rejection_reasons": [
+              "yes_when_missing"
+            ],
+            "side": "YES"
+          },
+          {
+            "candidate_key": "k-crypto-touch-accepted",
+            "conclusion": "ACCEPTED",
+            "market_kind": "touch",
+            "median_probability": 0.4448916257634084,
+            "rejection_reasons": [],
+            "side": "YES"
+          },
+          {
+            "candidate_key": "k-bridged-accepted",
+            "conclusion": "ACCEPTED",
+            "market_kind": "other",
+            "median_probability": 0.6,
+            "rejection_reasons": [],
+            "side": "YES"
+          },
+          {
+            "candidate_key": "k-construction-none",
+            "conclusion": "CONSTRUCTION_FAILED",
+            "market_kind": "other",
+            "median_probability": null,
+            "rejection_reasons": [
+              "construction_returned_none"
+            ],
+            "side": "YES"
+          },
+          {
+            "candidate_key": "k-construction-bad-line",
+            "conclusion": "CONSTRUCTION_FAILED",
+            "market_kind": "other",
+            "median_probability": null,
+            "rejection_reasons": [
+              "construction_value_error"
+            ],
+            "side": "YES"
+          }
+        ],
+        "conclusions_match_expected": {
+          "k-bridged-accepted": true,
+          "k-construction-bad-line": true,
+          "k-construction-none": true,
+          "k-crypto-terminal-rejected": true,
+          "k-crypto-touch-accepted": true,
+          "k-soccer48-accepted": true,
+          "k-stale-rejected": true
+        },
+        "entries": [
+          {
+            "fee_category": "sports",
+            "price": 0.56,
+            "stake": 250.0,
+            "tier": "FULL_EDGE"
+          },
+          {
+            "fee_category": "crypto",
+            "price": 0.3649,
+            "stake": 250.0,
+            "tier": "FULL_EDGE"
+          },
+          {
+            "fee_category": "sports",
+            "price": 0.52,
+            "stake": 150.0,
+            "tier": "MARGINAL"
+          }
+        ],
+        "entries_count": 3,
+        "expected_snapshot_rows": 5,
+        "shared_book_digest_soccer48_and_stale": true,
+        "snapshot_registrations": {
+          "k-bridged-accepted:book": {
+            "digest": "39cfb6e4917e27690dfed91fab8ccd77dc2845802cbeb4499f891a38f6bf4908",
+            "inserted": true
+          },
+          "k-bridged-accepted:bridge": {
+            "digest": "b85463c8abf30659cd7cc83c1043e394b117d5e9f2fdb6a474a04eded5d07df4",
+            "inserted": true
+          },
+          "k-crypto-terminal-rejected:book": {
+            "digest": "54016ae2420d0b7f65c72370290de5daf943d9f2f359958f2f3b5935f6517e24",
+            "inserted": true
+          },
+          "k-crypto-touch-accepted:book": {
+            "digest": "ce1dc612a4a98f82b695987f3ef3b733652a7e46a4f9cbfb7eef52365a2291cc",
+            "inserted": true
+          },
+          "k-soccer48-accepted:book": {
+            "digest": "de9e8b8e5c36327851a889e42d4a35309880cee12740967d8028172b4ca3ef55",
+            "inserted": true
+          },
+          "k-stale-rejected:book": {
+            "digest": "de9e8b8e5c36327851a889e42d4a35309880cee12740967d8028172b4ca3ef55",
+            "inserted": false
+          }
+        },
+        "snapshot_rows": 5
+      },
+      "scan": {
+        "bankroll_event_keys": [
+          "entry:1:cash",
+          "entry:2:cash",
+          "entry:3:cash"
+        ],
+        "candidate_count": 7,
+        "candidate_ids": {
+          "k-bridged-accepted": 5,
+          "k-construction-bad-line": 7,
+          "k-construction-none": 6,
+          "k-crypto-terminal-rejected": 3,
+          "k-crypto-touch-accepted": 4,
+          "k-soccer48-accepted": 1,
+          "k-stale-rejected": 2
+        },
+        "scan_id": 1,
+        "scan_key": "0fbe0b608d4a84e533dbb716576f843b2f6e3ef756df196b0027abb1e9ffaeb1"
+      },
+      "snapshot_ref_negative_probe": {
+        "error": "papersim_snapshot_ref_missing",
+        "rolled_back": true,
+        "scan_runs_after": 1,
+        "scan_runs_before": 1
+      },
+      "status": "PASS"
+    },
+    "s2_replay": {
+      "counts_after": {
+        "bankroll_events": 3,
+        "candidate_price_evidence": 5,
+        "candidates": 7,
+        "entries": 3,
+        "market_outcomes": 0,
+        "marks": 0,
+        "scan_runs": 1,
+        "settlements": 0,
+        "snapshots": 5
+      },
+      "counts_after_tamper": {
+        "bankroll_events": 3,
+        "candidate_price_evidence": 5,
+        "candidates": 7,
+        "entries": 3,
+        "market_outcomes": 0,
+        "marks": 0,
+        "scan_runs": 1,
+        "settlements": 0,
+        "snapshots": 5
+      },
+      "counts_before": {
+        "bankroll_events": 3,
+        "candidate_price_evidence": 5,
+        "candidates": 7,
+        "entries": 3,
+        "market_outcomes": 0,
+        "marks": 0,
+        "scan_runs": 1,
+        "settlements": 0,
+        "snapshots": 5
+      },
+      "replays": {
+        "k-bridged-accepted": {
+          "candidate_id": 5,
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "bundle",
+            "book",
+            "evidence",
+            "recompute",
+            "policy_pins",
+            "decision",
+            "conclusion",
+            "rejection_reasons"
+          ],
+          "matched": true,
+          "mode": "entry_request"
+        },
+        "k-construction-bad-line": {
+          "candidate_id": 7,
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "constructor",
+            "rejection_reasons"
+          ],
+          "matched": true,
+          "mode": "construction_failure"
+        },
+        "k-construction-none": {
+          "candidate_id": 6,
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "constructor",
+            "rejection_reasons"
+          ],
+          "matched": true,
+          "mode": "construction_failure"
+        },
+        "k-crypto-terminal-rejected": {
+          "candidate_id": 3,
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "bundle",
+            "book",
+            "evidence",
+            "recompute",
+            "policy_pins",
+            "decision",
+            "conclusion",
+            "rejection_reasons"
+          ],
+          "matched": true,
+          "mode": "entry_request"
+        },
+        "k-crypto-touch-accepted": {
+          "candidate_id": 4,
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "bundle",
+            "book",
+            "evidence",
+            "recompute",
+            "policy_pins",
+            "decision",
+            "conclusion",
+            "rejection_reasons"
+          ],
+          "matched": true,
+          "mode": "entry_request"
+        },
+        "k-soccer48-accepted": {
+          "candidate_id": 1,
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "bundle",
+            "book",
+            "evidence",
+            "recompute",
+            "policy_pins",
+            "decision",
+            "conclusion",
+            "rejection_reasons"
+          ],
+          "matched": true,
+          "mode": "entry_request"
+        },
+        "k-stale-rejected": {
+          "candidate_id": 2,
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "bundle",
+            "book",
+            "evidence",
+            "recompute",
+            "policy_pins",
+            "decision",
+            "conclusion",
+            "rejection_reasons"
+          ],
+          "matched": true,
+          "mode": "entry_request"
+        }
+      },
+      "status": "PASS",
+      "tamper_proofs": [
+        {
+          "candidate_key": "k-soccer48-accepted",
+          "digest_prefix": "de9e8b8e5c363278",
+          "flipped_byte_index": 4,
+          "replay_error": "papersim_snapshot_digest_mismatch",
+          "xor": "0x20"
+        },
+        {
+          "candidate_key": "k-crypto-touch-accepted",
+          "digest_prefix": "ce1dc612a4a98f82",
+          "flipped_byte_index": 4,
+          "replay_error": "papersim_snapshot_digest_mismatch",
+          "xor": "0x20"
+        }
+      ],
+      "zero_write": true
+    },
+    "s3_evaluation": {
+      "all_rejected_queue": {
+        "counts": {
+          "accepted": 0,
+          "candidates": 3,
+          "entered": 0,
+          "exited": 0,
+          "rejected": 3,
+          "settled": 0,
+          "unresolved": 1,
+          "voided": 0
+        },
+        "promotion_verdicts": {
+          "A": "FAIL",
+          "B": "NOT_ASSESSABLE",
+          "C": "NOT_ASSESSABLE",
+          "D": "FAIL",
+          "E": "NOT_ASSESSABLE",
+          "F": "NOT_ASSESSABLE_M1"
+        },
+        "queue": {
+          "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+          "market_type": "terminal",
+          "model_key": "gbm:r19"
+        },
+        "roi_status": "INSUFFICIENT",
+        "scoring": {
+          "brier_diff_mean": 0.0046,
+          "deduped_repeats": 0,
+          "logloss_diff_mean": 0.003236257252808731,
+          "market_brier": 0.1972,
+          "market_log_loss": 0.585591490751,
+          "markets_scored": 2,
+          "markets_total": 3,
+          "missing_market_mid": 0,
+          "missing_model_probability": 0,
+          "missing_outcome": 1,
+          "missing_side": 0,
+          "model_brier": 0.2018,
+          "model_log_loss": 0.588827748004
+        }
+      },
+      "all_rejected_scan": {
+        "candidate_ids": {
+          "r1": 8,
+          "r2": 9,
+          "r3": 10
+        },
+        "scan_id": 3
+      },
+      "full_store_queues": [
+        {
+          "counts": {
+            "accepted": 2,
+            "candidates": 3,
+            "entered": 2,
+            "exited": 0,
+            "rejected": 1,
+            "settled": 0,
+            "unresolved": 3,
+            "voided": 0
+          },
+          "queue": {
+            "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+            "market_type": "other",
+            "model_key": "soccer:soccer-r23"
+          },
+          "scoring_coverage": {
+            "markets_scored": 0,
+            "markets_total": 2,
+            "missing_market_mid": 0,
+            "missing_outcome": 2,
+            "unknown_coverage_present": true
+          }
+        },
+        {
+          "counts": {
+            "accepted": 0,
+            "candidates": 1,
+            "entered": 0,
+            "exited": 0,
+            "rejected": 1,
+            "settled": 0,
+            "unresolved": 1,
+            "voided": 0
+          },
+          "queue": {
+            "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+            "market_type": "terminal",
+            "model_key": "soccer:crypto-r19+fx13-2026-11-12"
+          },
+          "scoring_coverage": {
+            "markets_scored": 0,
+            "markets_total": 1,
+            "missing_market_mid": 0,
+            "missing_outcome": 1,
+            "unknown_coverage_present": true
+          }
+        },
+        {
+          "counts": {
+            "accepted": 1,
+            "candidates": 1,
+            "entered": 1,
+            "exited": 0,
+            "rejected": 0,
+            "settled": 0,
+            "unresolved": 1,
+            "voided": 0
+          },
+          "queue": {
+            "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+            "market_type": "touch",
+            "model_key": "soccer:crypto-r19+fx13-2026-11-12"
+          },
+          "scoring_coverage": {
+            "markets_scored": 0,
+            "markets_total": 1,
+            "missing_market_mid": 0,
+            "missing_outcome": 1,
+            "unknown_coverage_present": true
+          }
+        },
+        {
+          "counts": {
+            "accepted": 0,
+            "candidates": 2,
+            "entered": 0,
+            "exited": 0,
+            "rejected": 2,
+            "settled": 0,
+            "unresolved": 2,
+            "voided": 0
+          },
+          "queue": {
+            "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+            "market_type": "other",
+            "model_key": "soccer:soccer-r23-construction"
+          },
+          "scoring_coverage": {
+            "markets_scored": 0,
+            "markets_total": 2,
+            "missing_market_mid": 0,
+            "missing_outcome": 2,
+            "unknown_coverage_present": true
+          }
+        },
+        {
+          "counts": {
+            "accepted": 0,
+            "candidates": 3,
+            "entered": 0,
+            "exited": 0,
+            "rejected": 3,
+            "settled": 0,
+            "unresolved": 1,
+            "voided": 0
+          },
+          "queue": {
+            "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+            "market_type": "terminal",
+            "model_key": "gbm:r19"
+          },
+          "scoring_coverage": {
+            "markets_scored": 2,
+            "markets_total": 3,
+            "missing_market_mid": 0,
+            "missing_outcome": 1,
+            "unknown_coverage_present": true
+          }
+        }
+      ],
+      "historical_compat": {
+        "candidates": 40,
+        "entered": 40,
+        "excluding_top_market_roi": 0.1222252056963886,
+        "expected": {
+          "excluding_top_market_roi": 0.1222,
+          "gross_roi": 0.233,
+          "market_brier": 0.2082,
+          "model_brier": 0.1873,
+          "top_market_share": 0.511
+        },
+        "gross_roi": 0.23300585337710278,
+        "market_brier": 0.208229993429,
+        "model_brier": 0.187320721429,
+        "net_roi": 0.2036718812456711,
+        "top_market_share": 0.5113558452141685
+      },
+      "status": "PASS"
+    },
+    "s4_cli": {
+      "counts_after_cli": {
+        "bankroll_events": 3,
+        "candidate_price_evidence": 8,
+        "candidates": 10,
+        "entries": 3,
+        "market_outcomes": 2,
+        "marks": 0,
+        "scan_runs": 2,
+        "settlements": 0,
+        "snapshots": 5
+      },
+      "evaluate": {
+        "paper_only": true,
+        "queues": [
+          {
+            "counts": {
+              "accepted": 2,
+              "candidates": 3,
+              "entered": 2,
+              "exited": 0,
+              "rejected": 1,
+              "settled": 0,
+              "unresolved": 3,
+              "voided": 0
+            },
+            "queue": {
+              "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+              "market_type": "other",
+              "model_key": "soccer:soccer-r23"
+            },
+            "scoring_coverage": {
+              "markets_scored": 0,
+              "markets_total": 2,
+              "missing_market_mid": 0,
+              "missing_outcome": 2
+            }
+          },
+          {
+            "counts": {
+              "accepted": 0,
+              "candidates": 1,
+              "entered": 0,
+              "exited": 0,
+              "rejected": 1,
+              "settled": 0,
+              "unresolved": 1,
+              "voided": 0
+            },
+            "queue": {
+              "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+              "market_type": "terminal",
+              "model_key": "soccer:crypto-r19+fx13-2026-11-12"
+            },
+            "scoring_coverage": {
+              "markets_scored": 0,
+              "markets_total": 1,
+              "missing_market_mid": 0,
+              "missing_outcome": 1
+            }
+          },
+          {
+            "counts": {
+              "accepted": 1,
+              "candidates": 1,
+              "entered": 1,
+              "exited": 0,
+              "rejected": 0,
+              "settled": 0,
+              "unresolved": 1,
+              "voided": 0
+            },
+            "queue": {
+              "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+              "market_type": "touch",
+              "model_key": "soccer:crypto-r19+fx13-2026-11-12"
+            },
+            "scoring_coverage": {
+              "markets_scored": 0,
+              "markets_total": 1,
+              "missing_market_mid": 0,
+              "missing_outcome": 1
+            }
+          },
+          {
+            "counts": {
+              "accepted": 0,
+              "candidates": 2,
+              "entered": 0,
+              "exited": 0,
+              "rejected": 2,
+              "settled": 0,
+              "unresolved": 2,
+              "voided": 0
+            },
+            "queue": {
+              "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+              "market_type": "other",
+              "model_key": "soccer:soccer-r23-construction"
+            },
+            "scoring_coverage": {
+              "markets_scored": 0,
+              "markets_total": 2,
+              "missing_market_mid": 0,
+              "missing_outcome": 2
+            }
+          },
+          {
+            "counts": {
+              "accepted": 0,
+              "candidates": 3,
+              "entered": 0,
+              "exited": 0,
+              "rejected": 3,
+              "settled": 0,
+              "unresolved": 1,
+              "voided": 0
+            },
+            "queue": {
+              "gate_version": "gates-2026-11-07+fees-2026-11-12+risk-2026-11-07+crypto-fx13-2026-11-12",
+              "market_type": "terminal",
+              "model_key": "gbm:r19"
+            },
+            "scoring_coverage": {
+              "markets_scored": 2,
+              "markets_total": 3,
+              "missing_market_mid": 0,
+              "missing_outcome": 1
+            }
+          }
+        ],
+        "report_keys": [
+          "algorithm_version",
+          "paper_only",
+          "promotion_rules_version",
+          "queues",
+          "readonly",
+          "report_only",
+          "suspension_rules_version"
+        ],
+        "returncode": 0,
+        "stderr_tail": "",
+        "stdout_sha256": "baca61616d31d1068978a872d60c0050c5b509e606fddd06b5372e48cfde76ae"
+      },
+      "replays": {
+        "k-bridged-accepted": {
+          "candidate_id": 5,
+          "candidate_key": "k-bridged-accepted",
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "bundle",
+            "book",
+            "evidence",
+            "recompute",
+            "policy_pins",
+            "decision",
+            "conclusion",
+            "rejection_reasons"
+          ],
+          "code_commit": "ebe542e0b07ac255fd5800e841418f1f8bc2070c",
+          "matched": true,
+          "mode": "entry_request",
+          "scan_id": 1
+        },
+        "k-construction-bad-line": {
+          "candidate_id": 7,
+          "candidate_key": "k-construction-bad-line",
+          "checks": [
+            "code_commit",
+            "schema_version",
+            "snapshots",
+            "constructor",
+            "rejection_reasons"
+          ],
+          "code_commit": "ebe542e0b07ac255fd5800e841418f1f8bc2070c",
+          "matched": true,
+          "mode": "construction_failure",
+          "scan_id": 1
+        }
+      },
+      "status": "PASS"
+    },
+    "s5_import_dryrun": {
+      "allocation_conservation": {
+        "expected_gross_sum": "1305.20",
+        "fee_net_detail": [
+          "25.46, net 718.33",
+          "19.08, net 542.33"
+        ],
+        "gross_split": [
+          "743.79",
+          "561.41"
+        ],
+        "gross_sum": "1305.20",
+        "note": "market 3866000 per-share allocation splits the +1305.20 resolution pnl into 743.79 + 561.41 (gross, sum preserved); fee/net columns are the two-sided estimated-fee view"
+      },
+      "allocation_lines": [
+        "allocation market 3866000: legacy 1 -> 743.79 (fee 25.46, net 718.33)",
+        "allocation market 3866000: legacy 14 -> 561.41 (fee 19.08, net 542.33)"
+      ],
+      "content_sha256": "6345eaddc917d23c7bf5fc1990f2e984c6f9bd8897cc0042f26750a8d0dfc414",
+      "double_run_identical": true,
+      "net_identity_line": "net identity: pnl_gross - fee_total == pnl_net: OK",
+      "per_market_conservation_line": "per-market pnl conservation: OK over 65 settled markets, total 3768.33",
+      "status": "PASS"
+    }
+  }
+}

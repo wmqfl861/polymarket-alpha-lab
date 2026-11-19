@@ -1,10 +1,14 @@
 """M2 data-adapter package: the A0 contract layer only.
 
-Re-exports the shared contract surface (m2-plan-formal.md section 2.1)
+Re-exports the shared contract surface (M2 plan section 2.1)
 for the A1-A4 adapters. Nothing here is exported from
 ``polymarket_alpha_lab.papersim`` itself; adapters remain opt-in
 imports. No transport, database or cache code lives in this package
 init - adapters stay pure-contract consumers until their own nodes.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from polymarket_alpha_lab.papersim.adapters.contracts import (

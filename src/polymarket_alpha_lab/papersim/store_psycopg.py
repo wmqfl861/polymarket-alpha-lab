@@ -5,7 +5,7 @@ driver; it is the single new entry in the frozen connector allowlist
 guarded by ``tests/test_database_persistence_iron_rule.py`` (reviewed
 D-CONN diff: exactly one exact path, no globs).
 
-Contract (design 2026-11-15 v2, sections 3.3/3.4 and 5.8):
+Contract (09D design v2 sections 3.3/3.4 and 5.8):
 
 - Every raw DSN passes the single audited ``validate_local_postgres_dsn``
   (canonical import ``local_postgres_dsn``) BEFORE any connection, wrapper
@@ -31,6 +31,10 @@ Contract (design 2026-11-15 v2, sections 3.3/3.4 and 5.8):
   same scan key with the same payload returns the original result, a
   changed payload is a conflict, and any exception leaves no half scan.
   Database failures never degrade to a file journal.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -159,7 +163,7 @@ def _normalize(value):
 
 
 def record_market_outcome(conn, observation: MarketOutcomeObservation) -> dict:
-    """Insert one outcome observation; idempotent per evidence_key (section 4.1-4).
+    """Insert one outcome observation; idempotent per evidence_key (09D v2 section 4.1-4).
 
     A unique-key collision re-reads the stored row: an identical payload
     returns the original outcome_id; any difference raises
@@ -196,12 +200,12 @@ _IDENTITY_COLUMNS = ('condition_id', 'market_id', 'market_slug')
 
 
 def effective_market_outcome(conn, *, condition_id=None, market_id=None, market_slug=None):
-    """Effective outcome per section 4.1-3, corrected DISTINCT ON form.
+    """Effective outcome per 09D v2 section 4.1-3, corrected DISTINCT ON form.
 
     ``SELECT DISTINCT ON (<identity>) ... ORDER BY <identity>,
     observed_at DESC, outcome_id DESC``: the leftmost ORDER BY expressions
     must match the DISTINCT ON expressions, so the identity column leads
-    the ordering and the recursion stays expressible (design N3 fix).
+    the ordering and the recursion stays expressible (09D v2 N3 fix).
     """
     supplied = [(name, value) for name, value in zip(_IDENTITY_COLUMNS,
                                                       (condition_id, market_id, market_slug),
@@ -265,7 +269,7 @@ _CASH_INSERT = ('INSERT INTO papersim.bankroll_events (event_key, occurred_at, c
 
 
 def record_scan(conn, submission: ScanSubmission) -> dict:
-    """Write one complete scan in a single transaction (section 5.8).
+    """Write one complete scan in a single transaction (09D v2 section 5.8).
 
     Same scan key + same payload digest returns the original ids
     (``inserted=False``); a changed payload raises
@@ -300,7 +304,7 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
         for candidate in submission.candidates:
             references = json.loads(candidate.snapshot_refs)
             if references:
-                # Design 5.3/D-4: snapshot references are validated jsonb
+                # 09D v2 5.3/D-4: snapshot references are validated jsonb
                 # refs; the store layer proves each referenced snapshot is
                 # already registered inside the same transaction.
                 cursor.execute('SELECT content_sha256 FROM papersim.snapshots '

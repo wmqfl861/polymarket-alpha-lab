@@ -88,6 +88,10 @@ note in the 2026-11-01 migration and its verbatim DDL mirror are historical
 statements from that migration's capture date, not a current action item.
 Their reviewed bytes remain unchanged. This clarification uses archived
 evidence only; it neither verifies nor changes the live database.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -157,7 +161,7 @@ def record_entry(
 ) -> PaperLedgerEntry:
     """Build an entry event for a newly gated paper position.
 
-    FX-09L completion of the former P0 stub (design 2026-11-15 v2, section
+    FX-09L completion of the former P0 stub (09D design v2 section
     5.9): PURE event construction — validation and assembly only. Zero I/O,
     zero persistence, zero clock reads, no default fee category, no
     rounding. The returned entry carries the fixed ``event='entry'`` and
@@ -196,7 +200,7 @@ def record_entry(
 def mark_to_market(entry_price: float, exit_bid: float) -> float:
     """Per-share mark-to-market delta: ``exit_bid - entry_price``.
 
-    FX-09L completion of the former P0 stub (design section 5.9). The unit
+    FX-09L completion of the former P0 stub (09D v2 section 5.9). The unit
     is pinned to the DOLLAR PRICE DIFFERENCE PER SHARE of the held side's
     same token: the raw float subtraction — no rounding, no share
     multiplication. Position size lives in the ledger store

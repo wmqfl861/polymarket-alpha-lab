@@ -1,6 +1,6 @@
-"""M2 A2 tests: bounded BTC/ETH candle and spot adapter (m2-plan 6.2).
+"""M2 A2 tests: bounded BTC/ETH candle and spot adapter (M2 plan 6.2).
 
-Pins (m2-plan-formal.md sections 2.3 and 6.2, A2 row):
+Pins (M2 plan sections 2.3 and 6.2, A2 row):
 
 - closed input vocabulary: only exact ``BTC``/``ETH`` assets and the
   explicit ``binance``/``coinbase``/``kraken`` sources; venue, pair and
@@ -32,6 +32,10 @@ Pins (m2-plan-formal.md sections 2.3 and 6.2, A2 row):
 
 All tests are offline and synthetic: fixture bodies plus fake transport
 and fake clocks. No network, no database, no writes.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

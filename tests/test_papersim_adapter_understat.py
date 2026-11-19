@@ -1,4 +1,4 @@
-"""A3 tests: the Understat adapter (m2-plan-formal.md sections 2.4 and 6.2).
+"""A3 tests: the Understat adapter (M2 plan sections 2.4 and 6.2).
 
 Pins, all offline with synthetic fixture data, a fake transport and a fake
 clock (no real network, no database, zero file writes):
@@ -25,6 +25,10 @@ clock (no real network, no database, zero file writes):
   truncation and bad framing reject;
 - fixed source identity ``understat``: FotMob-shaped blocks are refused,
   never silently mixed.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

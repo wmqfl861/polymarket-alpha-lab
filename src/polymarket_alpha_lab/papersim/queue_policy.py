@@ -1,6 +1,6 @@
 """FX-17 cross-league and blueprint universal pause rules: decision layer.
 
-M2 node C1 (plan section 3.8, OD-G numbers registered 2026-11-13 in
+M2 node C1 (M2 plan section 3.8, OD-G numbers registered 2026-11-13 in
 ``DELIVERY_PLAN.md`` 77.3.2). This module is the pure decision layer
 only: it maps queue metrics -- the same numbers ``papersim.evaluation``
 already publishes -- to per-queue admission recommendations. It opens no
@@ -35,6 +35,10 @@ Rules (all thresholds are reused from ``evaluation``, never redeclared):
 During a pause, scanning, candidate recording, marks capture and
 settling of existing positions continue -- that too is enforced by the
 B1 admission wiring, not here.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

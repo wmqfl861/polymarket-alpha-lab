@@ -2,7 +2,7 @@
 
 Covers the M1 FX-11 node contract (docs/handoffs/2026-11-12-audit
 03-fix-list.md FX-11; re-reviewed M1 plan section `FX-11：净指标、全候选
-评分与已批准规则`):
+评分与已批准规则`; node chain in DELIVERY_PLAN.md 78.1):
 
 - pure per-queue (model + market_type + gate version) metrics: counts,
   gross / two-sided-fee net ROI with clustered fixed-seed bootstrap,
@@ -21,6 +21,10 @@ Covers the M1 FX-11 node contract (docs/handoffs/2026-11-12-audit
   top-market share 51.1%, excluding-top-market 12.22%, Brier 0.1873 vs
   0.2082, original bootstrap tolerance +/-1.5 percentage points.
   Historical regression, NOT v2-corrected performance.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -435,7 +439,8 @@ def test_repeated_market_observations_dedup_for_scoring_not_for_roi():
 
 
 def test_natural_outcome_feeds_scoring_independently_of_trade_labels():
-    """M1 final review P2-01: trade outcomes (win/loss labels, EXITED) and
+    """M1 final review P2-01 (receipt in repo:
+docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log): trade outcomes (win/loss labels, EXITED) and
     the market-level natural result are separate inputs. A settled book
     whose rows carry trade labels keeps whole-market scoring alive through
     ``natural_outcome``; without it every settled market would silently
@@ -623,7 +628,7 @@ def test_concentration_groups_by_market_key():
 
 def test_criterion_e_concentration_uses_net_of_fees_basis():
     """M1 final review P2-02: the OD-G E concentration verdict must use
-    the net-of-fees PnL basis (plan section 5 B-condition semantics:
+    the net-of-fees PnL basis (M1 plan section 5 B-condition semantics:
     every PnL is after fees), not the gross basis. The reviewer's
     four-market
     construction: stakes 150/250/250/250, entries 0.50 and 3x

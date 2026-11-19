@@ -1,7 +1,7 @@
 """FX-12 raw-evidence snapshots on the papersim managed PostgreSQL store.
 
 Single responsibility: register and verify the RAW evidence bytes every
-replayable decision cites (design 2026-11-15 v2 section 5.2; M1 plan
+replayable decision cites (09D design v2 section 5.2; M1 plan
 section 3 FX-12). The managed ``papersim.snapshots`` relation built by
 FX-09S stores the original bytes (``bytea``), their SHA-256 digest, the
 byte length, a free-form ``kind``/``source`` pair, the fetch time and a
@@ -36,6 +36,10 @@ Discipline (FX-12 node spec, item 1):
 Paper boundary: this module is paper-evidence storage only
 (``paper_only``/``report_only``/``readonly``); it grants no execution
 authorization and never touches an order.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -95,7 +99,7 @@ def _require_timestamp(value, name: str) -> datetime:
 
 
 def snapshot_content_sha256(content) -> str:
-    """SHA-256 of the raw bytes -- the snapshot identity (design 5.2)."""
+    """SHA-256 of the raw bytes -- the snapshot identity (09D v2 5.2)."""
     if not isinstance(content, (bytes, bytearray)):
         # A path or a bare digest can never substitute for the bytes.
         _fail('papersim_snapshot_content_bytes_required')
@@ -190,7 +194,7 @@ def _select_row(cursor, digest: str) -> dict | None:
 
 
 def register_snapshot(conn, registration: SnapshotRegistration) -> dict:
-    """Register raw bytes; idempotent per content digest (design 5.2).
+    """Register raw bytes; idempotent per content digest (09D v2 5.2).
 
     Same digest: the stored row is read back, its ORIGINAL BYTES are
     compared with the registration and the original row summary is

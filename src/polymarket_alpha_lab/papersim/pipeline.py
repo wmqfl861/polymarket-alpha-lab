@@ -48,6 +48,10 @@ candidate, a zero rate is a valid value, and
 Paper boundary: this module decides PAPER candidacy only
 (``paper_only``/``report_only``/``readonly``); it grants no execution
 authorization and never touches an order.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
