@@ -1,0 +1,7 @@
+# docs/handoffs/2026-11-13-m0-review/evidence/address_occurrence_diff.py run on 2026-11-19; values are never printed
+base=b5ab6108d9e72ee37ce43f8247221f4f674d1224 head=c4367b6b3ce4d957ce79ce645a7ab3425be5a133 distinct public IPv4-like values: 6
+address #1: base occurrences=23 in 11 files; head occurrences=22 in 10 files; files newly containing it=3
+    new: docs/handoffs/m3-cleanup/codex-b0-pause-decisions-20261116.log:1266 (plain form, value masked)
+    new: docs/remediation-evidence/2026-11-14/MANIFEST.md:60 (plain form, value masked)
+    new: docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log:329 (plain form, value masked)
+address #2: base occurrences=16 in 7 files; head occurrences=14 in 5 files; files newly containing it=0
