@@ -3,8 +3,8 @@
 ``base.ModelFamily`` (interface only, standard library plus
 ``optimize.spec``) is imported eagerly so the protocol is available as
 soon as the package is. Family IMPLEMENTATIONS import model source
-code (``soccer_model``, ``pipeline``, later ``intl_model``/
-``nba_model`` wrappers), so they load lazily: importing
+code (``soccer_model``, ``pipeline``, ``nba_model``, later
+``intl_model`` wrappers), so they load lazily: importing
 ``polymarket_alpha_lab.papersim.optimize`` itself adds no model,
 database or network modules beyond what the ``papersim`` package
 baseline already loads. The attribute pattern mirrors the lazy
@@ -24,6 +24,7 @@ _FAMILY_MODULES: dict[str, str] = {
     # MO-5 lanes each add their own key on their own branch; the
     # three-way merge of these lines is owned by the coordinator.
     "club-soccer-recalib": "soccer_recalib",
+    "nba-pace-efficiency": "nba",
 }
 
 
