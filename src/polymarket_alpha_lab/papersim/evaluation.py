@@ -66,6 +66,15 @@ the verdicts are rule determinations and pause SUGGESTIONS only — the
 automatic suspension wiring belongs to M2/FX-17, and criterion F (30 days
 unattended operation) is output as ``NOT_ASSESSABLE_M1`` because it needs
 M2 run evidence that cannot exist yet.
+
+OD-K supplementary scope (2026-11-20, FX-27+FX-30): criteria C and D
+additionally require >= 80% evidence coverage (close marks over ALL
+entries; scorable pairs over deduplicated markets with a natural result)
+or they are NOT_ASSESSABLE with the stated gap; criterion A counts
+accepted plus gate-rejected candidates only, with construction failures
+reported separately and never counted as observations. The six registered
+OD-G numbers are unchanged; the pause rules deliberately carry no
+coverage floor (coverage is reported side-by-side instead).
 """
 
 from __future__ import annotations
@@ -91,7 +100,11 @@ from polymarket_alpha_lab.research_probability_scores import (
 # ---------------------------------------------------------------------------
 
 ALGORITHM_VERSION = "fx11-evaluation-alg-v1"
-PROMOTION_RULES_VERSION = "odg-registered-2026-11-13"
+# The "+odk" suffix marks the OD-K supplementary scope (2026-11-20,
+# FX-27+FX-30; registered in DELIVERY_PLAN section 80.5): the C/D
+# coverage floors and the FX-30 valid-candidate counting. The registered
+# 2026-11-13 numbers themselves are unchanged.
+PROMOTION_RULES_VERSION = "odg-registered-2026-11-13+odk"
 SUSPENSION_RULES_VERSION = "blueprint-pause+fx17-registered-2026-11-13"
 
 BOOTSTRAP_SEED = 20261114
@@ -127,6 +140,12 @@ PROMOTION_NET_ROI_MIN = 0.0  # strictly greater
 PROMOTION_TOP_MARKET_SHARE_MAX = 0.30  # strictly lower
 DRAWDOWN_UNIT_USD = 250.0
 PROMOTION_MAX_DRAWDOWN_USD = 10.0 * DRAWDOWN_UNIT_USD
+# OD-K coverage floors (FX-27; supplementary to the registered OD-G
+# numbers above, which stay untouched): with close marks (C) or scorable
+# pairs (D) covering strictly less than 80% of their denominator the
+# criterion is NOT_ASSESSABLE — equality (exactly 80%) is assessable.
+PROMOTION_CLV_COVERAGE_MIN = 0.80
+PROMOTION_SCORING_COVERAGE_MIN = 0.80
 
 # Blueprint pause rule and FX-17 numbers (registered 2026-11-13).
 PAUSE_AFTER_ENTRIES = 40
@@ -175,6 +194,14 @@ class EvaluationCandidate:
     decision probabilities but MUST NOT carry entry fields (``stake``,
     ``fill_price``, ``fee_category``, ``fill_provenance``, ``recorded_pnl``):
     a rejection is never a trade and never a loss.
+
+    Construction failures (``construction_failed``; store conclusion
+    ``CONSTRUCTION_FAILED``) never became an observation: no decision
+    evidence, no entry. They are counted separately
+    (``QueueCounts.construction_failed``) and excluded from criterion A's
+    candidate count, which is accepted plus gate-rejected only (FX-30 /
+    OD-K, restoring the OD-G registered wording "accepted plus
+    rejected" — DELIVERY_PLAN 77.3.2).
     """
 
     candidate_id: str
@@ -185,6 +212,9 @@ class EvaluationCandidate:
     model_probability: float | None = None  # decision-time P(side)
     market_mid: float | None = None  # decision-time market implied P(side)
     accepted: bool = False
+    # FX-30/OD-K: construction failure (store CONCLUSION_FAILED); never
+    # an observation, counted in its own QueueCounts bucket.
+    construction_failed: bool = False
     stake: float | None = None
     fill_price: float | None = None  # average fill price of the entry
     side: str | None = None
@@ -208,6 +238,12 @@ class EvaluationCandidate:
                 raise ValueError(f"{name} must be a non-empty string")
         if type(self.accepted) is not bool:
             raise ValueError("accepted must be a bool")
+        if type(self.construction_failed) is not bool:
+            raise ValueError("construction_failed must be a bool")
+        if self.construction_failed and self.accepted:
+            raise ValueError(
+                "a construction-failed candidate is never accepted"
+            )
         _require_probability(
             self.model_probability, "model_probability", closed=True
         )
@@ -329,9 +365,17 @@ class QueueKey:
 
 @dataclass(frozen=True)
 class QueueCounts:
+    """Three-bucket conclusion decomposition (FX-30/OD-K, mirroring the
+    frozen reporting view ``20261116000010_papersim_reporting_views.sql``
+    ``candidate_block``): ``candidates`` is ALL rows and decomposes as
+    ``accepted + rejected + construction_failed``, where ``rejected`` is
+    gate-rejected ONLY — construction failures never fold into it.
+    Criterion A counts ``accepted + rejected``."""
+
     candidates: int
     accepted: int
     rejected: int
+    construction_failed: int
     entered: int
     settled: int
     exited: int
@@ -369,6 +413,10 @@ class FillMetrics:
 class ClvMetrics:
     entries_eligible: int
     entries_with_close: int
+    # OD-K/FX-27 side-by-side coverage: entries_with_close over
+    # entries_eligible; None when there are no entries (UNKNOWN, never a
+    # fabricated ratio).
+    close_coverage: float | None
     mean: float | None
     ci: tuple[float | None, float | None]
     status: str
@@ -395,6 +443,12 @@ class CalibrationBin:
 class MarketScoring:
     markets_total: int
     markets_scored: int
+    # OD-K/FX-27 side-by-side coverage: deduplicated markets that carry
+    # a natural result (``markets_total - missing_outcome``) and the
+    # fraction of them forming a scorable pair; None when the
+    # denominator is zero (UNKNOWN).
+    markets_with_outcome: int
+    scoring_coverage: float | None
     missing_outcome: int
     missing_model_probability: int
     missing_market_mid: int
@@ -499,7 +553,10 @@ class EvaluationReport:
 def criterion_a(
     candidates: int, entered: int, settled: int, span_days: float | None,
 ) -> CriterionResult:
-    """A sample: >=200 stored candidates (accepted plus rejected), >=50
+    """A sample: >=200 stored candidates (accepted plus GATE-REJECTED
+    only — construction failures carry no model probability, are counted
+    separately and never count as observations; FX-30/OD-K, restoring
+    the OD-G registered wording "accepted plus rejected"), >=50
     entries, >=30 settled (resolved entries: natural outcomes, win/loss
     labels and exits — the ledger's counted set), and a same-gate-version
     forward span of >= 4 weeks. Frozen span rule: 28 days measured across
@@ -568,11 +625,33 @@ def criterion_c(
     clv_mean: float | None,
     clv_lower_bound: float | None,
     entries_with_close: int,
+    entries_eligible: int,
 ) -> CriterionResult:
     """C lead indicator: closing-line value mean > 0 AND the 95% interval
     lower bound > 0 (both strict). No close coverage is NOT_ASSESSABLE —
-    never zero-filled into a PASS."""
-    if entries_with_close == 0 or clv_mean is None:
+    never zero-filled into a PASS.
+
+    OD-K coverage floor (FX-27): close marks must cover at least 80%
+    (inclusive; strictly less is not) of ALL entries
+    (``entries_with_close / entries_eligible``) or C is NOT_ASSESSABLE —
+    a partially covered entry set could pass on a biased subset. The
+    reason states the ratio and how many entries lack a close mark. No
+    entries at all leaves the ratio undefined (never 0/0)."""
+    if entries_eligible <= 0:
+        return CriterionResult(
+            "C", VERDICT_NOT_ASSESSABLE,
+            ("no entries: CLV close coverage undefined (no denominator)",),
+        )
+    coverage = entries_with_close / entries_eligible
+    if coverage < PROMOTION_CLV_COVERAGE_MIN:
+        missing = entries_eligible - entries_with_close
+        return CriterionResult(
+            "C", VERDICT_NOT_ASSESSABLE,
+            (f"close-mark coverage {entries_with_close}/{entries_eligible} "
+             f"({coverage:.1%}) < {PROMOTION_CLV_COVERAGE_MIN:.0%}: "
+             f"{missing} of {entries_eligible} entries lack a close mark",),
+        )
+    if clv_mean is None:
         return CriterionResult(
             "C", VERDICT_NOT_ASSESSABLE,
             ("no close marks: CLV not measurable (INSUFFICIENT coverage)",),
@@ -595,15 +674,45 @@ def criterion_c(
 
 def criterion_d(
     upper_bound: float | None, pairs: int, infinite_pairs: int,
+    markets_with_outcome: int,
 ) -> CriterionResult:
     """D market baseline: over ALL scanned markets (entries and rejections,
     deduplicated), the 95% upper bound of the paired log-loss difference
-    (model minus market) must be <= +0.010 (inclusive)."""
+    (model minus market) must be <= +0.010 (inclusive).
+
+    OD-K coverage floor (FX-27): scorable pairs must cover at least 80%
+    (inclusive; strictly less is not) of the deduplicated markets that
+    carry a natural result (``pairs / markets_with_outcome``) or D is
+    NOT_ASSESSABLE — a small scored subset could be unrepresentative of
+    the scanned universe. The reason states the ratio and the gap.
+
+    Numerator choice (strict, deliberate): the numerator is the scored
+    pair count. A market holding the model probability and the decision
+    mid but no ``side`` cannot enter the paired interval either, so
+    counting it as covered could yield "100% coverage" with zero pairs;
+    on the store read path such rows do not occur (decision evidence
+    implies a side), so this strictness has no production effect."""
     if pairs == 0:
         return CriterionResult(
             "D", VERDICT_NOT_ASSESSABLE,
             ("no market pairs with model probability, market mid and a "
              "natural result",),
+        )
+    if markets_with_outcome < pairs:
+        raise ValueError(
+            f"inconsistent criterion D inputs: pairs {pairs} exceed "
+            f"markets with a natural result {markets_with_outcome}"
+        )
+    coverage = pairs / markets_with_outcome
+    if coverage < PROMOTION_SCORING_COVERAGE_MIN:
+        missing = markets_with_outcome - pairs
+        return CriterionResult(
+            "D", VERDICT_NOT_ASSESSABLE,
+            (f"scoring coverage {pairs}/{markets_with_outcome} "
+             f"({coverage:.1%}) < {PROMOTION_SCORING_COVERAGE_MIN:.0%}: "
+             f"{missing} deduped market(s) with a natural result lack "
+             "complete decision evidence (model probability, market mid, "
+             "side)",),
         )
     if infinite_pairs:
         return CriterionResult(
@@ -981,6 +1090,13 @@ def _roi_metrics(
 def _market_scoring(
     candidates: Sequence[EvaluationCandidate],
 ) -> MarketScoring:
+    """Deduplicated whole-market model-vs-market scoring.
+
+    OD-K/FX-27 coverage inputs: ``markets_with_outcome`` counts deduped
+    market groups whose effective natural result is known; the coverage
+    numerator is the scored-pair count ``markets_scored`` (strict
+    reading, see ``criterion_d``: a market without a side cannot form a
+    pair and counts as not covered)."""
     groups: dict[str, list[EvaluationCandidate]] = {}
     for candidate in candidates:
         groups.setdefault(candidate.market_key, []).append(candidate)
@@ -1095,6 +1211,12 @@ def _market_scoring(
     return MarketScoring(
         markets_total=markets_total,
         markets_scored=len(pairs),
+        markets_with_outcome=markets_total - missing_outcome,
+        scoring_coverage=(
+            len(pairs) / (markets_total - missing_outcome)
+            if markets_total > missing_outcome
+            else None
+        ),
         missing_outcome=missing_outcome,
         missing_model_probability=missing_model,
         missing_market_mid=missing_mid,
@@ -1163,7 +1285,14 @@ def _evaluate_queue(
     counts = QueueCounts(
         candidates=len(candidates),
         accepted=sum(1 for c in candidates if c.accepted),
-        rejected=sum(1 for c in candidates if not c.accepted),
+        # Gate-rejected ONLY (FX-30/OD-K): candidates decompose as
+        # accepted + rejected + construction_failed, mirroring the frozen
+        # reporting view's three conclusion buckets.
+        rejected=sum(
+            1 for c in candidates
+            if not c.accepted and not c.construction_failed
+        ),
+        construction_failed=sum(1 for c in candidates if c.construction_failed),
         entered=len(entered),
         settled=len(counted),
         exited=len(exited),
@@ -1210,6 +1339,9 @@ def _evaluate_queue(
     clv = ClvMetrics(
         entries_eligible=len(entered),
         entries_with_close=len(with_close),
+        close_coverage=(
+            len(with_close) / len(entered) if entered else None
+        ),
         mean=clv_mean,
         ci=clv_ci,
         status=clv_status,
@@ -1308,8 +1440,10 @@ def _evaluate_queue(
     fee_data = sum(1 for c in entered if c.fee_category is not None)
     exited_fee_data = sum(1 for c in exited if c.fee_category is not None)
     promotion = (
+        # FX-30/OD-K: accepted + gate-rejected only; construction
+        # failures are counted separately above and never observations.
         criterion_a(
-            candidates=counts.candidates,
+            candidates=counts.accepted + counts.rejected,
             entered=counts.entered,
             settled=counts.settled,
             span_days=span_days,
@@ -1325,11 +1459,13 @@ def _evaluate_queue(
             clv_mean=clv.mean,
             clv_lower_bound=clv.ci[0],
             entries_with_close=clv.entries_with_close,
+            entries_eligible=clv.entries_eligible,
         ),
         criterion_d(
             upper_bound=scoring.logloss_diff_ci[1],
             pairs=scoring.markets_scored,
             infinite_pairs=scoring.infinite_log_loss_pairs,
+            markets_with_outcome=scoring.markets_with_outcome,
         ),
         criterion_e(
             net_roi=roi.net_roi,

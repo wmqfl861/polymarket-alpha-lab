@@ -719,6 +719,60 @@ def test_evaluate_fill_provenance_requires_a_recorded_order_book(
                for reason in verdicts["B"]["reasons"])
 
 
+def test_evaluate_wires_construction_failed_count_from_the_store(
+    monkeypatch, capsys
+) -> None:
+    """FX-30/OD-K (audit N-5, cli.py read path): one queue, three
+    conclusions — 1 ACCEPTED, 1 REJECTED, 1 CONSTRUCTION_FAILED. The
+    construction failure is reported in its own counts bucket and
+    criterion A fails on "candidates 2 < 200" (accepted plus
+    gate-rejected), never on 3."""
+    candidates = [
+        _entered_candidate(31, "m-cf-acc", side="YES", stake="250",
+                           price="0.56", has_order_book=True),
+        {"candidate_id": 32, "candidate_key": "k-cf-rej",
+         "conclusion": "REJECTED", "side": "NO", "market_type": "terminal",
+         "market_kind": "terminal", "model_name": "gbm",
+         "model_version": "r19", "evaluated_at": STUB_NOW,
+         "condition_id": None, "market_id": "m-cf-rej", "market_slug": None,
+         "gate_version": "gates-2026-11-07", "stake": None, "price": None,
+         "fee_category": None},
+        {"candidate_id": 33, "candidate_key": "k-cf-failed",
+         "conclusion": "CONSTRUCTION_FAILED", "side": None,
+         "market_type": "terminal", "market_kind": "terminal",
+         "model_name": "gbm", "model_version": "r19",
+         "evaluated_at": STUB_NOW, "condition_id": None, "market_id": None,
+         "market_slug": None, "gate_version": "gates-2026-11-07",
+         "stake": None, "price": None, "fee_category": None},
+    ]
+    evidence = [
+        _decision_evidence(31, "0.60", "0.50"),
+        _decision_evidence(32, "0.40", "0.45"),
+    ]
+    outcomes = [
+        _market_outcome("m-cf-acc", "YES", 6),
+        _market_outcome("m-cf-rej", "NO", 6),
+    ]
+    conn = _StubStoreConn(candidates=candidates, evidence=evidence,
+                          outcomes=outcomes)
+    monkeypatch.setattr(cli, "_open_readonly_connection", lambda args, label: conn)
+    # Unsettled accepted row: recomputed basis (recorded fails loudly).
+    code = cli.main(["evaluate", "--managed", "--pnl-basis", "recomputed"])
+    out = capsys.readouterr().out
+    assert code == 0, out
+    queue = json.loads(out)["queues"][0]
+    counts = queue["counts"]
+    assert counts["candidates"] == 3
+    assert counts["accepted"] == 1
+    assert counts["rejected"] == 1
+    assert counts["construction_failed"] == 1
+    verdicts = {c["key"]: c for c in queue["promotion"]}
+    assert any("candidates 2 < 200" in reason
+               for reason in verdicts["A"]["reasons"])
+    assert not any("candidates 3 < 200" in reason
+                   for reason in verdicts["A"]["reasons"])
+
+
 def test_evaluate_json_input_runs_without_any_connection(monkeypatch, capsys, tmp_path) -> None:
     def _forbidden(args, label):
         raise AssertionError("no connection may be opened for --json-input")
@@ -749,6 +803,40 @@ def test_evaluate_json_input_runs_without_any_connection(monkeypatch, capsys, tm
     assert sum(queue["counts"]["candidates"] for queue in report["queues"]) == 2
     cli.main(["evaluate", "--json-input", str(path)])
     assert capsys.readouterr().out == out  # deterministic
+
+
+def test_evaluate_json_input_accepts_construction_failed_flag(
+    monkeypatch, capsys, tmp_path
+) -> None:
+    """The JSON face takes the new optional ``construction_failed`` field;
+    rows without it keep defaulting to False (backward compatible)."""
+    def _forbidden(args, label):
+        raise AssertionError("no connection may be opened for --json-input")
+
+    monkeypatch.setattr(cli, "_open_readonly_connection", _forbidden)
+    document = {"candidates": [
+        {"candidate_id": "j1", "model_key": "gbm:r19",
+         "market_type": "terminal", "gate_version": "gates-2026-11-07",
+         "market_key": "m-1", "model_probability": 0.62, "market_mid": 0.5,
+         "accepted": True, "stake": 250.0, "fill_price": 0.56, "side": "YES",
+         "fee_category": "crypto", "fill_provenance": "book_walk",
+         "outcome": "YES", "recorded_pnl": 194.4,
+         "decision_time": "2026-11-15T12:00:00+00:00",
+         "settled_time": "2026-11-15T14:00:00+00:00", "close_price": 0.9},
+        {"candidate_id": "j9", "model_key": "gbm:r19",
+         "market_type": "terminal", "gate_version": "gates-2026-11-07",
+         "market_key": "m-9", "accepted": False,
+         "construction_failed": True, "side": None,
+         "decision_time": "2026-11-15T12:00:00+00:00"},
+    ]}
+    path = tmp_path / "queue-cf.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+    code = cli.main(["evaluate", "--json-input", str(path)])
+    out = capsys.readouterr().out
+    assert code == 0, out
+    queue = json.loads(out)["queues"][0]
+    assert queue["counts"]["candidates"] == 2
+    assert queue["counts"]["construction_failed"] == 1
 
 
 def test_evaluate_json_input_rejects_unknown_fields_and_garbage(capsys, tmp_path) -> None:

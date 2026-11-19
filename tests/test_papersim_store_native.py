@@ -1670,8 +1670,12 @@ def test_views_reconcile_with_ledger_sums_and_the_evaluator():
     counts = evaluated.counts
     assert queue['candidates_total'] == counts.candidates == 4
     assert queue['candidates_accepted'] == counts.accepted == 3
-    assert (queue['candidates_rejected'] + queue['candidates_construction_failed']
-            == counts.rejected == 1)
+    # FX-30/OD-K three-bucket reconciliation with the frozen view: each
+    # conclusion bucket now maps one-to-one (construction failures used
+    # to be folded into the evaluator's ``rejected`` count).
+    assert queue['candidates_rejected'] == counts.rejected == 1
+    assert (queue['candidates_construction_failed']
+            == counts.construction_failed == 0)
     assert queue['entered'] == counts.entered == 3
     assert queue['settled_natural'] + queue['settled_exit'] == counts.settled == 3
     assert queue['entries_unsettled'] == counts.unresolved == 0
@@ -1722,6 +1726,16 @@ def test_views_reconcile_with_ledger_sums_and_the_evaluator():
     assert queue['clv_entries_with_close_mark'] == 1
     assert queue['clv_entries_with_close_mid'] == clv.entries_with_close == 1
     assert abs(float(queue['clv_mean']) - clv.mean) < 1e-9
+    # OD-K coverage floors (FX-27): CLV coverage is 1/3 (< 80%), so C is
+    # NOT_ASSESSABLE instead of judging on the single covered entry; the
+    # D denominator is the two markets with a natural result (market_b
+    # never enters it), both scorable, so D stays assessable. Coverage
+    # is reported side-by-side in both metric blocks.
+    assert clv.close_coverage == pytest.approx(1.0 / 3.0)
+    assert scoring.markets_with_outcome == 2
+    assert scoring.scoring_coverage == pytest.approx(1.0)
+    promotion_verdicts = {c.key: c.verdict for c in evaluated.promotion}
+    assert promotion_verdicts['C'] == ev.VERDICT_NOT_ASSESSABLE
 
     # Same-basis ledger reconciliation: the queue row equals independent
     # SQL sums over the recorded book (entries and settlements).
