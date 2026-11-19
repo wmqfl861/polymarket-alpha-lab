@@ -91,6 +91,12 @@ def test_frozen_version_constants_are_pinned():
     assert ev.PROMOTION_TOP_MARKET_SHARE_MAX == 0.30
     assert ev.PROMOTION_MAX_DRAWDOWN_USD == 2500.0
     assert ev.DRAWDOWN_UNIT_USD == 250.0
+    # OD-K supplementary floors (FX-27) ride on a suffixed rules version;
+    # the registered 2026-11-13 numbers above stay untouched.
+    assert ev.PROMOTION_CLV_COVERAGE_MIN == 0.80
+    assert ev.PROMOTION_SCORING_COVERAGE_MIN == 0.80
+    assert ev.PROMOTION_RULES_VERSION.startswith("odg-registered-2026-11-13")
+    assert ev.PROMOTION_RULES_VERSION.endswith("+odk")
     # Blueprint pause + FX-17 numbers.
     assert ev.PAUSE_AFTER_ENTRIES == 40
     assert ev.FX17_SETTLED_MIN == 10
@@ -725,6 +731,72 @@ def test_criterion_a_boundaries():
     assert ev.criterion_a(**ok).reasons == ()
 
 
+def test_criterion_a_excludes_construction_failures():
+    """FX-30/OD-K (audit N-5): construction failures carry no model
+    probability and are not observations. 199 valid candidates (all
+    accepted and settled, spanning exactly 28 days so ONLY the candidate
+    count is short) plus 5 construction failures: A FAILS on
+    "candidates 199 < 200" — never on 204 — and the failures land in
+    their own counts bucket (OD-G 77.3.2 registered wording "accepted
+    plus rejected", restored)."""
+    rows = [
+        mk(candidate_id=f"v{i}", market_key=f"mkv{i}",
+           decision_time=_T0 + timedelta(days=i // 7),
+           settled_time=_T0 + timedelta(days=i // 7, hours=6))
+        for i in range(199)
+    ] + [
+        mk(candidate_id=f"f{i}", market_key=f"mkf{i}",
+           accepted=False, construction_failed=True, stake=None,
+           fill_price=None, fee_category=None, fill_provenance=None,
+           outcome=None, recorded_pnl=None, model_probability=None,
+           market_mid=None, side=None,
+           decision_time=_T0 + timedelta(days=28))
+        for i in range(5)
+    ]
+    q = ev.evaluate_queues(rows).queues[0]
+    assert q.counts.candidates == 204
+    assert q.counts.accepted == 199
+    assert q.counts.rejected == 0
+    assert q.counts.construction_failed == 5
+    assert q.counts.entered == 199  # >= 50
+    assert q.counts.settled == 199  # >= 30
+    verdicts = {c.key: c for c in q.promotion}
+    assert verdicts["A"].verdict == ev.VERDICT_FAIL
+    assert any("candidates 199 < 200" in r for r in verdicts["A"].reasons)
+    assert not any("204" in r for r in verdicts["A"].reasons)
+
+
+def test_criterion_a_passes_with_200_valid_plus_construction_failures():
+    # The exclusion is symmetric: 200 valid + 5 construction failures
+    # still PASSes A (the failures neither help nor block).
+    rows = [
+        mk(candidate_id=f"v{i}", market_key=f"mkw{i}",
+           decision_time=_T0 + timedelta(days=i // 7),
+           settled_time=_T0 + timedelta(days=i // 7, hours=6))
+        for i in range(200)
+    ] + [
+        mk(candidate_id=f"f{i}", market_key=f"mkx{i}",
+           accepted=False, construction_failed=True, stake=None,
+           fill_price=None, fee_category=None, fill_provenance=None,
+           outcome=None, recorded_pnl=None, model_probability=None,
+           market_mid=None, side=None,
+           decision_time=_T0 + timedelta(days=28))
+        for i in range(5)
+    ]
+    q = ev.evaluate_queues(rows).queues[0]
+    verdicts = {c.key: c.verdict for c in q.promotion}
+    assert verdicts["A"] == ev.VERDICT_PASS
+    assert q.counts.construction_failed == 5
+
+
+def test_construction_failed_input_validation():
+    # A construction failure is never accepted, and the flag is a bool.
+    with pytest.raises(ValueError, match="construction-failed"):
+        mk(accepted=True, construction_failed=True)
+    with pytest.raises(ValueError, match="construction_failed"):
+        mk(construction_failed="yes")
+
+
 def test_criterion_b_boundaries_and_provenance():
     ok = dict(
         entries=50,
@@ -750,7 +822,13 @@ def test_criterion_b_boundaries_and_provenance():
 
 
 def test_criterion_c_boundaries():
-    ok = dict(clv_mean=0.02, clv_lower_bound=0.01, entries_with_close=40)
+    """Was: CLV threshold boundaries (strict > 0) plus zero close
+    coverage NOT_ASSESSABLE. Now proves the same thresholds on a fully
+    covered entry set AND the OD-K floor (FX-27): strictly below 80%
+    close-mark coverage over ALL entries is NOT_ASSESSABLE, exactly 80%
+    (equality) is assessable."""
+    ok = dict(clv_mean=0.02, clv_lower_bound=0.01, entries_with_close=40,
+              entries_eligible=40)
     assert ev.criterion_c(**ok).verdict == ev.VERDICT_PASS
     cases = [
         ("clv_mean", -0.001, ev.VERDICT_FAIL),
@@ -764,14 +842,36 @@ def test_criterion_c_boundaries():
         assert ev.criterion_c(**{**ok, field: value}).verdict == expected, (
             field, value
         )
-    # No close coverage -> NOT_ASSESSABLE (never zero-filled to PASS).
+    # OD-K coverage floor: 79% NOT_ASSESSABLE, 80% (equality) and 100%
+    # assessable; zero close marks on a non-empty queue is the 0% case.
+    coverage_cases = [
+        (79, 100, ev.VERDICT_NOT_ASSESSABLE),
+        (80, 100, ev.VERDICT_PASS),
+        (100, 100, ev.VERDICT_PASS),
+        (0, 40, ev.VERDICT_NOT_ASSESSABLE),
+    ]
+    for with_close, eligible, expected in coverage_cases:
+        result = ev.criterion_c(
+            clv_mean=0.02, clv_lower_bound=0.01,
+            entries_with_close=with_close, entries_eligible=eligible,
+        )
+        assert result.verdict == expected, (with_close, eligible)
+    # No entries at all: the ratio stays undefined (never 0/0), still
+    # NOT_ASSESSABLE and never zero-filled to PASS.
     assert ev.criterion_c(
-        clv_mean=None, clv_lower_bound=None, entries_with_close=0
+        clv_mean=None, clv_lower_bound=None,
+        entries_with_close=0, entries_eligible=0,
     ).verdict == ev.VERDICT_NOT_ASSESSABLE
 
 
 def test_criterion_d_boundaries():
-    ok = dict(upper_bound=0.005, pairs=35, infinite_pairs=0)
+    """Was: upper-bound boundaries (inclusive <= +0.010), zero pairs and
+    infinite pairs NOT_ASSESSABLE. Now proves the same on a fully
+    covered market set AND the OD-K floor (FX-27): strictly below 80%
+    scorable-pair coverage over deduped markets with a natural result is
+    NOT_ASSESSABLE, exactly 80% (equality) is assessable."""
+    ok = dict(upper_bound=0.005, pairs=35, infinite_pairs=0,
+              markets_with_outcome=35)
     assert ev.criterion_d(**ok).verdict == ev.VERDICT_PASS
     cases = [
         ("upper_bound", 0.0099, ev.VERDICT_PASS),
@@ -783,12 +883,95 @@ def test_criterion_d_boundaries():
         assert ev.criterion_d(**{**ok, field: value}).verdict == expected, (
             field, value
         )
-    assert ev.criterion_d(upper_bound=None, pairs=0,
-                          infinite_pairs=0).verdict == ev.VERDICT_NOT_ASSESSABLE
-    # Infinite pairs hide nothing: NOT_ASSESSABLE with the count reported.
-    result = ev.criterion_d(upper_bound=0.005, pairs=35, infinite_pairs=2)
+    assert ev.criterion_d(upper_bound=None, pairs=0, infinite_pairs=0,
+                          markets_with_outcome=0).verdict == (
+        ev.VERDICT_NOT_ASSESSABLE
+    )
+    # OD-K coverage floor over deduped markets with a natural result.
+    coverage_cases = [
+        (79, 100, ev.VERDICT_NOT_ASSESSABLE),
+        (80, 100, ev.VERDICT_PASS),
+        (100, 100, ev.VERDICT_PASS),
+    ]
+    for pairs, with_outcome, expected in coverage_cases:
+        result = ev.criterion_d(
+            upper_bound=0.005, pairs=pairs, infinite_pairs=0,
+            markets_with_outcome=with_outcome,
+        )
+        assert result.verdict == expected, (pairs, with_outcome)
+    # Infinite pairs hide nothing: NOT_ASSESSABLE with the count reported
+    # (full coverage here, so the infinite branch is what fires).
+    result = ev.criterion_d(upper_bound=0.005, pairs=35, infinite_pairs=2,
+                            markets_with_outcome=35)
     assert result.verdict == ev.VERDICT_NOT_ASSESSABLE
     assert any("infinite" in r for r in result.reasons)
+    # Inconsistent inputs fail loudly instead of dividing toward a fake
+    # coverage number.
+    with pytest.raises(ValueError, match="inconsistent"):
+        ev.criterion_d(upper_bound=0.005, pairs=5, infinite_pairs=0,
+                       markets_with_outcome=3)
+
+
+def test_criterion_c_coverage_reason_reports_the_gap():
+    # OD-K/FX-27: the NOT_ASSESSABLE reason must state the ratio AND how
+    # many entries lack a close mark ("写明缺了多少").
+    result = ev.criterion_c(
+        clv_mean=0.05, clv_lower_bound=0.04,
+        entries_with_close=79, entries_eligible=100,
+    )
+    assert result.verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert any("79/100" in r and "21" in r for r in result.reasons)
+
+
+def test_criterion_d_coverage_reason_reports_the_gap():
+    result = ev.criterion_d(
+        upper_bound=0.005, pairs=79, infinite_pairs=0,
+        markets_with_outcome=100,
+    )
+    assert result.verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert any("79/100" in r and "21" in r for r in result.reasons)
+
+
+def test_partial_close_coverage_flips_c_to_not_assessable():
+    # 10 entries, 5 close marks: the CLV numbers on the covered half
+    # would PASS, but C must refuse to judge on a 50% subset; the report
+    # carries the coverage side-by-side (OD-K/FX-27).
+    rows = [
+        mk(candidate_id=f"cc{i}", market_key=f"mkcc{i}",
+           close_price=0.60 if i < 5 else None)
+        for i in range(10)
+    ]
+    q = ev.evaluate_queues(rows).queues[0]
+    assert q.clv.entries_eligible == 10
+    assert q.clv.entries_with_close == 5
+    assert q.clv.close_coverage == pytest.approx(0.5)
+    assert q.clv.mean == pytest.approx(0.10)  # covered half unchanged
+    verdicts = {c.key: c for c in q.promotion}
+    assert verdicts["C"].verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert any("5/10" in r for r in verdicts["C"].reasons)
+
+
+def test_partial_scoring_coverage_flips_d_to_not_assessable():
+    # Three deduped markets with a natural result, only one scorable:
+    # the denominator is "deduped markets WITH a natural result" — the
+    # missing-outcome market never enters it (OD-K/FX-27).
+    rows = [
+        mk(candidate_id="sc-ok", market_key="mk-sc-ok", outcome="YES"),
+        mk(candidate_id="sc-nomodel", market_key="mk-sc-nomodel",
+           model_probability=None, outcome="NO"),
+        mk(candidate_id="sc-nomid", market_key="mk-sc-nomid",
+           market_mid=None, outcome="NO"),
+        mk(candidate_id="sc-nooutcome", market_key="mk-sc-nooutcome",
+           outcome=None),
+    ]
+    q = ev.evaluate_queues(rows).queues[0]
+    assert q.scoring.markets_total == 4
+    assert q.scoring.markets_with_outcome == 3
+    assert q.scoring.markets_scored == 1
+    assert q.scoring.scoring_coverage == pytest.approx(1.0 / 3.0)
+    verdicts = {c.key: c for c in q.promotion}
+    assert verdicts["D"].verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert any("1/3" in r for r in verdicts["D"].reasons)
 
 
 def test_criterion_e_boundaries():

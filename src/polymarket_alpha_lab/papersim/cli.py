@@ -637,7 +637,10 @@ def _evaluation_candidates_from_store(conn) -> tuple:
     Every statement is a SELECT. Rejected candidates keep their decision
     probabilities and never carry entry fields; construction-failed
     candidates fall back to their candidate key as the market key (no
-    market identity was ever bound); an UNKNOWN effective outcome stays
+    market identity was ever bound) and are flagged
+    ``construction_failed`` so criterion A never counts them (FX-30 /
+    OD-K: accepted plus gate-rejected only); an UNKNOWN effective outcome
+    stays
     ``None`` (coverage gap), never a filled value.
 
     Settlement wiring (M1 final review P2-01): a trade with a
@@ -729,6 +732,7 @@ def _evaluation_candidates_from_store(conn) -> tuple:
             else _number(decision["model_probability"]),
             market_mid=_decision_mid(decision),
             accepted=row["conclusion"] == "ACCEPTED",
+            construction_failed=row["conclusion"] == "CONSTRUCTION_FAILED",
             stake=_number(row["stake"]) if entered else None,
             fill_price=_number(row["price"]) if entered else None,
             side=row["side"],
