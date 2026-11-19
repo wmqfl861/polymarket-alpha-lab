@@ -1,0 +1,23 @@
+# docs/handoffs/2026-11-13-m0-review/evidence/scan_mirror_tree.py run on commit c4367b6b3ce4d957ce79ce645a7ab3425be5a133 (2026-11-19)
+# input: git archive of docs/paper-sim/server-mirror, docs/paper-sim/ledger-snapshots and docs/handoffs/2026-11-12-m0-execution-review.md
+[manifest] entries=415 header/comment lines=8 files in tree=421 (top-level docs=6, scripts=415)
+[manifest] hash mismatch=0 size mismatch=0 listed but absent=0 scripts not listed=0
+[manifest] sum of listed sizes=3663690 largest committed script=99503 bytes
+[redactions] rows=9 rows whose 'redacted sha256' equals the committed file=9
+[scan] files scanned=430 hit counts={'ipv4_documentation-range': 3, 'ipv4_public': 3}
+    IPv4-like (documentation-range, plain, value masked): docs/paper-sim/server-mirror/tools/tests/test_understat_refresh.py:71
+    IPv4-like (documentation-range, plain, value masked): docs/paper-sim/server-mirror/tools/tests/test_understat_refresh.py:78
+    IPv4-like (documentation-range, plain, value masked): docs/paper-sim/server-mirror/tools/tests/test_understat_refresh.py:133
+    IPv4-like (public, plain, value masked): docs/paper-sim/server-mirror/tools/tests/test_understat_refresh.py:204
+    IPv4-like (public, plain, value masked): docs/paper-sim/server-mirror/tools/tests/test_understat_refresh.py:210
+    IPv4-like (public, plain, value masked): docs/paper-sim/server-mirror/tools/tests/test_understat_refresh.py:213
+[placeholder] files containing SERVER_HOST_REDACTED=9 occurrences=10
+    1 docs/paper-sim/ledger-snapshots/2026-11-12/VIEW-DIFF.md
+    1 docs/paper-sim/server-mirror/FX-04-wiring-proof.md
+    1 docs/paper-sim/server-mirror/MANIFEST-NOT-MIRRORED.md
+    1 docs/paper-sim/server-mirror/MANIFEST.sha256
+    2 docs/paper-sim/server-mirror/VERSION-CHECKIN.md
+    1 docs/paper-sim/server-mirror/intl/wp_intl3/polymarket_alpha_lab/papersim/league_strength.py
+    1 docs/paper-sim/server-mirror/round29/raw/write_scan.py
+    1 docs/paper-sim/server-mirror/round39/eredivisie_validate.py
+    1 docs/paper-sim/server-mirror/tools/fotmob_validate.py

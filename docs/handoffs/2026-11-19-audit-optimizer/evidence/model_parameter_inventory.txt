@@ -1,0 +1,126 @@
+commit=c4367b6b3ce4d957ce79ce645a7ab3425be5a133
+crypto_model.py: 2 entries
+  src/polymarket_alpha_lab/papersim/crypto_model.py:57: VOL_WINDOW_BARS = MappingProxyType({'7d': 28, '30d': 120, '60d': 240, '87d': 348})
+  src/polymarket_alpha_lab/papersim/crypto_model.py:65: SIGNATURE_WINDOW = '30d'
+soccer_model.py: 6 entries
+  src/polymarket_alpha_lab/papersim/soccer_model.py:102: RHO_DC = -0.1
+  src/polymarket_alpha_lab/papersim/soccer_model.py:105: GRID_MAX_GOALS = 10
+  src/polymarket_alpha_lab/papersim/soccer_model.py:108: LINEAGE_EPS = 1e-09
+  src/polymarket_alpha_lab/papersim/soccer_model.py:111: DC_FLOOR = 0.01
+  src/polymarket_alpha_lab/papersim/soccer_model.py:132: SWEEPS = (VariantSpec('blend w=.5 p=8 rho0', 0.5, 8.0, 0.0, 'blend', 1.0), VariantSpec('blend w=.5 p=8 DC', 0.5, 8.0, RHO_DC, ...
+  src/polymarket_alpha_lab/papersim/soccer_model.py:145: SWEEP_NAMES = tuple((spec.name for spec in SWEEPS))
+xg.py: 4 entries
+  src/polymarket_alpha_lab/papersim/xg.py:98: SEASON_GAMES = 38
+  src/polymarket_alpha_lab/papersim/xg.py:103: UNDERSTAT_LEAGUES = frozenset({'EPL', 'La_liga', 'Serie_A', 'Bundesliga', 'Ligue_1'})
+  src/polymarket_alpha_lab/papersim/xg.py:112: DOMESTIC_LEAGUES = UNDERSTAT_LEAGUES | frozenset({'Championship'})
+  src/polymarket_alpha_lab/papersim/xg.py:116: RATING_MODES = ('blend', 'cur', 'last')
+league_strength.py: 6 entries
+  src/polymarket_alpha_lab/papersim/league_strength.py:86: BRIDGE_CLAMP_RATIO = 1.25
+  src/polymarket_alpha_lab/papersim/league_strength.py:89: BRIDGE_CLAMP_LOG = math.log(BRIDGE_CLAMP_RATIO)
+  src/polymarket_alpha_lab/papersim/league_strength.py:116: AWAY_HAIRCUT = 0.06
+  src/polymarket_alpha_lab/papersim/league_strength.py:120: AWAY_HAIRCUT_FACTOR = math.exp(-AWAY_HAIRCUT)
+  src/polymarket_alpha_lab/papersim/league_strength.py:188: KAPPA = LeagueStrengthTable(kappa={'EPL': 0.021655, 'La_liga': -0.071492, 'Serie_A': -0.053532, 'Bundesliga': -0.095116, 'Lig...
+  src/polymarket_alpha_lab/papersim/league_strength.py:211: SUPERSEDED_KAPPA_WP_P2B = LeagueStrengthTable(kappa={'EPL': 0.126994, 'La_liga': -0.086886, 'Serie_A': -0.0961, 'Bundesliga': -0.111525, 'Ligue...
+recalib.py: 17 entries
+  src/polymarket_alpha_lab/papersim/recalib.py:92: Config.half_life_days = 120.0
+  src/polymarket_alpha_lab/papersim/recalib.py:93: Config.team_prior_matches = 8.0
+  src/polymarket_alpha_lab/papersim/recalib.py:94: Config.sparse_prior_matches = None
+  src/polymarket_alpha_lab/papersim/recalib.py:95: Config.sparse_below_matches = 8
+  src/polymarket_alpha_lab/papersim/recalib.py:96: Config.league_prior_matches = 20.0
+  src/polymarket_alpha_lab/papersim/recalib.py:97: Config.global_prior_matches = 20.0
+  src/polymarket_alpha_lab/papersim/recalib.py:98: Config.global_home_rate = 1.5
+  src/polymarket_alpha_lab/papersim/recalib.py:99: Config.global_away_rate = 1.2
+  src/polymarket_alpha_lab/papersim/recalib.py:100: Config.min_league_matches = 12
+  src/polymarket_alpha_lab/papersim/recalib.py:101: Config.min_league_weight = 6.0
+  src/polymarket_alpha_lab/papersim/recalib.py:102: Config.min_rho_matches = 80
+  src/polymarket_alpha_lab/papersim/recalib.py:103: Config.min_rho_low_scores = 20
+  src/polymarket_alpha_lab/papersim/recalib.py:104: Config.min_rho_weight = 20.0
+  src/polymarket_alpha_lab/papersim/recalib.py:105: Config.rho_bound = 0.3
+  src/polymarket_alpha_lab/papersim/recalib.py:106: Config.completion_lag_hours = 3.0
+  src/polymarket_alpha_lab/papersim/recalib.py:107: Config.fit_iterations = 80
+  src/polymarket_alpha_lab/papersim/recalib.py:108: Config.fit_tolerance = 1e-09
+intl_model.py: 9 entries
+  src/polymarket_alpha_lab/papersim/intl_model.py:173: ELO_BASE = 1500.0
+  src/polymarket_alpha_lab/papersim/intl_model.py:174: HOME_ADVANTAGE = 100.0
+  src/polymarket_alpha_lab/papersim/intl_model.py:178: DEFAULT_SLOPE = 0.47
+  src/polymarket_alpha_lab/papersim/intl_model.py:179: GLOBAL_FALLBACK_TOTAL = 2.6
+  src/polymarket_alpha_lab/papersim/intl_model.py:180: LAMBDA_FLOOR = 0.05
+  src/polymarket_alpha_lab/papersim/intl_model.py:183: SWEEP_SLOPES = (0.4, 0.47, 0.55)
+  src/polymarket_alpha_lab/papersim/intl_model.py:184: SWEEP_TOTAL_MULTIPLIERS = (1.0, 1.05, 0.95)
+  src/polymarket_alpha_lab/papersim/intl_model.py:225: VARIANTS = tuple((IntlVariantSpec(name=f'slope{slope:.2f}-totalx{multiplier:g}', slope=slope, total_multiplier=multiplier) for s...
+  src/polymarket_alpha_lab/papersim/intl_model.py:235: VARIANT_NAMES = tuple((spec.name for spec in VARIANTS))
+intl_totals.py: 6 entries
+  src/polymarket_alpha_lab/papersim/intl_totals.py:13: SHADOW_VERSION = 'intl-elo-goal-residuals-v1'
+  src/polymarket_alpha_lab/papersim/intl_totals.py:14: BASELINE_VERSION = 'intl-prior-tournament-mean-v1'
+  src/polymarket_alpha_lab/papersim/intl_totals.py:15: RECENT_DAYS = 730
+  src/polymarket_alpha_lab/papersim/intl_totals.py:16: MAX_RECENT_MATCHES = 12
+  src/polymarket_alpha_lab/papersim/intl_totals.py:17: MIN_RECENT_MATCHES = 4
+  src/polymarket_alpha_lab/papersim/intl_totals.py:18: PRIOR_MATCHES = 8
+nba_model.py: 15 entries
+  src/polymarket_alpha_lab/papersim/nba_model.py:150: DEFAULT_HALF_LIFE = 20.0
+  src/polymarket_alpha_lab/papersim/nba_model.py:153: SWEEP_HALF_LIVES = (10.0, 20.0, 35.0)
+  src/polymarket_alpha_lab/papersim/nba_model.py:154: SWEEP_SIGMA_SCALES = (1.0, 1.1)
+  src/polymarket_alpha_lab/papersim/nba_model.py:158: DEFAULT_SIGMA_MARGIN = 12.0
+  src/polymarket_alpha_lab/papersim/nba_model.py:159: SIGMA_MARGIN_CLAMP = (10.5, 13.5)
+  src/polymarket_alpha_lab/papersim/nba_model.py:163: DEFAULT_SIGMA_TOTAL = 15.0
+  src/polymarket_alpha_lab/papersim/nba_model.py:164: SIGMA_TOTAL_CLAMP = (13.0, 18.0)
+  src/polymarket_alpha_lab/papersim/nba_model.py:167: MIN_RESIDUAL_GAMES = 10
+  src/polymarket_alpha_lab/papersim/nba_model.py:172: DEFAULT_B2B_PENALTY = 2.0
+  src/polymarket_alpha_lab/papersim/nba_model.py:173: B2B_FIT_MIN_GAMES = 8
+  src/polymarket_alpha_lab/papersim/nba_model.py:174: B2B_PENALTY_CLAMP = (0.0, 4.0)
+  src/polymarket_alpha_lab/papersim/nba_model.py:178: REST_POINTS_PER_DAY = 0.25
+  src/polymarket_alpha_lab/papersim/nba_model.py:179: REST_MAX_DIFF_DAYS = 3
+  src/polymarket_alpha_lab/papersim/nba_model.py:247: VARIANTS = tuple((NbaVariantSpec(f'hl{half_life:g}-sig{scale:g}', half_life, scale) for half_life in SWEEP_HALF_LIVES for scale ...
+  src/polymarket_alpha_lab/papersim/nba_model.py:252: VARIANT_NAMES = tuple((spec.name for spec in VARIANTS))
+gates.py: 12 entries
+  src/polymarket_alpha_lab/papersim/gates.py:80: GATES = MappingProxyType({'variant_spread_max': 0.06, 'worst_edge_min': 0.04, 'exec_edge_min': 0.05, 'liq_min': 5000.0})
+  src/polymarket_alpha_lab/papersim/gates.py:91: GATE_EPSILON = 1e-09
+  src/polymarket_alpha_lab/papersim/gates.py:94: ENTRY_WINDOW = (0.1, 0.92)
+  src/polymarket_alpha_lab/papersim/gates.py:97: DEFAULT_NOTIONAL_USD = 250.0
+  src/polymarket_alpha_lab/papersim/gates.py:106: FEE_RATE_CRYPTO = 0.07
+  src/polymarket_alpha_lab/papersim/gates.py:107: FEE_RATE_SPORTS = 0.05
+  src/polymarket_alpha_lab/papersim/gates.py:110: DEPTH_NEAR_BAND = 0.02
+  src/polymarket_alpha_lab/papersim/gates.py:114: UNDER_RISK_EXEC_EDGE_MIN = 0.08
+  src/polymarket_alpha_lab/papersim/gates.py:123: CROSS_LEAGUE_MW_WORST_EDGE_MIN = 0.05
+  src/polymarket_alpha_lab/papersim/gates.py:139: HAIRCUT_BAND = (0.45, 0.55)
+  src/polymarket_alpha_lab/papersim/gates.py:140: HAIRCUT_FACTOR = 0.5
+  src/polymarket_alpha_lab/papersim/gates.py:171: SUSPENSION_REGISTRY = MappingProxyType({('match_winner', True): (POLICY_ELIGIBLE_DEPRIORITIZED, True, REASON_CROSS_LEAGUE_MATCH_WINNER), ('...
+risk_policy.py: 6 entries
+  src/polymarket_alpha_lab/papersim/risk_policy.py:37: FULL_EDGE_NOTIONAL_USD = 250.0
+  src/polymarket_alpha_lab/papersim/risk_policy.py:38: MARGINAL_NOTIONAL_USD = 150.0
+  src/polymarket_alpha_lab/papersim/risk_policy.py:39: EARLY_ENTRY_MIN_NOTIONAL_USD = 150.0
+  src/polymarket_alpha_lab/papersim/risk_policy.py:40: EARLY_ENTRY_MAX_NOTIONAL_USD = 250.0
+  src/polymarket_alpha_lab/papersim/risk_policy.py:53: DEFAULT_TEAM_CAP_USD = 1900.0
+  src/polymarket_alpha_lab/papersim/risk_policy.py:57: INITIAL_BANKROLL_USD = 10000.0
+pipeline.py: 8 entries
+  src/polymarket_alpha_lab/papersim/pipeline.py:103: PIPELINE_VERSION = 'papersim-pipeline-fx08-2026-11-14'
+  src/polymarket_alpha_lab/papersim/pipeline.py:117: MODEL_VERSION_SOCCER = 'soccer-r23'
+  src/polymarket_alpha_lab/papersim/pipeline.py:118: MODEL_VERSION_CRYPTO = 'crypto-r19+fx13-2026-11-12'
+  src/polymarket_alpha_lab/papersim/pipeline.py:126: CRYPTO_KINDS = frozenset({KIND_CRYPTO_TOUCH, KIND_CRYPTO_TERMINAL})
+  src/polymarket_alpha_lab/papersim/pipeline.py:131: MATCH_WINNER_KINDS = frozenset({'match_winner', '1x2', 'ml'})
+  src/polymarket_alpha_lab/papersim/pipeline.py:134: BUY_SIDES = ('yes', 'no')
+  src/polymarket_alpha_lab/papersim/pipeline.py:137: YES_WHEN_VALUES = ('below', 'above')
+  src/polymarket_alpha_lab/papersim/pipeline.py:230: GATE_REASON_IDS = ('variant_spread', 'worst_edge', 'exec_edge', 'liq', 'fill_250', 'entry_window', 'news_concordant', 'cross_league_bri...
+evaluation.py: 22 entries
+  src/polymarket_alpha_lab/papersim/evaluation.py:93: ALGORITHM_VERSION = 'fx11-evaluation-alg-v1'
+  src/polymarket_alpha_lab/papersim/evaluation.py:94: PROMOTION_RULES_VERSION = 'odg-registered-2026-11-13'
+  src/polymarket_alpha_lab/papersim/evaluation.py:95: SUSPENSION_RULES_VERSION = 'blueprint-pause+fx17-registered-2026-11-13'
+  src/polymarket_alpha_lab/papersim/evaluation.py:97: BOOTSTRAP_SEED = 20261114
+  src/polymarket_alpha_lab/papersim/evaluation.py:103: BOOTSTRAP_RESAMPLES = 20000
+  src/polymarket_alpha_lab/papersim/evaluation.py:104: BOOTSTRAP_PERCENTILES = (2.5, 97.5)
+  src/polymarket_alpha_lab/papersim/evaluation.py:109: CLUSTER_PRIORITY = ('match_key', 'market_key')
+  src/polymarket_alpha_lab/papersim/evaluation.py:120: PROMOTION_MIN_CANDIDATES = 200
+  src/polymarket_alpha_lab/papersim/evaluation.py:121: PROMOTION_MIN_ENTRIES = 50
+  src/polymarket_alpha_lab/papersim/evaluation.py:122: PROMOTION_MIN_SETTLED = 30
+  src/polymarket_alpha_lab/papersim/evaluation.py:123: PROMOTION_MIN_RUN_DAYS = 28
+  src/polymarket_alpha_lab/papersim/evaluation.py:124: PROMOTION_CLV_MIN = 0.0
+  src/polymarket_alpha_lab/papersim/evaluation.py:125: PROMOTION_LOGLOSS_DIFF_UPPER_MAX = 0.01
+  src/polymarket_alpha_lab/papersim/evaluation.py:126: PROMOTION_NET_ROI_MIN = 0.0
+  src/polymarket_alpha_lab/papersim/evaluation.py:127: PROMOTION_TOP_MARKET_SHARE_MAX = 0.3
+  src/polymarket_alpha_lab/papersim/evaluation.py:128: DRAWDOWN_UNIT_USD = 250.0
+  src/polymarket_alpha_lab/papersim/evaluation.py:129: PROMOTION_MAX_DRAWDOWN_USD = 10.0 * DRAWDOWN_UNIT_USD
+  src/polymarket_alpha_lab/papersim/evaluation.py:132: PAUSE_AFTER_ENTRIES = 40
+  src/polymarket_alpha_lab/papersim/evaluation.py:133: PAUSE_CLV_UPPER_BOUND_BELOW = 0.0
+  src/polymarket_alpha_lab/papersim/evaluation.py:135: FX17_SETTLED_MIN = 10
+  src/polymarket_alpha_lab/papersim/evaluation.py:136: FX17_NET_PNL_PAUSE_BELOW = -600.0
+  src/polymarket_alpha_lab/papersim/evaluation.py:137: FX17_ENTRIES_MIN = 20
