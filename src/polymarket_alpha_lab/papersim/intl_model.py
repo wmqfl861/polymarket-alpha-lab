@@ -111,6 +111,14 @@ cover both teams when one or both lack strictly prior matches. The explicit reas
 is available through :func:`refusal_reason`. Any malformed row, unknown
 snapshot shape or non-finite value raises ``ValueError`` (hard fail, never
 a silent NaN).
+
+MO-5b parameterization: every tunable constant is ALSO a keyword-only
+argument (defaulting to the module constant, the single source of the
+frozen value) on the functions that read it --
+:func:`fixture_prediction` takes ``elo_base``, ``home_advantage``,
+``global_fallback_total`` and ``variants``; :func:`pair_lambdas_from_elo`
+takes ``lambda_floor``. Calling with defaults is bit-identical to the
+pre-parameterization module (pinned by tests and the 334-match replay).
 """
 
 from __future__ import annotations
@@ -573,8 +581,14 @@ def _elo_expected(diff: float) -> float:
     return 1.0 / (1.0 + 10.0 ** (-diff / 400.0))
 
 
-def _elo_delta(row: _MatchRow, rating_home: float, rating_away: float) -> float:
-    advantage = 0.0 if row.neutral else HOME_ADVANTAGE
+def _elo_delta(
+    row: _MatchRow,
+    rating_home: float,
+    rating_away: float,
+    *,
+    home_advantage: float = HOME_ADVANTAGE,
+) -> float:
+    advantage = 0.0 if row.neutral else home_advantage
     expected = _elo_expected(rating_home + advantage - rating_away)
     margin = row.home_goals - row.away_goals
     if margin > 0:
@@ -595,23 +609,30 @@ def _replay_elos(
     home: str,
     away: str,
     barrier: date,
+    *,
+    elo_base: float = ELO_BASE,
+    home_advantage: float = HOME_ADVANTAGE,
 ) -> tuple[float, float, int, int]:
     """Replay the full history strictly before ``barrier``.
 
     Every match is replayed (all teams tracked — an update needs the
     opponent's current rating), in sorted date order, starting every team
-    at :data:`ELO_BASE`. Returns ``(elo_home, elo_away, games_home,
-    games_away)`` where the game counts are the strictly-prior matches
-    involving each fixture team.
+    at ``elo_base`` (default :data:`ELO_BASE`) and applying
+    ``home_advantage`` (default :data:`HOME_ADVANTAGE`) to non-neutral
+    rows. Returns ``(elo_home, elo_away, games_home, games_away)`` where
+    the game counts are the strictly-prior matches involving each fixture
+    team.
     """
     ratings: dict[str, float] = {}
     games = {home: 0, away: 0}
     for row in rows:
         if row.date >= barrier:
             break
-        rating_home = ratings.setdefault(row.home, ELO_BASE)
-        rating_away = ratings.setdefault(row.away, ELO_BASE)
-        delta = _elo_delta(row, rating_home, rating_away)
+        rating_home = ratings.setdefault(row.home, elo_base)
+        rating_away = ratings.setdefault(row.away, elo_base)
+        delta = _elo_delta(
+            row, rating_home, rating_away, home_advantage=home_advantage
+        )
         ratings[row.home] = rating_home + delta
         ratings[row.away] = rating_away - delta
         if row.home in games:
@@ -619,8 +640,8 @@ def _replay_elos(
         if row.away in games:
             games[row.away] += 1
     return (
-        ratings.get(home, ELO_BASE),
-        ratings.get(away, ELO_BASE),
+        ratings.get(home, elo_base),
+        ratings.get(away, elo_base),
         games[home],
         games[away],
     )
@@ -672,12 +693,14 @@ def pair_lambdas_from_elo(
     slope: float = DEFAULT_SLOPE,
     neutral: bool = False,
     home_advantage: float = HOME_ADVANTAGE,
+    lambda_floor: float = LAMBDA_FLOOR,
 ) -> tuple[float, float]:
     """``(lambda_home, lambda_away)`` split of the total by the Elo GD.
 
     ``lambda_home = total/2 + gd/2`` and ``lambda_away = total/2 - gd/2``,
-    each floored at :data:`LAMBDA_FLOOR` (extreme-mismatch safety clamp;
-    see the module docstring for the documented sum drift when it binds).
+    each floored at ``lambda_floor`` (default :data:`LAMBDA_FLOOR`;
+    extreme-mismatch safety clamp; see the module docstring for the
+    documented sum drift when it binds).
     """
     gd = expected_gd(
         elo_home,
@@ -687,10 +710,11 @@ def pair_lambdas_from_elo(
         home_advantage=home_advantage,
     )
     checked_total = _finite(total, "total", lower=0.0, strictly=True)
+    checked_floor = _finite(lambda_floor, "lambda_floor", lower=0.0)
     half_total = checked_total / 2.0
     return (
-        max(half_total + gd / 2.0, LAMBDA_FLOOR),
-        max(half_total - gd / 2.0, LAMBDA_FLOOR),
+        max(half_total + gd / 2.0, checked_floor),
+        max(half_total - gd / 2.0, checked_floor),
     )
 
 
@@ -734,10 +758,12 @@ def _resolve_total(
     rows: Sequence[_MatchRow],
     tournament: str | None,
     barrier: date,
+    *,
+    global_fallback_total: float = GLOBAL_FALLBACK_TOTAL,
 ) -> tuple[float, str, int]:
     """(total_base, source tag, corpus size) strictly before the fixture."""
     if tournament is None:
-        return GLOBAL_FALLBACK_TOTAL, TOTAL_SOURCE_FALLBACK, 0
+        return global_fallback_total, TOTAL_SOURCE_FALLBACK, 0
     total = 0.0
     count = 0
     for row in rows:
@@ -747,7 +773,7 @@ def _resolve_total(
             total += row.home_goals + row.away_goals
             count += 1
     if count == 0:
-        return GLOBAL_FALLBACK_TOTAL, TOTAL_SOURCE_FALLBACK, 0
+        return global_fallback_total, TOTAL_SOURCE_FALLBACK, 0
     return total / count, TOTAL_SOURCE_TOURNAMENT, count
 
 
@@ -778,15 +804,48 @@ def _validate_tournament_arg(tournament: object) -> None:
         raise ValueError(f"tournament must be a nonempty string or None, got {tournament!r}")
 
 
+def _validate_variants(variants: object) -> tuple[IntlVariantSpec, ...]:
+    """Validated envelope variants: nonempty, each a finite ``IntlVariantSpec``."""
+    if isinstance(variants, (str, bytes)) or not isinstance(variants, Sequence):
+        raise ValueError(
+            f"variants must be a sequence of IntlVariantSpec, got {type(variants)!r}"
+        )
+    checked = tuple(variants)
+    if not checked:
+        raise ValueError("variants must be a nonempty sequence")
+    for spec in checked:
+        if not isinstance(spec, IntlVariantSpec):
+            raise ValueError(
+                "each variant must be an IntlVariantSpec, got "
+                f"{type(spec).__name__}: {spec!r}"
+            )
+        _finite(spec.slope, "variant slope", lower=0.0, strictly=True)
+        _finite(
+            spec.total_multiplier,
+            "variant total_multiplier",
+            lower=0.0,
+            strictly=True,
+        )
+    return checked
+
+
 def _resolve_ratings(
     teams: Mapping,
     rows: Sequence[_MatchRow],
     fixture: IntlFixture,
     barrier: date,
+    *,
+    elo_base: float = ELO_BASE,
+    home_advantage: float = HOME_ADVANTAGE,
 ) -> tuple[float, float, int, int, str, bool] | str:
     """Causal replay ratings or a stale compatibility quote from the table."""
     elo_home, elo_away, games_home, games_away = _replay_elos(
-        rows, fixture.home, fixture.away, barrier
+        rows,
+        fixture.home,
+        fixture.away,
+        barrier,
+        elo_base=elo_base,
+        home_advantage=home_advantage,
     )
     if games_home and games_away:
         return elo_home, elo_away, games_home, games_away, RATING_SOURCE_REPLAY, False
@@ -840,6 +899,10 @@ def fixture_prediction(
     fixture: IntlFixture,
     *,
     tournament: str | None = None,
+    elo_base: float = ELO_BASE,
+    home_advantage: float = HOME_ADVANTAGE,
+    global_fallback_total: float = GLOBAL_FALLBACK_TOTAL,
+    variants: Sequence[IntlVariantSpec] = VARIANTS,
 ) -> IntlPrediction | None:
     """Nine-variant median/range prediction for one international fixture.
 
@@ -848,31 +911,55 @@ def fixture_prediction(
     :func:`refusal_reason` for the explicit reason). Any malformed row or
     non-finite value anywhere raises ``ValueError``. ``tournament``
     selects the mean total of strictly prior matches in that tournament.
-    A missing tournament history falls back to :data:`GLOBAL_FALLBACK_TOTAL`. Pure
-    function: no network, no I/O, no mutation of the snapshot; identical
+    A missing tournament history falls back to ``global_fallback_total``.
+    Pure function: no network, no I/O, no mutation of the snapshot; identical
     inputs give identical outputs.
+
+    MO-5b keyword-only model parameters, defaulting to the frozen module
+    constants (default calls are bit-identical to the
+    pre-parameterization module): ``elo_base`` and ``home_advantage``
+    drive the Elo replay engine — ``home_advantage`` additionally the
+    Elo->goals bridge and the reported ``home_advantage_applied``;
+    ``global_fallback_total`` is the no-context total; ``variants`` is
+    the sensitivity envelope swept in place of :data:`VARIANTS`.
     """
     barrier = _validate_fixture(fixture)
     _validate_tournament_arg(tournament)
+    checked_elo_base = _finite(elo_base, "elo_base")
+    checked_home_advantage = _finite(home_advantage, "home_advantage", lower=0.0)
+    checked_fallback_total = _finite(
+        global_fallback_total, "global_fallback_total", lower=0.0, strictly=True
+    )
+    checked_variants = _validate_variants(variants)
     teams = _snapshot_envelope(snapshot)
     rows = _validated_matches(snapshot.get("matches"))
-    resolved = _resolve_ratings(teams, rows, fixture, barrier)
+    resolved = _resolve_ratings(
+        teams,
+        rows,
+        fixture,
+        barrier,
+        elo_base=checked_elo_base,
+        home_advantage=checked_home_advantage,
+    )
     if isinstance(resolved, str):
         return None
     elo_home, elo_away, games_home, games_away, source, stale = resolved
-    total_base, total_source, corpus = _resolve_total(rows, tournament, barrier)
+    total_base, total_source, corpus = _resolve_total(
+        rows, tournament, barrier, global_fallback_total=checked_fallback_total
+    )
     if not total_base > 0.0:
         raise ValueError(
             f"tournament {tournament!r} has a degenerate mean total "
             f"({total_base!r}); refusing to price a zero-goal calibration"
         )
     results: list[IntlVariantResult] = []
-    for spec in VARIANTS:
+    for spec in checked_variants:
         gd = expected_gd(
             elo_home,
             elo_away,
             slope=spec.slope,
             neutral=fixture.neutral,
+            home_advantage=checked_home_advantage,
         )
         lambdas = pair_lambdas_from_elo(
             elo_home,
@@ -880,6 +967,7 @@ def fixture_prediction(
             total_base * spec.total_multiplier,
             slope=spec.slope,
             neutral=fixture.neutral,
+            home_advantage=checked_home_advantage,
         )
         results.append(
             IntlVariantResult(
@@ -904,6 +992,7 @@ def fixture_prediction(
         source,
         stale,
         tuple(results),
+        home_advantage=checked_home_advantage,
     )
     _ensure_finite(prediction)
     return prediction
@@ -936,6 +1025,8 @@ def _aggregate(
     source: str,
     stale: bool,
     variants: tuple[IntlVariantResult, ...],
+    *,
+    home_advantage: float = HOME_ADVANTAGE,
 ) -> IntlPrediction:
     home_wins = [variant.outputs.home_win for variant in variants]
     draws = [variant.outputs.draw for variant in variants]
@@ -955,7 +1046,7 @@ def _aggregate(
         elo_away=elo_away,
         games_home=games_home,
         games_away=games_away,
-        home_advantage_applied=0.0 if fixture.neutral else HOME_ADVANTAGE,
+        home_advantage_applied=0.0 if fixture.neutral else home_advantage,
         lambda_home=median([variant.lambda_home for variant in variants]),
         lambda_away=median([variant.lambda_away for variant in variants]),
         p_home=p_home,
