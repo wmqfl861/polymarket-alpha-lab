@@ -50,9 +50,11 @@ from polymarket_alpha_lab.papersim.store import (
     BankrollCheckRequest,
     BankrollCheckResult,
     CandidateMarkCapture,
+    CommandRunEventSubmission,
     EffectiveMarketOutcome,
     MarketOutcomeObservation,
     PapersimStoreError,
+    QueueControlSubmission,
     ScanSubmission,
     SettlementRecord,
     _as_decimal,
@@ -295,10 +297,12 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
                     'bankroll_event_keys': _read_back_event_keys(cursor, scan_id)}
         cursor.execute('INSERT INTO papersim.scan_runs (scan_key, scan_payload_sha256, team, '
                        'started_at, finished_at, code_commit, schema_version, gate_version, '
-                       'operator, params, is_legacy) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s) '
+                       'operator, params, is_legacy, operation_key) '
+                       'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) '
                        'RETURNING scan_id',
                        (key, payload, scan.team, scan.started_at, scan.finished_at, scan.code_commit,
-                        scan.schema_version, scan.gate_version, scan.operator, scan.params, scan.is_legacy))
+                        scan.schema_version, scan.gate_version, scan.operator, scan.params,
+                        scan.is_legacy, scan.operation_key))
         scan_id = int(cursor.fetchone()[0])
         candidate_ids: dict[str, int] = {}
         bankroll_keys: list[str] = []
@@ -638,3 +642,168 @@ def bankroll_daily_check(conn, request: BankrollCheckRequest) -> BankrollCheckRe
                                open_entry_fees=open_fees,
                                identity_difference=difference, tolerance=tolerance,
                                passed=passed)
+
+
+# ---------------------------------------------------------------------------
+# B1 run-scan operation writes (M2 plan section 3.1: the command run
+# receipts and the FX-17 queue-control latch; 05 section 2 B1 row).
+#
+# MO-7 SEAM (B1 plan D7, fourth wiring point): the shadow-prediction
+# writer joins THIS section when the registry exists (it writes
+# papersim.shadow_predictions from the scan's non-active roles); until
+# then there is intentionally no shadow write anywhere -- with the
+# registry empty the non-active role set is empty, so a shadow row here
+# would break the registered "bit-identical output" requirement.
+# ---------------------------------------------------------------------------
+
+_COMMAND_RUN_INSERT = ('INSERT INTO papersim.command_run_events (run_event_key, '
+                       'operation_key, attempt, phase, command, queue_id, scheduled_for, '
+                       'occurred_at, code_commit, config_digest, input_evidence, '
+                       'output_evidence, error_code, scan_id) '
+                       'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s) '
+                       'RETURNING run_event_id')
+
+_QUEUE_CONTROL_INSERT = ('INSERT INTO papersim.queue_control_events (control_key, queue_id, '
+                         'control_kind, rule, rule_version, metrics, evidence_watermark, '
+                         'reason, reviewed_by, observed_at, scan_id) '
+                         'VALUES (%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s,%s,%s) '
+                         'RETURNING control_event_id')
+
+
+def _json_text(value) -> str:
+    """Canonical JSON text (the jsonb parameters are always bound as text)."""
+    if type(value) is str:
+        return value
+    return json.dumps(value, sort_keys=True, separators=(',', ':'))
+
+
+def _compare_rows(stored: dict, expected: dict, code: str) -> None:
+    """Idempotency comparison over mixed scalar/jsonb columns.
+
+    ``_compare_stored`` normalizes every value through ``Decimal`` and
+    therefore only handles scalars; jsonb columns come back from the
+    driver as lists/dicts and compare structurally instead.
+    """
+    for column in expected:
+        if stored.get(column) != expected[column]:
+            if isinstance(expected[column], (list, dict)):
+                raise PapersimStoreError(code)
+            if _normalize(stored.get(column)) != _normalize(expected[column]):
+                raise PapersimStoreError(code)
+
+
+def record_command_run_event(conn, submission: CommandRunEventSubmission) -> dict:
+    """Append one run receipt row (idempotent on the scheduling identity).
+
+    Same run-event key + same content returns the original row
+    (``inserted=False``); a changed content under the same key is a
+    conflict; rows are never updated (append-only triggers on the
+    table), so every attempt phase of an operation stays as history.
+    """
+    submission.validate()
+    key = submission.key()
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT operation_key, attempt, phase, command, queue_id, '
+                       'scheduled_for, code_commit, config_digest, input_evidence, '
+                       'output_evidence, error_code, scan_id '
+                       'FROM papersim.command_run_events WHERE run_event_key = %s', (key,))
+        columns = ['operation_key', 'attempt', 'phase', 'command', 'queue_id',
+                   'scheduled_for', 'code_commit', 'config_digest', 'input_evidence',
+                   'output_evidence', 'error_code', 'scan_id']
+        row = cursor.fetchone()
+        content = (submission.operation_key, submission.attempt, submission.phase,
+                   submission.command, submission.queue_id, submission.scheduled_for,
+                   submission.code_commit, submission.config_digest,
+                   json.loads(_json_text(submission.input_evidence)),
+                   json.loads(_json_text(submission.output_evidence)),
+                   submission.error_code, submission.scan_id)
+        if row is not None:
+            stored = dict(zip(columns, row, strict=True))
+            expected = dict(zip(columns, content, strict=True))
+            _compare_rows(stored, expected, 'papersim_command_run_conflict')
+            return {'run_event_id': None, 'run_event_key': key, 'inserted': False}
+        cursor.execute(_COMMAND_RUN_INSERT,
+                       (key, submission.operation_key, submission.attempt,
+                        submission.phase, submission.command, submission.queue_id,
+                        submission.scheduled_for, submission.occurred_at,
+                        submission.code_commit, submission.config_digest,
+                        _json_text(submission.input_evidence),
+                        _json_text(submission.output_evidence),
+                        submission.error_code, submission.scan_id))
+        run_event_id = int(cursor.fetchone()[0])
+    return {'run_event_id': run_event_id, 'run_event_key': key, 'inserted': True}
+
+
+def record_queue_control_event(conn, submission: QueueControlSubmission) -> dict:
+    """Append one queue-control (pause latch) evidence row, idempotently.
+
+    ``queue_control_key`` includes ``observed_at`` (store.py), so two
+    scans tripping the same rule append two DISTINCT rows by design --
+    pause rows are appended evidence, and only a reviewed RESUME row may
+    follow a pause.  Same key + same content returns the original row.
+    """
+    submission.validate()
+    key = submission.key()
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT queue_id, control_kind, rule, rule_version, metrics, '
+                       'evidence_watermark, reason, reviewed_by, scan_id '
+                       'FROM papersim.queue_control_events WHERE control_key = %s', (key,))
+        columns = ['queue_id', 'control_kind', 'rule', 'rule_version', 'metrics',
+                   'evidence_watermark', 'reason', 'reviewed_by', 'scan_id']
+        row = cursor.fetchone()
+        content = (submission.queue_id, submission.control_kind, submission.rule,
+                   submission.rule_version, json.loads(_json_text(submission.metrics)),
+                   json.loads(_json_text(submission.evidence_watermark)),
+                   submission.reason, submission.reviewed_by, submission.scan_id)
+        if row is not None:
+            stored = dict(zip(columns, row, strict=True))
+            expected = dict(zip(columns, content, strict=True))
+            _compare_rows(stored, expected, 'papersim_queue_control_conflict')
+            return {'control_event_id': None, 'control_key': key, 'inserted': False}
+        cursor.execute(_QUEUE_CONTROL_INSERT,
+                       (key, submission.queue_id, submission.control_kind,
+                        submission.rule, submission.rule_version,
+                        _json_text(submission.metrics),
+                        _json_text(submission.evidence_watermark), submission.reason,
+                        submission.reviewed_by, submission.observed_at,
+                        submission.scan_id))
+        control_event_id = int(cursor.fetchone()[0])
+    return {'control_event_id': control_event_id, 'control_key': key, 'inserted': True}
+
+
+def latched_pauses(conn) -> dict:
+    """Fold the pause latch per queue from the append-only control rows.
+
+    Rows are read in append order (``observed_at``, then the identity
+    column as the tie-break).  Folding is per queue, matching the
+    migration's "only a reviewed RESUME row may follow one [pause]":
+    every PAUSE sets the latch of its rule family (``fx17*`` -> review,
+    anything else -> the blueprint universal stop); a RESUME clears ALL
+    latches of its queue (per-queue unlatch).  Any number of rows folds
+    idempotently: repeated PAUSE evidence between two RESUMEs leaves
+    the flags unchanged, and ``scan.py`` feeds these flags straight
+    into ``queue_policy.queue_pause_input`` (decisions only stay or
+    escalate -- nothing here auto-resumes).
+    """
+    review: dict[str, bool] = {}
+    stop: dict[str, bool] = {}
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT queue_id, control_kind, rule FROM '
+                       'papersim.queue_control_events ORDER BY observed_at, '
+                       'control_event_id')
+        for queue_id, control_kind, rule in cursor.fetchall():
+            queue = str(queue_id)
+            if str(control_kind) == 'RESUME':
+                review[queue] = False
+                stop[queue] = False
+                continue
+            rule_text = str(rule or '')
+            if rule_text.startswith('fx17'):
+                review[queue] = True
+            else:
+                stop[queue] = True
+    return {queue: (review.get(queue, False), stop.get(queue, False))
+            for queue in sorted(set(review) | set(stop))}
