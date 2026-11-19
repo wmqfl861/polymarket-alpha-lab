@@ -108,6 +108,42 @@ missing team or a team with no games strictly before the barrier —
 soft refusals whose explicit reason is available through
 ``refusal_reason``. Any malformed input or non-finite value anywhere
 raises ``ValueError`` (hard fail, never a silent NaN).
+
+MO-5c parameterization (optimize line, plan 05 node MO-5c): every
+tunable constant is also exposed as a keyword-only argument whose
+default IS the module constant, so the default call is bit-identical
+to the pre-MO-5c module and existing callers/constants are untouched.
+``fixture_prediction`` additionally takes:
+
+- ``variants``: the envelope grid (default ``VARIANTS``). Validated to
+  be a nonempty sequence of ``NbaVariantSpec`` with positive finite
+  half-life/sigma-scale and unique names. The count of DISTINCT
+  half-lives must be ODD: the residual-count fields report the fit of
+  the median distinct half-life, and an even count has no median
+  element (explicit ``ValueError`` instead of a hidden convention).
+- ``sigma_scale``: ONE center scale multiplying BOTH sigma margin and
+  sigma total (after the per-variant ``spec.sigma_scale``; ``x * 1.0``
+  is an exact float identity, so the default is bit-neutral). A single
+  knob on purpose: the frozen V1 variant structure applies one scale
+  to both families of sigma per variant, and the center scale follows
+  the same convention (plan review P3-4).
+- ``total_bias``: totals-only calibration offset added to each
+  variant's ``exp_total`` (default 0.0; ``+ 0.0`` on positive sums is
+  an exact identity). Margin, per-side points, sigma and the
+  walk-forward residual pass are deliberately untouched: the bias is
+  a prediction-stage correction, and shifting residuals by a constant
+  would not change their sample std anyway.
+- B2B: ``b2b_penalty_default`` / ``b2b_fit_min_games`` /
+  ``b2b_penalty_clamp`` re-expose the fit knobs, and
+  ``b2b_penalty_override`` (default ``None``) replaces the fitted or
+  fallback penalty with a flat assumption — reported honestly as
+  ``b2b_penalty_fitted=False`` (a stated assumption is not a fit).
+- Sigma: ``default_sigma_margin`` / ``sigma_margin_clamp`` /
+  ``default_sigma_total`` / ``sigma_total_clamp`` /
+  ``min_residual_games`` re-expose the sigma-fit knobs.
+- Rest: ``rest_points_per_day`` / ``rest_max_diff_days`` re-expose the
+  rest-differential constants (consumed only when
+  ``use_rest_adjustment`` is true).
 """
 
 from __future__ import annotations
@@ -491,24 +527,46 @@ def _team_games(teams: Mapping, team: str) -> list[_GameRow] | None:
 # ---------------------------------------------------------------------------
 
 
-def league_context(snapshot: object) -> NbaLeagueContext:
+def league_context(
+    snapshot: object,
+    *,
+    b2b_penalty_default: float = DEFAULT_B2B_PENALTY,
+    b2b_fit_min_games: int = B2B_FIT_MIN_GAMES,
+    b2b_penalty_clamp: tuple[float, float] = B2B_PENALTY_CLAMP,
+    b2b_penalty_override: float | None = None,
+) -> NbaLeagueContext:
     """League calibration over every game in the supplied snapshot.
 
     Walks and validates every team-game row: possession-weighted league
     ORtg/DRtg means, mean team-game pace, mean home-row margin (HCA),
     and the B2B penalty (fitted from league-average offensive output
-    when at least ``B2B_FIT_MIN_GAMES`` team-games sit on each side,
-    else the documented default). Raises on an empty snapshot — with no
-    games there is nothing to calibrate.
+    when at least ``b2b_fit_min_games`` team-games sit on each side,
+    clamped into ``b2b_penalty_clamp``, else the ``b2b_penalty_default``
+    assumption). ``b2b_penalty_override``, when set, replaces both with
+    a flat assumption reported as ``b2b_penalty_fitted=False``. Raises
+    on an empty snapshot — with no games there is nothing to calibrate.
     """
     teams = _snapshot_teams(snapshot)
     rows: list[_GameRow] = []
     for team in teams:
         rows.extend(_team_games(teams, team) or [])
-    return _league_context_from_rows(rows)
+    return _league_context_from_rows(
+        rows,
+        b2b_penalty_default=b2b_penalty_default,
+        b2b_fit_min_games=b2b_fit_min_games,
+        b2b_penalty_clamp=b2b_penalty_clamp,
+        b2b_penalty_override=b2b_penalty_override,
+    )
 
 
-def _league_context_from_rows(rows: Sequence[_GameRow]) -> NbaLeagueContext:
+def _league_context_from_rows(
+    rows: Sequence[_GameRow],
+    *,
+    b2b_penalty_default: float = DEFAULT_B2B_PENALTY,
+    b2b_fit_min_games: int = B2B_FIT_MIN_GAMES,
+    b2b_penalty_clamp: tuple[float, float] = B2B_PENALTY_CLAMP,
+    b2b_penalty_override: float | None = None,
+) -> NbaLeagueContext:
     if not rows:
         raise ValueError("snapshot contains no games; league context undefined")
     poss_sum = math.fsum(row.poss for row in rows)
@@ -521,19 +579,27 @@ def _league_context_from_rows(rows: Sequence[_GameRow]) -> NbaLeagueContext:
         if home_rows
         else 0.0
     )
-    b2b_pts = [row.pts for row in rows if row.b2b]
-    rested_pts = [row.pts for row in rows if not row.b2b]
-    if len(b2b_pts) >= B2B_FIT_MIN_GAMES and len(rested_pts) >= B2B_FIT_MIN_GAMES:
-        raw_penalty = (
-            math.fsum(rested_pts) / len(rested_pts)
-            - math.fsum(b2b_pts) / len(b2b_pts)
-        )
-        low, high = B2B_PENALTY_CLAMP
-        penalty = min(max(raw_penalty, low), high)
-        fitted = True
-    else:
-        penalty = DEFAULT_B2B_PENALTY
+    if b2b_penalty_override is not None:
+        # A stated flat assumption is not a fit; report it honestly.
+        penalty = b2b_penalty_override
         fitted = False
+    else:
+        b2b_pts = [row.pts for row in rows if row.b2b]
+        rested_pts = [row.pts for row in rows if not row.b2b]
+        if (
+            len(b2b_pts) >= b2b_fit_min_games
+            and len(rested_pts) >= b2b_fit_min_games
+        ):
+            raw_penalty = (
+                math.fsum(rested_pts) / len(rested_pts)
+                - math.fsum(b2b_pts) / len(b2b_pts)
+            )
+            low, high = b2b_penalty_clamp
+            penalty = min(max(raw_penalty, low), high)
+            fitted = True
+        else:
+            penalty = b2b_penalty_default
+            fitted = False
     return NbaLeagueContext(
         ortg=ortg,
         drtg=drtg,
@@ -634,11 +700,15 @@ def _adjusted_outcome(
     use_rest: bool,
     mult_home: float,
     mult_away: float,
+    rest_points_per_day: float = REST_POINTS_PER_DAY,
+    rest_max_diff_days: int = REST_MAX_DIFF_DAYS,
 ) -> tuple[float, float, float]:
     """(pace_estimate, exp home pts, exp away pts) with every adjustment.
 
     Order: raw pace/efficiency points -> B2B flat penalty -> HCA split
     -> optional rest-differential split -> injury stub multipliers.
+    The rest knobs default to the module constants and are consumed
+    only when ``use_rest`` is true.
     """
     pace_estimate = ratings_home.pace * ratings_away.pace / context.pace
     exp_ortg_home = ratings_home.ortg + ratings_away.drtg - context.ortg
@@ -653,8 +723,10 @@ def _adjusted_outcome(
     pts_away -= context.hca / 2.0
     if use_rest and rest_home is not None and rest_away is not None:
         differential = float(rest_home - rest_away)
-        capped = max(-float(REST_MAX_DIFF_DAYS), min(float(REST_MAX_DIFF_DAYS), differential))
-        adjustment = REST_POINTS_PER_DAY * capped
+        capped = max(
+            -float(rest_max_diff_days), min(float(rest_max_diff_days), differential)
+        )
+        adjustment = rest_points_per_day * capped
         pts_home += adjustment / 2.0
         pts_away -= adjustment / 2.0
     pts_home *= mult_home
@@ -698,9 +770,13 @@ def _sample_std(values: Sequence[float]) -> float:
 
 
 def _fit_sigma(
-    residuals: Sequence[float], default: float, clamp: tuple[float, float]
+    residuals: Sequence[float],
+    default: float,
+    clamp: tuple[float, float],
+    *,
+    min_games: int = MIN_RESIDUAL_GAMES,
 ) -> float:
-    if len(residuals) < MIN_RESIDUAL_GAMES:
+    if len(residuals) < min_games:
         return default
     low, high = clamp
     return min(max(_sample_std(residuals), low), high)
@@ -784,13 +860,20 @@ def _sigma_pass(
     paired_by_date: Mapping[date, Sequence[tuple[_GameRow, _GameRow]]],
     half_life: float,
     context: NbaLeagueContext,
+    *,
+    default_sigma_margin: float = DEFAULT_SIGMA_MARGIN,
+    sigma_margin_clamp: tuple[float, float] = SIGMA_MARGIN_CLAMP,
+    default_sigma_total: float = DEFAULT_SIGMA_TOTAL,
+    sigma_total_clamp: tuple[float, float] = SIGMA_TOTAL_CLAMP,
+    min_residual_games: int = MIN_RESIDUAL_GAMES,
 ) -> _SigmaFit:
     """Walk-forward margin/total residual sigma for one half-life.
 
     Dates act as barriers for ratings: all predictions for a date use
     strictly earlier ratings, then that date's rows update the states.
     Each prediction uses the fixture's fitted league context and that
-    game's B2B flags, with rest and injury adjustments disabled.
+    game's B2B flags, with rest and injury adjustments disabled. The
+    sigma knobs default to the module constants (MO-5c).
     """
     decay = math.exp2(-1.0 / half_life)
     state: dict[str, list[float]] = {}
@@ -833,8 +916,18 @@ def _sigma_pass(
             entry[3] += row.poss
             entry[4] += 1.0
     return _SigmaFit(
-        margin=_fit_sigma(margin_residuals, DEFAULT_SIGMA_MARGIN, SIGMA_MARGIN_CLAMP),
-        total=_fit_sigma(total_residuals, DEFAULT_SIGMA_TOTAL, SIGMA_TOTAL_CLAMP),
+        margin=_fit_sigma(
+            margin_residuals,
+            default_sigma_margin,
+            sigma_margin_clamp,
+            min_games=min_residual_games,
+        ),
+        total=_fit_sigma(
+            total_residuals,
+            default_sigma_total,
+            sigma_total_clamp,
+            min_games=min_residual_games,
+        ),
         residual_games=len(margin_residuals),
     )
 
@@ -888,6 +981,81 @@ def _resolve_multipliers(
     return (values[0], values[1])
 
 
+def _check_clamp(
+    clamp: object, name: str, *, positive_low: bool
+) -> tuple[float, float]:
+    """Validate a (low, high) clamp pair; reject bools and non-finite."""
+    if (
+        not isinstance(clamp, tuple)
+        or len(clamp) != 2
+    ):
+        raise ValueError(f"{name} must be a (low, high) tuple, got {clamp!r}")
+    low = _number(clamp[0], f"{name}[0]", lower=0.0, strictly=positive_low)
+    high = _number(clamp[1], f"{name}[1]", lower=0.0, strictly=positive_low)
+    if high < low:
+        raise ValueError(f"{name} high must not be below low, got {clamp!r}")
+    return (low, high)
+
+
+def _check_int_at_least(value: object, name: str, minimum: int) -> int:
+    if type(value) is not int or value < minimum:
+        raise ValueError(
+            f"{name} must be an int of at least {minimum}, got {value!r}"
+        )
+    return value
+
+
+def _check_variants(variants: object) -> tuple[NbaVariantSpec, ...]:
+    """Validate an envelope grid; return it as a tuple in given order.
+
+    Fail-closed on anything the aggregation would silently mishandle:
+    non-spec entries, non-positive or non-finite scales/half-lives,
+    duplicate names, and an EVEN number of distinct half-lives (the
+    residual-count fields report the median distinct half-life's fit,
+    and an even count has no median element).
+    """
+    if not isinstance(variants, Sequence) or isinstance(variants, (str, bytes)):
+        raise ValueError(
+            f"variants must be a sequence of NbaVariantSpec, got {type(variants)!r}"
+        )
+    checked = tuple(variants)
+    if not checked:
+        raise ValueError("variants must contain at least one NbaVariantSpec")
+    names: set[str] = set()
+    for spec in checked:
+        if not isinstance(spec, NbaVariantSpec):
+            raise ValueError(
+                f"variants entries must be NbaVariantSpec, got {type(spec)!r}"
+            )
+        if not isinstance(spec.name, str) or not spec.name:
+            raise ValueError(
+                f"variant name must be a nonempty string: {spec.name!r}"
+            )
+        if spec.name in names:
+            raise ValueError(f"duplicate variant name {spec.name!r}")
+        names.add(spec.name)
+        _number(
+            spec.half_life,
+            f"variant {spec.name!r} half_life",
+            lower=0.0,
+            strictly=True,
+        )
+        _number(
+            spec.sigma_scale,
+            f"variant {spec.name!r} sigma_scale",
+            lower=0.0,
+            strictly=True,
+        )
+    distinct = sorted({spec.half_life for spec in checked})
+    if len(distinct) % 2 == 0:
+        raise ValueError(
+            "variants must contain an ODD number of distinct half-lives "
+            f"(the residual-count fields report the median half-life's "
+            f"fit); got {len(distinct)}: {distinct!r}"
+        )
+    return checked
+
+
 def refusal_reason(
     snapshot: object,
     fixture: NbaFixture,
@@ -929,6 +1097,20 @@ def fixture_prediction(
     before_date: str | None = None,
     injury_multipliers: Mapping[str, float] | None = None,
     use_rest_adjustment: bool = False,
+    variants: Sequence[NbaVariantSpec] = VARIANTS,
+    sigma_scale: float = 1.0,
+    total_bias: float = 0.0,
+    rest_points_per_day: float = REST_POINTS_PER_DAY,
+    rest_max_diff_days: int = REST_MAX_DIFF_DAYS,
+    b2b_penalty_override: float | None = None,
+    b2b_penalty_default: float = DEFAULT_B2B_PENALTY,
+    b2b_fit_min_games: int = B2B_FIT_MIN_GAMES,
+    b2b_penalty_clamp: tuple[float, float] = B2B_PENALTY_CLAMP,
+    default_sigma_margin: float = DEFAULT_SIGMA_MARGIN,
+    sigma_margin_clamp: tuple[float, float] = SIGMA_MARGIN_CLAMP,
+    default_sigma_total: float = DEFAULT_SIGMA_TOTAL,
+    sigma_total_clamp: tuple[float, float] = SIGMA_TOTAL_CLAMP,
+    min_residual_games: int = MIN_RESIDUAL_GAMES,
 ) -> NbaPrediction | None:
     """Six-variant median/range prediction for one fixture.
 
@@ -939,10 +1121,35 @@ def fixture_prediction(
     that date, or all games when it is None. Malformed rows or non-finite
     outputs raise ``ValueError``. The prediction is deterministic and
     leaves the snapshot untouched.
+
+    MO-5c keyword knobs (every default IS the module constant, so the
+    default call is bit-identical to the pre-MO-5c module; see the
+    module docstring for the full semantics): ``variants`` (the
+    envelope grid; the distinct-half-life count must be odd),
+    ``sigma_scale`` (one center scale on BOTH sigmas, applied after
+    the per-variant scale), ``total_bias`` (totals-only offset on each
+    variant's ``exp_total``; margin and sigma untouched), the rest /
+    B2B / sigma-fit re-exposures, and ``b2b_penalty_override`` (flat
+    assumption replacing the fit, reported ``b2b_penalty_fitted=False``).
     """
     _validate_fixture(fixture)
     if not isinstance(use_rest_adjustment, bool):
         raise ValueError("use_rest_adjustment must be a boolean")
+    grid = _check_variants(variants)
+    center_scale = _number(sigma_scale, "sigma_scale", lower=0.0, strictly=True)
+    bias = _number(total_bias, "total_bias")
+    rest_points = _number(rest_points_per_day, "rest_points_per_day", lower=0.0)
+    rest_cap_days = _check_int_at_least(rest_max_diff_days, "rest_max_diff_days", 0)
+    if b2b_penalty_override is not None:
+        _number(b2b_penalty_override, "b2b_penalty_override", lower=0.0)
+    _number(b2b_penalty_default, "b2b_penalty_default", lower=0.0)
+    _check_int_at_least(b2b_fit_min_games, "b2b_fit_min_games", 1)
+    _check_clamp(b2b_penalty_clamp, "b2b_penalty_clamp", positive_low=False)
+    _number(default_sigma_margin, "default_sigma_margin", lower=0.0, strictly=True)
+    _check_clamp(sigma_margin_clamp, "sigma_margin_clamp", positive_low=True)
+    _number(default_sigma_total, "default_sigma_total", lower=0.0, strictly=True)
+    _check_clamp(sigma_total_clamp, "sigma_total_clamp", positive_low=True)
+    _check_int_at_least(min_residual_games, "min_residual_games", 0)
     reason = refusal_reason(snapshot, fixture, before_date=before_date)
     if reason is not None:
         return None
@@ -968,11 +1175,26 @@ def fixture_prediction(
             for team, rows in by_team.items()
         }
     context = _league_context_from_rows(
-        [row for rows in by_team.values() for row in rows]
+        [row for rows in by_team.values() for row in rows],
+        b2b_penalty_default=b2b_penalty_default,
+        b2b_fit_min_games=b2b_fit_min_games,
+        b2b_penalty_clamp=b2b_penalty_clamp,
+        b2b_penalty_override=b2b_penalty_override,
     )
+    grid_half_lives = sorted({spec.half_life for spec in grid})
     sigma_fits = {
-        half_life: _sigma_pass(rows_by_date, paired_by_date, half_life, context)
-        for half_life in SWEEP_HALF_LIVES
+        half_life: _sigma_pass(
+            rows_by_date,
+            paired_by_date,
+            half_life,
+            context,
+            default_sigma_margin=default_sigma_margin,
+            sigma_margin_clamp=sigma_margin_clamp,
+            default_sigma_total=default_sigma_total,
+            sigma_total_clamp=sigma_total_clamp,
+            min_residual_games=min_residual_games,
+        )
+        for half_life in grid_half_lives
     }
     ratings_by_half_life = {
         half_life: (
@@ -983,10 +1205,10 @@ def fixture_prediction(
                 by_team[fixture.away], fixture.away, half_life, before_date
             ),
         )
-        for half_life in SWEEP_HALF_LIVES
+        for half_life in grid_half_lives
     }
     variant_results: list[NbaVariantResult] = []
-    for spec in VARIANTS:
+    for spec in grid:
         ratings_home, ratings_away = ratings_by_half_life[spec.half_life]
         if ratings_home is None or ratings_away is None:  # refusal already checked
             raise ValueError(
@@ -1004,10 +1226,15 @@ def fixture_prediction(
             use_rest=use_rest_adjustment,
             mult_home=mult_home,
             mult_away=mult_away,
+            rest_points_per_day=rest_points,
+            rest_max_diff_days=rest_cap_days,
         )
         fit = sigma_fits[spec.half_life]
-        sigma_margin = fit.margin * spec.sigma_scale
-        sigma_total = fit.total * spec.sigma_scale
+        # Center scale applied AFTER the per-variant scale: with the
+        # default 1.0 the product is an exact float identity, so the
+        # default call reproduces `fit * spec.sigma_scale` bit for bit.
+        sigma_margin = fit.margin * spec.sigma_scale * center_scale
+        sigma_total = fit.total * spec.sigma_scale * center_scale
         p_home = _norm_cdf((pts_home - pts_away) / sigma_margin)
         variant_results.append(
             NbaVariantResult(
@@ -1016,7 +1243,9 @@ def fixture_prediction(
                 exp_pts_home=pts_home,
                 exp_pts_away=pts_away,
                 exp_margin=pts_home - pts_away,
-                exp_total=pts_home + pts_away,
+                # Totals-only calibration offset (plan review P3-4/P2:
+                # margin, sides and sigma deliberately untouched).
+                exp_total=pts_home + pts_away + bias,
                 sigma_margin=sigma_margin,
                 sigma_total=sigma_total,
                 p_home=p_home,
@@ -1024,7 +1253,10 @@ def fixture_prediction(
             )
         )
     _ensure_finite(variant_results)
-    return _aggregate(fixture, context, sigma_fits, tuple(variant_results))
+    central_half_life = grid_half_lives[len(grid_half_lives) // 2]
+    return _aggregate(
+        fixture, context, sigma_fits, tuple(variant_results), central_half_life
+    )
 
 
 def _ensure_finite(variants: Sequence[NbaVariantResult]) -> None:
@@ -1052,6 +1284,7 @@ def _aggregate(
     context: NbaLeagueContext,
     sigma_fits: Mapping[float, _SigmaFit],
     variants: tuple[NbaVariantResult, ...],
+    central_half_life: float = DEFAULT_HALF_LIFE,
 ) -> NbaPrediction:
     def median_of(name: str) -> float:
         return _median([getattr(variant, name) for variant in variants])
@@ -1064,7 +1297,12 @@ def _aggregate(
     p_home_low, p_home_high = range_of("p_home")
     margin_low, margin_high = range_of("exp_margin")
     total_low, total_high = range_of("exp_total")
-    central_fit = sigma_fits[DEFAULT_HALF_LIFE]
+    # Residual MEMBERSHIP is identical for every half-life (the skip
+    # rule only needs one strictly-earlier game per team), so any
+    # half-life's fit reports the same residual count; the median
+    # distinct half-life is the honest center (== DEFAULT_HALF_LIFE
+    # for the frozen grid).
+    central_fit = sigma_fits[central_half_life]
     return NbaPrediction(
         fixture=fixture,
         hca=context.hca,

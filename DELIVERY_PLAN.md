@@ -4205,3 +4205,44 @@ final CLI 端到端（计划 Z2，s4_cli）：`papersim.cli evaluate --dsn`（�
 | FX-26（数据库泳道，候选比赛键） | `99c25c05`（评审版）→ 落地 `30b9e91e` → `a3a14e91` | #75 冲突关闭，#77 / `d37650ca` | `44605506497` / `44605506369` / `44605506340`（+分发检查 `44605506422`，四条均 PR 事件） | 计划 FAIL→FAIL→PASS（R3 终审，同一复审者三轮）；代码 PASS（28 参数契约、改锚断言逐字比对、四偏差均可接受） | 前置核实的 connect_owner 在该服务器不可达（受管库实例不在此机）——采纳 2026-11-20 六项复核第 3 项的已登记证据（线上受管迁移 0 条）继续，未先行上报（复审判定可接受并留保留意见）；迁移时间戳取实施时实际 UTC `20261119173000`；三处计划外必要改动（另三个 native 测试改锚、升级测试种行改 pre-FX26 列集、cli stub 加列）；两轮 cherry-pick 落地（FX-27+30 与 FX-28 先后合入造成冲突；v3 唯一真冲突 m2 测试 docstring 两侧保留） |
 
 **流程性登记**：(1) PR 工作流触发规则实测——offline/纸面桥对全部 PR 触发；native 的 PR 触发带路径过滤（V1 时代清单），纯文档/纯新增 optimize 文件的 PR 不触发，以 workflow_dispatch 在同一 PR head 补跑为等效证据（FX-27+30、MO-1 两例）；含 database/** 或路径清单命中文件的 PR 自动触发（FX-28、FX-26）。(2) 与 main 有真实冲突的分支会发生 GitHub 无法计算 merge ref → PR 工作流完全不触发的现象（FX-28 的 #72/#73、FX-26 的 #75），处置为关闭冲突 PR、cherry-pick 到新分支落地并全量重验，原分支保留为评审证据；未使用强制推送。(3) 本登记为协调者汇总提交；后续节点随各自 PR 登记，第一阶段出口交接书汇总。
+
+## 81. MO-5c：NBA 模型族适配器（模型泳道，2026-11-20）
+
+本节为优化线节点 MO-5c（05 号开发计划 MO-5 表 5c 行）的登记记录。基线 `main @ d37650ca`（MO-1 与 FX-26 已合入），分支 `mo5c/nba-family`，实施前经独立计划复审（VERDICT: PASS，1 P2 + 7 P3，全部落实并逐条内联标注）。
+
+### 81.1 范围与提交
+
+- **提交一**（模型参数化，`b05f5b9e`）：`papersim/nba_model.py` 全部可调常量改为"仅限关键字、默认值取现常量、模块常量保留"的显式参数；新增 `total_bias`（总分偏置修正，默认 0，加在每变体 `exp_total` 上——只动总分，margin/两侧得分/σ 与残差走样不动）；`variants` 网格参数（显式拒绝偶数个不同半衰期——残差计数字段报告中位半衰期的拟合）；`sigma_scale` 单一中心尺度（乘在变体尺度之后，与变体结构一致"每变体同乘"，P3-4）；`b2b_penalty_override` 平价覆盖（报告 `b2b_penalty_fitted=False`，P2-ii）；rest/B2B/σ 拟合常量的再暴露。既有 33 项模型测试原样通过。
+- **提交二**（族与工具）：新增 `papersim/optimize/families/nba.py`（族 id `nba-pace-efficiency`，目标 `("moneyline", "totals")`）、族注册表键、`tests/test_papersim_optimize_nba_family.py`、重放工具 `tools/wp_nba138_replay.py`、MO-1 测试的注册表钉子扩展（`test_papersim_optimize_spec.py` L339 一行，并行族泳道 5a/5b/5d/5e 的同款扩展由协调者合并）。
+- **偏差登记（P3-2，比照 FX-26 先例）**：按节点要求"一个聚焦提交"，本节点拆为两个聚焦提交（模型参数化 / 族与工具），拆分理由是模型源码与族包装分属可独立回滚的改动面；**PR 描述须写明此偏差**。未推送。
+
+### 81.2 第一版搜索空间（版本化冻结；04 §7 与本节为唯一权威记录）
+
+| 参数 | 档位 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `half_life` | {10.0, 15.0, 20.0, 28.0, 35.0} | 20.0 | 04 §7 原文 |
+| `sigma_scale` | {0.9, 1.0, 1.1} | 1.0 | σ 中心尺度，单旋钮、双 σ 同乘（P3-4） |
+| `b2b_penalty` | {"fit", 1.0, 2.0, 3.0, 4.0} | "fit" | 数值档全部落在 `B2B_PENALTY_CLAMP=(0.0,4.0)` 内（P2-i/P2-iii）；族校验在 choice 之前先对模型常量复核夹断边界 |
+| `rest_points_per_day` | {0.0, 0.25, 0.5} | 0.0 | 0.0=关闭（现行为），>0=开启并传值（P3-5） |
+| `total_bias` | {-2.0, -1.0, 0.0, 1.0, 2.0} | 0.0 | 04 §7"新增，默认 0"；档位量级参照 §74 的 +1.2pt 总分偏置诊断 |
+
+类型归一（P3-3）：数值旋钮一律 `float`；`b2b_penalty` 选择集精确为 `{"fit"}∪float`。`PROCEDURE_VERSION="wp-nba2"` 为估计代码代际（1=冻结模块、2=参数化估计器），与 WP-NBA 研究轮次编号无关（P3-6）；`DATA_CONTRACT="espn-nba-snapshot-v1"` 在首次真实 `optimize init` 前可调（P3-7，同 soccer_frozen 警示）。NBA 影子模型无现成队列版本串（`pipeline.py` 仅钉 soccer/crypto），基线规格 `legacy_model_version=None`，不伪造历史串。
+
+包络（04 §7"现行六变体的结构，围绕新中心"）：半衰期 `(0.5h, 1.0h, 1.75h) × σ 尺度 (1.0, 1.1)`，命名沿用模型自身约定；h=20.0 时派生网格与 `nba_model.VARIANTS` 逐条、逐名、逐序相等（0.5/1.75 为二进制精确乘法），有测试钉住。
+
+### 81.3 验收证据（138 场冻结样本逐字段不变）
+
+- 样本：`~/paper-sim/nba/snapshot_20261110.json`（sha256 `eca00867…`，30 队 154 场，§74/§79.2）。
+- 命令与结果（服务器，2026-11-20）：基线 `d37650ca` worktree 与本分支各跑一次 `python3 -I tools/wp_nba138_replay.py`（基线侧以 `--src` 指向基线仓库根），两侧输出 `cmp` 逐字节一致：**154 配对 / 138 可预测 / 16 按历史不足语义拒绝**，dump 文件 SHA-256 `71fc9a27c1c171e4b6f3f…`，规范 JSON 内容 SHA-256 `1e4941990ff18380b4272e66728bc5c89a086c23a133500424f8152490d63aac`。逐字段覆盖面：`NbaPrediction` 全部字段（含六变体 `NbaVariantResult`）与 `total_line_prob` 报价（含 225.5 固定线与各场模型中位线）。
+- 仓库内合成回归：既有 33 项 + 新增 8 项模型层用例（显式默认 kwargs 逐位恒等、各旋钮字段级效应、网格校验、残差成员不变性）、新增 10 项族层用例（包络等价、spec 身份与派生版本串、参数校验含 b2b 夹断 fail-safe、fit/predict 薄封装逐位一致、导入纯度）全部通过。
+- 聚焦验证命令：`uv run --locked pytest -q tests/test_papersim_nba_model.py tests/test_papersim_espn_nba.py tests/test_papersim_optimize_spec.py tests/test_papersim_optimize_nba_family.py`（136 项通过）。全量 `scripts/verify_local.py --full` 在本节点分支的工作树上于研究服务器通过：八个阶段全 PASS，full pytest **42,436 项通过、185 项跳过、20 条警告，993.69 秒**（离线套件；代码文件与最终提交逐字节相同，其后仅有本节文档句子的改写；服务器回执 `/tmp/mo5c_verify_fg.log` 留存；`git diff --check` 干净）。
+
+### 81.4 边界与遗留
+
+- 不碰 `espn_nba.py`、`pipeline.py`、其他模型源码与 CI 工作流；`tools/wp_nba_validate.py` 与 `papersim/__init__.py` 的常量/re-export 引用零变化（模块常量保留）。
+- 归档研究脚本 `docs/paper-sim/research/league-admission-20261119/nba/backtest.py` 对 `_sigma_pass` 的 monkeypatch 复现按其报告钉在独立 checkout `80475c85` 运行，不受本改动影响；在 main 上直接重跑该归档脚本会因签名变化 TypeError，属预期（归档证据按钉住提交运行）。
+- `TARGETS` 词汇（"moneyline"/"totals"）为谱系键成分，与 MO-3/MO-6 的市场类型词表对齐仍待办（首次真实 `optimize init` 前可调）。逐场全量重算的性能记忆化（按日截断×kwargs）留待 MO-6 runner。
+
+### 81.5 落地记录（cherry-pick，2026-11-20）
+
+本节随 `mo5c/nba-family-v2` 分支落地：原分支 `mo5c/nba-family`（提交 `b05f5b9e`/`f3512e73`）经独立只读代码复审 VERDICT: PASS（复审者独立重跑了 138 场双 worktree 对照，逐字节一致；3 条 P3 观察无需整改）后，按既定流程 cherry-pick 到已含 MO-4/MO-5a 的 `main @ d148e91a`。冲突按并集解决共四处：`optimize/families/__init__.py` 注册表（club-soccer-frozen + club-soccer-recalib + nba-pace-efficiency，键序字典序）；`test_papersim_optimize_spec.py` 与 `test_papersim_optimize_soccer_recalib.py` 两处`iter_family_ids()` 钉子均并为三元组（后者是 MO-5a 测试内的同款钉子，非 git 冲突、因注册表并集而需同步扩展；注释保留"5b 后落者再并"）；本文件 §80.11 与 §81 为纯相邻追加，两侧保留。落地版仅做上述合并解决与本小节登记，模型与族代码与复审过的提交逐字节相同，故 138 场对照不重跑（以聚焦+全量验证为准）。

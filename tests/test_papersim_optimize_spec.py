@@ -336,7 +336,13 @@ def test_soccer_frozen_family_shape() -> None:
     assert spec.data_contract == DATA_CONTRACT
     assert SOCCER_FROZEN.targets() == TARGETS == ("over_under", "btts", "team_total")
     assert "match_winner" not in SOCCER_FROZEN.targets()  # suspended in r23
-    assert iter_family_ids() == ("club-soccer-frozen", "club-soccer-recalib")
+    # MO-5 lanes each extend this pin; the three-way merge of these
+    # lines is owned by the coordinator (5b/5d/5e to follow).
+    assert iter_family_ids() == (
+        "club-soccer-frozen",
+        "club-soccer-recalib",
+        "nba-pace-efficiency",
+    )
 
 
 def test_soccer_frozen_baseline_spec_is_immutable_and_stable() -> None:
