@@ -679,3 +679,272 @@ def test_fixture_validation_errors() -> None:
         nb.fixture_prediction(BASE, ("AAA", "BBB", None, None, False, False))
     with pytest.raises(ValueError, match="use_rest_adjustment"):
         nb.fixture_prediction(BASE, fixture(), use_rest_adjustment="yes")
+
+
+# ---------------------------------------------------------------------------
+# MO-5c parameterization: every keyword default IS the module constant, so
+# the default call is bit-identical to the pre-MO-5c module; each knob
+# moves exactly the fields it claims to and nothing else. Dataclass
+# equality plus repr equality double as bit equality here (all values are
+# positive normals, so == and repr agree with the bit pattern).
+# ---------------------------------------------------------------------------
+
+
+def test_mo5c_explicit_default_kwargs_are_bit_identical() -> None:
+    for snap, fx, before in (
+        (BASE, fixture(), None),
+        (BASE, fixture(rest_home=1, rest_away=4, b2b_home=True), None),
+        (B2B_SNAP, fixture(b2b_home=True, b2b_away=False), "2026-02-17"),
+        (SIG_SNAP, fixture(), "2026-03-10"),
+        (ENV_SNAP, fixture(), None),
+    ):
+        plain = nb.fixture_prediction(snap, fx, before_date=before)
+        explicit = nb.fixture_prediction(
+            snap,
+            fx,
+            before_date=before,
+            variants=nb.VARIANTS,
+            sigma_scale=1.0,
+            total_bias=0.0,
+            rest_points_per_day=nb.REST_POINTS_PER_DAY,
+            rest_max_diff_days=nb.REST_MAX_DIFF_DAYS,
+            b2b_penalty_override=None,
+            b2b_penalty_default=nb.DEFAULT_B2B_PENALTY,
+            b2b_fit_min_games=nb.B2B_FIT_MIN_GAMES,
+            b2b_penalty_clamp=nb.B2B_PENALTY_CLAMP,
+            default_sigma_margin=nb.DEFAULT_SIGMA_MARGIN,
+            sigma_margin_clamp=nb.SIGMA_MARGIN_CLAMP,
+            default_sigma_total=nb.DEFAULT_SIGMA_TOTAL,
+            sigma_total_clamp=nb.SIGMA_TOTAL_CLAMP,
+            min_residual_games=nb.MIN_RESIDUAL_GAMES,
+        )
+        assert plain is not None and explicit is not None
+        assert plain == explicit
+        assert repr(plain) == repr(explicit)
+        assert plain.total_line_prob(221.5) == explicit.total_line_prob(221.5)
+
+
+def test_mo5c_total_bias_moves_only_totals() -> None:
+    plain = nb.fixture_prediction(BASE, fixture())
+    biased = nb.fixture_prediction(BASE, fixture(), total_bias=3.0)
+    zero = nb.fixture_prediction(BASE, fixture(), total_bias=0.0)
+    assert plain is not None and biased is not None and zero is not None
+    # Zero bias is the exact float identity (plan acceptance).
+    assert zero == plain
+    assert repr(zero) == repr(plain)
+    # Each variant's total shifts by exactly the bias; margin, sides,
+    # sigma and p_home are untouched.
+    for plain_v, biased_v in zip(plain.variants, biased.variants):
+        assert biased_v.exp_total == plain_v.exp_total + 3.0
+        assert biased_v.exp_margin == plain_v.exp_margin
+        assert biased_v.exp_pts_home == plain_v.exp_pts_home
+        assert biased_v.exp_pts_away == plain_v.exp_pts_away
+        assert biased_v.sigma_margin == plain_v.sigma_margin
+        assert biased_v.sigma_total == plain_v.sigma_total
+        assert biased_v.p_home == plain_v.p_home
+    assert biased.exp_total == plain.exp_total + 3.0
+    assert biased.exp_margin == plain.exp_margin
+    assert biased.p_home == plain.p_home
+    assert biased.sigma_margin == plain.sigma_margin
+    assert biased.sigma_total == plain.sigma_total
+    # Totals quotes shift toward the biased mean; line identity holds.
+    quote_plain = plain.total_line_prob(221.5)
+    quote_biased = biased.total_line_prob(221.5)
+    assert quote_biased.line == quote_plain.line
+    assert quote_biased.p_over > quote_plain.p_over
+
+
+def test_mo5c_sigma_center_scale_is_one_knob_on_both() -> None:
+    plain = nb.fixture_prediction(ENV_SNAP, fixture())
+    tight = nb.fixture_prediction(ENV_SNAP, fixture(), sigma_scale=1.2)
+    neutral = nb.fixture_prediction(ENV_SNAP, fixture(), sigma_scale=1.0)
+    assert plain is not None and tight is not None and neutral is not None
+    assert neutral == plain
+    assert repr(neutral) == repr(plain)
+    for plain_v, tight_v in zip(plain.variants, tight.variants):
+        # Center scale applied after the per-variant scale: exact float
+        # relationship, on BOTH sigma margin and sigma total (P3-4).
+        assert tight_v.sigma_margin == plain_v.sigma_margin * 1.2
+        assert tight_v.sigma_total == plain_v.sigma_total * 1.2
+        assert tight_v.p_home != plain_v.p_home
+        assert tight_v.exp_margin == plain_v.exp_margin
+        assert tight_v.exp_total == plain_v.exp_total
+    with pytest.raises(ValueError, match="sigma_scale"):
+        nb.fixture_prediction(BASE, fixture(), sigma_scale=0.0)
+
+
+def test_mo5c_rest_knobs_flow_through() -> None:
+    rested = fixture(rest_home=3, rest_away=0)
+    per_quarter = nb.fixture_prediction(
+        BASE, rested, use_rest_adjustment=True
+    )
+    per_half = nb.fixture_prediction(
+        BASE, rested, use_rest_adjustment=True, rest_points_per_day=0.5
+    )
+    assert per_quarter is not None and per_half is not None
+    # 0.25/day over a capped 3-day differential -> 3.75 margin
+    # (test_rest_adjustment_flag); 0.5/day -> 4.5.
+    assert per_quarter.exp_margin == pytest.approx(3.75, abs=1e-12)
+    assert per_half.exp_margin == pytest.approx(4.5, abs=1e-12)
+    # Zero points per day with the flag on is the exact identity: the
+    # family maps 0.0 to use_rest_adjustment=False (P3-5), and the model
+    # guarantees the enabled-with-zero path agrees bit for bit.
+    zero_enabled = nb.fixture_prediction(
+        BASE, rested, use_rest_adjustment=True, rest_points_per_day=0.0
+    )
+    disabled = nb.fixture_prediction(BASE, rested, use_rest_adjustment=False)
+    assert zero_enabled is not None and disabled is not None
+    assert zero_enabled == disabled
+    assert repr(zero_enabled) == repr(disabled)
+    # Cap knob: differential 7 capped at 1 day instead of 3.
+    capped_short = nb.fixture_prediction(
+        BASE,
+        fixture(rest_home=7, rest_away=0),
+        use_rest_adjustment=True,
+        rest_max_diff_days=1,
+    )
+    assert capped_short is not None
+    assert capped_short.exp_margin == pytest.approx(3.25, abs=1e-12)
+    with pytest.raises(ValueError, match="rest_points_per_day"):
+        nb.fixture_prediction(BASE, fixture(), rest_points_per_day=-0.1)
+
+
+def test_mo5c_b2b_override_replaces_fit_and_reports_unfitted() -> None:
+    fitted = nb.league_context(B2B_SNAP)
+    assert fitted.b2b_penalty == 3.0 and fitted.b2b_fitted
+    # All b2b kwargs at their defaults -> the identical context.
+    explicit = nb.league_context(
+        B2B_SNAP,
+        b2b_penalty_default=nb.DEFAULT_B2B_PENALTY,
+        b2b_fit_min_games=nb.B2B_FIT_MIN_GAMES,
+        b2b_penalty_clamp=nb.B2B_PENALTY_CLAMP,
+        b2b_penalty_override=None,
+    )
+    assert explicit == fitted
+    # Override: flat assumption replaces the fit and is REPORTED as one
+    # (P2-ii: b2b_penalty_fitted=False, field semantics preserved).
+    overridden = nb.league_context(B2B_SNAP, b2b_penalty_override=1.5)
+    assert overridden.b2b_penalty == 1.5
+    assert overridden.b2b_fitted is False
+    # Min-games beyond the sample -> fallback default, parameterizable.
+    unfitted = nb.league_context(
+        B2B_SNAP, b2b_fit_min_games=100, b2b_penalty_default=1.0
+    )
+    assert unfitted.b2b_penalty == 1.0 and unfitted.b2b_fitted is False
+    # Clamp re-exposure: raw fit -3.0 (B2B_REV_SNAP) pulled to the low end.
+    clamped = nb.league_context(B2B_REV_SNAP, b2b_penalty_clamp=(2.5, 4.0))
+    assert clamped.b2b_penalty == 2.5 and clamped.b2b_fitted
+    # The override flows through the whole prediction: fixture-side
+    # penalty, sigma walk and output fields all see the flat value.
+    plain = nb.fixture_prediction(B2B_SNAP, fixture(b2b_home=True))
+    forced = nb.fixture_prediction(
+        B2B_SNAP, fixture(b2b_home=True), b2b_penalty_override=1.5
+    )
+    assert plain is not None and forced is not None
+    assert plain.b2b_penalty == 3.0 and plain.b2b_penalty_fitted
+    assert forced.b2b_penalty == 1.5 and forced.b2b_penalty_fitted is False
+    assert forced.exp_margin != plain.exp_margin
+    with pytest.raises(ValueError, match="b2b_penalty_override"):
+        nb.fixture_prediction(BASE, fixture(), b2b_penalty_override=-1.0)
+
+
+def test_mo5c_sigma_knobs_flow_through() -> None:
+    # SIG_SNAP has 11 residuals (>= MIN_RESIDUAL_GAMES=10): margin std
+    # ~31 clamps to 13.5, total std 0 clamps to 13.0 by default. The
+    # per-variant sig1.0 values pin the fit; the median field mixes in
+    # the sig1.1 variants.
+    plain = nb.fixture_prediction(SIG_SNAP, fixture())
+    assert plain is not None
+    base = [v for v in plain.variants if v.spec.sigma_scale == 1.0]
+    assert [v.sigma_margin for v in base] == [13.5] * 3
+    assert [v.sigma_total for v in base] == [13.0] * 3
+    # Raise the floor above the residual count -> documented defaults,
+    # themselves parameterizable.
+    defaulted = nb.fixture_prediction(
+        SIG_SNAP,
+        fixture(),
+        min_residual_games=100,
+        default_sigma_margin=11.0,
+        default_sigma_total=14.0,
+    )
+    assert defaulted is not None
+    base = [v for v in defaulted.variants if v.spec.sigma_scale == 1.0]
+    assert [v.sigma_margin for v in base] == [11.0] * 3
+    assert [v.sigma_total for v in base] == [14.0] * 3
+    # Clamp re-exposure: wide margin residual std lands on the new high end.
+    re_clamped = nb.fixture_prediction(
+        SIG_SNAP, fixture(), sigma_margin_clamp=(12.0, 12.4)
+    )
+    assert re_clamped is not None
+    base = [v for v in re_clamped.variants if v.spec.sigma_scale == 1.0]
+    assert [v.sigma_margin for v in base] == [12.4] * 3
+
+
+def test_mo5c_variant_grid_validation() -> None:
+    def spec(name, half_life, scale=1.0):
+        return nb.NbaVariantSpec(name, half_life, scale)
+
+    # Even distinct-half-life count: no median element -> explicit
+    # refusal instead of a hidden convention (P3-1).
+    with pytest.raises(ValueError, match="ODD"):
+        nb.fixture_prediction(
+            BASE, fixture(), variants=(spec("a", 10.0), spec("b", 20.0))
+        )
+    with pytest.raises(ValueError, match="at least one"):
+        nb.fixture_prediction(BASE, fixture(), variants=())
+    with pytest.raises(ValueError, match="NbaVariantSpec"):
+        nb.fixture_prediction(BASE, fixture(), variants=("hl10-sig1",))
+    with pytest.raises(ValueError, match="duplicate"):
+        nb.fixture_prediction(
+            BASE,
+            fixture(),
+            variants=(spec("dupe", 10.0), spec("dupe", 20.0), spec("c", 35.0)),
+        )
+    with pytest.raises(ValueError, match="half_life"):
+        nb.fixture_prediction(
+            BASE, fixture(), variants=(spec("a", 0.0), spec("b", 1.0), spec("c", 2.0))
+        )
+    with pytest.raises(ValueError, match="sigma_scale"):
+        nb.fixture_prediction(
+            BASE,
+            fixture(),
+            variants=(spec("a", 10.0, 0.0), spec("b", 20.0), spec("c", 35.0)),
+        )
+    with pytest.raises(ValueError, match="sequence"):
+        nb.fixture_prediction(BASE, fixture(), variants=42)
+
+
+def test_mo5c_variant_grid_effect_and_residual_membership() -> None:
+    plain = nb.fixture_prediction(ENV_SNAP, fixture())
+    same = nb.fixture_prediction(ENV_SNAP, fixture(), variants=nb.VARIANTS)
+    assert plain is not None and same is not None
+    assert same == plain
+    assert repr(same) == repr(plain)
+    # A re-centered single-scale grid: order and names follow the same
+    # convention; the envelope differentiates on the half-life axis
+    # (ENV_SNAP's AAA ortg 110/114/118 makes half-lives differ).
+    recentered = nb.fixture_prediction(
+        ENV_SNAP,
+        fixture(),
+        variants=tuple(
+            nb.NbaVariantSpec(f"hl{h:g}-sig1", h, 1.0) for h in (10.0, 20.0, 35.0)
+        ),
+    )
+    assert recentered is not None
+    assert [v.spec.name for v in recentered.variants] == [
+        "hl10-sig1",
+        "hl20-sig1",
+        "hl35-sig1",
+    ]
+    # The margin axis (half-lives) is untouched by dropping the sigma
+    # scale axis; what changes is sigma and therefore p_home.
+    assert recentered.exp_margin_range == plain.exp_margin_range
+    assert recentered.p_home_range != plain.p_home_range
+    assert {v.sigma_margin for v in recentered.variants} == {12.0}
+    assert {v.sigma_margin for v in plain.variants} == {12.0, 12.0 * 1.1}
+    # Residual membership is half-life-invariant: the reported residual
+    # counts are identical for any odd grid (module docstring).
+    assert (
+        recentered.sigma_margin_residuals == plain.sigma_margin_residuals
+    )
+    assert recentered.sigma_total_residuals == plain.sigma_total_residuals
