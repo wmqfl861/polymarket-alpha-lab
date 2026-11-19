@@ -1,6 +1,6 @@
 """m2 A4 tests: bounded FotMob / ESPN NBA scan inputs (adapters/sports.py).
 
-Pins (m2-plan-formal.md sections 2.5 and 6.2, A4 row):
+Pins (M2 plan sections 2.5 and 6.2, A4 row):
 
 - the ORIGINAL parse results survive the bounded-read retrofit: for
   identical synthetic wire inputs the adapter's value is EXACTLY the
@@ -29,6 +29,10 @@ Pins (m2-plan-formal.md sections 2.5 and 6.2, A4 row):
 
 All tests are offline and synthetic: fixture bytes + fake transport +
 fake clock; no network, no database, no writes.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

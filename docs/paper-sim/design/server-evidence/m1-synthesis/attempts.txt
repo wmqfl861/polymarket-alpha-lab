@@ -1,0 +1,32 @@
+M1 synthesis one-shot run attempts (2026-11-15, all on one-shot disposable
+/tmp clusters, random port + socket trust DSNs via validate_local_postgres_dsn,
+55432 business cluster never touched; every attempt's cluster was stopped and
+removed by the wrapper trap):
+
+- attempt 1 (2026-11-15 ~16:5x UTC): FAIL at import time -- glue bug:
+  `from polymarket_alpha_lab.papersim import replay` (the replay engine is the
+  top-level module polymarket_alpha_lab.replay, as papersim/cli.py imports it).
+  No component was exercised beyond the import. First failure preserved in the
+  session transcript; log overwritten by attempt 2 before archiving (noted
+  here rather than reconstructed).
+- attempt 2 (2026-11-15 17:0x UTC): steps s1-s4 PASS, s5 FAIL -- glue bug:
+  Decimal() fed "743.79)" while parsing the importer allocation line (the
+  743.79/561.41 conservation numbers are the GROSS split after "->", not the
+  net column). Evidence of that attempt kept: attempt2-run.log,
+  attempt2-import-dryrun-1.txt.
+- attempt 3 (2026-11-15 17:03 UTC, port 28079): full chain PASS
+  (s1_scan_record, s2_replay, s3_evaluation, s4_cli, s5_import_dryrun all
+  PASS; all_steps_passed=true). synthesis-evidence.json / synthesis-run.log /
+  cleanup.json / run-meta.json are this attempt. Both prior failures were
+  glue-script bugs, not M1 component failures; no component verdict changed
+  between attempts.
+
+Count-snapshot interpretation (so the JSON is not misread):
+- s2.counts_before == s2.counts_after == s2.counts_after_tamper is the replay
+  zero-write proof (nine tables identical across replaying all seven
+  candidates and across the two committed one-byte tampers).
+- s4.counts_after_cli equals the post-s3 state exactly (scan_runs 2,
+  candidates 10, candidate_price_evidence 8, market_outcomes 2, snapshots 5,
+  entries 3, bankroll_events 3, marks/settlements 0): s3 legitimately wrote
+  the all-rejected scan + two market outcomes; the CLI evaluate/replay
+  subprocesses added no rows.

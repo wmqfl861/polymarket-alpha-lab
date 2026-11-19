@@ -2,9 +2,13 @@
 UNKNOWN/INSUFFICIENT semantics and the append-only association rules.
 
 Offline by construction: this module imports only the pure transformation
-layer (design 2026-11-15 v2 sections 4.4, 4.5, 4.2-7 and 5.x CHECK
+layer (09D design v2 sections 4.4, 4.5, 4.2-7 and 5.x CHECK
 mirrors). The native PostgreSQL proofs live in
 ``tests/test_papersim_store_native.py``.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from datetime import UTC, datetime, timedelta
@@ -20,7 +24,7 @@ def at(minutes: int) -> datetime:
 
 
 # ---------------------------------------------------------------------------
-# Idempotency key construction (design section 4.4)
+# Idempotency key construction (09D v2 section 4.4)
 # ---------------------------------------------------------------------------
 
 def test_market_outcome_evidence_key_is_the_pinned_writer_form():
@@ -314,7 +318,7 @@ def test_payload_digest_changes_when_any_candidate_changes():
 
 
 # ---------------------------------------------------------------------------
-# UNKNOWN / INSUFFICIENT semantics and association rules (sections 4.1-3, 4.5)
+# UNKNOWN / INSUFFICIENT semantics and association rules (09D v2 sections 4.1-3, 4.5)
 # ---------------------------------------------------------------------------
 
 def observation_row(identifier, label, minutes, source_kind='gamma_close'):

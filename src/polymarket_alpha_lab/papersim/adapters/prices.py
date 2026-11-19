@@ -1,6 +1,6 @@
 """M2 A2 price adapter: bounded public BTC/ETH candles and spot reads.
 
-Single responsibility (m2-plan-formal.md section 2.3, FX-15 A2): turn an
+Single responsibility (M2 plan section 2.3, FX-15 A2): turn an
 explicitly bound BTC/ETH venue request into ascending, deduplicated,
 complete six-hour closed candles plus an independent spot observation,
 under the A0 budget/evidence contract, with zero persistence and zero
@@ -62,6 +62,10 @@ through ``public_http.read_public_body`` with
 ``FetchEvidence`` per HTTP response. Failures are fixed short reason
 codes only (``REASON_CODES``); URLs, query parameters, headers and
 response bodies are never embedded in errors.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

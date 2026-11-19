@@ -1,0 +1,77 @@
+....................F.F................................................. [ 65%]
+......................................                                   [100%]
+=================================== FAILURES ===================================
+__________ test_bridge_with_non_numeric_extra_key_rejected_not_crash ___________
+
+    def test_bridge_with_non_numeric_extra_key_rejected_not_crash():
+        """Review P2-1: a bridge carrying a non-numeric extra key (the
+        reviewer's ``"note": "wp-p2a"`` reproduction) must be rejected as
+        invalid bridge evidence -- the ValueError from the fingerprint's
+        float() conversion must NEVER escape decide_entry."""
+    
+        bridge = {
+            HOF_LEAGUE: math.log(1.25),
+            LYO_LEAGUE: 0.0,
+            "note": "wp-p2a",
+        }
+        # A non-None fingerprint is what drives the flow INTO the
+        # bridge_fingerprint computation (the reviewer's reproduction).
+>       decision = decide_entry(_hof_request(bridge=bridge, bridge_fingerprint="0" * 64))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_papersim_pipeline.py:520: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/polymarket_alpha_lab/papersim/pipeline.py:1400: in decide_entry
+    step, cross_mw, bridge_digest = _step_cross_league(request, kind_normalized, report)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/polymarket_alpha_lab/papersim/pipeline.py:1184: in _step_cross_league
+    bridge_reasons, bridge_ok, digest = _validate_crossbridge(request, kind_normalized)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/polymarket_alpha_lab/papersim/pipeline.py:1170: in _validate_crossbridge
+    digest = bridge_fingerprint(bridge)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+bridge = {'bundesliga': 0.22314355131420976, 'ligue_1': 0.0, 'note': 'wp-p2a'}
+
+    def bridge_fingerprint(bridge: Mapping[str, Any]) -> str:
+        """Stable SHA-256 fingerprint of one bridge kappa table.
+    
+        The construction side records this fingerprint on the candidate it
+        builds; :func:`decide_entry` recomputes it over the bridge evidence
+        handed in with the entry and rejects on mismatch, binding the entry
+        to the bridge the candidate was actually constructed with.
+        """
+    
+        canonical = json.dumps(
+>           {str(key): float(value) for key, value in sorted(bridge.items())},
+                       ^^^^^^^^^^^^
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+E       ValueError: could not convert string to float: 'wp-p2a'
+
+src/polymarket_alpha_lab/papersim/pipeline.py:287: ValueError
+______________ test_bridge_with_numeric_string_extra_key_rejected ______________
+
+    def test_bridge_with_numeric_string_extra_key_rejected():
+        """Numeric-STRING values anywhere in the bridge are invalid kappa
+        evidence (uniform pure-kappa-table rule; this deliberately closes
+        the P3-2-recorded permissiveness where an extra numeric-string key
+        slipped through the fingerprint's float() conversion)."""
+    
+        bridge = {HOF_LEAGUE: math.log(1.25), LYO_LEAGUE: 0.0, "epl": "0.1"}
+        decision = decide_entry(
+            _hof_request(bridge=bridge, bridge_fingerprint="0" * 64)
+        )
+        assert isinstance(decision, EntryDecision)
+        assert decision.accepted is False
+>       assert "bridge_invalid" in decision.reasons
+E       AssertionError: assert 'bridge_invalid' in ('bridge_fingerprint_mismatch', 'cross_league_bridge')
+E        +  where ('bridge_fingerprint_mismatch', 'cross_league_bridge') = EntryDecision(accepted=False, reasons=('bridge_fingerprint_mismatch', 'cross_league_bridge'), steps=(StepResult(step='...026-11-12', model_version='soccer-r23', code_sha256='a18e51eae3a4a0d6f6801663c91e1dd93fa35767db6574a22508ca0770bf940e').reasons
+
+tests/test_papersim_pipeline.py:554: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_papersim_pipeline.py::test_bridge_with_non_numeric_extra_key_rejected_not_crash
+FAILED tests/test_papersim_pipeline.py::test_bridge_with_numeric_string_extra_key_rejected
+2 failed, 108 passed in 3.08s

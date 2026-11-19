@@ -1,6 +1,6 @@
 """A1 Polymarket public-interface adapter: bounded Gamma/CLOB reads (FX-15).
 
-Single responsibility (m2-plan-formal.md section 2.2): the four public
+Single responsibility (M2 plan section 2.2): the four public
 entry points :func:`discover_markets`, :func:`fetch_market`,
 :func:`fetch_order_books` and :func:`fetch_resolution` turn bounded,
 permission-gated reads of the public Polymarket interfaces into
@@ -10,7 +10,7 @@ JSONL journal and no file at all; it holds no credentials and grants no
 execution authorization (``paper_only`` / ``report_only`` /
 ``readonly`` restate the frozen contract flags).
 
-Reuse map (plan section 2.2):
+Reuse map (M2 plan section 2.2):
 
 - Every single response body is read through
   :func:`polymarket_alpha_lab.public_http.read_public_body` with the
@@ -26,11 +26,11 @@ Reuse map (plan section 2.2):
   GET so the read limit stays exact in every case. The existing V1
   clients are not refactored.
 
-Data-source order (plan section 2.2): Gamma first (events, markets,
+Data-source order (M2 plan section 2.2): Gamma first (events, markets,
 rules, times, token mapping, settlement state), CLOB second
 (executable order books and terminal-state cross-validation). The
 Data API is NOT enabled in A1: no A1 function needs a field that has
-been verified as officially provided there, and the plan forbids
+been verified as officially provided there, and the M2 plan forbids
 treating it as an assumed universal settlement interface. Web scraping
 is not a data path here.
 
@@ -59,6 +59,10 @@ Semantic guarantees pinned by tests:
 - Failures carry fixed machine-readable ``reason_code`` strings only;
   URLs, query parameters, upstream exception text and response bodies
   never enter them, and nothing is printed to stdout.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -117,7 +121,7 @@ CLOB_BOOK_URL = CLOB_BASE_URL + "/book"
 # 50 with HTTP 406, so every discovery page requests exactly 50 events.
 GAMMA_EVENTS_PAGE_LIMIT = 50
 
-# Bounded discovery guards (plan section 2.2: bounded, no infinite
+# Bounded discovery guards (M2 plan section 2.2: bounded, no infinite
 # paging; the shared FetchBudget provides the per-round bound).
 DISCOVERY_MAX_PAGES = 40
 DISCOVERY_ACCUMULATION_CAP = 400
@@ -746,7 +750,7 @@ def _read_gamma_slug(
     budget: FetchBudget,
     now_utc: Callable[[], datetime],
 ) -> tuple[bytes, datetime]:
-    """Single-market Gamma context read (plan section 2.2).
+    """Single-market Gamma context read (M2 plan section 2.2).
 
     Prefers the existing bounded ``GammaResearchReader`` whenever the
     shared budget's exact read limit admits its fixed 1 MiB cap; the

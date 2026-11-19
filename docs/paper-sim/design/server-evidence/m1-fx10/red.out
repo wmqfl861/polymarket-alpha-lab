@@ -1,0 +1,506 @@
+............................FFFFFFFFFFFFFFF                              [100%]
+=================================== FAILURES ===================================
+_ test_candidate_for_market_over_matches_legacy_builder_bitwise[BRE-FOR_O2.5] __
+
+case_id = 'BRE-FOR_O2.5'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-51/test_candidate_for_market_over0')
+
+    @pytest.mark.parametrize("case_id", [c[0] for c in R23_CASES])
+    def test_candidate_for_market_over_matches_legacy_builder_bitwise(
+        case_id: str, tmp_path: Path
+    ) -> None:
+        """FX-10 headline proof: the generic builder's O/U over output IS the
+        frozen builder's output, bit for bit, on every frozen r23 fixture at
+        its frozen line."""
+        case, home, away, line = _r23_case_meta(case_id)
+        snapshot = _load_r23_snapshot(tmp_path)
+    
+        legacy = soccer_model.candidate_from_variants(
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            line,
+            case["match"],
+            case["market_id"],
+            case["entry_ask_vwap250"],
+        )
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            case["match"],
+            case["market_id"],
+            case["entry_ask_vwap250"],
+            kind="total",
+            side="over",
+            line=line,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:750: AttributeError
+_ test_candidate_for_market_over_matches_legacy_builder_bitwise[HUL-IPS_O2.5] __
+
+case_id = 'HUL-IPS_O2.5'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-51/test_candidate_for_market_over1')
+
+    @pytest.mark.parametrize("case_id", [c[0] for c in R23_CASES])
+    def test_candidate_for_market_over_matches_legacy_builder_bitwise(
+        case_id: str, tmp_path: Path
+    ) -> None:
+        """FX-10 headline proof: the generic builder's O/U over output IS the
+        frozen builder's output, bit for bit, on every frozen r23 fixture at
+        its frozen line."""
+        case, home, away, line = _r23_case_meta(case_id)
+        snapshot = _load_r23_snapshot(tmp_path)
+    
+        legacy = soccer_model.candidate_from_variants(
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            line,
+            case["match"],
+            case["market_id"],
+            case["entry_ask_vwap250"],
+        )
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            case["match"],
+            case["market_id"],
+            case["entry_ask_vwap250"],
+            kind="total",
+            side="over",
+            line=line,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:750: AttributeError
+_ test_candidate_for_market_over_matches_legacy_builder_bitwise[CHE-MUN_O3.5] __
+
+case_id = 'CHE-MUN_O3.5'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-51/test_candidate_for_market_over2')
+
+    @pytest.mark.parametrize("case_id", [c[0] for c in R23_CASES])
+    def test_candidate_for_market_over_matches_legacy_builder_bitwise(
+        case_id: str, tmp_path: Path
+    ) -> None:
+        """FX-10 headline proof: the generic builder's O/U over output IS the
+        frozen builder's output, bit for bit, on every frozen r23 fixture at
+        its frozen line."""
+        case, home, away, line = _r23_case_meta(case_id)
+        snapshot = _load_r23_snapshot(tmp_path)
+    
+        legacy = soccer_model.candidate_from_variants(
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            line,
+            case["match"],
+            case["market_id"],
+            case["entry_ask_vwap250"],
+        )
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            case["match"],
+            case["market_id"],
+            case["entry_ask_vwap250"],
+            kind="total",
+            side="over",
+            line=line,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:750: AttributeError
+_ test_candidate_for_market_over_matches_legacy_builder_bitwise[BOU-LEE_O2.5] __
+
+case_id = 'BOU-LEE_O2.5'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-51/test_candidate_for_market_over3')
+
+    @pytest.mark.parametrize("case_id", [c[0] for c in R23_CASES])
+    def test_candidate_for_market_over_matches_legacy_builder_bitwise(
+        case_id: str, tmp_path: Path
+    ) -> None:
+        """FX-10 headline proof: the generic builder's O/U over output IS the
+        frozen builder's output, bit for bit, on every frozen r23 fixture at
+        its frozen line."""
+        case, home, away, line = _r23_case_meta(case_id)
+        snapshot = _load_r23_snapshot(tmp_path)
+    
+        legacy = soccer_model.candidate_from_variants(
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            line,
+            case["match"],
+            case["market_id"],
+            case["entry_ask_vwap250"],
+        )
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            case["match"],
+            case["market_id"],
+            case["entry_ask_vwap250"],
+            kind="total",
+            side="over",
+            line=line,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:750: AttributeError
+___ test_candidate_for_market_over_25_matches_legacy_all_four[BRE-FOR_O2.5] ____
+
+case_id = 'BRE-FOR_O2.5'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-51/test_candidate_for_market_over4')
+
+    @pytest.mark.parametrize("case_id", [c[0] for c in R23_CASES])
+    def test_candidate_for_market_over_25_matches_legacy_all_four(
+        case_id: str, tmp_path: Path
+    ) -> None:
+        """The literal reading of the FX-10 proof: O/U over 2.5 on all four
+        frozen fixtures (including CHE-MUN, whose frozen case is O3.5) is
+        bitwise identical to the legacy builder."""
+        case, home, away, _ = _r23_case_meta(case_id)
+        snapshot = _load_r23_snapshot(tmp_path)
+        legacy = soccer_model.candidate_from_variants(
+            snapshot, home, "EPL", away, "EPL", 2.5, case["match"], "mid-o25", 0.5
+        )
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            case["match"],
+            "mid-o25",
+            0.5,
+            kind="total",
+            side="over",
+            line=2.5,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:792: AttributeError
+___ test_candidate_for_market_over_25_matches_legacy_all_four[HUL-IPS_O2.5] ____
+
+case_id = 'HUL-IPS_O2.5'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-51/test_candidate_for_market_over5')
+
+    @pytest.mark.parametrize("case_id", [c[0] for c in R23_CASES])
+    def test_candidate_for_market_over_25_matches_legacy_all_four(
+        case_id: str, tmp_path: Path
+    ) -> None:
+        """The literal reading of the FX-10 proof: O/U over 2.5 on all four
+        frozen fixtures (including CHE-MUN, whose frozen case is O3.5) is
+        bitwise identical to the legacy builder."""
+        case, home, away, _ = _r23_case_meta(case_id)
+        snapshot = _load_r23_snapshot(tmp_path)
+        legacy = soccer_model.candidate_from_variants(
+            snapshot, home, "EPL", away, "EPL", 2.5, case["match"], "mid-o25", 0.5
+        )
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            case["match"],
+            "mid-o25",
+            0.5,
+            kind="total",
+            side="over",
+            line=2.5,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:792: AttributeError
+___ test_candidate_for_market_over_25_matches_legacy_all_four[CHE-MUN_O3.5] ____
+
+case_id = 'CHE-MUN_O3.5'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-51/test_candidate_for_market_over6')
+
+    @pytest.mark.parametrize("case_id", [c[0] for c in R23_CASES])
+    def test_candidate_for_market_over_25_matches_legacy_all_four(
+        case_id: str, tmp_path: Path
+    ) -> None:
+        """The literal reading of the FX-10 proof: O/U over 2.5 on all four
+        frozen fixtures (including CHE-MUN, whose frozen case is O3.5) is
+        bitwise identical to the legacy builder."""
+        case, home, away, _ = _r23_case_meta(case_id)
+        snapshot = _load_r23_snapshot(tmp_path)
+        legacy = soccer_model.candidate_from_variants(
+            snapshot, home, "EPL", away, "EPL", 2.5, case["match"], "mid-o25", 0.5
+        )
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            case["match"],
+            "mid-o25",
+            0.5,
+            kind="total",
+            side="over",
+            line=2.5,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:792: AttributeError
+___ test_candidate_for_market_over_25_matches_legacy_all_four[BOU-LEE_O2.5] ____
+
+case_id = 'BOU-LEE_O2.5'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-51/test_candidate_for_market_over7')
+
+    @pytest.mark.parametrize("case_id", [c[0] for c in R23_CASES])
+    def test_candidate_for_market_over_25_matches_legacy_all_four(
+        case_id: str, tmp_path: Path
+    ) -> None:
+        """The literal reading of the FX-10 proof: O/U over 2.5 on all four
+        frozen fixtures (including CHE-MUN, whose frozen case is O3.5) is
+        bitwise identical to the legacy builder."""
+        case, home, away, _ = _r23_case_meta(case_id)
+        snapshot = _load_r23_snapshot(tmp_path)
+        legacy = soccer_model.candidate_from_variants(
+            snapshot, home, "EPL", away, "EPL", 2.5, case["match"], "mid-o25", 0.5
+        )
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            home,
+            "EPL",
+            away,
+            "EPL",
+            case["match"],
+            "mid-o25",
+            0.5,
+            kind="total",
+            side="over",
+            line=2.5,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:792: AttributeError
+_____ test_candidate_for_market_quotes_reuse_frozen_probability_functions ______
+
+    def test_candidate_for_market_quotes_reuse_frozen_probability_functions() -> None:
+        """Every kind's per-variant quotes ARE the frozen helpers' outputs, in
+        frozen sweep order; the envelope records the actual quote source."""
+        snapshot = _mini_snapshot()
+        variants = soccer_model.fixture_variants(snapshot, "Alpha", "EPL", "Beta", "EPL")
+        assert variants is not None
+        market = "Alpha vs. Beta"
+    
+        def build(**selection: object) -> soccer_model.CandidateEnvelope:
+            env = soccer_model.candidate_for_market(
+                snapshot, "Alpha", "EPL", "Beta", "EPL", market, "m1", 0.5, **selection
+            )
+            assert env is not None
+            return env
+    
+>       over = build(kind="total", side="over", line=2.5)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_papersim_soccer_model.py:824: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+selection = {'kind': 'total', 'side': 'over', 'line': 2.5}
+
+    def build(**selection: object) -> soccer_model.CandidateEnvelope:
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot, "Alpha", "EPL", "Beta", "EPL", market, "m1", 0.5, **selection
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:818: AttributeError
+___________ test_candidate_for_market_reverse_direction_complements ____________
+
+    def test_candidate_for_market_reverse_direction_complements() -> None:
+        """p and 1-p symmetry for every supported reverse direction."""
+        snapshot = _mini_snapshot()
+        selections = (
+            (("total", "over", 2.5, None), ("total", "under", 2.5, None)),
+            (("btts", "yes", None, None), ("btts", "no", None, None)),
+            (("team_total", "over", 1.5, "away"), ("team_total", "under", 1.5, "away")),
+            (("match_winner", "home", None, None), ("match_winner", "home_no", None, None)),
+            (("match_winner", "draw", None, None), ("match_winner", "draw_no", None, None)),
+            (("match_winner", "away", None, None), ("match_winner", "away_no", None, None)),
+            (("spread", "cover", -0.5, "home"), ("spread", "nocover", -0.5, "home")),
+            (("spread", "cover", 1.5, "away"), ("spread", "nocover", 1.5, "away")),
+        )
+        for forward_sel, reverse_sel in selections:
+>           forward = soccer_model.candidate_for_market(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                snapshot, "Alpha", "EPL", "Beta", "EPL", "m", "m1", 0.5,
+                kind=forward_sel[0], side=forward_sel[1], line=forward_sel[2], team_side=forward_sel[3],
+            )
+E           AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:915: AttributeError
+_______ test_candidate_for_market_match_winner_medians_not_renormalized ________
+
+    def test_candidate_for_market_match_winner_medians_not_renormalized() -> None:
+        """The three 1X2 outcome medians are raw per-outcome medians over the
+        ten variants and are NOT renormalized to sum to 1 (the documented
+        existing aggregation; WP-P4 observed 0.988-1.005 on real fixtures)."""
+        snapshot = _mini_snapshot()
+        variants = soccer_model.fixture_variants(snapshot, "Alpha", "EPL", "Beta", "EPL")
+        assert variants is not None
+    
+        medians = {}
+        for side, attr in (("home", "home_win"), ("draw", "draw"), ("away", "away_win")):
+>           env = soccer_model.candidate_for_market(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                snapshot, "Alpha", "EPL", "Beta", "EPL", "m", "m1", 0.5,
+                kind="match_winner", side=side,
+            )
+E           AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:944: AttributeError
+__________ test_candidate_for_market_construction_errors_are_explicit __________
+
+    def test_candidate_for_market_construction_errors_are_explicit() -> None:
+        """Every construction error raises a loud ValueError (for FX-08/09 to
+        record); nothing is silently defaulted or coerced."""
+        snapshot = _mini_snapshot()
+    
+        def call(**selection: object) -> soccer_model.CandidateEnvelope:
+            base: dict[str, object] = {"kind": "total", "side": "over", "line": 2.5}
+            base.update(selection)
+            env = soccer_model.candidate_for_market(
+                snapshot, "Alpha", "EPL", "Beta", "EPL", "m", "m1", 0.5, **base
+            )
+            assert env is not None
+            return env
+    
+        with pytest.raises(ValueError, match="kind"):
+>           call(kind="corners", side="over", line=2.5)
+
+tests/test_papersim_soccer_model.py:979: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+selection = {'kind': 'corners', 'side': 'over', 'line': 2.5}
+
+    def call(**selection: object) -> soccer_model.CandidateEnvelope:
+        base: dict[str, object] = {"kind": "total", "side": "over", "line": 2.5}
+        base.update(selection)
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot, "Alpha", "EPL", "Beta", "EPL", "m", "m1", 0.5, **base
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:972: AttributeError
+_______ test_candidate_for_market_spread_is_quote_only_registry_rejects ________
+
+    def test_candidate_for_market_spread_is_quote_only_registry_rejects() -> None:
+        """Spread envelopes are quotable, but the suspension registry keeps
+        rejecting spread entry (FLAGGED_ONLY) -- quoting is not entry
+        authorization."""
+        snapshot = _mini_snapshot()
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot, "Alpha", "EPL", "Beta", "EPL", "Alpha vs. Beta", "m1", 0.5,
+            kind="spread", side="cover", line=-1.5, team_side="home",
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:1014: AttributeError
+___ test_candidate_for_market_refused_fixture_returns_none_without_fallback ____
+
+    def test_candidate_for_market_refused_fixture_returns_none_without_fallback() -> None:
+        """Fixture refusal (banned cross-league pairing, unknown team/league)
+        returns None exactly like the frozen builders -- never a fabricated
+        candidate and never an ``over_under_quote`` fallback."""
+        snapshot = _mini_snapshot()
+        banned = json.loads((FIXTURES / "regression_banned_path.json").read_text(encoding="utf-8"))["case"]
+>       assert soccer_model.candidate_for_market(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            banned["home"]["team"],
+            banned["home"]["league"],
+            banned["away"]["team"],
+            banned["away"]["league"],
+            "banned",
+            "m1",
+            0.5,
+            kind="total",
+            side="over",
+            line=2.5,
+        ) is None
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:1037: AttributeError
+_________________ test_candidate_for_market_bridge_provenance __________________
+
+    def test_candidate_for_market_bridge_provenance() -> None:
+        """The envelope's bridge record corresponds to the actual source: a
+        bridged cross-league construction records the exact bridge table; a
+        same-league construction never consults one (quotes identical with or
+        without a bridge argument)."""
+        snapshot = _mini_snapshot()
+        bridge = {"bundesliga": -0.09, "ligue_1": -0.18}
+    
+>       env = soccer_model.candidate_for_market(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            snapshot,
+            "TSG 1899 Hoffenheim",
+            "bundesliga",
+            "Olympique Lyonnais",
+            "ligue_1",
+            "HOF-LYO",
+            "m1",
+            0.5,
+            kind="total",
+            side="over",
+            line=2.5,
+            bridge=bridge,
+        )
+E       AttributeError: module 'polymarket_alpha_lab.papersim.soccer_model' has no attribute 'candidate_for_market'. Did you mean: 'candidate_from_variants'?
+
+tests/test_papersim_soccer_model.py:1068: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_over_matches_legacy_builder_bitwise[BRE-FOR_O2.5]
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_over_matches_legacy_builder_bitwise[HUL-IPS_O2.5]
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_over_matches_legacy_builder_bitwise[CHE-MUN_O3.5]
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_over_matches_legacy_builder_bitwise[BOU-LEE_O2.5]
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_over_25_matches_legacy_all_four[BRE-FOR_O2.5]
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_over_25_matches_legacy_all_four[HUL-IPS_O2.5]
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_over_25_matches_legacy_all_four[CHE-MUN_O3.5]
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_over_25_matches_legacy_all_four[BOU-LEE_O2.5]
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_quotes_reuse_frozen_probability_functions
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_reverse_direction_complements
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_match_winner_medians_not_renormalized
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_construction_errors_are_explicit
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_spread_is_quote_only_registry_rejects
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_refused_fixture_returns_none_without_fallback
+FAILED tests/test_papersim_soccer_model.py::test_candidate_for_market_bridge_provenance
+15 failed, 28 passed in 4.64s

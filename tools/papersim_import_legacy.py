@@ -1,6 +1,6 @@
 """FX-09L legacy history importer for the papersim v2 managed face.
 
-Two-stage import (design 2026-11-15 v2, section 7): a pure DRY RUN is the
+Two-stage import (09D design v2 section 7): a pure DRY RUN is the
 DEFAULT and is always computable offline from the archived repo snapshot;
 production insertion is a separate authorization gate — the explicit
 ``--execute-production`` flag — and is refused without it. The legacy three
@@ -10,7 +10,8 @@ papersim DSN face); this tool never writes the legacy face, never invents
 unknown provenance (NULL stays NULL) and never converts a position label
 into a natural market outcome.
 
-Semantics pinned by the reviewed design:
+Semantics pinned by the reviewed 09D design v2 (original missing;
+docs/paper-sim/design/README.md):
 
 - Natural outcomes (YES/NO/YES-basket) are market assertions; ``win`` and
   ``loss`` are POSITION labels imported as ``UNKNOWN`` market outcomes with
@@ -59,6 +60,10 @@ Paper evidence storage only: this tool grants no order, account or
 execution authorization. FX-09L does NOT execute the production import
 (separate operator authorization); it proves the machinery on disposable
 clusters and in dry runs.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -101,7 +106,7 @@ INITIAL_EVENT_KEY = "legacy:bankroll:initial"
 CENT = Decimal("0.01")
 HALF_CENT = Decimal("0.005")
 
-# D-5 (design 9.1): the legacy side vocabulary observed in the archived
+# D-5 (09D v2 9.1): the legacy side vocabulary observed in the archived
 # snapshot maps one-to-one onto the four-token candidate vocabulary. The
 # table is explicit and test-pinned; any token outside it fails LOUDLY
 # instead of being silently rewritten to a "nearest" canonical value —
@@ -592,7 +597,7 @@ def build_import_plan(snapshot: LegacySnapshot) -> ImportPlan:
             confirmed_at = observed_at
         elif outcome_token in SETTLED_LABELS:
             # Position label, NOT a natural outcome: never fabricated into
-            # one; the recorded label survives verbatim (design 7.2/7.3).
+            # one; the recorded label survives verbatim (09D v2 7.2/7.3).
             mapped_outcome = "UNKNOWN"
             outcome_detail = f"recorded_label={outcome_token}"
             confirmed_at = None
@@ -705,7 +710,7 @@ def build_import_plan(snapshot: LegacySnapshot) -> ImportPlan:
             else row["cash"] + row["deployed"]
         event_total = _cents(event_cash + event_deployed)
         delta_total = None if snapshot_total is None else event_total - snapshot_total
-        # The match verdict uses the bankroll-identity lens (design 7.2:
+        # The match verdict uses the bankroll-identity lens (09D v2 7.2:
         # "bankroll_identity 口径"): the event ledger must reproduce the
         # snapshot's cash + deployed total; the cash-only delta stays
         # listed because entry/settle timestamps land between snapshots.
@@ -865,7 +870,7 @@ def execute_import(conn, plan: ImportPlan) -> dict:
     """Write one import plan inside ONE transaction; idempotent per keys.
 
     A second run inserts nothing new and returns the first mapping
-    (design 7.5): the scan key + payload guard the scan, evidence keys
+    (09D v2 7.5): the scan key + payload guard the scan, evidence keys
     guard the outcomes, unique entry settlement rows are compared
     field-by-field and cash events are keyed.
     """

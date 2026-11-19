@@ -1,6 +1,6 @@
 """A4 sports scan inputs: bounded FotMob / ESPN NBA reads (m2 FX-15).
 
-Single responsibility (m2-plan-formal.md section 2.5): give the scan
+Single responsibility (M2 plan section 2.5): give the scan
 side ONE bounded, permission-gated entrance per sports source —
 :func:`fetch_fotmob_inputs` and :func:`fetch_nba_inputs` — over the
 existing frozen fetch/transform modules
@@ -52,6 +52,10 @@ M2 scope contract (deterministic, bounded windows):
 - ESPN NBA ``scope``: a mapping with a required ``YYYY-YY`` ``season``
   (``"2026-27"``) and an optional ``teams`` list of known
   abbreviations (``None`` -> the frozen 30-team table).
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

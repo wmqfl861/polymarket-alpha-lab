@@ -24,7 +24,7 @@ eager implementation):
   project modules; ``polymarket_alpha_lab.papersim.cli`` imported 151 and
   ``polymarket_alpha_lab.papersim.gates`` imported 150. The M3 acceptance
   limit for the papersim.cli startup measurement is 20 project modules
-  (plan section 9.2 measurement discipline: fresh process, import only).
+  (M3 plan section 9.2 measurement discipline: fresh process, import only).
 """
 
 from __future__ import annotations

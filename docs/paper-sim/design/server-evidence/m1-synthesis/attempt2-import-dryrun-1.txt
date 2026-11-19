@@ -1,0 +1,87 @@
+papersim legacy import - DRY RUN (no database writes)
+source: legacy-face:read-only-reobservation
+rows: decisions=71 resolutions=65 bankroll=68
+content sha256: 6345eaddc917d23c7bf5fc1990f2e984c6f9bd8897cc0042f26750a8d0dfc414
+scan: key=d9c6ec9c82540f2ea19b7324846dacac92499f925cf43927cc622077df897b55 payload=e24e07e4ad0c31d1a27cabc440705c1b1314e36f3dae0a7d67a0efd2a61f44bb team=legacy_mixed operator=legacy_import code_commit=None started_at=2026-10-10T13:39:29.867432+00:00 finished_at=2026-11-09T07:44:46.902129+00:00
+candidates: 71 accepted=71 sides(NO x12, NO-basket x1, YES x57, YES-basket x1)
+entries: 71 (shares reconstructed stake/price; recorded shares preserved in input_payload)
+market_outcomes: 60 (YES=27 NO=19 YES-basket=1 VOIDED=4 UNKNOWN(position labels)=9); EXITED labels without a market row: 5
+settlements: 66 (NATURAL=57 EXIT=5 VOIDED_REFUND=4) open-entries (no resolution): 5
+insufficient markets (no allocation, never zero-filled): 0
+fees: entry=413.91 exit=27.10 total=441.01 source=estimated schedule-as-of=2026-11-12
+conservation: settlements pnl_gross sum 3768.33 fee sum 441.01 net sum 3327.32
+net identity: pnl_gross - fee_total == pnl_net: OK
+allocation market 3866000: legacy 1 -> 743.79 (fee 25.46, net 718.33)
+allocation market 3866000: legacy 14 -> 561.41 (fee 19.08, net 542.33)
+per-market pnl conservation: OK over 65 settled markets, total 3768.33
+plan digests (rows:sha16): bankroll_events=138:926a303892471895 candidates=71:74c3557aacc0a32e entries=71:a9a9730bc6d57a85 market_outcomes=60:3108f9cfe2d63f9a scan_runs=1:4a3ea8f96bb5a205 settlements=66:bf915ba0fd7b5b0d
+bankroll reconciliation: 68 snapshot rows match=8 diff=60 unknown=0 (half-cent tolerance; differences listed, never hidden)
+  2026-10-10T13:39:29.865609+00:00 cash snap=8930.00 events=10000.00 delta=1070.00 | total snap=10000.00 events=10000.00 delta=0.00: match
+  2026-10-10T14:08:48.620683+00:00 cash snap=8530.00 events=8481.88 delta=-48.12 | total snap=10000.00 events=10000.00 delta=0.00: match
+  2026-10-10T14:13:07.271014+00:00 cash snap=7880.00 events=7833.70 delta=-46.30 | total snap=10000.00 events=10000.00 delta=0.00: match
+  2026-10-10T14:16:09.106745+00:00 cash snap=7630.00 events=7582.21 delta=-47.79 | total snap=10000.00 events=10000.00 delta=0.00: match
+  2026-10-10T14:23:23.353547+00:00 cash snap=7260.00 events=7205.39 delta=-54.61 | total snap=10000.00 events=10000.00 delta=0.00: match
+  2026-10-10T14:34:38.216881+00:00 cash snap=6860.00 events=6799.69 delta=-60.31 | total snap=10000.00 events=10000.00 delta=0.00: match
+  2026-10-10T14:55:07.931556+00:00 cash snap=6180.00 events=6099.26 delta=-80.74 | total snap=10000.00 events=10000.00 delta=0.00: match
+  2026-10-11T01:11:18.274902+00:00 cash snap=5930.00 events=5844.10 delta=-85.90 | total snap=10000.00 events=10000.00 delta=0.00: match
+  2026-10-11T13:56:00.307700+00:00 cash snap=6773.00 events=6687.10 delta=-85.90 | total snap=10413.07 events=10402.54 delta=-10.53: diff
+  2026-10-12T12:57:46.874170+00:00 cash snap=6443.19 events=6347.89 delta=-95.30 | total snap=10313.07 events=10402.54 delta=89.47: diff
+  2026-10-12T13:11:30.132378+00:00 cash snap=5943.19 events=5828.81 delta=-114.38 | total snap=10313.07 events=10402.54 delta=89.47: diff
+  2026-10-13T01:06:51.357978+00:00 cash snap=6710.19 events=6595.81 delta=-114.38 | total snap=10750.07 events=10830.33 delta=80.26: diff
+  2026-10-14T13:08:37.444040+00:00 cash snap=7477.80 events=7608.81 delta=131.01 | total snap=10417.98 events=11182.47 delta=764.49: diff
+  2026-10-14T13:09:59.060568+00:00 cash snap=8062.49 events=7948.11 delta=-114.38 | total snap=11052.94 events=11115.57 delta=62.63: diff
+  2026-10-17T15:42:35.675163+00:00 cash snap=7562.69 events=7436.06 delta=-126.63 | total snap=11052.34 events=11115.57 delta=63.23: diff
+  2026-10-18T12:27:03.293010+00:00 cash snap=6962.69 events=6818.74 delta=-143.95 | total snap=10952.34 events=11115.57 delta=163.23: diff
+  2026-10-18T14:11:47.358846+00:00 cash snap=6362.97 events=6203.88 delta=-159.09 | total snap=10952.34 events=11115.57 delta=163.23: diff
+  2026-10-19T01:04:47.966874+00:00 cash snap=6670.25 events=7798.88 delta=1128.63 | total snap=10051.62 events=11275.34 delta=1223.72: diff
+  2026-10-19T10:11:43.792844+00:00 cash snap=6072.88 events=7183.89 delta=1111.01 | total snap=10051.62 events=11275.34 delta=1223.72: diff
+  2026-10-20T00:41:18.766987+00:00 cash snap=6829.88 events=7920.38 delta=1090.50 | total snap=10611.25 events=11808.35 delta=1197.10: diff
+  2026-10-20T03:45:34.967045+00:00 cash snap=7033.71 events=8124.06 delta=1090.35 | total snap=10615.08 events=11752.06 delta=1136.98: diff
+  2026-10-20T14:01:10.898034+00:00 cash snap=6483.88 events=7557.93 delta=1074.05 | total snap=10615.25 events=11752.06 delta=1136.81: diff
+  2026-10-21T11:32:48.992516+00:00 cash snap=5884.14 events=6936.74 delta=1052.60 | total snap=10615.25 events=11752.06 delta=1136.81: diff
+  2026-10-21T23:36:21.646036+00:00 cash snap=7454.14 events=8506.74 delta=1052.60 | total snap=10935.25 events=12503.10 delta=1567.85: diff
+  2026-10-22T01:33:26.032420+00:00 cash snap=6704.44 events=7739.55 delta=1035.11 | total snap=10935.11 events=12503.10 delta=1567.99: diff
+  2026-10-22T11:56:21.574562+00:00 cash snap=7104.44 events=7739.55 delta=635.11 | total snap=10885.06 events=12035.42 delta=1150.36: diff
+  2026-10-22T12:01:54.180419+00:00 cash snap=6704.44 events=7739.55 delta=1035.11 | total snap=10485.06 events=12035.42 delta=1550.36: diff
+  2026-10-22T12:04:13.961433+00:00 cash snap=7998.12 events=7739.55 delta=-258.57 | total snap=12182.29 events=12035.42 delta=-146.87: diff
+  2026-10-22T12:25:21.950080+00:00 cash snap=7698.12 events=7434.93 delta=-263.19 | total snap=12182.29 events=12035.42 delta=-146.87: diff
+  2026-10-22T12:37:27.572601+00:00 cash snap=6698.12 events=6408.30 delta=-289.82 | total snap=12182.29 events=12035.42 delta=-146.87: diff
+  2026-10-23T00:50:40.582288+00:00 cash snap=6698.12 events=6408.30 delta=-289.82 | total snap=11582.55 events=11414.23 delta=-168.32: diff
+  2026-10-23T01:12:48.466871+00:00 cash snap=6448.12 events=6155.49 delta=-292.63 | total snap=11582.55 events=11414.23 delta=-168.32: diff
+  2026-10-23T01:24:55.857049+00:00 cash snap=6198.12 events=5893.87 delta=-304.25 | total snap=11582.55 events=11414.23 delta=-168.32: diff
+  2026-10-23T01:32:13.517014+00:00 cash snap=5998.12 events=5687.09 delta=-311.03 | total snap=11582.55 events=11414.23 delta=-168.32: diff
+  2026-10-23T01:37:52.169454+00:00 cash snap=5748.12 events=5434.71 delta=-313.41 | total snap=11582.55 events=11414.23 delta=-168.32: diff
+  2026-10-24T00:31:27.612840+00:00 cash snap=5748.12 events=5434.71 delta=-313.41 | total snap=11082.85 events=10902.16 delta=-180.69: diff
+  2026-10-24T01:01:01.191295+00:00 cash snap=5598.12 events=5279.01 delta=-319.11 | total snap=11082.85 events=10902.16 delta=-180.69: diff
+  2026-10-25T01:03:01.980015+00:00 cash snap=6824.46 events=6505.35 delta=-319.11 | total snap=11309.43 events=11106.24 delta=-203.19: diff
+  2026-10-25T06:48:13.909327+00:00 cash snap=6074.46 events=5737.30 delta=-337.16 | total snap=11309.19 events=11106.24 delta=-202.95: diff
+  2026-10-26T01:02:53.740335+00:00 cash snap=6324.94 events=6954.38 delta=629.44 | total snap=10809.91 events=11043.40 delta=233.49: diff
+  2026-10-26T01:21:59.223530+00:00 cash snap=6949.94 events=7579.38 delta=629.44 | total snap=11284.91 events=11512.70 delta=227.79: diff
+  2026-10-26T03:35:18.468939+00:00 cash snap=6699.94 events=7319.92 delta=619.98 | total snap=11284.91 events=11512.70 delta=227.79: diff
+  2026-10-26T13:10:47.057533+00:00 cash snap=7045.33 events=7660.93 delta=615.60 | total snap=11030.73 events=11238.09 delta=207.36: diff
+  2026-10-27T01:03:48.751359+00:00 cash snap=7045.33 events=7660.93 delta=615.60 | total snap=10780.73 events=10978.63 delta=197.90: diff
+  2026-10-29T04:29:25.458011+00:00 cash snap=6545.33 events=7149.52 delta=604.19 | total snap=10780.73 events=10978.63 delta=197.90: diff
+  2026-10-30T01:03:38.204536+00:00 cash snap=9100.53 events=9704.72 delta=604.19 | total snap=12085.93 events=12239.29 delta=153.36: diff
+  2026-10-30T11:55:36.655541+00:00 cash snap=8100.53 events=8679.16 delta=578.63 | total snap=12085.93 events=12239.29 delta=153.36: diff
+  2026-11-01T00:54:44.742622+00:00 cash snap=9638.68 events=10217.56 delta=578.88 | total snap=12374.33 events=12497.91 delta=123.58: diff
+  2026-11-01T01:28:48.322763+00:00 cash snap=9488.68 events=10062.59 delta=573.91 | total snap=12374.33 events=12497.91 delta=123.58: diff
+  2026-11-01T10:15:28.890559+00:00 cash snap=9338.68 events=9907.71 delta=569.03 | total snap=12374.33 events=12497.91 delta=123.58: diff
+  2026-11-02T01:02:50.134154+00:00 cash snap=9767.25 events=10336.28 delta=569.03 | total snap=12652.90 events=12771.60 delta=118.70: diff
+  2026-11-03T01:03:47.074773+00:00 cash snap=10355.49 events=10924.52 delta=569.03 | total snap=12841.14 events=12947.68 delta=106.54: diff
+  2026-11-04T08:21:18.666821+00:00 cash snap=11062.69 events=11631.72 delta=569.03 | total snap=12998.34 events=13147.69 delta=149.35: diff
+  2026-11-04T11:20:05.006470+00:00 cash snap=9912.69 events=10969.46 delta=1056.77 | total snap=12498.34 events=13147.69 delta=649.35: diff
+  2026-11-04T13:06:04.319022+00:00 cash snap=10362.69 events=11619.46 delta=1256.77 | total snap=12698.34 events=13135.43 delta=437.09: diff
+  2026-11-04T13:08:06.933131+00:00 cash snap=9712.69 events=10956.78 delta=1244.09 | total snap=12648.34 events=13135.43 delta=487.09: diff
+  2026-11-04T13:58:21.895319+00:00 cash snap=11379.29 events=10956.78 delta=-422.51 | total snap=13514.94 events=13135.43 delta=-379.51: diff
+  2026-11-04T14:01:06.186112+00:00 cash snap=11529.29 events=11106.78 delta=-422.51 | total snap=13514.94 events=13132.62 delta=-382.32: diff
+  2026-11-05T01:02:25.573487+00:00 cash snap=11922.99 events=11500.48 delta=-422.51 | total snap=13658.64 events=13271.76 delta=-386.88: diff
+  2026-11-05T23:23:44.285130+00:00 cash snap=11922.99 events=11500.48 delta=-422.51 | total snap=13408.64 events=13016.45 delta=-392.19: diff
+  2026-11-06T00:08:55.698269+00:00 cash snap=11672.99 events=11245.83 delta=-427.16 | total snap=13408.64 events=13016.45 delta=-392.19: diff
+  2026-11-06T11:53:55.363355+00:00 cash snap=10372.99 events=9919.24 delta=-453.75 | total snap=13408.64 events=13016.45 delta=-392.19: diff
+  2026-11-07T07:09:08.069914+00:00 cash snap=10372.99 events=9919.24 delta=-453.75 | total snap=13158.64 events=12761.80 delta=-396.84: diff
+  2026-11-08T01:03:10.072009+00:00 cash snap=11577.66 events=11123.91 delta=-453.75 | total snap=13613.31 events=13202.45 delta=-410.86: diff
+  2026-11-08T14:10:37.501334+00:00 cash snap=11427.66 events=10971.96 delta=-455.70 | total snap=13613.31 events=13202.45 delta=-410.86: diff
+  2026-11-08T14:11:27.552013+00:00 cash snap=11177.66 events=10718.46 delta=-459.20 | total snap=13613.31 events=13202.45 delta=-410.86: diff
+  2026-11-09T01:05:23.661495+00:00 cash snap=12282.78 events=11823.58 delta=-459.20 | total snap=13768.43 events=13339.55 delta=-428.88: diff
+  2026-11-09T07:44:46.902129+00:00 cash snap=12032.78 events=11569.20 delta=-463.58 | total snap=13768.43 events=13339.55 delta=-428.88: diff
+authorization: production insertion requires --execute-production (NOT executed by this dry run)

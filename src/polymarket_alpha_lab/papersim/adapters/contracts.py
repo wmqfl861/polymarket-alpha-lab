@@ -1,6 +1,6 @@
 """A0 shared adapter contracts: evidence, budgets and failure vocabulary.
 
-Single responsibility (m2-plan-formal.md section 2.1, FX-15 A0): pure
+Single responsibility (M2 plan section 2.1, FX-15 A0): pure
 data types plus one shared budget object that the four M2 data adapters
 (A1 Polymarket, A2 BTC/ETH candles, A3 Understat, A4 FotMob/ESPN) use to
 express bounded public reads. This module opens no sockets, no database
@@ -39,6 +39,10 @@ Contract decisions frozen here for A1-A4:
   registration), digests exact raw bytes with SHA-256, and carries
   either the raw bytes or an already-registered snapshot key - never
   neither, and never both discarded.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -57,12 +61,12 @@ PAPER_ONLY = True
 REPORT_ONLY = True
 READONLY = True
 
-# Response-size caps (m2-plan section 2.1): 2 MiB default per response;
+# Response-size caps (M2 plan section 2.1): 2 MiB default per response;
 # nothing may exceed public_http.read_public_body's hard 4 MiB ceiling.
 DEFAULT_MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 HARD_MAX_RESPONSE_BYTES = 4 * 1024 * 1024
 
-# First-version run limits (m2-plan section 2.1): versioned operational
+# First-version run limits (M2 plan section 2.1): versioned operational
 # limits, not strategy thresholds. D1 re-ratifies them against the real
 # request amplification before they are written into runtime config.
 FIRST_VERSION_MAX_MARKETS_PER_ROUND = 100

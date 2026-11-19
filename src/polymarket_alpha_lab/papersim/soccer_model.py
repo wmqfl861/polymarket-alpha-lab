@@ -57,6 +57,10 @@ Implementation notes (frozen arithmetic, do not tune):
   through the builder).
 - ``over``/``under`` semantics follow the lineage push convention:
   ``over(line) = P(total >= floor(line) + 1)``.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -548,7 +552,7 @@ def over_under_quote(
 
 
 # ---------------------------------------------------------------------------
-# FX-10 (M1 plan §3): generic candidate construction across market kinds.
+# FX-10 (M1 plan §3; FX-10 node chain: DELIVERY_PLAN.md 78.1): generic candidate construction across market kinds.
 #
 # Everything above this banner is the frozen WP-P1 surface: the bytes of
 # ``candidate_from_variants`` / ``fixture_variants`` / ``match_lambdas`` /

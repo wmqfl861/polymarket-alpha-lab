@@ -21,6 +21,10 @@ Covers the pure ``papersim.queue_policy`` contract (M2 plan section
   driver import, deterministic;
 - the kappa freeze gate: one pre-season digest per season, mid-season
   drift or a missing digest blocks the input while keeping evidence.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

@@ -24,7 +24,8 @@ created here):
   ``EXITED``, ``VOIDED`` or ``None`` (unknown). ``EXITED`` is never treated
   as a natural result: exits realize PnL for ROI but are excluded from
   forecast scoring and hit counts. ``natural_outcome`` (M1 final review
-  P2-01) is the independent market-level natural result a settled trade
+  P2-01; receipt in repo: m1-final-review-rerun-20261116.log,
+  DELIVERY_PLAN.md 78.5) is the independent market-level natural result a settled trade
   row keeps for whole-market scoring while its ``outcome`` carries the
   trade-side label (``win``/``loss``/``EXITED``/``VOIDED``) from the
   settlement ledger; scoring accepts either field, trade PnL never does.
@@ -75,6 +76,10 @@ accepted plus gate-rejected candidates only, with construction failures
 reported separately and never counted as observations. The six registered
 OD-G numbers are unchanged; the pause rules deliberately carry no
 coverage floor (coverage is reported side-by-side instead).
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -477,7 +482,7 @@ class ConcentrationMetrics:
     The gross fields keep their historical-report role (the frozen 10-30
     regression anchors: total 2552.43 / top 1305.20 / share 51.1%). The
     ``*net*`` fields (M1 final review P2-02) are the net-of-fees numbers
-    the OD-G criterion E verdict reads: plan section 5 B-condition
+    the OD-G criterion E verdict reads: M1 plan section 5 B-condition
     semantics make every PnL used for promotion net of fees.
     """
 
@@ -746,7 +751,7 @@ def criterion_e(
     drawdown <= 10 standard units of $250 (inclusive).
 
     M1 final review P2-02: the concentration input is the net-of-fees
-    share (``ConcentrationMetrics.top_market_net_share``) per the plan
+    share (``ConcentrationMetrics.top_market_net_share``) per the M1 plan
     section 5 B-condition semantics — every PnL used for the promotion
     verdict is after fees. The gross share stays a reported historical
     metric only and must never gate this criterion."""

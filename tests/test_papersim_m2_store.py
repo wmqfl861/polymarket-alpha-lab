@@ -2,9 +2,13 @@
 
 Covers the writer-side idempotency keys (M2 plan section 3.2 two-layer
 identity), the CandidateMarkCapture / SettlementRecord / BankrollCheck
-validation contracts and the section 5.3 cash identity arithmetic. No
+validation contracts and the M2 plan section 5.3 cash identity arithmetic. No
 connection, clock or driver is touched; the native transactional proofs
 live in ``tests/test_papersim_m2_store_native.py``.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from datetime import UTC, datetime, timedelta, timezone
@@ -41,7 +45,7 @@ def settlement(**overrides):
 
 
 # ---------------------------------------------------------------------------
-# Idempotency keys (section 3.2 two-layer identity)
+# Idempotency keys (M2 plan section 3.2 two-layer identity)
 # ---------------------------------------------------------------------------
 
 def test_command_run_event_key_is_the_stable_scheduling_identity():
@@ -166,7 +170,7 @@ def test_settlement_rejects_pnl_mismatch_and_non_monetary_values():
 
 
 # ---------------------------------------------------------------------------
-# Bankroll check request and the section 5.3 identity
+# Bankroll check request and the M2 plan section 5.3 identity
 # ---------------------------------------------------------------------------
 
 def test_bankroll_check_request_defaults_and_key():

@@ -7,6 +7,10 @@ register before use, same-hash byte verification, no overwrite, no
 path-only registration, read-only legacy import -- is proven without a
 cluster. The opt-in native lane at the bottom proves the same surface
 against the real managed schema (append-only trigger included).
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from datetime import UTC, datetime, timedelta
@@ -177,7 +181,7 @@ def test_new_content_gets_a_new_digest_and_old_rows_are_never_overwritten():
     assert second['inserted'] is True
     assert second['content_sha256'] != first['content_sha256']
     # Same bytes re-registered under different metadata: identity is the
-    # digest, the ORIGINAL row is returned untouched (design 5.2).
+    # digest, the ORIGINAL row is returned untouched (09D v2 5.2).
     reread = snapshots.register_snapshot(conn, registration(kind='changed-label'))
     assert reread['inserted'] is False
     assert reread['kind'] == 'first'

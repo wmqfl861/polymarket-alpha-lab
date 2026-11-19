@@ -1,6 +1,6 @@
 """A0 tests: shared adapter contracts for budgets, evidence and failure states.
 
-Pins (m2-plan-formal.md section 2.1, FX-15 A0):
+Pins (M2 plan section 2.1, FX-15 A0):
 - one shared ``FetchBudget`` instance tracks requests and accumulated
   response bytes for every adapter of a round; caps are immutable and
   there is no reset or top-up path an adapter could hand itself;
@@ -24,6 +24,10 @@ Pins (m2-plan-formal.md section 2.1, FX-15 A0):
   bytes or an already-registered snapshot key - never neither.
 
 All tests are offline and synthetic: no network, no database, no writes.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations

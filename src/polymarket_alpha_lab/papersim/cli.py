@@ -45,7 +45,9 @@ Subcommands (WP-P1 final commit):
   papersim store (read-only SELECTs through the reviewed connection
   adapter), an explicit isolated-cluster DSN validated by the single
   audited local validator, or an explicit JSON candidate file. Store
-  reads join the per-trade settlement ledger (M1 final review P2-01):
+  reads join the per-trade settlement ledger (M1 final review P2-01; receipt in repo:
+  docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log,
+  DELIVERY_PLAN.md 78.5):
   settled trades evaluate on their recorded realization (win/loss
   labels, EXITED exits with the ledger gross and two-sided fees,
   VOIDED refunds), the market natural result stays an independent
@@ -59,6 +61,10 @@ Subcommands (WP-P1 final commit):
   it, never against the ambient HEAD); read-only SELECTs through the
   reviewed connection adapter; prints the replay match summary as
   JSON. No network, no code execution from the record.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from __future__ import annotations
@@ -540,7 +546,8 @@ def _cmd_validate_dsn() -> int:
 
 #: Read-only candidate/evidence/outcome SELECTs for ``evaluate``. The
 #: decision-time observation is the DECISION row with the smallest
-#: evidence_id (design P3-8 derived rule); the close mark is the latest
+#: evidence_id (09D review item P3-8 derived rule; extract in repo:
+#: docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log); the close mark is the latest
 #: CLOSE row; the effective market outcome reuses the pure FX-09S
 #: selection (latest non-UNKNOWN observation, tie-break outcome_id DESC).
 #: M1 final review P2-01: the candidates statement also joins the per-trade

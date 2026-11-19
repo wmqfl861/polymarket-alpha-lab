@@ -1,0 +1,16 @@
+
+==================================== ERRORS ====================================
+_______________ ERROR collecting tests/test_papersim_pipeline.py _______________
+ImportError while importing test module '/home/ubuntu/pal-m0-startup-20261113-yx2fyoje/worktrees/m1-fx08/tests/test_papersim_pipeline.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_papersim_pipeline.py:38: in <module>
+    from polymarket_alpha_lab.papersim import crypto_model, fees, gates, pipeline, risk_policy
+E   ImportError: cannot import name 'pipeline' from 'polymarket_alpha_lab.papersim' (/home/ubuntu/pal-m0-startup-20261113-yx2fyoje/worktrees/m1-fx08/src/polymarket_alpha_lab/papersim/__init__.py)
+=========================== short test summary info ============================
+ERROR tests/test_papersim_pipeline.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 2.99s

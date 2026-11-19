@@ -7,7 +7,11 @@ the current complete catalog and proves the transactional contracts of
 ``mark_capture_upsert``, ``settlement_record`` and ``bankroll_daily_check``
 against real PostgreSQL: atomic cash legs, idempotent re-runs,
 changed-content conflicts, the one-close rules, the P3-9 close time-order
-guard and the section 5.3 identity.
+guard and the M2 plan section 5.3 identity.
+
+Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
+original-missing unless a receipt is cited in-line; the reference map with
+in-repo basis is docs/paper-sim/design/README.md (FX-28).
 """
 
 from datetime import UTC, datetime, timedelta
