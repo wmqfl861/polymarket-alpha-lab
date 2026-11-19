@@ -379,10 +379,16 @@ T1 edge (-0.00944 → -0.00929); no gate regression anywhere.
 
 - Raw data fetching (Understat pages, Binance/Coinbase prints, CLOB
   books) stays in the external research tooling; the library consumes
-  local snapshot files only, with one sanctioned exception: the FotMob
-  fetch functions above (`papersim.fotmob`) are the package's only
-  network surface. The Phase 1 FotMob adapter/validator tools remain
-  the server-side backfill path for this host.
+  local snapshot files only. The package's networked surfaces are the
+  documented adapters under `papersim.adapters` (`polymarket.py`,
+  `contracts.py`, `sports.py`, `understat.py`, `prices.py` — Gamma/CLOB
+  market and contract discovery, sports and Understat fetches, and
+  bounded BTC/ETH candle and spot price reads) plus the FotMob fetch
+  functions above (`papersim.fotmob`) and the ESPN NBA fetch helper
+  (`papersim.espn_nba.py`), each under bounded reads and documented
+  budgets; snapshot parsers such as `soccer_totals.py` stay offline.
+  The Phase 1 FotMob adapter/validator tools remain the server-side
+  backfill path for this host.
 - The live `/home/ubuntu/paper-sim` round records remain the book of
   record for past rounds; the library is the canonical implementation
   new rounds copy from, not a retro-edit of history (r12/r13 boundary
@@ -391,8 +397,9 @@ T1 edge (-0.00944 → -0.00929); no gate regression anywhere.
   file and any migration application stay with the server-side
   migration ledger; `schema` only mirrors the DDL as evidence.
 
-Two ledger functions (`record_entry`, `mark_to_market`) remain frozen
-stubs by design until the store-adapter commit lands; everything else
-in the package surface is implemented and regression-anchored.
+The ledger functions `record_entry` and `mark_to_market` are
+implemented (`papersim/ledger.py:148` and `:196`, landed with the
+store adapter per FX-09L); the package surface is implemented and
+regression-anchored.
 
 **Gate-safe candidate construction:** build gateable soccer candidates with `soccer_model.candidate_from_variants(...)` (snapshot-driven, carries the true ten-variant quotes). The pair-level `over_under_quote(...)` collapses sweep variance for O/U >= 2.0 and is NOT gate-safe — see its docstring warning.
