@@ -1,0 +1,9 @@
+# paired_diff_spread.py run on 2026-11-19 against docs/paper-sim/research/league-admission-20261119/new-soccer/holdout_predictions.csv at commit c4367b6b
+1x2: matches=1129 tuned-baseline mean=-0.00321 sd=0.1322
+    matches needed to detect 0.010: 1370
+    matches needed to detect 0.005: 5480
+    tuned-market: matches=1128 mean=+0.02900 sd=0.1880
+ou2.5: matches=1129 tuned-baseline mean=+0.00315 sd=0.0661
+    matches needed to detect 0.010: 342
+    matches needed to detect 0.005: 1369
+    tuned-market: matches=1128 mean=+0.00540 sd=0.1209

@@ -1,0 +1,119 @@
+{
+ "format": "handoff-manifest-v1",
+ "directory": "docs/handoffs/2026-11-19-audit-optimizer",
+ "reviewed_commit": "c4367b6b3ce4d957ce79ce645a7ab3425be5a133",
+ "excluded": [
+  "06-local-agent-prompt.md",
+  "MANIFEST.json",
+  "MANIFEST.sha256"
+ ],
+ "file_count": 21,
+ "total_bytes": 167496,
+ "files": [
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/01-audit-report.md",
+   "bytes": 22340,
+   "sha256": "b2d0b0485a335725fe57cd6966b900686594b525e546e5ed83e0b0e2dd878a9e"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/02-blueprint-v4.md",
+   "bytes": 13830,
+   "sha256": "65be99b84975b838457e80f620271fbbe8320aedce6fe9b9501a03fe77190bbc"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/03-fix-list.md",
+   "bytes": 15272,
+   "sha256": "974f761fd80a0f4cc1088efd9d280d5bd11ac56f003896eceeef6b1bcfb7d2fd"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/04-optimizer-design.md",
+   "bytes": 25411,
+   "sha256": "3c01b85161dd1597b3dcb726233c390b4731234fd3009dd122eb3d7e96a60c18"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/05-development-plan.md",
+   "bytes": 21989,
+   "sha256": "85698b0d4f278a0b8a9c671d2c9cdf468db5054a32a7650cb167ca29ad4f3a11"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/README.md",
+   "bytes": 6763,
+   "sha256": "9a4c60318b47f5d6d0cb28164997399c83860c75d5e8ae82027236c19d7a7d9e"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/address_occurrence_output.txt",
+   "bytes": 768,
+   "sha256": "a92678b2d2d19fb5b47f89d8a81b0eed071c9f11c386063d3550886613a5eb9f"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/ci_runs.txt",
+   "bytes": 8618,
+   "sha256": "7fa1c1dcb6012ea6ee2382d09679166afbae3c956c7c3787083bb2d351320cd3"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/model_parameter_inventory.py",
+   "bytes": 3544,
+   "sha256": "75b60398b7d78f5b93ebfe25e7c2e4107162c08137350adeab93f675707570ec"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/model_parameter_inventory.txt",
+   "bytes": 10999,
+   "sha256": "54a869b64d0e9f49c292e383fda8e2c0c642f2e04803677fdfb65dbf8c5f3113"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/paired_diff_spread.py",
+   "bytes": 2452,
+   "sha256": "109907c828af499b2bb60f58eca38547a9b0fedd3cd290130f19b1b43db7b6e1"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/paired_diff_spread_output.txt",
+   "bytes": 543,
+   "sha256": "8cc063cb0dfc68c454972c65a63f5e4a65c9693aeff8383b8d447d9a0212bba4"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/recompute_nba.py",
+   "bytes": 2481,
+   "sha256": "720f6f5f590145b9fa300fcf4c019528007e1c3d979af125379412f16de223b3"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/recompute_nba_output.txt",
+   "bytes": 3557,
+   "sha256": "5f1cee15c90a404e89361b6ef0e4dd95e402aea9e9895ef5adfea2eff5c4e24a"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/recompute_new_soccer.py",
+   "bytes": 5978,
+   "sha256": "06d33e9ad4c883424135c8794d06f9c4a91ad1797d4c53cdc4f6d3883308e950"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/recompute_new_soccer_output.txt",
+   "bytes": 4963,
+   "sha256": "24a6fd38e225b3d98f25e93465cf47088cde77eb27175737c2e857b9e4913608"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/scan_changed_files.py",
+   "bytes": 6567,
+   "sha256": "0de63dcbeddbbbd873e8c845c1e18cd00d6aa3ae4b336dc391f5da95eba0cabb"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/scan_changed_files_output.txt",
+   "bytes": 3044,
+   "sha256": "ea57c5f82d61f6433c6284cf411542bd73db0b086829b59a6ca8c89e8dccd5d0"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/scan_mirror_output.txt",
+   "bytes": 2062,
+   "sha256": "fcad9bc541e10afcdb006209019b805ee6ebbbd89c223273165be3de478a9534"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/test_weakening_output.txt",
+   "bytes": 540,
+   "sha256": "75aa6712ae19025eb926bcfafd5098c6fd541aa9d387fd811325cd6ced5c1eeb"
+  },
+  {
+   "path": "docs/handoffs/2026-11-19-audit-optimizer/evidence/test_weakening_scan.py",
+   "bytes": 5775,
+   "sha256": "dfebe6186983895b2849c7d07904756f146bf32f65e2710557a8d621f4e9c32b"
+  }
+ ]
+}

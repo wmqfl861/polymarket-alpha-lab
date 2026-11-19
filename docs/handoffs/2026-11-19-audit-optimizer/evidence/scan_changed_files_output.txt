@@ -1,0 +1,35 @@
+# scan_changed_files.py run on 2026-11-19; values are never printed
+# classification of the hits is in 01-audit-report.md section 4.3
+base=b5ab6108d9e72ee37ce43f8247221f4f674d1224 head=c4367b6b3ce4d957ce79ce645a7ab3425be5a133
+files added or modified=241 scanned as text=241 (text members incl. archives=310) binary or unreadable=0
+hit counts: {'email_other': 7, 'ipv4_public': 14, 'secret:dsn_password': 7, 'secret:sk_key': 5}
+      1 x email_other DELIVERY_PLAN.md
+      2 x email_other tests/test_database_persistence_iron_rule.py
+      1 x email_other tests/test_papersim_cli.py
+      3 x email_other tests/test_papersim_ledger.py
+      9 x ipv4_public DELIVERY_PLAN.md
+      1 x ipv4_public docs/handoffs/m3-cleanup/codex-b0-pause-decisions-20261116.log
+      2 x ipv4_public docs/releases/linux-preview-release.md
+      1 x ipv4_public docs/remediation-evidence/2026-11-14/MANIFEST.md
+      1 x ipv4_public docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log
+      3 x secret:dsn_password docs/handoffs/m3-cleanup/codex-b0-pause-decisions-20261116.log
+      1 x secret:dsn_password tests/test_crypto_btc_forecast_service_scope.py
+      3 x secret:dsn_password tests/test_database_persistence_iron_rule.py
+      1 x secret:sk_key docs/paper-sim/research/league-admission-20261119/europe-basketball/frozen_inputs.tar.gz!BCL-BE-2026.md
+      1 x secret:sk_key docs/paper-sim/research/league-admission-20261119/europe-basketball/frozen_inputs.tar.gz!BCL-teams-2027.md
+      1 x secret:sk_key docs/paper-sim/research/league-admission-20261119/europe-basketball/frozen_inputs.tar.gz!clock_inputs/germany_bbl_bcl_verified_clocks.csv
+      1 x secret:sk_key docs/paper-sim/research/league-admission-20261119/europe-basketball/germany_bbl_bcl_verified_clocks.csv
+      1 x secret:sk_key docs/paper-sim/research/league-admission-20261119/europe-basketball/polymarket_market_replay.csv
+largest files:
+     4976831 docs/paper-sim/research/league-admission-20261119/europe-basketball/frozen_inputs.tar.gz
+     4100049 docs/paper-sim/research/league-admission-20261119/new-soccer/holdout_predictions.csv
+     1966061 docs/paper-sim/research/league-admission-20261119/europe-basketball/polymarket_market_replay.csv
+     1401448 docs/paper-sim/research/league-admission-20261119/europe-basketball/game_predictions.csv
+     1106116 docs/paper-sim/research/league-admission-20261119/nba/predictions.csv
+      866313 docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log
+      728941 docs/paper-sim/research/league-admission-20261119/new-soccer/frozen-inputs/prices.jsonl.gz
+      588290 docs/handoffs/m3-cleanup/codex-b0-pause-decisions-20261116.log
+      557195 docs/paper-sim/research/league-admission-20261119/europe-basketball/sportsbook_closing_moneyline_comparison.csv
+      349699 DELIVERY_PLAN.md
+      328417 docs/remediation-evidence/2026-11-14/decision/m1-rereview-output-20261114.log
+      304281 docs/paper-sim/research/league-admission-20261119/europe-football/comparison-inputs.json.gz

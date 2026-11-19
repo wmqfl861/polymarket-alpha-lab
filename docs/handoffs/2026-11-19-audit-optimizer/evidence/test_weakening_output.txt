@@ -1,0 +1,10 @@
+# test_weakening_scan.py run on 2026-11-19
+base=b5ab6108d9e72ee37ce43f8247221f4f674d1224 head=c4367b6b3ce4d957ce79ce645a7ab3425be5a133
+test python files: added=22 modified=42 deleted=0
+tests/test_papersim_cli.py: tests 15 -> 32
+    skip markers/calls: 0 -> 8
+tests/test_papersim_ledger.py: tests 46 -> 51
+    removed test: test_p0_stub_surface_unchanged (had 3 checks)
+modified files: test functions 418 -> 516
+totals: removed tests=1 tests with fewer checks=0 new skip markers=8 new xfail markers=0
+added files: 22 with 580 test functions

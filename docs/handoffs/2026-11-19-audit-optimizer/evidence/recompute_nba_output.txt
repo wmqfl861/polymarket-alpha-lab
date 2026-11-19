@@ -1,0 +1,33 @@
+# recompute_nba.py run on 2026-11-19 against docs/paper-sim/research/league-admission-20261119/nba/predictions.csv at commit c4367b6b
+season   split    market source              rows paired | logloss baseline / optimized / market | Brier baseline / optimized / market
+2024-25  holdout  ml     PM-NBA-final-score-diagnostic   160    160 | 0.5781 / 0.5880 / 0.5402 | 0.1974 / 0.2012 / 0.1798
+2024-25  holdout  ml     all_game_ml          416      0 | baseline-only logloss 0.5723 (n=416)
+2024-25  train    ml     all_game_ml          358      0 | baseline-only logloss 0.6088 (n=358)
+2024-25  tune     ml     all_game_ml          330      0 | baseline-only logloss 0.6310 (n=330)
+2025-26  holdout  ml     PM-explicit-full-game-OT   156    156 | 0.5098 / 0.5465 / 0.4673 | 0.1661 / 0.1804 / 0.1513
+2025-26  holdout  ml     all_game_ml          411      0 | baseline-only logloss 0.5243 (n=411)
+2025-26  holdout  spread PM-NBA-final-score-diagnostic   157    157 | 0.7191 / 0.7606 / 0.6868 | 0.2619 / 0.2810 / 0.2463
+2025-26  holdout  total  PM-NBA-final-score-diagnostic   156    156 | 0.6897 / 0.6865 / 0.6782 | 0.2483 / 0.2467 / 0.2424
+2025-26  train    ml     all_game_ml          372      0 | baseline-only logloss 0.6127 (n=372)
+2025-26  tune     ml     all_game_ml          323      0 | baseline-only logloss 0.6534 (n=323)
+2026-27  holdout  ml     DK-postfinal-close-proxy    36     36 | 0.7460 / 0.7460 / 0.6675 | 0.2480 / 0.2480 / 0.2356
+2026-27  holdout  ml     PM-explicit-full-game-OT    36     36 | 0.7460 / 0.7460 / 0.6675 | 0.2480 / 0.2480 / 0.2353
+2026-27  holdout  ml     all_game_ml           36      0 | baseline-only logloss 0.7460 (n=36)
+2026-27  holdout  spread DK-postfinal-close-proxy    36     36 | 0.8220 / 0.8220 / 0.6965 | 0.3058 / 0.3058 / 0.2517
+2026-27  holdout  spread PM-NBA-final-score-diagnostic    36     36 | 0.8220 / 0.8220 / 0.6952 | 0.3058 / 0.3058 / 0.2510
+2026-27  holdout  total  DK-postfinal-close-proxy    36     36 | 0.7644 / 0.6910 / 0.6957 | 0.2814 / 0.2479 / 0.2513
+2026-27  holdout  total  PM-NBA-final-score-diagnostic    33     33 | 0.7695 / 0.6854 / 0.6999 | 0.2836 / 0.2450 / 0.2534
+2026-27  train    ml     DK-postfinal-close-proxy    30      0 | baseline-only logloss 0.4987 (n=30)
+2026-27  train    ml     PM-explicit-full-game-OT    30      0 | baseline-only logloss 0.4987 (n=30)
+2026-27  train    ml     all_game_ml           30      0 | baseline-only logloss 0.4987 (n=30)
+2026-27  train    spread DK-postfinal-close-proxy    30      0 | baseline-only logloss 0.7487 (n=30)
+2026-27  train    spread PM-NBA-final-score-diagnostic    29      0 | baseline-only logloss 0.7595 (n=29)
+2026-27  train    total  DK-postfinal-close-proxy    30      0 | baseline-only logloss 0.8375 (n=30)
+2026-27  train    total  PM-NBA-final-score-diagnostic    29      0 | baseline-only logloss 0.8500 (n=29)
+2026-27  tune     ml     DK-postfinal-close-proxy    20      0 | baseline-only logloss 0.5509 (n=20)
+2026-27  tune     ml     PM-explicit-full-game-OT    20      0 | baseline-only logloss 0.5509 (n=20)
+2026-27  tune     ml     all_game_ml           20      0 | baseline-only logloss 0.5509 (n=20)
+2026-27  tune     spread DK-postfinal-close-proxy    20      0 | baseline-only logloss 0.8839 (n=20)
+2026-27  tune     spread PM-NBA-final-score-diagnostic    20      0 | baseline-only logloss 0.8839 (n=20)
+2026-27  tune     total  DK-postfinal-close-proxy    20      0 | baseline-only logloss 0.7282 (n=20)
+2026-27  tune     total  PM-NBA-final-score-diagnostic    19      0 | baseline-only logloss 0.7189 (n=19)

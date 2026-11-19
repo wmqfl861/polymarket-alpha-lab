@@ -1,0 +1,116 @@
+# GitHub Actions evidence for the 2026-11-19 audit (repository wmqfl861/polymarket-alpha-lab)
+# Collected read-only through the GitHub REST API on 2026-11-19 (UTC). Columns:
+# run id | workflow | event | head commit | attempt | created (UTC) | conclusion
+
+## Runs referenced by the report
+43608957166 | Offline verification | push | f5ca185a50ad6349275cd79dabd5b701b65a2548 | 1 | 2026-11-14T15:12:50Z | success
+    job 132489533123 | offline | success
+43608957129 | Native project PostgreSQL | push | f5ca185a50ad6349275cd79dabd5b701b65a2548 | 1 | 2026-11-14T15:12:50Z | success
+    job 132489533070 | linux-native-papersim | success
+    job 132489533301 | linux-native-dispatch | success
+    job 132489533324 | linux-native-storage | success
+    job 132489533352 | linux-native-research | success
+    job 132489534342 | windows-native-${{ matrix.partition }} | skipped
+    job 132489535185 | windows-native | skipped
+    job 132491485780 | linux-native | success
+43795350447 | Offline verification | push | d83ab0645b83d5f279c628e35eae0df49a92594f | 1 | 2026-11-16T02:58:44Z | success
+    job 133062811268 | offline | success
+43795350382 | Native project PostgreSQL | push | d83ab0645b83d5f279c628e35eae0df49a92594f | 1 | 2026-11-16T02:58:44Z | success
+    job 133062811509 | linux-native-storage | success
+    job 133062811672 | linux-native-dispatch | success
+    job 133062811720 | linux-native-papersim | success
+    job 133062811721 | linux-native-research | success
+    job 133062812464 | windows-native-${{ matrix.partition }} | skipped
+    job 133062813168 | windows-native | skipped
+    job 133064612656 | linux-native | success
+43884537577 | Offline verification | push | cae892c8e90ab0842d610bbbdea9e454be933456 | 1 | 2026-11-16T14:19:36Z | failure
+    job 133358998009 | offline | failure | failed step: Run sanitized full offline verification
+43884537518 | Native project PostgreSQL | push | cae892c8e90ab0842d610bbbdea9e454be933456 | 1 | 2026-11-16T14:19:36Z | success
+    job 133358999052 | linux-native-papersim | success
+    job 133358999305 | linux-native-dispatch | success
+    job 133358999623 | linux-native-storage | success
+    job 133358999688 | linux-native-research | success
+    job 133359001394 | windows-native-${{ matrix.partition }} | skipped
+    job 133359002248 | windows-native | skipped
+    job 133363099826 | linux-native | success
+44448766487 | Offline verification | pull_request | 53a2b4f05879227c04208470fb7352186b2ffcbb | 1 | 2026-11-19T03:03:57Z | success
+    job 135307265104 | offline | success
+44448766473 | Native project PostgreSQL | pull_request | 53a2b4f05879227c04208470fb7352186b2ffcbb | 1 | 2026-11-19T03:03:57Z | success
+    job 135307265219 | linux-native-papersim | success
+    job 135307265515 | linux-native-research | success
+    job 135307265572 | linux-native-storage | success
+    job 135307265690 | linux-native-dispatch | success
+    job 135307267073 | windows-native-${{ matrix.partition }} | skipped
+    job 135307267274 | windows-native | skipped
+    job 135309353269 | linux-native | success
+44448766576 | Research paper bridge | pull_request | 53a2b4f05879227c04208470fb7352186b2ffcbb | 1 | 2026-11-19T03:03:57Z | success
+    job 135307265199 | windows-paper | success
+44454326952 | Offline verification | push | c4367b6b3ce4d957ce79ce645a7ab3425be5a133 | 1 | 2026-11-19T03:51:29Z | success
+    job 135325551071 | offline | success
+44454327041 | Native project PostgreSQL | push | c4367b6b3ce4d957ce79ce645a7ab3425be5a133 | 1 | 2026-11-19T03:51:29Z | success
+    job 135325551594 | linux-native-research | success
+    job 135325551633 | linux-native-papersim | success
+    job 135325551687 | linux-native-storage | success
+    job 135325551732 | linux-native-dispatch | success
+    job 135325553354 | windows-native-${{ matrix.partition }} | skipped
+    job 135325553845 | windows-native | skipped
+    job 135327610234 | linux-native | success
+
+## pytest summary lines extracted from the job logs
+job 135325551071 (offline @c4367b6b (run 44454326952)):
+    42376 passed, 177 skipped, 20 warnings in 363.22s (0:06:03)
+job 135325551633 (linux-native-papersim @c4367b6b (run 44454327041)):
+    351 passed in 18.67s
+job 135325551594 (linux-native-research @c4367b6b):
+    1227 passed, 18 skipped in 107.13s (0:01:47)
+job 135325551687 (linux-native-storage @c4367b6b):
+    320 passed, 2 skipped in 75.08s (0:01:15)
+    version-switch native: PASS; old-initialize:13.2s;lifecycle-backup:10.0s;current-selection:5.8s;old-rollback:4.4s;bundle-refusals:8.6s;pending-backup-refusals:10.8s;explicit-migration:7.8s
+    89 passed in 65.01s (0:01:05)
+job 135325551732 (linux-native-dispatch @c4367b6b):
+    1933 passed, 15 skipped in 287.41s (0:04:47)
+job 133358998009 (offline @cae892c8 (run 43884537577)):
+    FAILED tests/test_init_lazy_imports.py::test_papersim_cli_startup_module_count - AssertionError: papersim.cli startup loads 21 project modules (limit 20):
+    1 failed, 42198 passed, 177 skipped, 20 warnings in 532.62s (0:08:52)
+
+## All runs on main since 2026-11-12 (newest first)
+44454327041 | Native project PostgreSQL | push | c4367b6b | 2026-11-19T03:51:29Z | success
+44454326952 | Offline verification | push | c4367b6b | 2026-11-19T03:51:29Z | success
+43884537577 | Offline verification | push | cae892c8 | 2026-11-16T14:19:36Z | failure
+43884537518 | Native project PostgreSQL | push | cae892c8 | 2026-11-16T14:19:36Z | success
+43868847397 | Native project PostgreSQL | schedule | 12b76f6b | 2026-11-16T12:41:20Z | success
+43862631423 | Native project PostgreSQL | push | 12b76f6b | 2026-11-16T12:00:08Z | success
+43862631656 | Offline verification | push | 12b76f6b | 2026-11-16T12:00:08Z | success
+43862583057 | Graph Update: uv in /. #1708564084 | dynamic | d0c331ac | 2026-11-16T11:59:48Z | success
+43836000354 | Offline verification | push | d0c331ac | 2026-11-16T09:01:03Z | failure
+43836000123 | Native project PostgreSQL | push | d0c331ac | 2026-11-16T09:01:03Z | failure
+43822513502 | Native project PostgreSQL | push | 1c720abc | 2026-11-16T07:15:25Z | success
+43822513525 | Offline verification | push | 1c720abc | 2026-11-16T07:15:25Z | success
+43819998740 | Native project PostgreSQL | push | b0172dfb | 2026-11-16T06:54:23Z | failure
+43819998760 | Offline verification | push | b0172dfb | 2026-11-16T06:54:23Z | success
+43801272610 | Offline verification | push | 4c8bec2f | 2026-11-16T03:58:38Z | success
+43795350447 | Offline verification | push | d83ab064 | 2026-11-16T02:58:44Z | success
+43795350382 | Native project PostgreSQL | push | d83ab064 | 2026-11-16T02:58:44Z | success
+43779672724 | Native project PostgreSQL | push | 0ca71e42 | 2026-11-16T00:19:21Z | failure
+43779672762 | Offline verification | push | 0ca71e42 | 2026-11-16T00:19:21Z | success
+43766159509 | Native project PostgreSQL | push | ae7c513a | 2026-11-15T21:53:18Z | success
+43766159552 | Offline verification | push | ae7c513a | 2026-11-15T21:53:18Z | success
+43753647116 | Native project PostgreSQL | push | 49951207 | 2026-11-15T19:39:33Z | failure
+43753647156 | Offline verification | push | 49951207 | 2026-11-15T19:39:33Z | success
+43741792290 | Offline verification | push | 29f043f7 | 2026-11-15T17:33:40Z | failure
+43741792178 | Native project PostgreSQL | push | 29f043f7 | 2026-11-15T17:33:39Z | failure
+43622778390 | Offline verification | push | ca16ac47 | 2026-11-14T17:44:57Z | success
+43616283477 | Offline verification | push | 268efa70 | 2026-11-14T16:33:48Z | success
+43608957129 | Native project PostgreSQL | push | f5ca185a | 2026-11-14T15:12:50Z | success
+43608957166 | Offline verification | push | f5ca185a | 2026-11-14T15:12:50Z | success
+43590617596 | Offline verification | push | ad001c77 | 2026-11-14T11:33:49Z | success
+43590617533 | Native project PostgreSQL | push | ad001c77 | 2026-11-14T11:33:49Z | failure
+43551531524 | Offline verification | push | 6add9b04 | 2026-11-14T03:25:07Z | success
+43551531643 | Native project PostgreSQL | push | 6add9b04 | 2026-11-14T03:25:07Z | failure
+43453970876 | Native project PostgreSQL | workflow_dispatch | 9286eefb | 2026-11-13T15:34:30Z | failure
+43431642731 | Offline verification | push | 9286eefb | 2026-11-13T13:12:19Z | success
+43431642963 | Native project PostgreSQL | push | 9286eefb | 2026-11-13T13:12:19Z | failure
+43404798264 | Native project PostgreSQL | push | 0eb2a096 | 2026-11-13T09:52:32Z | failure
+43404798203 | Offline verification | push | 0eb2a096 | 2026-11-13T09:52:32Z | success
+43342221238 | Native project PostgreSQL | push | 37b28895 | 2026-11-13T01:05:31Z | failure
+43342221407 | Offline verification | push | 37b28895 | 2026-11-13T01:05:31Z | failure
