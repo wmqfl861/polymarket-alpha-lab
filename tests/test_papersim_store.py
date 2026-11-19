@@ -317,6 +317,22 @@ def test_payload_digest_changes_when_any_candidate_changes():
         scan=scan, candidates=(candidate(),)).payload_sha256()
 
 
+def test_payload_digest_changes_when_event_fields_change():
+    # FX-26: the scan idempotency digest covers event_key/event_start_at,
+    # so replaying the same scan_key with a drifted key conflicts (the
+    # match key is part of the submitted content).
+    scan = store.ScanRunRecord(team='t', started_at=at(0), finished_at=at(1),
+                               code_commit='b' * 40, schema_version=1, gate_version='g')
+    base = store.ScanSubmission(scan=scan, candidates=(candidate(),))
+    keyed = store.ScanSubmission(scan=scan, candidates=(candidate(event_key='gamma:4242'),))
+    keyed_start = store.ScanSubmission(
+        scan=scan, candidates=(candidate(event_start_at=at(1)),))
+    assert base.payload_sha256() != keyed.payload_sha256()
+    assert base.payload_sha256() != keyed_start.payload_sha256()
+    assert keyed.payload_sha256() == store.ScanSubmission(
+        scan=scan, candidates=(candidate(event_key='gamma:4242'),)).payload_sha256()
+
+
 # ---------------------------------------------------------------------------
 # UNKNOWN / INSUFFICIENT semantics and association rules (09D v2 sections 4.1-3, 4.5)
 # ---------------------------------------------------------------------------

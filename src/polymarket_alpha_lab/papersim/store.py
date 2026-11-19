@@ -211,6 +211,60 @@ def scan_key(team, started_at, code_commit, gate_version, schema_version, params
     return sha256(material.encode('utf-8')).hexdigest()
 
 
+#: Market classes recognized by :func:`candidate_event_key` (FX-26).
+EVENT_KEY_CLASSES = ('sports', 'crypto', 'other')
+
+
+def _clean_text(value):
+    """Strip a string; blank/whitespace-only or non-str counts as missing."""
+    if type(value) is not str:
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def candidate_event_key(*, market_class: str,
+                        gamma_event_id: str | None = None,
+                        league: str | None = None, home: str | None = None,
+                        away: str | None = None, kickoff_day: str | None = None,
+                        asset: str | None = None, expiry_at: datetime | None = None,
+                        market_ref: str | None = None) -> str | None:
+    """The pure match key of one candidate's underlying event (FX-26, N-1).
+
+    Three shapes (fix-list FX-26): sports events key on the Gamma event
+    id, falling back to the canonical ``league|home|away|day`` string
+    when no id is available; crypto events key on the asset plus the UTC
+    expiry date; every other market keys on the market's own identity.
+    Insufficient inputs yield ``None`` -- no key is fabricated, and the
+    evaluation loader then keeps the frozen market-key clustering, so a
+    missing match key never silently widens or narrows an interval. The
+    kickoff day is a caller-normalized string and the expiry a tz-aware
+    datetime; this function never parses free text, reads clocks or
+    fetches anything.
+    """
+    normalized = _clean_text(market_class)
+    if normalized not in EVENT_KEY_CLASSES:
+        _fail('papersim_event_key_market_class_invalid')
+    if normalized == 'sports':
+        event_id = _clean_text(gamma_event_id)
+        if event_id is not None:
+            return f'gamma:{event_id}'
+        parts = [_clean_text(value) for value in (league, home, away, kickoff_day)]
+        if all(part is not None for part in parts):
+            return 'match:' + '|'.join(parts)
+        return None
+    if normalized == 'crypto':
+        asset_name = _clean_text(asset)
+        if asset_name is None or not isinstance(expiry_at, datetime) \
+                or expiry_at.tzinfo is None:
+            return None
+        return f'crypto:{asset_name}|{expiry_at.astimezone(UTC).date().isoformat()}'
+    identity = _clean_text(market_ref)
+    if identity is None:
+        return None
+    return f'market:{identity}'
+
+
 def validate_legacy_source(is_legacy, legacy_source_id) -> None:
     """legacy_source_id may be non-null only on legacy rows (P3-7)."""
     if type(is_legacy) is not bool:
@@ -509,6 +563,8 @@ class CandidateSubmission:
     yes_token_id: str | None = None
     no_token_id: str | None = None
     market_type: str | None = None
+    event_key: str | None = None
+    event_start_at: datetime | None = None
     binding_version: int = 1
     median_probability: Decimal | float | int | None = None
     variant_quotes: str | list = '[]'
@@ -548,6 +604,8 @@ class CandidateSubmission:
         if self.order_book is not None:
             _require_json_payload(self.order_book, 'order_book')
             _optional_timestamp(self.book_fetched_at, 'book_fetched_at')
+        _optional_text(self.event_key, 'event_key')
+        _optional_timestamp(self.event_start_at, 'event_start_at')
         validate_legacy_source(self.is_legacy, self.legacy_source_id)
         for evidence in self.price_evidence:
             evidence.validate()
@@ -647,6 +705,9 @@ class ScanSubmission:
                    'condition_id': candidate.condition_id, 'market_id': candidate.market_id,
                    'market_slug': candidate.market_slug, 'yes_token_id': candidate.yes_token_id,
                    'no_token_id': candidate.no_token_id, 'market_type': candidate.market_type,
+                   'event_key': candidate.event_key,
+                   'event_start_at': None if candidate.event_start_at is None
+                                     else candidate.event_start_at.isoformat(),
                    'binding_version': candidate.binding_version,
                    'median_probability': None if candidate.median_probability is None
                                          else str(candidate.median_probability),
