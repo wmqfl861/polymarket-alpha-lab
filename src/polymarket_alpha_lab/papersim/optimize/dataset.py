@@ -18,12 +18,17 @@ pipeline stays in the tool wrapper (``tools/wp_p4_history.load_history``).
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+import csv
 import hashlib
+import io
 import json
 import math
 import unicodedata
+
+from polymarket_alpha_lab.papersim.optimize.spec import canonical_value
 
 UTC = timezone.utc
 LEAGUES = {
@@ -522,3 +527,507 @@ def inventory(audit: HistoryAudit) -> list[dict]:
                        "prior_roster_observed": bool(before),
                        "new_to_league": sorted(now - before) if before else None})
     return result
+
+
+# ---------------------------------------------------------------------------
+# MO-4 dataset contracts and constructors (plan 05 node MO-4; design 04 s.8)
+# ---------------------------------------------------------------------------
+#
+# Disciplines pinned here:
+#
+# - LEAK GUARD. Every record carries a "when available" timestamp
+#   (``HistoricalMatch.available_at``, ``MarketObservation.observed_at``,
+#   ``Outcome.observed_at``). The historical barriers live in
+#   :func:`history_at` / :func:`build_folds` above (kickoff + completion lag
+#   strictly before the cutoff; the cutoff itself is the earliest of the
+#   official schedule and source clocks). Event-time replay sources carry
+#   ``available_at=None`` as an EXPLICIT declared assumption, never a filled
+#   value. Every constructor must pass a future-row injection test: rows
+#   dated at or after the analysis cutoff must not change what the cutoff
+#   can see.
+#
+# - REGISTRATION IS THE RUNNER'S DUTY. Raw bytes belong in
+#   ``papersim.snapshots`` (``papersim.snapshots.register_snapshot``); these
+#   constructors open no connection and therefore CANNOT verify
+#   registration. They only compute or accept a digest and cite it in the
+#   manifest. The MO-6 runner registers before citing (design 04 s.9).
+#
+# - FOLD OWNERSHIP. Design 04 s.8 lists fold generation under
+#   ``optimize/walkforward.py`` (MO-3). The match-week folds
+#   (``history_at``/``build_folds``) live HERE because node MO-4 moves the
+#   wp_p4_history pure logic as one verbatim unit; MO-3's walkforward module
+#   imports and wraps these instead of copying them.
+#
+# - NO FILE PERSISTENCE. Constructors take bytes or in-memory rows only;
+#   this module opens no path for reading or writing (tests may use
+#   ``pytest`` ``tmp_path``; that is test furniture, not persistence).
+
+#: Contract identity of the dataset layer (ModelSpec.data_contract cites it).
+DATASET_CONTRACT_VERSION = "optimize-dataset/1"
+
+#: Dataset origins: registered snapshots, managed-store rows, frozen research.
+ORIGIN_SNAPSHOT = "registered_snapshot"
+ORIGIN_MANAGED = "managed_store"
+ORIGIN_FROZEN = "frozen_research"
+
+#: Snapshot kinds a constructor accepts. ``intl_snapshot`` / ``espn_nba_snapshot``
+#: / ``kraken_candles`` pin provenance only in this node: xG is part of the
+#: match-record contract and is never fabricated, so their row-level assembly
+#: ships with the family adapters that own the correct record shape
+#: (MO-5b/MO-5c/MO-10). Naming follows the existing snapshot kind convention
+#: (``clob_book``, ``gamma_market``).
+SNAPSHOT_KINDS = (
+    "understat_xg", "fotmob_xg", "intl_snapshot", "espn_nba_snapshot", "kraken_candles",
+)
+
+#: Frozen research datasets, regression anchors only (never optimizer input).
+FROZEN_NEW_SOCCER = "new-soccer/holdout_predictions"
+FROZEN_NBA = "nba/predictions"
+FROZEN_DATASET_IDS = (FROZEN_NEW_SOCCER, FROZEN_NBA)
+
+
+@dataclass(frozen=True)
+class MarketObservation:
+    """One market quote observation tied to a match key.
+
+    Distinct from the research-internal ``tools/wp_p4_market.MarketObservation``
+    (a different, tool-local shape); this is the optimizer data contract.
+    ``mid`` is the bid/ask midpoint of the observation (stored mid when
+    present, else ``(bid + ask) / 2`` -- the evaluation decision-mid rule).
+    """
+
+    match_key: str
+    market_type: str
+    line: float | None
+    side: str
+    observed_at: datetime
+    mid: float
+    source: str
+    snapshot_sha256: str | None = None
+
+
+@dataclass(frozen=True)
+class Outcome:
+    """The effective result of one market identity."""
+
+    market_key: str
+    outcome: str
+    observed_at: datetime
+    source: str
+
+
+@dataclass(frozen=True)
+class DatasetManifest:
+    """Content-identity card of one dataset (design 04 s.9 snapshot citing).
+
+    ``manifest_sha256`` is the full-identity digest (references included):
+    the same bytes construct bit-identical manifests. ``Dataset.content_sha256``
+    complements it with a content-level digest that is insensitive to byte
+    spelling (key order, ``1.30`` vs ``1.3``) while the referenced snapshot
+    digests still differ.
+    """
+
+    origin: str
+    snapshot_sha256: tuple[str, ...]
+    match_rows: int
+    observation_rows: int
+    outcome_rows: int
+    anchor_rows: int
+    first_kickoff: str | None
+    last_kickoff: str | None
+    contract_version: str = DATASET_CONTRACT_VERSION
+
+    def canonical_json(self) -> str:
+        return json.dumps(
+            {"anchor_rows": self.anchor_rows,
+             "contract_version": self.contract_version,
+             "first_kickoff": self.first_kickoff,
+             "last_kickoff": self.last_kickoff,
+             "match_rows": self.match_rows,
+             "observation_rows": self.observation_rows,
+             "origin": self.origin,
+             "outcome_rows": self.outcome_rows,
+             "snapshot_sha256": list(self.snapshot_sha256)},
+            sort_keys=True, separators=(",", ":"))
+
+    def manifest_sha256(self) -> str:
+        return hashlib.sha256(self.canonical_json().encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True)
+class Dataset:
+    """One constructed dataset plus its manifest.
+
+    ``anchor_rows`` is populated only by :func:`from_frozen_research`:
+    normalized CSV rows (string cells; ``kickoff``/``forecast_as_of``/
+    ``tip_utc`` re-rendered as ISO Z) consumed by the MO-3 regression
+    anchors. ``notes`` carry structured ``code:detail`` entries (exclusions
+    and transitional barriers), never silent gaps.
+    """
+
+    matches: tuple[HistoricalMatch, ...]
+    observations: tuple[MarketObservation, ...]
+    outcomes: tuple[Outcome, ...]
+    manifest: DatasetManifest
+    notes: tuple[str, ...] = ()
+    anchor_rows: tuple[Mapping[str, object], ...] = field(default=())
+
+    def content_sha256(self) -> str:
+        """Digest over normalized row content only.
+
+        Key order and float spelling are canonicalized away (via
+        ``optimize.spec.canonical_value``); snapshot byte identity and row
+        counts beyond the content itself are NOT part of this digest.
+        """
+        payload = {
+            "anchor_rows": [canonical_value(dict(row)) for row in
+                            sorted(self.anchor_rows, key=lambda row: sorted(row.items()))],
+            "matches": [_match_content(m) for m in
+                        sorted(self.matches, key=lambda m: (m.league, m.season, iso(m.kickoff), m.match_id))],
+            "observations": [canonical_value(
+                {"line": obs.line, "market_type": obs.market_type, "match_key": obs.match_key,
+                 "mid": obs.mid, "observed_at": iso(obs.observed_at), "side": obs.side,
+                 "source": obs.source}) for obs in
+                sorted(self.observations, key=lambda obs: (obs.match_key, iso(obs.observed_at),
+                                                           obs.market_type, obs.side))],
+            "outcomes": [canonical_value(
+                {"market_key": out.market_key, "observed_at": iso(out.observed_at),
+                 "outcome": out.outcome, "source": out.source}) for out in
+                sorted(self.outcomes, key=lambda out: (out.market_key, iso(out.observed_at), out.outcome))],
+        }
+        return hashlib.sha256(canonical_value(payload).encode("utf-8")).hexdigest()
+
+
+def _match_content(match: HistoricalMatch) -> str:
+    return canonical_value({
+        "away_goals": match.away_goals, "away_team": match.away_team, "away_xg": match.away_xg,
+        "available_at": iso(match.available_at) if match.available_at is not None else None,
+        "home_goals": match.home_goals, "home_team": match.home_team, "home_xg": match.home_xg,
+        "kickoff": iso(match.kickoff), "league": match.league, "match_id": match.match_id,
+        "matchweek": match.matchweek, "season": match.season,
+    })
+
+
+def _require_digest(value: str) -> str:
+    """Validate a caller-supplied digest (mirrors snapshots.digest rules)."""
+    if not isinstance(value, str) or len(value) != 64 \
+            or any(character not in "0123456789abcdef" for character in value):
+        raise ValueError("dataset_snapshot_digest_invalid")
+    return value
+
+
+def _require_content(content: object) -> bytes:
+    if not isinstance(content, (bytes, bytearray)) or len(content) == 0:
+        raise ValueError("dataset_snapshot_content_bytes_required")
+    return bytes(content)
+
+
+def _require_field(row: object, name: str) -> object:
+    """Fail closed on a structurally missing column (``None`` is missing)."""
+    if not isinstance(row, Mapping) or name not in row or row[name] is None:
+        raise ValueError(f"dataset_missing_field:{name}")
+    return row[name]
+
+
+def _json_object(content: bytes) -> dict:
+    try:
+        payload = json.loads(content)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise ValueError("dataset_snapshot_json_invalid") from None
+    if not isinstance(payload, dict):
+        # Root-type contract mirrors papersim.xg.load_xg_payload (xg.py).
+        raise ValueError("dataset_snapshot_root_not_object")
+    return payload
+
+
+def _matches_from_xg_payload(payload: dict, kind: str) -> tuple[HistoricalMatch, ...]:
+    """Parse a multi-league xG snapshot (Understat/FotMob block shape).
+
+    Without an official fixture map every ``isResult`` row is kept with
+    ``matchweek=None`` (the archive parser calls these blocks prior-season
+    warmup material); the fail-closed identity, score and duplicate rules of
+    :func:`parse_matches` apply unchanged.
+    """
+    matches: list[HistoricalMatch] = []
+    for key in sorted(payload):
+        if not isinstance(key, str):
+            raise ValueError(f"dataset_snapshot_league_unknown:{key!r}")
+        league, separator, season = key.rpartition("_")
+        if not separator or league not in LEAGUES:
+            raise ValueError(f"dataset_snapshot_league_unknown:{key!r}")
+        block = payload[key]
+        if not isinstance(block, Mapping) or "dates" not in block:
+            raise ValueError(f"dataset_missing_field:dates:{key}")
+        parsed, _ = parse_matches(block, league, season, (), source_path=kind)
+        matches.extend(parsed)
+    return tuple(sorted(matches, key=lambda m: (m.league, m.season, m.kickoff, m.match_id)))
+
+
+def from_snapshot_bytes(*, content: bytes, kind: str,
+                        content_sha256: str | None = None) -> Dataset:
+    """Construct a dataset from the exact bytes of one registered snapshot.
+
+    ``content_sha256`` may be supplied by a caller that already registered
+    the bytes (it is validated, not recomputed); by default the digest is
+    computed here. Registration itself is the MO-6 runner's duty (see the
+    disciplines above): this constructor is connectionless and cites the
+    digest in the manifest only.
+    """
+    blob = _require_content(content)
+    if kind not in SNAPSHOT_KINDS:
+        raise ValueError(f"dataset_snapshot_kind_unknown:{kind!r}")
+    digest = _require_digest(content_sha256) if content_sha256 is not None \
+        else hashlib.sha256(blob).hexdigest()
+    if kind in ("understat_xg", "fotmob_xg"):
+        matches = _matches_from_xg_payload(_json_object(blob), kind)
+        kickoffs = [match.kickoff for match in matches]
+        manifest = DatasetManifest(
+            ORIGIN_SNAPSHOT, (digest,), len(matches), 0, 0, 0,
+            iso(min(kickoffs)) if kickoffs else None,
+            iso(max(kickoffs)) if kickoffs else None)
+        notes = ("Event-time replay only: archived final xG lacks original publication "
+                 "timestamps; available_at remains null.",)
+    else:
+        _json_object(blob)  # Fail closed on non-JSON or non-object content.
+        matches = ()
+        manifest = DatasetManifest(ORIGIN_SNAPSHOT, (digest,), 0, 0, 0, 0, None, None)
+        notes = (f"{kind}: provenance pinned only; row assembly ships with its family "
+                 "adapter (MO-5b/MO-5c/MO-10) -- xG is part of the match-record "
+                 "contract and is never fabricated.",)
+    return Dataset(matches=matches, observations=(), outcomes=(),
+                   manifest=manifest, notes=notes)
+
+
+#: Read-only managed-store SELECTs whose row shapes :func:`from_managed_rows`
+#: consumes. The evidence statement extends the ``papersim.cli`` evaluation
+#: evidence SELECT (``_EVAL_EVIDENCE_SQL``) with ``evidence_id`` and
+#: ``observed_at`` (plan review P2-1): both are NOT NULL in the v2 core
+#: migration, and the first-DECISION / last-CLOSE selection is replicated by
+#: ``evidence_id`` ordering exactly like the evaluation queue builder. The
+#: candidates statement omits ``event_key`` / ``event_start_at`` until the
+#: FX-26 migration lands; the constructor reads them as OPTIONAL keys.
+MANAGED_CANDIDATES_SQL = (
+    "SELECT candidate_id, condition_id, market_id, market_slug, market_type, side "
+    "FROM papersim.candidates ORDER BY candidate_id")
+MANAGED_EVIDENCE_SQL = (
+    "SELECT candidate_id, evidence_id, evidence_role, observed_at, model_probability, "
+    "mid, bid, ask, last, snapshot_sha256, source_kind "
+    "FROM papersim.candidate_price_evidence ORDER BY evidence_id")
+MANAGED_OUTCOMES_SQL = (
+    "SELECT outcome_id, condition_id, market_id, market_slug, outcome, observed_at, source_kind "
+    "FROM papersim.market_outcomes ORDER BY outcome_id")
+
+
+def _evidence_mid(row: Mapping) -> float | None:
+    """Decision mid: stored mid first, else the bid/ask midpoint (cli parity)."""
+    mid = row.get("mid")
+    if mid is not None:
+        return float(mid)
+    bid, ask = row.get("bid"), row.get("ask")
+    if bid is not None and ask is not None:
+        return (float(bid) + float(ask)) / 2.0
+    return None
+
+
+def from_managed_rows(*, candidate_rows, evidence_rows, outcome_rows) -> Dataset:
+    """Construct the market-observation dataset from managed-store rows.
+
+    Row shapes: the three ``MANAGED_*_SQL`` statements above (read-only;
+    the caller runs them through the reviewed connection adapter -- this
+    constructor opens no connection). Selection semantics match the
+    evaluation queue builder exactly: DECISION = smallest ``evidence_id``,
+    CLOSE = largest ``evidence_id``; the decision mid follows
+    ``papersim.cli._decision_mid``; the effective outcome reuses the pure
+    ``papersim.store.select_effective_outcome`` recursion (latest
+    non-UNKNOWN, tie-break ``outcome_id`` DESC), so MO-3/MO-4 score the
+    same rows the CLI evaluates.
+
+    Leak guards (FX-26 transitional semantics, plan review P2-2):
+    ``DECISION.observed_at <= CLOSE.observed_at <= effective outcome
+    .observed_at`` is enforced and violations are rejected. When the
+    candidate row carries ``event_start_at`` (post-FX-26 column), the close
+    and decision must both precede it. Until that column exists the
+    "close before kickoff" judgment CANNOT be made: the observation is
+    still constructed and the gap is recorded as a structured
+    ``dataset_close_barrier_pending_event_start:<key>`` note -- never
+    fabricated, never silently skipped.
+    """
+    from polymarket_alpha_lab.papersim import store  # Lazy: stdlib-only module.
+
+    candidates, seen_candidates = [], set()
+    for row in candidate_rows:
+        candidate_id = int(_require_field(row, "candidate_id"))
+        if candidate_id in seen_candidates:
+            raise ValueError(f"dataset_duplicate_match:candidate_id={candidate_id}")
+        seen_candidates.add(candidate_id)
+        identity = None
+        for column in ("condition_id", "market_id", "market_slug"):
+            value = row.get(column)
+            if value:
+                identity = str(value)
+                break
+        line = row.get("line")
+        candidates.append({
+            "candidate_id": candidate_id, "identity": identity,
+            "market_type": str(row.get("market_type") or ""),
+            "line": float(line) if line is not None else None,
+            "side": str(_require_field(row, "side")),
+            "event_start_at": row.get("event_start_at"),
+        })
+
+    decisions: dict[int, dict] = {}
+    closes: dict[int, dict] = {}
+    digests: set[str] = set()
+    for row in evidence_rows:
+        candidate_id = int(_require_field(row, "candidate_id"))
+        evidence_id = int(_require_field(row, "evidence_id"))
+        role = str(_require_field(row, "evidence_role"))
+        observed_at = utc(_require_field(row, "observed_at"))
+        if role not in ("DECISION", "CLOSE"):
+            raise ValueError(f"dataset_evidence_role_invalid:{role!r}")
+        slot = decisions if role == "DECISION" else closes
+        better = (role == "DECISION" and (candidate_id not in decisions
+                                          or evidence_id < decisions[candidate_id]["evidence_id"])) or \
+                 (role == "CLOSE" and (candidate_id not in closes
+                                       or evidence_id > closes[candidate_id]["evidence_id"]))
+        if better:
+            slot[candidate_id] = {"evidence_id": evidence_id, "observed_at": observed_at, "row": row}
+        digest = row.get("snapshot_sha256")
+        if digest:
+            digests.add(str(digest))
+
+    by_identity: dict[str, list] = {}
+    for row in outcome_rows:
+        _require_field(row, "outcome_id")
+        for column in ("condition_id", "market_id", "market_slug"):
+            value = row.get(column)
+            if value:
+                by_identity.setdefault(str(value), []).append(row)
+    outcomes, effective_at = [], {}
+    for identity in sorted(by_identity):
+        effective = store.select_effective_outcome(by_identity[identity])
+        if effective.outcome in ("YES", "NO", "YES-basket"):
+            observed_at = utc(effective.observed_at)
+            source = f"papersim.market_outcomes:{effective.source_kind}" \
+                if effective.source_kind else "papersim.market_outcomes"
+            outcomes.append(Outcome(identity, effective.outcome, observed_at, source))
+            effective_at[identity] = observed_at
+
+    observations, exclusions, pending_barrier = [], [], []
+    for candidate in candidates:
+        candidate_id, identity = candidate["candidate_id"], candidate["identity"]
+        if identity is None:
+            exclusions.append(f"dataset_market_identity_missing:candidate_id={candidate_id}")
+            continue
+        decision = decisions.get(candidate_id)
+        if decision is None:
+            exclusions.append(f"dataset_decision_evidence_missing:{identity}")
+            continue
+        mid = _evidence_mid(decision["row"])
+        if mid is None:
+            exclusions.append(f"dataset_decision_price_missing:{identity}")
+            continue
+        if not math.isfinite(mid) or not 0.0 < mid < 1.0:
+            exclusions.append(f"dataset_decision_price_invalid:{identity}")
+            continue
+        close = closes.get(candidate_id)
+        if close is not None:
+            if close["observed_at"] < decision["observed_at"]:
+                raise ValueError(f"dataset_time_inversion:decision_after_close:{identity}")
+            settled = effective_at.get(identity)
+            if settled is not None and close["observed_at"] > settled:
+                raise ValueError(f"dataset_time_inversion:close_after_outcome:{identity}")
+        start = candidate["event_start_at"]
+        if start is not None:
+            start = utc(start)
+            if decision["observed_at"] >= start:
+                raise ValueError(f"dataset_time_inversion:decision_after_kickoff:{identity}")
+            if close is not None and close["observed_at"] >= start:
+                raise ValueError(f"dataset_time_inversion:close_after_kickoff:{identity}")
+        elif close is not None:
+            pending_barrier.append(identity)
+        observations.append(MarketObservation(
+            match_key=identity, market_type=candidate["market_type"], line=candidate["line"],
+            side=candidate["side"], observed_at=decision["observed_at"], mid=mid,
+            source="papersim.candidate_price_evidence",
+            snapshot_sha256=decision["row"].get("snapshot_sha256")))
+
+    starts = [utc(candidate["event_start_at"]) for candidate in candidates
+              if candidate["event_start_at"] is not None]
+    manifest = DatasetManifest(
+        ORIGIN_MANAGED, tuple(sorted(digests)), len(candidates), len(observations),
+        len(outcomes), 0, iso(min(starts)) if starts else None,
+        iso(max(starts)) if starts else None)
+    notes = (*exclusions, *(f"dataset_close_barrier_pending_event_start:{key}"
+                            for key in sorted(pending_barrier)))
+    return Dataset(matches=(), observations=tuple(observations), outcomes=tuple(outcomes),
+                   manifest=manifest, notes=notes)
+
+
+def _frozen_anchor_rows(content: bytes, dataset_id: str) -> tuple[tuple[Mapping[str, object], ...], tuple[datetime, ...]]:
+    if dataset_id == FROZEN_NEW_SOCCER:
+        required = ("league", "id", "kickoff", "forecast_as_of", "home", "away",
+                    "hg_90", "ag_90", "market")
+    else:
+        required = ("espn_event_id", "tip_utc", "home", "away", "market", "line",
+                    "outcome", "split", "source")
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError:
+        raise ValueError("dataset_frozen_encoding_invalid") from None
+    rows = list(csv.DictReader(io.StringIO(text)))
+    if not rows:
+        raise ValueError("dataset_frozen_rows_missing")
+    anchor, kickoffs, seen = [], [], set()
+    for row in rows:
+        for column in required:
+            if not row.get(column):
+                raise ValueError(f"dataset_missing_field:{column}")
+        if dataset_id == FROZEN_NEW_SOCCER:
+            kickoff, forecast = utc(row["kickoff"]), utc(row["forecast_as_of"])
+            if forecast >= kickoff:
+                raise ValueError(
+                    f"dataset_time_inversion:forecast_not_before_kickoff:{row['league']}/{row['id']}")
+            key = (row["league"], row["id"], row["market"])
+            anchor.append({**row, "kickoff": iso(kickoff), "forecast_as_of": iso(forecast)})
+        else:
+            kickoff = utc(row["tip_utc"])
+            key = (row["espn_event_id"], row["market"], row["line"], row["outcome"],
+                   row["split"], row["source"])
+            anchor.append({**row, "tip_utc": iso(kickoff)})
+        if key in seen:
+            raise ValueError(f"dataset_duplicate_match:{'/'.join(key)}")
+        seen.add(key)
+        kickoffs.append(kickoff)
+    return tuple(anchor), tuple(kickoffs)
+
+
+def from_frozen_research(*, content: bytes, dataset_id: str,
+                         expected_sha256: str | None = None) -> Dataset:
+    """Construct a regression-anchor dataset from frozen research bytes.
+
+    Frozen research files (``new-soccer/holdout_predictions.csv`` and
+    ``nba/predictions.csv`` under ``docs/paper-sim/research/``) are anchors
+    ONLY: ``manifest.origin`` is ``frozen_research`` and the MO-6 runner
+    rejects this origin for anything but anchor recomputation. Row keys:
+    new-soccer ``(league, id, market)``; NBA ``(espn_event_id, market, line,
+    outcome, split, source)`` -- the source dimension distinguishes the
+    same game/market observed by different feeds. ``expected_sha256``
+    (e.g. the new-soccer ``MANIFEST.sha256`` pin) is verified before
+    parsing. The new-soccer leak guard requires ``forecast_as_of`` strictly
+    before ``kickoff`` on every row.
+    """
+    blob = _require_content(content)
+    if dataset_id not in FROZEN_DATASET_IDS:
+        raise ValueError(f"dataset_frozen_id_unknown:{dataset_id!r}")
+    digest = hashlib.sha256(blob).hexdigest()
+    if expected_sha256 is not None and _require_digest(expected_sha256) != digest:
+        raise ValueError("dataset_frozen_digest_mismatch")
+    anchor, kickoffs = _frozen_anchor_rows(blob, dataset_id)
+    manifest = DatasetManifest(
+        ORIGIN_FROZEN, (digest,), 0, 0, 0, len(anchor),
+        iso(min(kickoffs)), iso(max(kickoffs)))
+    notes = ("frozen research rows are regression anchors only; origin=frozen_research "
+             "never feeds optimizer training (runner-side rejection lands with MO-6).",)
+    return Dataset(matches=(), observations=(), outcomes=(), manifest=manifest,
+                   notes=notes, anchor_rows=anchor)
