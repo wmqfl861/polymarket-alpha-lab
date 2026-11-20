@@ -1,0 +1,2356 @@
+{
+ "baseline_commit": "4c8bec2fdce31fec3a8ec06a6ab93a25e4d7fc69",
+ "batch": "B6",
+ "counts": {
+  "files": 90,
+  "lines": 46510,
+  "root_exports": 0
+ },
+ "dependency_check": {
+  "canonical_order": [
+   "B1",
+   "B2",
+   "B3",
+   "B4",
+   "B5",
+   "B6",
+   "B7",
+   "B8"
+  ],
+  "cross_family_cycles": [],
+  "entry_script_tool_workflow_consumers": {},
+  "k0_dependency_leaks": [],
+  "reasons": [
+   "shared test files with module-scope imports spanning batches (5)",
+   "UNKNOWN dynamic references in test files remaining at this batch (24 files) -- manual review required (plan 3.3 item 6)"
+  ],
+  "retained_src_dependents": [],
+  "unknown_consumers_in_retained_surfaces": [],
+  "unknown_test_references_pending_manual_review": [
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_action_gated_strategy_recommendation_queue_history.py",
+      "kind": "attr:find_spec",
+      "line": 55
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_action_gated_strategy_recommendation_queue_history.py",
+      "kind": "attr:import_module",
+      "line": 57
+     }
+    ],
+    "test": "tests/test_action_gated_strategy_recommendation_queue_history.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "joined('poly', 'mark', 'et_alpha_lab.candidate_decision_base_rate_anchor_score')",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_candidate_decision_base_rate_anchor_score.py",
+      "kind": "attr:import_module",
+      "line": 29
+     }
+    ],
+    "test": "tests/test_candidate_decision_base_rate_anchor_score.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "joined('poly', 'mark', 'et_alpha_lab.candidate_decision_base_rate_drift_score')",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_candidate_decision_base_rate_drift_score.py",
+      "kind": "attr:import_module",
+      "line": 22
+     }
+    ],
+    "test": "tests/test_candidate_decision_base_rate_drift_score.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "case['loader_module']",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_cli_db_connection_cleanup.py",
+      "kind": "attr:import_module",
+      "line": 127
+     }
+    ],
+    "test": "tests/test_cli_db_connection_cleanup.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "f'polymarket_alpha_lab.{module}'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_crypto_btc_evidence_scope.py",
+      "kind": "attr:import_module",
+      "line": 568
+     }
+    ],
+    "test": "tests/test_crypto_btc_evidence_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_env_example_coverage.py",
+      "kind": "attr:import_module",
+      "line": 21
+     }
+    ],
+    "test": "tests/test_env_example_coverage.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "f'polymarket_alpha_lab.{module_name}'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_recommendation_cycle_snapshot_scope.py",
+      "kind": "attr:import_module",
+      "line": 368
+     }
+    ],
+    "test": "tests/test_paper_recommendation_cycle_snapshot_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "full_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_recommendation_integration_boundary_scope.py",
+      "kind": "attr:import_module",
+      "line": 173
+     }
+    ],
+    "test": "tests/test_paper_recommendation_integration_boundary_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_strategy_cycle_report_history_gate_db_row.py",
+      "kind": "attr:import_module",
+      "line": 64
+     }
+    ],
+    "test": "tests/test_paper_strategy_cycle_report_history_gate_db_row.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "f'{PACKAGE_NAME}.probability_event_screen_phase1_boundary_report'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_readonly_boundary_scan.py",
+      "kind": "attr:import_module",
+      "line": 51
+     },
+     {
+      "expr": "f'{PACKAGE_NAME}.strategy_phase1_readiness_aggregator'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_readonly_boundary_scan.py",
+      "kind": "attr:import_module",
+      "line": 69
+     }
+    ],
+    "test": "tests/test_phase1_readonly_boundary_scan.py"
+   },
+   {
+    "count": 4,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 54
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 63
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 79
+     }
+    ],
+    "test": "tests/test_phase1_report_discovery_smoke.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_modules_import_no_io.py",
+      "kind": "attr:import_module",
+      "line": 98
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_modules_import_no_io.py",
+      "kind": "attr:import_module",
+      "line": 111
+     }
+    ],
+    "test": "tests/test_phase1_report_modules_import_no_io.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_psycopg_adapter_cleanup.py",
+      "kind": "attr:import_module",
+      "line": 174
+     }
+    ],
+    "test": "tests/test_psycopg_adapter_cleanup.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_cost_threshold_policy.py",
+      "kind": "attr:find_spec",
+      "line": 26
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_cost_threshold_policy.py",
+      "kind": "attr:import_module",
+      "line": 27
+     }
+    ],
+    "test": "tests/test_research_cost_threshold_policy.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_signal_conflict_report.py",
+      "kind": "attr:find_spec",
+      "line": 34
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_signal_conflict_report.py",
+      "kind": "attr:import_module",
+      "line": 35
+     }
+    ],
+    "test": "tests/test_research_signal_conflict_report.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_probability_path_consistency_v10.py",
+      "kind": "attr:find_spec",
+      "line": 41
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_probability_path_consistency_v10.py",
+      "kind": "attr:import_module",
+      "line": 42
+     }
+    ],
+    "test": "tests/test_strategy_candidate_probability_path_consistency_v10.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_research_risk_register_v10.py",
+      "kind": "attr:find_spec",
+      "line": 30
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_research_risk_register_v10.py",
+      "kind": "attr:import_module",
+      "line": 31
+     }
+    ],
+    "test": "tests/test_strategy_candidate_research_risk_register_v10.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_scenario_balance_score_v2.py",
+      "kind": "attr:find_spec",
+      "line": 30
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_scenario_balance_score_v2.py",
+      "kind": "attr:import_module",
+      "line": 31
+     }
+    ],
+    "test": "tests/test_strategy_candidate_scenario_balance_score_v2.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py",
+      "kind": "attr:find_spec",
+      "line": 42
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py",
+      "kind": "attr:import_module",
+      "line": 43
+     }
+    ],
+    "test": "tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_digest.py",
+      "kind": "attr:find_spec",
+      "line": 39
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_digest.py",
+      "kind": "attr:import_module",
+      "line": 40
+     }
+    ],
+    "test": "tests/test_strategy_candidate_tail_risk_digest.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py",
+      "kind": "attr:find_spec",
+      "line": 42
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py",
+      "kind": "attr:import_module",
+      "line": 43
+     }
+    ],
+    "test": "tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "surface['module_name']",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_supabase_paper_recommendation_report_config.py",
+      "kind": "attr:import_module",
+      "line": 54
+     }
+    ],
+    "test": "tests/test_supabase_paper_recommendation_report_config.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "import_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_team_diagnostics_phase1_boundary.py",
+      "kind": "attr:import_module",
+      "line": 141
+     }
+    ],
+    "test": "tests/test_team_diagnostics_phase1_boundary.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "PRODUCTION_IMPORT",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_team_evaluation_attempt_latest_read_scope.py",
+      "kind": "attr:import_module",
+      "line": 513
+     }
+    ],
+    "test": "tests/test_team_evaluation_attempt_latest_read_scope.py"
+   }
+  ],
+  "verdict": "PAUSE"
+ },
+ "doc_registry_removals": {
+  "polymarket_alpha_lab.probability_event_cost_adjusted_position_recommendation_report": {
+   "docs/index/phase1-module-index.md": [
+    114
+   ],
+   "docs/testing/phase1-node-test-manifest.md": [
+    72
+   ]
+  },
+  "polymarket_alpha_lab.probability_event_market_signal_risk_readiness_report": {
+   "docs/index/phase1-module-index.md": [
+    135
+   ],
+   "docs/testing/phase1-node-test-manifest.md": [
+    73
+   ]
+  },
+  "polymarket_alpha_lab.probability_event_recommendation_rank_explainability_report": {
+   "docs/index/phase1-module-index.md": [
+    115
+   ],
+   "docs/testing/phase1-node-test-manifest.md": [
+    74
+   ]
+  }
+ },
+ "entry_set_ref": "prune-manifest.json#entry_points",
+ "executed": false,
+ "executed_commit": null,
+ "exports_to_retire": [],
+ "family": "probability_",
+ "files": [
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1057,
+   "module": "polymarket_alpha_lab.probability_edge_sensitivity_report",
+   "path": "src/polymarket_alpha_lab/probability_edge_sensitivity_report.py",
+   "root_exports": [],
+   "sha256": "e3bd6bf126f702eb7743cf8bd747427ae7a42d85b5fc86ed23c1d613cafb5038",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_edge_sensitivity_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 558,
+   "module": "polymarket_alpha_lab.probability_event_bayesian_prior_update_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_bayesian_prior_update_readiness_report.py",
+   "root_exports": [],
+   "sha256": "4e8b7eb3ab207136f9aef00ee547fb26e8525eab9132c4b4e40ff93d507a7350",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_bayesian_prior_update_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 465,
+   "module": "polymarket_alpha_lab.probability_event_capital_lockup_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_capital_lockup_readiness_report.py",
+   "root_exports": [],
+   "sha256": "ebf6c7ab358a98907180dba70c9665df7be69b1fb9e55a78bdc63f448bac2592",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_capital_lockup_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 635,
+   "module": "polymarket_alpha_lab.probability_event_correlation_cluster_exposure_report",
+   "path": "src/polymarket_alpha_lab/probability_event_correlation_cluster_exposure_report.py",
+   "root_exports": [],
+   "sha256": "f7ad9026672ee89dc893da28448b399af960918db68949c367cd1e95ea80d03b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_probability_event_correlation_cluster_exposure_report.py"
+    },
+    {
+     "nodeid": "test_module_scope_is_pure_in_memory_readonly_report_only",
+     "scope": "function",
+     "test": "tests/test_probability_event_correlation_cluster_exposure_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 529,
+   "module": "polymarket_alpha_lab.probability_event_cost_adjusted_kelly_bound_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_cost_adjusted_kelly_bound_readiness_report.py",
+   "root_exports": [],
+   "sha256": "bbe9d48bc45091285a6f3ea146635c7eba4aaecae7e4f52ce20617c8337eefc7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_cost_adjusted_kelly_bound_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     114
+    ],
+    "docs/testing/phase1-node-test-manifest.md": [
+     72
+    ]
+   },
+   "lines": 784,
+   "module": "polymarket_alpha_lab.probability_event_cost_adjusted_position_recommendation_report",
+   "path": "src/polymarket_alpha_lab/probability_event_cost_adjusted_position_recommendation_report.py",
+   "root_exports": [],
+   "sha256": "05b1bdd4558dbbb06980e4a257660d42a444ee5cf29f147f36599341e9c86b5e",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_phase1_public_payload_digest_smoke.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase1_report_discovery_smoke.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase1_report_modules_import_no_io.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase1_strategy_stack_smoke.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_cost_adjusted_position_recommendation_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 345,
+   "module": "polymarket_alpha_lab.probability_event_cost_model_governance_report",
+   "path": "src/polymarket_alpha_lab/probability_event_cost_model_governance_report.py",
+   "root_exports": [],
+   "sha256": "8cc0985898a086d3a03d3da7febea3521667ad1575941163272308bb0c4fb98b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_cost_model_governance_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 334,
+   "module": "polymarket_alpha_lab.probability_event_cost_sensitivity_break_even_report",
+   "path": "src/polymarket_alpha_lab/probability_event_cost_sensitivity_break_even_report.py",
+   "root_exports": [],
+   "sha256": "2e60826c9dfa61f09fb0b49d535f6a46e893fed5baf3f67d49fd2060f5b98ded",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_cost_sensitivity_break_even_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 468,
+   "module": "polymarket_alpha_lab.probability_event_cost_to_edge_margin_of_safety_report",
+   "path": "src/polymarket_alpha_lab/probability_event_cost_to_edge_margin_of_safety_report.py",
+   "root_exports": [],
+   "sha256": "e7c77356b1059730329687896dd4939b5fd04c21cf7c5db8b4fdfc11e207f18b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_cost_to_edge_margin_of_safety_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 506,
+   "module": "polymarket_alpha_lab.probability_event_duplicate_exposure_collision_report",
+   "path": "src/polymarket_alpha_lab/probability_event_duplicate_exposure_collision_report.py",
+   "root_exports": [],
+   "sha256": "ae79ef4c718479755972c4428aeeba14a05cc10f86a44218cb802d76326f6515",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_probability_event_duplicate_exposure_collision_report.py"
+    },
+    {
+     "nodeid": "test_duplicate_exposure_collision_report_module_stays_leaf_readonly_report_only",
+     "scope": "function",
+     "test": "tests/test_probability_event_duplicate_exposure_collision_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 386,
+   "module": "polymarket_alpha_lab.probability_event_edge_stability_over_time_report",
+   "path": "src/polymarket_alpha_lab/probability_event_edge_stability_over_time_report.py",
+   "root_exports": [],
+   "sha256": "18e96b99dbb8b323ca036b273c5ca1f124e37c34904580e708f09090c496a0c2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_edge_stability_over_time_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 421,
+   "module": "polymarket_alpha_lab.probability_event_evidence_freshness_quorum_rollup_report",
+   "path": "src/polymarket_alpha_lab/probability_event_evidence_freshness_quorum_rollup_report.py",
+   "root_exports": [],
+   "sha256": "b93c01fac06bcd81919e5c2c9dfcae8ef8ef00fc12873d91b4a36d7a08771f49",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_evidence_freshness_quorum_rollup_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 418,
+   "module": "polymarket_alpha_lab.probability_event_expected_utility_rank_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_expected_utility_rank_readiness_report.py",
+   "root_exports": [],
+   "sha256": "5cdbe5f679627c66ec0eb8bd774781c1f1826d26c3e5cad8d69b669844ddd027",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_expected_utility_rank_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 479,
+   "module": "polymarket_alpha_lab.probability_event_expected_value_uncertainty_band_report",
+   "path": "src/polymarket_alpha_lab/probability_event_expected_value_uncertainty_band_report.py",
+   "root_exports": [],
+   "sha256": "4746cc94dff4cbab5aa0a0d4c4e91786f6a94a64dee5b335fee0c122fa85ba14",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_expected_value_uncertainty_band_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 606,
+   "module": "polymarket_alpha_lab.probability_event_final_review_exception_queue_report",
+   "path": "src/polymarket_alpha_lab/probability_event_final_review_exception_queue_report.py",
+   "root_exports": [],
+   "sha256": "5f38b5b374f484620da09c2250ce8289c8b67ec28bcc8b627d06b78884334d06",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_final_review_exception_queue_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 511,
+   "module": "polymarket_alpha_lab.probability_event_forecast_calibration_residual_report",
+   "path": "src/polymarket_alpha_lab/probability_event_forecast_calibration_residual_report.py",
+   "root_exports": [],
+   "sha256": "70aefae090da50dcfd03d9db86bf57e6927010384c8423d914ab817465671789",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_module",
+     "scope": "function",
+     "test": "tests/test_probability_event_forecast_calibration_residual_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 390,
+   "module": "polymarket_alpha_lab.probability_event_forecast_freshness_drift_report",
+   "path": "src/polymarket_alpha_lab/probability_event_forecast_freshness_drift_report.py",
+   "root_exports": [],
+   "sha256": "1d7fd5545945b4df32db06dda8034c6326d363c6b02b8be62581b9a206fa50d0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_forecast_freshness_drift_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 527,
+   "module": "polymarket_alpha_lab.probability_event_forecast_model_disagreement_report",
+   "path": "src/polymarket_alpha_lab/probability_event_forecast_model_disagreement_report.py",
+   "root_exports": [],
+   "sha256": "aa01ab7096d1cf10eae933fd6cad5bef5875b54f84552ae0ba1ccff1d1ed08b6",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_forecast_model_disagreement_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 635,
+   "module": "polymarket_alpha_lab.probability_event_implied_probability_sanity_band_report",
+   "path": "src/polymarket_alpha_lab/probability_event_implied_probability_sanity_band_report.py",
+   "root_exports": [],
+   "sha256": "bf358dd7363f1eb455e8690c6ad85fcdb2ed0e29015f702c7187e708f2247122",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_implied_probability_sanity_band_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 867,
+   "module": "polymarket_alpha_lab.probability_event_joint_gate_consistency_report",
+   "path": "src/polymarket_alpha_lab/probability_event_joint_gate_consistency_report.py",
+   "root_exports": [],
+   "sha256": "51b12cd03fe281ced4fec4dd07c84cb6a8de22d4369287c84484418ba1e1bf5c",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_probability_event_joint_gate_consistency_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 603,
+   "module": "polymarket_alpha_lab.probability_event_liquidity_cost_curve_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_liquidity_cost_curve_readiness_report.py",
+   "root_exports": [],
+   "sha256": "3ede6eeeb70ee860603c4a6160ad254ba66a8c6d8fd7783b1df1315f73aba446",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_liquidity_cost_curve_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 498,
+   "module": "polymarket_alpha_lab.probability_event_liquidity_exit_penalty_stress_report",
+   "path": "src/polymarket_alpha_lab/probability_event_liquidity_exit_penalty_stress_report.py",
+   "root_exports": [],
+   "sha256": "fd5d86ae38e1a0bc7ecc260d78efcb857001d4afca724dfce7f44c65da6f9977",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_liquidity_exit_penalty_stress_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 429,
+   "module": "polymarket_alpha_lab.probability_event_liquidity_exit_window_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_liquidity_exit_window_readiness_report.py",
+   "root_exports": [],
+   "sha256": "bc1443ec5cd3a2332c8e70c7fef5c9b86c9ee10f402c5a843c0237b8ca8fcae5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_liquidity_exit_window_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 539,
+   "module": "polymarket_alpha_lab.probability_event_liquidity_source_alignment_report",
+   "path": "src/polymarket_alpha_lab/probability_event_liquidity_source_alignment_report.py",
+   "root_exports": [],
+   "sha256": "55c91f38532104ec77c251d743ec528b1ec51d972b9d12c2a0abc75ef8a88f0b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_liquidity_source_alignment_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 236,
+   "module": "polymarket_alpha_lab.probability_event_manual_blocker_resolution_checklist_report",
+   "path": "src/polymarket_alpha_lab/probability_event_manual_blocker_resolution_checklist_report.py",
+   "root_exports": [],
+   "sha256": "87ed9104647ef7080b17bb88fbbdb7babe541420ce0f077bbda2a68dc9ff2b56",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_manual_blocker_resolution_checklist_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 380,
+   "module": "polymarket_alpha_lab.probability_event_manual_research_checklist_coverage_report",
+   "path": "src/polymarket_alpha_lab/probability_event_manual_research_checklist_coverage_report.py",
+   "root_exports": [],
+   "sha256": "853e9a93b64f9dd2dc498513d9c9e4254367ec366ab4c44fc21a7aad3ea994bf",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_manual_research_checklist_coverage_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 444,
+   "module": "polymarket_alpha_lab.probability_event_market_depth_decay_forecast_report",
+   "path": "src/polymarket_alpha_lab/probability_event_market_depth_decay_forecast_report.py",
+   "root_exports": [],
+   "sha256": "069ef60bb99e674e89a0376a979f22bfe41d987da3b2dc704bf2cb6a18530756",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_market_depth_decay_forecast_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 502,
+   "module": "polymarket_alpha_lab.probability_event_market_maker_adverse_selection_report",
+   "path": "src/polymarket_alpha_lab/probability_event_market_maker_adverse_selection_report.py",
+   "root_exports": [],
+   "sha256": "b70792dcdb80248f4e252fb204e027a8640a4e2b510ea02595cd2ea5ea73cd0f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_market_maker_adverse_selection_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 544,
+   "module": "polymarket_alpha_lab.probability_event_market_signal_half_life_report",
+   "path": "src/polymarket_alpha_lab/probability_event_market_signal_half_life_report.py",
+   "root_exports": [],
+   "sha256": "9935ea143cf20eb3dc37009a2cfba40929d9fba3f8aa5ec58fbee34b965c8374",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_market_signal_half_life_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     135
+    ],
+    "docs/testing/phase1-node-test-manifest.md": [
+     73
+    ]
+   },
+   "lines": 1288,
+   "module": "polymarket_alpha_lab.probability_event_market_signal_risk_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_market_signal_risk_readiness_report.py",
+   "root_exports": [],
+   "sha256": "7b885bfba9c0f56d9e7f7e8819de586d64b3b7042df77e1f69aaf2f71d790402",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_phase1_report_discovery_smoke.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase1_report_modules_import_no_io.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_market_signal_risk_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1110,
+   "module": "polymarket_alpha_lab.probability_event_market_specificity_digest",
+   "path": "src/polymarket_alpha_lab/probability_event_market_specificity_digest.py",
+   "root_exports": [],
+   "sha256": "241608fcba094974899deb40310ddf62b4aaff28168bfad17b66c0efff849bdb",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_market_specificity_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 458,
+   "module": "polymarket_alpha_lab.probability_event_multi_source_forecast_blend_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_multi_source_forecast_blend_readiness_report.py",
+   "root_exports": [],
+   "sha256": "d0126bebce2baf95fbb8b4d1e7864c2d641b2dcfc4598056ebfd5ba17e1fe877",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_multi_source_forecast_blend_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 355,
+   "module": "polymarket_alpha_lab.probability_event_news_catalyst_timing_risk_report",
+   "path": "src/polymarket_alpha_lab/probability_event_news_catalyst_timing_risk_report.py",
+   "root_exports": [],
+   "sha256": "ea0840ff3b7474b111f11fdf4d1e1381ee919f64230297bc732ad5eae697adde",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_news_catalyst_timing_risk_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 373,
+   "module": "polymarket_alpha_lab.probability_event_operator_decision_evidence_completeness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_operator_decision_evidence_completeness_report.py",
+   "root_exports": [],
+   "sha256": "5f2d10d89bae1dca1984933e49da7db9e3584f0534bd2f3a6b4112684ca1e000",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_operator_decision_evidence_completeness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 249,
+   "module": "polymarket_alpha_lab.probability_event_operator_packet_regression_safety_report",
+   "path": "src/polymarket_alpha_lab/probability_event_operator_packet_regression_safety_report.py",
+   "root_exports": [],
+   "sha256": "78f62c340091fa1b7946d61fa516e341f7312c403b82f55930a0af511fb2eb5b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_operator_packet_regression_safety_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 491,
+   "module": "polymarket_alpha_lab.probability_event_outcome_dependency_collision_report",
+   "path": "src/polymarket_alpha_lab/probability_event_outcome_dependency_collision_report.py",
+   "root_exports": [],
+   "sha256": "1032fe5833c1d156bf44e689e96a9965262ea680512e994d705202cd674ef3c9",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_outcome_dependency_collision_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 388,
+   "module": "polymarket_alpha_lab.probability_event_position_sizing_suggestion_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_position_sizing_suggestion_readiness_report.py",
+   "root_exports": [],
+   "sha256": "e245d54c4da74efe7a180f2847bfd2152ad2cffe324c99c05f4dc13bea5a46ea",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_position_sizing_suggestion_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     115
+    ],
+    "docs/testing/phase1-node-test-manifest.md": [
+     74
+    ]
+   },
+   "lines": 1247,
+   "module": "polymarket_alpha_lab.probability_event_recommendation_rank_explainability_report",
+   "path": "src/polymarket_alpha_lab/probability_event_recommendation_rank_explainability_report.py",
+   "root_exports": [],
+   "sha256": "0b020867e37408d6ff9d21852d6c4eb7e96525e8852eef81655cb7ae40ec5261",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_recommendation_rank_explainability_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 421,
+   "module": "polymarket_alpha_lab.probability_event_research_confidence_decay_report",
+   "path": "src/polymarket_alpha_lab/probability_event_research_confidence_decay_report.py",
+   "root_exports": [],
+   "sha256": "627e8313b062fdbd94d4308d7796f22b712322fdefff0e61e3906a6c4b991b0c",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_research_confidence_decay_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 627,
+   "module": "polymarket_alpha_lab.probability_event_research_packet_gate_trace_report",
+   "path": "src/polymarket_alpha_lab/probability_event_research_packet_gate_trace_report.py",
+   "root_exports": [],
+   "sha256": "4a1661f54d5c094799b884584d6c88a6ced424929001f08b835f03e915303e53",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_probability_event_research_packet_gate_trace_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 769,
+   "module": "polymarket_alpha_lab.probability_event_resolution_rule_evidence_gap_report",
+   "path": "src/polymarket_alpha_lab/probability_event_resolution_rule_evidence_gap_report.py",
+   "root_exports": [],
+   "sha256": "0bca61ea885fe0d12a7a18913d116136e8a769bf3ac8b460f20f761a4e9582b2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_probability_event_resolution_rule_evidence_gap_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 506,
+   "module": "polymarket_alpha_lab.probability_event_resolution_source_confidence_weight_report",
+   "path": "src/polymarket_alpha_lab/probability_event_resolution_source_confidence_weight_report.py",
+   "root_exports": [],
+   "sha256": "d96400b31beb4ccca9e49bfae5bc62129dfcd4d6a14259b8fc541d50c6c1da2e",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_resolution_source_confidence_weight_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 348,
+   "module": "polymarket_alpha_lab.probability_event_resolution_timeline_compression_report",
+   "path": "src/polymarket_alpha_lab/probability_event_resolution_timeline_compression_report.py",
+   "root_exports": [],
+   "sha256": "1d0a32cfd203dc58c505cc57a0c3717ce95948b684e5fc3b8d02f16cd05a0881",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_resolution_timeline_compression_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 469,
+   "module": "polymarket_alpha_lab.probability_event_review_freshness_escalation_report",
+   "path": "src/polymarket_alpha_lab/probability_event_review_freshness_escalation_report.py",
+   "root_exports": [],
+   "sha256": "db5abb0d4f9ad235ffcfca9432067f00b2c8a6e050818a746f7a545652c89672",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_review_freshness_escalation_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 351,
+   "module": "polymarket_alpha_lab.probability_event_scenario_tree_consistency_report",
+   "path": "src/polymarket_alpha_lab/probability_event_scenario_tree_consistency_report.py",
+   "root_exports": [],
+   "sha256": "338b3064abfbfcb4e029e1b2e5e4e0625251d5dac5bf10e8882366cefdc9cdae",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_scenario_tree_consistency_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 581,
+   "module": "polymarket_alpha_lab.probability_event_screen_audit_summary_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_audit_summary_report.py",
+   "root_exports": [],
+   "sha256": "7e11b3a363b096db7d865596418e5ad23025ce904d7bc16a4cf5d8f01440133e",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_audit_summary_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 422,
+   "module": "polymarket_alpha_lab.probability_event_screen_batch_triage_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_batch_triage_report.py",
+   "root_exports": [],
+   "sha256": "fec67269760780dece0e40e3c0e0434124c7ae0d0345b6f3f3a217692d04fdf8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_batch_triage_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 496,
+   "module": "polymarket_alpha_lab.probability_event_screen_commit_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_commit_readiness_report.py",
+   "root_exports": [],
+   "sha256": "e047ce36f0dad3762be37daf8df2c9d6835a89d23c0f5e5bff67d01968456ec7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_commit_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 480,
+   "module": "polymarket_alpha_lab.probability_event_screen_contract",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_contract.py",
+   "root_exports": [],
+   "sha256": "59e4b160ce8a9811d5800369b17a2239d55f093a322ecf05c26aa4e82cedcdbc",
+   "src_consumers": [
+    "polymarket_alpha_lab.probability_event_screen_input_normalization_report"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_contract.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_input_normalization_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 499,
+   "module": "polymarket_alpha_lab.probability_event_screen_daily_brief_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_daily_brief_report.py",
+   "root_exports": [],
+   "sha256": "7e0591307eb8279e47ea2dc316016f5a62f4c6e247504f3031295a34025753b8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_daily_brief_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 436,
+   "module": "polymarket_alpha_lab.probability_event_screen_decision_memo_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_decision_memo_report.py",
+   "root_exports": [],
+   "sha256": "07f4d827ffdf6da2e2979d4e6badfd8a126243a6022ededd93447672171e7e62",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_decision_memo_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 538,
+   "module": "polymarket_alpha_lab.probability_event_screen_end_to_end_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_end_to_end_readiness_report.py",
+   "root_exports": [],
+   "sha256": "a018cadd0c6cb81ec3cc23638effb029246c11c4dc7b2b6c7caa47561ca35771",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_end_to_end_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 443,
+   "module": "polymarket_alpha_lab.probability_event_screen_exception_queue_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_exception_queue_report.py",
+   "root_exports": [],
+   "sha256": "956d4b18521b1033c20c555e05c5c987d400723ce1ffcc6968c2672deef91a65",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_exception_queue_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 538,
+   "module": "polymarket_alpha_lab.probability_event_screen_export_manifest_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_export_manifest_report.py",
+   "root_exports": [],
+   "sha256": "25ce3a6793084e87a787c0583c430ac3ae56078b5a9168aaf34aa299acf10cf8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_export_manifest_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 403,
+   "module": "polymarket_alpha_lab.probability_event_screen_final_review_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_final_review_readiness_report.py",
+   "root_exports": [],
+   "sha256": "585549f420709a9089d9053f3430771a93cf43c6e109c54010b473227d4bb9e7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_final_review_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 462,
+   "module": "polymarket_alpha_lab.probability_event_screen_input_normalization_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_input_normalization_report.py",
+   "root_exports": [],
+   "sha256": "444ca7bd5887de24d397943773bd171c2ce116c6cbfa87bef4856e00d8791054",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_input_normalization_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 330,
+   "module": "polymarket_alpha_lab.probability_event_screen_learning_feedback_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_learning_feedback_report.py",
+   "root_exports": [],
+   "sha256": "62be6aed13c33b57516b739fa4b0721748698f35b6c813a2a63c34b7327dd6e0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_learning_feedback_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 531,
+   "module": "polymarket_alpha_lab.probability_event_screen_manual_research_audit_log_contract_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_manual_research_audit_log_contract_report.py",
+   "root_exports": [],
+   "sha256": "3aaf01808e908780d8535e46d7bfb8001a040d97debf3942e1fc8a0cc2394ffb",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_manual_research_audit_log_contract_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 395,
+   "module": "polymarket_alpha_lab.probability_event_screen_node_handoff_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_node_handoff_report.py",
+   "root_exports": [],
+   "sha256": "ff760ba96fa7763d256f50a65e06d1da0ff1f5dc372df0a1f8be9b1a077fe1d6",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_node_handoff_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 541,
+   "module": "polymarket_alpha_lab.probability_event_screen_operating_review_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_operating_review_report.py",
+   "root_exports": [],
+   "sha256": "7eeae6f94054cf3455e193ca04596c145b3fcbc0d54a793db5d30aff9fee3410",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_operating_review_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 561,
+   "module": "polymarket_alpha_lab.probability_event_screen_operator_dashboard_snapshot_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_operator_dashboard_snapshot_report.py",
+   "root_exports": [],
+   "sha256": "4312251259e784e4a61953e0594762ce0a7a1175202421ec2739fd3e279d6dd4",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_operator_dashboard_snapshot_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 544,
+   "module": "polymarket_alpha_lab.probability_event_screen_operator_runbook_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_operator_runbook_report.py",
+   "root_exports": [],
+   "sha256": "236406616ec1d82df8079b7088daac9fb0761905fee2b773ba40ff256fd4bd0d",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_operator_runbook_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 564,
+   "module": "polymarket_alpha_lab.probability_event_screen_phase1_boundary_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_phase1_boundary_report.py",
+   "root_exports": [],
+   "sha256": "82ad59cd9cb076e90cb22178a69678e6f07fce13a7605e40c23e9dafa5ff3203",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_phase1_boundary_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 516,
+   "module": "polymarket_alpha_lab.probability_event_screen_push_readiness_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_push_readiness_report.py",
+   "root_exports": [],
+   "sha256": "7f2a5f0616f5ae0c483705345dc481a03e0134a1a4f6664304b6283022b2cda7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_push_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 463,
+   "module": "polymarket_alpha_lab.probability_event_screen_quality_index_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_quality_index_report.py",
+   "root_exports": [],
+   "sha256": "8893def4ac54f6cb02aac1f696079d61920eb9b4cb0a7296a75e22333c14945a",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_quality_index_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 432,
+   "module": "polymarket_alpha_lab.probability_event_screen_rank_order_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_rank_order_report.py",
+   "root_exports": [],
+   "sha256": "36ae638185bad1d9f0a76e851d6904d90f8c65be0d62a2e4c84c801f9255cc22",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_rank_order_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 548,
+   "module": "polymarket_alpha_lab.probability_event_screen_readiness_rollup_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_readiness_rollup_report.py",
+   "root_exports": [],
+   "sha256": "ecabcf108f72622f25622288db9a9441ca702a941ea63bacfba488dfdbef5b67",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_readiness_rollup_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 513,
+   "module": "polymarket_alpha_lab.probability_event_screen_recommendation_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_recommendation_report.py",
+   "root_exports": [],
+   "sha256": "da40c247628f67af5376c903536309e938dd93d48423529862f7a1b2107c84c1",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_recommendation_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 398,
+   "module": "polymarket_alpha_lab.probability_event_screen_release_gate_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_release_gate_report.py",
+   "root_exports": [],
+   "sha256": "88e5b3c0ba2e2c95100a5585a1d5c159a1e9f68dbce37f6cb570535e8662276f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_release_gate_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 533,
+   "module": "polymarket_alpha_lab.probability_event_screen_review_packet_index_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_review_packet_index_report.py",
+   "root_exports": [],
+   "sha256": "2b3979ef42db08f31f4eecaf28036e8a84a698668db6e2f4a1f3af6eb550685a",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_review_packet_index_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 516,
+   "module": "polymarket_alpha_lab.probability_event_screen_supabase_contract_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_supabase_contract_report.py",
+   "root_exports": [],
+   "sha256": "d833438554a6336c00dede926ae38c034b7a44928fea111cffce38462ebed7ee",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_phase1_public_payload_digest_smoke.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_supabase_contract_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 566,
+   "module": "polymarket_alpha_lab.probability_event_screen_system_health_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_system_health_report.py",
+   "root_exports": [],
+   "sha256": "3f309163a2ad6c09f1461f89e25d37a8322a378dcbdd6114472129addb042fe8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_system_health_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 422,
+   "module": "polymarket_alpha_lab.probability_event_screen_validation_matrix_report",
+   "path": "src/polymarket_alpha_lab/probability_event_screen_validation_matrix_report.py",
+   "root_exports": [],
+   "sha256": "b8cf0c6995104f3141780e0f8653e4d884f37a5e06e6fd8e52bf9964b1852105",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_screen_validation_matrix_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 423,
+   "module": "polymarket_alpha_lab.probability_event_selection_explainability_report",
+   "path": "src/polymarket_alpha_lab/probability_event_selection_explainability_report.py",
+   "root_exports": [],
+   "sha256": "f30dc79c6ca64025e0fd6f905b4aed24c18b1593c8ec1dba6b37b3c685444a87",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_module",
+     "scope": "function",
+     "test": "tests/test_probability_event_selection_explainability_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 646,
+   "module": "polymarket_alpha_lab.probability_event_settlement_delay_risk_report",
+   "path": "src/polymarket_alpha_lab/probability_event_settlement_delay_risk_report.py",
+   "root_exports": [],
+   "sha256": "856b65a14a9f383f3cf6bf9b4e0011459998e0c6cca2acd3a94ef729dcaa0d13",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_settlement_delay_risk_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 430,
+   "module": "polymarket_alpha_lab.probability_event_source_adjusted_edge_decay_report",
+   "path": "src/polymarket_alpha_lab/probability_event_source_adjusted_edge_decay_report.py",
+   "root_exports": [],
+   "sha256": "933f79f4a59bd0af8070f85c69aec1c1b556eb470c6eedb9e05352fc03c9bb0f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_source_adjusted_edge_decay_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 582,
+   "module": "polymarket_alpha_lab.probability_event_source_conflict_resolution_priority_report",
+   "path": "src/polymarket_alpha_lab/probability_event_source_conflict_resolution_priority_report.py",
+   "root_exports": [],
+   "sha256": "3b8c1d6ef5a967abeeda5e6b6201e4d4ddf3b28470e545646305f1ae9d84f3e9",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_source_conflict_resolution_priority_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 406,
+   "module": "polymarket_alpha_lab.probability_event_source_contradiction_aging_report",
+   "path": "src/polymarket_alpha_lab/probability_event_source_contradiction_aging_report.py",
+   "root_exports": [],
+   "sha256": "a789b43368b70d0373e50d234567b3244abb298e6d1d8930dc7230589b346a50",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_source_contradiction_aging_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 429,
+   "module": "polymarket_alpha_lab.probability_event_source_family_redundancy_report",
+   "path": "src/polymarket_alpha_lab/probability_event_source_family_redundancy_report.py",
+   "root_exports": [],
+   "sha256": "b0c010b7e08aa04917f8ebae759d7c50178638d80a8153a534dc9fcb645c196c",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_module",
+     "scope": "function",
+     "test": "tests/test_probability_event_source_family_redundancy_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 431,
+   "module": "polymarket_alpha_lab.probability_event_source_weight_sensitivity_report",
+   "path": "src/polymarket_alpha_lab/probability_event_source_weight_sensitivity_report.py",
+   "root_exports": [],
+   "sha256": "fc0ff890971e8e4be075b4be3ae23a94b3a2ae82c4bb4feb6d211b8ac041c6e6",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_module",
+     "scope": "function",
+     "test": "tests/test_probability_event_source_weight_sensitivity_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 406,
+   "module": "polymarket_alpha_lab.probability_event_stale_market_risk_review_report",
+   "path": "src/polymarket_alpha_lab/probability_event_stale_market_risk_review_report.py",
+   "root_exports": [],
+   "sha256": "8ba3ac9ab84a49024da71402d2b0e8582a449b22676fc5f437a35ca5054742fb",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_stale_market_risk_review_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 546,
+   "module": "polymarket_alpha_lab.probability_event_tail_risk_stress_scenario_report",
+   "path": "src/polymarket_alpha_lab/probability_event_tail_risk_stress_scenario_report.py",
+   "root_exports": [],
+   "sha256": "977460bfd52a5ac574ca1070c86b8c726ba05c45611e2ed425f3c220ebe6b9d8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_tail_risk_stress_scenario_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 527,
+   "module": "polymarket_alpha_lab.probability_event_team_consensus_quorum_report",
+   "path": "src/polymarket_alpha_lab/probability_event_team_consensus_quorum_report.py",
+   "root_exports": [],
+   "sha256": "6d7aa3b2bf6603f3a53ca70897760ea6ecbd347b1aa85c9a914162714bb76c58",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_team_consensus_quorum_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 441,
+   "module": "polymarket_alpha_lab.probability_event_unresolved_blocker_aging_report",
+   "path": "src/polymarket_alpha_lab/probability_event_unresolved_blocker_aging_report.py",
+   "root_exports": [],
+   "sha256": "7f0f1fcac560487c57e85ea8686b7c072ecad682f747a2ece2b4f570dfff7cd3",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_unresolved_blocker_aging_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 606,
+   "module": "polymarket_alpha_lab.probability_event_watchlist_refresh_priority_report",
+   "path": "src/polymarket_alpha_lab/probability_event_watchlist_refresh_priority_report.py",
+   "root_exports": [],
+   "sha256": "4db81856f5257fa21ff8cfe56863da49ebc917469d41b5d1c3ee3eaecfcd69ab",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_event_watchlist_refresh_priority_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 948,
+   "module": "polymarket_alpha_lab.probability_screen_research_gap_priority_report",
+   "path": "src/polymarket_alpha_lab/probability_screen_research_gap_priority_report.py",
+   "root_exports": [],
+   "sha256": "09994e64f19cd45d91d71c3fbd8b4914c4205b171cee529da84126e5331b1063",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_probability_screen_research_gap_priority_report.py"
+    },
+    {
+     "nodeid": "test_source_file_exposes_no_persistence_live_auth_wallet_or_order_surface",
+     "scope": "function",
+     "test": "tests/test_probability_screen_research_gap_priority_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 899,
+   "module": "polymarket_alpha_lab.probability_selection_scorer_agreement_trend_gate_db_row",
+   "path": "src/polymarket_alpha_lab/probability_selection_scorer_agreement_trend_gate_db_row.py",
+   "root_exports": [],
+   "sha256": "3a690e770957cda34d098e95ef0118bf58eb1d65cf539631b02fe38ef3d22aad",
+   "src_consumers": [
+    "polymarket_alpha_lab.probability_selection_scorer_agreement_trend_gate_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "test_trend_gate_db_row_serializes_canonical_payload_and_round_trips",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_gate_db_row_normalizes_utc_and_decimal_payload_before_hashing",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_gate_db_row_canonicalizes_payload_decimal_strings_before_hashing",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_gate_db_row_is_frozen_and_rejects_wrong_types_and_flags",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_gate_db_row_rejects_materialized_payload_mismatches",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_gate_db_row_rejects_float_and_decimal_payload_values",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_insert_uses_parameterized_insert_with_on_conflict_do_nothing",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_convenience_returns_row_and_dedup_result_reports_false",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_filters_orders_and_reconstructs_reports",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_accepts_mapping_and_tuple_records",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 153,
+   "module": "polymarket_alpha_lab.probability_selection_scorer_agreement_trend_gate_psycopg",
+   "path": "src/polymarket_alpha_lab/probability_selection_scorer_agreement_trend_gate_psycopg.py",
+   "root_exports": [],
+   "sha256": "de96daa0da3105098485097a275ed3ad4614bbef21d29ef22cc1bde233a2fd10",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_psycopg.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 308,
+   "module": "polymarket_alpha_lab.probability_selection_scorer_agreement_trend_gate_store",
+   "path": "src/polymarket_alpha_lab/probability_selection_scorer_agreement_trend_gate_store.py",
+   "root_exports": [],
+   "sha256": "ebf456db07b81bfca0d459b957315839300477151c61f066ed28e8313c6924e6",
+   "src_consumers": [
+    "polymarket_alpha_lab.probability_selection_scorer_agreement_trend_gate_psycopg",
+    "polymarket_alpha_lab.supabase_probability_selection_scorer_agreement_trend_gate_config"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "test_default_table_name",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_uses_parameterized_insert_with_on_conflict_do_nothing",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_convenience_returns_row_and_dedup_result_reports_false",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_preserves_execute_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_operation_failure_close_swallowed_for_rowcount_error",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_propagates_cursor_close_error_after_success",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_filters_orders_and_reconstructs_reports",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_preserves_execute_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_operation_failure_close_swallowed_for_db_row_error",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_propagates_cursor_close_error_after_success",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_accepts_mapping_and_tuple_records",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    },
+    {
+     "nodeid": "test_store_rejects_bad_table_filters_and_limit_without_sql",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_agreement_trend_gate_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 112,
+   "module": "polymarket_alpha_lab.probability_selection_scorer_bridge",
+   "path": "src/polymarket_alpha_lab/probability_selection_scorer_bridge.py",
+   "root_exports": [],
+   "sha256": "b2c68f218c5a167b78fdd3409e2657bcc415087072809197ec5d69b01d63f0ac",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_bridge_module",
+     "scope": "function",
+     "test": "tests/test_probability_selection_scorer_bridge.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_probability_selection_scorer_bridge_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  }
+ ],
+ "m2_reservations_check": [],
+ "test_retirement": {
+  "delete_full": [
+   "tests/test_probability_edge_sensitivity_report.py",
+   "tests/test_probability_event_bayesian_prior_update_readiness_report.py",
+   "tests/test_probability_event_capital_lockup_readiness_report.py",
+   "tests/test_probability_event_cost_adjusted_kelly_bound_readiness_report.py",
+   "tests/test_probability_event_cost_adjusted_position_recommendation_report.py",
+   "tests/test_probability_event_cost_model_governance_report.py",
+   "tests/test_probability_event_cost_sensitivity_break_even_report.py",
+   "tests/test_probability_event_cost_to_edge_margin_of_safety_report.py",
+   "tests/test_probability_event_edge_stability_over_time_report.py",
+   "tests/test_probability_event_evidence_freshness_quorum_rollup_report.py",
+   "tests/test_probability_event_expected_utility_rank_readiness_report.py",
+   "tests/test_probability_event_expected_value_uncertainty_band_report.py",
+   "tests/test_probability_event_final_review_exception_queue_report.py",
+   "tests/test_probability_event_forecast_freshness_drift_report.py",
+   "tests/test_probability_event_forecast_model_disagreement_report.py",
+   "tests/test_probability_event_implied_probability_sanity_band_report.py",
+   "tests/test_probability_event_liquidity_cost_curve_readiness_report.py",
+   "tests/test_probability_event_liquidity_exit_penalty_stress_report.py",
+   "tests/test_probability_event_liquidity_exit_window_readiness_report.py",
+   "tests/test_probability_event_liquidity_source_alignment_report.py",
+   "tests/test_probability_event_manual_blocker_resolution_checklist_report.py",
+   "tests/test_probability_event_manual_research_checklist_coverage_report.py",
+   "tests/test_probability_event_market_depth_decay_forecast_report.py",
+   "tests/test_probability_event_market_maker_adverse_selection_report.py",
+   "tests/test_probability_event_market_signal_half_life_report.py",
+   "tests/test_probability_event_market_signal_risk_readiness_report.py",
+   "tests/test_probability_event_market_specificity_digest.py",
+   "tests/test_probability_event_multi_source_forecast_blend_readiness_report.py",
+   "tests/test_probability_event_news_catalyst_timing_risk_report.py",
+   "tests/test_probability_event_operator_decision_evidence_completeness_report.py",
+   "tests/test_probability_event_operator_packet_regression_safety_report.py",
+   "tests/test_probability_event_outcome_dependency_collision_report.py",
+   "tests/test_probability_event_position_sizing_suggestion_readiness_report.py",
+   "tests/test_probability_event_recommendation_rank_explainability_report.py",
+   "tests/test_probability_event_research_confidence_decay_report.py",
+   "tests/test_probability_event_resolution_source_confidence_weight_report.py",
+   "tests/test_probability_event_resolution_timeline_compression_report.py",
+   "tests/test_probability_event_review_freshness_escalation_report.py",
+   "tests/test_probability_event_scenario_tree_consistency_report.py",
+   "tests/test_probability_event_screen_audit_summary_report.py",
+   "tests/test_probability_event_screen_batch_triage_report.py",
+   "tests/test_probability_event_screen_commit_readiness_report.py",
+   "tests/test_probability_event_screen_contract.py",
+   "tests/test_probability_event_screen_daily_brief_report.py",
+   "tests/test_probability_event_screen_decision_memo_report.py",
+   "tests/test_probability_event_screen_end_to_end_readiness_report.py",
+   "tests/test_probability_event_screen_exception_queue_report.py",
+   "tests/test_probability_event_screen_export_manifest_report.py",
+   "tests/test_probability_event_screen_final_review_readiness_report.py",
+   "tests/test_probability_event_screen_input_normalization_report.py",
+   "tests/test_probability_event_screen_learning_feedback_report.py",
+   "tests/test_probability_event_screen_manual_research_audit_log_contract_report.py",
+   "tests/test_probability_event_screen_node_handoff_report.py",
+   "tests/test_probability_event_screen_operating_review_report.py",
+   "tests/test_probability_event_screen_operator_dashboard_snapshot_report.py",
+   "tests/test_probability_event_screen_operator_runbook_report.py",
+   "tests/test_probability_event_screen_phase1_boundary_report.py",
+   "tests/test_probability_event_screen_push_readiness_report.py",
+   "tests/test_probability_event_screen_quality_index_report.py",
+   "tests/test_probability_event_screen_rank_order_report.py",
+   "tests/test_probability_event_screen_readiness_rollup_report.py",
+   "tests/test_probability_event_screen_recommendation_report.py",
+   "tests/test_probability_event_screen_release_gate_report.py",
+   "tests/test_probability_event_screen_review_packet_index_report.py",
+   "tests/test_probability_event_screen_supabase_contract_report.py",
+   "tests/test_probability_event_screen_system_health_report.py",
+   "tests/test_probability_event_screen_validation_matrix_report.py",
+   "tests/test_probability_event_settlement_delay_risk_report.py",
+   "tests/test_probability_event_source_adjusted_edge_decay_report.py",
+   "tests/test_probability_event_source_conflict_resolution_priority_report.py",
+   "tests/test_probability_event_source_contradiction_aging_report.py",
+   "tests/test_probability_event_stale_market_risk_review_report.py",
+   "tests/test_probability_event_tail_risk_stress_scenario_report.py",
+   "tests/test_probability_event_team_consensus_quorum_report.py",
+   "tests/test_probability_event_unresolved_blocker_aging_report.py",
+   "tests/test_probability_event_watchlist_refresh_priority_report.py",
+   "tests/test_probability_selection_scorer_agreement_trend_gate_psycopg.py"
+  ],
+  "nodeid_candidate_files": [
+   "tests/test_probability_event_correlation_cluster_exposure_report.py",
+   "tests/test_probability_event_duplicate_exposure_collision_report.py",
+   "tests/test_probability_event_forecast_calibration_residual_report.py",
+   "tests/test_probability_event_joint_gate_consistency_report.py",
+   "tests/test_probability_event_research_packet_gate_trace_report.py",
+   "tests/test_probability_event_resolution_rule_evidence_gap_report.py",
+   "tests/test_probability_event_selection_explainability_report.py",
+   "tests/test_probability_event_source_family_redundancy_report.py",
+   "tests/test_probability_event_source_weight_sensitivity_report.py",
+   "tests/test_probability_screen_research_gap_priority_report.py",
+   "tests/test_probability_selection_scorer_agreement_trend_gate_db_row.py",
+   "tests/test_probability_selection_scorer_agreement_trend_gate_store.py",
+   "tests/test_probability_selection_scorer_bridge.py"
+  ],
+  "retained_tests_zero_dependency_obligation": "after retiring delete_full files and this batch's nodeid candidates, remaining tests and shared fixtures must show zero references (module-scope, function-scope, strings) to this batch's modules and exports; prove on undeleted source per plan 3.4 step 2 before physical deletion",
+  "shared_conflicts_or_blocked": [
+   "tests/test_phase1_public_payload_digest_smoke.py",
+   "tests/test_phase1_report_discovery_smoke.py",
+   "tests/test_phase1_report_modules_import_no_io.py",
+   "tests/test_phase1_strategy_stack_smoke.py",
+   "tests/test_probability_selection_scorer_bridge_scope.py"
+  ]
+ },
+ "tool_sha256": "ac4609dd7547efae6e3a07777794b881d27fb9246ca9c7fa1a8ec30198f8c656",
+ "verification_requirements": [
+  "step 1: mark deprecated-pending-prune in the engineering inventory and current module index; no runtime warnings, no shell modules, no selfcheck output change",
+  "step 2: run the full verifier on undeleted source, then prove remaining-test zero dependency for this batch",
+  "step 3: physical deletion of exactly these manifest paths in one atomic commit (source + exclusive tests + root exports + doc registry entries); protection tag pre-prune-2026-11 pushed and read back first (coordinator action)",
+  "step 4: re-run inventory.py --verify on the batch parent commit; record R_before==R_after, unreachable totals, file/line/export counts, retired nodeids, remaining test results"
+ ]
+}
