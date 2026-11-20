@@ -51,7 +51,9 @@ REPEATABLE READ it cannot.
 from __future__ import annotations
 
 import datetime
-from decimal import Decimal
+from dataclasses import asdict, replace
+from decimal import Decimal, localcontext
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -77,8 +79,9 @@ def at(minutes: int) -> datetime.datetime:
 
 
 def _connect(dsn, *, autocommit=True):
-    psycopg = pytest.importorskip('psycopg')
-    connection = psycopg.connect(dsn)
+    from polymarket_alpha_lab.papersim import store_psycopg
+    connection = store_psycopg.connect_explicit(
+        dsn, label=store_psycopg.EXPLICIT_DSN_LABEL)
     connection.autocommit = autocommit
     return connection
 
@@ -94,7 +97,6 @@ def _fresh_managed_database() -> tuple[str, str]:
     Returns ``(owner_dsn, app_dsn)``: the OWNER binding is the test
     infrastructure / FX-29 choreography-writer face, the APP binding is
     the production runtime role every proved reader connects as."""
-    psycopg = pytest.importorskip('psycopg')
     admin = _connect(OWNER_DSN)
     name = 'pal_papersim_b3settle_' + uuid.uuid4().hex[:10]
     with admin.cursor() as cursor:
@@ -103,8 +105,7 @@ def _fresh_managed_database() -> tuple[str, str]:
         cursor.execute(f"CREATE DATABASE {name} OWNER pal_owner")
     admin.close()
     owner_dsn = _rebind_database(OWNER_DSN, name)
-    bootstrap = psycopg.connect(owner_dsn)
-    bootstrap.autocommit = True
+    bootstrap = _connect(owner_dsn, autocommit=True)
     with bootstrap.cursor() as cursor:
         from polymarket_alpha_lab.project_postgres import sql
         cursor.execute(sql.bootstrap_sql(uuid.uuid4().hex, 'b' * 64, system_id))
@@ -253,6 +254,7 @@ def test_settle_writes_settlement_and_exactly_one_cash_leg(app, repo):
     assert row[3] == pytest.approx(Decimal(250) / Decimal('0.56'))
     assert row[4] == pytest.approx(Decimal(250) / Decimal('0.56') - 250)
     assert row[5] == pytest.approx(Decimal('7.70'))  # 250 * 0.07 * (1 - 0.56)
+    assert row[5] == Decimal('7.70')
     assert row[6] == row[4] - row[5]  # the exact decimal identity
     assert row[7] == outcome_id
     assert row[8] == 'unattended' and row[9] == at(80)  # evidence confirmed_at only
@@ -365,7 +367,18 @@ def test_voided_outcome_refunds_the_stake(app, repo):
     assert (row[3], row[4], row[5]) == (Decimal('0'), Decimal('0'), Decimal('0'))
     leg = app.execute('SELECT amount, reason FROM papersim.bankroll_events '
                       'WHERE event_key = %s', (f'settle:{entry_id}',)).fetchone()
-    assert leg == (Decimal('250'), 'VOIDED_REFUND')
+    assert leg == (Decimal('257.70'), 'VOIDED_REFUND')
+    assert app.execute(
+        'SELECT event_key, amount, reason, entry_id, occurred_at FROM papersim.bankroll_events '
+        'WHERE entry_id = %s ORDER BY event_id', (entry_id,)).fetchall() == [
+        (f'entry:{entry_id}:cash', Decimal('-257.70'), 'SCAN_ENTRY', entry_id, at(6)),
+        (f'settle:{entry_id}', Decimal('257.70'), 'VOIDED_REFUND', entry_id, at(80)),
+    ]
+    from polymarket_alpha_lab.papersim import cli, evaluation
+    queue = evaluation.evaluate_queues(cli._evaluation_candidates_from_store(app)).queues[0]
+    assert queue.counts.voided == 1
+    assert queue.roi.counted == 0 and queue.fills.natural_settled == 0
+    assert queue.fills.hit_rate is None
 
 
 # ---------------------------------------------------------------------------
@@ -392,8 +405,8 @@ def _wait_reader_blocked(admin, reader_pid: int, *, blocked_relation_oid: int,
     PostgreSQL masks another role's wait_event/wait_event_type/state
     columns unless the observer holds ``pg_read_all_stats``, and the
     reader under proof must run as the least-privilege production
-    ``pal_app`` role (the papersim migrations grant pal_app only
-    SELECT + INSERT, never the predefined stats roles).  ``pg_locks``
+    ``pal_app`` role (the core papersim migration grants ``pal_app``
+    SELECT and INSERT on the application tables).  ``pg_locks``
     carries no query text and is not role-masked, and the
     relation-pinned ungranted request is stronger evidence than a bare
     wait-event label: the backend is provably queued on THIS table's
@@ -621,3 +634,756 @@ def test_fx29_settle_loader_snapshot_races_a_late_capture(repo):
     finally:
         reader.close()
         admin.close()
+
+
+@pytest.fixture
+def cash_faces():
+    _, app_dsn = _fresh_managed_database()
+    with _connect(app_dsn) as writer, _connect(app_dsn) as observer:
+        assert writer.info.backend_pid != observer.info.backend_pid
+        yield writer, observer, app_dsn
+
+
+def _prepare_scan(slug, *, entered=6, price='0.56', fee='7.70', shares=None,
+                  stake='250', condition=None, market=None, legacy=False, entry=True):
+    with localcontext(prec=60):
+        price, stake = Decimal(price), Decimal(stake)
+        shares = stake / price if shares is None else Decimal(shares)
+        submission = replace(
+            _entry_submission(), entered_at=at(entered), stake=stake, price=price, shares=shares,
+            entry_fee=Decimal(fee), fee_source='estimated' if legacy else 'schedule',
+            legacy_source_id=f'historical-entry-{slug}' if legacy else None, is_legacy=legacy)
+    candidate = replace(
+        _candidate(slug), condition_id=condition, market_id=market, evaluated_at=at(entered - 1),
+        price_evidence=(replace(_evidence(slug), observed_at=at(entered - 1),
+                                model_probability=Decimal('0.8'), mid=Decimal('0.5')),),
+        legacy_source_id=f'historical-candidate-{slug}' if legacy else None, is_legacy=legacy,
+        entry=submission if entry else None)
+    scan = replace(_scan_run(), started_at=at(entered - 6), finished_at=at(entered),
+                   is_legacy=legacy)
+    return store.ScanSubmission(scan=scan, candidates=(candidate,))
+
+
+def _accepted(app, slug, **kwargs):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    submission = _prepare_scan(slug, **kwargs)
+    result = store_psycopg.record_scan(app, submission)
+    candidate_id = result['candidate_ids'][submission.candidates[0].candidate_key]
+    entry_id = app.execute('SELECT entry_id FROM papersim.entries WHERE candidate_id = %s',
+                           (candidate_id,)).fetchone()[0]
+    return candidate_id, entry_id
+
+
+def _publish(app, outcome, *, slug=None, condition=None, market=None,
+             observed=60, confirmed=80):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    def time_at(value):
+        return at(value) if type(value) is int else value
+
+    return store_psycopg.record_market_outcome(app, store.MarketOutcomeObservation(
+        condition_id=condition, market_id=market, market_slug=slug, outcome=outcome,
+        observed_at=time_at(observed), confirmed_at=time_at(confirmed),
+        source_kind='gamma_close', source_ref=uuid.uuid4().hex))['outcome_id']
+
+
+def _insert_event(conn, key, *, minute, amount, reason, currency='USD',
+                  entry_id=None, scan_id=None, reverses=None, legacy=False, note=None):
+    return conn.execute(
+        'INSERT INTO papersim.bankroll_events '
+        '(event_key, occurred_at, currency, amount, reason, entry_id, scan_id, '
+        'reverses_event_id, is_legacy, note) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) '
+        'RETURNING event_id',
+        (key, at(minute), currency, Decimal(amount), reason, entry_id, scan_id,
+         reverses, legacy, note)).fetchone()[0]
+
+
+def _as_of_oracle(observer, cut, code_commit, expected):
+    """Independent as-of cash/event and entry/settlement reads on a second backend."""
+    from polymarket_alpha_lab.papersim import store_psycopg
+    events = observer.execute(
+        'SELECT event_id, amount, reason FROM papersim.bankroll_events '
+        'WHERE occurred_at <= %s ORDER BY event_id', (cut,)).fetchall()
+    entries = observer.execute(
+        'SELECT entry_id, stake, entry_fee FROM papersim.entries WHERE entered_at <= %s',
+        (cut,)).fetchall()
+    settlements = observer.execute(
+        'SELECT entry_id, pnl_net FROM papersim.settlements WHERE confirmed_at <= %s',
+        (cut,)).fetchall()
+    closed = {row[0] for row in settlements}
+    with localcontext(prec=100):
+        parts = (
+            sum(row[1] for row in events),
+            sum(stake for entry, stake, _fee in entries if entry not in closed),
+            sum(amount for _id, amount, reason in events if reason == 'INITIAL'),
+            sum(row[1] for row in settlements),
+            sum(fee for entry, _stake, fee in entries if entry not in closed),
+        )
+        cash, deployed, base, net, fees = parts
+        assert cash + deployed - base - net + fees == 0
+    assert (*parts, len(events), len(entries), len(settlements)) == expected
+    watermark = max((row[0] for row in events), default=0)
+    req = store.BankrollCheckRequest(as_of=cut, code_commit=code_commit)
+    event_count = observer.execute('SELECT count(*) FROM papersim.bankroll_events').fetchone()
+    check = store_psycopg.bankroll_daily_check(observer, req)
+    assert (check.cash_total, check.deployed_total, check.initial_and_adjustments,
+            check.realized_net, check.open_entry_fees) == parts
+    assert check.passed and check.inserted and check.identity_difference == 0
+    assert check.tolerance == Decimal('0.005') and check.event_watermark == watermark
+    assert observer.execute(
+        'SELECT as_of, cash_total, deployed_total, initial_and_adjustments, realized_net, '
+        'open_entry_fees, identity_difference, tolerance, passed, event_watermark '
+        'FROM papersim.bankroll_checks WHERE check_id = %s',
+        (check.check_id,)).fetchone() == (cut, *parts, 0, Decimal('0.005'), True, watermark)
+    assert observer.execute('SELECT count(*) FROM papersim.bankroll_events').fetchone() == event_count
+
+
+@NATIVE
+@pytest.mark.parametrize(('token', 'price', 'booked_fee', 'payout', 'gross', 'net', 'final_cash'), [
+    ('VOIDED', '0.56', '7.70', '250', '0', '0', '10000'),
+    ('NO', '0.56', '8.20', '0', '-250', '-258.20', '9741.80'),
+    ('YES', '0.56', '8.20', '446.4285714285714', '196.4285714285714',
+     '188.2285714285714', '10188.2285714285714'),
+    ('YES', '0.50', '8.20', '500', '250', '241.80', '10241.80'),
+    ('YES', '0.50', '0', '500', '250', '250', '10250'),
+    ('VOIDED', '0.50', '0', '250', '0', '0', '10000'),
+    ('YES', '0.0015', '0.1234567890123456789012345', '166666.66666666666',
+     '166416.66666666666', '166416.5432098776476543210987655',
+     '176416.5432098776476543210987655'),
+    ('VOIDED', '0.50', '0.1234567890123456789012345', '250', '0', '0', '10000'),
+    ('VOIDED', '0.50', '0.1234567890123456789012345678901234567', '250', '0', '0', '10000'),
+])
+def test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts(
+        cash_faces, repo, token, price, booked_fee, payout, gross, net, final_cash):
+    app, reader, _app_dsn = cash_faces
+    repo_root, _head = repo
+    _insert_event(app, 'initial', minute=1, amount='10000', reason='INITIAL')
+    with localcontext(prec=2):
+        _candidate_id, entry_id = _accepted(app, 'b3-physical', price=price, fee=booked_fee)
+        observed_id = _publish(app, token, slug='b3-physical')
+        outcome = _run(app, repo_root, operation_key='b3-physical')
+    assert outcome['settled_count'] == 1 and outcome['pending_count'] == 0
+    proceeds, gross, net, final_cash, booked_fee = map(
+        Decimal, (payout, gross, net, final_cash, booked_fee))
+    void = token == 'VOIDED'
+    performance_fee = Decimal(0) if void else booked_fee
+    reason = 'VOIDED_REFUND' if void else 'SETTLE_NATURAL'
+    classification = 'VOIDED_REFUND' if void else 'NATURAL'
+    opening, opened_cash, refund, pg_net = reader.execute(
+        'SELECT -(e.stake + e.entry_fee), 10000 - e.stake - e.entry_fee, '
+        'e.stake + e.entry_fee, s.pnl_gross - s.fee_total FROM papersim.entries e '
+        'JOIN papersim.settlements s USING (entry_id) WHERE e.entry_id = %s',
+        (entry_id,)).fetchone()
+    assert reader.execute(
+        'SELECT classification, proceeds, pnl_gross, fee_total, pnl_net, '
+        'source_outcome_id, confirmed_at, win_loss FROM papersim.settlements WHERE entry_id = %s',
+        (entry_id,)).fetchone() == (classification, proceeds, gross, performance_fee, net,
+                                   observed_id, at(80), None if void else
+                                   ('win' if token == 'YES' else 'loss'))
+    assert pg_net == net
+    if price == '0.0015':
+        assert opening == Decimal('-250.1234567890123456789012345')
+    if booked_fee == Decimal('0.1234567890123456789012345678901234567'):
+        assert opening == Decimal('-250.1234567890123456789012345678901234567')
+    assert reader.execute(
+        'SELECT event_key, amount, reason, occurred_at, currency FROM papersim.bankroll_events '
+        'WHERE entry_id = %s ORDER BY event_id', (entry_id,)).fetchall() == [
+        (f'entry:{entry_id}:cash', opening, 'SCAN_ENTRY', at(6), 'USD'),
+        (f'settle:{entry_id}', refund if void else proceeds, reason, at(80), 'USD'),
+    ]
+    expected = (
+        (10000, 0, 10000, 0, 0, 1, 0, 0),
+        (opened_cash, 250, 10000, 0, booked_fee, 2, 1, 0),
+        (opened_cash, 250, 10000, 0, booked_fee, 2, 1, 0),
+        (final_cash, 0, 10000, net, 0, 3, 1, 1),
+        (final_cash, 0, 10000, net, 0, 3, 1, 1),
+    )
+    for index, (minute, parts) in enumerate(zip((5, 6, 79, 80, 120), expected, strict=True)):
+        with localcontext(prec=2):
+            _as_of_oracle(reader, at(minute), str(index) * 40, parts)
+    assert reader.execute('SELECT count(*) FROM papersim.bankroll_checks').fetchone() == (5,)
+    assert reader.execute('SELECT count(*) FROM papersim.bankroll_events').fetchone() == (3,)
+
+
+def _business_counts(conn):
+    return conn.execute(
+        'SELECT (SELECT count(*) FROM papersim.scan_runs), '
+        '(SELECT count(*) FROM papersim.candidates), (SELECT count(*) FROM papersim.entries), '
+        '(SELECT count(*) FROM papersim.bankroll_events), '
+        '(SELECT count(*) FROM papersim.shadow_predictions), '
+        '(SELECT count(*) FROM papersim.settlements)').fetchone()
+
+
+@NATIVE
+def test_record_scan_checks_the_exact_share_product_before_any_write(cash_faces):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    app, reader, _app_dsn = cash_faces
+    cases = (
+        ('502', '250', '1', False), ('502', '251', '0', True),
+        ('500.019998', '250', '0.009999', True), ('500.02', '250', '0.010', False),
+        ('500.020002', '250', '0.010001', False), ('499.98', '250', '0.010', False),
+        ('499.980002', '250', '0.009999', True),
+    )
+    for index, (shares, stake, gap, valid) in enumerate(cases):
+        candidate = _prepare_scan(f'shares-{index}', price='0.5', shares=shares, stake=stake)
+        difference = reader.execute(
+            'SELECT abs(%s::numeric * 0.5 - %s::numeric)',
+            (Decimal(shares), Decimal(stake))).fetchone()[0]
+        assert difference == Decimal(gap)
+        previous = _business_counts(reader)
+        with localcontext(prec=2):
+            if valid:
+                assert store_psycopg.record_scan(app, candidate)['inserted']
+            else:
+                with pytest.raises(store.PapersimStoreError,
+                                   match='papersim_entry_stake_mismatch'):
+                    store_psycopg.record_scan(app, candidate)
+        if valid:
+            assert _business_counts(reader) == tuple(
+                n + (position < 4) for position, n in enumerate(previous))
+            assert reader.execute(
+                'SELECT e.stake, e.shares, e.price, b.amount FROM papersim.entries e '
+                'JOIN papersim.bankroll_events b USING (entry_id) ORDER BY e.entry_id DESC LIMIT 1'
+            ).fetchone() == (Decimal(stake), Decimal(shares), Decimal('0.5'),
+                             Decimal('-258.70' if stake == '251' else '-257.70'))
+        else:
+            assert _business_counts(reader) == previous
+
+
+def _entry_without_debit(app, slug, fee):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    submission = _prepare_scan(slug, fee=fee, entry=False)
+    scan = store_psycopg.record_scan(app, submission)
+    candidate_id = scan['candidate_ids'][submission.candidates[0].candidate_key]
+    entry_id = app.execute(
+        'INSERT INTO papersim.entries '
+        '(candidate_id, stake, price, shares, fee_category, fee_rate, entry_fee, tier, entered_at) '
+        "VALUES (%s, 250, 0.5, 500, 'crypto', 0.07, %s, 'standard', %s) RETURNING entry_id",
+        (candidate_id, Decimal(fee), at(6))).fetchone()[0]
+    return entry_id, scan['scan_id']
+
+
+def _entry_rows(conn):
+    return conn.execute(
+        'SELECT event_id, event_key, amount, occurred_at, currency, reason, entry_id, scan_id, '
+        "reverses_event_id, is_legacy FROM papersim.bankroll_events WHERE event_key NOT LIKE 'settle:%' "
+        'ORDER BY event_id').fetchall()
+
+
+@NATIVE
+@pytest.mark.parametrize('token', ['YES', 'VOIDED'])
+def test_b3_leaves_disputed_opening_debits_open_and_settles_healthy_peer(cash_faces, repo, token):
+    app, reader, _app_dsn = cash_faces
+    repo_root, _head = repo
+    _, healthy = _accepted(app, 'healthy', fee='8.20')
+    _publish(app, token, slug='healthy')
+    expected = []
+    variants = (
+        ('short', '8.20', '-257.70', 'amount'), ('high', '7.70', '-258.20', 'amount'),
+        ('missing', '8.20', None, 'missing'), ('duplicate', '8.20', '-258.20', 'ambiguous'),
+        ('wrong-time', '8.20', '-258.20', 'metadata'),
+        ('wrong-currency', '8.20', '-258.20', 'metadata'),
+        ('wrong-scan', '8.20', '-258.20', 'metadata'),
+        ('wrong-reason', '8.20', '-258.20', 'metadata'),
+        ('wrong-legacy', '8.20', '-258.20', 'metadata'),
+        ('wrong-entry', '8.20', '-258.20', 'metadata'),
+        ('reversed', '8.20', '-258.20', 'metadata'),
+    )
+    for slug, fee, amount, state in variants:
+        entry_id, scan_id = _entry_without_debit(app, slug, fee)
+        event_ids = []
+        if amount is not None:
+            opening = _insert_event(
+                app, f'entry:{entry_id}:cash', minute=7 if slug == 'wrong-time' else 6,
+                amount=amount, reason='ADJUSTMENT' if slug == 'wrong-reason' else 'SCAN_ENTRY',
+                entry_id=None if slug == 'wrong-entry' else entry_id,
+                scan_id=None if slug == 'wrong-scan' else scan_id,
+                currency='EUR' if slug == 'wrong-currency' else 'USD',
+                legacy=slug == 'wrong-legacy')
+            event_ids.append(opening)
+            if slug == 'duplicate':
+                event_ids.append(_insert_event(
+                    app, f'other-opening:{entry_id}', minute=6, amount=amount,
+                    reason='SCAN_ENTRY', entry_id=entry_id, scan_id=scan_id))
+            if slug == 'reversed':
+                _insert_event(app, f'reversal:{entry_id}', minute=7, amount='258.20',
+                              reason='REVERSAL', reverses=opening)
+        _publish(app, token, slug=slug)
+        expected.append({
+            'entry_id': entry_id, 'reason': 'entry_cash_mismatch', 'cash_discrepancy': {
+                'state': state, 'event_ids': event_ids,
+                'expected_amount': '-257.70' if fee == '7.70' else '-258.20',
+                'actual_amount': None if state in {'missing', 'ambiguous'} else amount,
+            },
+        })
+
+    baseline_openings = _entry_rows(reader)
+    before = _business_counts(reader)
+    first = _run(app, repo_root, operation_key='b3-cash-guard')
+    assert first['pending'] == expected
+    assert [written['entry_id'] for written in first['settled']] == [healthy]
+    retry = _run(app, repo_root, operation_key='b3-cash-guard', attempt=2)
+    assert retry['pending'] == expected and retry['settled_count'] == 0
+    assert _entry_rows(reader) == baseline_openings
+    assert _business_counts(reader) == (before[0], before[1], before[2], before[3] + 1,
+                                       before[4], before[5] + 1)
+    assert reader.execute(
+        "SELECT entry_id, amount, reason FROM papersim.bankroll_events WHERE event_key LIKE 'settle:%'"
+    ).fetchall() == [(healthy, Decimal('258.20' if token == 'VOIDED'
+                                      else '446.4285714285714'),
+                     'VOIDED_REFUND' if token == 'VOIDED' else 'SETTLE_NATURAL')]
+    assert reader.execute('SELECT entry_id FROM papersim.settlements').fetchall() == [(healthy,)]
+
+
+@NATIVE
+def test_b3_reentry_excludes_old_terminals_and_posts_the_new_confirmation(cash_faces, repo):
+    app, reader, _app_dsn = cash_faces
+    repo_root, _head = repo
+    _insert_event(app, 'initial', minute=1, amount='10000', reason='INITIAL')
+    _, first = _accepted(app, 'reused', price='0.50')
+    _publish(app, 'NO', slug='reused', observed=8, confirmed=8)
+    first_result = _run(app, repo_root, operation_key='b3-reused-initial')
+    assert [row['entry_id'] for row in first_result['settled']] == [first]
+
+    _, later = _accepted(app, 'reused', price='0.50', entered=20)
+    assert first != later
+    _as_of_oracle(reader, at(15), 'c' * 40,
+                  (Decimal('9742.30'), 0, 10000, Decimal('-257.70'), 0, 3, 1, 1))
+    captures = [(None, None, None), ('YES', 24, 8), ('YES', 30, None), ('YES', 18, 23)]
+    for attempt, (token, observed, confirmed) in enumerate(captures, 1):
+        if token is not None:
+            _publish(app, token, slug='reused', observed=observed, confirmed=confirmed)
+        result = _run(app, repo_root, operation_key='b3-reused', attempt=attempt)
+        assert result['pending'] == [{'entry_id': later, 'reason': 'no_captured_outcome'}]
+        assert result['settled_count'] == 0
+        assert reader.execute('SELECT entry_id FROM papersim.settlements').fetchall() == [(first,)]
+    _as_of_oracle(reader, at(45), 'd' * 40,
+                  (Decimal('9484.60'), 250, 10000, Decimal('-257.70'),
+                   Decimal('7.70'), 4, 2, 1))
+
+    valid = _publish(app, 'YES', slug='reused', observed=34, confirmed=25)
+    _publish(app, 'NO', slug='reused', observed=60, confirmed=10)
+    done = _run(app, repo_root, operation_key='b3-reused', attempt=5)
+    assert [row['entry_id'] for row in done['settled']] == [later]
+    assert reader.execute(
+        'SELECT s.source_outcome_id, s.confirmed_at, b.occurred_at, b.amount '
+        'FROM papersim.settlements s JOIN papersim.bankroll_events b USING (entry_id) '
+        "WHERE s.entry_id = %s AND b.reason = 'SETTLE_NATURAL'", (later,)
+    ).fetchall() == [(valid, at(25), at(25), Decimal('500'))]
+    _as_of_oracle(reader, at(24), 'e' * 40,
+                  (Decimal('9484.60'), 250, 10000, Decimal('-257.70'),
+                   Decimal('7.70'), 4, 2, 1))
+    _as_of_oracle(reader, at(25), 'f' * 40,
+                  (Decimal('9984.60'), 0, 10000, Decimal('-15.40'), 0, 5, 2, 2))
+
+
+@NATIVE
+def test_b3_typed_matching_ranks_eligible_observations(cash_faces, repo):
+    app, reader, _app_dsn = cash_faces
+    repo_root, _head = repo
+    stale_alias = _accepted(app, 'alias', condition='condition-alias', market='market-alias')[1]
+    _publish(app, 'NO', condition='condition-alias', observed=90, confirmed=5)
+    alias_id = _publish(app, 'YES', market='market-alias', observed=20, confirmed=20)
+    contradiction = _accepted(app, 'slug-contradiction', condition='own-condition')[1]
+    _publish(app, 'NO', slug='slug-contradiction', condition='foreign-condition')
+    cross = _accepted(app, 'same-text-slug', condition='typed-text')[1]
+    _publish(app, 'YES', market='typed-text')
+    strong = _accepted(app, 'priority', condition='condition-priority', market='market-priority')[1]
+    strong_id = _publish(app, 'YES', condition='condition-priority', observed=20, confirmed=20)
+    _publish(app, 'NO', market='market-priority', observed=40, confirmed=40)
+    weak = _accepted(app, 'unknown-strong', condition='condition-unknown', market='market-known')[1]
+    _publish(app, 'UNKNOWN', condition='condition-unknown', observed=80, confirmed=None)
+    weak_id = _publish(app, 'YES', market='market-known', observed=20, confirmed=20)
+    unknown = _accepted(app, 'unknown-only')[1]
+    _publish(app, 'UNKNOWN', slug='unknown-only', observed=60, confirmed=None)
+    tied = _accepted(app, 'equal-utc')[1]
+    _publish(app, 'NO', slug='equal-utc', observed=at(6), confirmed=None)
+    offset = datetime.timezone(datetime.timedelta(hours=-7))
+    tie_id = _publish(app, 'YES', slug='equal-utc', observed=at(6).astimezone(offset), confirmed=None)
+
+    result = _run(app, repo_root, operation_key='b3-typed')
+    assert result['pending'] == [
+        {'entry_id': contradiction, 'reason': 'no_captured_outcome'},
+        {'entry_id': cross, 'reason': 'no_captured_outcome'},
+        {'entry_id': unknown, 'reason': 'outcome_unknown'},
+    ]
+    assert [row['entry_id'] for row in result['settled']] == [stale_alias, strong, weak, tied]
+    assert reader.execute(
+        'SELECT entry_id, source_outcome_id, confirmed_at, win_loss '
+        'FROM papersim.settlements ORDER BY entry_id'
+    ).fetchall() == [(stale_alias, alias_id, at(20), 'win'), (strong, strong_id, at(20), 'win'),
+                     (weak, weak_id, at(20), 'win'), (tied, tie_id, at(6), 'win')]
+
+
+@NATIVE
+def test_b3_market_scoring_is_independent_of_unrecorded_and_recorded_trade_results(
+        cash_faces, repo, tmp_path):
+    from polymarket_alpha_lab.papersim import cli, evaluation, fees
+    app, reader, _app_dsn = cash_faces
+    repo_root, _head = repo
+    candidate, entry_id = _accepted(
+        app, 'contrasting', entered=10, fee='8.20', condition='contrasting-condition')
+    _publish(app, 'NO', condition='contrasting-condition', observed=40, confirmed=5)
+    gap_candidate, gap_entry = _accepted(
+        app, 'gap', entered=10, condition='gap-condition', market='eligible-alias')
+    _publish(app, 'UNKNOWN', condition='gap-condition', observed=40, confirmed=None)
+
+    def load(candidate_id):
+        return next(row for row in cli._evaluation_candidates_from_store(reader)
+                    if row.candidate_id == str(candidate_id))
+
+    def report(row, basis=evaluation.PNL_BASIS_RECORDED):
+        return evaluation.evaluate_queues((row,), pnl_basis=basis).queues[0]
+
+    stale = load(candidate)
+    assert (stale.outcome, stale.settled_time, stale.natural_outcome) == (None, None, 'NO')
+    before = report(stale)
+    assert before.counts.unresolved == 1 and before.roi.counted == 0
+    assert before.scoring.markets_scored == 1 and before.scoring.model_brier == 0.64
+    actual = _publish(app, 'YES', condition='contrasting-condition', observed=28, confirmed=24)
+    gap_actual = _publish(app, 'YES', market='eligible-alias', observed=28, confirmed=24)
+    expected = (
+        (candidate, entry_id, actual, 'NO', 1, 0, 0.64, 0.25),
+        (gap_candidate, gap_entry, gap_actual, None, 0, 1, None, None),
+    )
+    now = _business_counts(reader)
+    for candidate_id, _entry, _observation, global_outcome, scored, missing, model, mid in expected:
+        row = load(candidate_id)
+        assert row.market_outcome_authoritative
+        assert (row.outcome, row.settled_time, row.recorded_pnl, row.natural_outcome) == (
+            'YES', at(24), None, global_outcome)
+        with pytest.raises(ValueError, match="require a recorded 'pnl'"):
+            report(row)
+        projected = report(row, evaluation.PNL_BASIS_RECOMPUTED)
+        assert projected.fills.hits == projected.roi.counted == 1
+        assert (projected.scoring.markets_scored, projected.scoring.missing_outcome,
+                projected.scoring.model_brier, projected.scoring.market_brier) == (
+                    scored, missing, model, mid)
+
+    file = tmp_path / 'legacy-input.json'
+    legacy_json = asdict(load(candidate))
+    del legacy_json['market_outcome_authoritative']
+    file.write_text(json.dumps([legacy_json], default=lambda time: time.isoformat()), encoding='utf-8')
+    legacy_row, = cli._evaluation_candidates_from_json(file)
+    assert report(legacy_row, evaluation.PNL_BASIS_RECOMPUTED).scoring.model_brier == 0.04
+    managed_gap = load(gap_candidate)
+    legacy_gap = replace(legacy_row, candidate_id='legacy-row', market_key=managed_gap.market_key)
+    mixed = evaluation.evaluate_queues(
+        (managed_gap, legacy_gap), pnl_basis=evaluation.PNL_BASIS_RECOMPUTED).queues[0]
+    assert mixed.scoring.missing_outcome == 1 and mixed.scoring.markets_scored == 0
+    assert mixed.scoring.model_brier is None and mixed.scoring.deduped_repeats == 1
+    assert _business_counts(reader) == now
+
+    result = _run(app, repo_root, operation_key='b3-scoring')
+    assert result['settled_count'] == 2 and result['pending_count'] == 0
+    settled_counts = _business_counts(reader)
+    for candidate_id, affected, observation, global_outcome, scored, missing, model, mid in expected:
+        row = load(candidate_id)
+        assert (row.outcome, row.settled_time, row.natural_outcome) == ('win', at(24), global_outcome)
+        recorded = report(row)
+        assert recorded.fills.hits == recorded.roi.counted == 1
+        assert (recorded.scoring.markets_scored, recorded.scoring.missing_outcome,
+                recorded.scoring.model_brier, recorded.scoring.market_brier) == (
+                    scored, missing, model, mid)
+        persisted = reader.execute(
+            'SELECT source_outcome_id, pnl_gross, fee_total, pnl_net FROM papersim.settlements '
+            'WHERE entry_id = %s', (affected,)).fetchone()
+        assert persisted[0] == observation and Decimal(str(row.recorded_pnl)) == persisted[1]
+        assert recorded.roi.entry_fees == pytest.approx(7.70)
+        assert recorded.roi.fee_schedule_as_of == fees.FEE_SCHEDULE_AS_OF
+        assert recorded.roi.net_pnl == pytest.approx(188.7285714285714)
+        if affected == entry_id:
+            assert persisted[2:] == (Decimal('8.20'), Decimal('188.2285714285714'))
+    assert _business_counts(reader) == settled_counts
+
+
+@NATIVE
+def test_automatic_write_rechecks_cash_and_keeps_the_chosen_capture(cash_faces, repo):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    app, writer, _app_dsn = cash_faces
+    repo_root, _head = repo
+    _, sound = _accepted(app, 'stable-capture')
+    source = _publish(app, 'YES', slug='stable-capture')
+    _, tainted = _accepted(app, 'tainted-after-plan')
+    _publish(app, 'VOIDED', slug='tainted-after-plan')
+    scan_id = writer.execute(
+        'SELECT scan_id FROM papersim.bankroll_events WHERE event_key = %s',
+        (f'entry:{tainted}:cash',)).fetchone()[0]
+
+    def load_then_commit(connection):
+        rows = store_psycopg.open_entries_for_settlement(connection)
+        assert [row.entry_id for row in rows] == [sound, tainted]
+        assert rows[0].outcome.outcome_id == source
+        _publish(writer, 'NO', slug='stable-capture', observed=100, confirmed=90)
+        _insert_event(writer, f'contradictory:{tainted}', minute=6, amount='-257.70',
+                      reason='SCAN_ENTRY', entry_id=tainted, scan_id=scan_id)
+        return rows
+
+    result = settle.run_settle(
+        'crypto_eth', conn=app, repo_root=repo_root, now_utc=lambda: at(120),
+        open_entries=load_then_commit, operation_key='b3-between-plan-and-write')
+    assert [row['entry_id'] for row in result['settled']] == [sound]
+    assert [(row['entry_id'], row['reason'], row['cash_discrepancy']['state'])
+            for row in result['pending']] == [(tainted, 'entry_cash_mismatch', 'ambiguous')]
+    assert writer.execute(
+        'SELECT s.entry_id, s.source_outcome_id, s.outcome_label, b.occurred_at, b.amount '
+        'FROM papersim.settlements s JOIN papersim.bankroll_events b USING (entry_id) '
+        "WHERE b.reason = 'SETTLE_NATURAL'").fetchall() == [
+            (sound, source, 'YES', at(80), Decimal('446.4285714285714'))]
+    assert writer.execute(
+        'SELECT reason FROM papersim.bankroll_events WHERE entry_id = %s ORDER BY event_id',
+        (tainted,)).fetchall() == [('SCAN_ENTRY',), ('SCAN_ENTRY',)]
+
+
+@NATIVE
+def test_guarded_settlement_rejects_wrong_typed_source_token_side_or_time(cash_faces):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    app, reader, _app_dsn = cash_faces
+    _accepted(app, 'expected', condition='expected-key')
+    _publish(app, 'YES', condition='expected-key')
+    foreign = _publish(app, 'YES', market='expected-key')
+    pending, = store_psycopg.open_entries_for_settlement(app)
+    decision = settle.plan_settlement(pending)
+    record, guard = decision.record, decision.automatic
+    foreign_capture = replace(
+        guard.outcome, outcome_id=foreign, identity=settle.MarketIdentity(market_id='expected-key'))
+    before = _business_counts(reader)
+    variants = (
+        (replace(record, source_outcome_id=foreign), replace(guard, outcome=foreign_capture),
+         'papersim_automatic_settlement_evidence_mismatch'),
+        (record, replace(guard, outcome=replace(guard.outcome, confirmed_at=at(70))),
+         'papersim_automatic_settlement_evidence_mismatch'),
+        (replace(record, outcome_label='NO', win_loss='loss'), guard,
+         'papersim_automatic_settlement_record_mismatch'),
+        (replace(record, confirmed_at=at(69)), guard, 'papersim_automatic_settlement_record_mismatch'),
+        (replace(record, fee_total=Decimal('0'), pnl_net=record.pnl_gross), guard,
+         'papersim_automatic_settlement_record_mismatch'),
+    )
+    for settlement, context, code in variants:
+        with pytest.raises(store.PapersimStoreError, match=code):
+            store_psycopg.record_automatic_settlement(app, settlement, context)
+        assert _business_counts(reader) == before
+    result = store_psycopg.record_automatic_settlement(app, record, guard)
+    assert result['inserted'] is True
+
+
+def _wait_settlement_conflict(observer, holder_pid, contender_pid):
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        blockers, ungranted = observer.execute(
+            'SELECT pg_blocking_pids(%s), EXISTS (SELECT 1 FROM pg_locks WHERE pid = %s '
+            "AND locktype = 'transactionid' AND NOT granted)",
+            (contender_pid, contender_pid)).fetchone()
+        if holder_pid in blockers and ungranted:
+            return
+        time.sleep(0.02)
+    pytest.fail('contender never blocked on the held settlement transaction ID')
+
+
+@NATIVE
+@pytest.mark.parametrize('scenario', ['identical', 'divergent', 'repeatable-read'])
+def test_automatic_settlement_writers_converge_under_the_unique_key(cash_faces, scenario):
+    import psycopg
+
+    from polymarket_alpha_lab.papersim import store_psycopg
+    holder, observer, dsn = cash_faces
+    _, entry_id = _accepted(holder, 'same-entry')
+    source = _publish(holder, 'YES', slug='same-entry')
+    entry, = store_psycopg.open_entries_for_settlement(holder)
+    first = settle.plan_settlement(entry)
+    proposed = (replace(first.record, confirmed_by='other-operator')
+                if scenario == 'divergent' else first.record)
+    with _connect(dsn) as contender:
+        if scenario == 'repeatable-read':
+            contender.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
+        assert len({holder.info.backend_pid, observer.info.backend_pid,
+                    contender.info.backend_pid}) == 3
+        with holder.transaction():
+            written = store_psycopg.record_automatic_settlement(holder, first.record, first.automatic)
+            assert written['inserted']
+            assert observer.execute(
+                'SELECT count(*) FROM papersim.settlements WHERE entry_id = %s',
+                (entry_id,)).fetchone() == (0,)
+            box, thread = _midflight_reader(lambda: store_psycopg.record_automatic_settlement(
+                contender, proposed, first.automatic))
+            _wait_settlement_conflict(observer, holder.info.backend_pid, contender.info.backend_pid)
+        thread.join(timeout=30)
+        assert not thread.is_alive()
+        if scenario == 'repeatable-read':
+            assert isinstance(box.get('error'), psycopg.errors.SerializationFailure)
+            assert contender.info.transaction_status == psycopg.pq.TransactionStatus.IDLE
+            assert store_psycopg.record_automatic_settlement(
+                contender, first.record, first.automatic) == {**written, 'inserted': False}
+    if scenario == 'identical':
+        assert box == {'result': {**written, 'inserted': False}}
+    elif scenario == 'divergent':
+        assert isinstance(box.get('error'), store.PapersimStoreError)
+        assert box['error'].code == 'papersim_settlement_conflict'
+    assert observer.execute(
+        'SELECT s.settlement_id, b.event_id, s.source_outcome_id, s.proceeds, '
+        's.fee_total, s.pnl_net, s.confirmed_at, b.amount, b.occurred_at, b.reason '
+        'FROM papersim.settlements s JOIN papersim.bankroll_events b USING (entry_id) '
+        'WHERE s.entry_id = %s AND b.event_key = %s',
+        (entry_id, f'settle:{entry_id}')).fetchall() == [
+        (written['settlement_id'], written['bankroll_event_id'], source,
+         Decimal('446.4285714285714'), Decimal('7.70'), Decimal('188.7285714285714'),
+         at(80), Decimal('446.4285714285714'), at(80), 'SETTLE_NATURAL')]
+    assert _business_counts(observer)[3:] == (2, 0, 1)
+
+
+def _operator_record(entry_id, source=None, **fields):
+    record = store.SettlementRecord(
+        entry_id=entry_id, classification='NATURAL', outcome_label='YES', win_loss='win',
+        proceeds=Decimal('446.43'), pnl_gross=Decimal('196.43'), fee_total=Decimal('7.70'),
+        pnl_net=Decimal('188.73'), source_outcome_id=source, evidence='operator note',
+        confirmed_by='operator', confirmed_at=at(90))
+    return replace(record, **fields)
+
+
+@NATIVE
+def test_direct_writes_keep_operator_time_rounding_and_legacy_metadata(cash_faces, repo):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    app, reader, _app_dsn = cash_faces
+    repo_root, _head = repo
+    _, selected = _accepted(app, 'operator')
+    source = _publish(app, 'YES', slug='operator', observed=30, confirmed=60)
+    _, unsourced = _accepted(app, 'unsourced')
+    _, void = _accepted(app, 'direct-void', fee='8.20')
+    _, legacy = _accepted(app, 'estimated-history', price='0.5', fee='8.20', legacy=True)
+    legacy_source = _publish(app, 'YES', slug='estimated-history')
+    records = (_operator_record(selected, source), _operator_record(unsourced))
+    for record in records:
+        result = store_psycopg.settlement_record(app, record)
+        assert store_psycopg.settlement_record(app, record) == {**result, 'inserted': False}
+        assert reader.execute(
+            'SELECT b.amount, b.occurred_at, b.note, s.source_outcome_id, s.confirmed_by, '
+            's.proceeds FROM papersim.bankroll_events b JOIN papersim.settlements s USING (entry_id) '
+            'WHERE b.event_id = %s', (result['bankroll_event_id'],)).fetchone() == (
+                Decimal('446.43'), at(90), 'operator note', record.source_outcome_id,
+                'operator', Decimal('446.43'))
+    direct_refund = _operator_record(
+        void, classification='VOIDED_REFUND', outcome_label='VOIDED', win_loss=None,
+        proceeds=Decimal('250'), pnl_gross=Decimal(0), fee_total=Decimal(0), pnl_net=Decimal(0))
+    with pytest.raises(store.PapersimStoreError, match='papersim_voided_proceeds_mismatch'):
+        store_psycopg.settlement_record(app, replace(direct_refund, proceeds=Decimal('249')))
+    refund = store_psycopg.settlement_record(app, direct_refund)
+    assert store_psycopg.settlement_record(app, direct_refund) == {**refund, 'inserted': False}
+    assert reader.execute(
+        'SELECT s.proceeds, s.pnl_net, b.amount, b.occurred_at, b.reason '
+        'FROM papersim.settlements s JOIN papersim.bankroll_events b USING (entry_id) '
+        'WHERE b.event_id = %s', (refund['bankroll_event_id'],)
+    ).fetchone() == (Decimal('250'), Decimal(0), Decimal('258.20'), at(90), 'VOIDED_REFUND')
+    outcome = _run(app, repo_root, operation_key='b3-legacy-booked-fee')
+    assert [row['entry_id'] for row in outcome['settled']] == [legacy]
+    assert reader.execute(
+        'SELECT e.entry_fee, e.fee_source, e.is_legacy, s.fee_total, s.fee_source, '
+        's.is_legacy, s.pnl_net, s.source_outcome_id, b.amount, b.is_legacy '
+        'FROM papersim.entries e JOIN papersim.settlements s USING (entry_id) '
+        "JOIN papersim.bankroll_events b USING (entry_id) WHERE b.entry_id = %s "
+        "AND b.reason = 'SETTLE_NATURAL'", (legacy,)).fetchone() == (
+            Decimal('8.20'), 'estimated', True, Decimal('8.20'), 'estimated',
+            True, Decimal('241.80'), legacy_source, Decimal('500'), True)
+
+
+@NATIVE
+@pytest.mark.parametrize('defect', ['short-refund', 'missing', 'duplicate', 'metadata'])
+def test_historical_cash_discrepancy_reports_original_rows_without_repair(
+        cash_faces, defect):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    app, reader, _app_dsn = cash_faces
+    _, entry_id = _accepted(app, 'historical-cash', fee='8.20', legacy=True)
+    key = f'settle:{entry_id}'
+    record = _operator_record(
+        entry_id, classification='VOIDED_REFUND', outcome_label='VOIDED',
+        win_loss=None, proceeds=Decimal('250'), pnl_gross=Decimal(0), fee_total=Decimal(0),
+        pnl_net=Decimal(0), fee_source='estimated', is_legacy=True)
+    settlement_id = app.execute(
+        'INSERT INTO papersim.settlements (entry_id, classification, outcome_label, proceeds, '
+        'pnl_gross, fee_total, fee_source, pnl_net, evidence, confirmed_by, confirmed_at, is_legacy) '
+        "VALUES (%s, 'VOIDED_REFUND', 'VOIDED', 250, 0, 0, 'estimated', 0, %s, %s, %s, true) "
+        'RETURNING settlement_id',
+        (entry_id, record.evidence, record.confirmed_by, record.confirmed_at)).fetchone()[0]
+    historical_amount = '250' if defect == 'short-refund' else '258.20'
+    event_id = None if defect == 'missing' else _insert_event(
+        app, key, minute=90, amount=historical_amount, reason='VOIDED_REFUND',
+        entry_id=entry_id, legacy=True, note=None if defect == 'metadata' else record.evidence)
+    event_ids = () if event_id is None else (event_id,)
+    if defect == 'duplicate':
+        event_ids += (_insert_event(
+            app, f'other-cash:{entry_id}', minute=90, amount=historical_amount,
+            reason='VOIDED_REFUND', entry_id=entry_id, legacy=True, note=record.evidence),)
+    counts = _business_counts(reader)
+    for _ in range(2):
+        with pytest.raises(store_psycopg.SettlementCashDiscrepancy) as caught:
+            store_psycopg.settlement_record(app, record)
+        error = caught.value
+        assert (error.entry_id, error.settlement_id, error.cash_event_id) == (
+            entry_id, settlement_id, event_id)
+        assert error.expected_amount == Decimal('258.20')
+        assert error.event_ids == event_ids
+        if defect == 'missing':
+            assert error.code == 'papersim_settlement_cash_missing'
+            assert error.actual_amount is None and error.occurred_at is None
+        else:
+            assert error.code == 'papersim_settlement_cash_mismatch'
+            assert error.actual_amount == Decimal(historical_amount) and error.occurred_at == at(90)
+        assert _business_counts(reader) == counts
+        assert reader.execute(
+            'SELECT settlement_id, confirmed_at, is_legacy FROM papersim.settlements'
+        ).fetchall() == [(settlement_id, at(90), True)]
+        assert reader.execute(
+            'SELECT event_id, amount, occurred_at FROM papersim.bankroll_events WHERE event_key = %s',
+            (key,)).fetchall() == ([] if event_id is None else
+                                  [(event_id, Decimal(historical_amount), at(90))])
+
+
+@NATIVE
+def test_later_cash_insert_failure_rolls_back_its_settlement_and_keeps_receipts(cash_faces, repo):
+    import psycopg
+
+    app, reader, _app_dsn = cash_faces
+    repo_root, _head = repo
+    _, healthy = _accepted(app, 'before-conflict')
+    _publish(app, 'YES', slug='before-conflict')
+    _, conflict = _accepted(app, 'cash-key-conflict')
+    _publish(app, 'YES', slug='cash-key-conflict')
+    conflicting_key = f'settle:{conflict}'
+    sentinel = _insert_event(
+        app, conflicting_key, minute=85, amount='1', reason='ADJUSTMENT', entry_id=conflict)
+    baseline = _business_counts(reader)
+    for attempt in (1, 2):
+        with pytest.raises(psycopg.errors.UniqueViolation):
+            _run(app, repo_root, operation_key='b3-failed-cash', attempt=attempt)
+        assert reader.execute(
+            'SELECT entry_id FROM papersim.settlements').fetchall() == [(healthy,)]
+        assert reader.execute('SELECT event_id, amount, reason, occurred_at '
+                              'FROM papersim.bankroll_events WHERE event_key = %s',
+                              (conflicting_key,)).fetchall() == [
+                                  (sentinel, Decimal(1), 'ADJUSTMENT', at(85))]
+        assert _business_counts(reader) == tuple(
+            count + (index in (3, 5)) for index, count in enumerate(baseline))
+    assert reader.execute(
+        'SELECT attempt, phase, error_code FROM papersim.command_run_events ORDER BY run_event_id'
+    ).fetchall() == [(1, 'STARTED', None), (1, 'FAILED', 'UniqueViolation'),
+                     (2, 'STARTED', None), (2, 'FAILED', 'UniqueViolation')]
+
+
+@NATIVE
+def test_active_cash_enforcement_matches_the_released_migrations(cash_faces):
+    app, _reader, _dsn = cash_faces
+    assert len(pm.papersim_migration_catalog(ROOT)) == 6
+    protected = ('bankroll_events', 'entries', 'market_outcomes', 'settlements')
+    assert app.execute(
+        'SELECT c.relname, t.tgtype, t.tgenabled, p.proname '
+        'FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid '
+        'JOIN pg_namespace n ON n.oid = c.relnamespace '
+        'JOIN pg_proc p ON p.oid = t.tgfoid '
+        'WHERE n.nspname = %s AND c.relname = ANY(%s) AND NOT t.tgisinternal '
+        'ORDER BY c.relname, t.tgtype',
+        ('papersim', list(protected))).fetchall() == [
+            (rel, trigger, 'O', 'reject_mutation') for rel in protected for trigger in (27, 34)]
+    assert app.execute(
+        "SELECT has_table_privilege(current_user, 'papersim.settlements', 'SELECT'), "
+        "has_table_privilege(current_user, 'papersim.settlements', 'INSERT'), "
+        "has_table_privilege(current_user, 'papersim.settlements', 'UPDATE'), "
+        "current_user").fetchone() == (True, True, False, 'pal_app')

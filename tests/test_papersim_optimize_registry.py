@@ -367,6 +367,40 @@ def test_second_handover_retires_the_old_guard_in_the_same_batch():
     assert BASELINE in twice.retired
 
 
+def test_first_handover_rejects_a_stray_retired_event():
+    # MO-8 tightening (MO-2 code-review P3 follow-up): with no prior
+    # guard the handover batch has no legal RETIRED event. The old fold
+    # silently dropped a stray target; it now fails with the fixed code.
+    view = initialized()
+    registered = validate_role_event_batch(view, [event('CANDIDATE', CANDIDATE,
+                                                        forward_plan={})])
+    with pytest.raises(RegistryInvariantError) as stray:
+        validate_role_event_batch(
+            registered, [event('RETIRED', CANDIDATE2), event('GUARD', BASELINE),
+                         event('ACTIVE', CANDIDATE)])
+    assert 'papersim_registry_handover_stray_retired' in str(stray.value)
+    # The legal two-event handover is unchanged and stays silent-proof.
+    handed = validate_role_event_batch(
+        registered, [event('GUARD', BASELINE), event('ACTIVE', CANDIDATE)])
+    assert handed.retired == ()
+
+
+def test_second_handover_retired_event_must_be_exactly_the_old_guard():
+    # With a prior guard present the single RETIRED event must retire
+    # exactly that guard; a bystander digest fails the guard-cap rule.
+    view = initialized()
+    step = validate_role_event_batch(view, [event('CANDIDATE', CANDIDATE,
+                                                  forward_plan={})])
+    handed = validate_role_event_batch(
+        step, [event('GUARD', BASELINE), event('ACTIVE', CANDIDATE)])
+    again = validate_role_event_batch(
+        handed, [event('CANDIDATE', CANDIDATE2, forward_plan={})])
+    with pytest.raises(RegistryInvariantError):
+        validate_role_event_batch(
+            again, [event('RETIRED', CANDIDATE2), event('GUARD', CANDIDATE),
+                    event('ACTIVE', CANDIDATE2)])
+
+
 def test_retirement_only_currently_held_specs():
     view = initialized()
     with pytest.raises(RegistryInvariantError):

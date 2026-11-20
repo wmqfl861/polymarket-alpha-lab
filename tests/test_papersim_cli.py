@@ -315,9 +315,8 @@ class _StubStoreConn:
     """In-memory stand-in speaking only the evaluate SELECT surface.
 
     Candidate rows carry the settlement-join columns of the fixed
-    candidates query (``has_order_book`` plus the ``papersim.settlements``
-    fields; ``None`` when no entry/settlement row exists) so one stub
-    serves the whole evaluate surface.
+    candidates query, including entry attribution and the settlement
+    fields, so one stub serves the whole evaluate surface.
 
     FX-29 (B3 changed-test proof, fix-list 03 section 0 rule 2): the
     loader now opens ONE repeatable-read read-only snapshot before its
@@ -348,7 +347,7 @@ class _StubStoreConn:
                        "market_type", "market_kind", "event_key", "model_name",
                        "model_version", "evaluated_at", "condition_id", "market_id",
                        "market_slug", "gate_version", "stake", "price", "fee_category",
-                       "has_order_book", "classification", "win_loss",
+                       "entry_id", "entered_at", "has_order_book", "classification", "win_loss",
                        "exit_price", "proceeds", "pnl_gross", "fee_total",
                        "pnl_net", "confirmed_at"]
             return [tuple(row.get(name) for name in columns) for row in self._candidates], columns
@@ -358,7 +357,7 @@ class _StubStoreConn:
             return [tuple(row[name] for name in columns) for row in self._evidence], columns
         if sql.startswith("SELECT outcome_id, condition_id"):
             columns = ["outcome_id", "condition_id", "market_id", "market_slug",
-                       "outcome", "observed_at"]
+                       "outcome", "observed_at", "confirmed_at", "source_kind"]
             return [tuple(row[name] for name in columns) for row in self._outcomes], columns
         raise AssertionError(f"unexpected SQL reached the stub: {sql}")
 
@@ -380,6 +379,7 @@ def _stub_store() -> _StubStoreConn:
          "condition_id": None, "market_id": "m-1", "market_slug": None,
          "gate_version": "gates-2026-11-07", "stake": Decimal("250"),
          "price": Decimal("0.56"), "fee_category": "crypto",
+         "entry_id": 11, "entered_at": STUB_NOW,
          "has_order_book": True},
         {"candidate_id": 2, "candidate_key": "k-rej", "conclusion": "REJECTED",
          "side": "NO", "market_type": None, "market_kind": "other",
@@ -401,9 +401,11 @@ def _stub_store() -> _StubStoreConn:
     outcomes = [
         {"outcome_id": 1, "condition_id": None, "market_id": "m-1",
          "market_slug": None, "outcome": "YES",
+         "confirmed_at": None, "source_kind": "gamma_close",
          "observed_at": STUB_NOW + datetime.timedelta(hours=2)},
         {"outcome_id": 2, "condition_id": None, "market_id": None,
          "market_slug": "m-2", "outcome": "NO",
+         "confirmed_at": None, "source_kind": "gamma_close",
          "observed_at": STUB_NOW + datetime.timedelta(hours=2)},
     ]
     return _StubStoreConn(candidates, evidence, outcomes)
@@ -460,10 +462,11 @@ def _decision_evidence(candidate_id: int, probability, mid):
             "mid": Decimal(str(mid)), "bid": None, "ask": None, "last": None}
 
 
-def _market_outcome(market_id: str, outcome: str, hours: float):
-    return {"outcome_id": abs(hash(market_id)) % 1000, "condition_id": None,
+def _market_outcome(outcome_id: int, market_id: str, outcome: str, hours: float):
+    return {"outcome_id": outcome_id, "condition_id": None,
             "market_id": market_id, "market_slug": None, "outcome": outcome,
-            "observed_at": STUB_NOW + datetime.timedelta(hours=hours)}
+            "observed_at": STUB_NOW + datetime.timedelta(hours=hours),
+            "confirmed_at": None, "source_kind": "gamma_close"}
 
 
 def _entered_candidate(candidate_id: int, market_id: str, *, side: str,
@@ -476,6 +479,7 @@ def _entered_candidate(candidate_id: int, market_id: str, *, side: str,
            "condition_id": None, "market_id": market_id, "market_slug": None,
            "gate_version": "gates-2026-11-07", "stake": Decimal(stake),
            "price": Decimal(price), "fee_category": "sports",
+           "entry_id": candidate_id + 100, "entered_at": STUB_NOW,
            "has_order_book": has_order_book}
     if settlement is not None:
         row.update(settlement)
@@ -511,7 +515,7 @@ def test_evaluate_wires_settlement_ledger_for_exit_trades(
             11, "m-exit", side="YES", stake="250", price="0.50",
             has_order_book=True, settlement=_exit_settlement())],
         evidence=[_decision_evidence(11, "0.60", "0.50")],
-        outcomes=[_market_outcome("m-exit", "YES", 6)],
+        outcomes=[_market_outcome(101, "m-exit", "YES", 6)],
     )
     monkeypatch.setattr(cli, "_open_readonly_connection", lambda args, label: conn)
     # Default recorded basis: the settlement ledger supplies the PnL.
@@ -569,7 +573,7 @@ def test_evaluate_recorded_basis_reads_settlements_and_fails_without_them(
                         "pnl_net": Decimal("243.75"),
                         "confirmed_at": STUB_NOW + datetime.timedelta(hours=6)})],
         evidence=[_decision_evidence(12, "0.60", "0.50")],
-        outcomes=[_market_outcome("m-win", "YES", 7)],
+        outcomes=[_market_outcome(102, "m-win", "YES", 7)],
     )
     monkeypatch.setattr(
         cli, "_open_readonly_connection", lambda args, label: settled)
@@ -586,7 +590,7 @@ def test_evaluate_recorded_basis_reads_settlements_and_fails_without_them(
             14, "m-open", side="YES", stake="250", price="0.56",
             has_order_book=True)],
         evidence=[_decision_evidence(14, "0.62", "0.56")],
-        outcomes=[_market_outcome("m-open", "YES", 6)],
+        outcomes=[_market_outcome(103, "m-open", "YES", 6)],
     )
     monkeypatch.setattr(
         cli, "_open_readonly_connection", lambda args, label: unsettled)
@@ -626,8 +630,8 @@ def test_evaluate_win_loss_labels_and_natural_outcome_stay_separate(
         ],
         evidence=[_decision_evidence(15, "0.60", "0.50"),
                   _decision_evidence(16, "0.60", "0.50")],
-        outcomes=[_market_outcome("m-label", "YES", 7),
-                  _market_outcome("m-label-loss", "NO", 7)],
+        outcomes=[_market_outcome(104, "m-label", "YES", 7),
+                  _market_outcome(105, "m-label-loss", "NO", 7)],
     )
     monkeypatch.setattr(cli, "_open_readonly_connection", lambda args, label: conn)
     code = cli.main(["evaluate", "--managed"])
@@ -673,8 +677,8 @@ def test_evaluate_voided_settlement_excludes_the_trade_from_roi(
         ],
         evidence=[_decision_evidence(17, "0.60", "0.50"),
                   _decision_evidence(18, "0.60", "0.50")],
-        outcomes=[_market_outcome("m-void", "YES", 7),
-                  _market_outcome("m-win2", "YES", 7)],
+        outcomes=[_market_outcome(106, "m-void", "YES", 7),
+                  _market_outcome(107, "m-win2", "YES", 7)],
     )
     monkeypatch.setattr(cli, "_open_readonly_connection", lambda args, label: conn)
     code = cli.main(["evaluate", "--managed"])
@@ -720,8 +724,8 @@ def test_evaluate_fill_provenance_requires_a_recorded_order_book(
             candidates=rows,
             evidence=[_decision_evidence(row["candidate_id"], "0.60", "0.50")
                       for row in rows],
-            outcomes=[_market_outcome("m-v2", "YES", 7),
-                      _market_outcome("m-leg", "YES", 7)])
+            outcomes=[_market_outcome(108, "m-v2", "YES", 7),
+                      _market_outcome(109, "m-leg", "YES", 7)])
 
     monkeypatch.setattr(cli, "_open_readonly_connection",
                         lambda args, label: store(legacy=False))
@@ -780,8 +784,8 @@ def test_evaluate_wires_construction_failed_count_from_the_store(
         _decision_evidence(32, "0.40", "0.45"),
     ]
     outcomes = [
-        _market_outcome("m-cf-acc", "YES", 6),
-        _market_outcome("m-cf-rej", "NO", 6),
+        _market_outcome(110, "m-cf-acc", "YES", 6),
+        _market_outcome(111, "m-cf-rej", "NO", 6),
     ]
     conn = _StubStoreConn(candidates=candidates, evidence=evidence,
                           outcomes=outcomes)

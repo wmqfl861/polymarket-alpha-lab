@@ -256,6 +256,7 @@ class EvaluationCandidate:
     settled_time: datetime | None = None
     close_price: float | None = None  # later market mark, P(side)
     match_key: str | None = None
+    market_outcome_authoritative: bool = False
 
     def __post_init__(self) -> None:
         for name in (
@@ -269,6 +270,8 @@ class EvaluationCandidate:
             raise ValueError("accepted must be a bool")
         if type(self.construction_failed) is not bool:
             raise ValueError("construction_failed must be a bool")
+        if type(self.market_outcome_authoritative) is not bool:
+            raise ValueError("market_outcome_authoritative must be a bool")
         if self.construction_failed and self.accepted:
             raise ValueError(
                 "a construction-failed candidate is never accepted"
@@ -1024,6 +1027,8 @@ def _bootstrap_ratio_ci(
 
 def cluster_bootstrap_mean_ci(
     clusters: Sequence[Sequence[float]],
+    *,
+    percentiles: tuple[float, float] = BOOTSTRAP_PERCENTILES,
 ) -> tuple[float | None, float | None]:
     """Cluster bootstrap of a mean with the frozen seed.
 
@@ -1032,7 +1037,22 @@ frozen implementation moved verbatim (seed, resample count and
 linear-interpolation percentiles unchanged); the private alias
 below preserves every frozen call site. Exact output equality is
 pinned by tests/test_papersim_evaluation_bootstrap_public.py.
+
+    ``percentiles`` (MO-8 precursor, the evaluation-lane queued
+change): keyword-only, defaulting to the frozen 95% pair so every
+existing call site keeps its byte-identical output. The draws
+    themselves are unchanged by the parameter -- same seed, same
+    resample count, same linear interpolation -- only the two
+    extracted quantile positions move. The optimizer's promotion
+    rule v1 passes ``(0.5, 99.5)`` for its tightened first evidence
+    look (DELIVERY_PLAN 80.7); the numbers live only in
+    ``optimize/policy``.
     """
+    if type(percentiles) is not tuple or len(percentiles) != 2 \
+            or not all(type(value) is float and 0.0 <= value <= 100.0
+                       for value in percentiles) \
+            or not percentiles[0] < percentiles[1]:
+        raise ValueError("papersim_bootstrap_percentiles_invalid")
     if not clusters:
         return (None, None)
     rng = random.Random(BOOTSTRAP_SEED)
@@ -1047,8 +1067,8 @@ pinned by tests/test_papersim_evaluation_bootstrap_public.py.
         draws.append(total / count if count else 0.0)
     draws.sort()
     return (
-        _percentile(draws, BOOTSTRAP_PERCENTILES[0]),
-        _percentile(draws, BOOTSTRAP_PERCENTILES[1]),
+        _percentile(draws, percentiles[0]),
+        _percentile(draws, percentiles[1]),
     )
 
 
@@ -1205,22 +1225,13 @@ def _market_scoring(
     for group in groups.values():
         ordered = sorted(group, key=_representative_order)
         representative = ordered[0]
-        # The market's natural result: the earliest row exposing one,
-        # either directly through its outcome or — for rows whose outcome
-        # carries a trade label (win/loss/EXITED/VOIDED) — through the
-        # independent natural_outcome field (M1 final review P2-01).
-        outcome = next(
-            (
-                token
-                for token in (
-                    row.outcome if row.outcome in ledger.NATURAL_OUTCOMES
-                    else row.natural_outcome
-                    for row in ordered
-                )
-                if token is not None
-            ),
-            None,
-        )
+        authoritative = [row for row in ordered if row.market_outcome_authoritative]
+        if authoritative:
+            tokens = (row.natural_outcome for row in authoritative)
+        else:
+            tokens = (row.outcome if row.outcome in ledger.NATURAL_OUTCOMES
+                      else row.natural_outcome for row in ordered)
+        outcome = next((token for token in tokens if token is not None), None)
         if outcome is None:
             missing_outcome += 1
         elif representative.model_probability is None:

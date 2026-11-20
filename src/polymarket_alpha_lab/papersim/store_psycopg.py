@@ -57,11 +57,13 @@ from polymarket_alpha_lab.papersim.store import (
     MarketOutcomeObservation,
     PapersimStoreError,
     QueueControlSubmission,
+    SETTLEMENT_CASH_REASONS,
     ScanSubmission,
     SettlementRecord,
     _as_decimal,
     bankroll_identity_difference,
     entry_mark_key,
+    exact_sum,
     validate_evidence_time_order,
 )
 from polymarket_alpha_lab.project_postgres import binding, sql
@@ -338,14 +340,17 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
                 cursor.execute(_EVIDENCE_INSERT, _evidence_params(candidate_id, evidence))
             if candidate.entry is not None:
                 entry = candidate.entry
-                cursor.execute(_ENTRY_INSERT, (candidate_id, entry.legacy_source_id, entry.stake,
-                                               entry.price, entry.shares, entry.fee_category,
-                                               entry.fee_rate, entry.entry_fee, entry.fee_source,
+                stake, fee = _as_decimal(entry.stake), _as_decimal(entry.entry_fee)
+                cursor.execute(_ENTRY_INSERT, (candidate_id, entry.legacy_source_id, stake,
+                                               _as_decimal(entry.price), _as_decimal(entry.shares),
+                                               entry.fee_category, _as_decimal(entry.fee_rate),
+                                               fee, entry.fee_source,
                                                entry.tier, entry.entered_at, entry.is_legacy))
                 entry_id = int(cursor.fetchone()[0])
                 event_key = f'entry:{entry_id}:cash'
+                debit = exact_sum(stake, fee)
                 cursor.execute(_CASH_INSERT, (event_key, entry.entered_at, 'USD',
-                                              -(_as_decimal(entry.stake) + _as_decimal(entry.entry_fee)),
+                                              debit.copy_negate(),
                                               'SCAN_ENTRY', entry_id, scan_id, None, entry.is_legacy))
                 bankroll_keys.append(event_key)
     return {'scan_id': scan_id, 'scan_key': key, 'inserted': True,
@@ -417,11 +422,7 @@ _SETTLEMENT_COLUMNS = ('classification, outcome_label, win_loss, exit_price, pro
 
 _SETTLEMENT_INSERT = ('INSERT INTO papersim.settlements (entry_id, ' + _SETTLEMENT_COLUMNS
                       + ') VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) '
-                      'RETURNING settlement_id')
-
-_CASH_LEG_INSERT = ('INSERT INTO papersim.bankroll_events (event_key, occurred_at, currency, '
-                    'amount, reason, entry_id, scan_id, note, is_legacy) '
-                    'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING event_id')
+                      'ON CONFLICT (entry_id) DO NOTHING RETURNING settlement_id')
 
 _BANKROLL_CHECK_INSERT = ('INSERT INTO papersim.bankroll_checks (check_key, as_of, queue_id, '
                           'event_watermark, cash_total, deployed_total, initial_and_adjustments, '
@@ -611,116 +612,240 @@ def candidate_capture_target(conn, *, scan_id=None, scan_operation_key=None,
     return {'candidate_id': int(row[0]), 'event_start_at': row[1]}
 
 
-def settlement_record(conn, record: SettlementRecord) -> dict:
-    """Insert one settlement and its single cash leg in ONE transaction (M2 3.6).
+class SettlementCashDiscrepancy(PapersimStoreError):
+    """A historical settlement with a missing or inconsistent cash leg."""
 
-    The entry fee was already paid in SCAN_ENTRY; the cash leg carries the
-    settlement cash flow only (natural/voided: proceeds; exit: proceeds
-    minus the sell-leg fee). ``entry_id`` uniqueness plus exact content
-    comparison make repeats idempotent; a different payload for a settled
-    entry is ``papersim_settlement_conflict`` and never an update. Any
-    failure (for example a broken evidence reference) rolls back both the
-    settlement and the cash leg: no orphan cash movements survive.
-    """
+    def __init__(self, entry_id, settlement_id, expected_amount, leg, event_ids):
+        super().__init__('papersim_settlement_cash_missing' if leg is None
+                         else 'papersim_settlement_cash_mismatch')
+        self.entry_id = entry_id
+        self.settlement_id = settlement_id
+        self.cash_event_id = None if leg is None else leg['event_id']
+        self.expected_amount = expected_amount
+        self.actual_amount = None if leg is None else leg['amount']
+        self.occurred_at = None if leg is None else leg['occurred_at']
+        self.event_ids = event_ids
+
+
+def settlement_record(conn, record: SettlementRecord) -> dict:
+    """Write or replay an operator-supplied settlement and its cash leg."""
+    return _record_settlement(conn, record, automatic=None)
+
+
+def record_automatic_settlement(conn, record: SettlementRecord,
+                                automatic: settle.AutomaticSettlement) -> dict:
+    """Write a B3 decision against the immutable facts selected at planning."""
+    if not isinstance(automatic, settle.AutomaticSettlement):
+        raise PapersimStoreError('papersim_automatic_settlement_context_missing')
+    return _record_settlement(conn, record, automatic=automatic)
+
+
+def _settlement_values(record: SettlementRecord) -> dict:
+    values = record.comparison()
+    for name in ('exit_price', 'proceeds', 'pnl_gross', 'fee_total', 'pnl_net'):
+        if values[name] is not None:
+            values[name] = _as_decimal(values[name])
+    values['confirmed_at'] = settle.utc_instant(values['confirmed_at'])
+    return values
+
+
+def _record_settlement(conn, record: SettlementRecord, *, automatic) -> dict:
     record.validate()
+    values = _settlement_values(record)
     with conn.transaction():
         cursor = conn.cursor()
-        cursor.execute('SELECT settlement_id, ' + _SETTLEMENT_COLUMNS
-                       + ' FROM papersim.settlements WHERE entry_id = %s', (record.entry_id,))
-        columns = ['settlement_id'] + [name for name in
-                                       _SETTLEMENT_COLUMNS.replace(' ', '').split(',')]
+        paid_fee = None
+        if automatic is not None:
+            paid_fee = _validate_automatic_settlement(cursor, record, values, automatic)
+
+        cursor.execute(_SETTLEMENT_INSERT, (record.entry_id, *(
+            values[name] for name in _SETTLEMENT_COLUMNS.split(', '))))
         row = cursor.fetchone()
-        if row is not None:
-            stored = dict(zip(columns, row, strict=True))
-            _compare_stored(stored, record.comparison(), 'papersim_settlement_conflict')
-            settlement_id = int(stored['settlement_id'])
-            inserted = False
+        inserted = row is not None
+        if inserted:
+            settlement_id = int(row[0])
         else:
-            cursor.execute(_SETTLEMENT_INSERT, (record.entry_id,) + tuple(
-                record.comparison()[name] for name in columns[1:]))
-            settlement_id = int(cursor.fetchone()[0])
-            cursor.execute(_CASH_LEG_INSERT,
-                           (record.event_key(), record.confirmed_at, 'USD',
-                            record.cash_amount(), record.cash_reason(), record.entry_id, None,
-                            record.evidence, record.is_legacy))
-            bankroll_event_id = int(cursor.fetchone()[0])
-            inserted = True
-        if not inserted:
-            cursor.execute('SELECT event_id FROM papersim.bankroll_events WHERE event_key = %s '
-                           'ORDER BY event_id', (record.event_key(),))
-            legs = [int(leg[0]) for leg in cursor.fetchall()]
-            if len(legs) != 1:
-                raise PapersimStoreError('papersim_settlement_cash_missing')
-            bankroll_event_id = legs[0]
+            # In READ COMMITTED this statement sees the pair committed by the
+            # writer that won the unique key. Stronger isolation can raise a
+            # serialization failure, which leaves this transaction via rollback.
+            cursor.execute('SELECT settlement_id, ' + _SETTLEMENT_COLUMNS
+                           + ' FROM papersim.settlements WHERE entry_id = %s',
+                           (record.entry_id,))
+            row = cursor.fetchone()
+            if row is None:
+                raise PapersimStoreError('papersim_settlement_conflict')
+            stored = dict(zip(_columns_of(cursor), row, strict=True))
+            stored['confirmed_at'] = settle.utc_instant(stored['confirmed_at'])
+            _compare_stored(stored, values, 'papersim_settlement_conflict')
+            settlement_id = int(stored['settlement_id'])
+
+        if record.classification == 'VOIDED_REFUND' and paid_fee is None:
+            cursor.execute('SELECT stake, entry_fee FROM papersim.entries WHERE entry_id = %s',
+                           (record.entry_id,))
+            stake, paid_fee = cursor.fetchone()
+            if stake != values['proceeds']:
+                raise PapersimStoreError('papersim_voided_proceeds_mismatch')
+        cash = {
+            'event_key': record.event_key(),
+            'occurred_at': values['confirmed_at'],
+            'currency': 'USD',
+            'amount': record.cash_amount(entry_fee=paid_fee),
+            'reason': record.cash_reason(),
+            'entry_id': record.entry_id,
+            'scan_id': None,
+            'note': record.evidence,
+            'is_legacy': record.is_legacy,
+        }
+        if inserted:
+            cursor.execute(_CASH_INSERT, tuple(cash.values()))
+        cursor.execute('SELECT event_id, event_key, occurred_at, currency, amount, reason, '
+                       'entry_id, scan_id, note, is_legacy, reverses_event_id '
+                       'FROM papersim.bankroll_events WHERE event_key = %s '
+                       'OR (entry_id = %s AND reason = ANY(%s)) ORDER BY event_id',
+                       (cash['event_key'], record.entry_id, list(SETTLEMENT_CASH_REASONS.values())))
+        columns = _columns_of(cursor)
+        legs = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        leg = next((row for row in legs if row['event_key'] == cash['event_key']), None)
+        if leg is not None:
+            leg['occurred_at'] = settle.utc_instant(leg['occurred_at'])
+        if (len(legs) != 1 or leg is None or leg['reverses_event_id'] is not None
+                or any(leg[name] != value for name, value in cash.items())):
+            raise SettlementCashDiscrepancy(record.entry_id, settlement_id, cash['amount'],
+                                            leg, tuple(row['event_id'] for row in legs))
+        bankroll_event_id = int(leg['event_id'])
     return {'settlement_id': settlement_id, 'inserted': inserted,
             'bankroll_event_id': bankroll_event_id}
 
 
-# ---------------------------------------------------------------------------
-# B3 settle snapshot loader (05 section 2 B3 row / DELIVERY_PLAN 80.8; the
-# FX-29/N-4 consistent-snapshot read that feeds ``papersim.settle``).
-# ---------------------------------------------------------------------------
-
+_ENTRY_JOIN = ('FROM papersim.entries e '
+               'JOIN papersim.candidates c ON c.candidate_id = e.candidate_id ')
+_ENTRY_COLUMNS = ('e.entry_id, e.candidate_id, c.team, c.side, e.stake, e.price, '
+                  'e.fee_category, e.fee_source, e.entered_at, c.condition_id, c.market_id, '
+                  'c.market_slug, c.scan_id, e.entry_fee, e.is_legacy')
 _OPEN_ENTRIES_SQL = (
-    'SELECT e.entry_id, e.candidate_id, c.team, c.side, e.stake, e.price, '
-    'e.fee_category, e.fee_source, e.entered_at, c.condition_id, c.market_id, '
-    'c.market_slug, '
+    'SELECT ' + _ENTRY_COLUMNS + ', '
     'EXISTS (SELECT 1 FROM papersim.marks m WHERE m.entry_id = e.entry_id '
     'AND m.is_close) AS exit_marked '
-    'FROM papersim.entries e JOIN papersim.candidates c ON c.candidate_id = e.candidate_id '
-    'WHERE NOT EXISTS (SELECT 1 FROM papersim.settlements s WHERE s.entry_id = e.entry_id) '
+    + _ENTRY_JOIN
+    + 'WHERE NOT EXISTS (SELECT 1 FROM papersim.settlements s WHERE s.entry_id = e.entry_id) '
     'ORDER BY e.entry_id'
+)
+_CAPTURED_OUTCOME_SELECT = (
+    'SELECT outcome_id, condition_id, market_id, market_slug, outcome, observed_at, '
+    'confirmed_at, source_kind FROM papersim.market_outcomes '
 )
 
 
-def _identity_of(row):
-    """The outcome-lookup identity (evaluate-loader precedence)."""
-    for column in ('condition_id', 'market_id', 'market_slug'):
-        if row[column] is not None:
-            return column, row[column]
-    return None, None
+def _opening_cash(cursor, entry: dict) -> settle.OpeningCash | settle.EntryCashDiscrepancy:
+    entry_id = entry['entry_id']
+    event_key = f'entry:{entry_id}:cash'
+    stake, fee = entry['stake'], entry['entry_fee']
+    expected = exact_sum(stake, fee).copy_negate()
+    cursor.execute(
+        'SELECT b.event_id, b.event_key, b.occurred_at, b.currency, b.amount, b.reason, '
+        'b.entry_id, b.scan_id, b.is_legacy, b.reverses_event_id, '
+        'EXISTS (SELECT 1 FROM papersim.bankroll_events r '
+        'WHERE r.reverses_event_id = b.event_id) AS reversed '
+        'FROM papersim.bankroll_events b WHERE b.event_key = %s '
+        "OR (b.entry_id = %s AND b.reason = 'SCAN_ENTRY') ORDER BY b.event_id",
+        (event_key, entry_id),
+    )
+    columns = _columns_of(cursor)
+    rows = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    if len(rows) != 1:
+        state = 'missing' if not rows else 'ambiguous'
+        return settle.EntryCashDiscrepancy(entry_id, state,
+                                          tuple(row['event_id'] for row in rows), expected)
+    event = rows[0]
+    amount = event['amount']
+    if (event['event_key'] != event_key or event['entry_id'] != entry_id
+            or event['scan_id'] != entry['scan_id'] or event['currency'] != 'USD'
+            or event['reason'] != 'SCAN_ENTRY' or event['is_legacy'] != entry['is_legacy']
+            or settle.utc_instant(event['occurred_at']) != settle.utc_instant(entry['entered_at'])
+            or event['reverses_event_id'] is not None or event['reversed']):
+        return settle.EntryCashDiscrepancy(entry_id, 'metadata',
+                                          (event['event_id'],), expected, amount)
+    paid_fee = exact_sum(amount.copy_negate(), stake.copy_negate())
+    if amount != expected or paid_fee != fee or paid_fee < 0:
+        return settle.EntryCashDiscrepancy(entry_id, 'amount',
+                                          (event['event_id'],), expected, amount)
+    return settle.OpeningCash(event['event_id'], amount, paid_fee)
+
+
+def _validate_automatic_settlement(cursor, record, values, automatic) -> Decimal:
+    cursor.execute('SELECT ' + _ENTRY_COLUMNS + ' ' + _ENTRY_JOIN
+                   + 'WHERE e.entry_id = %s', (record.entry_id,))
+    row = cursor.fetchone()
+    if row is None:
+        raise PapersimStoreError('papersim_automatic_settlement_entry_missing')
+    entry = dict(zip(_columns_of(cursor), row, strict=True))
+    selected = automatic.outcome
+    cursor.execute(_CAPTURED_OUTCOME_SELECT + 'WHERE outcome_id = %s',
+                   (selected.outcome_id,))
+    row = cursor.fetchone()
+    if row is None:
+        raise PapersimStoreError('papersim_automatic_settlement_evidence_mismatch')
+    actual = settle.CapturedOutcome.from_row(dict(zip(_columns_of(cursor), row, strict=True)))
+    identity = settle.MarketIdentity.from_row(entry)
+    if (actual.identity != selected.identity or actual.outcome != selected.outcome
+            or actual.source_kind != selected.source_kind
+            or settle.utc_instant(actual.observed_at) != settle.utc_instant(selected.observed_at)
+            or settle.utc_instant(actual.confirmed_at) != settle.utc_instant(selected.confirmed_at)
+            or identity.match(actual.identity) != automatic.market_match):
+        raise PapersimStoreError('papersim_automatic_settlement_evidence_mismatch')
+
+    opening = _opening_cash(cursor, entry)
+    if isinstance(opening, settle.EntryCashDiscrepancy):
+        raise settle.EntryCashMismatch(opening)
+    if opening != automatic.opening_cash:
+        raise settle.EntryCashMismatch(settle.EntryCashDiscrepancy(
+            record.entry_id, 'snapshot_changed', (opening.event_id,),
+            automatic.opening_cash.amount, opening.amount))
+    snapshot = settle.OpenSettleEntry(**{key: value for key, value in entry.items() if key != 'scan_id'},
+                                      outcome=actual, opening_cash=opening)
+    expected = settle.plan_settlement(snapshot, operator=record.confirmed_by).record
+    if (expected is None or _settlement_values(expected) != values
+            or _as_decimal(expected.exit_fee) != _as_decimal(record.exit_fee)
+            or expected.cash_amount(entry_fee=opening.paid_fee) !=
+            record.cash_amount(entry_fee=opening.paid_fee)):
+        raise PapersimStoreError('papersim_automatic_settlement_record_mismatch')
+    return opening.paid_fee
 
 
 def open_entries_for_settlement(conn):
-    """Open entries + effective captured outcomes in ONE consistent snapshot.
-
-    FX-29: the FIRST statement of the transaction sets
-    ``SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY``; the
-    open entries (minus already-settled ones) and every entry's effective
-    captured outcome (the audited ``effective_market_outcome`` selection,
-    plus the winning row's ``confirmed_at``) are read inside that single
-    snapshot, so a concurrent capture or settlement cannot split the
-    read.  The settle driver (``papersim.settle.run_settle``) receives
-    this callable as its ``open_entries`` loader; the per-entry
-    settlement writes stay in their own transactions exactly as
-    ``settlement_record`` provides.
-    """
+    """Read the open entries, captured history and opening cash in one FX-29 snapshot."""
     with conn.transaction():
         cursor = conn.cursor()
         cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
         cursor.execute(_OPEN_ENTRIES_SQL)
-        columns = [description.name for description in cursor.description]
+        columns = _columns_of(cursor)
         rows = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        identities = tuple(list({row[column] for row in rows if row[column] is not None})
+                           for column in settle.MARKET_IDENTITY_COLUMNS)
+        indexed = {}
+        if any(identities):
+            cursor.execute(_CAPTURED_OUTCOME_SELECT
+                           + 'WHERE condition_id = ANY(%s) OR market_id = ANY(%s) '
+                           'OR market_slug = ANY(%s)', identities)
+            columns = _columns_of(cursor)
+            indexed = settle.index_captured_outcomes(
+                dict(zip(columns, row, strict=True)) for row in cursor.fetchall())
         entries = []
         for row in rows:
-            captured = settle.CapturedOutcome(None, 'UNKNOWN')
-            column, identity = _identity_of(row)
-            if column is not None:
-                effective = effective_market_outcome(conn, **{column: identity})
-                if effective.outcome_id is not None:
-                    cursor.execute('SELECT confirmed_at FROM papersim.market_outcomes '
-                                   'WHERE outcome_id = %s', (effective.outcome_id,))
-                    confirmed_at = cursor.fetchone()[0]
-                    captured = settle.captured_from_effective(effective,
-                                                              confirmed_at=confirmed_at)
+            identity = settle.MarketIdentity.from_row(row)
+            captured = settle.select_entry_outcome(
+                row['entry_id'], row['entered_at'], identity,
+                settle.captured_for_identity(indexed, identity))
+            opening, discrepancy = None, None
+            if captured is not None and captured.is_effective:
+                result = _opening_cash(cursor, row)
+                if isinstance(result, settle.EntryCashDiscrepancy):
+                    discrepancy = result
+                else:
+                    opening = result
             entries.append(settle.OpenSettleEntry(
-                entry_id=int(row['entry_id']), candidate_id=int(row['candidate_id']),
-                team=str(row['team']), side=str(row['side']), stake=row['stake'],
-                price=row['price'], fee_category=str(row['fee_category']),
-                entered_at=row['entered_at'], fee_source=str(row['fee_source']),
-                condition_id=row['condition_id'], market_id=row['market_id'],
-                market_slug=row['market_slug'], exit_marked=bool(row['exit_marked']),
-                outcome=captured))
+                **{key: value for key, value in row.items() if key != 'scan_id'},
+                outcome=captured, opening_cash=opening, cash_discrepancy=discrepancy))
     return tuple(entries)
 
 
@@ -768,7 +893,7 @@ def bankroll_daily_check(conn, request: BankrollCheckRequest) -> BankrollCheckRe
                        'WHERE confirmed_at <= %s', (request.as_of,))
         realized = _as_decimal(cursor.fetchone()[0])
         difference = bankroll_identity_difference(cash, deployed, base, realized, open_fees)
-        passed = abs(difference) <= tolerance
+        passed = difference.copy_abs() <= tolerance
         key = request.key(watermark)
         cursor.execute('SELECT check_id, event_watermark, cash_total, deployed_total, '
                        'initial_and_adjustments, realized_net, open_entry_fees, '
@@ -1509,14 +1634,18 @@ def load_model_spec(conn, spec_sha256: str):
     Returns ``None`` when the digest is unknown (the caller falls back
     to the baseline). The rebuilt spec's ``spec_sha256()`` MUST equal
     the primary key -- the spelling-flip guard of plan review P3-4.
+
+    The SELECT completes its own transaction on an idle connection and
+    uses a savepoint inside a caller-owned transaction.
     """
 
     from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
 
-    cursor = conn.cursor()
-    cursor.execute('SELECT ' + _SPEC_COLUMNS + ' FROM papersim.model_specs '
-                   'WHERE spec_sha256 = %s', (spec_sha256,))
-    row = cursor.fetchone()
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT ' + _SPEC_COLUMNS + ' FROM papersim.model_specs '
+                       'WHERE spec_sha256 = %s', (spec_sha256,))
+        row = cursor.fetchone()
     if row is None:
         return None
     columns = _SPEC_COLUMNS.replace(' ', '').split(',')
