@@ -1029,6 +1029,117 @@ def test_p2_1_scan_keyed_to_wrong_command_receipt_fails():
     )
 
 
+def test_p2_reversal_mutual_pair_fails():
+    """Re-review P2 exact counterexample: two IN-WINDOW REVERSAL rows
+    pointing at each other (zero receipts anywhere) used to be
+    classified matched with unmatched_total == 0 and could produce
+    PASS. The reversal chain must transitively close at a receipt; a
+    cycle (mutual pair included) fails closed."""
+    be_a = BankrollEventRecord(
+        "be-a", "REVERSAL", _dt(1, 8), reverses_event_id="be-b"
+    )
+    be_b = BankrollEventRecord(
+        "be-b", "REVERSAL", _dt(1, 9), reverses_event_id="be-a"
+    )
+    evidence = _green(bankroll_events=(be_a, be_b))
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "REVERSAL chain cycles at 'be-a'" in reason
+        or "REVERSAL chain cycles at 'be-b'" in reason
+        for reason in result.reasons
+    )
+    universe = ef.reconcile_universe(evidence)
+    # BOTH directions are orphaned — the pair proves nothing either way.
+    assert universe.unmatched_total == 2
+    assert not any(
+        "unmatched business rows: 0" in reason for reason in result.reasons
+    )
+
+
+def test_p2_reversal_to_pre_anchor_or_base_terminal_fails():
+    """Re-review P2 variant: an in-window REVERSAL whose chain
+    terminates at a PRE-ANCHOR disclosed row (or any unreceipted
+    terminal — a base-reason owner action included) used to pass. A
+    reversal lineage must close at a receipt-proven row; disclosed or
+    base terminals do not terminate it as proven."""
+    pre_anchor_initial = BankrollEventRecord(
+        "be-pre", "INITIAL", _dt(-2, 8)
+    )
+    to_pre_anchor = BankrollEventRecord(
+        "be-win", "REVERSAL", _dt(1, 8), reverses_event_id="be-pre"
+    )
+    evidence = _green(bankroll_events=(pre_anchor_initial, to_pre_anchor))
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "REVERSAL chain terminates at 'be-pre' which is not "
+        "receipt-proven" in reason
+        for reason in result.reasons
+    )
+    # The pre-anchor base row itself stays disclosed, never a failure
+    # (R6e) — only the IN-WINDOW reversal fails.
+    assert any("pre-anchor" in reason for reason in result.reasons)
+
+    # An in-window base-reason terminal is equally unreceipted.
+    in_window_adjustment = BankrollEventRecord(
+        "be-base", "ADJUSTMENT", _dt(2, 8)
+    )
+    to_base = BankrollEventRecord(
+        "be-win2", "REVERSAL", _dt(2, 9), reverses_event_id="be-base"
+    )
+    result = ev.criterion_f(
+        evidence=_green(bankroll_events=(in_window_adjustment, to_base))
+    )
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "REVERSAL chain terminates at 'be-base' which is not "
+        "receipt-proven" in reason
+        for reason in result.reasons
+    )
+
+
+def test_p2_reversal_long_chain_terminating_proven_passes():
+    """Re-review P2 positive control: a long reversal chain whose
+    terminal is a receipt-proven row (SETTLE_NATURAL on a proven entry)
+    is matched — the lineage closes at a receipt through the chain."""
+    terminal = BankrollEventRecord(
+        "be-term", "SETTLE_NATURAL", _dt(3, 12), entry_id="entry-1"
+    )
+    middle = BankrollEventRecord(
+        "be-r2", "REVERSAL", _dt(3, 13), reverses_event_id="be-term"
+    )
+    head = BankrollEventRecord(
+        "be-r1", "REVERSAL", _dt(3, 14), reverses_event_id="be-r2"
+    )
+    evidence = _green(
+        bankroll_events=(head, middle, terminal),
+        entries=(EntryRecord("entry-1", "cand-000", _dt(3, 11)),),
+    )
+    universe = ef.reconcile_universe(evidence)
+    assert universe.unmatched_total == 0
+    assert ev.criterion_f(evidence=evidence).verdict == ev.VERDICT_PASS
+    # The same chain with the terminal's entry link removed is no
+    # longer proven: the head reversal fails with the whole chain.
+    orphan_terminal = BankrollEventRecord(
+        "be-term2", "SETTLE_NATURAL", _dt(3, 12)
+    )
+    orphan_middle = BankrollEventRecord(
+        "be-r2", "REVERSAL", _dt(3, 13), reverses_event_id="be-term2"
+    )
+    orphan_head = BankrollEventRecord(
+        "be-r1", "REVERSAL", _dt(3, 14), reverses_event_id="be-r2"
+    )
+    orphan = _green(bankroll_events=(orphan_head, orphan_middle, orphan_terminal))
+    orphan_result = ev.criterion_f(evidence=orphan)
+    assert orphan_result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "REVERSAL chain terminates at 'be-term2' which is not "
+        "receipt-proven" in reason
+        for reason in orphan_result.reasons
+    )
+
+
 def test_p2_1_self_reversal_and_legacy_bypasses_fail():
     """P2-1 exact counterexamples: (a) a REVERSAL chaining to itself
     proves nothing; (b) unbound in-window cash merely flagged is_legacy

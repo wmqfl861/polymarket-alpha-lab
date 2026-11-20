@@ -92,8 +92,10 @@ candidate whose scan has no run-scan receipt) is UNMATCHED. A
 operation_key, wrong command) does not count as receipt-proven.
 In-window ``is_legacy`` flags and in-window ``LEGACY_IMPORT`` bankroll
 writes are NOT bypass exemptions (the legacy class is pre-anchor only);
-a REVERSAL may not chain to itself; a settle-written market outcome
-must carry a linked entry.
+a REVERSAL chain must transitively close at a receipt-proven row —
+cycles (including mutual pairs), dead ends and unreceipted terminals
+(base-reason/legacy/unlinked, in-window or pre-anchor) all fail closed;
+a settle-written market outcome must carry a linked entry.
 
 Degrade, never approximate (R3): families whose receipt contracts are
 still pending (B2 mark capture, B3 settle — unmerged at base fa01be0)
@@ -1117,6 +1119,91 @@ def _nearest_started_hypothesis(
     return best.operation_key, best.attempt
 
 
+def _reversal_terminal_proven(
+    event: BankrollEventRecord,
+    *,
+    proven_scan_ids: set[int],
+    proven_entry_ids: set[str],
+) -> bool:
+    """Whether a NON-reversal bankroll row terminates a REVERSAL chain
+    at a receipt (re-review P2: reversal lineage must close at a proven
+    row, exactly like every other family). Base-reason, legacy and
+    unknown-reason terminals carry no receipt and do not terminate a
+    chain as proven."""
+    if event.reason in BANKROLL_SCAN_LINKED_REASONS:
+        return (
+            event.scan_id is not None
+            and event.scan_id in proven_scan_ids
+        )
+    if event.reason in BANKROLL_ENTRY_LINKED_REASONS:
+        return (
+            event.entry_id is not None
+            and event.entry_id in proven_entry_ids
+        )
+    return False
+
+
+def _reversal_lineage_detail(
+    row: BankrollEventRecord,
+    events_by_id: Mapping[str, BankrollEventRecord],
+    *,
+    proven_scan_ids: set[int],
+    proven_entry_ids: set[str],
+) -> str | None:
+    """Adjudicate one REVERSAL row's lineage (re-review P2).
+
+    Walk ``reverses_event_id`` to the end: the chain must terminate at
+    a receipt-proven row (a SCAN_ENTRY on a proven scan or an
+    entry-linked row on a proven entry). A missing target (dead end),
+    a cycle (including the two-row mutual pair), or a terminal that is
+    itself unreceipted (a base-reason/legacy/unknown row, in-window or
+    pre-anchor) leaves the reversal unproven — fail closed."""
+    if (
+        row.reverses_event_id is None
+        or row.reverses_event_id not in events_by_id
+    ):
+        return (
+            "bankroll_events row %r REVERSAL does not chain via "
+            "reverses_event_id" % row.event_id
+        )
+    if row.reverses_event_id == row.event_id:
+        return (
+            "bankroll_events row %r REVERSAL chains to itself: "
+            "a self-reversal proves nothing" % row.event_id
+        )
+    current = row
+    visited = {row.event_id}
+    while True:
+        target = events_by_id.get(current.reverses_event_id)
+        if target is None:
+            return (
+                "bankroll_events row %r REVERSAL chain dead-ends at "
+                "unknown event %r" % (row.event_id, current.reverses_event_id)
+            )
+        if target.event_id in visited:
+            return (
+                "bankroll_events row %r REVERSAL chain cycles at %r: a "
+                "reversal cycle never terminates at a receipt"
+                % (row.event_id, target.event_id)
+            )
+        visited.add(target.event_id)
+        if target.reason == BANKROLL_REVERSAL_REASON:
+            current = target
+            continue
+        if _reversal_terminal_proven(
+            target,
+            proven_scan_ids=proven_scan_ids,
+            proven_entry_ids=proven_entry_ids,
+        ):
+            return None  # chain closes at a receipt-proven row
+        return (
+            "bankroll_events row %r REVERSAL chain terminates at %r "
+            "which is not receipt-proven (base-reason/legacy/unlinked "
+            "terminal): reversal lineage must close at a receipt"
+            % (row.event_id, target.event_id)
+        )
+
+
 def reconcile_universe(
     evidence: FEvidence,
     *,
@@ -1159,7 +1246,9 @@ def reconcile_universe(
         if e.candidate_id in proven_candidate_ids
     }
     all_entry_ids = {e.entry_id for e in evidence.entries}
-    bankroll_event_ids = {b.event_id for b in evidence.bankroll_events}
+    bankroll_events_by_id = {
+        b.event_id: b for b in evidence.bankroll_events
+    }
 
     families: list[FamilyAdjudication] = []
 
@@ -1314,20 +1403,15 @@ def reconcile_universe(
                 )
             return None
         if reason == BANKROLL_REVERSAL_REASON:
-            if (
-                row.reverses_event_id is None
-                or row.reverses_event_id not in bankroll_event_ids
-            ):
-                return (
-                    "bankroll_events row %r REVERSAL does not chain via "
-                    "reverses_event_id" % row.event_id
-                )
-            if row.reverses_event_id == row.event_id:
-                return (
-                    "bankroll_events row %r REVERSAL chains to itself: "
-                    "a self-reversal proves nothing" % row.event_id
-                )
-            return None
+            # Re-review P2: the chain must transitively close at a
+            # receipt-proven row; cycles, dead ends and unreceipted
+            # terminals (in-window or pre-anchor) all fail closed.
+            return _reversal_lineage_detail(
+                row,
+                bankroll_events_by_id,
+                proven_scan_ids=proven_scan_ids,
+                proven_entry_ids=proven_entry_ids,
+            )
         return (
             "bankroll_events row %r carries unknown reason %r"
             % (row.event_id, reason)
