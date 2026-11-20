@@ -8,6 +8,7 @@ actor rules; the database paths run in the native drill
 
 import json
 from pathlib import Path
+import types
 
 import pytest
 
@@ -119,6 +120,192 @@ def test_unfreeze_rejects_an_automatic_actor_before_any_write(monkeypatch,
     assert "papersim_unfreeze_actor_invalid" in capsys.readouterr().err
     assert not written
     assert connection.closed
+
+
+# ---------------------------------------------------------------------------
+# Review P2 fix: the apply path's every refusal branch, offline.
+# ---------------------------------------------------------------------------
+
+class _Conn:
+    def close(self):
+        pass
+
+
+def _decision_row(**overrides):
+    from datetime import UTC, datetime
+
+    base = {
+        "decision_id": 11, "lineage": "club-soccer-frozen/over_under",
+        "decision_class": "FORWARD",
+        "candidate_spec_sha256": "c" * 64, "active_spec_sha256": "a" * 64,
+        "conclusion": "PROMOTE", "look_number": 1,
+        "rule_version": "promo-rule-v1",
+        "decided_at": datetime(2026, 11, 24, tzinfo=UTC),
+    }
+    base.update(overrides)
+    return base
+
+
+def _facts_state(**fact_overrides):
+    from datetime import UTC, datetime
+
+    from polymarket_alpha_lab.papersim.optimize.policy import LineageFacts
+
+    facts = LineageFacts(
+        lineage="club-soccer-frozen/over_under",
+        active_spec="a" * 64, guard_spec="b" * 64,
+        candidate_specs=("c" * 64,),
+        candidate_registered_at={"c" * 64: datetime(2026, 11, 2, tzinfo=UTC)},
+        **fact_overrides)
+    view = types.SimpleNamespace(active="a" * 64, baseline="a" * 64,
+                                 candidates=("c" * 64,), guard="b" * 64)
+    return {"facts": facts, "view": view,
+            "entries": {"total": 0, "by_model_name": {}},
+            "active_model_version": "soccer-r23"}
+
+
+def _apply_args(**overrides):
+    base = {"command": "optimize", "optimize_command": "apply",
+            "decision_id": 11, "actor": None, "confirm": False,
+            "config": None, "managed": False, "dsn": None,
+            "repo_root": "."}
+    base.update(overrides)
+    return types.SimpleNamespace(**base)
+
+
+def _wire_apply(monkeypatch, decision, state):
+    captured = {}
+    monkeypatch.setattr(cli, "_open_readonly_connection",
+                        lambda args, label: _Conn())
+    monkeypatch.setattr(cli, "_optimize_decision_row",
+                        lambda conn, decision_id: decision)
+    monkeypatch.setattr(cli, "_optimize_lineage_facts",
+                        lambda conn, lineage, queue_ids:
+                            captured.update(queue_ids=queue_ids) or state)
+    monkeypatch.setattr(cli, "require_clean_worktree_path",
+                        lambda repo_root: "d" * 40)
+
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    def _capture(conn, batch):
+        captured["batch"] = batch
+        return {"lineage": "club-soccer-frozen/over_under",
+                "role_event_ids": {}, "inserted": True}
+
+    monkeypatch.setattr(store_psycopg, "record_role_events", _capture)
+    return captured
+
+
+def test_apply_refuses_decision_free_conclusions(monkeypatch, capsys):
+    for conclusion in ("CONTINUE", "HOLD", "BLOCKED"):
+        _wire_apply(monkeypatch, _decision_row(conclusion=conclusion),
+                    _facts_state())
+        assert cli._cmd_optimize_apply(_apply_args()) == 1
+        assert "papersim_optimize_apply_no_events" in capsys.readouterr().err
+
+
+def test_apply_pending_confirm_requires_human_actor_and_flag(monkeypatch,
+                                                              capsys):
+    state = _facts_state()
+    # No --confirm and no actor at all.
+    _wire_apply(monkeypatch, _decision_row(
+        conclusion="PROMOTE_PENDING_CONFIRM"), state)
+    assert cli._cmd_optimize_apply(_apply_args()) == 1
+    assert "papersim_optimize_apply_needs_owner_confirm" \
+        in capsys.readouterr().err
+    # --confirm but an automatic actor is still refused.
+    assert cli._cmd_optimize_apply(
+        _apply_args(confirm=True, actor="auto:promo-rule-v1")) == 1
+    assert "papersim_optimize_apply_needs_owner_confirm" \
+        in capsys.readouterr().err
+    # An auto actor WITHOUT --confirm is refused too.
+    assert cli._cmd_optimize_apply(
+        _apply_args(actor="auto:promo-rule-v1")) == 1
+    assert "papersim_optimize_apply_needs_owner_confirm" \
+        in capsys.readouterr().err
+
+
+def test_apply_unknown_decision_fails(monkeypatch, capsys):
+    _wire_apply(monkeypatch, None, _facts_state())
+    assert cli._cmd_optimize_apply(_apply_args()) == 1
+    assert "papersim_optimize_decision_unknown" in capsys.readouterr().err
+
+
+def test_apply_active_changing_requires_config_fail_closed(monkeypatch,
+                                                            capsys):
+    _wire_apply(monkeypatch, _decision_row(), _facts_state())
+    assert cli._cmd_optimize_apply(_apply_args(config=None)) == 1
+    assert "papersim_policy_queue_bindings_missing" in capsys.readouterr().err
+
+
+def test_apply_refuses_frozen_and_paused_lineages(monkeypatch, capsys,
+                                                   tmp_path):
+    config = tmp_path / "scan.json"
+    config.write_text('{"team":"paper","operator":"unattended",'
+                      '"queues":[{"queue":"q1","lineage":'
+                      '"club-soccer-frozen/over_under",'
+                      '"data_source_version":"v1"}]}', encoding="utf-8")
+    frozen = _wire_apply(monkeypatch, _decision_row(), _facts_state(
+        frozen=True))
+    assert cli._cmd_optimize_apply(_apply_args(config=str(config))) == 1
+    assert "papersim_optimize_apply_frozen" in capsys.readouterr().err
+    paused = _wire_apply(monkeypatch, _decision_row(), _facts_state(
+        lineage_paused_or_stopped=True))
+    # The pause re-verification is real: the bindings from --config feed
+    # the facts (here asserted through the captured queue_ids).
+    assert cli._cmd_optimize_apply(_apply_args(config=str(config))) == 1
+    assert "papersim_optimize_apply_paused" in capsys.readouterr().err
+    assert paused["queue_ids"] == ["q1"]
+
+
+def test_apply_promote_without_config_for_retire_only(monkeypatch, capsys):
+    from datetime import UTC, datetime
+
+    captured = _wire_apply(monkeypatch, _decision_row(conclusion="RETIRE"),
+                           _facts_state())
+    # A RETIRE batch changes no active: no config, no pause check.
+    assert cli._cmd_optimize_apply(_apply_args()) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["conclusion"] == "RETIRE"
+    assert captured["batch"].events[0].role == "RETIRED"
+
+
+def test_apply_promote_writes_the_handover_batch(monkeypatch, capsys,
+                                                  tmp_path):
+    config = tmp_path / "scan.json"
+    config.write_text('{"team":"paper","operator":"unattended",'
+                      '"queues":[{"queue":"q1","lineage":'
+                      '"club-soccer-frozen/over_under",'
+                      '"data_source_version":"v1"}]}', encoding="utf-8")
+    captured = _wire_apply(monkeypatch, _decision_row(), _facts_state())
+    assert cli._cmd_optimize_apply(_apply_args(config=str(config))) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["actor"] == "auto:promo-rule-v1"
+    roles = [event.role for event in captured["batch"].events]
+    assert roles == ["GUARD", "ACTIVE", "RETIRED"]  # prior guard retires
+
+
+def test_score_reports_unknown_pause_state_without_config(monkeypatch,
+                                                           capsys):
+    report = {"lineage": "club-soccer-frozen/over_under", "pairs": []}
+
+    def _score(conn, lineage, queue_ids, *, pause_state_known):
+        report["pause_state_known"] = pause_state_known
+        report["lineage_paused_or_stopped"] = (
+            False if pause_state_known else None)
+        return dict(report)
+
+    monkeypatch.setattr(cli, "_open_readonly_connection",
+                        lambda args, label: _Conn())
+    monkeypatch.setattr(cli, "_optimize_score_lineage", _score)
+    args = types.SimpleNamespace(
+        command="optimize", optimize_command="score",
+        lineage="club-soccer-frozen/over_under", config=None,
+        managed=False, dsn=None, repo_root=".")
+    assert cli._cmd_optimize_score(args) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["pause_state_known"] is False
+    assert payload["lineage_paused_or_stopped"] is None
 
 
 def test_freeze_accepts_auto_actor_and_echoes_key_and_id(monkeypatch, capsys):

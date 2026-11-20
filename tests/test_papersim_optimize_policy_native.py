@@ -167,12 +167,14 @@ def _run_decide(cli, capsys, config_root: Path, clean_root: Path) -> dict:
     return _json.loads(capsys.readouterr().out)
 
 
-def _run_apply(cli, capsys, clean_root: Path, decision_id: int) -> dict:
+def _run_apply(cli, capsys, config_root: Path, clean_root: Path,
+                decision_id: int) -> dict:
     import json as _json
 
     args = types.SimpleNamespace(
         command='optimize', optimize_command='apply',
         decision_id=decision_id, actor=None, confirm=False,
+        config=str(config_root / 'scan-config.json'),
         managed=False, dsn=None, repo_root=str(clean_root))
     assert cli._cmd_optimize_apply(args) == 0
     return _json.loads(capsys.readouterr().out)
@@ -237,7 +239,7 @@ def test_native_full_round_register_shadow_decide_handover_rollback(
         assert replay['looks'][0]['evidence_ordinal'] == 1
 
         # -- 4. apply: the handover batch lands as one transaction -----
-        applied = _run_apply(cli, capsys, clean_root, decision_id)
+        applied = _run_apply(cli, capsys, tmp_path, clean_root, decision_id)
         assert applied['conclusion'] == 'PROMOTE'
         view = store_psycopg.load_lineage_roles(app, LINEAGE)
         assert view.active == spec.spec_sha256()
@@ -267,7 +269,8 @@ def test_native_full_round_register_shadow_decide_handover_rollback(
         rollback_decision = rollback_report['written'][0]['decision_id']
 
         # -- 6. apply the rollback: the failed active retires ----------
-        applied2 = _run_apply(cli, capsys, clean_root, rollback_decision)
+        applied2 = _run_apply(cli, capsys, tmp_path, clean_root,
+                              rollback_decision)
         assert applied2['conclusion'] == 'ROLLBACK'
         final = store_psycopg.load_lineage_roles(app, LINEAGE)
         assert final.active == baseline.spec_sha256()

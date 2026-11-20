@@ -1483,7 +1483,8 @@ def _optimize_decide_lineage(conn, lineage: str, queue_ids) -> dict:
     return {"lineage": lineage, "looks": looks, "written": written}
 
 
-def _optimize_score_lineage(conn, lineage: str, queue_ids) -> dict:
+def _optimize_score_lineage(conn, lineage: str, queue_ids, *,
+                            pause_state_known: bool = True) -> dict:
     """Descriptive forward statistics only -- no conclusion, ever."""
     from polymarket_alpha_lab.papersim.optimize import policy
 
@@ -1534,7 +1535,11 @@ def _optimize_score_lineage(conn, lineage: str, queue_ids) -> dict:
         "roles": {"active": view.active, "baseline": view.baseline,
                   "candidates": list(view.candidates), "guard": view.guard},
         "frozen": facts.frozen,
-        "lineage_paused_or_stopped": facts.lineage_paused_or_stopped,
+        # Without a --config the pause state is UNKNOWN (null), never a
+        # silent False -- the bindings live in the scan configs.
+        "pause_state_known": pause_state_known,
+        "lineage_paused_or_stopped": (facts.lineage_paused_or_stopped
+                                      if pause_state_known else None),
         "last_handover_at": (None if facts.last_handover_at is None
                              else facts.last_handover_at.isoformat()),
         "active_queue_entries": state["entries"],
@@ -1563,13 +1568,15 @@ def _cmd_optimize_score(args) -> int:
     """Descriptive forward shadow statistics (read-only, no verdicts)."""
     try:
         queue_ids: list[str] = []
-        if getattr(args, "config", None):
+        has_config = bool(getattr(args, "config", None))
+        if has_config:
             queue_ids = _optimize_queue_bindings(args.config, args.lineage)
         connection = _open_readonly_connection(
             args, label="PAPERSIM_OPTIMIZE_PG_DSN")
         try:
-            report = _optimize_score_lineage(connection, args.lineage,
-                                             queue_ids)
+            report = _optimize_score_lineage(
+                connection, args.lineage, queue_ids,
+                pause_state_known=has_config)
         finally:
             connection.close()
     except (ValueError, OSError) as error:
@@ -1597,6 +1604,25 @@ def _cmd_optimize_decide(args) -> int:
     return 0
 
 
+def _optimize_decision_row(conn, decision_id: int) -> dict | None:
+    """One promotion decision by id (the apply path's read face)."""
+    if isinstance(decision_id, bool) or not isinstance(decision_id, int):
+        raise ValueError("papersim_optimize_decision_invalid")
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT decision_id, lineage, decision_class, "
+            "candidate_spec_sha256, active_spec_sha256, conclusion, "
+            "look_number, rule_version, decided_at FROM "
+            "papersim.promotion_decisions WHERE decision_id = %s",
+            (decision_id,))
+        columns = [description.name for description in cursor.description]
+        row = cursor.fetchone()
+    if row is None:
+        return None
+    return dict(zip(columns, row, strict=True))
+
+
 def _cmd_optimize_apply(args) -> int:
     """Write the role events of one PROMOTE / ROLLBACK / RETIRE decision.
 
@@ -1605,7 +1631,12 @@ def _cmd_optimize_apply(args) -> int:
     BLOCKED decisions never write role events.  Hard blocks are
     re-verified against the FRESH fold -- a stale PROMOTE decision
     never hands over into a blocked state; the RETIRE batch is exempt
-    (a retirement changes no active; P3-8)."""
+    (a retirement changes no active; P3-8).  Review P2 fix: an
+    active-changing apply REQUIRES --config -- the pause re-check runs
+    on the same frozen queue->lineage binding loader decide uses, and
+    without bindings it fails closed (papersim_policy_queue_bindings_
+    missing), never silently unpaused; RETIRE-only batches need no
+    config (a retirement is not a handover)."""
     from polymarket_alpha_lab.papersim import store, store_psycopg
     from polymarket_alpha_lab.papersim.optimize import policy
 
@@ -1613,19 +1644,10 @@ def _cmd_optimize_apply(args) -> int:
         connection = _open_readonly_connection(
             args, label="PAPERSIM_OPTIMIZE_PG_DSN")
         try:
-            with connection.transaction():
-                cursor = connection.cursor()
-                cursor.execute(
-                    "SELECT decision_id, lineage, decision_class, "
-                    "candidate_spec_sha256, active_spec_sha256, conclusion, "
-                    "look_number, rule_version, decided_at FROM "
-                    "papersim.promotion_decisions WHERE decision_id = %s",
-                    (args.decision_id,))
-                columns = [description.name for description in cursor.description]
-                row = cursor.fetchone()
+            row = _optimize_decision_row(connection, args.decision_id)
             if row is None:
                 raise ValueError("papersim_optimize_decision_unknown")
-            decision = dict(zip(columns, row, strict=True))
+            decision = row
             conclusion = decision["conclusion"]
             human = bool(args.actor) and not args.actor.startswith("auto:")
             if conclusion in ("CONTINUE", "HOLD", "BLOCKED"):
@@ -1635,11 +1657,16 @@ def _cmd_optimize_apply(args) -> int:
                 raise ValueError(
                     "papersim_optimize_apply_needs_owner_confirm")
             lineage = decision["lineage"]
-            state = _optimize_lineage_facts(connection, lineage, [])
-            facts: policy.LineageFacts = state["facts"]
-            view = state["view"]
             active_changing = conclusion in ("PROMOTE", "ROLLBACK",
                                              "PROMOTE_PENDING_CONFIRM")
+            queue_ids: list[str] = []
+            if active_changing:
+                if not getattr(args, "config", None):
+                    raise ValueError("papersim_policy_queue_bindings_missing")
+                queue_ids = _optimize_queue_bindings(args.config, lineage)
+            state = _optimize_lineage_facts(connection, lineage, queue_ids)
+            facts: policy.LineageFacts = state["facts"]
+            view = state["view"]
             if active_changing and facts.frozen:
                 raise ValueError("papersim_optimize_apply_frozen")
             if active_changing and facts.lineage_paused_or_stopped:
@@ -2117,6 +2144,12 @@ def _build_parser() -> argparse.ArgumentParser:
              "human --actor)",
     ), write=True)
     apply_parser.add_argument("--decision-id", type=int, required=True)
+    apply_parser.add_argument(
+        "--config", default=None,
+        help="scan config JSON carrying the queue->lineage bindings of "
+             "the pause re-verification; REQUIRED for active-changing "
+             "applies (fail-closed without it, the same loader decide "
+             "uses); RETIRE-only applies need no config")
     apply_parser.add_argument("--actor", default=None,
                               help="deciding actor (default auto:<rule "
                                    "version>); a PROMOTE_PENDING_CONFIRM "
