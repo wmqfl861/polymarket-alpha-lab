@@ -50,12 +50,15 @@ registered, ``optimize.families.iter_family_ids``):
   are not wired in the provider); ``league-bridge`` is exempt
   (``targets=()`` yields no registry lineage).
 
-MO-8 boundary note (plan MO-7 section 1.2 / section 6.6): the merged
-provider view consumes ONLY candidates and guards from estimator
-lineages; a promoted estimator active is visible in the scan
-parameters but never prices the scan under MO-7.  Consuming it is an
-explicit MO-8 obligation that must land together with pack-side
-consultation of the provider.
+MO-8 boundary note (plan MO-7 sections 1.2/6.6, aligned with the
+provider's class docstring): the merged provider view takes
+candidates and guards from EVERY consulted lineage -- including the
+tunable production family (crypto-gbm); the frozen soccer family is
+structurally candidate-free -- while the active is definitionally the
+production baseline, so a promoted lineage active is visible in the
+scan parameters but never prices the scan under MO-7.  Consuming
+promotions is an explicit MO-8 obligation that must land together
+with pack-side consultation of the provider.
 """
 
 from __future__ import annotations
