@@ -50,6 +50,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from polymarket_alpha_lab.team_research_agent_types import strict_json
+
 __all__ = [
     "BookLevel",
     "BookSnapshot",
@@ -63,6 +65,7 @@ __all__ = [
     "journal_digest",
     "journal_document",
     "entries_from_document",
+    "gamma_page_index",
     "market_from_entries",
     "sanitize_query",
     "sanitize_request_meta",
@@ -370,6 +373,57 @@ def _parse_listy(raw: Any) -> Any:
         except json.JSONDecodeError:
             return None
     return raw
+
+
+def gamma_page_index(content: bytes) -> dict[str, Any] | None:
+    """Locate events and markets inside one unchanged Gamma response.
+
+    Paths are JSON Pointers into the full page bytes. The index retains
+    label and token positions and leaves contract text in the cited page.
+    An empty page is a valid index with an event count of zero.
+    """
+    try:
+        payload = strict_json(content.decode("utf-8"))
+    except (ValueError, RecursionError):
+        return None
+    if not isinstance(payload, list):
+        return None
+    events = []
+    markets = []
+
+    def label_array(value: Any) -> list[str] | None:
+        if isinstance(value, str):
+            try:
+                value = strict_json(value)
+            except (ValueError, RecursionError):
+                return None
+        if isinstance(value, list) and all(type(item) is str for item in value):
+            return value
+        return None  # Malformed arrays stay available through the raw path.
+
+    for event_index, event_value in enumerate(payload):
+        event = event_value if isinstance(event_value, dict) else {}
+        event_path = f"/{event_index}"
+        event_id = _text(event.get("id"))
+        rows = event.get("markets")
+        events.append({
+            "path": event_path, "event_id": event_id, "event_slug": _text(event.get("slug")),
+            "market_count": len(rows) if isinstance(rows, list) else None,
+        })
+        if not isinstance(rows, list):
+            continue
+        for market_index, market_value in enumerate(rows):
+            market = market_value if isinstance(market_value, dict) else {}
+            markets.append({
+                "path": f"{event_path}/markets/{market_index}",
+                "event_id": event_id,
+                "market_id": _text(market.get("id")),
+                "slug": _text(market.get("slug")),
+                "condition_id": _text(market.get("conditionId")),
+                "outcomes": label_array(market.get("outcomes")),
+                "token_ids": label_array(market.get("clobTokenIds")),
+            })
+    return {"event_count": len(payload), "events": events, "markets": markets}
 
 
 @dataclass(frozen=True)

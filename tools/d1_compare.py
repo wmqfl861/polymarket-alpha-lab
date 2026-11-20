@@ -6,8 +6,9 @@ original per-leg Git archives and their manifest in managed PostgreSQL.
 Import-original verifies retained stage-v1 evidence against an independent
 manifest digest and registers the exact original bytes and a receipt.
 The restore command verifies those bytes by manifest digest and tests
-extraction in a temporary scope. Build-packs and diff process local
-inputs. Run-frozen and run-new require the plan section 5 authorization
+extraction in a temporary scope. Capture-inputs records public market
+responses for a UTC window in the managed snapshot store. Build-packs and
+diff process local inputs. Run-frozen and run-new require the plan section 5 authorization
 and the approved execution wiring.
 """
 
@@ -15,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import datetime
 import json
 import signal
 import sys
@@ -74,6 +76,34 @@ def command_restore(args: argparse.Namespace) -> int:
         args.manifest_sha256,
         staging_root=Path(args.staging_root), repo_root=Path(args.repo_root))
     print(json.dumps(receipt, sort_keys=True))
+    return 0
+
+
+def _capture_time(value: str) -> datetime.datetime:
+    try:
+        stamp = datetime.datetime.fromisoformat(value)
+        if stamp.utcoffset() is not None:
+            return stamp.astimezone(datetime.timezone.utc)
+    except (ValueError, OverflowError):
+        pass
+    raise argparse.ArgumentTypeError("expected an ISO 8601 timestamp with a UTC offset")
+
+
+def command_capture_inputs(args: argparse.Namespace) -> int:
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    try:
+        receipt = acquire.capture_inputs(
+            repo_root=Path(args.repo_root),
+            window_start=args.window_start,
+            window_end=args.window_end,
+            tag_slugs=tuple(args.tag_slug),
+            allow_public_fetch=args.allow_public_fetch,
+        )
+    except acquire.AcquisitionError as error:
+        print(f"d1_compare: capture-inputs failed: {error.code}", file=sys.stderr)
+        return 2
+    print(json.dumps(receipt, sort_keys=True, allow_nan=False))
     return 0
 
 
@@ -257,6 +287,19 @@ def build_parser() -> argparse.ArgumentParser:
     restore.add_argument("--repo-root", default=".")
     restore.set_defaults(handler=command_restore)
 
+    capture = subparsers.add_parser(
+        "capture-inputs", help="record public Gamma and CLOB responses for a UTC window")
+    capture.add_argument("--repo-root", default=".", help="project root with managed PostgreSQL")
+    capture.add_argument("--window-start", required=True, type=_capture_time,
+                         help="inclusive start of the capture window")
+    capture.add_argument("--window-end", required=True, type=_capture_time,
+                         help="exclusive end of the capture window")
+    capture.add_argument("--tag-slug", required=True, action="append",
+                         help="Gamma tag to discover (repeat for additional tags)")
+    capture.add_argument("--allow-public-fetch", action="store_true",
+                         help="enable the public market data adapters")
+    capture.set_defaults(handler=command_capture_inputs)
+
     run_frozen = subparsers.add_parser(
         "run-frozen", help="execute Path L (refused unless every plan "
                            "section 5 run gate is recorded)")
@@ -316,7 +359,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"d1_compare: {args.command} refused: {error}", file=sys.stderr)
         return 2
     except OSError as error:
-        if args.command not in ("stage", "import-original", "restore", "run-frozen"):
+        if args.command not in ("stage", "import-original", "restore", "run-frozen", "capture-inputs"):
             raise
         print(f"d1_compare: {args.command} failed: {type(error).__name__}", file=sys.stderr)
         return 2
