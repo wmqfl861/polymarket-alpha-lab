@@ -1,0 +1,107 @@
+{
+ "boundary": "refreshed copies are evidence only; every refreshed batch manifest keeps executed=false and verdict PAUSE; nothing in PR-A deletes, retires or approves deletion of anything",
+ "counts": {
+  "batch_counts": {
+   "B1": 1114,
+   "B2": 399,
+   "B3": 332,
+   "B4": 114,
+   "B5": 65,
+   "B6": 90,
+   "B7": 98,
+   "B8": 193
+  },
+  "d0": 2405,
+  "k0": 43,
+  "reachable": 441,
+  "test_verdict_counts": {
+   "blocked_mixed": 135,
+   "conflict": 26,
+   "keep_with_flags": 11,
+   "nodeid_partial": 691,
+   "retire_full": 1651
+  },
+  "tests_files_scanned": 3318,
+  "u0": 2448
+ },
+ "deltas_vs_frozen_baseline": {
+  "B1_stability": {
+   "delete_full": "796 -> 796 (zero lost, zero gained)",
+   "files": "1,114 -> 1,114 (identical membership, lines and exports; zero D0 file modified at HEAD)",
+   "nodeid_candidate_files": "317 -> 317 (zero lost, zero gained)",
+   "shared_conflicts_or_blocked": "3 -> 3 (same three files)"
+  },
+  "batch_counts": {
+   "B1": 0,
+   "B2": 0,
+   "B3": 0,
+   "B4": 0,
+   "B5": 0,
+   "B6": 0,
+   "B7": 0,
+   "B8": 10
+  },
+  "batch_lines": {
+   "B1": 0,
+   "B2": 0,
+   "B3": 0,
+   "B4": 0,
+   "B5": 0,
+   "B6": 0,
+   "B7": 0,
+   "B8": 3866
+  },
+  "d0": 10,
+  "reachable": 12,
+  "root_init_lines": 1130,
+  "src_files": 22,
+  "test_verdict_counts": {
+   "blocked_mixed": 11,
+   "conflict": 0,
+   "keep_with_flags": 0,
+   "nodeid_partial": 2,
+   "retire_full": 0
+  },
+  "tests_files_scanned": 30,
+  "u0": 10
+ },
+ "drift_handling": {
+  "baseline_d0_modules_with_new_source_consumers": {},
+  "baseline_d0_new_consumer_note": "empty = no frozen D0 module gained any source consumer since baseline; also proven by inventory.py --verify (v3 reachable invariant clean, no_longer_unreachable empty)",
+  "gone_unknown_references": [],
+  "held_subtracted_modules": 22,
+  "held_table": "docs/handoffs/m3-cleanup/pr-a-20261120/refreshed-drift-held-subtracted.tsv",
+  "lost_baseline_modules": [],
+  "new_unknown_references": [
+   "src_d0:B8:46",
+   "src_pkg:1987",
+   "src_pkg:1989",
+   "src_reachable:128",
+   "src_reachable:287"
+  ],
+  "root_export_anomaly": [
+   "__all__ names without provider import: ['MarketScore', 'MarketSnapshot', 'NormalizedMarket', 'OrderBookLevel', 'OrderBookSnapshot', 'OutcomeToken', 'OutcomeTrackingConfig', 'OutcomeTrackingLog', 'OutcomeTrackingReport', 'PaperAnalyticsBreach']"
+  ],
+  "root_export_anomaly_note": "the root __init__ lazy-export rework (874 -> 2,004 lines) leaves 10 __all__ names without a statically mappable provider import, so the refreshed run classifies no provider (0 vs frozen 76); the frozen root-exports.tsv stays the authoritative export evidence and export retirement must be re-derived before any B4/B7/B8 execution",
+  "unknown_reference_note": "all new UNKNOWN refs sit in the new papersim machinery (root lazy-import loader and papersim optimize/adapters); they remain UNKNOWN/unresolved and pause every batch in the refreshed view; never force-resolved"
+ },
+ "node": "FX-18 PR-A refreshed inventory run (preparation-only)",
+ "run": {
+  "baseline_of_frozen_artifacts": "4c8bec2fdce31fec3a8ec06a6ab93a25e4d7fc69",
+  "parent_commit": "3e52516f71fdadeb86ef0d521521e6384ad9bb68",
+  "root_init_lines": 2004,
+  "src_files": 2890,
+  "src_total_lines": 2499016,
+  "worktree_clean": false,
+  "worktree_note": "false by design: the frozen B0 artifacts, this refreshed copy and the PR-A tables are uncommitted PR-A additions"
+ },
+ "tool": {
+  "command": "python3 -I docs/handoffs/m3-cleanup/inventory.py <repo_root> --out docs/handoffs/m3-cleanup/refreshed-20261120",
+  "exit_code": 2,
+  "exit_code_note": "expected: baseline plan locks intentionally do not hold on the drifted PR-A parent tree; artifacts are still written and every batch stays PAUSE",
+  "path": "docs/handoffs/m3-cleanup/inventory.py",
+  "provenance": "frozen m3/b0 B0 tool, landed byte-identically (m3/b0 commit 9b905791cb961fbdce818fe3a299d552662adeec; the byte-identity of all 14 landed artifacts is proven by git blob-hash equality against m3/b0 -- the id above is the m3/b0 commit id, not a blob id)",
+  "disposition_generator_command": "python3 -I docs/handoffs/m3-cleanup/pr-a-20261120/gen-pr-a-artifacts.py <repo_root>",
+  "sha256": "ac4609dd7547efae6e3a07777794b881d27fb9246ca9c7fa1a8ec30198f8c656"
+ }
+}
