@@ -1541,7 +1541,7 @@ def _optimize_forward_stats(conn, lineage: str, *, shadow_spec_sha256: str,
     mean = (float(sum(diffs) / len(diffs)) if diffs else None)
     family_class = threshold.family_class
     if family_class.startswith("club-soccer"):
-        blocks = policy.complete_matchweek_blocks(starts, watermark)
+        blocks = policy.complete_matchweek_blocks(starts, watermark) if cluster_rows else 0
     elif family_class == "intl":
         blocks = policy.intl_window_blocks(starts)
     else:
