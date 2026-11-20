@@ -246,6 +246,11 @@ def test_v5_case2_same_slot_retry_is_covered_with_honest_counts():
     assert timeline.attempts_total == 31
     assert timeline.error_codes == ("E_RETRYABLE",)
     assert any("1 retry" in reason for reason in result.reasons)
+    # Independent review P2-2: the FAILED attempt stays counted even
+    # though attempt 2 SUCCEEDED — FAILED->SUCCEEDED must not hide the
+    # failed-attempt count.
+    assert timeline.attempts_failed == 1
+    assert any("1 failed" in reason for reason in result.reasons)
 
 
 def test_v5_case3_nonterminal_only_slot_fails():
@@ -706,6 +711,90 @@ def test_window_incomplete_at_asof_is_not_assessable():
     assert ev.criterion_f(evidence=complete).verdict == ev.VERDICT_PASS
 
 
+def test_ten_good_completed_days_without_future_evidence_stay_not_assessable():
+    """Independent review P2-2 (exact counterexample): ten good
+    completed days whose future days simply have no evidence yet must
+    be NOT_ASSESSABLE with the incompleteness stated — the future
+    slots/days are IMMATURE, so their absence is a shortfall, never a
+    'uncovered'/'missing' failure."""
+    evidence = _green(as_of=_dt(10, 0))
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert not any("uncovered" in reason for reason in result.reasons)
+    assert not any("identity missing" in reason for reason in result.reasons)
+    assert not any("identity failed" in reason for reason in result.reasons)
+    assert any(
+        "not yet mature" in reason for reason in result.reasons
+    )
+    timeline = ef.build_slot_timeline(
+        evidence.run_events, ANCHOR, evidence.schedule,
+        judgeable_until=_dt(10, 0),
+    )
+    assert timeline.uncovered == ()
+    assert len(timeline.immature) > 0
+    assert all(s.status == ef.SLOT_IMMATURE for s in timeline.immature)
+    # Receipts after the as-of are excluded from every status decision
+    # and counted honestly instead.
+    assert timeline.post_cutoff_receipt_rows > 0
+
+
+def test_post_window_terminal_success_cannot_cover_last_slot():
+    """Independent review P2-2 (exact counterexample): an operation
+    STARTED inside the last slot whose SUCCEEDED receipt lands after
+    the window end must NOT cover the last slot. At window close the
+    slot had no in-window terminal success — the old code upgraded the
+    group from a post-window receipt and passed."""
+    late_op = "op-late-29"
+    events, scans = _grid(("06:00",))
+    # Remove day 29's healthy group and replace it with the late one.
+    events = [
+        e for e in events
+        if not e.operation_key.startswith("op-29-")
+    ]
+    scans = [s for s in scans if s.operation_key != "op-29-0-06:00"]
+    started = _dt(29, 23, 59)
+    events += [
+        RunEventRecord(late_op, 1, "STARTED", started),
+        # Terminal receipt AFTER the window end (day 31 00:00).
+        RunEventRecord(
+            late_op, 1, "SUCCEEDED", _dt(30, 0, 1)
+        ),
+    ]
+    scans.append(
+        ScanRunRecord(
+            scan_id=95, started_at=started,
+            operation_key=late_op, code_commit=COMMIT,
+        )
+    )
+    evidence = _green(
+        run_events=tuple(sorted(events, key=lambda e: e.occurred_at)),
+        scan_runs=tuple(scans),
+    )
+    timeline = ef.build_slot_timeline(
+        evidence.run_events, ANCHOR, evidence.schedule
+    )
+    last = timeline.slots[-1]
+    assert last.status == ef.SLOT_NONTERMINAL_ONLY
+    assert last.covered is False
+    assert timeline.post_cutoff_receipt_rows == 1
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "2026-10-30T06:00:00+00:00" in reason and "(nonterminal-only)"
+        in reason
+        for reason in result.reasons
+    )
+    # Even a LATER as-of (after the success landed) cannot retrofit the
+    # post-window success into the window: the cutoff is clamped at the
+    # window end.
+    later = _green(
+        run_events=tuple(sorted(events, key=lambda e: e.occurred_at)),
+        scan_runs=tuple(scans),
+        as_of=_dt(32, 0),
+    )
+    assert ev.criterion_f(evidence=later).verdict == ev.VERDICT_FAIL
+
+
 def test_scheduled_for_takes_precedence_for_attribution():
     """Per-row scheduled_for is used when present (still NULL in
     production today). P3 (review-v5 section 7) is recorded here: pure
@@ -811,7 +900,7 @@ def test_bankroll_event_reason_classes():
     orphan = BankrollEventRecord("be-2", "SCAN_ENTRY", _dt(1, 8))
     result = ev.criterion_f(evidence=_green(bankroll_events=(orphan,)))
     assert result.verdict == ev.VERDICT_FAIL
-    assert any("SCAN_ENTRY lacks a linked scan_id" in reason
+    assert any("SCAN_ENTRY lacks a receipt-proven scan_id" in reason
                for reason in result.reasons)
 
     settle_orphan = BankrollEventRecord("be-3", "SETTLE_NATURAL", _dt(1, 8))
@@ -863,6 +952,334 @@ def test_linkage_families_reject_orphans():
     assert any("unknown candidate_id='cand-404'" in reason
                for reason in result.reasons)
     assert any("cited by neither" in reason for reason in result.reasons)
+
+
+# ---------------------------------------------------------------------------
+# Independent-review fx35-3f0cac37 regression tests (one per finding)
+# ---------------------------------------------------------------------------
+
+
+def test_p2_1_in_window_entry_via_unkeyed_historical_parent_fails():
+    """P2-1 exact counterexample: a window ENTRY linked through an
+    unkeyed HISTORICAL parent (pre-anchor NULL-key scan run) used to be
+    classified matched and could produce PASS. Transitive linkage must
+    terminate at a receipt; the in-window write fails closed."""
+    pre_anchor_scan = ScanRunRecord(
+        4242, _dt(-5, 6), operation_key=None
+    )
+    pre_anchor_candidate = CandidateLinkRecord(
+        "cand-old", scan_id=4242, written_at=_dt(-5, 7),
+        code_commit=OLD_COMMIT,
+    )
+    window_entry = EntryRecord("entry-hist", "cand-old", _dt(3, 9))
+    events, scans = _grid(("06:00",))
+    evidence = FEvidence(
+        window_start=ANCHOR,
+        schedule=_schedule("06:00"),
+        run_events=tuple(events),
+        scan_runs=tuple(scans) + (pre_anchor_scan,),
+        bankroll_checks=tuple(_checks()),
+        candidates=tuple(_candidates()) + (pre_anchor_candidate,),
+        entries=(window_entry,),
+        replay_agreements={c.candidate_id: True for c in _candidates()},
+        pending_contracts=(),
+    )
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "entries row 'entry-hist' references candidate_id='cand-old' "
+        "whose candidate is not receipt-proven" in reason
+        for reason in result.reasons
+    )
+    # The pre-anchor rows themselves stay disclosed, never failures
+    # (R6e) — only the IN-WINDOW write fails.
+    assert any("pre-anchor" in reason for reason in result.reasons)
+
+
+def test_p2_1_scan_keyed_to_wrong_command_receipt_fails():
+    """P2-1 exact counterexample: a scan_runs row whose operation_key
+    matches only a NON-scan command receipt (same key attributed to the
+    wrong command) used to count as receipt-proven. Only run-scan
+    command receipts prove a scan run."""
+    wrong_key = "op-owned-by-settle"
+    events, scans = _grid(("06:00",))
+    events = list(events) + [
+        RunEventRecord(
+            wrong_key, 1, "SUCCEEDED", _dt(3, 12),
+            command="settle-cash",
+        ),
+    ]
+    scans = list(scans) + [
+        ScanRunRecord(
+            scan_id=777, started_at=_dt(3, 12),
+            operation_key=wrong_key, code_commit=COMMIT,
+        ),
+    ]
+    evidence = _green(
+        run_events=tuple(sorted(events, key=lambda e: e.occurred_at)),
+        scan_runs=tuple(scans),
+    )
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "operation_key='op-owned-by-settle' matches no run-scan "
+        "command_run_events receipt (wrong command or no receipt)"
+        in reason
+        for reason in result.reasons
+    )
+
+
+def test_p2_1_self_reversal_and_legacy_bypasses_fail():
+    """P2-1 exact counterexamples: (a) a REVERSAL chaining to itself
+    proves nothing; (b) unbound in-window cash merely flagged is_legacy
+    is not a bypass exemption; (c) an in-window LEGACY_IMPORT bankroll
+    write is a bypass signal (the legacy class is pre-anchor only)."""
+    self_reversal = BankrollEventRecord(
+        "be-self", "REVERSAL", _dt(1, 8), reverses_event_id="be-self"
+    )
+    result = ev.criterion_f(evidence=_green(bankroll_events=(self_reversal,)))
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any("chains to itself" in reason for reason in result.reasons)
+
+    legacy_flagged = BankrollEventRecord(
+        "be-leg", "SETTLE_NATURAL", _dt(1, 8), is_legacy=True
+    )
+    result = ev.criterion_f(evidence=_green(bankroll_events=(legacy_flagged,)))
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "SETTLE_NATURAL lacks a linked entry_id" in reason
+        for reason in result.reasons
+    )
+
+    in_window_legacy_import = BankrollEventRecord(
+        "be-li", "LEGACY_IMPORT", _dt(2, 8)
+    )
+    result = ev.criterion_f(
+        evidence=_green(bankroll_events=(in_window_legacy_import,))
+    )
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "LEGACY_IMPORT in-window" in reason for reason in result.reasons
+    )
+
+
+def test_p2_1_settle_market_outcome_requires_entry_link():
+    """P2-1 exact counterexample (loose writer label): with the pending
+    contracts cleared (clearly-labeled synthetic post-B3 model), a
+    settle-written market_outcome row with NO entry link used to pass on
+    the writer label alone. The label proves nothing; the entry link
+    does."""
+    unlinked = MarketOutcomeRecord("settle", _dt(3, 12))
+    evidence = _green(market_outcomes=(unlinked,))
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "writer=settle lacks a linked entry_id" in reason
+        for reason in result.reasons
+    )
+
+    linked = MarketOutcomeRecord("settle", _dt(3, 12), entry_id="entry-1")
+    evidence = _green(
+        market_outcomes=(linked,),
+        entries=(EntryRecord("entry-1", "cand-000", _dt(3, 11)),),
+    )
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_PASS
+
+
+def test_p2_1_unkeyed_in_window_evidence_with_known_registration_fails():
+    """P2-1 exact counterexample (misclassification): with a KNOWN
+    anchor and schedule and zero run receipts / zero checks but an
+    in-window unkeyed scan_runs row, the old code returned the
+    empty-store NOT_ASSESSABLE before ever looking at the universe.
+    Known registration + unkeyed in-window evidence is a KNOWN ORPHAN:
+    FAIL, never NOT_ASSESSABLE."""
+    unkeyed = ScanRunRecord(500, _dt(3, 12), operation_key=None)
+    evidence = FEvidence(
+        window_start=ANCHOR,
+        schedule=_schedule("06:00"),
+        run_events=(),
+        scan_runs=(unkeyed,),
+        bankroll_checks=(),
+        pending_contracts=(),
+    )
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any("NULL operation_key" in reason for reason in result.reasons)
+    # The store is NOT empty: the empty-store NOT_ASSESSABLE must not
+    # appear.
+    assert not any("empty store" in reason for reason in result.reasons)
+
+
+def test_p2_3_replay_denominator_counts_distinct_entities():
+    """P2-3 exact counterexample: ONE eligible entity repeated twenty
+    times used to satisfy N=20 (one replay then 'agreed'). The
+    denominator counts DISTINCT candidate ids; one entity is one
+    eligible candidate and the draw is evidence-absent."""
+    duplicated = tuple(
+        CandidateLinkRecord(
+            candidate_id="cand-dup", scan_id=1, written_at=_dt(0, 7),
+            code_commit=COMMIT,
+        )
+        for _ in range(20)
+    )
+    evidence = _green(
+        candidates=duplicated,
+        replay_agreements={"cand-dup": True},
+    )
+    sample = draw_replay_sample(evidence)
+    assert sample.eligible_ids == ("cand-dup",)
+    assert sample.selected_ids is None
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert any(
+        "replay evidence absent" in reason and "1 eligible" in reason
+        for reason in result.reasons
+    )
+
+
+def test_p2_3_replay_agreements_must_be_real_booleans():
+    """P2-3 exact counterexample: twenty None outcomes used to pass
+    (None is neither False nor a missing key). Non-bool agreement values
+    are rejected at construction — an agreement can never be fabricated
+    from a missing/None value."""
+    with pytest.raises(ValueError, match="must be bool"):
+        FEvidence(replay_agreements={"cand-000": None})
+    with pytest.raises(ValueError, match="must be bool"):
+        FEvidence(replay_agreements={"cand-000": 1})
+    with pytest.raises(ValueError, match="must be bool"):
+        FEvidence(replay_agreements={"cand-000": "yes"})
+    # Keys must be non-empty strings.
+    with pytest.raises(ValueError, match="non-empty string"):
+        FEvidence(replay_agreements={"": True})
+    # A real bool mapping constructs fine.
+    assert FEvidence(replay_agreements={"cand-000": True})
+
+
+def test_p2_4_overall_pass_requires_complete_criterion_set():
+    """P2-4 exact counterexamples: criterion A PASSing alone (or any
+    partial A-F set) used to yield an overall PASS, and an unknown
+    verdict value used to fall through to PASS. Both fail closed to
+    NOT_ASSESSABLE now; only the complete A-F set all-PASS passes."""
+    a_pass = [ev.CriterionResult("A", ev.VERDICT_PASS, ())]
+    assert ev.overall_verdict(a_pass) == ev.VERDICT_NOT_ASSESSABLE
+    a_to_e_pass = [
+        ev.CriterionResult(key, ev.VERDICT_PASS, ())
+        for key in ("A", "B", "C", "D", "E")
+    ]
+    assert ev.overall_verdict(a_to_e_pass) == ev.VERDICT_NOT_ASSESSABLE
+    unknown = [
+        ev.CriterionResult("A", "MAYBE", ()),
+        *[
+            ev.CriterionResult(key, ev.VERDICT_PASS, ())
+            for key in ("B", "C", "D", "E", "F")
+        ],
+    ]
+    assert ev.overall_verdict(unknown) == ev.VERDICT_NOT_ASSESSABLE
+    # Empty input stays byte-compatible with the pre-FX-35 behavior.
+    assert ev.overall_verdict([]) == ev.VERDICT_NOT_ASSESSABLE_M1
+    # FAIL still beats the fail-closed unknown branch.
+    with_fail = [
+        ev.CriterionResult("A", "MAYBE", ()),
+        ev.CriterionResult("B", ev.VERDICT_FAIL, ()),
+    ]
+    assert ev.overall_verdict(with_fail) == ev.VERDICT_FAIL
+
+
+def test_p3_cash_receipt_exactness_guards():
+    """P3 exact counterexamples: float-zero defaults fabricated a
+    recorded 0.0/0.0 for failed receipts, and invalid tolerances
+    (negative, NaN, Inf) were accepted. Defaults are now None (not
+    recorded) and values must be finite with tolerance >= 0."""
+    with pytest.raises(ValueError, match="tolerance must be >= 0"):
+        BankrollCheckRecord(
+            as_of=_dt(0, 23), passed=False, tolerance=-0.001
+        )
+    with pytest.raises(ValueError, match="must be finite"):
+        BankrollCheckRecord(
+            as_of=_dt(0, 23), passed=False,
+            identity_difference=float("nan"),
+        )
+    with pytest.raises(ValueError, match="must be finite"):
+        BankrollCheckRecord(
+            as_of=_dt(0, 23), passed=False, tolerance=float("inf"),
+        )
+    with pytest.raises(ValueError, match="finite number or None"):
+        BankrollCheckRecord(
+            as_of=_dt(0, 23), passed=False, identity_difference="0.5",
+        )
+    # Default is None (not recorded), never a fabricated 0.0.
+    plain = BankrollCheckRecord(as_of=_dt(0, 23), passed=False)
+    assert plain.identity_difference is None
+    assert plain.tolerance is None
+    # A failed day whose receipt recorded nothing reports "not
+    # recorded", never a fabricated zero.
+    evidence = _green(bankroll_checks=(plain,))
+    result = ev.criterion_f(evidence=evidence)
+    assert result.verdict == ev.VERDICT_FAIL
+    assert any(
+        "identity failed" in reason and "not recorded" in reason
+        for reason in result.reasons
+    )
+    assert not any(
+        "identity failed" in reason and "0.0 vs" in reason
+        for reason in result.reasons
+    )
+
+
+def test_p3_identity_report_is_input_order_deterministic():
+    """P3 exact counterexample: the reported failing difference used to
+    be ``in_day[-1]`` — input order decided which receipt was reported.
+    The report now follows a deterministic order (latest as_of, failed
+    receipts ranked ahead of passed ones at the same instant, then the
+    recorded values), so both permutations report the same difference."""
+    early_failed = BankrollCheckRecord(
+        as_of=_dt(5, 22), passed=False, identity_difference=0.1,
+        tolerance=0.005,
+    )
+    late_failed = BankrollCheckRecord(
+        as_of=_dt(5, 23, 30), passed=False, identity_difference=0.7,
+        tolerance=0.005,
+    )
+    checks = _checks(days=[d for d in range(30) if d != 5])
+    forward = tuple(checks + [early_failed, late_failed])
+    reverse = tuple(checks + [late_failed, early_failed])
+    forward_result = ev.criterion_f(
+        evidence=_green(bankroll_checks=forward)
+    )
+    reverse_result = ev.criterion_f(
+        evidence=_green(bankroll_checks=reverse)
+    )
+    assert forward_result.verdict == ev.VERDICT_FAIL
+    assert reverse_result.verdict == ev.VERDICT_FAIL
+    forward_line = next(
+        r for r in forward_result.reasons if "identity failed" in r
+    )
+    reverse_line = next(
+        r for r in reverse_result.reasons if "identity failed" in r
+    )
+    assert forward_line == reverse_line
+    # The latest receipt's difference is reported in either order.
+    assert "0.7" in forward_line
+    # Same instant, two failed receipts with different recorded
+    # differences: the deterministic tiebreak (recorded value) reports
+    # the same receipt in either input order.
+    tie_small = BankrollCheckRecord(
+        as_of=_dt(6, 23), passed=False, identity_difference=0.1,
+        tolerance=0.005,
+    )
+    tie_large = BankrollCheckRecord(
+        as_of=_dt(6, 23), passed=False, identity_difference=0.9,
+        tolerance=0.005,
+    )
+    base = _checks(days=[d for d in range(30) if d != 6])
+    for pair in ((tie_small, tie_large), (tie_large, tie_small)):
+        result = ev.criterion_f(
+            evidence=_green(bankroll_checks=tuple(list(base) + list(pair)))
+        )
+        assert result.verdict == ev.VERDICT_FAIL
+        line = next(r for r in result.reasons if "identity failed" in r)
+        assert "0.9" in line
 
 
 def test_input_validation_guards():

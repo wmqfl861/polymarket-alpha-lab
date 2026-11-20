@@ -58,21 +58,42 @@ over pure interval containment. Neither C1 nor C2 is weakened by this
 nuance: an omitted slot with no receipts still fails, and cross-slot
 masking stays impossible.
 
-As-of isolation: this module is total over the records it is given. A
-receipt committed after the caller's snapshot simply is not in the
-input, so the affected slot is judged uncovered at that as-of even if it
-later succeeded. The optional ``FEvidence.as_of`` timestamp is used only
-for the "n/30 full days elapsed" completeness check (R1: the evaluation
-day itself never counts).
+As-of isolation and slot maturity (independent review fx35-3f0cac37
+P2-2): the module is total over the records it is given, AND every
+status computation is clamped at the judgeable cutoff ``min(as_of,
+window_end)`` (``window_end`` when no as-of is supplied). A terminal
+receipt at or after the cutoff never upgrades a group, so a post-window
+``SUCCEEDED`` can no longer fill the last slot. A slot whose interval
+ends after the cutoff is IMMATURE: its absence is a stated shortfall
+(NOT_ASSESSABLE), never a failure — ten good completed days without
+future evidence stay NOT_ASSESSABLE. The optional ``FEvidence.as_of``
+timestamp also feeds the "n/30 full days elapsed" completeness check
+(R1: the evaluation day itself never counts).
 
 Replay sample (R2): sample size N and seed are OWNER-REGISTRATION
 PLACEHOLDERS (``evaluation.F_REPLAY_SAMPLE_N`` / ``evaluation
 .F_REPLAY_SEED``), never tuned to outcomes and never derived from
-observed data. The draw is deterministic: candidates in the window whose
+observed data. The draw is deterministic over DISTINCT in-window
+candidates (one entity repeated twenty times is ONE eligible entity,
+never a denominator of twenty — independent review P2-3) whose
 ``code_commit`` equals the window's latest scan commit, sorted by
 ``candidate_id``, drawn with ``random.Random(seed)``; older-commit
 candidates are counted and listed, never silently skipped; fewer than N
-eligible is evidence-absent (NOT_ASSESSABLE), not a failure.
+distinct eligible is evidence-absent (NOT_ASSESSABLE), not a failure.
+``replay_agreements`` values must be real booleans (None/NaN/anything
+else is rejected at construction); an agreement can never be fabricated
+from a missing value.
+
+Receipt lineage (independent review P2-1): transitive linkage must
+terminate at a receipt — an in-window business row chained through an
+unkeyed or unreceipted parent (a pre-anchor NULL-key scan run, a
+candidate whose scan has no run-scan receipt) is UNMATCHED. A
+``scan_runs`` row keyed to a NON-scan command receipt (same
+operation_key, wrong command) does not count as receipt-proven.
+In-window ``is_legacy`` flags and in-window ``LEGACY_IMPORT`` bankroll
+writes are NOT bypass exemptions (the legacy class is pre-anchor only);
+a REVERSAL may not chain to itself; a settle-written market outcome
+must carry a linked entry.
 
 Degrade, never approximate (R3): families whose receipt contracts are
 still pending (B2 mark capture, B3 settle — unmerged at base fa01be0)
@@ -90,6 +111,7 @@ here only through synthetic fixtures.
 
 from __future__ import annotations
 
+import math
 import random
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -183,6 +205,7 @@ SLOT_COVERED = "covered"
 SLOT_ABSENT = "absent"
 SLOT_FAILED_ONLY = "failed-only"
 SLOT_NONTERMINAL_ONLY = "nonterminal-only"
+SLOT_IMMATURE = "immature"
 
 
 def _require_aware(value: object, name: str) -> None:
@@ -283,21 +306,47 @@ class ScanRunRecord:
             _require_nonempty_str(self.operation_key, "operation_key")
 
 
+def _require_finite_optional(
+    value: object, name: str, *, allow_negative: bool,
+) -> None:
+    """Exact cash receipts (independent review P3): a numeric field is
+    either explicitly supplied and finite, or ``None`` (not recorded).
+    Float zero is never fabricated as a default, NaN/Inf are illegal,
+    and a tolerance may not be negative."""
+    if value is None:
+        return
+    if type(value) is not float and type(value) is not int:
+        raise ValueError(f"{name} must be a finite number or None")
+    as_float = float(value)
+    if not math.isfinite(as_float):
+        raise ValueError(f"{name} must be finite (NaN/Inf are illegal)")
+    if not allow_negative and as_float < 0.0:
+        raise ValueError(f"{name} must be >= 0")
+
+
 @dataclass(frozen=True)
 class BankrollCheckRecord:
     """One ``papersim.bankroll_checks`` identity receipt. ``passed`` is
     the recorded verdict; the difference and tolerance are REPORTED and
-    never re-judged here."""
+    never re-judged here. ``None`` means "not recorded" — a numeric
+    zero is never fabricated (independent review P3)."""
 
     as_of: datetime
     passed: bool
-    identity_difference: float = 0.0
-    tolerance: float = 0.0
+    identity_difference: float | None = None
+    tolerance: float | None = None
 
     def __post_init__(self) -> None:
         _require_aware(self.as_of, "as_of")
         if type(self.passed) is not bool:
             raise ValueError("passed must be a bool")
+        _require_finite_optional(
+            self.identity_difference, "identity_difference",
+            allow_negative=True,
+        )
+        _require_finite_optional(
+            self.tolerance, "tolerance", allow_negative=False,
+        )
 
 
 @dataclass(frozen=True)
@@ -407,15 +456,24 @@ class MarketOutcomeRecord:
     """Family 8 — one ``papersim.market_outcomes`` row with its real
     writer class: ``legacy_import`` (the FX-09 pre-anchor import tool;
     an in-window write of this class is a real bypass signal, R6f) or
-    ``settle`` (B3 contract, pending)."""
+    ``settle`` (B3 contract, pending). A settle-written row must carry
+    its ``entry_id`` link — the writer label alone proves nothing
+    (independent review P2-1: no loose writer labels)."""
 
     writer: str
     observed_at: datetime
+    entry_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.writer not in MARKET_OUTCOME_WRITERS:
             raise ValueError(f"unknown market_outcome writer: {self.writer!r}")
         _require_aware(self.observed_at, "observed_at")
+        if self.entry_id is not None:
+            _require_nonempty_str(self.entry_id, "entry_id")
+        if self.writer == "legacy_import" and self.entry_id is not None:
+            raise ValueError(
+                "legacy_import market_outcomes carry no entry link"
+            )
 
 
 @dataclass(frozen=True)
@@ -492,6 +550,23 @@ class FEvidence:
                     f"unknown pending-contract family: {family!r}"
                 )
         object.__setattr__(self, "pending_contracts", pending)
+        if self.replay_agreements is not None:
+            if not isinstance(self.replay_agreements, Mapping):
+                raise ValueError(
+                    "replay_agreements must be a mapping of candidate_id "
+                    "to bool"
+                )
+            for candidate_id, agreement in self.replay_agreements.items():
+                _require_nonempty_str(
+                    candidate_id, "replay_agreements candidate_id"
+                )
+                if type(agreement) is not bool:
+                    raise ValueError(
+                        "replay_agreements values must be bool; "
+                        f"candidate {candidate_id!r} carries "
+                        f"{agreement!r} (None/non-bool can never be an "
+                        "agreement — independent review P2-3)"
+                    )
 
 
 # ---------------------------------------------------------------------------
@@ -649,14 +724,18 @@ class SlotCoverage:
     end: datetime
     groups: tuple[str, ...]
     covered: bool
-    status: str  # covered | absent | failed-only | nonterminal-only
+    status: str  # covered | absent | failed-only | nonterminal-only | immature
 
 
 @dataclass(frozen=True)
 class SlotTimeline:
     """C1 enforcement grain: per-slot coverage plus honest window
     totals. Retries and failures are counted and NEVER rescue an
-    uncovered slot."""
+    uncovered slot. Slots whose interval ends after the judgeable
+    cutoff are IMMATURE (absence there is a shortfall, never a
+    failure); FAILED attempts are counted explicitly so a
+    FAILED-then-SUCCEEDED retry can never hide the failed attempt
+    (independent review P2-2)."""
 
     slots: tuple[SlotCoverage, ...]
     groups_succeeded: int
@@ -664,10 +743,14 @@ class SlotTimeline:
     groups_nonterminal: int
     attempts_total: int
     retry_attempts: int
+    attempts_failed: int
+    attempts_nonterminal: int
     error_codes: tuple[str, ...]
     out_of_window_groups: int
     non_scan_receipt_rows: int
+    post_cutoff_receipt_rows: int
     uncovered: tuple[SlotCoverage, ...]
+    immature: tuple[SlotCoverage, ...]
 
 
 def build_slot_timeline(
@@ -676,6 +759,7 @@ def build_slot_timeline(
     schedule: FEvidenceSchedule,
     *,
     window_days: int = F_WINDOW_DAYS,
+    judgeable_until: datetime | None = None,
 ) -> SlotTimeline:
     """Attribute every in-window operation group to exactly one
     expected slot and classify per-slot coverage (C1).
@@ -686,6 +770,14 @@ def build_slot_timeline(
     containment can let an ad-hoc attended run cover a slot whose
     scheduled run was omitted; prefer/require ``scheduled_for``-matching
     once D2 persists it per the registered schedule.
+
+    ``judgeable_until`` (independent review P2-2, default the window
+    end): receipts at or after this cutoff are excluded from every
+    status computation (counted in ``post_cutoff_receipt_rows``), so a
+    post-window terminal success can no longer fill the last slot; a
+    slot whose interval ends after the cutoff is IMMATURE — its
+    absence is judged nowhere here and reported as a shortfall by the
+    caller, never as a failure.
     """
     intervals = expected_slot_intervals(
         window_start, schedule, window_days=window_days
@@ -693,12 +785,19 @@ def build_slot_timeline(
     window_start_dt, window_end = window_bounds(
         window_start, window_days=window_days
     )
+    cutoff = (
+        judgeable_until if judgeable_until is not None else window_end
+    )
+    in_scope_events = [
+        e for e in run_events if e.occurred_at < cutoff
+    ]
+    post_cutoff = len(run_events) - len(in_scope_events)
     non_scan = sum(
         1 for e in run_events if e.command != SCAN_COMMAND
     )
     attributed: dict[int, list[OperationGroup]] = {}
     out_of_window = 0
-    for group in build_operation_groups(run_events):
+    for group in build_operation_groups(in_scope_events):
         stamp = group.attribution_stamp
         if stamp < window_start_dt or stamp >= window_end:
             out_of_window += 1
@@ -712,7 +811,9 @@ def build_slot_timeline(
         groups = attributed.get(index, [])
         keys = tuple(g.operation_key for g in groups)
         statuses = [g.status for g in groups]
-        if GROUP_SUCCEEDED in statuses:
+        if end > cutoff:
+            slot_status, covered = SLOT_IMMATURE, False
+        elif GROUP_SUCCEEDED in statuses:
             slot_status, covered = SLOT_COVERED, True
         elif not statuses:
             slot_status, covered = SLOT_ABSENT, False
@@ -756,10 +857,22 @@ def build_slot_timeline(
         retry_attempts=sum(
             1 for g in in_window_groups for a in g.attempts if a.attempt > 1
         ),
+        attempts_failed=sum(
+            1 for g in in_window_groups
+            for a in g.attempts if a.status == GROUP_FAILED
+        ),
+        attempts_nonterminal=sum(
+            1 for g in in_window_groups
+            for a in g.attempts if a.status == GROUP_NONTERMINAL
+        ),
         error_codes=tuple(error_codes),
         out_of_window_groups=out_of_window,
         non_scan_receipt_rows=non_scan,
-        uncovered=tuple(s for s in slots if not s.covered),
+        post_cutoff_receipt_rows=post_cutoff,
+        uncovered=tuple(
+            s for s in slots if not s.covered and s.status != SLOT_IMMATURE
+        ),
+        immature=tuple(s for s in slots if s.status == SLOT_IMMATURE),
     )
 
 
@@ -772,17 +885,45 @@ def build_slot_timeline(
 class IdentityDay:
     """One window day's identity verdict: passed receipts count, failed
     receipts count with the reported difference/tolerance (never
-    re-judged), or absence."""
+    re-judged), or absence. ``mature`` is False while the day has not
+    fully elapsed at the judgeable cutoff (an immature day is judged
+    nowhere — independent review P2-2)."""
 
     day: date
     passed_count: int
     failed_count: int
     reported_difference: float | None
     reported_tolerance: float | None
+    mature: bool
 
     @property
     def ok(self) -> bool:
         return self.passed_count >= 1
+
+
+def _fmt_optional(value: float | None) -> str:
+    """Render a possibly-unrecorded cash number (P3): ``None`` is
+    "not recorded" — never a fabricated 0.0."""
+    if value is None:
+        return "not recorded"
+    return repr(value)
+
+
+def _receipt_order_key(check: BankrollCheckRecord) -> tuple:
+    """Deterministic total order over one day's receipts, independent
+    of input order (independent review P3): latest ``as_of`` first,
+    a FAILED receipt outranks a passed one at the same instant, then
+    recorded-ness and value of difference/tolerance."""
+    difference = check.identity_difference
+    tolerance = check.tolerance
+    return (
+        check.as_of,
+        0 if check.passed else 1,
+        difference is not None,
+        difference if difference is not None else 0.0,
+        tolerance is not None,
+        tolerance if tolerance is not None else 0.0,
+    )
 
 
 def build_identity_days(
@@ -790,10 +931,15 @@ def build_identity_days(
     window_start: date,
     *,
     window_days: int = F_WINDOW_DAYS,
+    judgeable_until: datetime | None = None,
 ) -> tuple[IdentityDay, ...]:
     """03:145: every window day needs >=1 in-day ``passed=true``
     receipt; a day with only failed receipts FAILs with the recorded
-    difference and tolerance reported, never re-judged."""
+    difference and tolerance reported, never re-judged. The reported
+    receipt is chosen by a deterministic order (latest as_of, a failed
+    receipt preferred at ties), so input order can never change the
+    reported difference. Days not fully elapsed at ``judgeable_until``
+    (default: the window end) are immature and judged nowhere."""
     days: list[IdentityDay] = []
     for offset in range(window_days):
         day = window_start + timedelta(days=offset)
@@ -804,7 +950,9 @@ def build_identity_days(
         ]
         passed = [c for c in in_day if c.passed]
         failed = [c for c in in_day if not c.passed]
-        latest = in_day[-1] if in_day else None
+        latest = (
+            max(in_day, key=_receipt_order_key) if in_day else None
+        )
         days.append(
             IdentityDay(
                 day=day,
@@ -814,6 +962,10 @@ def build_identity_days(
                     latest.identity_difference if latest else None
                 ),
                 reported_tolerance=latest.tolerance if latest else None,
+                mature=(
+                    day_end <= judgeable_until
+                    if judgeable_until is not None else True
+                ),
             )
         )
     return tuple(days)
@@ -827,9 +979,11 @@ def build_identity_days(
 @dataclass(frozen=True)
 class ReplaySample:
     """The deterministic R2 draw. ``selected_ids`` is None when no
-    trusted commit exists (nothing drawable). Older-commit in-window
-    candidates are counted (``older_commit_count``), never silently
-    skipped."""
+    trusted commit exists (nothing drawable). ``eligible_ids`` are
+    DISTINCT candidate ids — one entity repeated twenty times is one
+    eligible entity, never a denominator of twenty (independent review
+    P2-3). Older-commit in-window candidates are counted
+    (``older_commit_count``), never silently skipped."""
 
     trusted_commit: str | None
     eligible_ids: tuple[str, ...]
@@ -843,10 +997,11 @@ def draw_replay_sample(
     seed: int = F_REPLAY_SEED,
     sample_n: int = F_REPLAY_SAMPLE_N,
 ) -> ReplaySample:
-    """Deterministic draw over in-window candidates whose code_commit
-    equals the window's latest scan commit, sorted by candidate_id,
-    drawn with ``random.Random(seed)`` (seed/N are owner-registration
-    placeholders — never tuned, never derived from observed data)."""
+    """Deterministic draw over DISTINCT in-window candidates whose
+    code_commit equals the window's latest scan commit, sorted by
+    ``candidate_id``, drawn with ``random.Random(seed)`` (seed/N are
+    owner-registration placeholders — never tuned, never derived from
+    observed data; the denominator counts entities, never rows)."""
     if evidence.window_start is None:
         raise ValueError("draw_replay_sample requires a registered window_start")
     window_start_dt, window_end = window_bounds(evidence.window_start)
@@ -866,10 +1021,12 @@ def draw_replay_sample(
         c for c in evidence.candidates
         if window_start_dt <= c.written_at < window_end
     ]
-    eligible = sorted(
-        c.candidate_id for c in in_window_candidates
-        if c.code_commit == trusted
-    )
+    eligible = tuple(sorted(
+        {
+            c.candidate_id for c in in_window_candidates
+            if c.code_commit == trusted
+        }
+    ))
     older = sum(
         1 for c in in_window_candidates
         if c.code_commit is not None and c.code_commit != trusted
@@ -879,7 +1036,7 @@ def draw_replay_sample(
             str(trusted), tuple(eligible), older, None
         )
     rng = random.Random(seed)
-    selected = tuple(rng.sample(eligible, sample_n))
+    selected = tuple(rng.sample(list(eligible), sample_n))
     return ReplaySample(str(trusted), tuple(eligible), older, selected)
 
 
@@ -977,12 +1134,31 @@ def reconcile_universe(
     window_start_dt, window_end = window_bounds(
         evidence.window_start, window_days=window_days
     )
-    receipt_operation_keys = {
+    # Receipt-proven lineage (independent review P2-1): a scan run is
+    # proven only when its operation_key belongs to a RUN-SCAN command
+    # receipt (the same key on a non-scan command receipt is a wrong
+    # command, not a proof); business rows are proven only through
+    # parents that terminate at such a receipt.
+    scan_receipt_keys = {
         e.operation_key for e in evidence.run_events
+        if e.command == SCAN_COMMAND
     }
-    scan_ids = {s.scan_id for s in evidence.scan_runs}
-    candidate_ids = {c.candidate_id for c in evidence.candidates}
-    entry_ids = {e.entry_id for e in evidence.entries}
+    proven_scan_ids = {
+        s.scan_id for s in evidence.scan_runs
+        if s.operation_key is not None
+        and s.operation_key in scan_receipt_keys
+    }
+    all_scan_ids = {s.scan_id for s in evidence.scan_runs}
+    proven_candidate_ids = {
+        c.candidate_id for c in evidence.candidates
+        if c.scan_id in proven_scan_ids
+    }
+    all_candidate_ids = {c.candidate_id for c in evidence.candidates}
+    proven_entry_ids = {
+        e.entry_id for e in evidence.entries
+        if e.candidate_id in proven_candidate_ids
+    }
+    all_entry_ids = {e.entry_id for e in evidence.entries}
     bankroll_event_ids = {b.event_id for b in evidence.bankroll_events}
 
     families: list[FamilyAdjudication] = []
@@ -1012,7 +1188,9 @@ def reconcile_universe(
             )
         )
 
-    # Family 1: scan_runs — operation_key present AND matching a receipt.
+    # Family 1: scan_runs — operation_key present AND matching a
+    # RUN-SCAN command receipt (a key owned by a non-scan command is a
+    # wrong-command attribution, never a proof).
     adjudicate(
         "scan_runs",
         [(s.started_at, s) for s in evidence.scan_runs],
@@ -1023,24 +1201,33 @@ def reconcile_universe(
             if s.operation_key is None
             else (
                 "scan_runs row scan_id=%d operation_key=%r matches no "
-                "command_run_events receipt" % (s.scan_id, s.operation_key)
-                if s.operation_key not in receipt_operation_keys else None
+                "run-scan command_run_events receipt (wrong command or "
+                "no receipt)" % (s.scan_id, s.operation_key)
+                if s.operation_key not in scan_receipt_keys else None
             )
         ),
     )
 
-    # Family 2: candidates — transitive via scan_id -> #1.
+    # Family 2: candidates — transitive via scan_id -> #1; the chain
+    # must terminate at a receipt-proven scan run.
     adjudicate(
         "candidates",
         [(c.written_at, c) for c in evidence.candidates],
         lambda c: (
             "candidates row %r references unknown scan_id=%d"
             % (c.candidate_id, c.scan_id)
-            if c.scan_id not in scan_ids else None
+            if c.scan_id not in all_scan_ids
+            else (
+                "candidates row %r references scan_id=%d whose scan run "
+                "is not receipt-proven (unkeyed or unreceipted writer)"
+                % (c.candidate_id, c.scan_id)
+                if c.scan_id not in proven_scan_ids else None
+            )
         ),
     )
 
-    # Families 3 and 7: candidate_id -> #2 (7 also R3-pending).
+    # Families 3 and 7: candidate_id -> #2 (7 also R3-pending); the
+    # parent candidate must itself be receipt-proven.
     for family, rows in (
         ("candidate_price_evidence", evidence.price_evidence),
         ("candidate_marks", evidence.candidate_marks),
@@ -1051,22 +1238,34 @@ def reconcile_universe(
             lambda r: (
                 "%s row references unknown candidate_id=%r"
                 % (family, r.candidate_id)
-                if r.candidate_id not in candidate_ids else None
+                if r.candidate_id not in all_candidate_ids
+                else (
+                    "%s row references candidate_id=%r whose candidate "
+                    "is not receipt-proven" % (family, r.candidate_id)
+                    if r.candidate_id not in proven_candidate_ids else None
+                )
             ),
         )
 
-    # Family 4: entries — candidate_id -> #2.
+    # Family 4: entries — candidate_id -> #2 (receipt-proven parent).
     adjudicate(
         "entries",
         [(r.written_at, r) for r in evidence.entries],
         lambda r: (
             "entries row %r references unknown candidate_id=%r"
             % (r.entry_id, r.candidate_id)
-            if r.candidate_id not in candidate_ids else None
+            if r.candidate_id not in all_candidate_ids
+            else (
+                "entries row %r references candidate_id=%r whose "
+                "candidate is not receipt-proven (unkeyed or unreceipted "
+                "historical parent)" % (r.entry_id, r.candidate_id)
+                if r.candidate_id not in proven_candidate_ids else None
+            )
         ),
     )
 
-    # Families 5 and 9: entry_id -> #4 (both R3-pending).
+    # Families 5 and 9: entry_id -> #4 (both R3-pending; receipt-proven
+    # parent).
     for family, rows in (
         ("settlements", evidence.settlements),
         ("marks", evidence.marks),
@@ -1076,26 +1275,39 @@ def reconcile_universe(
             [(r.written_at, r) for r in rows],
             lambda r: (
                 "%s row references unknown entry_id=%r" % (family, r.entry_id)
-                if r.entry_id not in entry_ids else None
+                if r.entry_id not in all_entry_ids
+                else (
+                    "%s row references entry_id=%r whose entry is not "
+                    "receipt-proven" % (family, r.entry_id)
+                    if r.entry_id not in proven_entry_ids else None
+                )
             ),
         )
 
     # Family 6: bankroll_events — reason classes.
     def _bankroll_detail(row: BankrollEventRecord) -> str | None:
-        if row.is_legacy:
-            return None  # legacy import class: disclosed, never a failure
+        # The legacy-import class is PRE-ANCHOR only (independent review
+        # P2-1): an is_legacy flag or a LEGACY_IMPORT reason on an
+        # IN-WINDOW row is never a bypass exemption. Pre-anchor rows are
+        # disclosed by the window split and never reach this check.
+        if row.reason == "LEGACY_IMPORT":
+            return (
+                "bankroll_events row %r reason LEGACY_IMPORT in-window: "
+                "the legacy import class is pre-anchor only; an in-window "
+                "legacy write is a bypass signal (R6f)" % row.event_id
+            )
         reason = row.reason
         if reason in BANKROLL_BASE_REASONS:
             return None  # base-funds class: disclosed per class
         if reason in BANKROLL_SCAN_LINKED_REASONS:
-            if row.scan_id is None or row.scan_id not in scan_ids:
+            if row.scan_id is None or row.scan_id not in proven_scan_ids:
                 return (
                     "bankroll_events row %r reason SCAN_ENTRY lacks a "
-                    "linked scan_id" % row.event_id
+                    "receipt-proven scan_id" % row.event_id
                 )
             return None
         if reason in BANKROLL_ENTRY_LINKED_REASONS:
-            if row.entry_id is None or row.entry_id not in entry_ids:
+            if row.entry_id is None or row.entry_id not in proven_entry_ids:
                 return (
                     "bankroll_events row %r reason %s lacks a linked "
                     "entry_id" % (row.event_id, reason)
@@ -1110,6 +1322,11 @@ def reconcile_universe(
                     "bankroll_events row %r REVERSAL does not chain via "
                     "reverses_event_id" % row.event_id
                 )
+            if row.reverses_event_id == row.event_id:
+                return (
+                    "bankroll_events row %r REVERSAL chains to itself: "
+                    "a self-reversal proves nothing" % row.event_id
+                )
             return None
         return (
             "bankroll_events row %r carries unknown reason %r"
@@ -1119,7 +1336,7 @@ def reconcile_universe(
     base_counts: dict[str, int] = {}
     legacy_count = 0
     for event in evidence.bankroll_events:
-        if event.is_legacy:
+        if event.is_legacy or event.reason == "LEGACY_IMPORT":
             legacy_count += 1
         elif event.reason in BANKROLL_BASE_REASONS:
             base_counts[event.reason] = base_counts.get(event.reason, 0) + 1
@@ -1129,7 +1346,8 @@ def reconcile_universe(
             f"{reason}={count}"
             for reason, count in sorted(base_counts.items())
         ),
-        f"legacy rows disclosed: {legacy_count}",
+        f"legacy rows disclosed: {legacy_count} (pre-anchor only; "
+        "in-window legacy writes fail closed)",
     ]
     adjudicate(
         "bankroll_events",
@@ -1138,7 +1356,9 @@ def reconcile_universe(
         bankroll_disclosed,
     )
 
-    # Family 8: market_outcomes — writer classes (R6f).
+    # Family 8: market_outcomes — writer classes (R6f); a settle-written
+    # row must carry its entry link (no loose writer labels —
+    # independent review P2-1).
     adjudicate(
         "market_outcomes",
         [(m.observed_at, m) for m in evidence.market_outcomes],
@@ -1147,7 +1367,12 @@ def reconcile_universe(
             "legacy import tool is unmatched in-window (R6f): real "
             "bypass signal"
             if m.writer == "legacy_import"
-            else None  # settle-written: per B3 contract (R3-pending)
+            else (
+                "market_outcomes row writer=settle lacks a linked "
+                "entry_id: the writer label alone proves nothing"
+                if m.entry_id is None or m.entry_id not in proven_entry_ids
+                else None
+            )
         ),
     )
 
@@ -1260,16 +1485,19 @@ def reconcile_universe(
 def evaluate_f_evidence(evidence: FEvidence) -> CriterionResult:
     """Derive the criterion F verdict from one evidence snapshot.
 
-    Precedence: the unknown shortfalls (no R1 anchor, no R4 schedule, no
-    receipts at all) make F UNEVALUABLE — NOT_ASSESSABLE with the
-    shortfall stated, never PASS. With a registered window, known
-    orphans (an expected slot with no success per C1, a failed identity
-    day, an unproven/unlinked in-window row per C3/03:147, a replay
-    mismatch) FAIL, and FAIL beats the remaining NOT_ASSESSABLE
-    shortfalls (pending R3 contracts, incomplete window at as-of,
-    insufficient replay evidence). PASS requires everything green and no
-    pending contracts. The signed 03:147 boundary sentence is emitted
-    with every evidence-full verdict.
+    Precedence: the unknown shortfalls (no R1 anchor, no R4 schedule, a
+    completely empty store) make F UNEVALUABLE — NOT_ASSESSABLE with
+    the shortfall stated, never PASS. A KNOWN registration with unkeyed
+    in-window evidence is NOT misclassified as unevaluable (independent
+    review P2-1): with anchor and schedule registered the evaluation
+    proceeds and in-window orphans FAIL. With a registered window,
+    known orphans (an expected MATURE slot with no success per C1, a
+    failed mature identity day, an unproven/unlinked in-window row per
+    C3/03:147, a replay mismatch) FAIL, and FAIL beats the remaining
+    NOT_ASSESSABLE shortfalls (pending R3 contracts, incomplete window
+    at as-of, insufficient replay evidence). PASS requires everything
+    green and no pending contracts. The signed 03:147 boundary sentence
+    is emitted with every evidence-full verdict.
     """
     key = "F"
     shortfalls: list[str] = []
@@ -1285,7 +1513,15 @@ def evaluate_f_evidence(evidence: FEvidence) -> CriterionResult:
             "slots come only from the registered grid, never from "
             "observed receipts (C2)"
         )
-    if not evidence.run_events and not evidence.bankroll_checks:
+    has_any_records = any((
+        evidence.run_events, evidence.bankroll_checks,
+        evidence.scan_runs, evidence.control_events,
+        evidence.candidates, evidence.price_evidence,
+        evidence.entries, evidence.settlements,
+        evidence.bankroll_events, evidence.candidate_marks,
+        evidence.market_outcomes, evidence.marks, evidence.snapshots,
+    ))
+    if not has_any_records:
         shortfalls.append(
             "no run receipts and no bankroll checks at all (empty store "
             "at cutover is UNKNOWN evidence, not a failure)"
@@ -1301,6 +1537,14 @@ def evaluate_f_evidence(evidence: FEvidence) -> CriterionResult:
     reasons: list[str] = []
     failures: list[str] = []
 
+    # Judgeable cutoff (independent review P2-2): terminal receipts at
+    # or after min(as_of, window_end) never upgrade a group; slots and
+    # days whose interval ends after the cutoff are immature (absence
+    # there is a shortfall, never a failure).
+    judgeable_until = (
+        min(evidence.as_of, window_end)
+        if evidence.as_of is not None else window_end
+    )
     if evidence.as_of is not None and evidence.as_of < window_end:
         elapsed = int(
             (evidence.as_of - window_bounds(evidence.window_start)[0])
@@ -1320,28 +1564,38 @@ def evaluate_f_evidence(evidence: FEvidence) -> CriterionResult:
 
     # Sub-check 1 (03:144): slot-level scheduled-scan continuity (C1/C2).
     timeline = build_slot_timeline(
-        evidence.run_events, evidence.window_start, evidence.schedule
+        evidence.run_events, evidence.window_start, evidence.schedule,
+        judgeable_until=judgeable_until,
     )
+    if timeline.immature:
+        shortfalls.append(
+            f"window incomplete at as-of: {len(timeline.immature)} "
+            "expected slot(s) not yet mature (interval end after the "
+            f"as-of {judgeable_until.isoformat()}); absent receipts "
+            "there are shortfalls, never failures"
+        )
     for slot in timeline.uncovered:
         failures.append(
             f"expected slot {slot.start.isoformat()} uncovered "
             f"({slot.status}): every registered slot needs >=1 "
             "SUCCEEDED operation group (C1)"
         )
-    # Sub-check 3 (03:145): per-day cash identity.
+    # Sub-check 3 (03:145): per-day cash identity. Days not fully
+    # elapsed at the cutoff are immature and judged nowhere.
     identity_days = build_identity_days(
-        evidence.bankroll_checks, evidence.window_start
+        evidence.bankroll_checks, evidence.window_start,
+        judgeable_until=judgeable_until,
     )
     for day in identity_days:
-        if day.ok:
+        if not day.mature or day.ok:
             continue
         if day.failed_count:
             failures.append(
                 f"day {day.day.isoformat()} cash identity failed: "
                 f"{day.failed_count} receipt(s) with passed=false "
-                f"(recorded difference {day.reported_difference!r} vs "
-                f"tolerance {day.reported_tolerance!r}, reported not "
-                "re-judged)"
+                f"(recorded difference {_fmt_optional(day.reported_difference)} vs "
+                f"tolerance {_fmt_optional(day.reported_tolerance)}, "
+                "reported not re-judged)"
             )
         else:
             failures.append(
@@ -1422,16 +1676,22 @@ def evaluate_f_evidence(evidence: FEvidence) -> CriterionResult:
                     f"commit {sample.trusted_commit!r}, all agreed "
                     "(seeded registered draw)"
                 )
-    # Honest counts (03:144: failures and retries counted honestly).
+    # Honest counts (03:144: failures and retries counted honestly; a
+    # FAILED attempt stays counted even when a later attempt SUCCEEDED
+    # — independent review P2-2).
     reasons.append(
         f"window totals: {timeline.groups_succeeded} SUCCEEDED / "
         f"{timeline.groups_failed} FAILED / "
         f"{timeline.groups_nonterminal} NONTERMINAL operation groups, "
         f"{timeline.attempts_total} attempts "
-        f"({timeline.retry_attempts} retry), distinct error codes "
-        f"{list(timeline.error_codes)}, "
+        f"({timeline.retry_attempts} retry, "
+        f"{timeline.attempts_failed} failed, "
+        f"{timeline.attempts_nonterminal} nonterminal), distinct error "
+        f"codes {list(timeline.error_codes)}, "
         f"{timeline.non_scan_receipt_rows} non-run-scan receipt row(s), "
-        f"{timeline.out_of_window_groups} out-of-window group(s)"
+        f"{timeline.out_of_window_groups} out-of-window group(s), "
+        f"{timeline.post_cutoff_receipt_rows} receipt row(s) at or "
+        "after the judgeable cutoff excluded from every status"
     )
     disclosed_pre_anchor = sum(f.pre_anchor for f in universe.families)
     if disclosed_pre_anchor:
