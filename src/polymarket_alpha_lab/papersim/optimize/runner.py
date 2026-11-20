@@ -361,32 +361,42 @@ class _ClubSoccerRecalibAdapter(FamilyRunAdapter):
         return payload["mo4"]
 
     def events(self, payload):
-        mo4_folds, _ = self._mo4_folds(payload)
-        events = {}
-        for fold in mo4_folds:
-            for match in fold.test:
-                outcome = (
-                    0 if match.home_goals > match.away_goals
-                    else 1 if match.home_goals == match.away_goals
-                    else 2
-                )
-                rows = [RowOutcome("match_winner", "1x2", outcome)]
-                total = int(match.home_goals) + int(match.away_goals)
-                for line in CLUB_TOTAL_LINES:
-                    rows.append(
-                        RowOutcome(
-                            "over_under", f"over-{line}", 1 if total > line else 0
-                        )
+        # EVERY completed match of the audit, not only fold test blocks:
+        # the selection-boundary validator must resolve TRAIN labels too
+        # (a fold's training rows are selection-region labels exactly as
+        # its test rows are).  Scoring stays fold-test-only everywhere.
+        def event_of(match):
+            outcome = (
+                0 if match.home_goals > match.away_goals
+                else 1 if match.home_goals == match.away_goals
+                else 2
+            )
+            rows = [RowOutcome("match_winner", "1x2", outcome)]
+            total = int(match.home_goals) + int(match.away_goals)
+            for line in CLUB_TOTAL_LINES:
+                rows.append(
+                    RowOutcome(
+                        "over_under", f"over-{line}", 1 if total > line else 0
                     )
-                events[match.match_id] = RunEvent(
-                    event_key=match.match_id,
-                    group_id=f"{match.league}:{match.season}:round-{match.matchweek}",
-                    kickoff=match.kickoff,
-                    available_at=match.available_at or match.kickoff,
-                    fixture=match,
-                    outcomes=tuple(rows),
                 )
-        return tuple(sorted(events.values(), key=lambda e: (e.kickoff, e.event_key)))
+            return RunEvent(
+                event_key=match.match_id,
+                group_id=f"{match.league}:{match.season}:round-{match.matchweek}",
+                kickoff=match.kickoff,
+                available_at=match.available_at or match.kickoff,
+                fixture=match,
+                outcomes=tuple(rows),
+            )
+
+        mo4_folds, _ = self._mo4_folds(payload)
+        seen = set()
+        events = []
+        for fold in mo4_folds:
+            for match in (*fold.train, *fold.test):
+                if match.match_id not in seen:
+                    seen.add(match.match_id)
+                    events.append(event_of(match))
+        return tuple(sorted(events, key=lambda e: (e.kickoff, e.event_key)))
 
     def folds(self, payload):
         mo4_folds, skipped = self._mo4_folds(payload)
@@ -827,10 +837,21 @@ RUN_PROFILES: Mapping[str, RunProfile] = {
     # Plan r2 section 3, pre-registered run parameters.  The club
     # cutoff is the archive pointer's pointed_at_utc literal (its
     # fetched_at_utc is null; deriving from file mtimes is forbidden).
+    # AMENDED WINDOW (landing deviation, ratified via the fix PR): the
+    # pre-registered 2026-09-01 window is INFEASIBLE on the actual
+    # archive — three postponed Eredivisie 2026 round-3 matches (kickoff
+    # Sep 8/9/15) sit in walk-forward fold test sets, so their labels
+    # realize after the first holdout kickoff and the registered
+    # delayed-label boundary invariant (violations -> RUN_FAILED, never
+    # per-label filtering) rejects the run.  A scan over every fold
+    # boundary found 15 windows with ZERO boundary violations and floors
+    # met; the LATEST feasible one maximizes the selection region's
+    # recency: holdout = 425 matches / 43 round blocks (floor 300/20),
+    # walk-forward = 26 folds.  Derived from data-manifest dates only.
     "club-soccer-recalib": RunProfile(
         family_id="club-soccer-recalib",
         fold_kind="mo4_rounds",
-        holdout_start_utc=dt.datetime(2026, 9, 1, tzinfo=UTC),
+        holdout_start_utc=dt.datetime(2026, 5, 2, 14, 30, tzinfo=UTC),
         grid_overrides={},
         max_seconds=7200.0,
         max_trials=3000,
@@ -2116,7 +2137,7 @@ def run_and_record(
         submission = store.OptimizationRunSubmission(
             family=family_id,
             data_cutoff=as_of,
-            lineages=sorted(result.active_specs),
+            lineages=_submission_lineage_names(family_id, adapter, result),
             dataset_summary=_render(result.dataset_summary),
             snapshot_refs=sorted(
                 set(result.snapshot_refs) | {artifacts["content_sha256"]}
@@ -2214,6 +2235,22 @@ def run_and_record(
             except Exception:
                 pass  # The original failure is the one to surface.
         raise
+
+
+def _submission_lineage_names(
+    family_id: str, adapter: FamilyRunAdapter, result: RunResult
+) -> list[str]:
+    """The run row's lineage list: the finished lineages when any, else
+    the family's DECLARED set.
+
+    An early integrity/budget failure legitimately carries an empty
+    ``active_specs`` map (no lineage finished); the failed row must
+    still land, and store validation rejects an empty list — the
+    declared set is what the run was scoped to.
+    """
+    return sorted(result.active_specs) or sorted(
+        f"{family_id}/{target}" for target in adapter.targets()
+    )
 
 
 def _spec_from_sha(adapter: FamilyRunAdapter, spec_sha: str | None) -> ModelSpec:
