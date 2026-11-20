@@ -48,6 +48,7 @@ import json
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from polymarket_alpha_lab.team_research_agent_types import strict_json
@@ -376,11 +377,67 @@ def _parse_listy(raw: Any) -> Any:
     return raw
 
 
+def _gamma_line(value: Any) -> tuple[int, str, int] | None:
+    if type(value) not in (str, int, Decimal):
+        return None
+    try:
+        number = Decimal(value)
+    except InvalidOperation:
+        return None
+    if not number.is_finite():
+        return None
+    if not number:
+        return (0, "0", 0)
+    sign, digits, exponent = number.as_tuple()
+    coefficient = "".join(map(str, digits)).rstrip("0")
+    return sign, coefficient, exponent + len(digits) - len(coefficient)
+
+
+def _gamma_terms_sha256(market: Mapping[str, Any]) -> str | None:
+    """Compare public contract text, clocks and settlement metadata verbatim.
+
+    The witnessed fields mirror Gamma market context. UTC normalization
+    permits equivalent timestamp offsets; quotes remain in the raw page.
+    An unknown required field or malformed context has no fingerprint.
+    """
+    context = {}
+    if not market.get("question") or market.get("endDate") is None:
+        return None
+    for field in ("question", "description", "umaResolutionStatus", "resolutionSource",
+                  "groupItemTitle", "marketType", "sportsMarketType"):
+        value = market.get(field)
+        if value is not None and type(value) is not str:
+            return None
+        context[field] = value
+    for field in ("line", "handicap"):
+        value = market.get(field)
+        number = _gamma_line(value)
+        if value is not None and number is None:
+            return None
+        context[field] = number
+    for field in ("closed", "active", "archived"):
+        value = market.get(field)
+        if value is not None and type(value) is not bool:
+            return None
+        context[field] = value
+    for field in ("startDate", "gameStartTime", "endDate"):
+        value = market.get(field)
+        if value is not None:
+            if type(value) is not str:
+                return None
+            try:
+                value = _require_utc(datetime.datetime.fromisoformat(value), field).isoformat()
+            except (ValueError, OverflowError):
+                return None
+        context[field] = value
+    return _sha256_hex(json.dumps(context, sort_keys=True, ensure_ascii=True).encode("ascii"))
+
+
 def gamma_page_index(content: bytes) -> dict[str, Any] | None:
     """Locate events and markets inside one unchanged Gamma response.
 
     Paths are JSON Pointers into the full page bytes. The index retains
-    label and token positions and leaves contract text in the cited page.
+    label and token positions and fingerprints the cited contract text.
     An empty page is a valid index with an event count of zero.
     """
     try:
@@ -421,8 +478,12 @@ def gamma_page_index(content: bytes) -> dict[str, Any] | None:
                 "market_id": _text(market.get("id")),
                 "slug": _text(market.get("slug")),
                 "condition_id": _text(market.get("conditionId")),
+                "identity_fields_valid": (type(market.get("conditionId")) is str
+                                          and type(market.get("slug")) is str
+                                          and (market.get("id") is None or type(market["id"]) is str)),
                 "outcomes": label_array(market.get("outcomes")),
                 "token_ids": label_array(market.get("clobTokenIds")),
+                "terms_sha256": _gamma_terms_sha256(market),
             })
     return {"event_count": len(payload), "events": events, "markets": markets}
 
@@ -433,7 +494,10 @@ def gamma_outcomes_by_token(row: Mapping[str, Any]) -> dict[str, str] | None:
     tokens = row["token_ids"]
     if labels is None or tokens is None or len(labels) != 2 or len(tokens) != 2 or tokens[0] == tokens[1]:
         return None
-    return {token: label.strip().casefold() for token, label in zip(tokens, labels, strict=True)}
+    first, second = (label.strip().casefold() for label in labels)
+    if not first or not second or first == second:
+        return None
+    return {tokens[0]: first, tokens[1]: second}
 
 
 @dataclass(frozen=True)

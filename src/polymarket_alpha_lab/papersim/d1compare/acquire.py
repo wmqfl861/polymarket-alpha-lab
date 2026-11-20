@@ -7,7 +7,7 @@ deduplicate by content. Acquiring bytes does not create paper decisions.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from contextlib import closing, contextmanager
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
@@ -45,6 +45,10 @@ _SEALED_RECEIPT = (
 )
 _EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 _TOKEN_ID = re.compile(r"[0-9]{1,%d}" % polymarket.MAX_TOKEN_ID_DIGITS)
+_BINDING_ISSUE_ORDER = (
+    "identity_drift", "token_condition_conflict", "outcome_tokens_invalid", "outcome_label_conflict",
+    "contract_terms_unknown", "contract_terms_conflict",
+)
 
 
 class AcquisitionError(ValueError):
@@ -334,29 +338,100 @@ def _add_markets(markets: dict, accepted: tuple, rejections: list, attempts: Seq
                 market.update(binding_status="unresolved_outcomes", side_tokens={})
 
 
-def _index_market_observations(markets: dict, attempts: Sequence[_Request]) -> None:
-    """Check every captured page, including repeats folded by discovery."""
-    seen: dict[str, dict[str, str]] = {}
+def _gamma_appearances(attempts: Sequence[_Request]) -> Iterator[tuple[dict, dict]]:
     for attempt in attempts:
-        if attempt.page is None:
+        if attempt.page is not None:
+            for row in attempt.page["markets"]:
+                yield {"sequence": attempt.sequence, "path": row["path"]}, row
+
+
+def _condition_identity(row: dict) -> str | None:
+    identity = row["condition_id"]
+    try:
+        condition(identity)
+    except ValueError:
+        return None
+    return identity
+
+
+def _market_aliases(row: dict) -> Iterator[tuple[str, str]]:
+    for field in ("market_id", "slug"):
+        value = row[field]
+        if value is not None:
+            yield field, value
+
+
+def _index_market_observations(markets: dict, attempts: Sequence[_Request]) -> list[dict]:
+    """Fold every raw occurrence before accepting a book target or side."""
+    aliases: dict[tuple[str, str], str | None] = {}
+    token_owners: dict[str, str | None] = {}
+    for _, row in _gamma_appearances(attempts):
+        identity = _condition_identity(row)
+        if identity is None:
             continue
-        for row in attempt.page["markets"]:
-            identity = row["condition_id"]
-            market = markets.get(identity)
-            if market is None:
+        markets.setdefault(identity, {
+            "condition_id": identity, "market_id": row["market_id"], "slug": row["slug"],
+            "side_tokens": {}, "observations": [], "binding_status": "adapter_unselected", "book_tokens": [],
+        })
+        for alias in _market_aliases(row):
+            if aliases.setdefault(alias, identity) != identity:
+                aliases[alias] = None  # More than one observed condition claims this identifier.
+        for token in row["token_ids"] or ():
+            if _TOKEN_ID.fullmatch(token) and token_owners.setdefault(token, identity) != identity:
+                token_owners[token] = None
+    for market in markets.values():
+        market["binding_issues"] = []
+
+    labels_seen: dict[str, dict[str, str]] = {}
+    terms_seen: dict[str, str] = {}
+    unbound = []
+    for ref, row in _gamma_appearances(attempts):
+        identity = _condition_identity(row)
+        owners = {aliases[alias] for alias in _market_aliases(row) if alias in aliases}
+        tokens = row["token_ids"]
+        claims = {token_owners[token] for token in tokens or () if token in token_owners}
+        if identity is None:
+            # Attach malformed identity to a uniquely identified market for
+            # evidence. It still invalidates that market's binding.
+            known = (owners | claims) - {None}
+            if len(known) != 1:
+                unbound.append(ref)
+                for owner in sorted(known):
+                    markets[owner]["binding_issues"].append({**ref, "reason_code": "identity_drift"})
                 continue
-            market["observations"].append({"sequence": attempt.sequence, "path": row["path"]})
-            tokens = market["book_tokens"]
-            if not tokens:
-                continue
-            pair = row["token_ids"]
-            if (row["slug"] != market["slug"] or row["market_id"] != market["market_id"]
-                    or (_valid_pair(pair) and tokens != sorted(pair))):
-                market.update(binding_status="identity_drift", side_tokens={}, book_tokens=[])
-                continue
-            labels = journal.gamma_outcomes_by_token(row)
-            if labels is not None and sorted(labels) == tokens and seen.setdefault(identity, labels) != labels:
-                market.update(binding_status="outcome_label_conflict", side_tokens={}, book_tokens=[])
+            identity = next(iter(known))
+        market = markets[identity]
+        market["observations"].append(ref)
+        issues = []
+        if (not row["identity_fields_valid"] or row["condition_id"] != identity or owners - {identity}
+                or (row["market_id"], row["slug"]) != (market["market_id"], market["slug"])):
+            issues.append("identity_drift")
+
+        if claims - {identity}:
+            issues.append("token_condition_conflict")
+        labels = journal.gamma_outcomes_by_token(row)
+        if labels is None or not _valid_pair(tokens):
+            issues.append("outcome_tokens_invalid")
+        else:
+            previous_labels = labels_seen.setdefault(identity, labels)
+            if previous_labels.keys() != labels.keys():
+                issues.append("identity_drift")
+            elif previous_labels != labels:
+                issues.append("outcome_label_conflict")
+
+        terms = row["terms_sha256"]
+        if terms is None:
+            issues.append("contract_terms_unknown")
+        elif terms_seen.setdefault(identity, terms) != terms:
+            issues.append("contract_terms_conflict")
+        market["binding_issues"].extend({**ref, "reason_code": code} for code in dict.fromkeys(issues))
+
+    for market in markets.values():
+        codes = {issue["reason_code"] for issue in market["binding_issues"]}
+        if codes:
+            status = next(code for code in _BINDING_ISSUE_ORDER if code in codes)
+            market.update(binding_status=status, side_tokens={}, book_tokens=[])
+    return unbound
 
 
 def _valid_pair(pair: object) -> bool:
@@ -435,7 +510,7 @@ def _collect(connection, scope: dict, started_at: datetime,
         discoveries.append(discovery)
         attempts = transport.requests[offset:]
         _add_markets(markets, accepted, discovery["rejections"], attempts)
-    _index_market_observations(markets, transport.requests)
+    unbound_appearances = _index_market_observations(markets, transport.requests)
     token_owners: dict[str, set[str]] = {}
     for identity, market in markets.items():
         for token in market["book_tokens"]:
@@ -487,7 +562,8 @@ def _collect(connection, scope: dict, started_at: datetime,
         rejection["reason_code"] != "outcomes_unsupported" or
         not markets.get(rejection["condition_id"], {}).get("book_tokens")
         for discovery in discoveries for rejection in discovery["rejections"])
-    book_targets_known = rejections_without_books == 0 and all(row["book_tokens"] for row in markets.values())
+    book_targets_known = (not unbound_appearances and rejections_without_books == 0
+                          and all(row["book_tokens"] for row in markets.values()))
     clob_transport_complete = book_targets_known and book_responses_in_window == len(books)
     clob_inputs_complete = book_targets_known and books_received == len(books)
     no_book_targets = not books and gamma_complete and clob_transport_complete
@@ -511,6 +587,8 @@ def _collect(connection, scope: dict, started_at: datetime,
         "tags": tag_summaries, "markets_with_mapping": sum(bool(row["side_tokens"]) for row in markets.values()),
         "markets_with_unresolved_binding": sum(not row["side_tokens"] for row in markets.values()),
         "outcome_label_conflicts": sum(row["binding_status"] == "outcome_label_conflict" for row in markets.values()),
+        "markets_with_binding_issues": sum(bool(row["binding_issues"]) for row in markets.values()),
+        "unbound_market_appearances": len(unbound_appearances),
         "books_requested": sum(book["request_sequence"] is not None and
                                by_sequence[book["request_sequence"]]["sent"] for book in books),
         "books_received": books_received, "book_targets": len(books),
@@ -531,6 +609,7 @@ def _collect(connection, scope: dict, started_at: datetime,
         "started_at": _stamp(started_at), "sealed_at": _stamp(sealed_at),
         "decision_as_of": _stamp(cutoff), "requests": request_rows,
         "discoveries": discoveries, "markets": list(markets.values()), "books": books,
+        "unbound_market_appearances": unbound_appearances,
         "coverage": coverage,
     }
 
@@ -609,10 +688,11 @@ def _read_entries(connection, document: dict) -> tuple[journal.JournalEntry, ...
     return tuple(entries)
 
 
-def _summary(document: dict, digest: str, *, reused: bool, registered_at: datetime) -> dict:
+def _summary(document: dict, digest: str, *, reused: bool, occurred_at: datetime) -> dict:
     scope = document["scope"]
     coverage = document["coverage"]
-    if document["capture_version"] == 1:
+    legacy = document["capture_version"] == 1
+    if legacy:
         # Preserve the original manifest for forensic read-back. Its verdict
         # predates both the freshness record and the raw-label conflict check.
         coverage = {**coverage, "polymarket_complete": False,
@@ -621,12 +701,13 @@ def _summary(document: dict, digest: str, *, reused: bool, registered_at: dateti
                                        "policy_ref": None},
                     "original_coverage": document["coverage"]}
         coverage["sources"] = {**coverage["sources"], polymarket.SOURCE_KIND_CLOB: "not_assessable"}
+    event_time = _stamp(occurred_at.astimezone(UTC))
     return {
         "batch_sha256": digest, "scope_sha256": _digest(_canonical(scope)),
         "capture_version": document["capture_version"],
         **scope, "started_at": document["started_at"],
         "decision_as_of": document["decision_as_of"], "sealed_at": document["sealed_at"],
-        "registered_at": _stamp(registered_at.astimezone(UTC)),
+        "occurred_at": event_time, "registered_at": None if legacy else event_time,
         "status": "sealed" if coverage["polymarket_complete"] else "partial",
         "reused": reused, "request_count": len(document["requests"]),
         "response_count": sum(row["content_sha256"] is not None for row in document["requests"]),
@@ -666,19 +747,19 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
         cursor.execute(_SEALED_RECEIPT, (sealed_key,))
         existing = cursor.fetchone()
         if existing is not None:
-            command, saved_scope, evidence, registered_at = existing
+            command, saved_scope, evidence, occurred_at = existing
             if (command != _COMMAND or saved_scope != scope_sha
                     or not isinstance(evidence, list) or len(evidence) != 1):
                 raise AcquisitionError("d1_capture_receipt_conflict")
             digest = snapshots.snapshot_digest_argument(evidence[0])
             document = _load_batch(connection, digest)
             sealed_at = datetime.fromisoformat(document["sealed_at"])
-            invalid_clock = (registered_at != sealed_at if document["capture_version"] == 1
-                             else registered_at < sealed_at)
+            invalid_clock = (occurred_at != sealed_at if document["capture_version"] == 1
+                             else occurred_at < sealed_at)
             if document["scope"] != scope or invalid_clock:
                 raise AcquisitionError("d1_capture_receipt_conflict")
             _read_entries(connection, document)
-            return _summary(document, digest, reused=True, registered_at=registered_at)
+            return _summary(document, digest, reused=True, occurred_at=occurred_at)
         started_at = _now_utc()
         if started_at < start:
             raise AcquisitionError("d1_capture_window_not_open")
@@ -697,7 +778,7 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
         store_psycopg.record_command_run_event(connection, store.CommandRunEventSubmission(
             operation_key=operation_key, command=_COMMAND, phase="SUCCEEDED", scheduled_for=start,
             occurred_at=registered_at, config_digest=scope_sha, output_evidence=[digest]))
-    return _summary(document, digest, reused=False, registered_at=registered_at)
+    return _summary(document, digest, reused=False, occurred_at=registered_at)
 
 
 def read_capture(*, repo_root: Path, batch_sha256: str) -> tuple[dict, tuple[journal.JournalEntry, ...]]:

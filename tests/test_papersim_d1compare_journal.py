@@ -510,6 +510,129 @@ def test_capture_identifies_same_token_label_pair_after_reordering(monkeypatch):
     assert document["coverage"]["polymarket_transport_complete"] is True
 
 
+def _gamma_market_variant(*, updates=None, remove=()):
+    page = json.loads(_GAMMA_PAGE)
+    raw_market = page[0]["markets"][0]
+    raw_market.update(updates or {})
+    for field in remove:
+        del raw_market[field]
+    return b' \n' + json.dumps(page, ensure_ascii=True).encode("ascii") + b'\n'
+
+
+class _GammaPagesFixture(_PublicFixtureOpener):
+    def __init__(self, pages_by_tag):
+        super().__init__({token: _book_bytes(token, STAMP) for token in ("111", "222", "333")})
+        self.pages_by_tag = pages_by_tag
+
+    def open(self, url, *, timeout_seconds):
+        from tests.test_papersim_adapter_polymarket import _response
+
+        split = urlsplit(url)
+        if split.path != "/events":
+            return super().open(url, timeout_seconds=timeout_seconds)
+        self.calls.append(url)
+        query = parse_qs(split.query)
+        pages = self.pages_by_tag[query["tag_slug"][0]]
+        page = int(query["offset"][0]) // 50
+        return _response(pages[page] if page < len(pages) else b' [] \n', url=url)
+
+
+@pytest.mark.parametrize("malformed_first", (True, False))
+@pytest.mark.parametrize(("updates", "removed"), (
+    pytest.param({"outcomes": ["No", "Yes", "Draw"], "clobTokenIds": ["111", "222", "333"]}, (), id="three-way"),
+    pytest.param({"clobTokenIds": ["111", "111"]}, (), id="duplicate-tokens"),
+    pytest.param({"clobTokenIds": []}, (), id="empty-array"),
+    pytest.param({"clobTokenIds": ["111", ""]}, (), id="empty-token"),
+    pytest.param({"clobTokenIds": ["111", "not-a-token"]}, (), id="invalid-token"),
+    pytest.param({"clobTokenIds": ["111"]}, (), id="wrong-length"),
+    pytest.param({}, ("clobTokenIds",), id="missing-tokens"),
+    pytest.param({}, ("outcomes",), id="missing-labels"),
+    pytest.param({"outcomes": ["No", "No"]}, (), id="duplicate-labels"),
+    pytest.param({}, ("conditionId",), id="same-market-id-missing-condition"),
+    pytest.param({"clobTokenIds": ["111", "333"]}, (), id="different-token-pair"),
+    pytest.param({}, ("question",), id="missing-question"),
+    pytest.param({}, ("endDate",), id="missing-expiry"),
+))
+def test_capture_folds_malformed_duplicate_market_appearances(monkeypatch, malformed_first, updates, removed):
+    malformed = _gamma_market_variant(updates=updates, remove=removed)
+    pages = (malformed, _GAMMA_PAGE) if malformed_first else (_GAMMA_PAGE, malformed)
+    document, stored = _collect_public_fixture(monkeypatch, _GammaPagesFixture({"soccer": pages}))
+    [market] = document["markets"]
+    assert market["book_tokens"] == [] and market["side_tokens"] == {}
+    assert market["observations"] == [{"sequence": 1, "path": "/0/markets/0"},
+                                      {"sequence": 2, "path": "/0/markets/0"}]
+    assert market["binding_issues"]
+    assert document["coverage"]["sources"]["polymarket-clob"] == "incomplete"
+    assert document["coverage"]["polymarket_transport_complete"] is False
+    assert document["coverage"]["book_targets"] == 0
+    assert [stored[row["content_sha256"]] for row in document["requests"][:2]] == list(pages)
+
+
+@pytest.mark.parametrize("changed_first", (True, False))
+@pytest.mark.parametrize("changes", (
+    pytest.param({"description": "Regulation time only. Overtime does not count."}, id="regulation-vs-overtime"),
+    pytest.param({"gameStartTime": "2026-12-30T18:00:00Z"}, id="different-kickoff"),
+    pytest.param({"closed": True, "umaResolutionStatus": "resolved"}, id="settlement-state"),
+    pytest.param({"line": "2.5"}, id="handicap-line"),
+))
+def test_capture_rejects_cross_tag_contract_conflicts(monkeypatch, changed_first, changes):
+    changed = _gamma_market_variant(updates=changes)
+    pages = (changed, _GAMMA_PAGE) if changed_first else (_GAMMA_PAGE, changed)
+    fixture = _GammaPagesFixture({"alpha": (pages[0],), "beta": (pages[1],)})
+    document, stored = _collect_public_fixture(monkeypatch, fixture, tags=("alpha", "beta"))
+    [market] = document["markets"]
+    assert market["binding_status"] == "contract_terms_conflict"
+    assert market["book_tokens"] == [] and market["side_tokens"] == {}
+    records = [document["requests"][index] for index in (0, 2)]
+    assert [stored[row["content_sha256"]] for row in records] == list(pages)
+    assert market["observations"] == [{"sequence": 1, "path": "/0/markets/0"},
+                                      {"sequence": 3, "path": "/0/markets/0"}]
+    assert document["coverage"]["polymarket_transport_complete"] is False
+
+
+def test_capture_same_market_id_different_conditions_leaves_both_unbound(monkeypatch):
+    variant = _gamma_market_variant(updates={"conditionId": "0x" + "b" * 64})
+    fixture = _GammaPagesFixture({"alpha": (_GAMMA_PAGE,), "beta": (variant,)})
+    document, _ = _collect_public_fixture(monkeypatch, fixture, tags=("alpha", "beta"))
+    assert len(document["markets"]) == 2
+    assert all(market["binding_status"] == "identity_drift" and not market["side_tokens"]
+               and not market["book_tokens"] for market in document["markets"])
+    assert document["coverage"]["polymarket_transport_complete"] is False
+
+
+def test_capture_conflicting_raw_token_ownership_leaves_both_conditions_unbound(monkeypatch):
+    variant = _gamma_market_variant(updates={
+        "id": "different-market", "conditionId": "0x" + "b" * 64, "slug": "different-slug",
+        "outcomes": ["No", "Yes", "Draw"], "clobTokenIds": ["111", "222", "333"],
+    })
+    fixture = _GammaPagesFixture({"alpha": (_GAMMA_PAGE,), "beta": (variant,)})
+    document, _ = _collect_public_fixture(monkeypatch, fixture, tags=("alpha", "beta"))
+    assert len(document["markets"]) == 2
+    assert all(market["binding_status"] == "token_condition_conflict" and not market["side_tokens"]
+               and not market["book_tokens"] for market in document["markets"])
+    assert document["coverage"]["polymarket_transport_complete"] is False
+
+
+def test_capture_same_terms_different_utc_offset_across_tags_remains_consistent(monkeypatch):
+    utc_page = _gamma_market_variant(updates={"line": 2.5})
+    variant = _gamma_market_variant(updates={"endDate": "2026-12-30T19:00:00-05:00", "line": "2.500"})
+    fixture = _GammaPagesFixture({"alpha": (utc_page,), "beta": (variant,)})
+    document, _ = _collect_public_fixture(monkeypatch, fixture, tags=("alpha", "beta"))
+    [market] = document["markets"]
+    assert market["side_tokens"] == {"YES": "222", "NO": "111"}
+    assert market["binding_status"] == "explicit_yes_no"
+    assert document["coverage"]["polymarket_transport_complete"] is True
+
+
+def test_capture_indexes_unidentifiable_market_appearance_without_claiming_empty_tag(monkeypatch):
+    variant = _gamma_market_variant(remove=("id", "slug", "conditionId", "clobTokenIds", "outcomes"))
+    document, stored = _collect_public_fixture(monkeypatch, _GammaPagesFixture({"soccer": (variant,)}))
+    assert document["unbound_market_appearances"] == [{"sequence": 1, "path": "/0/markets/0"}]
+    assert stored[document["requests"][0]["content_sha256"]] == variant
+    assert document["coverage"]["sources"]["polymarket-clob"] == "incomplete"
+    assert document["coverage"]["polymarket_transport_complete"] is False
+
+
 def test_capture_scope_validation_precedes_managed_connection(monkeypatch):
     from polymarket_alpha_lab.papersim.d1compare import acquire
 
@@ -552,13 +675,20 @@ def _register_legacy_capture(repo_root, original, window_start):
     manifest = deepcopy(original)
     manifest["scope"]["window_start"] = window_start.isoformat()
     manifest["capture_version"] = 1
+    del manifest["unbound_market_appearances"]
+    for market in manifest["markets"]:
+        del market["binding_issues"]
     coverage = manifest["coverage"]
-    for field in ("book_freshness", "polymarket_transport_complete", "book_responses_in_window", "outcome_label_conflicts"):
+    for field in ("book_freshness", "polymarket_transport_complete", "book_responses_in_window",
+                  "outcome_label_conflicts", "markets_with_binding_issues", "unbound_market_appearances"):
         del coverage[field]
     coverage["polymarket_complete"] = True
     coverage["sources"]["polymarket-clob"] = "complete"
     for request in manifest["requests"]:
         request.pop("freshness", None)
+        if request["page"] is not None:
+            for market in request["page"]["markets"]:
+                del market["terms_sha256"], market["identity_fields_valid"]
     content = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("ascii")
     scope = json.dumps(manifest["scope"], sort_keys=True, separators=(",", ":")).encode("ascii")
     scope_digest = hashlib.sha256(scope).hexdigest()
@@ -578,7 +708,7 @@ def _register_legacy_capture(repo_root, original, window_start):
     sys.platform != "linux" or os.environ.get("POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES") != "1",
     reason="explicit Linux native PostgreSQL proof is opt-in",
 )
-def test_capture_cli_native_seals_and_independent_process_reads_exact_bytes(tmp_path):
+def test_capture_cli_native_seals_and_independent_process_reads_exact_bytes(monkeypatch, tmp_path):
     from polymarket_alpha_lab.papersim import store_psycopg
     from tests.test_papersim_d1compare_archive_native import _isolated_project, _process_env
 
@@ -695,12 +825,27 @@ print(json.dumps(acquire.capture_inputs(repo_root=Path(sys.argv[1]), window_star
         returned = capture(legacy_start)
         assert returned["capture_version"] == 1 and returned["reused"] is True
         assert returned["batch_sha256"] == legacy_digest and returned["status"] == "partial"
+        assert returned["registered_at"] is None
+        assert returned["occurred_at"] == legacy["sealed_at"]
         assert returned["coverage"]["polymarket_complete"] is False
         assert returned["coverage"]["polymarket_transport_complete"] is None
         assert returned["coverage"]["original_coverage"] == legacy["coverage"]
         stored_legacy, legacy_entries = acquire.read_capture(repo_root=project.root, batch_sha256=legacy_digest)
         assert stored_legacy == legacy
         assert [entry.content for entry in legacy_entries] == bodies
+
+        regulation = _gamma_market_variant(updates={"description": "Regulation time only."})
+        conflict = _GammaPagesFixture({"alpha": (_GAMMA_PAGE,), "beta": (regulation,)})
+        monkeypatch.setattr(acquire.polymarket, "BoundedPublicOpener", lambda: conflict)
+        conflicting_receipt = acquire.capture_inputs(repo_root=project.root, window_start=start, window_end=end,
+                                                     tag_slugs=("alpha", "beta"), allow_public_fetch=True)
+        document, conflict_entries = acquire.read_capture(repo_root=project.root,
+                                                          batch_sha256=conflicting_receipt["batch_sha256"])
+        [conflicting_market] = document["markets"]
+        assert conflicting_market["binding_status"] == "contract_terms_conflict"
+        assert conflicting_market["side_tokens"] == {} and conflicting_market["book_tokens"] == []
+        assert [entry.content for entry in conflict_entries[::2]] == [_GAMMA_PAGE, regulation]
+        assert len(conflict.calls) == 4
 
 
 @pytest.mark.skipif(
