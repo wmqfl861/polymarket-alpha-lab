@@ -4256,3 +4256,19 @@ final CLI 端到端（计划 Z2，s4_cli）：`papersim.cli evaluate --dsn`（�
 ### 82.5 落地记录（单提交，2026-11-20）
 
 本节随 `mo5d/crypto-family` 分支单提交落地（计划经独立复审 VERDICT: PASS，6 项 P3 全部落实：六元组钉、防御性短路表述、两种模式短历史语义分开、混合权重元组写死且全 float 字面量、验收措辞限定默认规格、行号以符号为准）。全量 `scripts/verify_local.py --full` 于研究服务器在本分支工作树（代码文件与最终提交逐字节相同，其后仅追加本节文字）通过：八个阶段全 PASS，full pytest **42,579 项通过、203 项跳过、20 条警告，1554.93 秒**（离线套件；终端 `mo5d-full-verify2` 留存；单进程会话回收问题按 MO-1 的登记以持久终端解决）。聚焦命令：`uv run python -m polymarket_alpha_lab.papersim.cli selfcheck`（10/10，crypto-r19×3 的 A/B 与 |dA|/|dB| 输出与基线逐字相同）与 `uv run pytest -q`（本节点 8 个测试文件 162 项通过、1 项跳过）。`git diff --check` 干净；`crypto_model.py` 未触碰（工作树 git diff 为空，另有 LF 哈希钉双保险）。B1 双定义债关闭：provider 与族的基线 sha 相等由两侧测试钉住。未推送，待协调者走 PR 与工作流（纯 optimize 新文件不触发 native 的 PR 路径过滤时，按 MO-1/FX-28 登记流程以 workflow_dispatch 同 head 补跑为等效证据）。
+
+## 83. 治理节点决定：收紧 FX-31 公网地址库存（2026-11-20）
+
+本治理 PR 同时移除两处已登记的出现记录，并更新
+`tests/test_tracked_public_address_hygiene.py` 的 `FROZEN_ALLOWLIST`。
+FX-31 基线为 `ed5eabbd4ff01b1d10a4798e34f505d6186cc57b`，整合所用正本
+`fe5ae538420e3fe060cd1fed2c12121cbd8301ba` 的库存同为 42。治理整合头
+`bad754244d19d0de0e02e19eb7e67eabefe02566` 的 Linux 全量首轮以旧库存校验失败，
+实际库存为 40。下表登记本次收紧的两项决定。
+
+| 路径 | SHA-256 前缀 | 文件内计数 | 跨文件摘要计数 |
+| --- | --- | ---: | ---: |
+| `AGENTS.md` | `fb214e079022` | 1 → 0 | 19 → 18 |
+| `docs/handoffs/g2-activation-readiness.md` | `0a4731266cec` | 5 → 4 | 14 → 13 |
+
+库存总数由 42 收紧至 40，新增出现次数为 0。继续使用原检测器、逐路径摘要计数与相等校验。
