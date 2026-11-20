@@ -848,6 +848,15 @@ def replay_shadow_prediction(conn, candidate_id: int, spec_sha256: str, *,
         guard = entry.get('guard')
         if guard is not None:
             digests.append(guard)
+        # MO-8 (MO-7 review P3-3): the lookup set also carries the
+        # provider params' active and baseline digests.  A BASELINE-role
+        # shadow row (active != baseline once promotions are consumed)
+        # would otherwise fail papersim_replay_shadow_unregistered even
+        # though the scan pinned its materials.
+        for role_key in ('active_spec_sha256', 'baseline_spec_sha256'):
+            role_digest = entry.get(role_key)
+            if role_digest is not None:
+                digests.append(role_digest)
         if spec_sha256 in digests:
             lineage = scan_lineage
             break
