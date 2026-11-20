@@ -1,0 +1,1791 @@
+{
+ "baseline_commit": "86feaf1ad88be3f9c262a26cdac650cb26c1a573",
+ "batch": "B5",
+ "counts": {
+  "files": 65,
+  "lines": 63194,
+  "root_exports": 0
+ },
+ "dependency_check": {
+  "canonical_order": [
+   "B1",
+   "B2",
+   "B3",
+   "B4",
+   "B5",
+   "B6",
+   "B7",
+   "B8"
+  ],
+  "cross_family_cycles": [],
+  "entry_script_tool_workflow_consumers": {},
+  "k0_dependency_leaks": [],
+  "reasons": [
+   "shared test files with module-scope imports spanning batches (6)",
+   "UNKNOWN dynamic references on retained surfaces (4)",
+   "UNKNOWN dynamic references in test files remaining at this batch (24 files) -- manual review required (plan 3.3 item 6)"
+  ],
+  "retained_src_dependents": [],
+  "unknown_consumers_in_retained_surfaces": [
+   {
+    "expr": "module_name",
+    "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/src/polymarket_alpha_lab/__init__.py",
+    "kind": "attr:import_module",
+    "line": 1987,
+    "surface": "src_pkg"
+   },
+   {
+    "expr": "f'{__name__}.{name}'",
+    "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/src/polymarket_alpha_lab/__init__.py",
+    "kind": "attr:import_module",
+    "line": 1989,
+    "surface": "src_pkg"
+   },
+   {
+    "expr": "f'.{module_name}'",
+    "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/src/polymarket_alpha_lab/papersim/__init__.py",
+    "kind": "name:import_module",
+    "line": 287,
+    "surface": "src_reachable"
+   },
+   {
+    "expr": "f'polymarket_alpha_lab.papersim.optimize.families.{module_name}'",
+    "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/src/polymarket_alpha_lab/papersim/optimize/provider.py",
+    "kind": "name:import_module",
+    "line": 138,
+    "surface": "src_reachable"
+   }
+  ],
+  "unknown_test_references_pending_manual_review": [
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_action_gated_strategy_recommendation_queue_history.py",
+      "kind": "attr:find_spec",
+      "line": 55
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_action_gated_strategy_recommendation_queue_history.py",
+      "kind": "attr:import_module",
+      "line": 57
+     }
+    ],
+    "test": "tests/test_action_gated_strategy_recommendation_queue_history.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "joined('poly', 'mark', 'et_alpha_lab.candidate_decision_base_rate_anchor_score')",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_candidate_decision_base_rate_anchor_score.py",
+      "kind": "attr:import_module",
+      "line": 29
+     }
+    ],
+    "test": "tests/test_candidate_decision_base_rate_anchor_score.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "joined('poly', 'mark', 'et_alpha_lab.candidate_decision_base_rate_drift_score')",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_candidate_decision_base_rate_drift_score.py",
+      "kind": "attr:import_module",
+      "line": 22
+     }
+    ],
+    "test": "tests/test_candidate_decision_base_rate_drift_score.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "case['loader_module']",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_cli_db_connection_cleanup.py",
+      "kind": "attr:import_module",
+      "line": 127
+     }
+    ],
+    "test": "tests/test_cli_db_connection_cleanup.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "f'polymarket_alpha_lab.{module}'",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_crypto_btc_evidence_scope.py",
+      "kind": "attr:import_module",
+      "line": 568
+     }
+    ],
+    "test": "tests/test_crypto_btc_evidence_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_env_example_coverage.py",
+      "kind": "attr:import_module",
+      "line": 21
+     }
+    ],
+    "test": "tests/test_env_example_coverage.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "f'polymarket_alpha_lab.{module_name}'",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_paper_recommendation_cycle_snapshot_scope.py",
+      "kind": "attr:import_module",
+      "line": 368
+     }
+    ],
+    "test": "tests/test_paper_recommendation_cycle_snapshot_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "full_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_paper_recommendation_integration_boundary_scope.py",
+      "kind": "attr:import_module",
+      "line": 173
+     }
+    ],
+    "test": "tests/test_paper_recommendation_integration_boundary_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_paper_strategy_cycle_report_history_gate_db_row.py",
+      "kind": "attr:import_module",
+      "line": 64
+     }
+    ],
+    "test": "tests/test_paper_strategy_cycle_report_history_gate_db_row.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "f'{PACKAGE_NAME}.probability_event_screen_phase1_boundary_report'",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_phase1_readonly_boundary_scan.py",
+      "kind": "attr:import_module",
+      "line": 51
+     },
+     {
+      "expr": "f'{PACKAGE_NAME}.strategy_phase1_readiness_aggregator'",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_phase1_readonly_boundary_scan.py",
+      "kind": "attr:import_module",
+      "line": 69
+     }
+    ],
+    "test": "tests/test_phase1_readonly_boundary_scan.py"
+   },
+   {
+    "count": 4,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 54
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 63
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 79
+     }
+    ],
+    "test": "tests/test_phase1_report_discovery_smoke.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_phase1_report_modules_import_no_io.py",
+      "kind": "attr:import_module",
+      "line": 98
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_phase1_report_modules_import_no_io.py",
+      "kind": "attr:import_module",
+      "line": 111
+     }
+    ],
+    "test": "tests/test_phase1_report_modules_import_no_io.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_psycopg_adapter_cleanup.py",
+      "kind": "attr:import_module",
+      "line": 174
+     }
+    ],
+    "test": "tests/test_psycopg_adapter_cleanup.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_research_cost_threshold_policy.py",
+      "kind": "attr:find_spec",
+      "line": 26
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_research_cost_threshold_policy.py",
+      "kind": "attr:import_module",
+      "line": 27
+     }
+    ],
+    "test": "tests/test_research_cost_threshold_policy.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_research_signal_conflict_report.py",
+      "kind": "attr:find_spec",
+      "line": 34
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_research_signal_conflict_report.py",
+      "kind": "attr:import_module",
+      "line": 35
+     }
+    ],
+    "test": "tests/test_research_signal_conflict_report.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_probability_path_consistency_v10.py",
+      "kind": "attr:find_spec",
+      "line": 41
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_probability_path_consistency_v10.py",
+      "kind": "attr:import_module",
+      "line": 42
+     }
+    ],
+    "test": "tests/test_strategy_candidate_probability_path_consistency_v10.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_research_risk_register_v10.py",
+      "kind": "attr:find_spec",
+      "line": 30
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_research_risk_register_v10.py",
+      "kind": "attr:import_module",
+      "line": 31
+     }
+    ],
+    "test": "tests/test_strategy_candidate_research_risk_register_v10.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_scenario_balance_score_v2.py",
+      "kind": "attr:find_spec",
+      "line": 30
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_scenario_balance_score_v2.py",
+      "kind": "attr:import_module",
+      "line": 31
+     }
+    ],
+    "test": "tests/test_strategy_candidate_scenario_balance_score_v2.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py",
+      "kind": "attr:find_spec",
+      "line": 42
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py",
+      "kind": "attr:import_module",
+      "line": 43
+     }
+    ],
+    "test": "tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_tail_risk_digest.py",
+      "kind": "attr:find_spec",
+      "line": 39
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_tail_risk_digest.py",
+      "kind": "attr:import_module",
+      "line": 40
+     }
+    ],
+    "test": "tests/test_strategy_candidate_tail_risk_digest.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py",
+      "kind": "attr:find_spec",
+      "line": 42
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py",
+      "kind": "attr:import_module",
+      "line": 43
+     }
+    ],
+    "test": "tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "surface['module_name']",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_supabase_paper_recommendation_report_config.py",
+      "kind": "attr:import_module",
+      "line": 54
+     }
+    ],
+    "test": "tests/test_supabase_paper_recommendation_report_config.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "import_name",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_team_diagnostics_phase1_boundary.py",
+      "kind": "attr:import_module",
+      "line": 141
+     }
+    ],
+    "test": "tests/test_team_diagnostics_phase1_boundary.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "PRODUCTION_IMPORT",
+      "file": "/home/ubuntu/test-sandbox/projects/pal-nov20-fx18/tests/test_team_evaluation_attempt_latest_read_scope.py",
+      "kind": "attr:import_module",
+      "line": 513
+     }
+    ],
+    "test": "tests/test_team_evaluation_attempt_latest_read_scope.py"
+   }
+  ],
+  "verdict": "PAUSE"
+ },
+ "doc_registry_removals": {
+  "polymarket_alpha_lab.candidate_decision_cost_thresholds": {
+   "docs/index/phase1-module-index.md": [
+    108
+   ]
+  },
+  "polymarket_alpha_lab.candidate_decision_ev_sensitivity_score": {
+   "docs/index/phase1-module-index.md": [
+    106
+   ]
+  },
+  "polymarket_alpha_lab.candidate_decision_team_memory_calibration": {
+   "docs/index/phase1-module-index.md": [
+    192
+   ]
+  },
+  "polymarket_alpha_lab.candidate_portfolio_exposure_throttle": {
+   "docs/index/phase1-module-index.md": [
+    126
+   ]
+  },
+  "polymarket_alpha_lab.candidate_settlement_cash_drag_score": {
+   "docs/index/phase1-module-index.md": [
+    130
+   ]
+  },
+  "polymarket_alpha_lab.candidate_similar_event_memory_digest": {
+   "docs/index/phase1-module-index.md": [
+    193
+   ]
+  }
+ },
+ "entry_set_ref": "prune-manifest.json#entry_points",
+ "executed": false,
+ "executed_commit": null,
+ "exports_to_retire": [],
+ "family": "candidate_",
+ "files": [
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 813,
+   "module": "polymarket_alpha_lab.candidate_decision_attention_skew_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_attention_skew_score.py",
+   "root_exports": [],
+   "sha256": "31b39d64220fa4e48e79347a70350ddc1b203ac6a67c55733b776269e4a51d77",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_attention_skew_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1309,
+   "module": "polymarket_alpha_lab.candidate_decision_base_rate_anchor_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_base_rate_anchor_score.py",
+   "root_exports": [],
+   "sha256": "00cf6be4a497710c7c6bcf7611b989360fdb3aeefffc2a5e2a94422d493a9875",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "test_public_surface_excludes_raw_event_fields_and_live_operation_surfaces",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_base_rate_anchor_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1275,
+   "module": "polymarket_alpha_lab.candidate_decision_base_rate_drift_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_base_rate_drift_score.py",
+   "root_exports": [],
+   "sha256": "902f09b20227dfa9f41e0d463ff0ec413fa84ecb19a74a5a0aea620a698d7ef5",
+   "src_consumers": [],
+   "test_consumers": [],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 834,
+   "module": "polymarket_alpha_lab.candidate_decision_catalyst_timing_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_catalyst_timing_score.py",
+   "root_exports": [],
+   "sha256": "359c6543cd1dbac97ff2fb4c185010f5f7560845a0594d8e3a26ed7d91a3da8a",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_catalyst_timing_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 2037,
+   "module": "polymarket_alpha_lab.candidate_decision_conflict_resolution_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_conflict_resolution_score.py",
+   "root_exports": [],
+   "sha256": "aa2f79ec34d68cbdac27fa2c5814ccdcfb1257a3f3c5b4e8876d6ab820dc6153",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_conflict_resolution_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1104,
+   "module": "polymarket_alpha_lab.candidate_decision_consensus_reversal_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_consensus_reversal_score.py",
+   "root_exports": [],
+   "sha256": "6cfc0fca73b16113c26f07db879158b21c2fb05b42f88cde53f6e1efaa9a78e2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_consensus_reversal_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 827,
+   "module": "polymarket_alpha_lab.candidate_decision_contradiction_cluster_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_contradiction_cluster_score.py",
+   "root_exports": [],
+   "sha256": "09fce660322fb4d2e876702291ecf8fd774d273ca83582317da69e9dfd31d855",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_contradiction_cluster_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     108
+    ]
+   },
+   "lines": 653,
+   "module": "polymarket_alpha_lab.candidate_decision_cost_thresholds",
+   "path": "src/polymarket_alpha_lab/candidate_decision_cost_thresholds.py",
+   "root_exports": [],
+   "sha256": "20d76da04349814cee51412b16a4f65c67693b318dd4fa4ba73081e465f31b20",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_cost_thresholds.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 761,
+   "module": "polymarket_alpha_lab.candidate_decision_counterfactual_sensitivity_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_counterfactual_sensitivity_score.py",
+   "root_exports": [],
+   "sha256": "1f488718ec6357df79020adc63fce07076093c5b8bcc640d10240e035a6036c2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_counterfactual_sensitivity_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1073,
+   "module": "polymarket_alpha_lab.candidate_decision_criteria_change_risk_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_criteria_change_risk_score.py",
+   "root_exports": [],
+   "sha256": "b073b45febbf4bdb778c13409fca9beadcbfac570c58a000756f5dc0f6ea32df",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_criteria_change_risk_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1053,
+   "module": "polymarket_alpha_lab.candidate_decision_cross_team_consensus_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_cross_team_consensus_score.py",
+   "root_exports": [],
+   "sha256": "cd83a90ea72c6260e6c237ec33df5f08e3c8fb2b6094fdce8f0fbefca8f5f5de",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_cross_team_consensus_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 728,
+   "module": "polymarket_alpha_lab.candidate_decision_crowd_overreaction_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_crowd_overreaction_score.py",
+   "root_exports": [],
+   "sha256": "775b9a5ff3cc1cc1952b62b8728737152902c94a74a808d114aa2ba8a77e72b5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_crowd_overreaction_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1032,
+   "module": "polymarket_alpha_lab.candidate_decision_data_revision_risk_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_data_revision_risk_score.py",
+   "root_exports": [],
+   "sha256": "eb4936e2f97b5145478745fd58105f1f67c63c150ff17d02fc7826c362ff35b1",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_data_revision_risk_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 855,
+   "module": "polymarket_alpha_lab.candidate_decision_early_signal_noise_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_early_signal_noise_score.py",
+   "root_exports": [],
+   "sha256": "0e88d7e85c6056fc315261c356540b51478f846a9bbf9e7727954559177598a3",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_early_signal_noise_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     106
+    ]
+   },
+   "lines": 632,
+   "module": "polymarket_alpha_lab.candidate_decision_ev_sensitivity_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_ev_sensitivity_score.py",
+   "root_exports": [],
+   "sha256": "93989754fb5418fb0fc3829850b3567c5f0ae0a8e8b27032df9ade813a157d4b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_ev_sensitivity_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1113,
+   "module": "polymarket_alpha_lab.candidate_decision_event_dependency_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_event_dependency_score.py",
+   "root_exports": [],
+   "sha256": "3e55ebf843ae6a003bac0ab2fdaaeef634ca156344ba26f7681725882bb2e1af",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_event_dependency_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1122,
+   "module": "polymarket_alpha_lab.candidate_decision_event_freshness_decay_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_event_freshness_decay_score.py",
+   "root_exports": [],
+   "sha256": "1426190ce06dddaff3d7afeaed19831821ef99f09d07e0300e2bba29a05a6229",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_event_freshness_decay_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 531,
+   "module": "polymarket_alpha_lab.candidate_decision_event_specificity_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_event_specificity_score.py",
+   "root_exports": [],
+   "sha256": "8fda1f8425b084075e47b8b4b34b12b9f8250de2de1bdcfab778ececa3f8bd09",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_event_specificity_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1853,
+   "module": "polymarket_alpha_lab.candidate_decision_evidence_conflict_severity_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_evidence_conflict_severity_score.py",
+   "root_exports": [],
+   "sha256": "32b69dc668ca5e06471b915714c16bb84985f40baf7e1e0727411a2651d6aff2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_evidence_conflict_severity_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 857,
+   "module": "polymarket_alpha_lab.candidate_decision_evidence_gap_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_evidence_gap_score.py",
+   "root_exports": [],
+   "sha256": "0e2b493f3b54d4b1086e4661832bd5688a014b240b7eeb07d73acfc065823d60",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_evidence_gap_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1017,
+   "module": "polymarket_alpha_lab.candidate_decision_evidence_independence_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_evidence_independence_score.py",
+   "root_exports": [],
+   "sha256": "bb8a5dbac46eaf7a2edba344cf05952bcebd7cfef98207d357d9f8421588c774",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_evidence_independence_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1000,
+   "module": "polymarket_alpha_lab.candidate_decision_evidence_staleness_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_evidence_staleness_score.py",
+   "root_exports": [],
+   "sha256": "f2e3d860ef8e240da9b912f7446f79d32c0bdd12d3a677a63647ff4e5f3004ce",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_evidence_staleness_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1073,
+   "module": "polymarket_alpha_lab.candidate_decision_evidence_traceability_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_evidence_traceability_score.py",
+   "root_exports": [],
+   "sha256": "90d2b873788787f1c63650bd97d6c7f0edb795c83e1fcecce68a1287a678cb28",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_evidence_traceability_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 768,
+   "module": "polymarket_alpha_lab.candidate_decision_exogenous_shock_sensitivity_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_exogenous_shock_sensitivity_score.py",
+   "root_exports": [],
+   "sha256": "01389cc7ae38ae13fbbcaa591feaa1a9b9e9d1d145d03abe1409bda8091ab845",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_exogenous_shock_sensitivity_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1140,
+   "module": "polymarket_alpha_lab.candidate_decision_falsifiability_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_falsifiability_score.py",
+   "root_exports": [],
+   "sha256": "426b0842a12e17b1de58e50594b1d025769d3132156c6bbab44bb16c83a7d845",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_falsifiability_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1258,
+   "module": "polymarket_alpha_lab.candidate_decision_historical_resolution_pattern_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_historical_resolution_pattern_score.py",
+   "root_exports": [],
+   "sha256": "4da5dcf39be5843ce68caeb604950fad8a7dbe97da2f7d0f8eb5523ab8549056",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_historical_resolution_pattern_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 819,
+   "module": "polymarket_alpha_lab.candidate_decision_information_asymmetry_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_information_asymmetry_score.py",
+   "root_exports": [],
+   "sha256": "ba55e39da6c8674f8fb1f1ef7c8ddf038f86525953b4648e6b22351e2b754a7b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_information_asymmetry_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1180,
+   "module": "polymarket_alpha_lab.candidate_decision_liquidity_regime_shift_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_liquidity_regime_shift_score.py",
+   "root_exports": [],
+   "sha256": "d08fe202673727d99a49c15db991a01cd286214e870c8c54e415914e8907ed85",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_liquidity_regime_shift_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1511,
+   "module": "polymarket_alpha_lab.candidate_decision_market_microstructure_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_market_microstructure_score.py",
+   "root_exports": [],
+   "sha256": "49690d4514b1ec7ea2d0475860c02e57da7e783404e6faa5a6eeb2456369750e",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_market_microstructure_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 937,
+   "module": "polymarket_alpha_lab.candidate_decision_market_rule_completeness_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_market_rule_completeness_score.py",
+   "root_exports": [],
+   "sha256": "659e0015bf61a0f31d40ccc287c6733e5ebade471efc7d3957eee4c7a6badb74",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_market_rule_completeness_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1281,
+   "module": "polymarket_alpha_lab.candidate_decision_microstructure_quality_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_microstructure_quality_score.py",
+   "root_exports": [],
+   "sha256": "91129fd36c18666a6de7ecbd799c87ab6ec57fa3abe8027d729b038a81d2b1c5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_microstructure_quality_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 955,
+   "module": "polymarket_alpha_lab.candidate_decision_oracle_alignment_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_oracle_alignment_score.py",
+   "root_exports": [],
+   "sha256": "114d6f8a8839ff4f13990cf1341cef8f06ae881755818f6f169855352a368db3",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_oracle_alignment_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1284,
+   "module": "polymarket_alpha_lab.candidate_decision_outcome_source_reliability_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_outcome_source_reliability_score.py",
+   "root_exports": [],
+   "sha256": "16f2912b31d1d7b8127c0266b492b24943683a5dd224877cca3eb3db81964c53",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_outcome_source_reliability_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 874,
+   "module": "polymarket_alpha_lab.candidate_decision_public_attention_gap_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_public_attention_gap_score.py",
+   "root_exports": [],
+   "sha256": "6388af07b793a7acf9897929565f1e64fa3dd399845a2edf55f5af27fcfb4d7b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_public_attention_gap_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1025,
+   "module": "polymarket_alpha_lab.candidate_decision_research_priority_queue",
+   "path": "src/polymarket_alpha_lab/candidate_decision_research_priority_queue.py",
+   "root_exports": [],
+   "sha256": "6ea12d4678a869ce841a2ab815f69202fafc4cc13019f8a6c2c4a4d53297d620",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_research_priority_queue.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1163,
+   "module": "polymarket_alpha_lab.candidate_decision_research_readiness_gate",
+   "path": "src/polymarket_alpha_lab/candidate_decision_research_readiness_gate.py",
+   "root_exports": [],
+   "sha256": "d81efd4c3a5deeebfb7baadb945c12b023198437f2cd9e8c2d7ce4eaa8e896c9",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_research_readiness_gate.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1122,
+   "module": "polymarket_alpha_lab.candidate_decision_resolution_dispute_risk_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_resolution_dispute_risk_score.py",
+   "root_exports": [],
+   "sha256": "1b5b542ddf361a53416e06bd9c1084971070ba712458960805ade2a754f7affa",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_resolution_dispute_risk_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1206,
+   "module": "polymarket_alpha_lab.candidate_decision_resolution_path_ambiguity_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_resolution_path_ambiguity_score.py",
+   "root_exports": [],
+   "sha256": "196f0cf340fd9bf72e1914fb5f4d3b7976fd5eb7f78d36ec16154dce8b83b390",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_resolution_path_ambiguity_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1364,
+   "module": "polymarket_alpha_lab.candidate_decision_resolution_source_latency_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_resolution_source_latency_score.py",
+   "root_exports": [],
+   "sha256": "6b4099a66db0a4ddf6d778d6ec1cb864dc3a93e947afbb49eb19be56a74fe716",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_resolution_source_latency_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1424,
+   "module": "polymarket_alpha_lab.candidate_decision_resolution_timing_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_resolution_timing_score.py",
+   "root_exports": [],
+   "sha256": "7bf1506ed2635a857050ee55c0f8a4b35b61cc62052ba1416aa79557af312de0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_resolution_timing_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 488,
+   "module": "polymarket_alpha_lab.candidate_decision_score_db_row",
+   "path": "src/polymarket_alpha_lab/candidate_decision_score_db_row.py",
+   "root_exports": [],
+   "sha256": "2706eb033dac8fbe2a75320a9579763e6d303230798159a7b0e735aeb12172a9",
+   "src_consumers": [
+    "polymarket_alpha_lab.candidate_decision_score_store"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_score_db_row.py"
+    },
+    {
+     "nodeid": "store_fixture",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_score_store.py"
+    },
+    {
+     "nodeid": "test_module_import_does_not_require_db_row_module",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_score_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 650,
+   "module": "polymarket_alpha_lab.candidate_decision_score_history",
+   "path": "src/polymarket_alpha_lab/candidate_decision_score_history.py",
+   "root_exports": [],
+   "sha256": "53c87eb71e736dc8ac19879b6615153487c121d26523b275bcc12de80a1eb7b3",
+   "src_consumers": [
+    "polymarket_alpha_lab.candidate_decision_score_history_db_row",
+    "polymarket_alpha_lab.candidate_decision_score_history_payload"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_score_history.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_score_history_db_row.py"
+    },
+    {
+     "nodeid": "history_api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_score_history_payload.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 122,
+   "module": "polymarket_alpha_lab.candidate_decision_score_history_cli_format",
+   "path": "src/polymarket_alpha_lab/candidate_decision_score_history_cli_format.py",
+   "root_exports": [],
+   "sha256": "11ac4bf963d63f0718bf3852f1c889917abaa8bbe0f5cbd2b6ccb824e07bde57",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_score_history.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_score_history_cli_format.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 875,
+   "module": "polymarket_alpha_lab.candidate_decision_score_history_db_row",
+   "path": "src/polymarket_alpha_lab/candidate_decision_score_history_db_row.py",
+   "root_exports": [],
+   "sha256": "a94133a834f73cad7a63a10d500eb837c72ed2620632353fd819787321eaef92",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_score_history_db_row.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 132,
+   "module": "polymarket_alpha_lab.candidate_decision_score_history_payload",
+   "path": "src/polymarket_alpha_lab/candidate_decision_score_history_payload.py",
+   "root_exports": [],
+   "sha256": "5f26a00161e668c16c6060d4cc647a320c43da491d2c08b3930e307c09cc159b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_score_history_payload.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 186,
+   "module": "polymarket_alpha_lab.candidate_decision_score_psycopg",
+   "path": "src/polymarket_alpha_lab/candidate_decision_score_psycopg.py",
+   "root_exports": [],
+   "sha256": "db1ff2ea3ee6b56a1cb95b8c8246537d04b069fdd43684f7bc31791a10b8d255",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_score_psycopg.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 435,
+   "module": "polymarket_alpha_lab.candidate_decision_score_store",
+   "path": "src/polymarket_alpha_lab/candidate_decision_score_store.py",
+   "root_exports": [],
+   "sha256": "d406c0694a9dbf103a0d091b6ce4fc5e3bde00822f7ee3358c41abed53699a9d",
+   "src_consumers": [
+    "polymarket_alpha_lab.candidate_decision_score_psycopg"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "store_fixture",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_score_store.py"
+    },
+    {
+     "nodeid": "test_module_import_does_not_require_db_row_module",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_score_store.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_database_persistence_iron_rule.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1013,
+   "module": "polymarket_alpha_lab.candidate_decision_source_authority_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_source_authority_score.py",
+   "root_exports": [],
+   "sha256": "527921cbaf9991926e0f10acc57a1a99ed640ecc1c5625c8f113a7a5630da083",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_source_authority_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1082,
+   "module": "polymarket_alpha_lab.candidate_decision_source_conflict_penalty",
+   "path": "src/polymarket_alpha_lab/candidate_decision_source_conflict_penalty.py",
+   "root_exports": [],
+   "sha256": "0bdf95be661b16081827cce32dd78cc0aef522bbdf2d5c26027dbb1c521134a5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_source_conflict_penalty.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1267,
+   "module": "polymarket_alpha_lab.candidate_decision_source_disagreement_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_source_disagreement_score.py",
+   "root_exports": [],
+   "sha256": "25712638b6da4d372ac76abb3d084416ced3936bdb26fa4643afb36468f8b6e8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_source_disagreement_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1100,
+   "module": "polymarket_alpha_lab.candidate_decision_source_lag_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_source_lag_score.py",
+   "root_exports": [],
+   "sha256": "2b56096cb103b952f4aa493726be29dae548f34517e033a7f80b70ebb8273ef1",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_source_lag_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1085,
+   "module": "polymarket_alpha_lab.candidate_decision_source_recency_decay_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_source_recency_decay_score.py",
+   "root_exports": [],
+   "sha256": "26f586cd46c7c3f491f753eecc82a1a88b4ebf7d23fd2f984d6d736e445ef152",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_source_recency_decay_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1113,
+   "module": "polymarket_alpha_lab.candidate_decision_source_revision_frequency_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_source_revision_frequency_score.py",
+   "root_exports": [],
+   "sha256": "69ffd519c7c2b0bea58e2909503fb9f485853bb0b9e98e2fdfe13a5103781caf",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_source_revision_frequency_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1130,
+   "module": "polymarket_alpha_lab.candidate_decision_source_volatility_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_source_volatility_score.py",
+   "root_exports": [],
+   "sha256": "ec04f47050cb955f6b48e44f031362a52e75b018a8d5c74e9ffc850da571384d",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_source_volatility_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     192
+    ]
+   },
+   "lines": 840,
+   "module": "polymarket_alpha_lab.candidate_decision_team_memory_calibration",
+   "path": "src/polymarket_alpha_lab/candidate_decision_team_memory_calibration.py",
+   "root_exports": [],
+   "sha256": "f41576dda77e75d3a8a37f0a8f3d2c58cfa15594cf681311e45c6b0a82c62f66",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_decision_team_memory_calibration.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 772,
+   "module": "polymarket_alpha_lab.candidate_decision_threshold_margin_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_threshold_margin_score.py",
+   "root_exports": [],
+   "sha256": "4513e29ad66003d79c8c54422cb5050c0a8c03bcae6612b730177afb3ecb3034",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_threshold_margin_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 816,
+   "module": "polymarket_alpha_lab.candidate_decision_time_to_resolution_uncertainty_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_time_to_resolution_uncertainty_score.py",
+   "root_exports": [],
+   "sha256": "55506212f4e53dff498e2aacd921d8416381be19edf03ece2b94d1761eb757d5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_time_to_resolution_uncertainty_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 702,
+   "module": "polymarket_alpha_lab.candidate_decision_uncertainty_band_score",
+   "path": "src/polymarket_alpha_lab/candidate_decision_uncertainty_band_score.py",
+   "root_exports": [],
+   "sha256": "1b8c2d8610973f74fbdd7b9a1727c438e0e41cf581fb92e97977872d6fded018",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_decision_uncertainty_band_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 685,
+   "module": "polymarket_alpha_lab.candidate_memory_context_readiness_report",
+   "path": "src/polymarket_alpha_lab/candidate_memory_context_readiness_report.py",
+   "root_exports": [],
+   "sha256": "20cced82d5849fc52d229649056b5e50badc84b8b809f12a2f79a52f10777ec7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_memory_context_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     126
+    ]
+   },
+   "lines": 1219,
+   "module": "polymarket_alpha_lab.candidate_portfolio_exposure_throttle",
+   "path": "src/polymarket_alpha_lab/candidate_portfolio_exposure_throttle.py",
+   "root_exports": [],
+   "sha256": "c42d06e14b0c5018f6d855809cf1af2cacb5cd7b6f7541730a8e29cb80fcf742",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_portfolio_exposure_throttle.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 704,
+   "module": "polymarket_alpha_lab.candidate_research_queue_priority",
+   "path": "src/polymarket_alpha_lab/candidate_research_queue_priority.py",
+   "root_exports": [],
+   "sha256": "14d9a1b971f791d0d9e31879d09ce2210a3d40e954e8ddc4178854b0814ea3a0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "module",
+     "scope": "function",
+     "test": "tests/test_candidate_research_queue_priority.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1023,
+   "module": "polymarket_alpha_lab.candidate_resolution_ambiguity_digest",
+   "path": "src/polymarket_alpha_lab/candidate_resolution_ambiguity_digest.py",
+   "root_exports": [],
+   "sha256": "f3c5a899d6cd4face9b453b99f47e0e7c0be986b6631ec79d8d9bbe02dfbaaa1",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_resolution_ambiguity_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 874,
+   "module": "polymarket_alpha_lab.candidate_resolution_rule_clarity_score",
+   "path": "src/polymarket_alpha_lab/candidate_resolution_rule_clarity_score.py",
+   "root_exports": [],
+   "sha256": "de11bd2300e503e9f4a4fac92ff3ff4b53143920e48ed8a669d76b8ad4ddc476",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_resolution_rule_clarity_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     130
+    ]
+   },
+   "lines": 775,
+   "module": "polymarket_alpha_lab.candidate_settlement_cash_drag_score",
+   "path": "src/polymarket_alpha_lab/candidate_settlement_cash_drag_score.py",
+   "root_exports": [],
+   "sha256": "81ae71e82fb497d5a18ced97c4215793ac8793d24b1193bd361e3071ca918fba",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_candidate_settlement_cash_drag_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {
+    "docs/index/phase1-module-index.md": [
+     193
+    ]
+   },
+   "lines": 1243,
+   "module": "polymarket_alpha_lab.candidate_similar_event_memory_digest",
+   "path": "src/polymarket_alpha_lab/candidate_similar_event_memory_digest.py",
+   "root_exports": [],
+   "sha256": "0aed630854ea161060a1cd5fb96a2bbda5c0c3cb8d8585c9a345de3b2da597d2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_candidate_similar_event_memory_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  }
+ ],
+ "m2_reservations_check": [],
+ "test_retirement": {
+  "delete_full": [
+   "tests/test_candidate_decision_attention_skew_score.py",
+   "tests/test_candidate_decision_conflict_resolution_score.py",
+   "tests/test_candidate_decision_consensus_reversal_score.py",
+   "tests/test_candidate_decision_contradiction_cluster_score.py",
+   "tests/test_candidate_decision_cost_thresholds.py",
+   "tests/test_candidate_decision_counterfactual_sensitivity_score.py",
+   "tests/test_candidate_decision_criteria_change_risk_score.py",
+   "tests/test_candidate_decision_cross_team_consensus_score.py",
+   "tests/test_candidate_decision_crowd_overreaction_score.py",
+   "tests/test_candidate_decision_data_revision_risk_score.py",
+   "tests/test_candidate_decision_early_signal_noise_score.py",
+   "tests/test_candidate_decision_event_dependency_score.py",
+   "tests/test_candidate_decision_event_freshness_decay_score.py",
+   "tests/test_candidate_decision_event_specificity_score.py",
+   "tests/test_candidate_decision_evidence_conflict_severity_score.py",
+   "tests/test_candidate_decision_evidence_gap_score.py",
+   "tests/test_candidate_decision_evidence_independence_score.py",
+   "tests/test_candidate_decision_evidence_staleness_score.py",
+   "tests/test_candidate_decision_evidence_traceability_score.py",
+   "tests/test_candidate_decision_exogenous_shock_sensitivity_score.py",
+   "tests/test_candidate_decision_falsifiability_score.py",
+   "tests/test_candidate_decision_historical_resolution_pattern_score.py",
+   "tests/test_candidate_decision_information_asymmetry_score.py",
+   "tests/test_candidate_decision_liquidity_regime_shift_score.py",
+   "tests/test_candidate_decision_market_microstructure_score.py",
+   "tests/test_candidate_decision_market_rule_completeness_score.py",
+   "tests/test_candidate_decision_microstructure_quality_score.py",
+   "tests/test_candidate_decision_oracle_alignment_score.py",
+   "tests/test_candidate_decision_public_attention_gap_score.py",
+   "tests/test_candidate_decision_research_readiness_gate.py",
+   "tests/test_candidate_decision_resolution_dispute_risk_score.py",
+   "tests/test_candidate_decision_resolution_path_ambiguity_score.py",
+   "tests/test_candidate_decision_score_history_cli_format.py",
+   "tests/test_candidate_decision_source_conflict_penalty.py",
+   "tests/test_candidate_decision_source_disagreement_score.py",
+   "tests/test_candidate_decision_source_lag_score.py",
+   "tests/test_candidate_decision_source_recency_decay_score.py",
+   "tests/test_candidate_decision_source_revision_frequency_score.py",
+   "tests/test_candidate_decision_source_volatility_score.py",
+   "tests/test_candidate_decision_threshold_margin_score.py",
+   "tests/test_candidate_decision_time_to_resolution_uncertainty_score.py",
+   "tests/test_candidate_decision_uncertainty_band_score.py",
+   "tests/test_candidate_memory_context_readiness_report.py",
+   "tests/test_candidate_portfolio_exposure_throttle.py",
+   "tests/test_candidate_resolution_ambiguity_digest.py",
+   "tests/test_candidate_similar_event_memory_digest.py"
+  ],
+  "nodeid_candidate_files": [
+   "tests/test_candidate_decision_base_rate_anchor_score.py",
+   "tests/test_candidate_decision_catalyst_timing_score.py",
+   "tests/test_candidate_decision_ev_sensitivity_score.py",
+   "tests/test_candidate_decision_outcome_source_reliability_score.py",
+   "tests/test_candidate_decision_research_priority_queue.py",
+   "tests/test_candidate_decision_resolution_source_latency_score.py",
+   "tests/test_candidate_decision_resolution_timing_score.py",
+   "tests/test_candidate_decision_score_store.py",
+   "tests/test_candidate_decision_source_authority_score.py",
+   "tests/test_candidate_decision_team_memory_calibration.py",
+   "tests/test_candidate_research_queue_priority.py",
+   "tests/test_candidate_resolution_rule_clarity_score.py",
+   "tests/test_candidate_settlement_cash_drag_score.py"
+  ],
+  "retained_tests_zero_dependency_obligation": "after retiring delete_full files and this batch's nodeid candidates, remaining tests and shared fixtures must show zero references (module-scope, function-scope, strings) to this batch's modules and exports; prove on undeleted source per plan 3.4 step 2 before physical deletion",
+  "shared_conflicts_or_blocked": [
+   "tests/test_candidate_decision_score_db_row.py",
+   "tests/test_candidate_decision_score_history.py",
+   "tests/test_candidate_decision_score_history_db_row.py",
+   "tests/test_candidate_decision_score_history_payload.py",
+   "tests/test_candidate_decision_score_psycopg.py",
+   "tests/test_database_persistence_iron_rule.py"
+  ]
+ },
+ "tool_sha256": "ac4609dd7547efae6e3a07777794b881d27fb9246ca9c7fa1a8ec30198f8c656",
+ "verification_requirements": [
+  "step 1: mark deprecated-pending-prune in the engineering inventory and current module index; no runtime warnings, no shell modules, no selfcheck output change",
+  "step 2: run the full verifier on undeleted source, then prove remaining-test zero dependency for this batch",
+  "step 3: physical deletion of exactly these manifest paths in one atomic commit (source + exclusive tests + root exports + doc registry entries); protection tag pre-prune-2026-11 pushed and read back first (coordinator action)",
+  "step 4: re-run inventory.py --verify on the batch parent commit; record R_before==R_after, unreachable totals, file/line/export counts, retired nodeids, remaining test results"
+ ]
+}

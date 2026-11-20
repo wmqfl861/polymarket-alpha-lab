@@ -1,0 +1,98 @@
+module	kind	reason	unreachable	excluded_batches
+polymarket_alpha_lab.paper_broker	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.paper_broker_db_row	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.paper_broker_history	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	yes	all
+polymarket_alpha_lab.paper_broker_load	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	yes	all
+polymarket_alpha_lab.paper_broker_psycopg	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.paper_broker_store	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.paper_order_lifecycle	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.paper_order_lifecycle_db_history	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	yes	all
+polymarket_alpha_lab.paper_order_lifecycle_db_history_load	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	yes	all
+polymarket_alpha_lab.paper_order_lifecycle_db_row	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.paper_order_lifecycle_psycopg	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.paper_order_lifecycle_store	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.supabase_paper_broker_config	seed_broker	plan 3.1 paper-broker/order-lifecycle seed	no	all
+polymarket_alpha_lab.commodities_gold_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.commodities_oil_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.crypto_btc_evidence_catalog	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.crypto_btc_evidence_policy	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.crypto_btc_evidence_registry	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.crypto_btc_evidence_resolution	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.crypto_btc_forecast_service	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.crypto_btc_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.crypto_eth_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.equity_indices_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.macro_rates_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.paper_broker_history	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.paper_broker_load	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.paper_order_lifecycle_db_history	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.paper_order_lifecycle_db_history_load	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.politics_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_claude_exec	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_claude_operator	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_claude_profile	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_codex_exec	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_codex_process	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_codex_profile	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_linux_relay	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_process	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_process_linux	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.research_process_windows	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.sports_basketball_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.sports_other_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.sports_soccer_team	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.supabase_team_evidence_aggregation_config	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evaluation_attempt_latest_read	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation_allocation	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation_attempt_psycopg	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation_attempt_store	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation_codec	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation_db_row	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation_temporal	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation_types	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_evidence_aggregation_witness	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_forecast_batch	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_forecast_build_envelope	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.team_research_glm	k0_retained	plan 3.1 K0 closure member	yes	all
+polymarket_alpha_lab.local_postgres_dsn	protected_reachable	plan 3.1 named exclusion	no	all
+polymarket_alpha_lab.papersim	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.cli	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.crypto_model	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.espn_nba	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.evaluation	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.fees	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.fotmob	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.gates	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.intl_data	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.intl_model	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.league_strength	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.ledger	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.migrations	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.nba_model	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.pipeline	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.recalib	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.risk_policy	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.snapshots	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.soccer_model	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.store	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.store_psycopg	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.papersim.xg	protected_reachable	plan 3.1 protected papersim subpackage	no	all
+polymarket_alpha_lab.project_postgres	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.backup	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.backup_format	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.backup_zip	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.binding	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.bootstrap	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.cli	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.distribution	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.files	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.migration_compat	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.research	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.runtime	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.runtime_publish	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.server	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.project_postgres.sql	protected_reachable	plan 3.1 protected project_postgres subpackage	no	all
+polymarket_alpha_lab.public_http	protected_reachable	plan 3.1 named exclusion	no	all
+polymarket_alpha_lab.research_probability_scores	protected_reachable	plan 3.1 named exclusion	no	all
+polymarket_alpha_lab.supabase_local_dsn	protected_reachable	plan 3.1 named exclusion	no	all
