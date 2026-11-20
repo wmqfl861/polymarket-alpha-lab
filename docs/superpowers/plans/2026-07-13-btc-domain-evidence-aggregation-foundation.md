@@ -8,11 +8,12 @@
 
 The original plan combined probability semantics, aggregation arithmetic, replay identity, packet compatibility, schema changes, transaction enforcement, BTC resolution policy, and production service wiring. Independent audits found that one review could not reject or approve those contracts separately and that several interfaces were underspecified.
 
-Each node below therefore has its own exact path allowlist, TDD cycle, focused
-tests, full suite, CodeGraph sync, read-only Claude Code review, commit, and
-GitHub push. A later node cannot consume an earlier contract until the accepted
-reviewed commit is stably observed at exact remote `main`, and every required
-external PASS receipt has been descriptor-validated against that commit.
+Each node has its own exact path allowlist, TDD cycle, focused tests, full
+suite, CodeGraph sync, independent read-only review, commit, and GitHub push.
+The linked July plans retain their historical commands and receipt contracts.
+For a new or renewed review, follow [Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing).
+A later node still needs the accepted commit at exact remote `main` and
+every required historical PASS receipt descriptor-validated against it.
 
 ## Node Sequence
 

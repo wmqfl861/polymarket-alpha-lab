@@ -1,17 +1,15 @@
 # Phase 1 Claude Review Handoff
 
 Date: 2026-07-12
-Status: review handoff packet for the current Phase 1 strategy-stack batch
+Status: historical handoff for the July 2026 Phase 1 strategy-stack batch
 Scope: documentation-only handoff node
 
 ## Review Target
 
-Use this document as the entry packet for the next local Claude Code review.
-The review should run read-only with:
-
-- model: `claude-opus-4-8`;
-- thinking level: `max`;
-- mode: read-only review.
+This packet records the July 2026 review target and retains its evidence
+checklist for reference. Follow
+[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+for a current independent read-only review.
 
 The reviewer may inspect diffs, source files, tests, docs, and local scratch
 review artifacts supplied outside the repository commit scope. The reviewer must
@@ -21,8 +19,8 @@ create commits.
 
 ## Node Goal
 
-Review the current Phase 1 strategy-stack expansion as a paper-only,
-report-only, readonly screening and operator-review surface.
+The July batch was scoped to paper-only, report-only, readonly screening
+and operator review.
 
 The batch appears to add or modify many report modules, tests, and supporting
 documentation for probability-event screening, specialist research routing,
@@ -30,10 +28,9 @@ source/freshness quality, cost/liquidity/risk diagnostics, manual go/no-go
 packets, post-settlement calibration, report discovery, and local
 Supabase/Postgres readiness.
 
-This handoff document does not approve the batch. It exists to make the next
-Claude review faster and more consistent.
+This document records the handoff. The review outcome belongs to the reviewed revision.
 
-## Active Review Inputs
+## Review Inputs For The July Batch
 
 Primary review inputs:
 
@@ -53,12 +50,11 @@ They should not be committed unless a later explicit instruction changes that.
 
 ## Changed Surface Summary
 
-Current repository status shows a large existing worktree batch outside this
-documentation node, including modified source/tests and many untracked source
-report modules, test files, and documentation directories. This handoff node is
-limited to `docs/review`.
+At handoff, an existing batch outside this documentation node included
+modified source and tests, untracked report modules and tests, and
+documentation directories. The handoff node was limited to `docs/review`.
 
-The next Claude review should separate:
+The handoff listed these review surfaces:
 
 - the implementation batch under `src/`, `tests/`, docs, and
   `strategy.example.phase1-screening.json`;
@@ -124,7 +120,7 @@ screening and manual go/no-go decisions, or whether it is generic report bloat.
 | Report discovery and readiness aggregation | `report_discovery`, strategy readiness aggregators, local Supabase evidence readiness, schema migration safety | Discovery/readiness helpers must not execute reports, migrate databases, or repair evidence. |
 | Public payload execution-text safety | public payload safety rollups and manual boundary checks | Payloads must reject or flag unsafe live execution/account/order language. |
 
-## Key Constraints For Claude Review
+## Review Constraints
 
 Reviewer should block the batch for any Critical or Important issue in these
 areas:
@@ -197,7 +193,7 @@ worktree, inspect the current worktree directly and report the mismatch.
 
 ## Test Matrix For Review
 
-The current Phase 1 module index maps modules to focused tests. Claude should
+The Phase 1 module index maps modules to focused tests. The reviewer should
 verify that the test matrix covers module-specific behavior rather than only
 checking template construction.
 
@@ -228,13 +224,14 @@ rg -n "sqlite|duckdb|redis|mongodb|sqlalchemy|jsonl|csv|filesystem|file-backed|d
 rg -n "api[_-]?key|secret|token|password|passwd|private[_-]?key|seed phrase|mnemonic|cookie|authorization|bearer|wallet|clob|signature|signed|order_id|live_order|account_id|account_address" src tests docs supabase strategy.example.phase1-screening.json
 ```
 
-For this documentation-only handoff node, compile and pytest may be skipped if
-the handoff packet states that no source, tests, configuration, CLI, Supabase,
-execution/auth, or live-trading behavior changed.
+The July handoff allowed compile and pytest to be skipped for that
+documentation-only node if its packet recorded the absence of source, tests,
+configuration, CLI, Supabase, execution/auth, or live-trading changes.
+For a new node, apply the current [quality gates](../quality/phase-1-development-node-quality-gates.md).
 
 ## Reviewer Questions
 
-Ask Claude to answer these explicitly:
+The handoff asked the reviewer these questions:
 
 - Which modules are Critical/Important blockers, and why?
 - Which modules are too generic, duplicative, or weakly tied to Polymarket
@@ -250,7 +247,7 @@ Ask Claude to answer these explicitly:
 
 ## Expected Review Outcome Format
 
-Claude should return concise findings ordered by severity:
+The July packet requested findings ordered by severity:
 
 ```text
 Critical
@@ -267,10 +264,9 @@ Checked
 - residual risks
 ```
 
-If the batch is clean enough to commit, Claude should still state the exact
-files, diffs, tests, boundary checks, local Supabase/Postgres checks, and
-secret/live-field scans it reviewed. Absence of findings is not enough without
-that evidence.
+A review of a new batch must identify the exact files, diffs, tests,
+boundary checks, local Supabase/Postgres checks, and secret/live-field
+scans reviewed, then give the explicit verdict required by Project Iron Rule 4.
 
 ## Documentation-Only Node Statement
 

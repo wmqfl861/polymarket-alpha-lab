@@ -283,15 +283,14 @@ only. They should not require external network access or a live hosted service.
 
 ## Review Workflow
 
-All Phase 2 plans, code, and post-node reviews go directly to Claude Code with
-model `claude-opus-4-8` and thinking level `max`.
+Follow [Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing)
+for Phase 2 planning and fresh independent reviews under Project Iron Rule 4.
 
 Review prompts are read-only. Reviewers may inspect plans, diffs, files, and
 test output, but must not modify files, mutate databases, submit orders, change
 account state, or perform exchange mutations.
 
-The current project rule has no OpenCode review fallback. If Claude Code is
-unavailable, the review gate is blocked until Claude Code is available again.
+The gate is blocked when no eligible independent reviewer can be dispatched.
 
 ## Parallel Development Plan
 
@@ -309,6 +308,6 @@ run independent workers on disjoint file pairs:
 8. CLI wiring and tests.
 
 The main controller should keep workers on disjoint ownership, close completed
-agents promptly, independently verify their changes, send each change through
-Claude Code review, commit exactly the intended module/test file pair when the
-review is approved, and push `origin main` after each approved commit.
+agents promptly, independently verify their changes, and obtain an independent
+read-only review for each change. Commit the intended module/test file pair
+after approval and follow the root Codex Node Push Policy.

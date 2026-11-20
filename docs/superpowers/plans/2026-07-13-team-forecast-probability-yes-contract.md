@@ -1,5 +1,9 @@
 # Canonical Team Forecast P(YES) Contract Implementation Plan
 
+This July 2026 plan retains its original review instructions for receipt
+and implementation history. For a current review, follow
+[Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the existing canonical `P(YES)` semantics explicit and testable across team packets, DB rows, calibration, side-edge economics, Supabase metadata, and operator documentation without changing the correct arithmetic.

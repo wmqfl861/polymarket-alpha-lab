@@ -1,5 +1,9 @@
 # Team Evidence Aggregation Independence, Correlation, And Requirement Witness Implementation Plan
 
+This July 2026 plan retains its original review instructions for receipt
+and implementation history. For a current review, follow
+[Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add the pure Node 2B allocation and requirement-witness modules that deterministically apply independence-then-correlation caps in integer micro-units and produce the globally severity-optimal, lexically canonical requirement b-matching.

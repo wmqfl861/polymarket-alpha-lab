@@ -1,5 +1,9 @@
 # Team Evidence Aggregation Status Facade, Publishability, And Scope Guard Implementation Plan
 
+This July 2026 plan retains its original review instructions for receipt
+and implementation history. For a current review, follow
+[Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the pure Node 2C reducer that composes the reviewed Node 2A and Node 2B contracts into deterministic diagnostics, capped arithmetic `P(YES)`, requirement coverage, contradiction, readiness, reasons, ready-only publication, and tamper-evident result validation, then enforce the complete six-module Node 2 boundary with one unified scope guard.

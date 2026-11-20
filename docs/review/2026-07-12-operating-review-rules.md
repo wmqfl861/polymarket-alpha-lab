@@ -13,18 +13,11 @@ need a short, auditable checklist.
 
 ## Review Routing
 
-All plan reviews, code reviews, stage audits, post-node external review gates,
-and handoff review gates must go directly to local Claude Code.
-
-Required settings:
-
-- model: `claude-opus-5`;
-- thinking level: `max`;
-- mode: read-only review.
-
-No other reviewer is approved unless the user explicitly changes the rule. If
-local Claude Code is unavailable, the review gate is blocked. There is no
-fallback reviewer under the current project rule.
+Dispatch a fresh, independent, read-only reviewer for each plan, code,
+stage, post-node, and handoff review under Project Iron Rule 4 and
+[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing).
+The gate is blocked when no eligible independent reviewer can be dispatched.
+There is no fallback reviewer under the current project rules.
 
 Review prompts must be read-only. Reviewers may inspect plans, diffs, files,
 reports, test output, and documentation. Reviewers must not modify, create,
@@ -33,7 +26,7 @@ account state, handle credentials, or submit/cancel/replace orders.
 
 ## Long-Running Review Monitoring
 
-Claude Code review invocations must not be wrapped in a fixed elapsed-time
+Review subagents must not be wrapped in a fixed elapsed-time
 timeout. Run long reviews in an inspectable session and check them about every
 30 seconds. At each check, observe process/session liveness and, when available,
 stream growth or event count, stderr or terminal events, CPU, and network
@@ -173,13 +166,15 @@ identifiers over raw sensitive payloads.
 
 ## Review Outcome Meanings
 
-Use these meanings consistently:
+Record the review findings and use the explicit `VERDICT: PASS` or
+`VERDICT: FAIL` line required by Project Iron Rule 4. Use these
+meanings for the handoff status:
 
 - `approved`: scope is clear, tests and verification are adequate, boundaries
   hold, and no blocking issues remain.
 - `approved with changes`: the direction is acceptable, but the listed changes
   must be made before the node is considered complete.
-- `blocked`: a required local review tool is unavailable, Phase 1 boundaries
+- `blocked`: an eligible reviewer is unavailable, Phase 1 boundaries
   are breached, local Supabase/Postgres persistence rules are breached, tests
   or verification are insufficient for the changed surface, or unresolved
   findings remain.

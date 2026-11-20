@@ -1,22 +1,25 @@
 # Project Instructions
 
-## Current owner override: all tasks to ZCode native subagents (2026-10-07)
+## Native Codex Subagent Routing
 
-Owner instruction (verbatim): "修改项目规则，本项目所有任务交给zcode的子代理工作，
-包括计划，开发和审核。多模块，多子代理，多节点并行开发". From this point,
-planning, arbitration, implementation, testing and review are ALL performed by
-ZCode-native Agent-tool subagents. No new Codex/claude/opencode external
-dispatches are issued for this project (the watchdog wrapper and the §63/§64
-Codex delegations/model pins are retained as history and apply only to
-already-issued dispatches). Native review subagents keep the Iron Rule 4
-requirements (fresh, read-only, VERDICT line). Parallel development keeps
-Project Iron Rule 6: discover capacity dynamically, split write ownership by
-non-overlapping files, one independent reviewer per change.
+Effective 2026-11-20, use native Codex subagents for project work.
+
+- **Plan drafting and substantive revision** uses `model="gpt-6.2-astra"` and
+  `reasoning_effort="max"`.
+- **All other subagent work** uses `model="gpt-6.2-sol"` and
+  `reasoning_effort="max"`. This includes plan review, implementation,
+  testing, exploration, audit, documentation, handoffs, code review,
+  and independent arbitration within delegated authority.
+
+Pass both settings explicitly on every dispatch, including nested dispatches.
+Never inherit the coordinator's or parent's model or effort. Keep fast mode off.
+Follow Project Iron Rules 4–6 for independent review and parallel ownership.
+D1's local research-client choices govern the product adapter.
 
 ## Current owner override: Linux-only V1 platform (2026-09-27)
 
 Owner instruction (verbatim): "本机不能做虚拟架构，你就直接再linux开发不行么？为什么要在windows开发？以后也在linux用，不要管windows了". Linux is now the sole
-V1 development and delivery platform: development resumes on ubuntu@166.1.232.93;
+V1 development and delivery platform: development resumes on designated Linux host;
 the release tuple is Ubuntu 26.04.1 x86_64 / Python 3.12.14 / a pinned PG18 build;
 the WP-02 probe boundary is a rootless Linux namespace environment (no Windows
 Sandbox, no Hyper-V, no OS upgrade); Windows-specific acceptance obligations are
@@ -134,11 +137,10 @@ or replay existing migrations. Native migrations have a checked-in hash manifest
 and a transactional PostgreSQL ledger. Existing external/local installations are
 not automatically imported, migrated, modified or deleted.
 
-The owner has also authorized self-review, commits and merges without external
-Claude Code review or CodeGraph synchronization; do not claim those checks ran.
-The remaining research, credential, persistence and Phase 1 safety boundaries
-continue to apply. Earlier conflicting Supabase/review wording below is retained
-as historical context and is superseded by this section.
+The owner-authorized separate self-review is a supplementary check.
+Record it as self-review. The mandatory independent plan, code, stage,
+and handoff review gates follow Project Iron Rule 4 and
+[Native Codex Subagent Routing](#native-codex-subagent-routing).
 
 ## Scope
 
@@ -219,14 +221,9 @@ the user explicitly changes them in a later instruction.
    limited or when write conflicts, rate limits, memory pressure, shared test
    resources, or coordination overhead would materially reduce correctness;
    raise it again when doing so becomes useful.
-7. **Codex subagent model is fixed.** Every Codex subagent, including nested
-   subagents, implementation workers, planning workers, explorers, test workers,
-   and audit workers, must be spawned with model `gpt-6.1-sol` and reasoning
-   effort `max` explicitly specified. Do not omit either setting, inherit a
-   different model or effort, or substitute another Codex model. Fast mode
-   remains forbidden. (Owner directive 2026-09-30: "修改项目规则，本项目调用
-   codex，指定模型改为gpt-6.1-sol 思考等级为max" — replaces the prior
-   `gpt-5.6-sol` pin recorded in DELIVERY_PLAN.md section 64.)
+7. **Subagent model and effort.** Follow
+   [Native Codex Subagent Routing](#native-codex-subagent-routing) for
+   every project subagent dispatch.
 
 ## CodeGraph
 
@@ -276,14 +273,8 @@ Avoid using website scraping as a primary data path unless a needed field is una
 
 ## Model Defaults
 
-- Every Codex subagent must explicitly use model `gpt-6.1-sol` with reasoning
-  effort `max`, as required by Project Iron Rule 7 (owner directive
-  2026-09-30). No other Codex subagent model or reasoning effort is
-  permitted.
-- Review subagents (Project Iron Rule 4) run as native subagents on the
-  session's current model; do not pin, substitute, or fast-path them.
-- Do not use fast mode for the main Codex agent, Codex subagents, review
-  subagents, or local implementation/review gates.
+[Native Codex Subagent Routing](#native-codex-subagent-routing) defines the
+explicit settings for all roles.
 
 ## Review / Audit Defaults
 

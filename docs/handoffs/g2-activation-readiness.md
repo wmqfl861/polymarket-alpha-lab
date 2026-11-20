@@ -1,6 +1,6 @@
 # G2 activation-readiness pack (draft; requests decisions; authorizes nothing)
 
-Worker N1 of the post-L9 cycle (§66 all-native-subagent flow), 2026-10-09.
+Worker N1 of the October 2026 post-L9 cycle, 2026-10-09.
 Updated by worker N5 (D-2: activation-record pinning with T8 evidence) on
 2026-10-10: every T8-dependent field below moved from PENDING-DECISION /
 MEASURED-AT-RUN to the NOW-MEASURED values recorded in DELIVERY_PLAN.md §68
@@ -54,8 +54,8 @@ charter's Revision 1 F1 numbering.
 
 ## 1. The §65 activation-prerequisite mapping
 
-§65 (DELIVERY_PLAN.md:2777-2799) states the activation prerequisites
-verbatim (lines 2793-2796):
+The original §65 ruling quoted below records the approval wording at that
+time. Use [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing) for current arbitration.
 
 > "Effective activation requires accepted final engineering/native/review
 > evidence, delivered contained transport, official-image qualification
@@ -80,7 +80,7 @@ node is FULLY CLOSED ("L9 节点自此彻底关闭（无剩余门）", §68:3125
 | 4 | "a non-shared trusted runtime" | **SATISFIED — D-1 RESOLVED by owner attestation (§68:3113-3115)** | The owner's explicit instruction "按你推荐的做" (2026-10-10) adopted the coordinator recommendation: 154.89.153.24 constitutes a dedicated/non-shared host in the §65 sense (option 1 of the D-1 shapes below), on the complete fact base of §68:3025-3027 plus the §68:3044-3050 coordinator-measured four items (`ls /home/` shows only `ubuntu`; `/etc/passwd` has no other UID≥1000 human user; all 15 tmux terminal sessions belong to ubuntu, owner-operated, earliest traceable 2026-08-29; `sudo -n true` passes, NOPASSWD). The attestation satisfies R-W16 F1's owner-attestation requirement and the W13 runbook's ISOLATED_HOST premise; T8 subsequently ran with POLYMARKET_ALPHA_LAB_CLAUDE_PROBE_ISOLATED_HOST=1 under it (§68:3116-3117). The earlier shared-machine record (§68:2975-2981) is superseded for §65 purposes by this later owner ruling. The record's runtime_isolation fields are now filled from this attestation (§3 below). |
 | 5 | "reviewed explicit per-call credential supply" | **PENDING-DECISION D-4 — designed, not approved, not executed (HELD, §68:3137-3139)** | The operator procedure is designed and landed as design text (research-local-agent.md:1513-1551: dedicated principal, private local channel, `FiniteInMemoryApiKeySupplier` one-slot-per-team, delayed model-phase delivery, no-erasure honesty, no credential in evidence). The supplier type and its stop-token identity binding are implemented and natively proven in the §54 composition (tests/test_project_postgres_uncapped_audit_native.py:347). Its D-1 precondition is now discharged (row 4), but the approval to execute remains owner-gated (§53:1681-1685) and is HELD at the credential boundary: the final go/no-go and the credential-supply window require the owner's explicit statement before the fully pinned record (§68:3137-3139). |
 | 6 | "a … pinned activation record with scoped PG evidence writes" | **RECORD PINNED WITH ALL AVAILABLE EVIDENCE (this N5 update); D-2 APPROVAL REMAINS THE GATE** | The record template was delivered at 35478f53 (§66:2819-2820, design gate PASS). The §3 fill is now pinned with all available evidence: the T8-dependent fields carry the §68 NOW-MEASURED values (`contained_qualification` cites the executed T8 run), and the runtime_isolation fields carry the D-1 attestation. The remaining PENDING fields are exactly D-4 (credential procedure + window) and the final owner go/no-go (§68:3137-3139), plus the approval-time measurements re-taken on the exact run host/tree at pinning. Flipping `status` to `approved-not-yet-effective`/`effective` remains the D-2 decision (native-subagent arbitration + owner confirmation); approval flips no flag by itself. |
-| 7 | "Codex-approved" (deciding authority) | **TRANSLATED per §66 / plan F5 — not a prerequisite to satisfy but an authority to seat** | §66 (DELIVERY_PLAN.md:2801-2814) records the owner's 2026-10-07 instruction that ALL planning/arbitration/review is native-subagent; §63's "ask Codex" standing delegation (§63:2645-2648) and §64's model pin survive as history applying only to already-issued dispatches. The draft record's `deciding_authority` and `sign_off` fields are therefore filled with the native-arbitration wording (fresh, read-only subagent, explicit VERDICT line, Project Iron Rule 4), with the owner above it (Article 0; §6:155-156: any acceptance-criteria change requires the owner). No Codex dispatch is requested or implied. |
+| 7 | "Codex-approved" (historical wording) | **D-2 approval authority** | Obtain fresh, independent read-only arbitration with an explicit verdict under Project Iron Rule 4 and [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing). Owner confirmation remains required for the owner-gated decisions, including D-4 and the final go/no-go. |
 
 Downstream (not §65 prerequisites, recorded for honesty): the G2 real-research
 half itself — at least one reviewed real execution per `crypto_btc`/
@@ -101,7 +101,7 @@ per-call credential supply approval and scoped real-run execution are all
 owner/arbiter-gated; nothing below may be read as deciding or preconditioning
 them (plan-review question 2).
 
-### D-1 — Is 154.89.153.24 a "dedicated/non-shared host" in the §65 sense? (RESOLVED 2026-10-10 — see Status; originally blocked T8 and rows 4-5 above)
+### D-1 — Is the designated Linux host a "dedicated/non-shared host" in the §65 sense? (RESOLVED 2026-10-10 — see Status; originally blocked T8 and rows 4-5 above)
 
 - **What §65 requires:** "a non-shared trusted runtime". The activation-record
   template requires a dedicated host identity, a documented host-trust
@@ -117,9 +117,9 @@ them (plan-review question 2).
   plan Revision 1 F1): `/home` contains only the `ubuntu` principal; all tmux
   sessions on the machine belong to it and are owner-operated; no other human
   users exist; sudo is passwordless.
-- **What is being asked:** the OWNER's explicit attestation (or an arbitration
-  ruling under §66) that 154 does — or does not — qualify as dedicated in the
-  §65 sense. Possible shapes (the owner chooses; this pack is neutral):
+- **Original request:** the owner's explicit attestation, or the ruling of
+  the arbiter under the rule then in effect, on whether the designated Linux
+  host met §65. The October 2026 options were:
   1. Attest 154 qualifies (e.g. single-trustee machine in the §65 sense) →
      T8 may run on 154 with `POLYMARKET_ALPHA_LAB_CLAUDE_PROBE_ISOLATED_HOST=1`
      as the recorded attestation, and the runtime_isolation fields of the
@@ -157,8 +157,8 @@ them (plan-review question 2).
   baseline re-pin rule stands: the tree has moved past 67cad027 through
   documentation-only commits to e76361d7, and will move again when this
   update lands).
-- The approving authority under §66 is a native-subagent arbitration (fresh,
-  read-only, VERDICT line) with owner confirmation; see row 7 above.
+- D-2 requires independent read-only arbitration under the
+  [root subagent routing rule](../../AGENTS.md#native-codex-subagent-routing) and owner confirmation (row 7).
 - Approval flips no flag by itself: `activation_authorized` changes only
   through the explicit activation decision recorded with the record
   (research-dispatch.md:646-648, 797-799). The record's `status` stays
@@ -235,10 +235,10 @@ Template source: [research-dispatch.md](../research-dispatch.md) lines
 655-749. The template's own rule governs (lines 646-653): filling does NOT
 flip any activation flag; the template is a review schema recorded through
 the documentation/PR path; fields without evidence references stay
-placeholders. Authority translation per §66/plan F5 is applied to
-`deciding_authority` and `sign_off` (original template wording "Codex
-consultation" retained in brackets for traceability). No credential
-material appears anywhere in this fill. T8 HAS run (§68:3116-3125) and is
+placeholders. The draft's authority fields follow the
+[root subagent routing rule](../../AGENTS.md#native-codex-subagent-routing)
+and the owner gates listed above. T8 HAS run (§68:3116-3125) and is
+recorded without credential material in this fill. It is
 pinned below as ENGINEERING evidence only; nothing here claims activation
 occurred, that any real provider call was made, that D-4 was approved, or
 that the final owner go/no-go was given.
@@ -255,14 +255,14 @@ status               : blocked
                       (D-1 resolved + T8 passed, 68:3111-3125; now blocked
                       on D-4 -> final owner go/no-go -> the D-2 approval
                       decision; nothing below is effective)
-deciding_authority   : NATIVE-SUBAGENT ARBITRATION per DELIVERY_PLAN.md 66
-                      (fresh, read-only subagent, explicit VERDICT line,
-                      Project Iron Rule 4 independence), with owner
-                      confirmation for owner-gated items (Article 0;
-                      DELIVERY_PLAN.md 6:155-156).
-                      [Template original: "Codex consultation" — superseded
-                      by the 2026-10-07 owner instruction recorded in 66;
-                      63's standing delegation survives as history only.]
+deciding_authority   : independent, freshly dispatched read-only
+                      arbitration per AGENTS.md Native Codex Subagent
+                      Routing and Project Iron Rule 4, with explicit
+                      VERDICT line and owner confirmation for
+                      owner-gated items (Article 0; DELIVERY_PLAN.md
+                      §6). D-4 and the final owner go/no-go remain
+                      owner decisions before approval of the pinned
+                      record.
 valid_window_utc     : PENDING (D-4 window statement + final owner
                       go/no-go, 68:3137-3139; set at the D-2 approval;
                       must cover the whole intended run)
@@ -579,9 +579,9 @@ evidence
                        D-tuple adoption; D-3 provisional set; D-4/final
                        held).
 
-sign_off             : PENDING — operator reference + NATIVE-SUBAGENT
-                       ARBITRATION approval reference per 66 [template
-                       original: "Codex approval"; superseded as above].
+sign_off             : PENDING — operator reference, arbitration
+                       verdict reference under AGENTS.md, and
+                       owner confirmation references.
                        No sign-off exists at update time; the D-2 approval
                        decision is still outstanding.
 ```
@@ -639,10 +639,10 @@ Performed against the plan N1 charter and dispatch constraints:
   67cad027; T8 and every owner-gated item marked PENDING-DECISION with the
   owning gate named; D-1 not resolved or preconditioned (facts only, from
   §68's own record).
-- Template fidelity: the fill keeps the template's field order and names;
-  filling/flipping rules preserved; the "Codex consultation"/"Codex
-  approval" wording translated to the §66 native-arbitration regime with the
-  original retained for traceability (plan F5).
+- Template fidelity in the October 2026 N1 draft: field order, names,
+  and filling/flipping rules were preserved. The draft then reflected
+  the arbitration route recorded in §66 (plan F5). The live route for
+  reuse is in the project root rule linked above.
 - Credential discipline: zero credential material; the credential_supply
   fields carry only the designed boundary text.
 - Non-evidence discipline: W12/W15 facts used only as re-verify pointers;
