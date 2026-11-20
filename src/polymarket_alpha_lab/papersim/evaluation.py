@@ -185,6 +185,18 @@ VERDICT_FAIL = "FAIL"
 VERDICT_NOT_ASSESSABLE = "NOT_ASSESSABLE"
 VERDICT_NOT_ASSESSABLE_M1 = "NOT_ASSESSABLE_M1"
 
+# The complete registered promotion criterion set (A-F). An overall
+# PASS requires every one of these to be present and PASS (FX-35
+# independent review P2-4: a subset such as A alone is missing
+# evidence, never an overall PASS).
+PROMOTION_CRITERIA = ("A", "B", "C", "D", "E", "F")
+_KNOWN_VERDICTS = frozenset({
+    VERDICT_PASS,
+    VERDICT_FAIL,
+    VERDICT_NOT_ASSESSABLE,
+    VERDICT_NOT_ASSESSABLE_M1,
+})
+
 _MAX_DT = datetime.max.replace(tzinfo=timezone.utc)
 _TRADE_NATURAL_OUTCOMES = (
     *ledger.NATURAL_OUTCOMES,
@@ -822,24 +834,38 @@ def criterion_f(evidence: object | None = None) -> CriterionResult:
 
 
 def overall_verdict(results: Iterable[CriterionResult]) -> str:
-    """FAIL beats NOT_ASSESSABLE beats NOT_ASSESSABLE_M1; PASS only when
-    at least one result is present and every criterion passes.
+    """FAIL beats NOT_ASSESSABLE beats NOT_ASSESSABLE_M1; overall PASS
+    only when the COMPLETE registered criterion set A-F is present and
+    every one of them PASSes (FX-35 independent review P2-4: criterion
+    A passing alone — or an unknown verdict value — can never yield an
+    overall PASS).
 
     Exactly backward-compatible (FX-35 Phase A, v4 section 3.6 / v5
     section 4): without F evidence F stays ``NOT_ASSESSABLE_M1``, so no
     pre-existing output, frozen number, or frozen test can change; the
     PASS branch becomes reachable only through a full F evidence
     snapshot (synthetic until D2 registers the R1 anchor and R4 grid).
+    A subset of A-F (e.g. only A) or an unknown verdict value is
+    missing/unknowable evidence: NOT_ASSESSABLE, fail closed.
     """
     results = tuple(results)
+    if not results:
+        return VERDICT_NOT_ASSESSABLE_M1
     if any(r.verdict == VERDICT_FAIL for r in results):
         return VERDICT_FAIL
+    if any(r.verdict not in _KNOWN_VERDICTS for r in results):
+        # Unknown verdict values fail closed: they never silently rank
+        # as a pass (independent review P2-4).
+        return VERDICT_NOT_ASSESSABLE
     if any(r.verdict == VERDICT_NOT_ASSESSABLE for r in results):
         return VERDICT_NOT_ASSESSABLE
     if any(r.verdict == VERDICT_NOT_ASSESSABLE_M1 for r in results):
         return VERDICT_NOT_ASSESSABLE_M1
-    if not results:
-        return VERDICT_NOT_ASSESSABLE_M1
+    # Every verdict is PASS from here: overall PASS additionally
+    # requires the complete registered criterion set — a partial set
+    # (e.g. only A) is missing evidence for the absent criteria.
+    if {r.key for r in results} != set(PROMOTION_CRITERIA):
+        return VERDICT_NOT_ASSESSABLE
     return VERDICT_PASS
 
 

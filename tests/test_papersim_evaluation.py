@@ -1055,6 +1055,18 @@ def test_overall_verdict_ordering():
     assert ev.overall_verdict(
         all_pass[:-1] + [ev.criterion_f()]
     ) == ev.VERDICT_NOT_ASSESSABLE_M1
+    # Independent review fx35-3f0cac37 P2-4: a PARTIAL set (criterion A
+    # passing alone, or A-E without F) is missing evidence, never an
+    # overall PASS; an unknown verdict value fails closed (never PASS);
+    # empty input stays NOT_ASSESSABLE_M1 (pre-FX-35 byte parity).
+    assert ev.overall_verdict(
+        [ev.CriterionResult("A", ev.VERDICT_PASS, ())]
+    ) == ev.VERDICT_NOT_ASSESSABLE
+    assert ev.overall_verdict(all_pass[:-1]) == ev.VERDICT_NOT_ASSESSABLE
+    assert ev.overall_verdict(
+        all_pass[:-1] + [ev.CriterionResult("F", "MAYBE", ())]
+    ) == ev.VERDICT_NOT_ASSESSABLE
+    assert ev.overall_verdict([]) == ev.VERDICT_NOT_ASSESSABLE_M1
 
 
 # ---------------------------------------------------------------------------
