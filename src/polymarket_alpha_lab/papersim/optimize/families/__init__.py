@@ -28,6 +28,7 @@ _FAMILY_MODULES: dict[str, str] = {
     "crypto-gbm": "crypto",
     "intl-elo-goal-residuals": "intl",
     "intl-elo-poisson": "intl",
+    "league-bridge": "league_bridge",
     "nba-pace-efficiency": "nba",
 }
 

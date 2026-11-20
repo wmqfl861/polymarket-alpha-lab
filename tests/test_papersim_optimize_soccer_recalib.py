@@ -137,13 +137,14 @@ def test_family_registry_lists_both_club_soccer_families() -> None:
     # the parallel MO-5 lanes is owned by the coordinator.
     # MO-5c landing (cherry-pick) extended this pin to the union of the
     # merged lanes; the MO-5b landing extended it to five; the MO-5d
-    # landing extended it to six; 5e extends it further on its landing.
+    # landing extended it to six; the MO-5e landing extended it to seven.
     assert iter_family_ids() == (
         "club-soccer-frozen",
         "club-soccer-recalib",
         "crypto-gbm",
         "intl-elo-goal-residuals",
         "intl-elo-poisson",
+        "league-bridge",
         "nba-pace-efficiency",
     )
     assert sr.FAMILY_ID == "club-soccer-recalib"
