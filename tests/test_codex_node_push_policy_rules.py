@@ -155,10 +155,21 @@ def test_root_has_one_project_subagent_model_rule():
     instructions, _ = _agents_instructions()
     active = instructions.split("## omo / sisyphus session workflow (historical)", 1)[0]
 
-    assert active.count("## native codex subagent routing") == 1
-    assert re.findall(r"\bgpt-\d[\w.-]*\b", active) == [
-        "gpt-6.2-astra",
-        "gpt-6.2-sol",
-    ]
+    routing_heading = "## native codex subagent routing"
+    coordination_heading = "## 协调、复审与授权"
+    assert active.count(routing_heading) == 1
+    assert active.count(coordination_heading) == 1
+    routing = active.split(routing_heading, 1)[1].split("\n## ", 1)[0]
+    coordination = active.split(coordination_heading, 1)[1].split("\n## ", 1)[0]
+    model_pattern = r"\bgpt-\d[\w.-]*\b"
+    expected = ["gpt-6.2-astra", "gpt-6.2-sol"]
+    assert re.findall(model_pattern, routing) == expected
+    assert re.findall(model_pattern, coordination) == expected
+    assert re.findall(model_pattern, active) == expected * 2
+    assert "计划编写和实质修订由原生 `gpt-6.2-astra` 子代理承担" in coordination
+    assert "其他子任务由原生 `gpt-6.2-sol` 子代理承担" in coordination
+    assert "包括计划复审、开发、测试、代码复审和独立验收" in coordination
+    assert "每次派发显式指定 `reasoning_effort=max`，关闭快速模式" in coordination
+    assert "独立复审按铁律 4 执行" in coordination
     assert re.findall(r"\bzcode(?: cli)?\b", active) == ["zcode cli"]
     assert "inherit the current session model" not in active
