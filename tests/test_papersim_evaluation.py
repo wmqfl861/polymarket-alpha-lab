@@ -1010,9 +1010,17 @@ def test_criterion_e_boundaries():
 
 
 def test_criterion_f_is_blocked_in_m1():
+    """Rule-0.2 note (FX-35 Phase A). 原来证明什么：criterion_f() 无 M2
+    运行证据时恒为 NOT_ASSESSABLE_M1。改完证明什么：同样的无证据行为经新的
+    可选 evidence 参数逐字节不变（evidence=None 与无参调用完全一致），M1
+    底线不变；带证据的 F 判定在 tests/test_papersim_evaluation_f.py 覆盖。"""
     result = ev.criterion_f()
     assert result.verdict == ev.VERDICT_NOT_ASSESSABLE_M1
     assert result.reasons
+    # FX-35 Phase A: explicit evidence=None is byte-identical to no-arg.
+    explicit = ev.criterion_f(evidence=None)
+    assert explicit == result
+    assert repr(explicit) == repr(result)
 
 
 def test_overall_verdict_ordering():
@@ -1033,6 +1041,32 @@ def test_overall_verdict_ordering():
         ev.criterion_f(),
     ]
     assert ev.overall_verdict(failing) == ev.VERDICT_FAIL
+    # Rule-0.2 note (FX-35 Phase A, v4 section 3.6 / v5 section 4).
+    # 原来证明什么：无 F 证据时 A-E 全绿也停在 NOT_ASSESSABLE_M1（旧
+    # overall_verdict 无 PASS 分支）。改完证明什么：新增的全 PASS 分支 —
+    # 仅当 A-F 六项全部 PASS 才输出 PASS；F 无证据时输出不变，冻结行为
+    # 不受影响（带证据的端到端翻转在 tests/test_papersim_evaluation_f.py）。
+    all_pass = [
+        ev.CriterionResult(key, ev.VERDICT_PASS, ())
+        for key in ("A", "B", "C", "D", "E", "F")
+    ]
+    assert ev.overall_verdict(all_pass) == ev.VERDICT_PASS
+    # One non-PASS member keeps the queue out of PASS.
+    assert ev.overall_verdict(
+        all_pass[:-1] + [ev.criterion_f()]
+    ) == ev.VERDICT_NOT_ASSESSABLE_M1
+    # Independent review fx35-3f0cac37 P2-4: a PARTIAL set (criterion A
+    # passing alone, or A-E without F) is missing evidence, never an
+    # overall PASS; an unknown verdict value fails closed (never PASS);
+    # empty input stays NOT_ASSESSABLE_M1 (pre-FX-35 byte parity).
+    assert ev.overall_verdict(
+        [ev.CriterionResult("A", ev.VERDICT_PASS, ())]
+    ) == ev.VERDICT_NOT_ASSESSABLE
+    assert ev.overall_verdict(all_pass[:-1]) == ev.VERDICT_NOT_ASSESSABLE
+    assert ev.overall_verdict(
+        all_pass[:-1] + [ev.CriterionResult("F", "MAYBE", ())]
+    ) == ev.VERDICT_NOT_ASSESSABLE
+    assert ev.overall_verdict([]) == ev.VERDICT_NOT_ASSESSABLE_M1
 
 
 # ---------------------------------------------------------------------------
