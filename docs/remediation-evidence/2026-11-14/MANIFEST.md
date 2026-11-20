@@ -57,7 +57,7 @@ authorization，大小写不敏感）加 dotted-quad IPv4（八位组 0–255 �
 | `76c8da64feb9e29587b7c6a4392b357e1b5dc440a0c50121e215a2e8c7e75bd1` | 328417 | `decision/m1-rereview-output-20261114.log` | `PAL-R\`（M1 计划复审回执补齐：2026-11-14 codex gpt-6-astra/max 独立复审，VERDICT: PASS＝3 CORRECT-AS-APPLIED＋2 NO-CHANGE-CONFIRMED、0 新发现；原件 CRLF，同 decision-output.log 存证口径原样入库） |
 | `d693680ad272a50f20330a965bcdff49d3da15255102544e48894dc3f2251bba` | 2825 | `decision/m1-rereview-brief-20261114.md` | `PAL-R\`（该回执的 owner 委派简报：复审对象 SHA256 锚点、背景锚点与输出要求；原件 CRLF 原样入库） |
 | `a4ebe4f17e925b7001c5337f93f67c454bff68467c0bbf5972b4c6f9a9d8296b` | 5509 | `decision/codex-m1-final-brief-20261115.md` | `PAL-R\codex-m1-final-brief-20261115.md`（M1 整体终审 owner 委派简报：终审对象 d83ab064 锚点、核验清单、降级取证条款与整改记录；M1 出口回执节点 2026-11-16 追加入库，敏感扫描 8 词＋dotted-quad 均 0 命中；原件 CRLF 原样入库，索引 i/crlf 逐字节保真） |
-| `e4d7a35de67833563d0fa17036291e0141a3d673138373b775b477930e1aa7` | 866313 | `decision/m1-final-review-rerun-20261116.log` | `PAL-R\codex-m1-final-rerun-output.log`（M1 整体终审复跑回执：codex gpt-6-astra/max，VERDICT: PASS＝0 未决 P1/P2＋新增 1 项 P3 报表缺口；含 P2-01/02/03 关闭裁定、铁律/冻结面核验与双 CI 降级取证边界；M1 出口回执节点 2026-11-16 追加入库，索引 i/mixed 逐字节保真。敏感扫描：8 词命中 50 处经逐条核对均为过程性/否定性文本（secret-scan 规则名、"password-free DSN" 类否定性结论、测试函数名、passfile 占位 DSN 模板），无凭据/token/密钥值；IPv4 命中 1 处＝166.1.232.93，系终审读取 AGENTS.md 时引用的既有 tracked 内容（HEAD 中 10+ 文件已含），非新增披露，其余 3 形态为排除项 127.0.0.1/0.0.0.0/255.255.255.255；原件 CRLF+LF 混合行尾原样入库，不做行尾/空白归一） |
+| `e4d7a35de67833563d0fa17036291e0141a3d673138373b775b477930e1aa7` | 866313 | `decision/m1-final-review-rerun-20261116.log` | `PAL-R\codex-m1-final-rerun-output.log`（M1 整体终审复跑回执：codex gpt-6-astra/max，VERDICT: PASS＝0 未决 P1/P2＋新增 1 项 P3 报表缺口；含 P2-01/02/03 关闭裁定、铁律/冻结面核验与双 CI 降级取证边界；M1 出口回执节点 2026-11-16 追加入库，索引 i/mixed 逐字节保真。敏感扫描：8 词命中 50 处经逐条核对均为过程性/否定性文本（secret-scan 规则名、"password-free DSN" 类否定性结论、测试函数名、passfile 占位 DSN 模板），无凭据/token/密钥值；IPv4 命中 1 处＝SERVER_HOST_REDACTED，系终审读取 AGENTS.md 时引用的既有 tracked 内容（HEAD 中 10+ 文件已含），非新增披露，其余 3 形态为排除项 127.0.0.1/0.0.0.0/255.255.255.255；原件 CRLF+LF 混合行尾原样入库，不做行尾/空白归一） |
 
 ### plans/（r03 三计划 + 复审结论要点 + distribution 计划）
 
@@ -137,3 +137,26 @@ authorization，大小写不敏感）加 dotted-quad IPv4（八位组 0–255 �
    `q-basis/archive-locators-20261114.md` §2），未复制入库。
 5. 本清单自身与 D 交付书（`docs/handoffs/2026-11-13-m0-remediation.md`）不参与
    本清单哈希表（避免自哈希）；其字节由所在提交的 Git 对象固定。
+
+## FX-31 地址脱敏登记（2026-11-20 追加；不改上表既有哈希行）
+
+按 2026-11-19 审计修复清单 FX-31（发现 N-6）：本清单第 60 行与
+`decision/m1-final-review-rerun-20261116.log` 第 329 行各含 1 处服务器公网地址原文
+（引用根 AGENTS.md Linux-only 段所致），已按字节级单次替换为 `SERVER_HOST_REDACTED`
+（占位符沿用 FX-24 server-mirror 约定，表式见 `docs/paper-sim/server-mirror/REDACTIONS.md`
+与 `docs/handoffs/m3-cleanup/REDACTIONS.md`）。上表登记的原始 sha256 / 字节数为脱敏前
+原件，保持不改；原件字节由 Git 历史对象固定。
+
+| file | original sha256 | redacted sha256 | line |
+|---|---|---|---|
+| `decision/m1-final-review-rerun-20261116.log` | `e4d7a35de67833563d0fa17036291e0141a3d673138373b775b477930e1aa7` | `2c4e75d7317b90f526e269b47de7b24cee932b7e82aff532f6c22fe8a0ebf83f` | 329 |
+| `MANIFEST.md` | edited-in-place-post-redaction (see note) | `7392598ddf1106943d970e6cb79f1981c6a3c04ea187c9c7eb149bc05832f6dd` | 60 |
+
+注（自行自引用，仿 server-mirror `MANIFEST.sha256` 先例）：本清单在记录脱敏后哈希之后
+又被本节追加深改，故自行的 original 列置 edited-in-place 标记；其 redacted sha256 覆盖
+第 60 行脱敏完成、本节追加之前的字节状态（14013 字节）。脱敏前原件为 14005 字节、
+sha256 `8718a20bd5feb68a1b0b562986b6297557102f56b564e43912ce8c3a63c841e5`。文件无法内嵌
+自身最终哈希（定点不可达）；最终字节仍由所在提交的 Git 对象固定，与文末既有的
+避免自哈希约定一致。守卫测试 `tests/test_tracked_public_address_hygiene.py` 冻结登记后
+的全部追踪文件出现计数（当前 42 处，含根 AGENTS.md 保留的 1 处），新增或无故减少任一
+处即失败。

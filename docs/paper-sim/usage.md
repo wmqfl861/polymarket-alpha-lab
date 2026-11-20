@@ -386,7 +386,12 @@ T1 edge (-0.00944 → -0.00929); no gate regression anywhere.
   bounded BTC/ETH candle and spot price reads) plus the FotMob fetch
   functions above (`papersim.fotmob`) and the ESPN NBA fetch helper
   (`papersim.espn_nba.py`), each under bounded reads and documented
-  budgets; snapshot parsers such as `soccer_totals.py` stay offline.
+  budgets; `papersim.intl_data.py` likewise fetches the upstream
+  results-CSV and Elo-rating TSV endpoints under the module's byte
+  caps with a one-hour default cache, entering via the documented
+  refresh calls above while library model paths keep using local
+  snapshot inputs; snapshot parsers such as `soccer_totals.py` stay
+  offline.
   The Phase 1 FotMob adapter/validator tools remain the server-side
   backfill path for this host.
 - The live `/home/ubuntu/paper-sim` round records remain the book of
@@ -398,7 +403,7 @@ T1 edge (-0.00944 → -0.00929); no gate regression anywhere.
   migration ledger; `schema` only mirrors the DDL as evidence.
 
 The ledger functions `record_entry` and `mark_to_market` are
-implemented (`papersim/ledger.py:148` and `:196`, landed with the
+implemented (`papersim/ledger.py:152` and `:200`, landed with the
 store adapter per FX-09L); the package surface is implemented and
 regression-anchored.
 
