@@ -15,9 +15,11 @@ lands as its pair or not at all); the database-side canonical-digest
 CHECK and the UNFREEZE actor CHECK back the application layers; a
 fresh registry reads empty (all-baseline fallback premise) and the
 stored spec rebuilds to its own primary key through the jsonb
-round-trip (plan-review P3-4).
+round-trip (plan-review P3-4). Registry reads preserve the incoming
+transaction state after success, malformed stored specs and SQL errors.
 """
 
+from contextlib import closing, contextmanager, nullcontext
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 import os
@@ -31,6 +33,7 @@ from polymarket_alpha_lab.papersim import store
 from polymarket_alpha_lab.papersim.optimize.families.soccer_frozen import (
     SOCCER_FROZEN,
 )
+from polymarket_alpha_lab.papersim.optimize.provider import RegistryProvider
 from polymarket_alpha_lab.papersim.optimize.registry import (
     RegistryInvariantError,
     derive_lineage_roles,
@@ -47,8 +50,14 @@ AT = datetime(2026, 11, 19, 21, 0, tzinfo=UTC)
 LATER = AT + timedelta(hours=2)
 COMMIT = 'd' * 40
 LINEAGE = 'club-soccer-frozen/over_under'
+SCAN_LINEAGE = 'club-soccer/over_under'
+MISMATCH_LINEAGE = 'club-soccer-frozen/btts'
+MISMATCH_SCAN_LINEAGE = 'club-soccer/btts'
 BASELINE_SPEC = SOCCER_FROZEN.baseline_spec()
 BASELINE = BASELINE_SPEC.spec_sha256()
+UNKNOWN_SPEC = 'e' * 64
+AUTOCOMMIT_MODES = pytest.mark.parametrize('autocommit', [False, True],
+                                            ids=['default', 'autocommit'])
 
 
 def candidate_spec() -> ModelSpec:
@@ -59,8 +68,7 @@ def candidate_spec() -> ModelSpec:
 
 
 def _connect(dsn, *, autocommit=True):
-    psycopg = pytest.importorskip('psycopg')
-    connection = psycopg.connect(dsn)
+    connection = _adapter().connect_explicit(dsn)
     connection.autocommit = autocommit
     return connection
 
@@ -72,25 +80,18 @@ def _rebind_database(dsn: str, database: str) -> str:
 
 def _migrated_app() -> tuple[str, str]:
     """A fully migrated private database; returns (owner_dsn, app_dsn)."""
-    psycopg = pytest.importorskip('psycopg')
-    admin = _connect(OWNER_DSN)
+    from polymarket_alpha_lab.project_postgres import sql
+
     name = 'pal_papersim_mo2reg_' + uuid.uuid4().hex[:10]
-    with admin.cursor() as cursor:
+    with _connect(OWNER_DSN) as admin, admin.cursor() as cursor:
         cursor.execute("SELECT system_identifier::text FROM pg_control_system()")
         system_id = cursor.fetchone()[0]
         cursor.execute(f"CREATE DATABASE {name} OWNER pal_owner")
-    admin.close()
     owner_dsn = _rebind_database(OWNER_DSN, name)
-    bootstrap = psycopg.connect(owner_dsn)
-    bootstrap.autocommit = True
-    with bootstrap.cursor() as cursor:
-        from polymarket_alpha_lab.project_postgres import sql
+    with _connect(owner_dsn) as bootstrap, bootstrap.cursor() as cursor:
         cursor.execute(sql.bootstrap_sql(uuid.uuid4().hex, 'b' * 64, system_id))
-    bootstrap.close()
-    owner = _connect(owner_dsn, autocommit=False)
-    assert pm.apply_pending_migrations(owner, ROOT) == {'applied': 6, 'pending_before': 6}
-    owner.commit()
-    owner.close()
+    with _connect(owner_dsn, autocommit=False) as owner:
+        assert pm.apply_pending_migrations(owner, ROOT) == {'applied': 6, 'pending_before': 6}
     return owner_dsn, owner_dsn.replace('user=pal_owner', 'user=pal_app')
 
 
@@ -103,11 +104,13 @@ def _adapter():
     fx26 native files follow the same function-level discipline).
     """
 
-    return pytest.importorskip('polymarket_alpha_lab.papersim.store_psycopg')
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    return store_psycopg
 
 
 def _app(dsn: str):
-    return _adapter().connect_explicit(dsn, label='PAPERSIM_MIGRATIONS_PG_DSN')
+    return _connect(dsn, autocommit=False)
 
 
 def _initialized(dsn: str):
@@ -450,3 +453,285 @@ def test_native_foreign_keys_hold_shadow_to_candidate_and_specs_to_runs():
             lineage=LINEAGE, active_spec_sha256='f' * 64, rule_version='rules-v1',
             decided_by='op', decided_at=LATER, conclusion='HOLD'))
     app.close()
+
+
+@pytest.fixture
+def registry_database():
+    return _migrated_app()
+
+
+def _register_candidate_role(conn, lineage, spec):
+    result = _adapter().record_role_events(conn, store.RoleEventBatch(events=(
+        store.RoleEventSubmission(
+            lineage=lineage, spec_sha256=spec.spec_sha256(), role='CANDIDATE',
+            effective_at=LATER, reason='transaction test', forward_plan={'look_at': 150},
+            actor='auto:rules-v1', code_commit=COMMIT),)))
+    assert result['inserted'] is True
+
+
+def _seed_registered_registry(dsn):
+    adapter = _adapter()
+    app, _ = _initialized(dsn)
+    with app:
+        candidate = candidate_spec()
+        assert adapter.register_model_spec(app, candidate, source='optimizer',
+                                           code_commit=COMMIT)['inserted'] is True
+        _register_candidate_role(app, LINEAGE, candidate)
+    return candidate
+
+
+def _seed_mismatched_spec(owner_dsn, app_dsn):
+    spec = ModelSpec(family=SOCCER_FROZEN.family_id,
+                     procedure_version=BASELINE_SPEC.procedure_version,
+                     params={'kappa': 0.75}, envelope=(),
+                     data_contract=BASELINE_SPEC.data_contract)
+    with _connect(owner_dsn) as owner:
+        # The canonical text and digest satisfy the database CHECK. Only
+        # the separately stored rebuild fields disagree with that identity.
+        owner.execute(
+            "INSERT INTO papersim.model_specs "
+            "(spec_sha256, canonical_text, family, procedure_version, model_version, "
+            "params, envelope, data_contract, source, code_commit) "
+            "VALUES (%s, %s, %s, %s, %s, %s::jsonb, '[]'::jsonb, %s, 'manual', %s)",
+            (spec.spec_sha256(), spec.canonical_json(), spec.family, spec.procedure_version,
+             spec.model_version(), '{"kappa": 0.5}', spec.data_contract, COMMIT))
+    with _app(app_dsn) as app:
+        _register_candidate_role(app, MISMATCH_LINEAGE, spec)
+    return spec.spec_sha256()
+
+
+@contextmanager
+def _expect_read_transaction(conn, status):
+    autocommit = conn.autocommit
+    assert conn.info.transaction_status is status
+    yield
+    assert conn.info.transaction_status is status
+    assert conn.autocommit is autocommit
+
+
+def _assert_spec(actual, expected):
+    assert actual.spec_sha256() == expected.spec_sha256()
+    assert actual.canonical_json() == expected.canonical_json()
+    assert actual.model_version() == expected.model_version()
+
+
+def _assert_fallback(provider, lineage, reason):
+    spec_view = provider.specs_for_lineage(lineage)
+    assert spec_view.fallback_reason == reason
+    _assert_spec(spec_view.active, BASELINE_SPEC)
+    _assert_spec(spec_view.baseline, BASELINE_SPEC)
+    assert spec_view.candidates == () and spec_view.guard is None
+    assert spec_view.registry is None
+
+
+def _assert_registered(provider, candidate):
+    spec_view = provider.specs_for_lineage(SCAN_LINEAGE)
+    assert spec_view.fallback_reason is None
+    _assert_spec(spec_view.active, BASELINE_SPEC)
+    _assert_spec(spec_view.baseline, BASELINE_SPEC)
+    assert len(spec_view.candidates) == 1
+    _assert_spec(spec_view.candidates[0], candidate)
+    assert candidate.spec_sha256() != BASELINE
+    assert spec_view.registry == ((LINEAGE, BASELINE, (candidate.spec_sha256(),)),)
+
+
+def _snapshot_sentinel():
+    from polymarket_alpha_lab.papersim.snapshots import SnapshotRegistration
+
+    return SnapshotRegistration(uuid.uuid4().bytes, 'test', 'registry transaction', AT)
+
+
+def _assert_snapshot_visible(conn, snapshot, *, visible):
+    with conn.transaction(), conn.cursor() as cursor:
+        cursor.execute('SELECT content FROM papersim.snapshots WHERE content_sha256 = %s',
+                       (snapshot.content_sha256,))
+        rows = cursor.fetchall()
+    assert rows == ([(snapshot.content,)] if visible else [])
+
+
+@contextmanager
+def _caller_transaction(conn, *, commit, implicit=False):
+    from psycopg import Rollback
+
+    if implicit:
+        conn.execute('SELECT 1')
+        yield
+        if commit:
+            conn.commit()
+        else:
+            conn.rollback()
+        return
+    with conn.transaction() as transaction:
+        yield
+        if not commit:
+            raise Rollback(transaction)
+
+
+def _assert_mismatched_spec_read(conn, status, digest):
+    with _expect_read_transaction(conn, status), pytest.raises(
+            store.PapersimStoreError, match='^papersim_model_spec_roundtrip_mismatch$'):
+        _adapter().load_model_spec(conn, digest)
+
+
+@NATIVE
+@AUTOCOMMIT_MODES
+def test_native_registry_idle_reads_release_transaction(registry_database, autocommit,
+                                                        monkeypatch):
+    from psycopg.pq import TransactionStatus
+
+    from polymarket_alpha_lab.papersim.snapshots import register_snapshot
+
+    adapter = _adapter()
+    idle = TransactionStatus.IDLE
+    _owner_dsn, dsn = registry_database
+    sentinel = _snapshot_sentinel()
+    with closing(_connect(dsn, autocommit=autocommit)) as app:
+        with _expect_read_transaction(app, idle):
+            empty = RegistryProvider.from_connection(app)
+        _assert_fallback(empty, SCAN_LINEAGE, 'registry_empty')
+
+        candidate = _seed_registered_registry(dsn)
+        with _expect_read_transaction(app, idle):
+            rebuilt = adapter.load_model_spec(app, BASELINE)
+        _assert_spec(rebuilt, BASELINE_SPEC)
+        with _expect_read_transaction(app, idle):
+            unknown = adapter.load_model_spec(app, UNKNOWN_SPEC)
+        assert unknown is None
+
+        loaded_digests = []
+        load_model_spec = adapter.load_model_spec
+
+        def track_lookup(conn, digest):
+            loaded_digests.append(digest)
+            return load_model_spec(conn, digest)
+
+        monkeypatch.setattr(adapter, 'load_model_spec', track_lookup)
+        with _expect_read_transaction(app, idle):
+            registered = RegistryProvider.from_connection(app)
+        _assert_registered(registered, candidate)
+        # Active and Baseline share a digest across the initialized lineages.
+        assert sorted(loaded_digests) == sorted([BASELINE, candidate.spec_sha256()])
+
+        assert register_snapshot(app, sentinel)['inserted'] is True
+        assert app.info.transaction_status is idle
+    with _app(dsn) as observer:
+        _assert_snapshot_visible(observer, sentinel, visible=True)
+
+
+@NATIVE
+@AUTOCOMMIT_MODES
+def test_native_registry_spec_content_failure_releases_idle_transaction(registry_database,
+                                                                        autocommit):
+    from psycopg.pq import TransactionStatus
+
+    adapter = _adapter()
+    idle = TransactionStatus.IDLE
+    owner_dsn, dsn = registry_database
+    candidate = _seed_registered_registry(dsn)
+    mismatched = _seed_mismatched_spec(owner_dsn, dsn)
+    with closing(_connect(dsn, autocommit=autocommit)) as app:
+        _assert_mismatched_spec_read(app, idle, mismatched)
+        with _expect_read_transaction(app, idle):
+            provider = RegistryProvider.from_connection(app)
+        _assert_fallback(provider, MISMATCH_SCAN_LINEAGE, 'spec_checksum_mismatch')
+        _assert_registered(provider, candidate)
+        with _expect_read_transaction(app, idle):
+            rebuilt = adapter.load_model_spec(app, BASELINE)
+        _assert_spec(rebuilt, BASELINE_SPEC)
+
+
+@NATIVE
+@pytest.mark.parametrize('autocommit,implicit', [(False, False), (True, False), (False, True)],
+                         ids=['explicit-default', 'explicit-autocommit', 'implicit-default'])
+@pytest.mark.parametrize('commit', [False, True], ids=['rollback', 'commit'])
+def test_native_registry_reads_preserve_caller_transaction(registry_database, autocommit,
+                                                           implicit, commit):
+    from psycopg.pq import TransactionStatus
+
+    from polymarket_alpha_lab.papersim.snapshots import register_snapshot
+
+    adapter = _adapter()
+    intrans = TransactionStatus.INTRANS
+    owner_dsn, dsn = registry_database
+    candidate = _seed_registered_registry(dsn)
+    mismatched = _seed_mismatched_spec(owner_dsn, dsn)
+    sentinel = _snapshot_sentinel()
+    with closing(_connect(dsn, autocommit=autocommit)) as app, _app(dsn) as observer:
+        with _caller_transaction(app, commit=commit, implicit=implicit):
+            assert register_snapshot(app, sentinel)['inserted'] is True
+            _assert_snapshot_visible(observer, sentinel, visible=False)
+
+            with _expect_read_transaction(app, intrans):
+                rebuilt = adapter.load_model_spec(app, BASELINE)
+            _assert_spec(rebuilt, BASELINE_SPEC)
+            _assert_snapshot_visible(app, sentinel, visible=True)
+            _assert_snapshot_visible(observer, sentinel, visible=False)
+
+            _assert_mismatched_spec_read(app, intrans, mismatched)
+            with _expect_read_transaction(app, intrans):
+                unknown = adapter.load_model_spec(app, UNKNOWN_SPEC)
+            assert unknown is None
+            with _expect_read_transaction(app, intrans):
+                provider = RegistryProvider.from_connection(app)
+            _assert_fallback(provider, MISMATCH_SCAN_LINEAGE, 'spec_checksum_mismatch')
+            _assert_registered(provider, candidate)
+            _assert_snapshot_visible(app, sentinel, visible=True)
+            _assert_snapshot_visible(observer, sentinel, visible=False)
+            with _expect_read_transaction(app, intrans):
+                rebuilt = adapter.load_model_spec(app, BASELINE)
+            _assert_spec(rebuilt, BASELINE_SPEC)
+        assert app.info.transaction_status is TransactionStatus.IDLE
+    with _app(dsn) as observer:
+        _assert_snapshot_visible(observer, sentinel, visible=commit)
+
+
+@NATIVE
+@AUTOCOMMIT_MODES
+@pytest.mark.parametrize('outcome', ['idle', 'rollback', 'commit'])
+@pytest.mark.parametrize('reader', ['loader', 'provider'])
+def test_native_registry_sql_failure_releases_read_transaction(registry_database, autocommit,
+                                                             outcome, reader):
+    from psycopg.errors import LockNotAvailable
+    from psycopg.pq import TransactionStatus
+
+    from polymarket_alpha_lab.papersim.snapshots import register_snapshot
+
+    adapter = _adapter()
+    owner_dsn, dsn = registry_database
+    candidate = _seed_registered_registry(dsn)
+    sentinel = _snapshot_sentinel()
+    idle = outcome == 'idle'
+    status = TransactionStatus.IDLE if idle else TransactionStatus.INTRANS
+    with closing(_connect(dsn, autocommit=autocommit)) as app, _app(dsn) as observer:
+        with app.transaction():
+            app.execute("SET lock_timeout = '250ms'")
+        assert app.info.transaction_status is TransactionStatus.IDLE
+
+        caller = nullcontext() if idle else _caller_transaction(app, commit=outcome == 'commit')
+        with caller:
+            if not idle:
+                assert register_snapshot(app, sentinel)['inserted'] is True
+                _assert_snapshot_visible(observer, sentinel, visible=False)
+            with _connect(owner_dsn) as locker, locker.transaction():
+                locker.execute('LOCK TABLE papersim.model_specs IN ACCESS EXCLUSIVE MODE')
+                with _expect_read_transaction(app, status):
+                    roles = adapter.load_all_role_events(app)
+                assert LINEAGE in roles
+                if reader == 'loader':
+                    with _expect_read_transaction(app, status), pytest.raises(
+                            LockNotAvailable) as error:
+                        adapter.load_model_spec(app, BASELINE)
+                    assert error.value.sqlstate == '55P03'
+                else:
+                    with _expect_read_transaction(app, status):
+                        provider = RegistryProvider.from_connection(app)
+                    _assert_fallback(provider, SCAN_LINEAGE, 'registry_read_failed')
+            if not idle:
+                _assert_snapshot_visible(app, sentinel, visible=True)
+                _assert_snapshot_visible(observer, sentinel, visible=False)
+            with _expect_read_transaction(app, status):
+                provider = RegistryProvider.from_connection(app)
+            _assert_registered(provider, candidate)
+        assert app.info.transaction_status is TransactionStatus.IDLE
+    with _app(dsn) as observer:
+        _assert_snapshot_visible(observer, sentinel, visible=outcome == 'commit')

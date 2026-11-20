@@ -1509,14 +1509,18 @@ def load_model_spec(conn, spec_sha256: str):
     Returns ``None`` when the digest is unknown (the caller falls back
     to the baseline). The rebuilt spec's ``spec_sha256()`` MUST equal
     the primary key -- the spelling-flip guard of plan review P3-4.
+
+    The SELECT completes its own transaction on an idle connection and
+    uses a savepoint inside a caller-owned transaction.
     """
 
     from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
 
-    cursor = conn.cursor()
-    cursor.execute('SELECT ' + _SPEC_COLUMNS + ' FROM papersim.model_specs '
-                   'WHERE spec_sha256 = %s', (spec_sha256,))
-    row = cursor.fetchone()
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SELECT ' + _SPEC_COLUMNS + ' FROM papersim.model_specs '
+                       'WHERE spec_sha256 = %s', (spec_sha256,))
+        row = cursor.fetchone()
     if row is None:
         return None
     columns = _SPEC_COLUMNS.replace(' ', '').split(',')
