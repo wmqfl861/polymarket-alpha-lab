@@ -201,6 +201,13 @@ def _validate_handover(prior: LineageRoles,
     retire in the SAME batch (the guard cap stays at one). The
     promoted spec must be a registered candidate; the demoted active
     must be exactly the current active.
+
+    MO-8 tightening (MO-2 code-review P3 follow-up; the real handover
+    writer arrives with MO-8's ``apply``): a handover batch may carry a
+    RETIRED event ONLY to retire a PRESENT previous guard. With no
+    prior guard a stray RETIRED event used to pass the shape check and
+    was silently dropped from the fold -- it now fails with a fixed
+    code instead.
     """
 
     retired = tuple(event for event in batch if event.role == "RETIRED")
@@ -221,6 +228,11 @@ def _validate_handover(prior: LineageRoles,
             _fail("papersim_registry_handover_guard_cap")
         retired_specs = prior.retired + (prior.guard,)
     else:
+        # MO-8 tightening: no previous guard means the batch has no
+        # legal RETIRED event at all (a stray target was previously
+        # accepted and silently dropped -- never again).
+        if retired:
+            _fail("papersim_registry_handover_stray_retired")
         retired_specs = prior.retired
     candidates = tuple(s for s in prior.candidates if s != promoted.spec_sha256)
     return LineageRoles(lineage=prior.lineage, baseline=prior.baseline,
