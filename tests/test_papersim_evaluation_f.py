@@ -40,15 +40,16 @@ import hashlib
 import json
 import sys
 from collections import Counter
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from dataclasses import FrozenInstanceError, replace
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from inspect import Parameter, signature
+from random import Random
 
 import pytest
 
-from polymarket_alpha_lab.papersim import capture, settle, store
+from polymarket_alpha_lab.papersim import capture, report, settle, store
 from polymarket_alpha_lab.papersim import evaluation as ev
 from polymarket_alpha_lab.papersim import evaluation_f as ef
 from polymarket_alpha_lab.papersim.evaluation_f import (
@@ -844,12 +845,22 @@ def registered_replay_entry_point(request):
     return evaluate_queue
 
 
+@contextmanager
+def _decimal_conversion_limit(limit):
+    original_limit = sys.get_int_max_str_digits()
+    sys.set_int_max_str_digits(limit)
+    try:
+        yield
+    finally:
+        sys.set_int_max_str_digits(original_limit)
+
+
 @pytest.fixture
 def integer_above_decimal_digit_limit():
-    limit = sys.get_int_max_str_digits()
-    if limit == 0:
-        pytest.skip("the interpreter has no decimal conversion limit")
-    return 10**limit
+    default_limit = sys.int_info.default_max_str_digits
+    limit = min(sys.get_int_max_str_digits() or default_limit, default_limit)
+    with _decimal_conversion_limit(limit):
+        yield 10**limit
 
 
 @pytest.mark.parametrize("sign", [1, -1], ids=["positive", "negative"])
@@ -914,6 +925,57 @@ def test_registered_replay_marks_extreme_negative_n_as_missing_evidence(
     assert result.key == "F"
     assert result.verdict == ev.VERDICT_NOT_ASSESSABLE
     assert sample.shortfalls[0] in result.reasons
+
+
+@pytest.mark.parametrize("drawable", [True, False], ids=["drawable", "insufficient"])
+def test_registered_replay_serializes_extreme_integers_with_unlimited_decimal_conversion(drawable):
+    digits = sys.int_info.default_max_str_digits
+    magnitude = 10**digits
+    decimal_magnitude = "1" + "0" * digits
+    seed = -magnitude
+    sample_n = 3 if drawable else magnitude
+    expected_n = "3" if drawable else decimal_magnitude
+    registration = replace(_replay_registration(), sample_n=sample_n, seed=seed)
+    evidence = _replay_evidence(replay_registration=registration)
+
+    with _decimal_conversion_limit(0):
+        sample = draw_replay_sample(evidence)
+        assert len(sample.eligible_ids) == 25
+        if drawable:
+            expected_ids = tuple(Random(seed).sample(sample.eligible_ids, sample_n))
+            assert sample.selected_ids == expected_ids
+            evidence = replace(evidence, replay_agreements=dict.fromkeys(expected_ids, True))
+            verdict = ev.VERDICT_PASS
+            replay_reason = (
+                f"replay sample: 3 of 25 eligible at trusted commit {COMMIT!r}, "
+                "all agreed (seeded registered draw)"
+            )
+        else:
+            assert sample.selected_ids is None
+            verdict = ev.VERDICT_NOT_ASSESSABLE
+            replay_reason = (
+                "replay evidence absent: 25 eligible candidate(s) "
+                f"at trusted commit {COMMIT!r} < registered N {expected_n}"
+            )
+
+        direct = ev.criterion_f(evidence=evidence)
+        queue_report = ev.evaluate_queues(_a_to_e_green_queue()[:1], f_evidence=evidence)
+        (queue,) = queue_report.queues
+        assert queue.promotion[-1] == direct
+        assert direct.verdict == verdict
+
+        payload = report.canonical_report_json(report.report_json_value(queue_report))
+        serialized = json.loads(payload)["queues"][0]["promotion"][-1]
+        assert serialized == {"key": "F", "verdict": verdict, "reasons": list(direct.reasons)}
+        assert (
+            f"replay registration (R2) fixes N {expected_n}, seed -{decimal_magnitude}, "
+            f"rule {registration.rule_version}, and source SHA-256 {registration.source_sha256}"
+        ) in serialized["reasons"]
+        assert replay_reason in serialized["reasons"]
+        assert evidence.replay_registration is registration
+        assert type(registration.sample_n) is int and registration.sample_n == sample_n
+        assert type(registration.seed) is int and registration.seed == seed
+        assert sys.get_int_max_str_digits() == 0
 
 
 def test_registered_replay_does_not_fall_back_to_an_earlier_trusted_scan():
