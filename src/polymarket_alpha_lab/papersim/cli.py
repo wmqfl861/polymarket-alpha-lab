@@ -604,7 +604,7 @@ def _jsonify(value):
 
 
 def _open_readonly_connection(args, *, label: str):
-    """Read-only source connection through the reviewed papersim adapter.
+    """Source connection through the reviewed papersim adapter.
 
     ``--managed`` opens the project-private managed application face
     (its DSN already passed the single audited local validator inside
@@ -612,11 +612,24 @@ def _open_readonly_connection(args, *, label: str):
     explicit DSN for an isolated/throwaway cluster validated by the
     same single audited validator. This module opens no connection
     itself and never reads the process environment.
+
+    Autocommit is enabled on the returned connection so bare SELECTs
+    (registry reads, snapshot lookups, identity probes) never open an
+    implicit transaction; every ``with conn.transaction():`` block in
+    the store writers is then the OUTERMOST real transaction and its
+    commit persists (MO-6 code review finding 3: without this, any bare
+    SELECT between connection open and the first write block degrades
+    all subsequent write blocks to savepoints inside that implicit
+    transaction, and ``finally: connection.close()`` rolls back
+    everything while the CLI still prints success).
     """
     from polymarket_alpha_lab.papersim import store_psycopg
     if args.managed:
-        return store_psycopg.connect_managed(Path(args.repo_root))
-    return store_psycopg.connect_explicit(args.dsn, label=label)
+        connection = store_psycopg.connect_managed(Path(args.repo_root))
+    else:
+        connection = store_psycopg.connect_explicit(args.dsn, label=label)
+    connection.autocommit = True
+    return connection
 
 
 def _fetch_rows(conn, sql: str) -> list[dict]:
