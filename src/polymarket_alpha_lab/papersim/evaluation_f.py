@@ -3814,15 +3814,24 @@ def _cash_number(value: Decimal | float | int | None) -> str:
     return "not recorded" if value is None else str(value)
 
 
+def _format_replay_integer(value: int) -> str:
+    """Use exact hexadecimal if the interpreter limits decimal conversion."""
+    try:
+        return str(value)
+    except ValueError:
+        return hex(value)
+
+
 def _report_replay(
     ledger: _LedgerEvidence, failures: list[str], shortfalls: list[str], reasons: list[str],
     *, seed: int, sample_n: int,
 ) -> None:
     registration = ledger.evidence.replay_registration
     registered = isinstance(registration, FReplayRegistration)
+    sample_size = _format_replay_integer(sample_n)
     if registered:
         reasons.append(
-            f"replay registration (R2) fixes N {sample_n}, seed {seed}, "
+            f"replay registration (R2) fixes N {sample_size}, seed {_format_replay_integer(seed)}, "
             f"rule {registration.rule_version}, and source SHA-256 {registration.source_sha256}"
         )
     sample = _draw_replay_sample(ledger, seed, sample_n)
@@ -3838,7 +3847,7 @@ def _report_replay(
     if sample.selected_ids is None:
         shortfalls.append(
             f"replay evidence absent: {len(sample.eligible_ids)} eligible candidate(s) "
-            f"at trusted commit {sample.trusted_commit!r} < registered N {sample_n}"
+            f"at trusted commit {sample.trusted_commit!r} < registered N {sample_size}"
         )
         return
     results = ledger.evidence.replay_agreements

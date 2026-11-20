@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from collections import Counter
 from contextlib import nullcontext
 from dataclasses import FrozenInstanceError, replace
@@ -827,6 +828,92 @@ def test_registered_replay_insufficient_pool_uses_registered_n():
     assert (
         f"replay evidence absent: 25 eligible candidate(s) at trusted commit {COMMIT!r} < registered N 26"
     ) in _assert_replay_verdict(evidence, ev.VERDICT_NOT_ASSESSABLE)
+
+
+@pytest.fixture(params=["criterion_f", "evaluate_queues"])
+def registered_replay_entry_point(request):
+    if request.param == "criterion_f":
+        return ev.criterion_f
+
+    def evaluate_queue(evidence):
+        (queue,) = ev.evaluate_queues(
+            _a_to_e_green_queue()[:1], f_evidence=evidence,
+        ).queues
+        return queue.promotion[-1]
+
+    return evaluate_queue
+
+
+@pytest.fixture
+def integer_above_decimal_digit_limit():
+    limit = sys.get_int_max_str_digits()
+    if limit == 0:
+        pytest.skip("the interpreter has no decimal conversion limit")
+    return 10**limit
+
+
+@pytest.mark.parametrize("sign", [1, -1], ids=["positive", "negative"])
+def test_registered_replay_reports_extreme_signed_seed(
+    registered_replay_entry_point, integer_above_decimal_digit_limit, sign,
+):
+    seed = sign * integer_above_decimal_digit_limit
+    registration = replace(_replay_registration(), seed=seed)
+    evidence = _replay_evidence(replay_registration=registration)
+    sample = draw_replay_sample(evidence)
+    assert sample == draw_replay_sample(evidence, seed=seed, sample_n=3)
+    assert sample.selected_ids is not None
+    assert len(sample.selected_ids) == 3
+    evidence = replace(evidence, replay_agreements=dict.fromkeys(sample.selected_ids, True))
+
+    limit = sys.get_int_max_str_digits()
+    result = registered_replay_entry_point(evidence)
+    assert sys.get_int_max_str_digits() == limit
+    assert result.key == "F"
+    assert result.verdict == ev.VERDICT_PASS
+    assert (
+        f"replay registration (R2) fixes N 3, seed {hex(seed)}, "
+        f"rule {registration.rule_version}, and source SHA-256 {registration.source_sha256}"
+    ) in result.reasons
+
+
+def test_registered_replay_reports_extreme_n_when_pool_is_insufficient(
+    registered_replay_entry_point, integer_above_decimal_digit_limit,
+):
+    sample_n = integer_above_decimal_digit_limit
+    registration = replace(_replay_registration(seed=0), sample_n=sample_n)
+    evidence = _replay_evidence(replay_registration=registration)
+    sample = draw_replay_sample(evidence)
+    assert sample == draw_replay_sample(evidence, sample_n=sample_n, seed=0)
+    assert len(sample.eligible_ids) == 25
+    assert sample.selected_ids is None
+
+    limit = sys.get_int_max_str_digits()
+    result = registered_replay_entry_point(evidence)
+    assert sys.get_int_max_str_digits() == limit
+    assert result.key == "F"
+    assert result.verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert (
+        f"replay registration (R2) fixes N {hex(sample_n)}, seed 0, "
+        f"rule {registration.rule_version}, and source SHA-256 {registration.source_sha256}"
+    ) in result.reasons
+    assert (
+        "replay evidence absent: 25 eligible candidate(s) "
+        f"at trusted commit {COMMIT!r} < registered N {hex(sample_n)}"
+    ) in result.reasons
+
+
+def test_registered_replay_marks_extreme_negative_n_as_missing_evidence(
+    registered_replay_entry_point, integer_above_decimal_digit_limit,
+):
+    registration = replace(_replay_registration(), sample_n=-integer_above_decimal_digit_limit)
+    evidence = _replay_evidence(replay_registration=registration)
+    sample = draw_replay_sample(evidence)
+    assert sample.selected_ids is None
+    assert sample.shortfalls == ("replay registration sample_n must be a positive integer (R2)",)
+    result = registered_replay_entry_point(evidence)
+    assert result.key == "F"
+    assert result.verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert sample.shortfalls[0] in result.reasons
 
 
 def test_registered_replay_does_not_fall_back_to_an_earlier_trusted_scan():
