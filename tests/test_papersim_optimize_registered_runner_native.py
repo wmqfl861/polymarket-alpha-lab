@@ -1338,9 +1338,17 @@ def test_native_unavailable_database_does_not_seal_timeout(archive, tmp_path):
         _wait_path(barrier, process)
         timing = json.loads(clock.read_bytes())
         _advance_past(timing['compute'])
-        with _connect(_rebind_database(OWNER_DSN, name)) as owner:
-            pid = json.loads(session.read_bytes())
-            assert owner.execute('SELECT pg_terminate_backend(%s, 500)', (pid,)).fetchone()[0]
+        pid = json.loads(session.read_bytes())
+        with _worker_connection(name) as controller:
+            terminated = controller.execute(
+                'SELECT pg_terminate_backend(pid, 500) FROM pg_catalog.pg_stat_activity '
+                'WHERE pid = %s AND pid <> pg_backend_pid() '
+                'AND datname = %s AND datname = current_database() '
+                "AND current_user = 'pal_app' AND usename = current_user "
+                "AND backend_type = 'client backend'",
+                (pid, name),
+            ).fetchall()
+            assert terminated == [(True,)]
         barrier.with_suffix('.release').touch()
         failed = _reply(process, 1)
     assert failed['error_code'] == 'papersim_optimize_transport_failure'
@@ -1581,7 +1589,10 @@ def test_native_cli_rejects_stale_rollback_judgment(judged_rollback, change):
         assert adapter.load_all_role_events(fresh) == histories
         assert adapter.load_promotion_decisions(fresh, lineage) == decisions
     status = _policy_cli(archive, 'status', '--lineage', lineage, '--config', str(config))
-    assert status['lineages'][lineage]['initialized'] is True
+    rows = status['lineages']
+    assert isinstance(rows, list)
+    assert [row['lineage'] for row in rows] == [lineage]
+    assert rows[0]['initialized'] is True
 
 
 @pytest.mark.parametrize('manual', [False, True])
