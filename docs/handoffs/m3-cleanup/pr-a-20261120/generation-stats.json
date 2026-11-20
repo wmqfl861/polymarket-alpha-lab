@@ -1,0 +1,40 @@
+{
+ "dynamic_reference_resolutions": {
+  "call_sites": 39,
+  "files": 25,
+  "resolved": 39,
+  "status_counts": {
+   "RESOLVED_MIXED_PER_INSTANCE": 7,
+   "RESOLVED_RETAINED_ONLY": 11,
+   "RESOLVED_SINGLE_BATCH": 21
+  },
+  "unresolved": 0,
+  "unresolved_keys": []
+ },
+ "held_subtracted_rows": 22,
+ "protected_assertions": {
+  "fails": [],
+  "pass": 21,
+  "rows": 21
+ },
+ "test_retirement_nodeids": {
+  "KEEP_MANDATED_SHARED_CONFLICT": 25,
+  "KEEP_NOT_A_NODEID": 317,
+  "KEEP_PROPOSAL": 2146,
+  "RETIRE_PROPOSAL": 6252,
+  "files_delete_full": 796,
+  "files_nodeid_candidate": 317,
+  "files_shared_conflict": 3,
+  "missing_files": []
+ },
+ "zero_dependency_scan": {
+  "excluded": 1116,
+  "files_scanned": 2202,
+  "files_with_b1_function_scope": 0,
+  "files_with_b1_module_scope": 0,
+  "files_with_b1_string_refs": 0,
+  "files_with_dangling": 0,
+  "missing_excluded": [],
+  "parse_errors": []
+ }
+}
