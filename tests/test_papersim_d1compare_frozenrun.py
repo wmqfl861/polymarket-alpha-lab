@@ -16,11 +16,13 @@ import datetime
 import hashlib
 import io
 import json
+import os
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -795,6 +797,358 @@ def test_execute_designated_chain_refuses_without_gates(
     # even with gates recorded, this pass wires no executor
     assert error.value.code == "frozen_run_executor_not_wired"
     assert not list(tmp_path.iterdir())
+
+
+# ---------------------------------------------------------------------------
+# Frozen-input preflight through the ordinary CLI and an isolated PostgreSQL
+# ---------------------------------------------------------------------------
+
+
+_PREFLIGHT_COMMAND = "run-frozen-preflight"
+_CAPTURE_PROCESS = """\
+from tests.test_papersim_d1compare_journal import _start_fixture_capture_process
+_start_fixture_capture_process(with_failed_page=WITH_FAILED_PAGE)
+"""
+_INSPECT_PREFLIGHT = """\
+import hashlib, json, sys
+from pathlib import Path
+from polymarket_alpha_lab.papersim import store_psycopg
+root, operation = Path(sys.argv[1]), sys.argv[2]
+with store_psycopg.connect_managed(root) as connection:
+    events = connection.execute(
+        "SELECT attempt, phase, command, queue_id, scheduled_for, config_digest, "
+        "input_evidence, output_evidence, error_code, scan_id "
+        "FROM papersim.command_run_events WHERE operation_key=%s ORDER BY run_event_id",
+        (operation,),
+    ).fetchall()
+    documents = {}
+    for row in events:
+        for digest in row[7]:
+            kind, saved = connection.execute(
+                "SELECT kind, content FROM papersim.snapshots WHERE content_sha256=%s", (digest,),
+            ).fetchone()
+            assert hashlib.sha256(saved).hexdigest() == digest
+            record = json.loads(saved)
+            documents[kind] = record
+            for observed in record.get("requests", []):
+                raw_sha = observed["content_sha256"]
+                if raw_sha is None:
+                    assert observed["byte_length"] is None
+                    continue
+                raw, size = connection.execute(
+                    "SELECT content,byte_length FROM papersim.snapshots WHERE content_sha256=%s", (raw_sha,),
+                ).fetchone()
+                assert len(raw) == size == observed["byte_length"]
+                assert hashlib.sha256(raw).hexdigest() == raw_sha
+    report = {"events": events, "documents": documents}
+    report["business"] = {
+        name: connection.execute("SELECT count(*) FROM papersim." + name).fetchone()[0]
+        for name in ("scan_runs", "candidates", "entries", "candidate_marks", "market_outcomes",
+                     "settlements", "bankroll_events")
+    }
+    report["scheduled_non_capture_events"] = connection.execute(
+        "SELECT count(*) FROM papersim.command_run_events "
+        "WHERE command <> 'capture-inputs' AND scheduled_for IS NOT NULL"
+    ).fetchone()[0]
+print(json.dumps(report, default=str))
+"""
+
+
+def _preflight_fault_script(phase, *, after_commit):
+    when = "after" if after_commit else "before"
+    return f"""\
+import os, runpy, sys
+from polymarket_alpha_lab.papersim.d1compare import frozenexec
+original = frozenexec._event
+def deny_child(event, _arguments):
+    if event in ("subprocess.Popen", "os.fork", "os.posix_spawn", "os.system"):
+        raise AssertionError("preflight started a child")
+sys.addaudithook(deny_child)
+def event(connection, *args, **kwargs):
+    match = args[3] == {phase!r}
+    if match and {when!r} == "before":
+        os._exit(83)
+    result = original(connection, *args, **kwargs)
+    if match and {when!r} == "after":
+        pending.add(id(connection))
+    return result
+pending = set()
+from contextlib import contextmanager
+original_managed = frozenexec.frozenrun._managed_archive
+class Connection:
+    def __init__(self, connection):
+        self.connection = connection
+    def __getattr__(self, name):
+        return getattr(self.connection, name)
+    @contextmanager
+    def transaction(self):
+        with self.connection.transaction():
+            yield
+        if id(self) in pending:
+            os._exit(84)
+@contextmanager
+def managed(root, operation):
+    with original_managed(root, operation) as connection:
+        yield Connection(connection) if operation == "preflight" else connection
+frozenexec._event = event
+frozenexec.frozenrun._managed_archive = managed
+cli = sys.argv.pop(1)
+runpy.run_path(cli, run_name="__main__")
+"""
+
+
+def test_preflight_gamma_readback_keeps_late_observation_and_captured_only_scope():
+    from polymarket_alpha_lab.papersim.d1compare import frozenexec, journal
+    from tests.test_papersim_d1compare_journal import _CONDITION, _GAMMA_PAGE
+
+    cutoff = datetime.datetime(2026, 11, 20, tzinfo=UTC)
+    received = cutoff + datetime.timedelta(seconds=1)
+    request = {
+        "sequence": 7, "status": "late", "source_time_status": "receipt_only",
+        "source_observed_at": None, "request_meta": {"query": {"tag_slug": "nba"}},
+    }
+    entry = journal.capture("https://gamma-api.polymarket.com/events", received, {}, _GAMMA_PAGE)
+    page, observations = frozenexec._gamma_observations(request, entry, cutoff)
+    assert page["page_status"] == "partly_indexed"
+    (market,) = observations
+    assert market["request_sequence"] == 7 and market["condition_id"] == _CONDITION
+    assert market["scope_class"] == "captured_only" and market["economic_direction"] is None
+    assert market["page_sha256"] == hashlib.sha256(_GAMMA_PAGE).hexdigest()
+    assert market["contract"]["description"] == "Overtime included."
+
+
+@pytest.mark.parametrize(("mutation", "readback"), [
+    ("asset_id", "book_identity_mismatch"), ("market", "book_identity_mismatch"),
+    ("timestamp", "book_source_clock_unproved"), ("price", "invalid_book_payload"),
+])
+def test_preflight_book_refuses_unbound_bytes_clock_or_level(mutation, readback):
+    from polymarket_alpha_lab.papersim.d1compare import frozenexec, journal
+    from tests.test_papersim_d1compare_journal import _CONDITION, STAMP, _book_bytes
+
+    payload = json.loads(_book_bytes("111", STAMP))
+    if mutation == "price":
+        payload["asks"][0]["price"] = "1.01"
+    else:
+        payload[mutation] = {"asset_id": "222", "market": "0x" + "b" * 64,
+                             "timestamp": str(int(STAMP.timestamp() * 1000) - 1)}[mutation]
+    cutoff = STAMP + datetime.timedelta(seconds=2)
+    received = STAMP + datetime.timedelta(seconds=1)
+    entry = journal.capture("https://clob.polymarket.com/book?token_id=111",
+                            received, {}, json.dumps(payload).encode())
+    requests = {8: {"source_kind": "polymarket-clob", "request_meta": {"query": {"token_id": "111"}},
+                    "utc_fetched_at": received.isoformat(), "source_observed_at": STAMP.isoformat(),
+                    "content_sha256": entry.content_sha256, "status": "received"}}
+    target = {"request_sequence": 8, "token_id": "111", "condition_id": _CONDITION, "reason_code": None}
+    result = frozenexec._book_target(target, requests, {8: entry}, cutoff)
+    assert result["readback_status"] == readback
+    assert result["usable_for_decision"] is None
+
+
+def test_preflight_recovery_refuses_a_same_operation_binding_conflict():
+    from polymarket_alpha_lab.papersim import store
+    from polymarket_alpha_lab.papersim.d1compare import frozenexec
+
+    operation = "d1:frozen-preflight:v1:" + "a" * 64
+    binding = {"manifest_sha256": "b" * 64, "batch_sha256": "c" * 64}
+
+    class ConflictingEvent:
+        def execute(self, _sql, args):
+            assert args == (operation,)
+            return self
+
+        def fetchall(self):
+            return [(store.command_run_event_key(operation, 1, "STARTED"), 1, "STARTED",
+                     _PREFLIGHT_COMMAND, None, None, datetime.datetime.now(UTC), "a" * 64,
+                     [binding["manifest_sha256"], "d" * 64], [], None, None)]
+
+    with pytest.raises(frozenrun.FrozenRunError) as error:
+        frozenexec._existing(ConflictingEvent(), operation, binding)
+    assert error.value.code == "frozen_preflight_receipt_conflict"
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux" or os.environ.get("POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES") != "1",
+    reason="explicit Linux native PostgreSQL proof is opt-in",
+)
+def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp_path):
+    from polymarket_alpha_lab.papersim import snapshots, store, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+    from tests.test_papersim_d1compare_archive_native import (
+        _cli, _isolated_project, _process_env, _receipt, _refused,
+    )
+    from tests.test_papersim_d1compare_journal import _CONDITION, _GAMMA_PAGE
+
+    with _isolated_project(tmp_path) as project:
+        staging = tmp_path / "caller-stage"
+        stage = _receipt(_cli(project, "stage", staging, "--leg", "all"))
+        assert set(stage["legs"]) == {"soccer", "crypto"}
+        cli = str(REPO_ROOT / "tools/d1_compare.py")
+        before = datetime.datetime.now(UTC)
+        start, end = before - datetime.timedelta(minutes=1), before + datetime.timedelta(minutes=5)
+
+        def process(source, *args):
+            return subprocess.run(
+                [sys.executable, "-B", "-c", source, *args], cwd=REPO_ROOT,
+                env=_process_env(project), capture_output=True, timeout=90,
+            )
+
+        def capture(window_start, *, failed_page=False):
+            result = process(
+                _CAPTURE_PROCESS.replace("WITH_FAILED_PAGE", repr(failed_page)),
+                "capture-inputs", "--repo-root", str(project.root),
+                "--window-start", window_start.isoformat(), "--window-end", end.isoformat(),
+                "--tag-slug", "soccer", "--tag-slug", "empty", "--allow-public-fetch",
+            )
+            assert result.returncode == 0 and not result.stderr, result.stderr
+            return json.loads(result.stdout)["batch_sha256"]
+
+        def options(leg, batch, manifest):
+            return ("--preflight", "--leg", leg, "--manifest-sha256", manifest, "--batch-sha256", batch)
+
+        def preflight(leg, batch, manifest=stage["manifest_sha256"]):
+            return _cli(project, "run-frozen", staging, *options(leg, batch, manifest))
+
+        def check_result(result, expected="incomplete"):
+            assert result.returncode == 2 and not result.stderr, result.stderr
+            outcome = json.loads(result.stdout)
+            assert outcome["status"] == expected
+            assert outcome["mode"] == "preflight" and outcome["qualifying"] is False
+            assert outcome["child_started"] is False and outcome["day_credit"] == 0
+            assert outcome["actor"] == "pal_app"
+            assert outcome["receipt_sha256"] and outcome["attempt"] >= 1
+            return outcome
+
+        def inspect(summary):
+            invocation = process(_INSPECT_PREFLIGHT, str(project.root), summary["operation_key"])
+            assert invocation.returncode == 0 and not invocation.stderr, invocation.stderr
+            return json.loads(invocation.stdout)
+
+        batch = capture(start)
+        with ThreadPoolExecutor(max_workers=2) as workers:
+            results = list(workers.map(lambda _: check_result(preflight("soccer", batch)), range(2)))
+        initial, retry = sorted(results, key=lambda result: result["reused"])
+        assert retry == {**initial, "reused": True}
+        assert initial["denominator_sha256"] and initial["denominator_revalidated"] is True
+        assert initial["attempt"] == 1
+        assert initial["readback"] == {"archive": "verified", "capture": "verified"}
+        assert {"frozen_execution_capability_unproved", "registered_comparison_scope_missing",
+                "frozen_gamma_pagination_limit_100", "registered_book_age_policy_missing"} <= set(initial["missing"])
+        read = inspect(initial)
+        assert all(count == 0 for count in read["business"].values())
+        assert read["scheduled_non_capture_events"] == 0
+        assert [(row[0], row[1], row[2]) for row in read["events"]] == [
+            (1, phase, _PREFLIGHT_COMMAND) for phase in ("STARTED", "PREPARED", "FAILED")
+        ]
+        assert all(row[3] is row[4] is row[9] is None for row in read["events"])
+        frozen = read["documents"]["d1_frozen_preflight_denominator"]
+        assert frozen["stage"]["library"]["commit"] == FROZEN_LIBRARIES["soccer"].commit
+        assert len(frozen["stage"]["scripts"]) == len(SOCCER_DESIGNATED)
+        assert frozen["capture_event"]["command"] == "capture-inputs"
+        assert frozen["capture_event"]["attempt"] == 1
+        first, repeated = frozen["market_observations"]
+        assert first["request_sequence"] != repeated["request_sequence"]
+        assert first["page_sha256"] == repeated["page_sha256"] == hashlib.sha256(_GAMMA_PAGE).hexdigest()
+        assert first["path"] == repeated["path"] == "/0/markets/0"
+        assert first["condition_id"] == _CONDITION and first["event_id"] == "event-12"
+        assert first["outcomes"] == ["No", "Yes"] and first["token_ids"] == ["111", "222"]
+        assert first["outcomes_by_token"] == {"111": "no", "222": "yes"}
+        assert set(first["book_request_sequences"]) == {"111", "222"}
+        assert first["scope_class"] == first["final_adoption"] == "unknown"
+        assert first["terms_sha256"]
+        assert frozen["requests"][1]["utc_fetched_at"] < frozen["requests"][2]["utc_fetched_at"]
+        assert {row["raw_asset_id"] for row in frozen["book_targets"]} == {"111", "222"}
+        for book in frozen["book_targets"]:
+            assert book["readback_status"] == "verified" and book["raw_condition_id"] == _CONDITION
+            assert book["ladder_status"] == "one_side_empty"
+            assert book["source_observed_at"] < book["utc_fetched_at"] <= frozen["decision_as_of"]
+            assert book["freshness_policy_ref"] is book["usable_for_decision"] is None
+        assert frozen["coverage"]["observed_market_lower_bound"] == 1
+        assert frozen["coverage"]["unseen_frozen_market_count"] is None
+        assert frozen["coverage"]["known_comparison_fields"] == 0
+        raw_receipt = read["documents"]["d1_frozen_preflight_receipt"]
+        assert raw_receipt["attempt"] == raw_receipt["binding"]["preflight_version"] == 1
+        assert raw_receipt["terminal_event_key"] == initial["terminal_event_key"]
+
+        ordinary = _cli(project, "run-frozen", staging, "--leg", "soccer",
+                        "--manifest-sha256", stage["manifest_sha256"])
+        _refused(ordinary, "b2_b3_b4_merged_commit")
+        mixed = _cli(project, "run-frozen", staging, *options("soccer", batch, stage["manifest_sha256"]),
+                     "--authorization", str(tmp_path / "absent"))
+        _refused(mixed, "preflight")
+        unavailable = check_result(preflight("soccer", batch, "a" * 64), "failed")
+        assert unavailable["denominator_sha256"] is None
+        assert unavailable["denominator_revalidated"] is False
+        assert unavailable["readback"]["archive"] == "unverified"
+
+        # Both disconnect boundaries use ordinary CLI in a separate process.
+        # The first exits inside the terminal transaction; the second drops
+        # the reply after its actual terminal commit.
+        def fault(leg, wanted_batch, *, after_commit):
+            return process(
+                _preflight_fault_script("FAILED", after_commit=after_commit), cli,
+                "run-frozen", "--repo-root", str(project.root), "--staging-root", str(staging),
+                *options(leg, wanted_batch, stage["manifest_sha256"]),
+            )
+
+        partial_batch = capture(start + datetime.timedelta(seconds=1), failed_page=True)
+        broken = fault("crypto", partial_batch, after_commit=False)
+        assert (broken.returncode, broken.stdout, broken.stderr) == (83, b"", b"")
+        failed_recheck = check_result(_cli(
+            project, "run-frozen", staging, *options("crypto", partial_batch, stage["manifest_sha256"]),
+            "--mirror-root", str(tmp_path / "missing-mirror"),
+        ), "failed")
+        assert failed_recheck["denominator_sha256"] and failed_recheck["denominator_revalidated"] is False
+        assert failed_recheck["attempt"] == 2
+        recovered = check_result(preflight("crypto", partial_batch))
+        assert recovered["attempt"] == 3 and recovered["reused"] is False
+        assert recovered["denominator_sha256"] == failed_recheck["denominator_sha256"]
+        recovered_rows = inspect(recovered)
+        assert [(row[0], row[1]) for row in recovered_rows["events"]] == [
+            (1, "STARTED"), (1, "PREPARED"), (2, "STARTED"), (2, "FAILED"),
+            (3, "STARTED"), (3, "PREPARED"), (3, "FAILED"),
+        ]
+        assert recovered_rows["events"][1][7] == recovered_rows["events"][5][7]
+        gaps = recovered_rows["documents"]["d1_frozen_preflight_denominator"]
+        assert gaps["coverage"]["incomplete_gamma_tags"] == ["soccer"]
+        assert gaps["coverage"]["missing_or_unusable_gamma_sequences"]
+        assert gaps["coverage"]["unseen_a1_market_count"] is None
+        assert gaps["coverage"]["observed_market_lower_bound"] == 1
+        assert recovered["operation_key"] != initial["operation_key"]
+
+        lost = fault("crypto", batch, after_commit=True)
+        assert (lost.returncode, lost.stdout, lost.stderr) == (84, b"", b"")
+        after_loss = check_result(preflight("crypto", batch))
+        assert after_loss["attempt"] == 1 and after_loss["reused"] is True
+        assert len(inspect(after_loss)["events"]) == 3
+        assert after_loss["operation_key"] not in {recovered["operation_key"], initial["operation_key"]}
+
+        # A correctly SHA-addressed copy with a different scope cannot use
+        # the capture success event registered for the original scope.
+        current, _ = acquire.read_capture(repo_root=project.root, batch_sha256=batch)
+        orphan = {**current, "scope": {**current["scope"], "tag_slugs": ["wrong"]}}
+        with store_psycopg.connect_managed(project.root) as connection:
+            copied = snapshots.register_snapshot(connection, snapshots.SnapshotRegistration(
+                acquire._canonical(orphan), "d1_public_capture_manifest", "d1:public-capture:v2",
+                datetime.datetime.fromisoformat(orphan["sealed_at"]), schema_version=2,
+            ))
+        orphan_failure = check_result(preflight("crypto", copied["content_sha256"]), "failed")
+        assert orphan_failure["error_code"] == "frozen_preflight_capture_event_missing"
+        assert orphan_failure["denominator_sha256"] is None
+        assert orphan_failure["readback"] == {"archive": "verified", "capture": "unverified"}
+        assert orphan_failure["terminal_event_key"] == store.command_run_event_key(
+            orphan_failure["operation_key"], 1, "FAILED")
+        altered = {**current, "requests": [{**current["requests"][0], "byte_length": 999},
+                                          *current["requests"][1:]]}
+        with store_psycopg.connect_managed(project.root) as connection:
+            invalid_bytes = snapshots.register_snapshot(connection, snapshots.SnapshotRegistration(
+                acquire._canonical(altered), "d1_public_capture_manifest", "d1:public-capture:v2",
+                datetime.datetime.fromisoformat(altered["sealed_at"]), schema_version=2,
+            ))
+        untrusted = check_result(preflight("crypto", invalid_bytes["content_sha256"]), "failed")
+        assert untrusted["error_code"] == "d1_capture_manifest_request_invalid"
+        assert untrusted["denominator_sha256"] is None
+        assert not list(project.temporary.glob("polymarket-d1-frozen-*/call-*"))
+        assert not staging.exists() or not list(staging.iterdir())
 
 
 # ---------------------------------------------------------------------------

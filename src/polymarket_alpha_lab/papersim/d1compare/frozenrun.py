@@ -125,6 +125,7 @@ __all__ = [
     "manifest_rows",
     "mount_namespace_plan",
     "plan_chain",
+    "preflight_designated_chain",
     "read_staged_archives",
     "restore_archives",
     "sandbox_bindings",
@@ -1732,6 +1733,18 @@ def plan_chain(leg: str, *, mirror_root: Path, staging_root: Path,
             _work=work,
             _leg_manifest=entry,
         )
+
+
+def preflight_designated_chain(leg: str, *, mirror_root: Path, staging_root: Path,
+                               repo_root: Path, manifest_sha256: str,
+                               batch_sha256: str) -> dict[str, Any]:
+    """Verify and record a managed capture without starting frozen execution."""
+    from polymarket_alpha_lab.papersim.d1compare import frozenexec
+
+    return frozenexec.preflight(
+        leg, mirror_root=mirror_root, staging_root=staging_root, repo_root=repo_root,
+        manifest_sha256=manifest_sha256, batch_sha256=batch_sha256,
+    )
 
 
 def execute_designated_chain(leg: str, *, mirror_root: Path, staging_root: Path,
