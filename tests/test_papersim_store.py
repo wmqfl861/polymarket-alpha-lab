@@ -221,7 +221,7 @@ def test_reversal_requires_original_reference():
 
 
 # ---------------------------------------------------------------------------
-# Time-order guards (P3-9)
+# Time-order guards (P3-9) and the FX-34 event-start boundary
 # ---------------------------------------------------------------------------
 
 def test_close_before_decision_is_rejected():
@@ -236,6 +236,62 @@ def test_decision_after_scan_finish_is_rejected():
 
 def test_valid_time_order_passes():
     store.validate_evidence_time_order(at(4), close_observed_at=at(5), scan_finished_at=at(6))
+
+
+def test_close_strictly_before_event_start_is_the_only_close_legal_form():
+    # FX-34 acceptance table: a mark 1 second before the event start may
+    # be a CLOSE; 1 second after may not; AT the start may not (equality
+    # refused -- the boundary is strict).
+    store.validate_evidence_time_order(at(4), close_observed_at=at(5),
+                                       event_start_at=at(5) + timedelta(seconds=1))
+    with pytest.raises(store.PapersimStoreError, match='papersim_evidence_time_order_invalid'):
+        store.validate_evidence_time_order(at(4), close_observed_at=at(5),
+                                           event_start_at=at(4))
+    with pytest.raises(store.PapersimStoreError, match='papersim_evidence_time_order_invalid'):
+        store.validate_evidence_time_order(at(4), close_observed_at=at(5),
+                                           event_start_at=at(5))
+
+
+def test_event_start_boundary_is_keyword_only_and_absent_keeps_old_behavior():
+    # Backward compatibility: callers without FX-26 data pass no boundary
+    # and keep the exact pre-FX-34 behavior (a close after any imagined
+    # "start" is NOT refused here -- whether such a candidate may carry a
+    # CLOSE at all is the writer's hard refusal, proven in the native
+    # suite).
+    store.validate_evidence_time_order(at(4), close_observed_at=at(90))
+    store.validate_evidence_time_order(at(4), close_observed_at=at(90),
+                                       event_start_at=None)
+    with pytest.raises(TypeError):
+        store.validate_evidence_time_order(at(4), at(5), at(6))
+    # A boundary without a close observation checks nothing extra (the
+    # guard governs CLOSE evidence only).
+    store.validate_evidence_time_order(at(4), event_start_at=at(2))
+
+
+def test_submission_rejects_close_at_or_after_the_candidate_event_start():
+    # FX-34 wired through ScanSubmission.validate: a scan submitting its
+    # own CLOSE evidence obeys the same law against the candidate's
+    # FX-26 event_start_at.
+    def close_submission(event_start_at):
+        return store.ScanSubmission(
+            scan=store.ScanRunRecord(team='crypto_eth', started_at=at(0), finished_at=at(6),
+                                     code_commit='b' * 40, schema_version=1, gate_version='g1'),
+            candidates=(candidate(
+                event_start_at=event_start_at,
+                price_evidence=(
+                    evidence(observed_at=at(3), evidence_role='DECISION',
+                             source_kind='gamma_close', source_ref='r'),
+                    evidence(observed_at=at(5), evidence_role='CLOSE',
+                             source_kind='clob_terminal_price', source_ref='t',
+                             last=Decimal('1')),), ),))
+    close_submission(at(6)).validate()  # strictly before the start: legal
+    with pytest.raises(store.PapersimStoreError, match='papersim_evidence_time_order_invalid'):
+        close_submission(at(5)).validate()  # observed AT the start
+    with pytest.raises(store.PapersimStoreError, match='papersim_evidence_time_order_invalid'):
+        close_submission(at(4)).validate()  # observed AFTER the start
+    # No stored event start: the pure layer asserts nothing extra here
+    # (the writer-level hard refusal owns the missing-start case).
+    close_submission(None).validate()
 
 
 def candidate(**overrides):

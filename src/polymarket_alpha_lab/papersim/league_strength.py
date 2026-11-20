@@ -76,6 +76,7 @@ __all__ = [
     "UEFA_COEFFICIENT_REFERENCE_URL",
     "apply_away_haircut",
     "bridge_factor",
+    "kappa_from_report",
     "load_kappa_report",
     "load_kappa_table",
 ]
@@ -266,6 +267,33 @@ def load_kappa_table(path: str) -> LeagueStrengthTable:
     return LeagueStrengthTable(kappa=kappa)
 
 
+def kappa_from_report(payload: Mapping[str, object]) -> LeagueStrengthTable:
+    """Extract a κ table from an in-memory estimation report mapping.
+
+    Pure-payload twin of :func:`load_kappa_report` (MO-5e: the
+    league-bridge family binds already-produced report artifacts
+    without file I/O). ``payload`` is the parsed report object whose
+    ``"kappa"`` member holds the league -> κ mapping; the
+    validation, error messages and immutability guarantees are the
+    file loader's, verbatim. Raises ``ValueError`` when the root is
+    not a mapping, the ``"kappa"`` member is missing or not a
+    mapping, or any κ entry is non-numeric, boolean or non-finite.
+    No network access, no file access.
+    """
+    if not isinstance(payload, Mapping):
+        raise ValueError("league kappa report root must be a JSON object")
+    nested = payload.get("kappa")
+    if not isinstance(nested, Mapping):
+        raise ValueError(
+            'league kappa report must contain a "kappa" JSON object, got '
+            f"{type(nested).__name__}"
+        )
+    kappa: dict[str, float] = {}
+    for league, value in nested.items():
+        kappa[str(league)] = _validated_kappa_entry(league, value)
+    return LeagueStrengthTable(kappa=kappa)
+
+
 def load_kappa_report(path: str) -> LeagueStrengthTable:
     """Load a κ table from a WP-P2b nested estimation report.
 
@@ -282,24 +310,16 @@ def load_kappa_report(path: str) -> LeagueStrengthTable:
 
     This loader extracts the ``"kappa"`` sub-object (the flat
     :func:`load_kappa_table` path stays available for a standalone
-    flat config file). Raises ``ValueError`` when the root is not an
-    object, the ``"kappa"`` member is missing or not an object, or any
-    κ entry is non-numeric, boolean or non-finite. No network access.
+    flat config file); the parsing itself is
+    :func:`kappa_from_report` over the ``json.load`` payload, so the
+    in-memory and file paths share one rule. Raises ``ValueError``
+    when the root is not an object, the ``"kappa"`` member is
+    missing or not an object, or any κ entry is non-numeric,
+    boolean or non-finite. No network access.
     """
     with open(path, "r", encoding="utf-8") as handle:
         payload = json.load(handle)
-    if not isinstance(payload, dict):
-        raise ValueError("league kappa report root must be a JSON object")
-    nested = payload.get("kappa")
-    if not isinstance(nested, dict):
-        raise ValueError(
-            'league kappa report must contain a "kappa" JSON object, got '
-            f"{type(nested).__name__}"
-        )
-    kappa: dict[str, float] = {}
-    for league, value in nested.items():
-        kappa[str(league)] = _validated_kappa_entry(league, value)
-    return LeagueStrengthTable(kappa=kappa)
+    return kappa_from_report(payload)
 
 
 def bridge_factor(

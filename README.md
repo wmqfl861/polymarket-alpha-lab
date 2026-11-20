@@ -1,6 +1,6 @@
 # Polymarket Alpha Lab
 
-> **当前主线是模拟盘（paper-sim）**。M1 工程出口已验收，M2 按 [蓝图 v3](docs/paper-sim/blueprint.md) 继续接线。V1 六个工作包中 WP-01 已完整验收，真实模型研究按 OD-A 处于未激活状态。当前交付状态和证据见 [DELIVERY_PLAN.md](DELIVERY_PLAN.md)。
+> **当前主线是模拟盘（paper-sim）**。M1 工程出口已验收，M2 按 [蓝图 v4](docs/paper-sim/blueprint.md) 继续接线。V1 六个工作包中 WP-01 已完整验收，真实模型研究按 OD-A 处于未激活状态。当前交付状态和证据见 [DELIVERY_PLAN.md](DELIVERY_PLAN.md)。
 
 Polymarket Alpha Lab is a research-first project for finding, scoring, and validating Polymarket markets before any capital is committed.
 

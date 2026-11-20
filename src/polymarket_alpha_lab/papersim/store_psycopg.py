@@ -430,7 +430,7 @@ def _compare_stored(stored: dict, expected: dict, code: str) -> None:
 
 def mark_capture_upsert(conn, capture: CandidateMarkCapture, *, entry_id: int | None = None,
                         close_evidence=None) -> dict:
-    """Write one mark capture atomically (M2 plan section 3.5).
+    """Write one mark capture atomically (M2 plan section 3.5; FX-34).
 
     ``papersim.candidate_marks`` always receives the observation (marks do
     not depend on entries); the entry-level ``papersim.marks`` row is
@@ -440,6 +440,19 @@ def mark_capture_upsert(conn, capture: CandidateMarkCapture, *, entry_id: int | 
     guard against the candidate's decision-time observation. At most one
     CLOSE exists per candidate and per entry; same key + same content
     returns the original ids; changed content is a conflict.
+
+    FX-34 (fix-list section 2): any CLOSE attempt -- a CLOSE sampling
+    kind and/or a CLOSE evidence row -- reads the candidate's FX-26
+    ``papersim.candidates.event_start_at`` and refuses, inside the same
+    transaction, when the stored start is NULL
+    (``papersim_close_event_start_missing``: a candidate without an event
+    start produces no closing price at all) or when the close observation
+    is NOT strictly before the start
+    (``papersim_evidence_time_order_invalid`` via
+    ``store.validate_evidence_time_order``; equality refused). The
+    B2 orchestrator downgrades such observations to PERIODIC before ever
+    reaching this writer; this guard is the independent, fail-closed
+    backstop for any other caller.
     """
     capture.validate()
     if entry_id is not None and type(entry_id) is not int:
@@ -452,6 +465,25 @@ def mark_capture_upsert(conn, capture: CandidateMarkCapture, *, entry_id: int | 
     is_close = capture.sampling_kind == 'CLOSE'
     with conn.transaction():
         cursor = conn.cursor()
+        if is_close or close_evidence is not None:
+            # FX-34 backstop: the boundary comes from the stored candidate
+            # row itself (never from the caller), so a post-start or
+            # start-less CLOSE can never be written through this face.
+            cursor.execute('SELECT event_start_at FROM papersim.candidates '
+                           'WHERE candidate_id = %s', (capture.candidate_id,))
+            boundary_row = cursor.fetchone()
+            if boundary_row is not None:
+                event_start_at = boundary_row[0]
+                if event_start_at is None:
+                    raise PapersimStoreError('papersim_close_event_start_missing')
+                close_observed_at = (close_evidence.observed_at
+                                     if close_evidence is not None
+                                     else capture.observed_at)
+                decision = decision_time_evidence(conn, capture.candidate_id)
+                validate_evidence_time_order(
+                    None if decision is None else decision['observed_at'],
+                    close_observed_at,
+                    event_start_at=event_start_at)
         cursor.execute('SELECT candidate_mark_id, ' + _CANDIDATE_MARK_COLUMNS
                        + ' FROM papersim.candidate_marks WHERE candidate_mark_key = %s',
                        (mark_key,))
@@ -505,10 +537,8 @@ def mark_capture_upsert(conn, capture: CandidateMarkCapture, *, entry_id: int | 
         close_evidence_id = None
         close_evidence_inserted = False
         if close_evidence is not None:
-            decision = decision_time_evidence(conn, capture.candidate_id)
-            if decision is not None:
-                validate_evidence_time_order(decision['observed_at'],
-                                             close_evidence.observed_at)
+            # The P3-9/FX-34 guards (decision order + event-start boundary)
+            # already ran in the CLOSE gate above, inside this transaction.
             key = close_evidence.evidence_key_with(capture.candidate_id)
             cursor.execute('SELECT ' + _DECISION_COLUMNS
                            + ' FROM papersim.candidate_price_evidence WHERE evidence_key = %s',
@@ -530,6 +560,43 @@ def mark_capture_upsert(conn, capture: CandidateMarkCapture, *, entry_id: int | 
             'entry_mark_id': entry_mark_id, 'entry_mark_inserted': entry_mark_inserted,
             'close_evidence_id': close_evidence_id,
             'close_evidence_inserted': close_evidence_inserted}
+
+
+def candidate_capture_target(conn, *, scan_id=None, scan_operation_key=None,
+                             candidate_key: str) -> dict | None:
+    """Resolve ONE mark-pack reference to its stored candidate (M2 B2).
+
+    Exactly one of ``scan_id`` / ``scan_operation_key`` must be given: a
+    candidate key is unique only inside its scan, so the pack names the
+    producing scan either by id or by the B1 scheduling identity
+    (``papersim.scan_runs.operation_key``, unique). The read returns
+    ``{'candidate_id': int, 'event_start_at': datetime | None}`` -- the
+    FX-26 column the orchestrator classifies PERIODIC vs CLOSE against
+    (FX-34) -- or ``None`` when no such candidate exists (the caller
+    fails loudly; marks are never attributed by guesswork). Read-only
+    SELECT; the write side of B2 goes through ``mark_capture_upsert``.
+    """
+    if type(candidate_key) is not str or not candidate_key:
+        raise PapersimStoreError('papersim_candidate_key_invalid')
+    if (scan_id is None) == (scan_operation_key is None):
+        raise PapersimStoreError('papersim_capture_scan_ref_invalid')
+    with conn.transaction():
+        cursor = conn.cursor()
+        if scan_id is not None:
+            if type(scan_id) is not int:
+                raise PapersimStoreError('papersim_scan_id_invalid')
+            cursor.execute('SELECT candidate_id, event_start_at FROM papersim.candidates '
+                           'WHERE scan_id = %s AND candidate_key = %s',
+                           (scan_id, candidate_key))
+        else:
+            cursor.execute('SELECT c.candidate_id, c.event_start_at FROM papersim.candidates c '
+                           'JOIN papersim.scan_runs s ON s.scan_id = c.scan_id '
+                           'WHERE s.operation_key = %s AND c.candidate_key = %s',
+                           (scan_operation_key, candidate_key))
+        row = cursor.fetchone()
+    if row is None:
+        return None
+    return {'candidate_id': int(row[0]), 'event_start_at': row[1]}
 
 
 def settlement_record(conn, record: SettlementRecord) -> dict:

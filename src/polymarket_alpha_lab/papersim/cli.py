@@ -893,6 +893,42 @@ def _cmd_run_scan(args) -> int:
     return 0
 
 
+def _cmd_capture_marks(args) -> int:
+    # B2 (05 section 2 / FX-34): every heavy import stays inside the
+    # function body so the CLI startup module count is untouched
+    # (FX-20; tests/test_init_lazy_imports.py pins the limit).
+    import datetime as _datetime
+
+    from polymarket_alpha_lab.papersim import capture
+
+    try:
+        config_path = Path(args.config)
+        try:
+            document = json.loads(config_path.read_text(encoding="utf-8"))
+        except OSError as error:
+            raise ValueError(f"papersim_capture_config_unreadable: {config_path}") from error
+        config = capture.config_from_mapping(document)
+        packs = capture.load_mark_packs(config, base_dir=config_path.parent)
+        connection = _open_readonly_connection(args, label="PAPERSIM_CAPTURE_PG_DSN")
+        try:
+            result = capture.run_capture(
+                config,
+                packs,
+                conn=connection,
+                repo_root=args.repo_root,
+                now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
+                operation_key=args.operation_key,
+                attempt=args.attempt,
+            )
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"capture-marks: FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, sort_keys=True, allow_nan=False))
+    return 0
+
+
 def _cmd_settle(args) -> int:
     # B3 (05 section 2 / 80.8): heavy imports stay inside the handler
     # (FX-20; tests/test_init_lazy_imports.py pins the startup cap).
@@ -1058,6 +1094,56 @@ def _build_parser() -> argparse.ArgumentParser:
         "--attempt", type=int, default=1,
         help="attempt number of this operation for the run receipts (default: 1)",
     )
+    capture_parser = subparsers.add_parser(
+        "capture-marks",
+        help="B2 mark capture: periodic and close marks for ALL candidates",
+        description=(
+            "Capture periodic and close marks for every recorded candidate "
+            "(plan 05 section 2 / DELIVERY_PLAN 80.8; FX-34): refuse a dirty "
+            "worktree (FX-03), register each mark pack's raw bytes in "
+            "papersim.snapshots before normalization, classify every "
+            "observation against the candidate's FX-26 event_start_at (a "
+            "CLOSE must be observed strictly before the event start -- an "
+            "NBA full-game mark during overtime stays PERIODIC; a candidate "
+            "without an event start produces no CLOSE), and write "
+            "candidate_marks rows (plus CLOSE price evidence) through "
+            "mark_capture_upsert. Marks come from prepared pack files named "
+            "by the capture config; the command itself opens no network "
+            "session. The coverage summary (candidates seen, marks written, "
+            "CLOSE eligible, downgraded-to-periodic, missing event start, "
+            "missing quote) goes to the SUCCEEDED receipt and stdout. "
+            "Paper-only: no order, account or credential surface."
+        ),
+    )
+    capture_parser.add_argument(
+        "--config", required=True,
+        help="capture config JSON (team, operator, packs: prepared-mark "
+             "pack paths relative to the config file)",
+    )
+    capture_source = capture_parser.add_mutually_exclusive_group(required=True)
+    capture_source.add_argument(
+        "--managed", action="store_true",
+        help="write through the project-private managed application instance",
+    )
+    capture_source.add_argument(
+        "--dsn",
+        help="explicit DSN for an isolated/throwaway cluster "
+             "(validated by the single audited local DSN validator)",
+    )
+    capture_parser.add_argument(
+        "--repo-root", default=".",
+        help="repository root for the clean-worktree commit check and the "
+             "managed instance (default: .)",
+    )
+    capture_parser.add_argument(
+        "--operation-key", default=None,
+        help="stable scheduling identity of this unattended run (default: "
+             "capture-marks|<team>|<started UTC stamp>|b2)",
+    )
+    capture_parser.add_argument(
+        "--attempt", type=int, default=1,
+        help="attempt number of this operation for the run receipts (default: 1)",
+    )
     settle_parser = subparsers.add_parser(
         "settle",
         help="B3 paper settlement: per-entry natural/voided settlement from captured evidence",
@@ -1130,6 +1216,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_run_scan(args)
     if args.command == "settle":
         return _cmd_settle(args)
+    if args.command == "capture-marks":
+        return _cmd_capture_marks(args)
     parser.error(f"unknown command {args.command!r}")  # pragma: no cover
     raise AssertionError("unreachable")  # pragma: no cover
 

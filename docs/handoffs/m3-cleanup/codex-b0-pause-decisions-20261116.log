@@ -1263,7 +1263,7 @@ non-overlapping files, one independent reviewer per change.
 ## Current owner override: Linux-only V1 platform (2026-09-27)
 
 Owner instruction (verbatim): "本机不能做虚拟架构，你就直接再linux开发不行么？为什么要在windows开发？以后也在linux用，不要管windows了". Linux is now the sole
-V1 development and delivery platform: development resumes on ubuntu@166.1.232.93;
+V1 development and delivery platform: development resumes on ubuntu@SERVER_HOST_REDACTED;
 the release tuple is Ubuntu 26.04.1 x86_64 / Python 3.12.14 / a pinned PG18 build;
 the WP-02 probe boundary is a rootless Linux namespace environment (no Windows
 Sandbox, no Hyper-V, no OS upgrade); Windows-specific acceptance obligations are
