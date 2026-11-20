@@ -910,6 +910,110 @@ def _cmd_capture_marks(args) -> int:
     return 0
 
 
+def _cmd_optimize(args) -> int:
+    # MO-6 (plan 05 node MO-6 / plan r2 section 1.3): every heavy
+    # import stays inside the function bodies so the CLI startup module
+    # count is untouched (FX-20; tests/test_init_lazy_imports.py pins
+    # the 20-module limit; measured baseline 19).
+    import datetime as _datetime
+    import json as _json
+
+    from polymarket_alpha_lab.papersim.optimize import runner as _runner
+
+    try:
+        if args.optimize_command == "families":
+            print(_json.dumps(_runner.families_summary(), sort_keys=True))
+            return 0
+        if args.optimize_command == "run":
+            # Read and validate the input document BEFORE any
+            # connection: a malformed input fails fast without ever
+            # touching the cluster.
+            from pathlib import Path as _Path
+
+            document = _json.loads(
+                _Path(args.input).read_text(encoding="utf-8")
+            )
+            inputs = _runner.resolve_run_inputs(document)
+        connection = _open_readonly_connection(
+            args, label="PAPERSIM_OPTIMIZE_PG_DSN"
+        )
+        # The store layer's writers wrap every statement group in
+        # ``conn.transaction()``; on a NON-autocommit psycopg connection
+        # those blocks degrade to savepoints inside one long implicit
+        # transaction and the final ``close()`` rolls everything back.
+        # The native fixtures and the migration applier open their
+        # managed connections in autocommit for exactly this reason —
+        # the optimize writer does the same, so each store-level
+        # transaction commits for real.
+        connection.autocommit = True
+        try:
+            if args.optimize_command == "init":
+                from polymarket_alpha_lab.papersim import scan as _scan
+                from polymarket_alpha_lab.papersim import store_psycopg
+                from polymarket_alpha_lab.papersim.optimize.families import (
+                    iter_family_ids as _iter_family_ids,
+                )
+
+                known = _iter_family_ids()
+                wanted = tuple(args.families) if args.families else known
+                unknown = [name for name in wanted if name not in known]
+                if unknown:
+                    raise ValueError(
+                        f"papersim_optimize_family_unknown:{sorted(unknown)}"
+                    )
+                effective_at = (
+                    _datetime.datetime.fromisoformat(
+                        args.effective_at.replace("Z", "+00:00")
+                    )
+                    if args.effective_at
+                    else _datetime.datetime.now(_datetime.UTC)
+                )
+                code_commit = _scan.require_clean_worktree(args.repo_root)
+                report = store_psycopg.initialize_registry(
+                    connection,
+                    families=[_runner.family_singleton(name) for name in wanted],
+                    actor=args.actor,
+                    code_commit=code_commit,
+                    effective_at=effective_at,
+                )
+                print(_json.dumps(report, sort_keys=True, default=str))
+                return 0
+            if args.optimize_command == "run":
+                result = _runner.run_and_record(
+                    conn=connection,
+                    repo_root=args.repo_root,
+                    family_id=args.family,
+                    as_of=_datetime.datetime.fromisoformat(
+                        args.as_of.replace("Z", "+00:00")
+                    ),
+                    inputs=inputs,
+                    seed=args.seed,
+                    budget_seconds=args.budget_seconds,
+                    max_trials=args.max_trials,
+                    operation_key=args.operation_key,
+                    attempt=args.attempt,
+                    now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
+                    dry_run=args.dry_run,
+                )
+                print(_json.dumps(result, sort_keys=True, default=str))
+                return 0
+            if args.optimize_command == "status":
+                report = _runner.status_report(connection, lineage_filter=args.lineage)
+                print(_json.dumps(report, sort_keys=True, default=str))
+                return 0
+            parser_error_unknown_optimize(args.optimize_command)
+            return 2
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"optimize: FAIL: {error}", file=sys.stderr)
+        return 1
+
+
+def parser_error_unknown_optimize(name: str) -> None:
+    raise ValueError(f"papersim_optimize_command_unknown:{name!r}")
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="papersim",
@@ -1096,6 +1200,157 @@ def _build_parser() -> argparse.ArgumentParser:
         "--attempt", type=int, default=1,
         help="attempt number of this operation for the run receipts (default: 1)",
     )
+    optimize_parser = subparsers.add_parser(
+        "optimize",
+        help="model auto-optimization: families, registry init, runs, status",
+        description=(
+            "Optimize subcommands (plan 05 node MO-6): families lists the "
+            "model families with baseline specs and search-space summaries; "
+            "init writes every family's baseline spec and initial roles "
+            "idempotently; run performs one historical optimization run "
+            "(receipts, snapshot registration, optimization_runs row, "
+            "candidate registration when the stage-1 gates pass); status "
+            "reports roles, freeze state and recent runs. Paper-only: no "
+            "order, account or credential surface."
+        ),
+    )
+    optimize_subparsers = optimize_parser.add_subparsers(
+        dest="optimize_command", required=True
+    )
+    optimize_subparsers.add_parser(
+        "families",
+        help="list families, baseline specs and search-space summaries "
+             "(no connection, no writes)",
+    )
+    optimize_init = optimize_subparsers.add_parser(
+        "init",
+        help="write every family's baseline spec and initial roles (idempotent)",
+    )
+    optimize_init.add_argument(
+        "--families", nargs="*", default=None,
+        help="subset of family ids to initialize (default: every registered "
+             "family)",
+    )
+    optimize_init.add_argument(
+        "--actor", default="optimize-init",
+        help="actor recorded on the initialization role events (default: "
+             "optimize-init)",
+    )
+    optimize_init.add_argument(
+        "--effective-at", default=None,
+        help="explicit effective time of the initialization batch (default: "
+             "now UTC)",
+    )
+    optimize_init_source = optimize_init.add_mutually_exclusive_group(
+        required=True
+    )
+    optimize_init_source.add_argument(
+        "--managed", action="store_true",
+        help="write through the project-private managed application instance",
+    )
+    optimize_init_source.add_argument(
+        "--dsn",
+        help="explicit DSN for an isolated/throwaway cluster "
+             "(validated by the single audited local DSN validator)",
+    )
+    optimize_init.add_argument(
+        "--repo-root", default=".",
+        help="repository root for the clean-worktree commit check and the "
+             "managed instance (default: .)",
+    )
+    optimize_run = optimize_subparsers.add_parser(
+        "run",
+        help="one historical optimization run (receipts + snapshots + run row)",
+        description=(
+            "Run one stage-1 optimization run over a family's registered "
+            "search space on frozen historical inputs. The holdout window "
+            "and the grid come from the frozen per-family run profile, "
+            "never from CLI knobs; the --input document names the input "
+            "bytes (with digests) and optional budget overrides. "
+            "--dry-run computes everything and writes nothing. Paper-only: "
+            "no order, account or credential surface."
+        ),
+    )
+    optimize_run.add_argument("--family", required=True,
+                              help="family id to optimize")
+    optimize_run.add_argument("--as-of", required=True,
+                              help="the run's fixed data cutoff (ISO-8601)")
+    optimize_run.add_argument(
+        "--input", required=True,
+        help="run input JSON: {'archive_root': ...} for club soccer or "
+             "{'inputs': [{'path', 'kind', 'sha256'?}]}",
+    )
+    optimize_run_source = optimize_run.add_mutually_exclusive_group(
+        required=True
+    )
+    optimize_run_source.add_argument(
+        "--managed", action="store_true",
+        help="write through the project-private managed application instance",
+    )
+    optimize_run_source.add_argument(
+        "--dsn",
+        help="explicit DSN for an isolated/throwaway cluster "
+             "(validated by the single audited local DSN validator)",
+    )
+    optimize_run.add_argument(
+        "--repo-root", default=".",
+        help="repository root for the clean-worktree commit check and the "
+             "managed instance (default: .)",
+    )
+    optimize_run.add_argument(
+        "--seed", type=int, default=20261120,
+        help="random seed of the run (part of the run identity; default: "
+             "20261120)",
+    )
+    optimize_run.add_argument(
+        "--budget-seconds", type=float, default=None,
+        help="override the profile's wall-clock budget in seconds "
+             "(default: the frozen profile budget)",
+    )
+    optimize_run.add_argument(
+        "--max-trials", type=int, default=None,
+        help="override the profile's trial budget (default: the frozen "
+             "profile budget)",
+    )
+    optimize_run.add_argument(
+        "--operation-key", default=None,
+        help="stable scheduling identity of this unattended run (default: "
+             "optimize-run|<family>|<as-of>|mo6)",
+    )
+    optimize_run.add_argument(
+        "--attempt", type=int, default=1,
+        help="attempt number of this operation for the run receipts "
+             "(default: 1)",
+    )
+    optimize_run.add_argument(
+        "--dry-run", action="store_true",
+        help="compute everything, write nothing (byte-identical artifact "
+             "digest on stdout)",
+    )
+    optimize_status = optimize_subparsers.add_parser(
+        "status",
+        help="roles, freeze state and recent runs per lineage (read-only)",
+    )
+    optimize_status.add_argument(
+        "--lineage", default=None,
+        help="restrict the report to one lineage id",
+    )
+    optimize_status_source = optimize_status.add_mutually_exclusive_group(
+        required=True
+    )
+    optimize_status_source.add_argument(
+        "--managed", action="store_true",
+        help="read through the project-private managed application instance",
+    )
+    optimize_status_source.add_argument(
+        "--dsn",
+        help="explicit DSN for an isolated/throwaway cluster "
+             "(validated by the single audited local DSN validator)",
+    )
+    optimize_status.add_argument(
+        "--repo-root", default=".",
+        help="repository root of the managed instance (default: .)",
+    )
     return parser
 
 
@@ -1117,6 +1372,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_run_scan(args)
     if args.command == "capture-marks":
         return _cmd_capture_marks(args)
+    if args.command == "optimize":
+        return _cmd_optimize(args)
     parser.error(f"unknown command {args.command!r}")  # pragma: no cover
     raise AssertionError("unreachable")  # pragma: no cover
 
