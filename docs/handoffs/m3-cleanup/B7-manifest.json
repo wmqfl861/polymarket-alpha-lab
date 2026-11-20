@@ -1,0 +1,3560 @@
+{
+ "baseline_commit": "4c8bec2fdce31fec3a8ec06a6ab93a25e4d7fc69",
+ "batch": "B7",
+ "counts": {
+  "files": 98,
+  "lines": 37446,
+  "root_exports": 9
+ },
+ "dependency_check": {
+  "canonical_order": [
+   "B1",
+   "B2",
+   "B3",
+   "B4",
+   "B5",
+   "B6",
+   "B7",
+   "B8"
+  ],
+  "cross_family_cycles": [],
+  "entry_script_tool_workflow_consumers": {},
+  "k0_dependency_leaks": [],
+  "reasons": [
+   "shared test files with module-scope imports spanning batches (48)",
+   "UNKNOWN dynamic references in test files remaining at this batch (24 files) -- manual review required (plan 3.3 item 6)"
+  ],
+  "retained_src_dependents": [],
+  "unknown_consumers_in_retained_surfaces": [],
+  "unknown_test_references_pending_manual_review": [
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_action_gated_strategy_recommendation_queue_history.py",
+      "kind": "attr:find_spec",
+      "line": 55
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_action_gated_strategy_recommendation_queue_history.py",
+      "kind": "attr:import_module",
+      "line": 57
+     }
+    ],
+    "test": "tests/test_action_gated_strategy_recommendation_queue_history.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "joined('poly', 'mark', 'et_alpha_lab.candidate_decision_base_rate_anchor_score')",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_candidate_decision_base_rate_anchor_score.py",
+      "kind": "attr:import_module",
+      "line": 29
+     }
+    ],
+    "test": "tests/test_candidate_decision_base_rate_anchor_score.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "joined('poly', 'mark', 'et_alpha_lab.candidate_decision_base_rate_drift_score')",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_candidate_decision_base_rate_drift_score.py",
+      "kind": "attr:import_module",
+      "line": 22
+     }
+    ],
+    "test": "tests/test_candidate_decision_base_rate_drift_score.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "case['loader_module']",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_cli_db_connection_cleanup.py",
+      "kind": "attr:import_module",
+      "line": 127
+     }
+    ],
+    "test": "tests/test_cli_db_connection_cleanup.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "f'polymarket_alpha_lab.{module}'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_crypto_btc_evidence_scope.py",
+      "kind": "attr:import_module",
+      "line": 568
+     }
+    ],
+    "test": "tests/test_crypto_btc_evidence_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_env_example_coverage.py",
+      "kind": "attr:import_module",
+      "line": 21
+     }
+    ],
+    "test": "tests/test_env_example_coverage.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "f'polymarket_alpha_lab.{module_name}'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_recommendation_cycle_snapshot_scope.py",
+      "kind": "attr:import_module",
+      "line": 368
+     }
+    ],
+    "test": "tests/test_paper_recommendation_cycle_snapshot_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "full_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_recommendation_integration_boundary_scope.py",
+      "kind": "attr:import_module",
+      "line": 173
+     }
+    ],
+    "test": "tests/test_paper_recommendation_integration_boundary_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_strategy_cycle_report_history_gate_db_row.py",
+      "kind": "attr:import_module",
+      "line": 64
+     }
+    ],
+    "test": "tests/test_paper_strategy_cycle_report_history_gate_db_row.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "f'{PACKAGE_NAME}.probability_event_screen_phase1_boundary_report'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_readonly_boundary_scan.py",
+      "kind": "attr:import_module",
+      "line": 51
+     },
+     {
+      "expr": "f'{PACKAGE_NAME}.strategy_phase1_readiness_aggregator'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_readonly_boundary_scan.py",
+      "kind": "attr:import_module",
+      "line": 69
+     }
+    ],
+    "test": "tests/test_phase1_readonly_boundary_scan.py"
+   },
+   {
+    "count": 4,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 54
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 63
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 79
+     }
+    ],
+    "test": "tests/test_phase1_report_discovery_smoke.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_modules_import_no_io.py",
+      "kind": "attr:import_module",
+      "line": 98
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_modules_import_no_io.py",
+      "kind": "attr:import_module",
+      "line": 111
+     }
+    ],
+    "test": "tests/test_phase1_report_modules_import_no_io.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_psycopg_adapter_cleanup.py",
+      "kind": "attr:import_module",
+      "line": 174
+     }
+    ],
+    "test": "tests/test_psycopg_adapter_cleanup.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_cost_threshold_policy.py",
+      "kind": "attr:find_spec",
+      "line": 26
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_cost_threshold_policy.py",
+      "kind": "attr:import_module",
+      "line": 27
+     }
+    ],
+    "test": "tests/test_research_cost_threshold_policy.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_signal_conflict_report.py",
+      "kind": "attr:find_spec",
+      "line": 34
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_signal_conflict_report.py",
+      "kind": "attr:import_module",
+      "line": 35
+     }
+    ],
+    "test": "tests/test_research_signal_conflict_report.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_probability_path_consistency_v10.py",
+      "kind": "attr:find_spec",
+      "line": 41
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_probability_path_consistency_v10.py",
+      "kind": "attr:import_module",
+      "line": 42
+     }
+    ],
+    "test": "tests/test_strategy_candidate_probability_path_consistency_v10.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_research_risk_register_v10.py",
+      "kind": "attr:find_spec",
+      "line": 30
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_research_risk_register_v10.py",
+      "kind": "attr:import_module",
+      "line": 31
+     }
+    ],
+    "test": "tests/test_strategy_candidate_research_risk_register_v10.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_scenario_balance_score_v2.py",
+      "kind": "attr:find_spec",
+      "line": 30
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_scenario_balance_score_v2.py",
+      "kind": "attr:import_module",
+      "line": 31
+     }
+    ],
+    "test": "tests/test_strategy_candidate_scenario_balance_score_v2.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py",
+      "kind": "attr:find_spec",
+      "line": 42
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py",
+      "kind": "attr:import_module",
+      "line": 43
+     }
+    ],
+    "test": "tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_digest.py",
+      "kind": "attr:find_spec",
+      "line": 39
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_digest.py",
+      "kind": "attr:import_module",
+      "line": 40
+     }
+    ],
+    "test": "tests/test_strategy_candidate_tail_risk_digest.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py",
+      "kind": "attr:find_spec",
+      "line": 42
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py",
+      "kind": "attr:import_module",
+      "line": 43
+     }
+    ],
+    "test": "tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "surface['module_name']",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_supabase_paper_recommendation_report_config.py",
+      "kind": "attr:import_module",
+      "line": 54
+     }
+    ],
+    "test": "tests/test_supabase_paper_recommendation_report_config.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "import_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_team_diagnostics_phase1_boundary.py",
+      "kind": "attr:import_module",
+      "line": 141
+     }
+    ],
+    "test": "tests/test_team_diagnostics_phase1_boundary.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "PRODUCTION_IMPORT",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_team_evaluation_attempt_latest_read_scope.py",
+      "kind": "attr:import_module",
+      "line": 513
+     }
+    ],
+    "test": "tests/test_team_evaluation_attempt_latest_read_scope.py"
+   }
+  ],
+  "verdict": "PAUSE"
+ },
+ "doc_registry_removals": {},
+ "entry_set_ref": "prune-manifest.json#entry_points",
+ "executed": false,
+ "executed_commit": null,
+ "exports_to_retire": [
+  "PaperResearchPacketQualityHistoryTrendConfig",
+  "PaperResearchPacketQualityHistoryTrendGateConfig",
+  "PaperResearchPacketQualityHistoryTrendGateReasonCodeCount",
+  "PaperResearchPacketQualityHistoryTrendGateReport",
+  "PaperResearchPacketQualityHistoryTrendRecurringReasonCodeRow",
+  "PaperResearchPacketQualityHistoryTrendReport",
+  "PaperResearchPacketQualityHistoryTrendStatusRow",
+  "build_paper_research_packet_quality_history_trend_gate_report",
+  "build_paper_research_packet_quality_history_trend_report"
+ ],
+ "family": "paper_",
+ "files": [
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 519,
+   "module": "polymarket_alpha_lab.paper_autonomous_allocation_proposal_db_history_metrics_evaluation_db_row",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_allocation_proposal_db_history_metrics_evaluation_db_row.py",
+   "root_exports": [],
+   "sha256": "1f81a58056c59996dcec21514e2b2c52335abc9c6631e48baf12083934a8e3a8",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_allocation_proposal_db_history_metrics_evaluation_store"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_db_row.py"
+    },
+    {
+     "nodeid": "test_new_db_modules_do_not_import_live_trading_or_network_surfaces",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_schema.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 192,
+   "module": "polymarket_alpha_lab.paper_autonomous_allocation_proposal_db_history_metrics_evaluation_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_allocation_proposal_db_history_metrics_evaluation_psycopg.py",
+   "root_exports": [],
+   "sha256": "795162ff39228fe0b45726d1f7eecd7b8901c2aeac3b8d4775ac8ca730233f13",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "adapter_module",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_psycopg.py"
+    },
+    {
+     "nodeid": "test_new_db_modules_do_not_import_live_trading_or_network_surfaces",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_schema.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 246,
+   "module": "polymarket_alpha_lab.paper_autonomous_allocation_proposal_db_history_metrics_evaluation_store",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_allocation_proposal_db_history_metrics_evaluation_store.py",
+   "root_exports": [],
+   "sha256": "de024a08c232e950a132e70fbfeb096018d5739165248906fb739aebe93a19ac",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_allocation_proposal_db_history_metrics_evaluation_psycopg"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "test_new_db_modules_do_not_import_live_trading_or_network_surfaces",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_schema.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1203,
+   "module": "polymarket_alpha_lab.paper_autonomous_candidate_selection",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_candidate_selection.py",
+   "root_exports": [],
+   "sha256": "329035b9a7930201c17b2b95543aed5c015ed1e57d021b2b789293d02a569f53",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_candidate_selection.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 176,
+   "module": "polymarket_alpha_lab.paper_autonomous_investment_ledger_db_history_health_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_investment_ledger_db_history_health_psycopg.py",
+   "root_exports": [],
+   "sha256": "bf965778e982364a9db5b258c3def459400ffd4091690034f0a59e5477189f39",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_investment_ledger_db_history_health_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 80,
+   "module": "polymarket_alpha_lab.paper_autonomous_investment_ledger_load",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_investment_ledger_load.py",
+   "root_exports": [],
+   "sha256": "22ee53a14adc9ca20c7d8b632f63cb79aa2c9890a38f5c09c58b61b262460563",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "test_load_ledger_reads_broker_execution_records_and_calls_reducer",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_investment_ledger_load.py"
+    },
+    {
+     "nodeid": "test_load_ledger_rejects_duck_typed_broker_records_before_reducer",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_investment_ledger_load.py"
+    },
+    {
+     "nodeid": "test_load_ledger_rejects_non_hard_flagged_broker_records",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_investment_ledger_load.py"
+    },
+    {
+     "nodeid": "test_load_ledger_rejects_bad_reducer_return_type",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_investment_ledger_load.py"
+    },
+    {
+     "nodeid": "test_load_ledger_requires_exact_config_type",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_investment_ledger_load.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_investment_ledger_load_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 580,
+   "module": "polymarket_alpha_lab.paper_autonomous_proposal_risk_gate_db_row",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_proposal_risk_gate_db_row.py",
+   "root_exports": [],
+   "sha256": "bc02c6b3379014209ef3a1eaaa6a8644abe975e16e964d8ca75300aae87b9d4c",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_proposal_risk_gate_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_db_row",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_proposal_risk_gate_db_row_serializes_payload_and_round_trips",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_proposal_risk_gate_db_row_writes_decimal_payloads_as_fixed_six_place_strings",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_proposal_risk_gate_db_row_rejects_false_report_flags_before_write",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_proposal_risk_gate_db_row_rejects_materialized_payload_mismatches",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_proposal_risk_gate_db_row_rejects_raw_json_payload_values",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_db_row.py"
+    },
+    {
+     "nodeid": "test_proposal_risk_gate_db_row_validates_row_shape",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_db_row.py"
+    },
+    {
+     "nodeid": "_db_row",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 168,
+   "module": "polymarket_alpha_lab.paper_autonomous_proposal_risk_gate_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_proposal_risk_gate_psycopg.py",
+   "root_exports": [],
+   "sha256": "ae7a6734af87674a8aa260d6d7ebb120b1fc748090746cb9e6bbc75c4ddf8af0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "test_insert_with_psycopg_wraps_json_params_and_manages_connection",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_psycopg.py"
+    },
+    {
+     "nodeid": "test_insert_with_psycopg_rolls_back_and_closes_on_execute_error",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_psycopg.py"
+    },
+    {
+     "nodeid": "test_insert_operation_failure_close_swallowed_without_echoing_dsn",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_psycopg.py"
+    },
+    {
+     "nodeid": "test_remote_dsn_is_rejected_before_psycopg_import_or_connect",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_psycopg.py"
+    },
+    {
+     "nodeid": "test_load_with_psycopg_passes_filters_and_manages_connection",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_psycopg.py"
+    },
+    {
+     "nodeid": "test_load_success_close_propagates_without_echoing_dsn",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_psycopg.py"
+    },
+    {
+     "nodeid": "test_public_exports_are_exact",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_psycopg.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 286,
+   "module": "polymarket_alpha_lab.paper_autonomous_proposal_risk_gate_store",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_proposal_risk_gate_store.py",
+   "root_exports": [],
+   "sha256": "2c66be9a5ee26a18d9b3ec4659395a8fe13f0f098166d2dc717c018d6f4006f3",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_proposal_risk_gate_psycopg",
+    "polymarket_alpha_lab.supabase_paper_autonomous_proposal_risk_gate_config"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "test_migration_creates_report_table_matching_store_columns",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_schema.py"
+    },
+    {
+     "nodeid": "test_insert_proposal_risk_gate_report_uses_parameterized_insert",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_proposal_risk_gate_report_with_result_observes_duplicate",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_rejects_unexpected_rowcount",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_closes_cursor_when_execute_fails_without_managing_transaction",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_propagates_cursor_close_errors_after_successful_execute",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_proposal_risk_gate_reports_filters_newest_first_and_selects_inserted_at",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_preserves_execute_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_propagates_cursor_close_errors_after_successful_fetch",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_proposal_risk_gate_reports_accepts_positional_rows",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_proposal_risk_gate_reports_accepts_dict_rows_without_mutation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_proposal_risk_gate_reports_accepts_namedtuple_like_rows",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_rejects_unsafe_table_name_before_cursor_creation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_accepts_lowercase_table_names",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_insert_rejects_postgres_identifier_over_length_limit",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_load_rejects_invalid_query_inputs_before_cursor_creation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_public_exports_include_default_table_and_store_functions",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_proposal_risk_gate_store.py"
+    },
+    {
+     "nodeid": "test_public_constants_match_expected_env_surface_and_store_default",
+     "scope": "function",
+     "test": "tests/test_supabase_paper_autonomous_proposal_risk_gate_config.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 204,
+   "module": "polymarket_alpha_lab.paper_autonomous_readiness_gate_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_readiness_gate_psycopg.py",
+   "root_exports": [],
+   "sha256": "7d2c5e90edcb97d917dca9a4b8514cf2e2911662dbf1653b3f04b5fec1b4472e",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_readiness_gate_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_readiness_gate_psycopg_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 278,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition.py",
+   "root_exports": [],
+   "sha256": "1d7fc741085106f615e314ba5fcd4b95a3825ef9697529baec468dcd95785b83",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_db_row",
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_load",
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_store",
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_load.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 566,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_db_row",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition_db_row.py",
+   "root_exports": [],
+   "sha256": "c132f0a845b4d7b634bb08bd0bdf6e7a45cd2c36236bee6ea99ab146471dc377",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "test_transition_db_row_serializes_payload_and_round_trips",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_hash_is_deterministic",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_preserves_empty_transition_report",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_is_frozen",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_rejects_wrong_report_types_and_subclasses",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_rejects_wrong_row_types_and_subclasses",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_rejects_false_report_flags_before_write",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_rejects_false_nested_row_flags_before_write",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_rejects_corrupted_stored_payload_flags",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_rejects_nested_payload_rows_missing_hard_flags",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_rejects_recursive_floats_in_json_payloads",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_rejects_materialized_payload_mismatches",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_replace_rejects_materialized_payload_mismatches",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_from_db_row_rejects_bypassed_payload_mismatch",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_from_db_row_rejects_bypassed_missing_payload_flags",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_validates_row_shape",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "test_transition_db_row_module_is_pure_codec",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py"
+    },
+    {
+     "nodeid": "_db_row",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 108,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_load",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition_load.py",
+   "root_exports": [],
+   "sha256": "9479051b27fdb0ecb3b85c872efac32f1bf3a90217ba1032691cee1815e7ba4b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_load.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 190,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition_psycopg.py",
+   "root_exports": [],
+   "sha256": "1700387ed6bd7e92c3b2d9ede97c35312656cf0e1c6138aef2904c508f73d3b1",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 288,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_store",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition_store.py",
+   "root_exports": [],
+   "sha256": "83d20d01b661f5e7abdf2ab5488babe36fe7bac85294ef84264b3d3ad997092d",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_psycopg",
+    "polymarket_alpha_lab.supabase_paper_autonomous_screening_decision_support_gate_transition_config"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_psycopg.py"
+    },
+    {
+     "nodeid": "test_transition_migration_creates_report_table_with_contract_columns",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_schema.py"
+    },
+    {
+     "nodeid": "test_transition_config_public_constants_match_expected_env_surface",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_schema.py"
+    },
+    {
+     "nodeid": "test_insert_transition_report_uses_parameterized_insert",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_insert_transition_report_with_result_observes_duplicate",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_insert_preserves_rowcount_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_insert_preserves_execute_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_insert_propagates_cursor_close_error_after_success",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_transition_reports_filters_by_config_statuses_and_limit",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_preserves_execute_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_preserves_fetchall_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_propagates_cursor_close_error_after_success",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_transition_reports_accepts_positional_rows",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_transition_reports_accepts_dict_rows_without_mutation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_transition_reports_accepts_namedtuple_like_rows",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_transition_reports_accepts_db_row_objects",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_insert_rejects_unsafe_table_name_before_cursor_creation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_accepts_simple_lowercase_table_names",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_load_rejects_invalid_query_inputs_before_cursor_creation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    },
+    {
+     "nodeid": "test_public_exports_include_default_table_and_store_functions",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 135,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition_trend.py",
+   "root_exports": [],
+   "sha256": "759cc7460a9f47118da65b6d498572bdaef1274a098c35d1ab561f93d72d6c9e",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend_db_row",
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend_store"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 547,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend_db_row",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py",
+   "root_exports": [],
+   "sha256": "bb01401b057c3999d688e89f8327e88f8cefc47f3d305e42d853d6c3cc32ddc5",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "test_trend_db_row_serializes_canonical_payload_and_round_trips",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_preserves_empty_trend_report",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_hash_is_deterministic_for_equivalent_decimal_payloads",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_is_frozen",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_rejects_wrong_report_types_and_subclasses",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_rejects_wrong_row_types_and_subclasses",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_rejects_false_report_flags_before_write",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_rejects_corrupted_stored_payload_flags",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_rejects_recursive_floats_and_decimals_in_json_payload",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_rejects_materialized_payload_mismatches",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_validates_row_shape",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_matches_migration_count_nullability_constraints",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "test_trend_db_row_module_is_pure_codec",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py"
+    },
+    {
+     "nodeid": "_db_row",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 190,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition_trend_psycopg.py",
+   "root_exports": [],
+   "sha256": "6628475c8bffa5dff5223dcc891b34f048071c04d3b40e86c8bb80b1ab8686c2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_psycopg.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 284,
+   "module": "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend_store",
+   "path": "src/polymarket_alpha_lab/paper_autonomous_screening_decision_support_gate_transition_trend_store.py",
+   "root_exports": [],
+   "sha256": "2e81557b61240a26dea6bf4a2f18a9e98efc09123698aadc0b830ffe43acfd62",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_autonomous_screening_decision_support_gate_transition_trend_psycopg",
+    "polymarket_alpha_lab.supabase_paper_autonomous_screening_decision_support_gate_transition_trend_config"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_psycopg.py"
+    },
+    {
+     "nodeid": "test_trend_migration_creates_report_table_with_contract_columns",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_schema.py"
+    },
+    {
+     "nodeid": "test_insert_trend_report_uses_parameterized_insert",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_insert_trend_report_with_result_observes_duplicate",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_insert_trend_report_rejects_unexpected_rowcount",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_insert_preserves_execute_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_insert_propagates_cursor_close_error_after_success",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_trend_reports_filters_by_config_statuses_and_limit",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_preserves_execute_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_preserves_fetchall_error_when_cursor_close_also_fails",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_propagates_cursor_close_error_after_success",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_trend_reports_accepts_positional_rows",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_trend_reports_accepts_dict_rows_without_mutation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_trend_reports_accepts_namedtuple_like_rows",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_trend_reports_accepts_db_row_objects",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_insert_rejects_unsafe_table_name_before_cursor_creation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_accepts_simple_lowercase_table_names",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_load_rejects_invalid_query_inputs_before_cursor_creation",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_public_exports_include_default_table_and_store_functions",
+     "scope": "function",
+     "test": "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py"
+    },
+    {
+     "nodeid": "test_trend_config_public_constants_match_expected_env_surface",
+     "scope": "function",
+     "test": "tests/test_supabase_paper_autonomous_screening_decision_support_gate_transition_trend_config.py"
+    },
+    {
+     "nodeid": "test_module_scope_does_not_import_live_api_auth_or_order_modules",
+     "scope": "function",
+     "test": "tests/test_supabase_paper_autonomous_screening_decision_support_gate_transition_trend_config.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 596,
+   "module": "polymarket_alpha_lab.paper_candidate_cash_drag_buffer_digest",
+   "path": "src/polymarket_alpha_lab/paper_candidate_cash_drag_buffer_digest.py",
+   "root_exports": [],
+   "sha256": "63baa43bbc32a5f1da256d4f82016cdec477c61eb45625e0745110ef81ff47a0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_paper_candidate_cash_drag_buffer_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 750,
+   "module": "polymarket_alpha_lab.paper_candidate_cash_lockup_digest",
+   "path": "src/polymarket_alpha_lab/paper_candidate_cash_lockup_digest.py",
+   "root_exports": [],
+   "sha256": "99f9cedce30ff945d41308dc5362ab5f709a8a647c7961a4ac1fc7cd05ddf379",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_paper_candidate_cash_lockup_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 805,
+   "module": "polymarket_alpha_lab.paper_candidate_cost_stack_digest",
+   "path": "src/polymarket_alpha_lab/paper_candidate_cost_stack_digest.py",
+   "root_exports": [],
+   "sha256": "89969edc4f83a19a68193b8b07bdaa64184866f7eb530c7b9d90366c1457d922",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_candidate_cost_stack_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 691,
+   "module": "polymarket_alpha_lab.paper_candidate_fee_sensitivity_digest",
+   "path": "src/polymarket_alpha_lab/paper_candidate_fee_sensitivity_digest.py",
+   "root_exports": [],
+   "sha256": "b5a72c2d21d4ae718212f4461aac147158c75b5ad1afb09627f40b6eebf81d54",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_paper_candidate_fee_sensitivity_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 301,
+   "module": "polymarket_alpha_lab.paper_capital_cost",
+   "path": "src/polymarket_alpha_lab/paper_capital_cost.py",
+   "root_exports": [],
+   "sha256": "0f8bb02d17b350f0d7bdb9c1842c05a4d4770413bd21578707b1916d6b292cb7",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_capital_cost_side_edge_adapter"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_capital_cost.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 405,
+   "module": "polymarket_alpha_lab.paper_capital_cost_model",
+   "path": "src/polymarket_alpha_lab/paper_capital_cost_model.py",
+   "root_exports": [],
+   "sha256": "d8dac0f0e930f6a930bdfa0ed8def9fa4839dd37a2c1e35a9b4fb7e75e044863",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_capital_cost_model.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_capital_cost_model_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 255,
+   "module": "polymarket_alpha_lab.paper_capital_cost_side_edge_adapter",
+   "path": "src/polymarket_alpha_lab/paper_capital_cost_side_edge_adapter.py",
+   "root_exports": [],
+   "sha256": "668378379a8137744525cfd8671ab20a5c8bdee7e7a2b12f070fad07c25a6c62",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_capital_cost_side_edge_adapter.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 622,
+   "module": "polymarket_alpha_lab.paper_correlation_grouping",
+   "path": "src/polymarket_alpha_lab/paper_correlation_grouping.py",
+   "root_exports": [],
+   "sha256": "bbf0bf8295b3f5c07aa17bce8fc33b46988af8a995fb7773d76e312721b1330b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_correlation_grouping.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_correlation_grouping_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 340,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation.py",
+   "root_exports": [],
+   "sha256": "19f91dcc24aa1f62a773876a7b8ca1978c458ed6fc2802743498ccd1fe685419",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_execution_reconciliation_db_history",
+    "polymarket_alpha_lab.paper_execution_reconciliation_db_row",
+    "polymarket_alpha_lab.paper_execution_reconciliation_health_gate",
+    "polymarket_alpha_lab.paper_execution_reconciliation_load",
+    "polymarket_alpha_lab.paper_execution_reconciliation_store"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_db_history.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_db_history_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_gate.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_gate_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_load.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_load_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_team_diagnostics_phase1_boundary.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_team_framework_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 753,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation_db_history",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation_db_history.py",
+   "root_exports": [],
+   "sha256": "b64be87cd1c1d25cc19c89ad6bfc2e8e4e1044407cba0ffd968d3a8926ea4abf",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_execution_reconciliation_db_history_load"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_db_history.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_db_history_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_gate.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_trend_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 54,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation_db_history_load",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation_db_history_load.py",
+   "root_exports": [],
+   "sha256": "6195f673712c879612d0a1e11c1597c4d82514f3746f3deaca220cb47776a4db",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_db_history_load.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_db_history_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 744,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation_db_row",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation_db_row.py",
+   "root_exports": [],
+   "sha256": "f9cd82bc4eeee47f3d0395b98d85935f7f738ff749da8398f3d89d92d8e5dff1",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_execution_reconciliation_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_codec",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_gate_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_trend_scope.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_store_db.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 614,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation_health_gate",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation_health_gate.py",
+   "root_exports": [],
+   "sha256": "fa71ec3c1d777d8346de0d8d8322574573e4612db75f452d54a73aaa2354c2d1",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_execution_reconciliation_health_trend"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_health_gate.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_gate_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_trend.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_trend_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 547,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation_health_trend",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation_health_trend.py",
+   "root_exports": [],
+   "sha256": "6ab70e12ed3837929646792ccd8b94d44b4bdb157caeb24ae1d7abf963d15640",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_health_trend.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_trend_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 82,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation_load",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation_load.py",
+   "root_exports": [],
+   "sha256": "cafd7098b5bf8b6e831c53ae60cfe927a6e9b78919bfea66c199629da380202d",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_trend_scope.py"
+    },
+    {
+     "nodeid": "test_load_reconciliation_reads_lifecycle_records_and_calls_reducer",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_load.py"
+    },
+    {
+     "nodeid": "test_load_reconciliation_rejects_duck_typed_lifecycle_records_before_reducer",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_load.py"
+    },
+    {
+     "nodeid": "test_load_reconciliation_rejects_non_hard_flagged_lifecycle_records",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_load.py"
+    },
+    {
+     "nodeid": "test_load_reconciliation_rejects_bad_reducer_return_type",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_load.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 162,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation_psycopg.py",
+   "root_exports": [],
+   "sha256": "a63885eecdfed270834e34d795f8ec1c4a0a90137cf4960d522a0838309edb32",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_gate_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_trend_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_load_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_psycopg_db.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 251,
+   "module": "polymarket_alpha_lab.paper_execution_reconciliation_store",
+   "path": "src/polymarket_alpha_lab/paper_execution_reconciliation_store.py",
+   "root_exports": [],
+   "sha256": "88465cf3467e62c9af9a06cf4dd2733c3fd569ad74b5a3050d91e18861b660ad",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_execution_reconciliation_db_history_load",
+    "polymarket_alpha_lab.paper_execution_reconciliation_psycopg"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_db_history_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_gate_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_health_trend_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_load_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_execution_reconciliation_psycopg_db.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_execution_reconciliation_store_db.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 281,
+   "module": "polymarket_alpha_lab.paper_external_cost_assumptions",
+   "path": "src/polymarket_alpha_lab/paper_external_cost_assumptions.py",
+   "root_exports": [],
+   "sha256": "2e9ef50065573d7106e5a8e2fb0adb4bedaff16f49dab01852e450fba4b184e0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_external_cost_assumptions.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 341,
+   "module": "polymarket_alpha_lab.paper_fee_schedule",
+   "path": "src/polymarket_alpha_lab/paper_fee_schedule.py",
+   "root_exports": [],
+   "sha256": "95b6379fe8f06dfca32e4169e26acabaaf3169c887d4736a113914ef8779e199",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "fee_module",
+     "scope": "function",
+     "test": "tests/test_paper_fee_schedule.py"
+    },
+    {
+     "nodeid": "test_module_has_no_live_auth_order_or_network_imports",
+     "scope": "function",
+     "test": "tests/test_paper_fee_schedule.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 549,
+   "module": "polymarket_alpha_lab.paper_liquidity_depth_gate",
+   "path": "src/polymarket_alpha_lab/paper_liquidity_depth_gate.py",
+   "root_exports": [],
+   "sha256": "b361bb2c642f857f4823b8243ce80a7c2e5745a0a0b68ad60aac77463469b6f7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_liquidity_depth_gate.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_liquidity_depth_gate_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 764,
+   "module": "polymarket_alpha_lab.paper_nav_liquidity_risk",
+   "path": "src/polymarket_alpha_lab/paper_nav_liquidity_risk.py",
+   "root_exports": [],
+   "sha256": "152962b45701296bdee119043522193c32606dcdadfa85f5fc91cb08277f84b1",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_nav_snapshot_db_liquidity_risk_load",
+    "polymarket_alpha_lab.strategy_signal_adapter"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_nav_liquidity_risk.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_strategy_assessment_pre_layer_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_strategy_recommendation_layer_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_strategy_signal_adapter.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 56,
+   "module": "polymarket_alpha_lab.paper_nav_snapshot_db_liquidity_risk_load",
+   "path": "src/polymarket_alpha_lab/paper_nav_snapshot_db_liquidity_risk_load.py",
+   "root_exports": [],
+   "sha256": "b05b8e173f72814a1aa88ab26e9336994cee39da23c55d0d12ca0b95fbf49cfd",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_nav_snapshot_db_liquidity_risk_load.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 520,
+   "module": "polymarket_alpha_lab.paper_outcome_uncertainty",
+   "path": "src/polymarket_alpha_lab/paper_outcome_uncertainty.py",
+   "root_exports": [],
+   "sha256": "263f2563f039d676559c22ed9a17e508a6f58dcda7ec2ed23ddacb4bc6ed8de2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_outcome_uncertainty.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_outcome_uncertainty_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 499,
+   "module": "polymarket_alpha_lab.paper_position_concentration_guard",
+   "path": "src/polymarket_alpha_lab/paper_position_concentration_guard.py",
+   "root_exports": [],
+   "sha256": "6e8a275f73237699a8f0c2104ff85d91af3616c2a48fff041f01f1de8b1ce8f1",
+   "src_consumers": [
+    "polymarket_alpha_lab.position_concentration_trend_monitor"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_position_concentration_guard.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_position_concentration_trend_monitor.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 166,
+   "module": "polymarket_alpha_lab.paper_probability_selection_summary_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_probability_selection_summary_psycopg.py",
+   "root_exports": [],
+   "sha256": "1db05f25f862974184f58aecb6e9d45b48eb6ab89c998cd47128df2e7ba01c4a",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_probability_selection_summary_psycopg.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 747,
+   "module": "polymarket_alpha_lab.paper_project_screening_rank_stability_db_history_health",
+   "path": "src/polymarket_alpha_lab/paper_project_screening_rank_stability_db_history_health.py",
+   "root_exports": [],
+   "sha256": "a223d54f8794eb813056c7226a74c2a4618819fdabea11de076a68abcfe605b3",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_project_screening_rank_stability_db_history_health_load",
+    "polymarket_alpha_lab.paper_project_screening_rank_stability_db_history_health_trend"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health.py"
+    },
+    {
+     "nodeid": "_health_api",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health_load.py"
+    },
+    {
+     "nodeid": "test_loader_module_has_no_db_lifecycle_env_cli_or_live_trading_surface",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health_load.py"
+    },
+    {
+     "nodeid": "_health_api",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health_trend.py"
+    },
+    {
+     "nodeid": "_health_api",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health_trend_gate.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 57,
+   "module": "polymarket_alpha_lab.paper_project_screening_rank_stability_db_history_health_load",
+   "path": "src/polymarket_alpha_lab/paper_project_screening_rank_stability_db_history_health_load.py",
+   "root_exports": [],
+   "sha256": "b8d93b2fea1ddd599d15900b8b98e76684ce954dc04fda3a87cbfe8263295613",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health_load.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1213,
+   "module": "polymarket_alpha_lab.paper_project_screening_rank_stability_db_history_health_trend",
+   "path": "src/polymarket_alpha_lab/paper_project_screening_rank_stability_db_history_health_trend.py",
+   "root_exports": [],
+   "sha256": "2a08c018d0d8b2fbe9e88ae0d7e0b7cc43400847a6be25c7c770a07b6d9c5a82",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_project_screening_rank_stability_db_history_health_trend_gate"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health_trend.py"
+    },
+    {
+     "nodeid": "_trend_api",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health_trend_gate.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 635,
+   "module": "polymarket_alpha_lab.paper_project_screening_rank_stability_db_history_health_trend_gate",
+   "path": "src/polymarket_alpha_lab/paper_project_screening_rank_stability_db_history_health_trend_gate.py",
+   "root_exports": [],
+   "sha256": "b11d801e48dfd00b21d20f6bbe5e7dd3a1c6d3e0039b55b798e8f97d1ce48938",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_project_screening_rank_stability_db_history_health_trend_gate.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 185,
+   "module": "polymarket_alpha_lab.paper_project_screening_rank_stability_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_project_screening_rank_stability_psycopg.py",
+   "root_exports": [],
+   "sha256": "757acc0cbb918b02f26bdae11a37cb00f6611b078442dfe08ee5a29dd91f9da0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_project_screening_rank_stability_psycopg.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 659,
+   "module": "polymarket_alpha_lab.paper_recommendation_calibration_gate",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_calibration_gate.py",
+   "root_exports": [],
+   "sha256": "abef49c03adf9fdc403ca36ea6c700c42887b804dc71fb369097d66ced7af93e",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_calibration_gate.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_calibration_gate_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_consistency_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 568,
+   "module": "polymarket_alpha_lab.paper_recommendation_consistency",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_consistency.py",
+   "root_exports": [],
+   "sha256": "c6cf386d7d17a80568af0cb2d1bd2c1f96660418498a051217df7094e61867dc",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_consistency_db_row",
+    "polymarket_alpha_lab.paper_recommendation_consistency_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_consistency.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_consistency_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_consistency_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 549,
+   "module": "polymarket_alpha_lab.paper_recommendation_consistency_db_row",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_consistency_db_row.py",
+   "root_exports": [],
+   "sha256": "1309e70d2d98995050d255cd59925292556e4f8a9dca97c12540b4494f6e0ed6",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_consistency_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_codec_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_consistency_db_row.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_consistency_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 163,
+   "module": "polymarket_alpha_lab.paper_recommendation_consistency_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_consistency_psycopg.py",
+   "root_exports": [],
+   "sha256": "078cc43f79f93cc26d5137fc635c4a6a8a7dc5c18b3dfadf286d1da92deba840",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "adapter_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_consistency_psycopg.py"
+    },
+    {
+     "nodeid": "test_import_does_not_require_psycopg",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_consistency_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 235,
+   "module": "polymarket_alpha_lab.paper_recommendation_consistency_store",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_consistency_store.py",
+   "root_exports": [],
+   "sha256": "37cc66f1cbdbd7a4ad9f7588ecdc1cefb2178e2e8562bf5e78108c969f53bbab",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_consistency_psycopg"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_consistency_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 243,
+   "module": "polymarket_alpha_lab.paper_recommendation_cycle_bundle",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_cycle_bundle.py",
+   "root_exports": [],
+   "sha256": "bc9fcf14d41fb82d9e00633cb83ae59261589bf9378243ada6918d36fddcc4d8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_cycle_bundle.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 52,
+   "module": "polymarket_alpha_lab.paper_recommendation_cycle_snapshot_db_action_gate",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_cycle_snapshot_db_action_gate.py",
+   "root_exports": [],
+   "sha256": "669395dcd44796d6be3cbe3413cd1f3cdb4cf3064c7394624f8664ab3e8929c7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_db_action_gate",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_cycle_snapshot_db_action_gate.py"
+    },
+    {
+     "nodeid": "test_cycle_snapshot_db_action_gate_module_has_no_live_driver_or_network_imports",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_cycle_snapshot_db_action_gate.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 42,
+   "module": "polymarket_alpha_lab.paper_recommendation_cycle_snapshot_db_review",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_cycle_snapshot_db_review.py",
+   "root_exports": [],
+   "sha256": "209b4514085dd37ce8775d6d56e0837549601fd4f7ae43f06b67f203206649ae",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_cycle_snapshot_db_review.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 44,
+   "module": "polymarket_alpha_lab.paper_recommendation_cycle_snapshot_db_trend",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_cycle_snapshot_db_trend.py",
+   "root_exports": [],
+   "sha256": "803fc89ed862ad9f2cc327e8113e7e6600cdc965595287e7d96fba835d641306",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_cycle_snapshot_db_trend.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 190,
+   "module": "polymarket_alpha_lab.paper_recommendation_cycle_snapshot_log",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_cycle_snapshot_log.py",
+   "root_exports": [],
+   "sha256": "4c04ef0257331f6254ef3a13e438107520abfc2ecfebda22266a0384fc12ec1f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_cycle_snapshot_log.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 408,
+   "module": "polymarket_alpha_lab.paper_recommendation_decision_ledger",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_decision_ledger.py",
+   "root_exports": [],
+   "sha256": "38814758fab25ac4e07253443a959a236a0a6db3beb72ef410396610f1bb646f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_decision_ledger.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 433,
+   "module": "polymarket_alpha_lab.paper_recommendation_gate_summary",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_gate_summary.py",
+   "root_exports": [],
+   "sha256": "17a3efcbdf9b32797ad04430c4b9840c73dfa1d87f58a10e2efa71e19f537b4c",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_consistency_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_gate_summary.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_gate_summary_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 481,
+   "module": "polymarket_alpha_lab.paper_recommendation_health",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_health.py",
+   "root_exports": [],
+   "sha256": "358d2f028082d63d03bd9eb832b796faff81e68306e3294ebf15149056cf7c8e",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_health_db_row",
+    "polymarket_alpha_lab.paper_recommendation_health_store"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_health.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_health_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_health_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 433,
+   "module": "polymarket_alpha_lab.paper_recommendation_health_db_row",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_health_db_row.py",
+   "root_exports": [],
+   "sha256": "28a9918b241280d09208825badbbf294cf2101a03f3e3971569aec34f0b83c96",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_health_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_codec_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_health_db_row.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_health_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 161,
+   "module": "polymarket_alpha_lab.paper_recommendation_health_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_health_psycopg.py",
+   "root_exports": [],
+   "sha256": "486ff6044e68cccf00d1287c2a5a22ce23c27f6e0000c7d8bfb7618bc652cc17",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "adapter_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_health_psycopg.py"
+    },
+    {
+     "nodeid": "test_import_does_not_require_psycopg",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_health_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 243,
+   "module": "polymarket_alpha_lab.paper_recommendation_health_store",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_health_store.py",
+   "root_exports": [],
+   "sha256": "d4ba707fdeb1a6ed56cb38ca69a32c16b49fd28f0198b2b2ba76e9acd618deb6",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_health_psycopg"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_health_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 362,
+   "module": "polymarket_alpha_lab.paper_recommendation_manifest",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_manifest.py",
+   "root_exports": [],
+   "sha256": "b12801f9508b747fd48dc0d175b7a37427bd7bce303653e265b8be51b680b957",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_manifest.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_manifest_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 245,
+   "module": "polymarket_alpha_lab.paper_recommendation_pipeline_trend",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_pipeline_trend.py",
+   "root_exports": [],
+   "sha256": "ae8f0962d7d1907323564a88cd8cd0d77f48fca295a05979744efea155a00f97",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_pipeline_trend.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 472,
+   "module": "polymarket_alpha_lab.paper_recommendation_quality_history",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_quality_history.py",
+   "root_exports": [],
+   "sha256": "409ff761478e73efe57d94cfc81d941d29bbc954dce6ffac42c8ede2d10fcfb3",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_quality_history_db_row",
+    "polymarket_alpha_lab.paper_recommendation_quality_history_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_history.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_quality_history_db_row.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 513,
+   "module": "polymarket_alpha_lab.paper_recommendation_quality_history_db_row",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_quality_history_db_row.py",
+   "root_exports": [],
+   "sha256": "fce966d1ea765cbecbe118820a978f4c9fe4d52903521281b81b0eb28a0c7fe1",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_quality_history_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_codec_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_history_db_row.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_history_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 160,
+   "module": "polymarket_alpha_lab.paper_recommendation_quality_history_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_quality_history_psycopg.py",
+   "root_exports": [],
+   "sha256": "e7f7c19e9c9c75100ec0c5603a644e1d2b2d55b0aedddbf829e4fb1622df4b2a",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "adapter_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_history_psycopg.py"
+    },
+    {
+     "nodeid": "test_import_does_not_require_psycopg",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_history_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 314,
+   "module": "polymarket_alpha_lab.paper_recommendation_quality_history_store",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_quality_history_store.py",
+   "root_exports": [],
+   "sha256": "f1da693e4dbe1dee9442778029281e5f077cb7e2e820f452b223945a2611ce3c",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_quality_history_psycopg",
+    "polymarket_alpha_lab.supabase_paper_recommendation_quality_history_config"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_history_store.py"
+    },
+    {
+     "nodeid": "test_public_constants_match_expected_env_surface",
+     "scope": "function",
+     "test": "tests/test_supabase_paper_recommendation_quality_history_config.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 490,
+   "module": "polymarket_alpha_lab.paper_recommendation_quality_summary",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_quality_summary.py",
+   "root_exports": [],
+   "sha256": "8610215b45e2459eb6ca399d59412162d5743375581062d2a139676d94a790c9",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_quality_history",
+    "polymarket_alpha_lab.paper_recommendation_quality_summary_db_row",
+    "polymarket_alpha_lab.paper_recommendation_quality_summary_store"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_quality_history.py"
+    },
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_summary.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_quality_summary_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_quality_summary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 435,
+   "module": "polymarket_alpha_lab.paper_recommendation_quality_summary_db_row",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_quality_summary_db_row.py",
+   "root_exports": [],
+   "sha256": "f1e4401df8114a79a69c63f06c170b9068fb8bb34586173cb1fc20410c46563f",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_quality_summary_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_codec_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_summary_db_row.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_summary_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 160,
+   "module": "polymarket_alpha_lab.paper_recommendation_quality_summary_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_quality_summary_psycopg.py",
+   "root_exports": [],
+   "sha256": "1e7a107594df1997d04d0533f197ee3b6fc41f7294d3968f1d2f9cf2cff1c0f1",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "adapter_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_summary_psycopg.py"
+    },
+    {
+     "nodeid": "test_import_does_not_require_psycopg",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_summary_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 280,
+   "module": "polymarket_alpha_lab.paper_recommendation_quality_summary_store",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_quality_summary_store.py",
+   "root_exports": [],
+   "sha256": "86494bdd729b954df9c513b770f8d935a3df0eebb413de5edcfa69bfc0611be2",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_quality_summary_psycopg",
+    "polymarket_alpha_lab.supabase_paper_recommendation_quality_summary_config"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_quality_summary_store.py"
+    },
+    {
+     "nodeid": "test_public_constants_match_expected_env_surface",
+     "scope": "function",
+     "test": "tests/test_supabase_paper_recommendation_quality_summary_config.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 513,
+   "module": "polymarket_alpha_lab.paper_recommendation_readiness",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_readiness.py",
+   "root_exports": [],
+   "sha256": "30fc21a0aa163799f9277f82672f54911cd8486d0c2eee0b24d7ab18b0ec1ac2",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_readiness_db_row",
+    "polymarket_alpha_lab.paper_recommendation_readiness_store"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_consistency_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_readiness.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_readiness_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_readiness_db_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_readiness_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 422,
+   "module": "polymarket_alpha_lab.paper_recommendation_readiness_db_row",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_readiness_db_row.py",
+   "root_exports": [],
+   "sha256": "5905ea53c2eb83b5db3f326e3a04bded9785ca1822db67f8c71ad86519e5d292",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_readiness_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_codec_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_readiness_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_readiness_db_scope.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_readiness_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 163,
+   "module": "polymarket_alpha_lab.paper_recommendation_readiness_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_readiness_psycopg.py",
+   "root_exports": [],
+   "sha256": "cb1cfbcffbf54e4cfbf8555c2e235d36897fe8c16113143227c99e1a1029d867",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_readiness_db_scope.py"
+    },
+    {
+     "nodeid": "adapter_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_readiness_psycopg.py"
+    },
+    {
+     "nodeid": "test_import_does_not_require_psycopg",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_readiness_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 231,
+   "module": "polymarket_alpha_lab.paper_recommendation_readiness_store",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_readiness_store.py",
+   "root_exports": [],
+   "sha256": "f20ac1ff5a655730d99b95d2f0c5c1ef5ce1638e54981f4a129aff3eb2ac6975",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_readiness_psycopg"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_readiness_db_scope.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_readiness_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 342,
+   "module": "polymarket_alpha_lab.paper_recommendation_reason_trend_health",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_reason_trend_health.py",
+   "root_exports": [],
+   "sha256": "671c392e336f2256ea708a9335ef48a8fee6118629af30f45a65f2ebe7262cfe",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_reason_trend_health_db_row",
+    "polymarket_alpha_lab.paper_recommendation_reason_trend_health_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_reason_trend_health.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_reason_trend_health_db_row.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 461,
+   "module": "polymarket_alpha_lab.paper_recommendation_reason_trend_health_db_row",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_reason_trend_health_db_row.py",
+   "root_exports": [],
+   "sha256": "b545086db2bd986e81f00dd312f357de8f0f18138b899a2b440cb23a699d4b7a",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_reason_trend_health_store"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_codec_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_reason_trend_health_db_row.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_reason_trend_health_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 163,
+   "module": "polymarket_alpha_lab.paper_recommendation_reason_trend_health_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_reason_trend_health_psycopg.py",
+   "root_exports": [],
+   "sha256": "3ce9e40167a8c8cbd88bb8b8be070c53cec3de2cd3e8c9554c6f4ffd2ee41f8d",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "adapter_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_reason_trend_health_psycopg.py"
+    },
+    {
+     "nodeid": "test_import_does_not_require_psycopg",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_reason_trend_health_psycopg.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_psycopg_adapter_cleanup.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 271,
+   "module": "polymarket_alpha_lab.paper_recommendation_reason_trend_health_store",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_reason_trend_health_store.py",
+   "root_exports": [],
+   "sha256": "127dcc89fc26c1004d615aef2a8554e8ad50a6f321816ca80536952a8d05c80b",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_reason_trend_health_psycopg"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_recommendation_reason_trend_health_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 459,
+   "module": "polymarket_alpha_lab.paper_recommendation_risk_budget_db_history",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_risk_budget_db_history.py",
+   "root_exports": [],
+   "sha256": "8709c05b4a400875010300e57822704d5f9f3ec60f2c648ac37abb2fe7acfaff",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_recommendation_risk_budget_db_history_load"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_risk_budget_db_history.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 44,
+   "module": "polymarket_alpha_lab.paper_recommendation_risk_budget_db_history_load",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_risk_budget_db_history_load.py",
+   "root_exports": [],
+   "sha256": "ea16d018571efb3c7446dabd43e0675a3c61ee3b6d4510236957630394d9e1d9",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_risk_budget_db_history_load.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 415,
+   "module": "polymarket_alpha_lab.paper_recommendation_score_explanation",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_score_explanation.py",
+   "root_exports": [],
+   "sha256": "4f770aa40b73709b2d44ed6f119b4538a4c21ac24b118668c3b34429adffd7b4",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_autonomous_market_scorer_explanation.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_score_explanation.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 460,
+   "module": "polymarket_alpha_lab.paper_recommendation_shadow_nav",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_shadow_nav.py",
+   "root_exports": [],
+   "sha256": "be17140e35acc9424ec12b19962793b20119ecedd46efec53339a57d283e541d",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_consistency_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_shadow_nav.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_shadow_nav_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 515,
+   "module": "polymarket_alpha_lab.paper_recommendation_thresholds",
+   "path": "src/polymarket_alpha_lab/paper_recommendation_thresholds.py",
+   "root_exports": [],
+   "sha256": "10f69f53adbe2b26c494b1ff0be37fb69f3ab440756056041e8b61ea216f8126",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_consistency_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_thresholds.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_recommendation_thresholds_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_phase_2_recommendation_boundary_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 749,
+   "module": "polymarket_alpha_lab.paper_research_packet_quality_history_trend",
+   "path": "src/polymarket_alpha_lab/paper_research_packet_quality_history_trend.py",
+   "root_exports": [
+    "PaperResearchPacketQualityHistoryTrendConfig",
+    "PaperResearchPacketQualityHistoryTrendRecurringReasonCodeRow",
+    "PaperResearchPacketQualityHistoryTrendReport",
+    "PaperResearchPacketQualityHistoryTrendStatusRow",
+    "build_paper_research_packet_quality_history_trend_report"
+   ],
+   "sha256": "4524dd6040c35231c243d902a022c085a4ad8dc3fe86be54bbacea74eb7be21d",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_research_packet_quality_history_trend_gate"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_init.py"
+    },
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_research_packet_quality_history_trend.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_research_packet_quality_history_trend_gate.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 599,
+   "module": "polymarket_alpha_lab.paper_research_packet_quality_history_trend_gate",
+   "path": "src/polymarket_alpha_lab/paper_research_packet_quality_history_trend_gate.py",
+   "root_exports": [
+    "PaperResearchPacketQualityHistoryTrendGateConfig",
+    "PaperResearchPacketQualityHistoryTrendGateReasonCodeCount",
+    "PaperResearchPacketQualityHistoryTrendGateReport",
+    "build_paper_research_packet_quality_history_trend_gate_report"
+   ],
+   "sha256": "1ff28abe295ba2297410a221ea28500e3db9eb5c21990b98b27099520f071c31",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_init.py"
+    },
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_paper_research_packet_quality_history_trend_gate.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 40,
+   "module": "polymarket_alpha_lab.paper_strategy_cycle_report_db_history",
+   "path": "src/polymarket_alpha_lab/paper_strategy_cycle_report_db_history.py",
+   "root_exports": [],
+   "sha256": "caa4678758d4cf4a3067a822e79752c6f263f62617ed618c648c79cf9db00d86",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_strategy_cycle_report_db_history.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 615,
+   "module": "polymarket_alpha_lab.paper_trade_attribution",
+   "path": "src/polymarket_alpha_lab/paper_trade_attribution.py",
+   "root_exports": [],
+   "sha256": "a709cf6e3d212690eb5e6f9a8e3e45d547ed3c6d37318225c4274d6225f3228f",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_trade_attribution_db_row"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_trade_attribution.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_trade_attribution_db_row.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_paper_trade_attribution_scope.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_strategy_assessment_pre_layer_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 690,
+   "module": "polymarket_alpha_lab.paper_trade_attribution_db_row",
+   "path": "src/polymarket_alpha_lab/paper_trade_attribution_db_row.py",
+   "root_exports": [],
+   "sha256": "a7d4254752cb50de609b679e2be50c117179cd6045fac7f14ca8b7388a1a8ed0",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_trade_attribution_store"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_trade_attribution_db_row.py"
+    },
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_trade_attribution_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 159,
+   "module": "polymarket_alpha_lab.paper_trade_attribution_psycopg",
+   "path": "src/polymarket_alpha_lab/paper_trade_attribution_psycopg.py",
+   "root_exports": [],
+   "sha256": "6516f6dca5f5a20c648c49ac3d9ddd79cc02ae180dd8bbb8b42e3a1a41cefba7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "adapter_module",
+     "scope": "function",
+     "test": "tests/test_paper_trade_attribution_psycopg.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 252,
+   "module": "polymarket_alpha_lab.paper_trade_attribution_store",
+   "path": "src/polymarket_alpha_lab/paper_trade_attribution_store.py",
+   "root_exports": [],
+   "sha256": "c7835f10c370fdf4cc7e796933fea5da7f45bdf61828759f8df4f3eae6b66c0a",
+   "src_consumers": [
+    "polymarket_alpha_lab.paper_trade_attribution_psycopg"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "store_module",
+     "scope": "function",
+     "test": "tests/test_paper_trade_attribution_store.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 43,
+   "module": "polymarket_alpha_lab.paper_trade_journal_db_cost_audit_load",
+   "path": "src/polymarket_alpha_lab/paper_trade_journal_db_cost_audit_load.py",
+   "root_exports": [],
+   "sha256": "996bfca54279d8e9c52687355773da9740d5c94255e897c555ddf0bfda98dbb5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_trade_journal_db_cost_audit_load.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 55,
+   "module": "polymarket_alpha_lab.paper_trade_journal_db_cost_trend_load",
+   "path": "src/polymarket_alpha_lab/paper_trade_journal_db_cost_trend_load.py",
+   "root_exports": [],
+   "sha256": "3a6393fd863a33f767d80bab011b571219bb082dba258f32e86a10b2d5a5f323",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_trade_journal_db_cost_trend_load.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1225,
+   "module": "polymarket_alpha_lab.paper_trade_settlement_validation",
+   "path": "src/polymarket_alpha_lab/paper_trade_settlement_validation.py",
+   "root_exports": [],
+   "sha256": "f65631d25b3c9d0e7acfdac4eab8d0a500d8c50d6c36c6961eeb735027863c46",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_paper_trade_settlement_validation.py"
+    }
+   ],
+   "unknown_consumers": []
+  }
+ ],
+ "m2_reservations_check": [],
+ "test_retirement": {
+  "delete_full": [
+   "tests/test_paper_autonomous_readiness_gate_psycopg_scope.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_db_row.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_load.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_psycopg.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_db_row.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_psycopg.py",
+   "tests/test_paper_candidate_cost_stack_digest.py",
+   "tests/test_paper_capital_cost.py",
+   "tests/test_paper_capital_cost_model.py",
+   "tests/test_paper_correlation_grouping.py",
+   "tests/test_paper_execution_reconciliation_db_history.py",
+   "tests/test_paper_execution_reconciliation_db_history_load.py",
+   "tests/test_paper_execution_reconciliation_db_history_scope.py",
+   "tests/test_paper_execution_reconciliation_db_row.py",
+   "tests/test_paper_execution_reconciliation_health_gate.py",
+   "tests/test_paper_execution_reconciliation_health_trend.py",
+   "tests/test_paper_execution_reconciliation_psycopg_db.py",
+   "tests/test_paper_external_cost_assumptions.py",
+   "tests/test_paper_liquidity_depth_gate.py",
+   "tests/test_paper_outcome_uncertainty.py",
+   "tests/test_paper_position_concentration_guard.py",
+   "tests/test_paper_probability_selection_summary_psycopg.py",
+   "tests/test_paper_recommendation_calibration_gate.py",
+   "tests/test_paper_recommendation_consistency_db_row.py",
+   "tests/test_paper_recommendation_cycle_bundle.py",
+   "tests/test_paper_recommendation_cycle_snapshot_db_trend.py",
+   "tests/test_paper_recommendation_decision_ledger.py",
+   "tests/test_paper_recommendation_gate_summary.py",
+   "tests/test_paper_recommendation_health.py",
+   "tests/test_paper_recommendation_health_db_row.py",
+   "tests/test_paper_recommendation_manifest.py",
+   "tests/test_paper_recommendation_pipeline_trend.py",
+   "tests/test_paper_recommendation_quality_history.py",
+   "tests/test_paper_recommendation_quality_history_db_row.py",
+   "tests/test_paper_recommendation_quality_summary_db_row.py",
+   "tests/test_paper_recommendation_readiness.py",
+   "tests/test_paper_recommendation_readiness_db_row.py",
+   "tests/test_paper_recommendation_reason_trend_health_db_row.py",
+   "tests/test_paper_recommendation_score_explanation.py",
+   "tests/test_paper_recommendation_shadow_nav.py",
+   "tests/test_paper_recommendation_shadow_nav_scope.py",
+   "tests/test_paper_recommendation_thresholds.py",
+   "tests/test_paper_research_packet_quality_history_trend_gate.py",
+   "tests/test_paper_trade_attribution_db_row.py"
+  ],
+  "nodeid_candidate_files": [
+   "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_psycopg.py",
+   "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_store.py",
+   "tests/test_paper_autonomous_investment_ledger_load.py",
+   "tests/test_paper_autonomous_proposal_risk_gate_db_row.py",
+   "tests/test_paper_autonomous_proposal_risk_gate_psycopg.py",
+   "tests/test_paper_autonomous_proposal_risk_gate_schema.py",
+   "tests/test_paper_autonomous_proposal_risk_gate_store.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_schema.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_store.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_schema.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition_trend_store.py",
+   "tests/test_paper_candidate_cash_drag_buffer_digest.py",
+   "tests/test_paper_candidate_cash_lockup_digest.py",
+   "tests/test_paper_candidate_fee_sensitivity_digest.py",
+   "tests/test_paper_execution_reconciliation_store_db.py",
+   "tests/test_paper_fee_schedule.py",
+   "tests/test_paper_project_screening_rank_stability_db_history_health.py",
+   "tests/test_paper_project_screening_rank_stability_db_history_health_load.py",
+   "tests/test_paper_project_screening_rank_stability_db_history_health_trend.py",
+   "tests/test_paper_project_screening_rank_stability_db_history_health_trend_gate.py",
+   "tests/test_paper_recommendation_consistency.py",
+   "tests/test_paper_recommendation_consistency_store.py",
+   "tests/test_paper_recommendation_cycle_snapshot_db_action_gate.py",
+   "tests/test_paper_recommendation_health_psycopg.py",
+   "tests/test_paper_recommendation_health_store.py",
+   "tests/test_paper_recommendation_quality_history_psycopg.py",
+   "tests/test_paper_recommendation_quality_history_store.py",
+   "tests/test_paper_recommendation_quality_summary.py",
+   "tests/test_paper_recommendation_quality_summary_psycopg.py",
+   "tests/test_paper_recommendation_quality_summary_store.py",
+   "tests/test_paper_recommendation_readiness_psycopg.py",
+   "tests/test_paper_recommendation_readiness_store.py",
+   "tests/test_paper_recommendation_reason_trend_health.py",
+   "tests/test_paper_recommendation_reason_trend_health_psycopg.py",
+   "tests/test_paper_recommendation_reason_trend_health_store.py",
+   "tests/test_paper_research_packet_quality_history_trend.py",
+   "tests/test_paper_trade_attribution_psycopg.py",
+   "tests/test_paper_trade_attribution_store.py",
+   "tests/test_supabase_paper_recommendation_quality_history_config.py",
+   "tests/test_supabase_paper_recommendation_quality_summary_config.py"
+  ],
+  "retained_tests_zero_dependency_obligation": "after retiring delete_full files and this batch's nodeid candidates, remaining tests and shared fixtures must show zero references (module-scope, function-scope, strings) to this batch's modules and exports; prove on undeleted source per plan 3.4 step 2 before physical deletion",
+  "shared_conflicts_or_blocked": [
+   "tests/test_autonomous_market_scorer_explanation.py",
+   "tests/test_init.py",
+   "tests/test_paper_autonomous_allocation_proposal_db_history_metrics_evaluation_db_row.py",
+   "tests/test_paper_autonomous_candidate_selection.py",
+   "tests/test_paper_autonomous_investment_ledger_db_history_health_psycopg.py",
+   "tests/test_paper_autonomous_investment_ledger_load_scope.py",
+   "tests/test_paper_autonomous_readiness_gate_psycopg.py",
+   "tests/test_paper_autonomous_screening_decision_support_gate_transition.py",
+   "tests/test_paper_capital_cost_model_scope.py",
+   "tests/test_paper_capital_cost_side_edge_adapter.py",
+   "tests/test_paper_correlation_grouping_scope.py",
+   "tests/test_paper_execution_reconciliation.py",
+   "tests/test_paper_execution_reconciliation_health_gate_scope.py",
+   "tests/test_paper_execution_reconciliation_health_trend_scope.py",
+   "tests/test_paper_execution_reconciliation_load.py",
+   "tests/test_paper_execution_reconciliation_load_scope.py",
+   "tests/test_paper_liquidity_depth_gate_scope.py",
+   "tests/test_paper_nav_liquidity_risk.py",
+   "tests/test_paper_nav_snapshot_db_liquidity_risk_load.py",
+   "tests/test_paper_outcome_uncertainty_scope.py",
+   "tests/test_paper_project_screening_rank_stability_psycopg.py",
+   "tests/test_paper_recommendation_calibration_gate_scope.py",
+   "tests/test_paper_recommendation_consistency_scope.py",
+   "tests/test_paper_recommendation_cycle_snapshot_db_review.py",
+   "tests/test_paper_recommendation_cycle_snapshot_log.py",
+   "tests/test_paper_recommendation_gate_summary_scope.py",
+   "tests/test_paper_recommendation_health_scope.py",
+   "tests/test_paper_recommendation_manifest_scope.py",
+   "tests/test_paper_recommendation_quality_summary_scope.py",
+   "tests/test_paper_recommendation_readiness_db_scope.py",
+   "tests/test_paper_recommendation_readiness_scope.py",
+   "tests/test_paper_recommendation_risk_budget_db_history.py",
+   "tests/test_paper_recommendation_risk_budget_db_history_load.py",
+   "tests/test_paper_recommendation_thresholds_scope.py",
+   "tests/test_paper_strategy_cycle_report_db_history.py",
+   "tests/test_paper_trade_attribution.py",
+   "tests/test_paper_trade_attribution_scope.py",
+   "tests/test_paper_trade_journal_db_cost_audit_load.py",
+   "tests/test_paper_trade_journal_db_cost_trend_load.py",
+   "tests/test_paper_trade_settlement_validation.py",
+   "tests/test_phase_2_recommendation_boundary_scope.py",
+   "tests/test_position_concentration_trend_monitor.py",
+   "tests/test_psycopg_adapter_cleanup.py",
+   "tests/test_strategy_assessment_pre_layer_scope.py",
+   "tests/test_strategy_recommendation_layer_scope.py",
+   "tests/test_strategy_signal_adapter.py",
+   "tests/test_team_diagnostics_phase1_boundary.py",
+   "tests/test_team_framework_scope.py"
+  ]
+ },
+ "tool_sha256": "ac4609dd7547efae6e3a07777794b881d27fb9246ca9c7fa1a8ec30198f8c656",
+ "verification_requirements": [
+  "step 1: mark deprecated-pending-prune in the engineering inventory and current module index; no runtime warnings, no shell modules, no selfcheck output change",
+  "step 2: run the full verifier on undeleted source, then prove remaining-test zero dependency for this batch",
+  "step 3: physical deletion of exactly these manifest paths in one atomic commit (source + exclusive tests + root exports + doc registry entries); protection tag pre-prune-2026-11 pushed and read back first (coordinator action)",
+  "step 4: re-run inventory.py --verify on the batch parent commit; record R_before==R_after, unreachable totals, file/line/export counts, retired nodeids, remaining test results"
+ ]
+}

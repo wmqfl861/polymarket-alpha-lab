@@ -1,5 +1,9 @@
 # Team Evidence Aggregation Contracts, Codec, And Temporal Eligibility Implementation Plan
 
+This July 2026 plan retains its original review instructions for receipt
+and implementation history. For a current review, follow
+[Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build Node 2A's pure immutable team-evidence contracts, complete bounded input-graph validation, both canonical record selectors, strict canonical payload/digest codec, and exact temporal eligibility assessment.

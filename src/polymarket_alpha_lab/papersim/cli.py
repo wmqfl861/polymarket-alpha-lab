@@ -628,6 +628,13 @@ def _fetch_rows(conn, sql: str) -> list[dict]:
     return [dict(zip(columns, row, strict=True)) for row in rows]
 
 
+def _snapshot_rows(cursor, sql: str) -> list[dict]:
+    """Execute one SELECT on an open snapshot cursor and dictify its rows."""
+    cursor.execute(sql)
+    columns = [description.name for description in cursor.description]
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
 def _number(value):
     return None if value is None else float(value)
 
@@ -668,20 +675,32 @@ def _evaluation_candidates_from_store(conn) -> tuple:
     basis fails loudly on it (honest gap, never zero-filled).
     ``book_walk`` provenance requires the candidate's recorded walked
     book; legacy imports (no stored order book) stay ``recorded_price``.
+
+    FX-29 (N-4): the three SELECTs run inside ONE REPEATABLE READ
+    READ ONLY transaction — the first statement of the transaction sets
+    the isolation level — so a capture or settlement committed by another
+    connection mid-load can never split the queue: all three row lists
+    come from one consistent snapshot. On a static database the results
+    are bit-identical to the previous per-statement default isolation.
     """
     from polymarket_alpha_lab.papersim import evaluation, ledger, store
 
-    candidate_rows = _fetch_rows(conn, _EVAL_CANDIDATES_SQL)
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        candidate_rows = _snapshot_rows(cursor, _EVAL_CANDIDATES_SQL)
+        evidence_rows = _snapshot_rows(cursor, _EVAL_EVIDENCE_SQL)
+        outcome_rows = _snapshot_rows(cursor, _EVAL_OUTCOMES_SQL)
     decision_evidence: dict[int, dict] = {}
     close_evidence: dict[int, dict] = {}
-    for row in _fetch_rows(conn, _EVAL_EVIDENCE_SQL):
+    for row in evidence_rows:
         candidate_id = int(row["candidate_id"])
         if row["evidence_role"] == "DECISION":
             decision_evidence.setdefault(candidate_id, row)
         elif row["evidence_role"] == "CLOSE":
             close_evidence[candidate_id] = row
     observations: dict[str, list[dict]] = {}
-    for row in _fetch_rows(conn, _EVAL_OUTCOMES_SQL):
+    for row in outcome_rows:
         for column in ("condition_id", "market_id", "market_slug"):
             identity = row[column]
             if identity is not None:
@@ -838,7 +857,12 @@ def _cmd_run_scan(args) -> int:
     import datetime as _datetime
 
     from polymarket_alpha_lab.papersim import scan
-    from polymarket_alpha_lab.papersim.optimize.provider import FrozenBaselineProvider
+    # MO-7 (coordinator-lane one-liner, plan 05 node MO-7 / review
+    # P2-3): the scan consults the registry-backed provider.  An empty
+    # or unreadable registry collapses to the frozen baseline INSIDE
+    # the provider (04 section 11), so this swap alone changes nothing
+    # until candidates are registered.
+    from polymarket_alpha_lab.papersim.optimize.provider import RegistryProvider
 
     try:
         config_path = Path(args.config)
@@ -854,16 +878,31 @@ def _cmd_run_scan(args) -> int:
             # ONE metric implementation feeds both the evaluate command
             # and the pause admission wiring -- no second SQL face.
             evaluation_candidates = _evaluation_candidates_from_store(connection)
+            # MO-8 / MO-7 review P3-2: the production entry point wires
+            # the pack-citation shadow source (SnapshotShadowSource over
+            # the scan connection) and the shadow budget.  With the
+            # registry empty the non-active role set is empty, so this
+            # changes nothing until candidates are registered; the
+            # pack-side model-input snapshot citations (xG/K-line) are
+            # the registered adapter-lane follow-up.
+            from polymarket_alpha_lab.papersim import snapshots
+            from polymarket_alpha_lab.papersim.optimize.shadow import (
+                SnapshotShadowSource,
+            )
+
             result = scan.run_scan(
                 config,
                 records,
                 conn=connection,
                 repo_root=args.repo_root,
-                provider=FrozenBaselineProvider(),
+                provider=RegistryProvider.from_connection(connection),
                 now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
                 evaluation_candidates=evaluation_candidates,
                 operation_key=args.operation_key,
                 attempt=args.attempt,
+                shadow_source=SnapshotShadowSource(
+                    lambda digest: snapshots.read_snapshot(connection, digest)),
+                shadow_budget_seconds=args.shadow_budget_seconds,
             )
         finally:
             connection.close()
@@ -910,7 +949,44 @@ def _cmd_capture_marks(args) -> int:
     return 0
 
 
-def _cmd_optimize(args) -> int:
+def _cmd_settle(args) -> int:
+    # B3 (05 section 2 / 80.8): heavy imports stay inside the handler
+    # (FX-20; tests/test_init_lazy_imports.py pins the startup cap).
+    import datetime as _datetime
+
+    from polymarket_alpha_lab.papersim import settle, store_psycopg
+
+    try:
+        connection = _open_readonly_connection(args, label="PAPERSIM_SETTLE_PG_DSN")
+        try:
+            result = settle.run_settle(
+                args.team,
+                conn=connection,
+                repo_root=args.repo_root,
+                now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
+                open_entries=store_psycopg.open_entries_for_settlement,
+                operator=args.operator,
+                operation_key=args.operation_key,
+                attempt=args.attempt,
+            )
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"settle: FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, sort_keys=True, allow_nan=False))
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# MO-6: optimize families/init/run/status (plan 05 node MO-6).  Every
+# heavy import stays inside the handler (FX-20; the startup module cap
+# is pinned by tests/test_init_lazy_imports.py; measured baseline 19).
+# ---------------------------------------------------------------------------
+
+
+def _cmd_optimize_mo6(args) -> int:
     # MO-6 (plan 05 node MO-6 / plan r2 section 1.3): every heavy
     # import stays inside the function bodies so the CLI startup module
     # count is untouched (FX-20; tests/test_init_lazy_imports.py pins
@@ -1012,6 +1088,872 @@ def _cmd_optimize(args) -> int:
 
 def parser_error_unknown_optimize(name: str) -> None:
     raise ValueError(f"papersim_optimize_command_unknown:{name!r}")
+
+
+# MO-8: optimize score/decide/apply/rollback/freeze/unfreeze (plan 05 node
+# MO-8; design 04 sections 6, 9, 10 and 11).  Every heavy import stays
+# inside the handlers so the CLI startup module count is untouched (FX-20;
+# tests/test_init_lazy_imports.py pins the limit).  The judgement rules
+# themselves are pure and live in optimize/policy.py; these handlers only
+# assemble facts from the store, call the policy and write through the
+# reviewed MO-2 writers.
+# ---------------------------------------------------------------------------
+
+
+def _optimize_threshold(lineage: str):
+    """(family_id, target, threshold) of one lineage id; unknown fails."""
+    from polymarket_alpha_lab.papersim.optimize.policy import classify_threshold
+
+    if not isinstance(lineage, str) or lineage.count("/") != 1:
+        raise ValueError("papersim_optimize_lineage_invalid")
+    family_id, target = lineage.split("/", 1)
+    try:
+        return family_id, target, classify_threshold(family_id, target)
+    except ValueError:
+        raise ValueError("papersim_optimize_lineage_unknown") from None
+
+
+def _optimize_role_batches(conn, lineage: str) -> list[list[dict]]:
+    """The lineage's role events grouped into writer-transaction batches."""
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT spec_sha256, role, effective_at FROM papersim.model_role_events "
+            "WHERE lineage = %s ORDER BY effective_at, role_event_id", (lineage,))
+        columns = [description.name for description in cursor.description]
+        rows = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    batches: list[list[dict]] = []
+    current: list[dict] = []
+    stamp = None
+    for row in rows:
+        if current and row["effective_at"] != stamp:
+            batches.append(current)
+            current = []
+        current.append(row)
+        stamp = row["effective_at"]
+    if current:
+        batches.append(current)
+    return batches
+
+
+def _optimize_queue_bindings(config_path, lineage: str) -> list[str]:
+    """The queue ids one scan config binds to this lineage (read-only).
+
+    P2-3: the queue->lineage association lives in the scan configs
+    (QueueScanConfig carries both fields); nothing here writes or
+    rewires the scan module -- the config is parsed through the SAME
+    frozen loader run-scan uses.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    from polymarket_alpha_lab.papersim import scan as _scan
+
+    path = _Path(config_path)
+    try:
+        document = _json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise ValueError(
+            f"papersim_scan_config_unreadable: {config_path}") from error
+    config = _scan.config_from_mapping(document)
+    return [queue.queue for queue in config.queues if queue.lineage == lineage]
+
+
+def _optimize_entry_count(conn, model_version: str, market_type: str) -> dict:
+    """Entries of the ACTIVE's queue (OD-L / P3-4: the full queue key is
+    model_name x model_version x market_type; model_name is constant per
+    family+version in practice, so the count is grouped by model_name and
+    the breakdown is returned alongside the total)."""
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT c.model_name, COUNT(*) FROM papersim.entries e "
+            "JOIN papersim.candidates c ON c.candidate_id = e.candidate_id "
+            "WHERE c.model_version = %s AND c.market_type = %s "
+            "GROUP BY c.model_name ORDER BY c.model_name",
+            (model_version, market_type))
+        rows = cursor.fetchall()
+    breakdown = {str(model_name): int(total) for model_name, total in rows}
+    return {"total": sum(breakdown.values()), "by_model_name": breakdown}
+
+
+def _optimize_scan_failure_since(conn, since) -> bool:
+    """Any FAILED run-scan receipt at or after `since` (the concrete,
+    recorded v1 face of the data-integrity gate)."""
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT 1 FROM papersim.command_run_events "
+            "WHERE command = 'run-scan' AND phase = 'FAILED' "
+            "AND occurred_at >= %s LIMIT 1", (since,))
+        return cursor.fetchone() is not None
+
+
+def _optimize_lineage_facts(conn, lineage: str, queue_ids) -> dict:
+    """Everything decide/score need about one lineage (no clock reads)."""
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.optimize import policy
+    from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
+
+    view = store_psycopg.load_lineage_roles(conn, lineage)
+    if view is None:
+        raise ValueError("papersim_optimize_lineage_unknown")
+    batches = _optimize_role_batches(conn, lineage)
+    registered_at: dict[str, object] = {}
+    last_handover_at = None
+    for batch in batches:
+        roles = {row["role"] for row in batch}
+        if roles == {"CANDIDATE"}:
+            registered_at[batch[0]["spec_sha256"]] = batch[0]["effective_at"]
+        elif "GUARD" in roles and "ACTIVE" in roles:
+            stamp = batch[0]["effective_at"]
+            if last_handover_at is None or stamp > last_handover_at:
+                last_handover_at = stamp
+    freeze = store_psycopg.registry_freeze_state(conn)
+    frozen = bool(freeze["global_frozen"] or lineage in freeze["frozen_lineages"])
+    latched = store_psycopg.latched_pauses(conn)
+    paused = any(latched.get(queue_id, (False, False)) != (False, False)
+                 for queue_id in queue_ids)
+    active_spec = store_psycopg.load_model_spec(conn, view.active)
+    if active_spec is None:
+        raise ValueError("papersim_optimize_active_spec_missing")
+    _family_id, target, _threshold = _optimize_threshold(lineage)
+    entries = _optimize_entry_count(conn, active_spec.model_version(), target)
+    since = min(registered_at.values()) if registered_at else None
+    integrity_ok = True
+    guard_integrity_regression = False
+    if since is not None:
+        integrity_ok = not _optimize_scan_failure_since(conn, since)
+    if last_handover_at is not None:
+        guard_integrity_regression = _optimize_scan_failure_since(
+            conn, last_handover_at)
+    facts = policy.LineageFacts(
+        lineage=lineage,
+        active_spec=view.active,
+        guard_spec=view.guard,
+        candidate_specs=tuple(view.candidates),
+        candidate_registered_at=registered_at,
+        last_handover_at=last_handover_at,
+        frozen=frozen,
+        lineage_paused_or_stopped=paused,
+        active_queue_entries=entries["total"],
+        # v1 registered decision: no tunable family with season-frozen
+        # parameters is registered yet (league-bridge has targets=());
+        # the block code exists and the fact stays an explicit input.
+        touches_season_frozen_params=False,
+        integrity_ok=integrity_ok,
+        guard_integrity_regression=guard_integrity_regression,
+        # v1 registered limitation: the validation-gate regression flag
+        # has no recorded face yet; the statistical rollback trigger is
+        # fully wired and this flag stays a documented input.
+        guard_validation_gate_regression=False,
+    )
+    return {"view": view, "facts": facts, "entries": entries,
+            "active_model_version": active_spec.model_version()}
+
+
+def _optimize_outcome_for(conn, rows) -> dict:
+    """candidate_id -> (natural outcome YES/NO, observed_at), effective
+    selection over the recorded observations (same discipline as the
+    evaluate loader; UNKNOWN stays absent, never guessed)."""
+    from polymarket_alpha_lab.papersim import store
+
+    identities: dict[str, list[dict]] = {}
+    condition_ids = sorted({row["condition_id"] for row in rows
+                            if row["condition_id"] is not None})
+    market_ids = sorted({row["market_id"] for row in rows
+                         if row["market_id"] is not None})
+    slugs = sorted({row["market_slug"] for row in rows
+                    if row["market_slug"] is not None})
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT outcome_id, condition_id, market_id, market_slug, "
+            "outcome, observed_at FROM papersim.market_outcomes "
+            "WHERE condition_id = ANY(%s) OR market_id = ANY(%s) "
+            "OR market_slug = ANY(%s) ORDER BY observed_at, outcome_id",
+            (condition_ids, market_ids, slugs))
+        columns = [description.name for description in cursor.description]
+        for row in cursor.fetchall():
+            record = dict(zip(columns, row, strict=True))
+            for column in ("condition_id", "market_id", "market_slug"):
+                identity = record[column]
+                if identity is not None:
+                    identities.setdefault(identity, []).append(record)
+    resolved: dict[int, tuple[str, object]] = {}
+    for row in rows:
+        identity = row["condition_id"] or row["market_id"] or row["market_slug"]
+        if identity is None:
+            continue
+        effective = store.select_effective_outcome(identities.get(identity, ()))
+        if effective.is_effective and effective.outcome in ("YES", "NO"):
+            resolved[int(row["candidate_id"])] = (effective.outcome,
+                                                  effective.observed_at)
+    return resolved
+
+
+def _optimize_close_prices(conn, candidate_ids) -> dict:
+    """candidate_id -> close price (CLOSE evidence rows only)."""
+    if not candidate_ids:
+        return {}
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT candidate_id, last, mid FROM papersim.candidate_price_evidence "
+            "WHERE evidence_role = 'CLOSE' AND candidate_id = ANY(%s) "
+            "ORDER BY evidence_id", (sorted(candidate_ids),))
+        result = {}
+        for candidate_id, last, mid in cursor.fetchall():
+            price = last if last is not None else mid
+            if price is not None:
+                result[int(candidate_id)] = float(price)
+        return result
+
+
+def _optimize_logdiff(p_judged, p_other, realized_yes: bool):
+    """One paired log-loss difference in Decimal (judged minus other).
+
+    Same arithmetic posture as optimize.metrics.production_binary_paired:
+    side-aligned closed probabilities, Decimal logs, a zero probability
+    on either side is an infinite pair (excluded and counted, never
+    zero-filled).
+    """
+    from decimal import Decimal, localcontext
+
+    from polymarket_alpha_lab.research_probability_scores import CONTEXT
+
+    with localcontext(CONTEXT):
+        judged = Decimal(str(p_judged))
+        other = Decimal(str(p_other))
+        judged_true = judged if realized_yes else Decimal(1) - judged
+        other_true = other if realized_yes else Decimal(1) - other
+        if judged_true == 0 or other_true == 0:
+            return None
+        return other_true.ln() - judged_true.ln()
+
+
+def _optimize_pair_rows(conn, *, shadow_spec_sha256: str,
+                        priced_model_version: str, since) -> list[dict]:
+    """The shadow/priced pair rows of one judged pair.
+
+    Pairing rule (plan section 4): a shadow prediction hangs on the
+    candidate row the PRICED spec wrote for the same market in the same
+    scan, so the join is by candidate_id; `since` bounds the window
+    (candidate registration for FORWARD looks, the handover stamp for
+    ROLLBACK looks)."""
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT c.candidate_id, c.side, c.condition_id, c.market_id, "
+            "c.market_slug, c.market_type, c.model_version, c.event_key, "
+            "c.event_start_at, c.evaluated_at, "
+            "c.median_probability AS priced_p, "
+            "sp.probability AS shadow_p, sp.gate_pass AS shadow_gate, "
+            "sp.refusal_reason AS shadow_refusal "
+            "FROM papersim.shadow_predictions sp "
+            "JOIN papersim.candidates c ON c.candidate_id = sp.candidate_id "
+            "WHERE sp.spec_sha256 = %s AND c.model_version = %s "
+            "AND c.evaluated_at >= %s ORDER BY c.candidate_id",
+            (shadow_spec_sha256, priced_model_version, since))
+        columns = [description.name for description in cursor.description]
+        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
+def _optimize_stats_dict(stats) -> dict:
+    """One ForwardStats as canonical JSON (repr floats, sorted by dump)."""
+    return {
+        "n_markets": stats.n_markets,
+        "n_event_clusters": stats.n_event_clusters,
+        "n_complete_blocks": stats.n_complete_blocks,
+        "span_days": stats.span_days,
+        "watermark": None if stats.watermark is None
+        else stats.watermark.isoformat(),
+        "paired_mean": None if stats.paired_mean is None
+        else repr(stats.paired_mean),
+        "ci95": [None if bound is None else repr(bound) for bound in stats.ci95],
+        "ci99": [None if bound is None else repr(bound) for bound in stats.ci99],
+        "close_dev_markets": stats.close_dev_markets,
+        "close_dev_gap": None if stats.close_dev_gap is None
+        else repr(stats.close_dev_gap),
+        "unpaired": stats.unpaired,
+    }
+
+
+def _optimize_forward_stats(conn, lineage: str, *, shadow_spec_sha256: str,
+                            priced_model_version: str, since, judged: str,
+                            with_close_deviation: bool, stats_spec: str = "",
+                            stats_comparator: str = ""):
+    """Assemble one ForwardStats from the store (pure over its rows).
+
+    ``judged`` picks the diff direction: "shadow" (FORWARD look -- the
+    candidate's shadow against the priced active) or "priced" (ROLLBACK
+    look -- the priced NEW active against the guard's shadow).  The
+    registered "场/市场" sample counts EVENT CLUSTERS (match/expiry
+    keys), never raw lines; intervals come from the evaluation
+    module's frozen cluster bootstrap at both registered levels.
+    """
+    from polymarket_alpha_lab.papersim.evaluation import cluster_bootstrap_mean_ci
+    from polymarket_alpha_lab.papersim.optimize import policy
+
+    _family_id, _target, threshold = _optimize_threshold(lineage)
+    rows = _optimize_pair_rows(
+        conn, shadow_spec_sha256=shadow_spec_sha256,
+        priced_model_version=priced_model_version, since=since)
+    resolved = _optimize_outcome_for(conn, rows)
+    close_prices = (_optimize_close_prices(
+        conn, [int(row["candidate_id"]) for row in rows
+               if row["shadow_gate"]])
+        if with_close_deviation else {})
+    diffs: list[tuple[tuple[str, str], object]] = []
+    starts: list = []
+    clusters: dict[tuple[str, str], list[float]] = {}
+    order: list[tuple[str, str]] = []
+    unpaired = 0
+    watermark = None
+    close_judged: list[float] = []
+    close_other: list[float] = []
+    close_markets = 0
+    for row in rows:
+        outcome = resolved.get(int(row["candidate_id"]))
+        if outcome is None or row["shadow_p"] is None \
+                or row["priced_p"] is None or row["shadow_refusal"] is not None:
+            unpaired += 1
+            continue
+        realized_yes = (row["side"].startswith("YES")) == (outcome[0] == "YES")
+        if judged == "shadow":
+            diff = _optimize_logdiff(row["shadow_p"], row["priced_p"], realized_yes)
+        else:
+            diff = _optimize_logdiff(row["priced_p"], row["shadow_p"], realized_yes)
+        key = ("event_key", row["event_key"]) if row["event_key"] else (
+            "market_key", str(row["condition_id"] or row["market_id"]
+                              or row["market_slug"] or row["candidate_id"]))
+        if diff is None:
+            unpaired += 1
+            continue
+        if key not in clusters:
+            clusters[key] = []
+            order.append(key)
+        clusters[key].append(float(diff))
+        diffs.append(diff)
+        if row["event_start_at"] is not None:
+            starts.append(row["event_start_at"])
+        observed = outcome[1]
+        if watermark is None or observed > watermark:
+            watermark = observed
+        if with_close_deviation and row["shadow_gate"]:
+            # The would-bet subset counts GATE rows; a missing close
+            # price only degrades the gap to None (annotated), never
+            # the count (completeness belongs to integrity_ok).
+            close_markets += 1
+            close = close_prices.get(int(row["candidate_id"]))
+            if close is not None:
+                close_judged.append(abs(close - float(row["shadow_p"]))
+                                    if judged == "shadow"
+                                    else abs(close - float(row["priced_p"])))
+                close_other.append(abs(close - float(row["priced_p"]))
+                                   if judged == "shadow"
+                                   else abs(close - float(row["shadow_p"])))
+    cluster_rows = [clusters[key] for key in order]
+    lo95, hi95 = cluster_bootstrap_mean_ci(cluster_rows)
+    lo99, hi99 = cluster_bootstrap_mean_ci(
+        cluster_rows, percentiles=policy.FIRST_EVIDENCE_CI_PERCENTILES)
+    mean = (float(sum(diffs) / len(diffs)) if diffs else None)
+    family_class = threshold.family_class
+    if family_class.startswith("club-soccer"):
+        blocks = policy.complete_matchweek_blocks(starts, watermark)
+    elif family_class == "intl":
+        blocks = policy.intl_window_blocks(starts)
+    else:
+        blocks = 0
+    span = policy.span_days_of(starts)
+    close_gap = (sum(close_judged) / len(close_judged)
+                 - sum(close_other) / len(close_other)
+                 if close_judged else None)
+    from polymarket_alpha_lab.papersim.optimize.policy import ForwardStats
+    return ForwardStats(
+        spec=stats_spec or shadow_spec_sha256,
+        comparator=stats_comparator or shadow_spec_sha256,
+        n_markets=len(order), n_event_clusters=len(order),
+        n_complete_blocks=blocks, span_days=span, watermark=watermark,
+        paired_mean=mean, ci95=(lo95, hi95), ci99=(lo99, hi99),
+        close_dev_markets=close_markets,
+        close_dev_gap=close_gap, unpaired=unpaired)
+
+
+def _optimize_prior_decisions(conn, lineage: str, decision_class: str,
+                              candidate_sha: str | None) -> list[dict]:
+    """Prior rows of one (lineage, class, candidate) under the LIVE rule
+    version -- the look-key counter and the evidence ordinal come from
+    these (BLOCKED rows count toward the key, never the ordinal)."""
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.optimize.policy import RULE_VERSION
+
+    rows = [row for row in store_psycopg.load_promotion_decisions(conn, lineage)
+            if row["decision_class"] == decision_class
+            and row["rule_version"] == RULE_VERSION
+            and row["candidate_spec_sha256"] == candidate_sha]
+    return rows
+
+
+def _optimize_write_decision(conn, *, lineage: str, decision_class: str,
+                             candidate_sha, active_sha: str, look_number: int,
+                             verdict, decided_at) -> dict:
+    from polymarket_alpha_lab.papersim import store, store_psycopg
+    from polymarket_alpha_lab.papersim.optimize.policy import RULE_VERSION
+
+    submission = store.PromotionDecisionSubmission(
+        lineage=lineage, decision_class=decision_class,
+        candidate_spec_sha256=candidate_sha, active_spec_sha256=active_sha,
+        rule_version=RULE_VERSION, look_number=look_number,
+        evidence_watermark=verdict.evidence_watermark,
+        metrics=verdict.metrics, conclusion=verdict.conclusion,
+        block_reason=verdict.block_reason,
+        decided_by=f"auto:{RULE_VERSION}", decided_at=decided_at)
+    return store_psycopg.record_promotion_decision(conn, submission)
+
+
+def _optimize_decide_lineage(conn, lineage: str, queue_ids) -> dict:
+    """Every due look of one lineage, in the pinned order: the ROLLBACK
+    look first (safety before promotion), then each candidate's FORWARD
+    look in registry order.  Each row write is its own idempotent
+    transaction; not-due looks write nothing."""
+    import datetime as _datetime
+
+    from polymarket_alpha_lab.papersim.optimize import policy
+
+    _family_id, _target, threshold = _optimize_threshold(lineage)
+    state = _optimize_lineage_facts(conn, lineage, queue_ids)
+    facts: policy.LineageFacts = state["facts"]
+    view = state["view"]
+    written: list[dict] = []
+    looks: list[dict] = []
+
+    if facts.guard_spec is not None and facts.last_handover_at is not None:
+        stats = _optimize_forward_stats(
+            conn, lineage, shadow_spec_sha256=facts.guard_spec,
+            priced_model_version=state["active_model_version"],
+            since=facts.last_handover_at, judged="priced",
+            with_close_deviation=False, stats_spec=facts.active_spec,
+            stats_comparator=facts.guard_spec)
+        prior = _optimize_prior_decisions(conn, lineage, "ROLLBACK",
+                                          facts.active_spec)
+        key_counter = len(prior) + 1
+        ordinal = len([row for row in prior if row["conclusion"] != "BLOCKED"])
+        regression = (facts.guard_integrity_regression
+                      or facts.guard_validation_gate_regression)
+        due = regression or policy.rollback_look_due(stats, threshold)
+        looks.append({"class": "ROLLBACK", "spec": facts.active_spec,
+                      "due": due, "key_counter": key_counter,
+                      "evidence_ordinal": ordinal,
+                      "blocked_looks_consumed": key_counter - 1 - ordinal,
+                      "n_markets": stats.n_markets})
+        if due and stats.watermark is not None:
+            verdict = policy.decide_rollback(
+                facts, stats, look_number=key_counter, threshold=threshold,
+                as_of=stats.watermark)
+            record = _optimize_write_decision(
+                conn, lineage=lineage, decision_class="ROLLBACK",
+                candidate_sha=facts.active_spec, active_sha=facts.active_spec,
+                look_number=key_counter, verdict=verdict,
+                decided_at=stats.watermark)
+            written.append({**record, "conclusion": verdict.conclusion,
+                            "class": "ROLLBACK"})
+
+    for candidate_sha in view.candidates:
+        if candidate_sha not in facts.candidate_registered_at:
+            continue
+        since = facts.candidate_registered_at[candidate_sha]
+        stats = _optimize_forward_stats(
+            conn, lineage, shadow_spec_sha256=candidate_sha,
+            priced_model_version=state["active_model_version"],
+            since=since, judged="shadow", with_close_deviation=True)
+        prior = _optimize_prior_decisions(conn, lineage, "FORWARD",
+                                          candidate_sha)
+        key_counter = len(prior) + 1
+        ordinal = len([row for row in prior if row["conclusion"] != "BLOCKED"])
+        due = policy.forward_look_due(stats, threshold, ordinal)
+        expired = (stats.watermark is not None and
+                   stats.watermark - since >
+                   _datetime.timedelta(days=threshold.max_shadow_days))
+        looks.append({"class": "FORWARD", "spec": candidate_sha,
+                      "due": bool(due or expired), "key_counter": key_counter,
+                      "evidence_ordinal": ordinal,
+                      "blocked_looks_consumed": key_counter - 1 - ordinal,
+                      "n_markets": stats.n_markets})
+        if (due or expired) and stats.watermark is not None:
+            verdict = policy.decide_forward(
+                facts, stats, look_number=key_counter, evidence_ordinal=ordinal,
+                threshold=threshold, as_of=stats.watermark)
+            record = _optimize_write_decision(
+                conn, lineage=lineage, decision_class="FORWARD",
+                candidate_sha=candidate_sha, active_sha=facts.active_spec,
+                look_number=key_counter, verdict=verdict,
+                decided_at=stats.watermark)
+            written.append({**record, "conclusion": verdict.conclusion,
+                            "class": "FORWARD"})
+    return {"lineage": lineage, "looks": looks, "written": written}
+
+
+def _optimize_score_lineage(conn, lineage: str, queue_ids, *,
+                            pause_state_known: bool = True) -> dict:
+    """Descriptive forward statistics only -- no conclusion, ever."""
+    from polymarket_alpha_lab.papersim.optimize import policy
+
+    _family_id, _target, threshold = _optimize_threshold(lineage)
+    state = _optimize_lineage_facts(conn, lineage, queue_ids)
+    facts: policy.LineageFacts = state["facts"]
+    view = state["view"]
+    pairs: list[dict] = []
+    if facts.guard_spec is not None and facts.last_handover_at is not None:
+        stats = _optimize_forward_stats(
+            conn, lineage, shadow_spec_sha256=facts.guard_spec,
+            priced_model_version=state["active_model_version"],
+            since=facts.last_handover_at, judged="priced",
+            with_close_deviation=False, stats_spec=facts.active_spec,
+            stats_comparator=facts.guard_spec)
+        pairs.append({"pair": "active-vs-guard",
+                      "spec": facts.active_spec,
+                      "comparator": facts.guard_spec,
+                      "stats": _optimize_stats_dict(stats)})
+    for candidate_sha in view.candidates:
+        if candidate_sha not in facts.candidate_registered_at:
+            continue
+        stats = _optimize_forward_stats(
+            conn, lineage, shadow_spec_sha256=candidate_sha,
+            priced_model_version=state["active_model_version"],
+            since=facts.candidate_registered_at[candidate_sha],
+            judged="shadow", with_close_deviation=True)
+        prior = _optimize_prior_decisions(conn, lineage, "FORWARD",
+                                          candidate_sha)
+        ordinal = len([row for row in prior if row["conclusion"] != "BLOCKED"])
+        target_markets = (threshold.min_markets if ordinal == 0
+                          else threshold.min_markets
+                          * policy.SECOND_LOOK_SAMPLE_MULTIPLIER)
+        pairs.append({
+            "pair": "candidate-vs-active", "spec": candidate_sha,
+            "comparator": facts.active_spec,
+            "stats": _optimize_stats_dict(stats),
+            "next_look": {
+                "due": policy.forward_look_due(stats, threshold, ordinal),
+                "evidence_ordinal": ordinal,
+                "blocked_looks_consumed": len(prior) - ordinal,
+                "target_markets": target_markets,
+                "markets_to_next_look": max(target_markets
+                                            - stats.n_markets, 0)},
+        })
+    return {
+        "lineage": lineage,
+        "roles": {"active": view.active, "baseline": view.baseline,
+                  "candidates": list(view.candidates), "guard": view.guard},
+        "frozen": facts.frozen,
+        # Without a --config the pause state is UNKNOWN (null), never a
+        # silent False -- the bindings live in the scan configs.
+        "pause_state_known": pause_state_known,
+        "lineage_paused_or_stopped": (facts.lineage_paused_or_stopped
+                                      if pause_state_known else None),
+        "last_handover_at": (None if facts.last_handover_at is None
+                             else facts.last_handover_at.isoformat()),
+        "active_queue_entries": state["entries"],
+        "pairs": pairs,
+    }
+
+
+def _optimize_parse_time(value, error_code: str):
+    """Parse an explicit ISO-8601 stamp (tz-aware) or fail closed."""
+    if value is None:
+        return None
+    import datetime as _datetime
+
+    if not isinstance(value, str):
+        raise ValueError(error_code)
+    try:
+        stamp = _datetime.datetime.fromisoformat(value)
+    except ValueError:
+        raise ValueError(error_code) from None
+    if stamp.tzinfo is None:
+        raise ValueError(error_code)
+    return stamp
+
+
+def _cmd_optimize_score(args) -> int:
+    """Descriptive forward shadow statistics (read-only, no verdicts)."""
+    try:
+        queue_ids: list[str] = []
+        has_config = bool(getattr(args, "config", None))
+        if has_config:
+            queue_ids = _optimize_queue_bindings(args.config, args.lineage)
+        connection = _open_readonly_connection(
+            args, label="PAPERSIM_OPTIMIZE_PG_DSN")
+        try:
+            report = _optimize_score_lineage(
+                connection, args.lineage, queue_ids,
+                pause_state_known=has_config)
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"optimize score: FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps(report, sort_keys=True, allow_nan=False))
+    return 0
+
+
+def _cmd_optimize_decide(args) -> int:
+    """Apply the rule at every due look and write the decisions."""
+    try:
+        queue_ids = _optimize_queue_bindings(args.config, args.lineage)
+        connection = _open_readonly_connection(
+            args, label="PAPERSIM_OPTIMIZE_PG_DSN")
+        try:
+            report = _optimize_decide_lineage(connection, args.lineage,
+                                              queue_ids)
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"optimize decide: FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps(report, sort_keys=True, allow_nan=False))
+    return 0
+
+
+def _optimize_decision_row(conn, decision_id: int) -> dict | None:
+    """One promotion decision by id (the apply path's read face)."""
+    if isinstance(decision_id, bool) or not isinstance(decision_id, int):
+        raise ValueError("papersim_optimize_decision_invalid")
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT decision_id, lineage, decision_class, "
+            "candidate_spec_sha256, active_spec_sha256, conclusion, "
+            "look_number, rule_version, decided_at FROM "
+            "papersim.promotion_decisions WHERE decision_id = %s",
+            (decision_id,))
+        columns = [description.name for description in cursor.description]
+        row = cursor.fetchone()
+    if row is None:
+        return None
+    return dict(zip(columns, row, strict=True))
+
+
+def _cmd_optimize_apply(args) -> int:
+    """Write the role events of one PROMOTE / ROLLBACK / RETIRE decision.
+
+    PROMOTE_PENDING_CONFIRM applies only with an explicit human actor
+    and --confirm (the OD-L owner-confirmation path); CONTINUE, HOLD and
+    BLOCKED decisions never write role events.  Hard blocks are
+    re-verified against the FRESH fold -- a stale PROMOTE decision
+    never hands over into a blocked state; the RETIRE batch is exempt
+    (a retirement changes no active; P3-8).  Review P2 fix: an
+    active-changing apply REQUIRES --config -- the pause re-check runs
+    on the same frozen queue->lineage binding loader decide uses, and
+    without bindings it fails closed (papersim_policy_queue_bindings_
+    missing), never silently unpaused; RETIRE-only batches need no
+    config (a retirement is not a handover)."""
+    from polymarket_alpha_lab.papersim import store, store_psycopg
+    from polymarket_alpha_lab.papersim.optimize import policy
+
+    try:
+        connection = _open_readonly_connection(
+            args, label="PAPERSIM_OPTIMIZE_PG_DSN")
+        try:
+            row = _optimize_decision_row(connection, args.decision_id)
+            if row is None:
+                raise ValueError("papersim_optimize_decision_unknown")
+            decision = row
+            conclusion = decision["conclusion"]
+            human = bool(args.actor) and not args.actor.startswith("auto:")
+            if conclusion in ("CONTINUE", "HOLD", "BLOCKED"):
+                raise ValueError("papersim_optimize_apply_no_events")
+            if conclusion == "PROMOTE_PENDING_CONFIRM" \
+                    and not (args.confirm and human):
+                raise ValueError(
+                    "papersim_optimize_apply_needs_owner_confirm")
+            lineage = decision["lineage"]
+            active_changing = conclusion in ("PROMOTE", "ROLLBACK",
+                                             "PROMOTE_PENDING_CONFIRM")
+            queue_ids: list[str] = []
+            if active_changing:
+                if not getattr(args, "config", None):
+                    raise ValueError("papersim_policy_queue_bindings_missing")
+                queue_ids = _optimize_queue_bindings(args.config, lineage)
+            state = _optimize_lineage_facts(connection, lineage, queue_ids)
+            facts: policy.LineageFacts = state["facts"]
+            view = state["view"]
+            if active_changing and facts.frozen:
+                raise ValueError("papersim_optimize_apply_frozen")
+            if active_changing and facts.lineage_paused_or_stopped:
+                raise ValueError("papersim_optimize_apply_paused")
+            actor = args.actor or f"auto:{decision['rule_version']}"
+            code_commit = require_clean_worktree_path(args.repo_root)
+            effective_at = decision["decided_at"]
+            reason = (f"MO-8 {decision['decision_class']} look "
+                      f"{decision['look_number']} decision "
+                      f"{decision['decision_id']}")
+
+            def _event(spec: str, role: str) -> store.RoleEventSubmission:
+                return store.RoleEventSubmission(
+                    lineage=lineage, spec_sha256=spec, role=role,
+                    effective_at=effective_at, reason=reason,
+                    decision_id=int(decision["decision_id"]), actor=actor,
+                    code_commit=code_commit)
+
+            if conclusion in ("PROMOTE", "PROMOTE_PENDING_CONFIRM"):
+                events = [_event(decision["active_spec_sha256"], "GUARD"),
+                          _event(decision["candidate_spec_sha256"], "ACTIVE")]
+                if view.guard is not None:
+                    events.append(_event(view.guard, "RETIRED"))
+            elif conclusion == "ROLLBACK":
+                if view.guard is None:
+                    raise ValueError("papersim_optimize_apply_no_guard")
+                events = [_event(view.active, "RETIRED"),
+                          _event(view.guard, "ACTIVE")]
+            else:  # RETIRE
+                events = [_event(decision["candidate_spec_sha256"], "RETIRED")]
+            batch = store.RoleEventBatch(events=tuple(events))
+            applied = store_psycopg.record_role_events(connection, batch)
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"optimize apply: FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps({"applied": applied, "decision_id": args.decision_id,
+                      "conclusion": conclusion, "actor": actor},
+                     sort_keys=True, allow_nan=False))
+    return 0
+
+
+def _cmd_optimize_rollback(args) -> int:
+    """Manual rollback: one MANUAL-class decision plus the rollback batch.
+
+    The MANUAL decision's key candidate is the DEMOTED spec (P3-5): a
+    retired spec can never re-register (registry candidate-not-new), so
+    one row per demotion is structurally unique."""
+    import datetime as _datetime
+
+    from polymarket_alpha_lab.papersim import store, store_psycopg
+
+    try:
+        if not args.actor or args.actor.startswith("auto:"):
+            raise ValueError("papersim_optimize_rollback_actor_invalid")
+        connection = _open_readonly_connection(
+            args, label="PAPERSIM_OPTIMIZE_PG_DSN")
+        try:
+            state = _optimize_lineage_facts(connection, args.lineage, [])
+            facts = state["facts"]
+            view = state["view"]
+            if facts.frozen:
+                raise ValueError("papersim_optimize_apply_frozen")
+            if view.guard is None:
+                raise ValueError("papersim_optimize_apply_no_guard")
+            occurred_at = _optimize_parse_time(
+                args.at, "papersim_optimize_time_invalid") or \
+                _datetime.datetime.now(_datetime.UTC)
+            code_commit = require_clean_worktree_path(args.repo_root)
+            decision = store.PromotionDecisionSubmission(
+                lineage=args.lineage, decision_class="MANUAL",
+                candidate_spec_sha256=view.active,
+                active_spec_sha256=view.active,
+                rule_version="manual-v1", look_number=1,
+                evidence_watermark={"reason": args.reason},
+                metrics={}, conclusion="ROLLBACK", block_reason=None,
+                decided_by=args.actor, decided_at=occurred_at)
+            written = store_psycopg.record_promotion_decision(
+                connection, decision)
+
+            def _event(spec: str, role: str) -> store.RoleEventSubmission:
+                return store.RoleEventSubmission(
+                    lineage=args.lineage, spec_sha256=spec, role=role,
+                    effective_at=occurred_at, reason=args.reason,
+                    decision_id=int(written["decision_id"]), actor=args.actor,
+                    code_commit=code_commit)
+
+            batch = store.RoleEventBatch(events=(
+                _event(view.active, "RETIRED"), _event(view.guard, "ACTIVE")))
+            applied = store_psycopg.record_role_events(connection, batch)
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"optimize rollback: FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps({"decision": written, "applied": applied},
+                     sort_keys=True, allow_nan=False))
+    return 0
+
+
+def _cmd_optimize_control(args, control_kind: str) -> int:
+    """freeze/unfreeze: one optimizer_control_events row (MO-2 writer).
+
+    FREEZE may carry an auto: actor (04 section 11 restricts only
+    UNFREEZE to humans); UNFREEZE with an auto: actor is rejected by
+    the three existing layers before any write.  The default
+    occurred_at is the one deliberate wall-clock read of this command
+    (documented): pass --occurred-at for a deterministic replay; the
+    command echoes the idempotency key and row id either way."""
+    import datetime as _datetime
+
+    from polymarket_alpha_lab.papersim import store, store_psycopg
+
+    try:
+        connection = _open_readonly_connection(
+            args, label="PAPERSIM_OPTIMIZE_PG_DSN")
+        try:
+            occurred_at = _optimize_parse_time(
+                args.occurred_at,
+                "papersim_optimize_time_invalid") or \
+                _datetime.datetime.now(_datetime.UTC)
+            submission = store.OptimizerControlEventSubmission(
+                scope="LINEAGE" if args.lineage else "GLOBAL",
+                lineage=args.lineage, control_kind=control_kind,
+                reason=args.reason, actor=args.actor, occurred_at=occurred_at)
+            # Belt beside braces: the writer validates again (and the
+            # database CHECK is the third layer) -- validating BEFORE
+            # the write keeps an invalid actor from ever reaching it.
+            submission.validate()
+            record = store_psycopg.record_optimizer_control_event(
+                connection, submission)
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"optimize {control_kind.lower()}: FAIL: {error}",
+              file=sys.stderr)
+        return 1
+    print(json.dumps(record, sort_keys=True, allow_nan=False))
+    return 0
+
+
+def require_clean_worktree_path(repo_root):
+    """The scan-module clean-worktree proof, re-exported for the MO-8
+    role-event writers (role events carry a code_commit, B1 discipline)."""
+    from polymarket_alpha_lab.papersim.scan import require_clean_worktree
+
+    return require_clean_worktree(repo_root)
+
+
+def _cmd_optimize(args) -> int:
+    command = args.optimize_command
+    if command in ("families", "init", "run", "status"):
+        return _cmd_optimize_mo6(args)
+    if command == "score":
+        return _cmd_optimize_score(args)
+    if command == "decide":
+        return _cmd_optimize_decide(args)
+    if command == "apply":
+        return _cmd_optimize_apply(args)
+    if command == "rollback":
+        return _cmd_optimize_rollback(args)
+    if command == "freeze":
+        return _cmd_optimize_control(args, "FREEZE")
+    if command == "unfreeze":
+        return _cmd_optimize_control(args, "UNFREEZE")
+    print(f"optimize: FAIL: unknown optimize command {command!r}",
+          file=sys.stderr)
+    return 2
+
+
+#: MO-8 / MO-7 review P3-2: the run-scan shadow budget default.  An
+#: OPERATIONAL default (seconds), deliberately NOT one of the
+#: registered rule numbers of DELIVERY_PLAN 80.7 -- those live only in
+#: optimize/policy.py.
+RUN_SCAN_SHADOW_BUDGET_SECONDS = 30.0
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -1150,6 +2092,14 @@ def _build_parser() -> argparse.ArgumentParser:
         "--attempt", type=int, default=1,
         help="attempt number of this operation for the run receipts (default: 1)",
     )
+    run_scan_parser.add_argument(
+        "--shadow-budget-seconds", type=float,
+        default=RUN_SCAN_SHADOW_BUDGET_SECONDS,
+        help="wall-clock budget of the shadow side; over budget the scan "
+             "drops NEW shadow work, never the active path (default: "
+             f"{RUN_SCAN_SHADOW_BUDGET_SECONDS}s, an operational default "
+             "NOT a registered rule number)",
+    )
     capture_parser = subparsers.add_parser(
         "capture-marks",
         help="B2 mark capture: periodic and close marks for ALL candidates",
@@ -1200,157 +2150,245 @@ def _build_parser() -> argparse.ArgumentParser:
         "--attempt", type=int, default=1,
         help="attempt number of this operation for the run receipts (default: 1)",
     )
-    optimize_parser = subparsers.add_parser(
-        "optimize",
-        help="model auto-optimization: families, registry init, runs, status",
+    settle_parser = subparsers.add_parser(
+        "settle",
+        help="B3 paper settlement: per-entry natural/voided settlement from captured evidence",
         description=(
-            "Optimize subcommands (plan 05 node MO-6): families lists the "
-            "model families with baseline specs and search-space summaries; "
-            "init writes every family's baseline spec and initial roles "
-            "idempotently; run performs one historical optimization run "
-            "(receipts, snapshot registration, optimization_runs row, "
-            "candidate registration when the stage-1 gates pass); status "
-            "reports roles, freeze state and recent runs. Paper-only: no "
-            "order, account or credential surface."
+            "Settle open paper entries (plan 05 section 2 / DELIVERY_PLAN "
+            "80.8): refuse a dirty worktree (FX-03), read the open entries "
+            "and their EFFECTIVE captured final-outcome evidence in ONE "
+            "repeatable-read read-only snapshot (FX-29), derive each "
+            "settlement purely from the captured outcome token (NATURAL "
+            "win/loss via the ledger, VOIDED stake refund; basketball "
+            "full-game semantics are OT-inclusive because only "
+            "completed-game evidence settles), and write one idempotent "
+            "settlement row plus its single cash leg per entry (STARTED/"
+            "SUCCEEDED/FAILED run receipts). An entry without captured "
+            "terminal evidence stays open and is reported PENDING with a "
+            "reason; early EXIT settlement stays operator-attested. "
+            "Paper-only: no order, account or credential surface."
         ),
     )
-    optimize_subparsers = optimize_parser.add_subparsers(
-        dest="optimize_command", required=True
+    settle_parser.add_argument(
+        "--team", required=True,
+        help="team identity feeding the run receipts and the default operation key",
     )
-    optimize_subparsers.add_parser(
+    settle_source = settle_parser.add_mutually_exclusive_group(required=True)
+    settle_source.add_argument(
+        "--managed", action="store_true",
+        help="write through the project-private managed application instance",
+    )
+    settle_source.add_argument(
+        "--dsn",
+        help="explicit DSN for an isolated/throwaway cluster "
+             "(validated by the single audited local DSN validator)",
+    )
+    settle_parser.add_argument(
+        "--repo-root", default=".",
+        help="repository root for the clean-worktree commit check and the "
+             "managed instance (default: .)",
+    )
+    settle_parser.add_argument(
+        "--operator", default="unattended",
+        help="operator identity recorded on every settlement (default: unattended)",
+    )
+    settle_parser.add_argument(
+        "--operation-key", default=None,
+        help="stable scheduling identity of this unattended run (default: "
+             "settle|<team>|<started UTC stamp>|b3)",
+    )
+    settle_parser.add_argument(
+        "--attempt", type=int, default=1,
+        help="attempt number of this operation for the run receipts (default: 1)",
+    )
+    optimize_parser = subparsers.add_parser(
+        "optimize",
+        help="model auto-optimization: shadow statistics, promotion "
+             "decisions, role events and freeze control (MO-8; "
+             "paper-only / report-only / readonly)",
+    )
+    optimize_sub = optimize_parser.add_subparsers(
+        dest="optimize_command", required=True)
+
+    def _optimize_source(parser, *, write: bool):
+        parser.add_argument(
+            "--managed", action="store_true",
+            help="operate through the project-private managed application "
+                 "instance",
+        )
+        parser.add_argument(
+            "--dsn",
+            help="explicit DSN for an isolated/throwaway cluster "
+                 "(validated by the single audited local DSN validator)",
+        )
+        parser.add_argument("--repo-root", default=".",
+                            help="repository root (default: .)")
+        return parser
+
+    families_parser = optimize_sub.add_parser(
         "families",
         help="list families, baseline specs and search-space summaries "
              "(no connection, no writes)",
     )
-    optimize_init = optimize_subparsers.add_parser(
+    init_parser = _optimize_source(optimize_sub.add_parser(
         "init",
-        help="write every family's baseline spec and initial roles (idempotent)",
-    )
-    optimize_init.add_argument(
+        help="write every family's baseline spec and initial roles "
+             "(idempotent; MO-6)",
+    ), write=True)
+    init_parser.add_argument(
         "--families", nargs="*", default=None,
-        help="subset of family ids to initialize (default: every registered "
-             "family)",
+        help="subset of family ids to initialize (default: every "
+             "registered family)",
     )
-    optimize_init.add_argument(
+    init_parser.add_argument(
         "--actor", default="optimize-init",
-        help="actor recorded on the initialization role events (default: "
-             "optimize-init)",
+        help="actor recorded on the initialization role events "
+             "(default: optimize-init)",
     )
-    optimize_init.add_argument(
+    init_parser.add_argument(
         "--effective-at", default=None,
-        help="explicit effective time of the initialization batch (default: "
-             "now UTC)",
+        help="explicit effective time of the initialization batch "
+             "(default: now UTC)",
     )
-    optimize_init_source = optimize_init.add_mutually_exclusive_group(
-        required=True
-    )
-    optimize_init_source.add_argument(
-        "--managed", action="store_true",
-        help="write through the project-private managed application instance",
-    )
-    optimize_init_source.add_argument(
-        "--dsn",
-        help="explicit DSN for an isolated/throwaway cluster "
-             "(validated by the single audited local DSN validator)",
-    )
-    optimize_init.add_argument(
-        "--repo-root", default=".",
-        help="repository root for the clean-worktree commit check and the "
-             "managed instance (default: .)",
-    )
-    optimize_run = optimize_subparsers.add_parser(
+    run_parser = _optimize_source(optimize_sub.add_parser(
         "run",
-        help="one historical optimization run (receipts + snapshots + run row)",
-        description=(
-            "Run one stage-1 optimization run over a family's registered "
-            "search space on frozen historical inputs. The holdout window "
-            "and the grid come from the frozen per-family run profile, "
-            "never from CLI knobs; the --input document names the input "
-            "bytes (with digests) and optional budget overrides. "
-            "--dry-run computes everything and writes nothing. Paper-only: "
-            "no order, account or credential surface."
-        ),
-    )
-    optimize_run.add_argument("--family", required=True,
-                              help="family id to optimize")
-    optimize_run.add_argument("--as-of", required=True,
-                              help="the run's fixed data cutoff (ISO-8601)")
-    optimize_run.add_argument(
+        help="one historical optimization run: receipts + snapshots + run "
+             "row (+ candidate registration when the stage-1 gates pass; "
+             "MO-6)",
+    ), write=True)
+    run_parser.add_argument("--family", required=True,
+                            help="family id to optimize")
+    run_parser.add_argument("--as-of", required=True,
+                            help="the run's fixed data cutoff (ISO-8601)")
+    run_parser.add_argument(
         "--input", required=True,
         help="run input JSON: {'archive_root': ...} for club soccer or "
              "{'inputs': [{'path', 'kind', 'sha256'?}]}",
     )
-    optimize_run_source = optimize_run.add_mutually_exclusive_group(
-        required=True
-    )
-    optimize_run_source.add_argument(
-        "--managed", action="store_true",
-        help="write through the project-private managed application instance",
-    )
-    optimize_run_source.add_argument(
-        "--dsn",
-        help="explicit DSN for an isolated/throwaway cluster "
-             "(validated by the single audited local DSN validator)",
-    )
-    optimize_run.add_argument(
-        "--repo-root", default=".",
-        help="repository root for the clean-worktree commit check and the "
-             "managed instance (default: .)",
-    )
-    optimize_run.add_argument(
+    run_parser.add_argument(
         "--seed", type=int, default=20261120,
-        help="random seed of the run (part of the run identity; default: "
-             "20261120)",
+        help="random seed of the run (part of the run identity; "
+             "default: 20261120)",
     )
-    optimize_run.add_argument(
+    run_parser.add_argument(
         "--budget-seconds", type=float, default=None,
         help="override the profile's wall-clock budget in seconds "
              "(default: the frozen profile budget)",
     )
-    optimize_run.add_argument(
+    run_parser.add_argument(
         "--max-trials", type=int, default=None,
         help="override the profile's trial budget (default: the frozen "
              "profile budget)",
     )
-    optimize_run.add_argument(
+    run_parser.add_argument(
         "--operation-key", default=None,
-        help="stable scheduling identity of this unattended run (default: "
-             "optimize-run|<family>|<as-of>|mo6)",
+        help="stable scheduling identity of this unattended run "
+             "(default: optimize-run|<family>|<as-of>|seed-<seed>|mo6)",
     )
-    optimize_run.add_argument(
+    run_parser.add_argument(
         "--attempt", type=int, default=1,
         help="attempt number of this operation for the run receipts "
              "(default: 1)",
     )
-    optimize_run.add_argument(
+    run_parser.add_argument(
         "--dry-run", action="store_true",
         help="compute everything, write nothing (byte-identical artifact "
              "digest on stdout)",
     )
-    optimize_status = optimize_subparsers.add_parser(
+    status_parser = _optimize_source(optimize_sub.add_parser(
         "status",
-        help="roles, freeze state and recent runs per lineage (read-only)",
-    )
-    optimize_status.add_argument(
+        help="roles, freeze state and recent runs per lineage "
+             "(read-only; MO-6)",
+    ), write=False)
+    status_parser.add_argument(
         "--lineage", default=None,
         help="restrict the report to one lineage id",
     )
-    optimize_status_source = optimize_status.add_mutually_exclusive_group(
-        required=True
-    )
-    optimize_status_source.add_argument(
-        "--managed", action="store_true",
-        help="read through the project-private managed application instance",
-    )
-    optimize_status_source.add_argument(
-        "--dsn",
-        help="explicit DSN for an isolated/throwaway cluster "
-             "(validated by the single audited local DSN validator)",
-    )
-    optimize_status.add_argument(
-        "--repo-root", default=".",
-        help="repository root of the managed instance (default: .)",
-    )
+    score_parser = _optimize_source(optimize_sub.add_parser(
+        "score",
+        help="forward shadow statistics of one lineage (read-only, "
+             "descriptive; never a verdict)",
+    ), write=False)
+    score_parser.add_argument("--lineage", required=True,
+                              help="lineage id family_id/target")
+    score_parser.add_argument(
+        "--config", default=None,
+        help="scan config JSON (queue->lineage bindings for the pause "
+             "state; without it the pause state reports UNKNOWN fields "
+             "only)")
+
+    decide_parser = _optimize_source(optimize_sub.add_parser(
+        "decide",
+        help="apply rule v1 at every due look and write the decisions "
+             "(idempotent per evidence watermark)",
+    ), write=True)
+    decide_parser.add_argument("--lineage", required=True,
+                               help="lineage id family_id/target")
+    decide_parser.add_argument(
+        "--config", required=True,
+        help="scan config JSON carrying the queue->lineage bindings of "
+             "the pause check (P2-3)")
+
+    apply_parser = _optimize_source(optimize_sub.add_parser(
+        "apply",
+        help="write the role events of one PROMOTE/ROLLBACK/RETIRE "
+             "decision (PROMOTE_PENDING_CONFIRM needs --confirm and a "
+             "human --actor)",
+    ), write=True)
+    apply_parser.add_argument("--decision-id", type=int, required=True)
+    apply_parser.add_argument(
+        "--config", default=None,
+        help="scan config JSON carrying the queue->lineage bindings of "
+             "the pause re-verification; REQUIRED for active-changing "
+             "applies (fail-closed without it, the same loader decide "
+             "uses); RETIRE-only applies need no config")
+    apply_parser.add_argument("--actor", default=None,
+                              help="deciding actor (default auto:<rule "
+                                   "version>); a PROMOTE_PENDING_CONFIRM "
+                                   "decision requires a human name")
+    apply_parser.add_argument("--confirm", action="store_true",
+                              help="the OD-L owner confirmation of a "
+                                   "PROMOTE_PENDING_CONFIRM decision")
+
+    rollback_parser = _optimize_source(optimize_sub.add_parser(
+        "rollback",
+        help="manual rollback to the guard: one MANUAL decision plus the "
+             "rollback batch (human actor required)",
+    ), write=True)
+    rollback_parser.add_argument("--lineage", required=True)
+    rollback_parser.add_argument("--reason", required=True)
+    rollback_parser.add_argument("--actor", required=True,
+                                 help="the human deciding the rollback")
+    rollback_parser.add_argument(
+        "--at", default=None,
+        help="explicit decision/effective time (ISO-8601); default is the "
+             "invocation moment (the command's one deliberate wall-clock "
+             "read)")
+
+    def _control(kind, help_text):
+        parser = _optimize_source(optimize_sub.add_parser(kind,
+                                                          help=help_text),
+                                  write=True)
+        parser.add_argument(
+            "--lineage", default=None,
+            help="scope the event to one lineage (default GLOBAL)")
+        parser.add_argument("--reason", required=True)
+        parser.add_argument(
+            "--actor", required=True,
+            help="deciding actor; an UNFREEZE actor may never start with "
+                 "'auto:' (three enforcement layers)")
+        parser.add_argument(
+            "--occurred-at", default=None,
+            help="explicit event time (ISO-8601) for deterministic "
+                 "replays; default is the invocation moment (the one "
+                 "deliberate wall-clock read, echoed with the row id)")
+        return parser
+
+    _control("freeze", "freeze the optimizer (global or one lineage); a "
+                       "freeze blocks registrations, handovers and applies "
+                       "of active-changing batches")
+    _control("unfreeze", "unfreeze (human actor only; never an automatic "
+                         "rule)")
     return parser
 
 
@@ -1370,10 +2408,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_replay(args)
     if args.command == "run-scan":
         return _cmd_run_scan(args)
-    if args.command == "capture-marks":
-        return _cmd_capture_marks(args)
     if args.command == "optimize":
         return _cmd_optimize(args)
+    if args.command == "settle":
+        return _cmd_settle(args)
+    if args.command == "capture-marks":
+        return _cmd_capture_marks(args)
     parser.error(f"unknown command {args.command!r}")  # pragma: no cover
     raise AssertionError("unreachable")  # pragma: no cover
 

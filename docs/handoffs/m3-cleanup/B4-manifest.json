@@ -1,0 +1,2709 @@
+{
+ "baseline_commit": "4c8bec2fdce31fec3a8ec06a6ab93a25e4d7fc69",
+ "batch": "B4",
+ "counts": {
+  "files": 114,
+  "lines": 106707,
+  "root_exports": 6
+ },
+ "dependency_check": {
+  "canonical_order": [
+   "B1",
+   "B2",
+   "B3",
+   "B4",
+   "B5",
+   "B6",
+   "B7",
+   "B8"
+  ],
+  "cross_family_cycles": [],
+  "entry_script_tool_workflow_consumers": {},
+  "k0_dependency_leaks": [],
+  "reasons": [
+   "shared test files with module-scope imports spanning batches (5)",
+   "UNKNOWN dynamic references in test files remaining at this batch (24 files) -- manual review required (plan 3.3 item 6)"
+  ],
+  "retained_src_dependents": [],
+  "unknown_consumers_in_retained_surfaces": [],
+  "unknown_test_references_pending_manual_review": [
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_action_gated_strategy_recommendation_queue_history.py",
+      "kind": "attr:find_spec",
+      "line": 55
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_action_gated_strategy_recommendation_queue_history.py",
+      "kind": "attr:import_module",
+      "line": 57
+     }
+    ],
+    "test": "tests/test_action_gated_strategy_recommendation_queue_history.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "joined('poly', 'mark', 'et_alpha_lab.candidate_decision_base_rate_anchor_score')",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_candidate_decision_base_rate_anchor_score.py",
+      "kind": "attr:import_module",
+      "line": 29
+     }
+    ],
+    "test": "tests/test_candidate_decision_base_rate_anchor_score.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "joined('poly', 'mark', 'et_alpha_lab.candidate_decision_base_rate_drift_score')",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_candidate_decision_base_rate_drift_score.py",
+      "kind": "attr:import_module",
+      "line": 22
+     }
+    ],
+    "test": "tests/test_candidate_decision_base_rate_drift_score.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "case['loader_module']",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_cli_db_connection_cleanup.py",
+      "kind": "attr:import_module",
+      "line": 127
+     }
+    ],
+    "test": "tests/test_cli_db_connection_cleanup.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "f'polymarket_alpha_lab.{module}'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_crypto_btc_evidence_scope.py",
+      "kind": "attr:import_module",
+      "line": 568
+     }
+    ],
+    "test": "tests/test_crypto_btc_evidence_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_env_example_coverage.py",
+      "kind": "attr:import_module",
+      "line": 21
+     }
+    ],
+    "test": "tests/test_env_example_coverage.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "f'polymarket_alpha_lab.{module_name}'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_recommendation_cycle_snapshot_scope.py",
+      "kind": "attr:import_module",
+      "line": 368
+     }
+    ],
+    "test": "tests/test_paper_recommendation_cycle_snapshot_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "full_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_recommendation_integration_boundary_scope.py",
+      "kind": "attr:import_module",
+      "line": 173
+     }
+    ],
+    "test": "tests/test_paper_recommendation_integration_boundary_scope.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_paper_strategy_cycle_report_history_gate_db_row.py",
+      "kind": "attr:import_module",
+      "line": 64
+     }
+    ],
+    "test": "tests/test_paper_strategy_cycle_report_history_gate_db_row.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "f'{PACKAGE_NAME}.probability_event_screen_phase1_boundary_report'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_readonly_boundary_scan.py",
+      "kind": "attr:import_module",
+      "line": 51
+     },
+     {
+      "expr": "f'{PACKAGE_NAME}.strategy_phase1_readiness_aggregator'",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_readonly_boundary_scan.py",
+      "kind": "attr:import_module",
+      "line": 69
+     }
+    ],
+    "test": "tests/test_phase1_readonly_boundary_scan.py"
+   },
+   {
+    "count": 4,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 54
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 63
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_discovery_smoke.py",
+      "kind": "attr:import_module",
+      "line": 79
+     }
+    ],
+    "test": "tests/test_phase1_report_discovery_smoke.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_modules_import_no_io.py",
+      "kind": "attr:import_module",
+      "line": 98
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_phase1_report_modules_import_no_io.py",
+      "kind": "attr:import_module",
+      "line": 111
+     }
+    ],
+    "test": "tests/test_phase1_report_modules_import_no_io.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_psycopg_adapter_cleanup.py",
+      "kind": "attr:import_module",
+      "line": 174
+     }
+    ],
+    "test": "tests/test_psycopg_adapter_cleanup.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_cost_threshold_policy.py",
+      "kind": "attr:find_spec",
+      "line": 26
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_cost_threshold_policy.py",
+      "kind": "attr:import_module",
+      "line": 27
+     }
+    ],
+    "test": "tests/test_research_cost_threshold_policy.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_signal_conflict_report.py",
+      "kind": "attr:find_spec",
+      "line": 34
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_research_signal_conflict_report.py",
+      "kind": "attr:import_module",
+      "line": 35
+     }
+    ],
+    "test": "tests/test_research_signal_conflict_report.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_probability_path_consistency_v10.py",
+      "kind": "attr:find_spec",
+      "line": 41
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_probability_path_consistency_v10.py",
+      "kind": "attr:import_module",
+      "line": 42
+     }
+    ],
+    "test": "tests/test_strategy_candidate_probability_path_consistency_v10.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_research_risk_register_v10.py",
+      "kind": "attr:find_spec",
+      "line": 30
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_research_risk_register_v10.py",
+      "kind": "attr:import_module",
+      "line": 31
+     }
+    ],
+    "test": "tests/test_strategy_candidate_research_risk_register_v10.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_scenario_balance_score_v2.py",
+      "kind": "attr:find_spec",
+      "line": 30
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_scenario_balance_score_v2.py",
+      "kind": "attr:import_module",
+      "line": 31
+     }
+    ],
+    "test": "tests/test_strategy_candidate_scenario_balance_score_v2.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py",
+      "kind": "attr:find_spec",
+      "line": 42
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py",
+      "kind": "attr:import_module",
+      "line": 43
+     }
+    ],
+    "test": "tests/test_strategy_candidate_source_disagreement_adjusted_ev_v2.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_digest.py",
+      "kind": "attr:find_spec",
+      "line": 39
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_digest.py",
+      "kind": "attr:import_module",
+      "line": 40
+     }
+    ],
+    "test": "tests/test_strategy_candidate_tail_risk_digest.py"
+   },
+   {
+    "count": 2,
+    "refs": [
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py",
+      "kind": "attr:find_spec",
+      "line": 42
+     },
+     {
+      "expr": "module_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py",
+      "kind": "attr:import_module",
+      "line": 43
+     }
+    ],
+    "test": "tests/test_strategy_candidate_tail_risk_event_asymmetry_gate_v2.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "surface['module_name']",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_supabase_paper_recommendation_report_config.py",
+      "kind": "attr:import_module",
+      "line": 54
+     }
+    ],
+    "test": "tests/test_supabase_paper_recommendation_report_config.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "import_name",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_team_diagnostics_phase1_boundary.py",
+      "kind": "attr:import_module",
+      "line": 141
+     }
+    ],
+    "test": "tests/test_team_diagnostics_phase1_boundary.py"
+   },
+   {
+    "count": 1,
+    "refs": [
+     {
+      "expr": "PRODUCTION_IMPORT",
+      "file": "/home/ubuntu/polymarket-alpha-lab/worktrees/m3-b0/tests/test_team_evaluation_attempt_latest_read_scope.py",
+      "kind": "attr:import_module",
+      "line": 513
+     }
+    ],
+    "test": "tests/test_team_evaluation_attempt_latest_read_scope.py"
+   }
+  ],
+  "verdict": "PAUSE"
+ },
+ "doc_registry_removals": {},
+ "entry_set_ref": "prune-manifest.json#entry_points",
+ "executed": false,
+ "executed_commit": null,
+ "exports_to_retire": [
+  "TeamDiagnosticsConfig",
+  "TeamDiagnosticsReport",
+  "TeamDiagnosticsRow",
+  "TeamPerformanceSummaryReport",
+  "build_team_diagnostics_report",
+  "build_team_performance_summary_report"
+ ],
+ "family": "team_",
+ "files": [
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 967,
+   "module": "polymarket_alpha_lab.team_category_learning_readiness_score",
+   "path": "src/polymarket_alpha_lab/team_category_learning_readiness_score.py",
+   "root_exports": [],
+   "sha256": "2d134e86336eecb1fb9b03fa1b566ffeeab5b5958ad73bc9c9d1cf01ed9d6435",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_category_learning_readiness_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 883,
+   "module": "polymarket_alpha_lab.team_category_queue_balance_score",
+   "path": "src/polymarket_alpha_lab/team_category_queue_balance_score.py",
+   "root_exports": [],
+   "sha256": "a885a2b6641fed8fa6c0cb86afd13dfcf57dcbc23969123a7e1b4da3be235318",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_category_queue_balance_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 313,
+   "module": "polymarket_alpha_lab.team_diagnostics",
+   "path": "src/polymarket_alpha_lab/team_diagnostics.py",
+   "root_exports": [
+    "TeamDiagnosticsConfig",
+    "TeamDiagnosticsReport",
+    "TeamDiagnosticsRow",
+    "build_team_diagnostics_report"
+   ],
+   "sha256": "2e5b0e8739b9ec74da8bf91b3f85ce0c7b04985c40bc702e3da50cca7e7b43ac",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_init.py"
+    },
+    {
+     "nodeid": "_module",
+     "scope": "function",
+     "test": "tests/test_team_diagnostics.py"
+    },
+    {
+     "nodeid": "test_forbidden_imports_are_not_used_by_facade_module",
+     "scope": "function",
+     "test": "tests/test_team_diagnostics.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 993,
+   "module": "polymarket_alpha_lab.team_domain_memory_reliability_rollup_v2",
+   "path": "src/polymarket_alpha_lab/team_domain_memory_reliability_rollup_v2.py",
+   "root_exports": [],
+   "sha256": "8eff750bf22ac4681fafe7cbe7ff846d541600645899294b6483f9fceb79ef37",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_domain_memory_reliability_rollup_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 985,
+   "module": "polymarket_alpha_lab.team_domain_specialist_capacity_queue_v2",
+   "path": "src/polymarket_alpha_lab/team_domain_specialist_capacity_queue_v2.py",
+   "root_exports": [],
+   "sha256": "be3ac4cbde3a1eae911ccef18369f7820d905068a8bef4306f1d73e017f0b4ed",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_domain_specialist_capacity_queue_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1036,
+   "module": "polymarket_alpha_lab.team_domain_watchlist_prioritization_report",
+   "path": "src/polymarket_alpha_lab/team_domain_watchlist_prioritization_report.py",
+   "root_exports": [],
+   "sha256": "f7b281b0fc50417255f6869f5cc733ff3acacf6147e5088136651df13df2cb16",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_domain_watchlist_prioritization_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 804,
+   "module": "polymarket_alpha_lab.team_memory_adjudication_followup_queue",
+   "path": "src/polymarket_alpha_lab/team_memory_adjudication_followup_queue.py",
+   "root_exports": [],
+   "sha256": "526c4fec3bf0366a97d0badfd0c311d876c4c85b1b9961f4449ae65987119b3b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_memory_adjudication_followup_queue.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 601,
+   "module": "polymarket_alpha_lab.team_memory_market_regime_learning_digest",
+   "path": "src/polymarket_alpha_lab/team_memory_market_regime_learning_digest.py",
+   "root_exports": [],
+   "sha256": "e4bbbfc1e7ecd8e928942ccd9e65dc8e2c3f725b29861d40b97047150aff7264",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_market_regime_learning_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1068,
+   "module": "polymarket_alpha_lab.team_memory_outcome_source_recheck_coverage_report",
+   "path": "src/polymarket_alpha_lab/team_memory_outcome_source_recheck_coverage_report.py",
+   "root_exports": [],
+   "sha256": "1eeb0b7fd7274466f5caf553405fa5c4876fd67703ad2ee337a8030edf6c0617",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_team_memory_outcome_source_recheck_coverage_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 988,
+   "module": "polymarket_alpha_lab.team_memory_outcome_source_recheck_health_report",
+   "path": "src/polymarket_alpha_lab/team_memory_outcome_source_recheck_health_report.py",
+   "root_exports": [],
+   "sha256": "fca37ab59d8b231022b56a0f680ff56628372bb0f6d4943cc9d428cf88cb4257",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_outcome_source_recheck_health_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1204,
+   "module": "polymarket_alpha_lab.team_memory_outcome_source_recheck_priority_report",
+   "path": "src/polymarket_alpha_lab/team_memory_outcome_source_recheck_priority_report.py",
+   "root_exports": [],
+   "sha256": "b51c03c32afd79d7867666e80c8f0724f782d374bbcfc84a5ed4f3ff498bd077",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_memory_outcome_source_recheck_priority_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 753,
+   "module": "polymarket_alpha_lab.team_memory_performance_metrics",
+   "path": "src/polymarket_alpha_lab/team_memory_performance_metrics.py",
+   "root_exports": [],
+   "sha256": "61c5a74c4c50eb584e46899434120938e8bc4c32edd12e096b61d8cbda97eb76",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_performance_metrics.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 707,
+   "module": "polymarket_alpha_lab.team_memory_policy_gate_readiness_report",
+   "path": "src/polymarket_alpha_lab/team_memory_policy_gate_readiness_report.py",
+   "root_exports": [],
+   "sha256": "5f2402da8160438fd4ab907c43d7eb8c92b3ce722d7a8a25cb0147b22a550473",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_policy_gate_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 684,
+   "module": "polymarket_alpha_lab.team_memory_quality_gate",
+   "path": "src/polymarket_alpha_lab/team_memory_quality_gate.py",
+   "root_exports": [],
+   "sha256": "ecdd2835043481fa4b7d9ca890ec16496296b14e773fc1cccae22a5793630b41",
+   "src_consumers": [
+    "polymarket_alpha_lab.team_research_readiness_dashboard"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_quality_gate.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_readiness_dashboard.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 442,
+   "module": "polymarket_alpha_lab.team_memory_readiness_digest_history",
+   "path": "src/polymarket_alpha_lab/team_memory_readiness_digest_history.py",
+   "root_exports": [],
+   "sha256": "9af91d10bfe2b4bfb9c6c24f3a5fee2cea6588956b24b59e5afdcfe612250f60",
+   "src_consumers": [
+    "polymarket_alpha_lab.domain_team_memory_scorecard"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_domain_team_memory_scorecard.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_readiness_digest_history.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 691,
+   "module": "polymarket_alpha_lab.team_memory_recency_decay_readiness_report",
+   "path": "src/polymarket_alpha_lab/team_memory_recency_decay_readiness_report.py",
+   "root_exports": [],
+   "sha256": "00e9fe67a58520dfd6af53f1edd33d6892cc34d94567805b5fbc92042ca970e8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_team_memory_recency_decay_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 697,
+   "module": "polymarket_alpha_lab.team_memory_replay_gap_queue",
+   "path": "src/polymarket_alpha_lab/team_memory_replay_gap_queue.py",
+   "root_exports": [],
+   "sha256": "24d265f437bdfea6775288a624d773884996d20db900281826a5f1ce714bf3c8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_memory_replay_gap_queue.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 882,
+   "module": "polymarket_alpha_lab.team_memory_source_recheck_cadence_coverage_report",
+   "path": "src/polymarket_alpha_lab/team_memory_source_recheck_cadence_coverage_report.py",
+   "root_exports": [],
+   "sha256": "fff2586c05ca5ade57c9d23a6540944f6913c58c898a8e0f3211d64939b49537",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_memory_source_recheck_cadence_coverage_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1321,
+   "module": "polymarket_alpha_lab.team_memory_source_recheck_cadence_exception_report",
+   "path": "src/polymarket_alpha_lab/team_memory_source_recheck_cadence_exception_report.py",
+   "root_exports": [],
+   "sha256": "5fabc4663eaae6da76031f7071c0bf4e53821825869a61359f43c67877cc1ee1",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_memory_source_recheck_cadence_exception_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 667,
+   "module": "polymarket_alpha_lab.team_memory_source_recheck_cadence_health_report",
+   "path": "src/polymarket_alpha_lab/team_memory_source_recheck_cadence_health_report.py",
+   "root_exports": [],
+   "sha256": "7a06c47e635c40aa0ce7af5a5d5cb02ac8729949fa4af3ed4503b84c72cc6158",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_memory_source_recheck_cadence_health_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 735,
+   "module": "polymarket_alpha_lab.team_memory_source_recheck_cadence_priority_report",
+   "path": "src/polymarket_alpha_lab/team_memory_source_recheck_cadence_priority_report.py",
+   "root_exports": [],
+   "sha256": "bb3994c0f973815241a6dd52a333001116806052d75ed4b7d50b6f9e8df54339",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_memory_source_recheck_cadence_priority_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1150,
+   "module": "polymarket_alpha_lab.team_memory_source_recheck_cadence_queue_report",
+   "path": "src/polymarket_alpha_lab/team_memory_source_recheck_cadence_queue_report.py",
+   "root_exports": [],
+   "sha256": "d26bf82dc30e54bb60ecbbbbc0f284d0e55818b88753e320bcde181d96aebf79",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_source_recheck_cadence_queue_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1044,
+   "module": "polymarket_alpha_lab.team_memory_source_recheck_cadence_readiness_report",
+   "path": "src/polymarket_alpha_lab/team_memory_source_recheck_cadence_readiness_report.py",
+   "root_exports": [],
+   "sha256": "1003917c6b2b847b8288a87fe5dbf2aff90aab2a6a2e1473760fdb22a28bdc8c",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_team_memory_source_recheck_cadence_readiness_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 810,
+   "module": "polymarket_alpha_lab.team_memory_source_recheck_cadence_sla_report",
+   "path": "src/polymarket_alpha_lab/team_memory_source_recheck_cadence_sla_report.py",
+   "root_exports": [],
+   "sha256": "49eab6abf745a3e111fe1e77d4193fd06bc7f72b6f0504a48542f7bd9714b50d",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_team_memory_source_recheck_cadence_sla_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 832,
+   "module": "polymarket_alpha_lab.team_memory_source_recheck_cadence_status_report",
+   "path": "src/polymarket_alpha_lab/team_memory_source_recheck_cadence_status_report.py",
+   "root_exports": [],
+   "sha256": "a5e53dc8a48cbae0b29846669baf2dd4d981f0b40864c5ab33e3cdb89dd89bb3",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_source_recheck_cadence_status_report.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 843,
+   "module": "polymarket_alpha_lab.team_memory_source_reliability_scorecard_digest",
+   "path": "src/polymarket_alpha_lab/team_memory_source_reliability_scorecard_digest.py",
+   "root_exports": [],
+   "sha256": "63cbb822ee117e546e881bbef14697d77117bd46426b0e58183d9f1a43a51dc4",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_memory_source_reliability_scorecard_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 925,
+   "module": "polymarket_alpha_lab.team_memory_specialist_playbook_score",
+   "path": "src/polymarket_alpha_lab/team_memory_specialist_playbook_score.py",
+   "root_exports": [],
+   "sha256": "37a755ba059ff780a0a6f383ee0a4d06315ee5508f43b7b16d4f58be02901c3e",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "module",
+     "scope": "function",
+     "test": "tests/test_team_memory_specialist_playbook_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 920,
+   "module": "polymarket_alpha_lab.team_memory_specialist_resolution_latency_score_v2",
+   "path": "src/polymarket_alpha_lab/team_memory_specialist_resolution_latency_score_v2.py",
+   "root_exports": [],
+   "sha256": "deec0bed60638c037f92fdd94a8548e8f3b99a5ec1ef051294d2da5fbc2a4a64",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "module",
+     "scope": "function",
+     "test": "tests/test_team_memory_specialist_resolution_latency_score_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 609,
+   "module": "polymarket_alpha_lab.team_paper_exposure_guard",
+   "path": "src/polymarket_alpha_lab/team_paper_exposure_guard.py",
+   "root_exports": [],
+   "sha256": "185e234abda861c67acb57ce3776eedcb06a0279112973c41d9f7ec4ca997cb2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_paper_exposure_guard.py"
+    },
+    {
+     "nodeid": "test_team_paper_exposure_guard_is_not_exported_from_package_root",
+     "scope": "function",
+     "test": "tests/test_team_paper_exposure_guard_scope.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 766,
+   "module": "polymarket_alpha_lab.team_performance_summary",
+   "path": "src/polymarket_alpha_lab/team_performance_summary.py",
+   "root_exports": [
+    "TeamPerformanceSummaryReport",
+    "build_team_performance_summary_report"
+   ],
+   "sha256": "8ee096a4392bdc4d0e003fdda29b658c271425477b54983809614425521edb29",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_init.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_team_performance_summary.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 867,
+   "module": "polymarket_alpha_lab.team_probability_calibration_drift_digest",
+   "path": "src/polymarket_alpha_lab/team_probability_calibration_drift_digest.py",
+   "root_exports": [],
+   "sha256": "b9f1be436c174364d26f797d87bdca632de8680e3ed7e240cf2e7404c5c2e078",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_probability_calibration_drift_digest.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 724,
+   "module": "polymarket_alpha_lab.team_research_calibration_snapshot",
+   "path": "src/polymarket_alpha_lab/team_research_calibration_snapshot.py",
+   "root_exports": [],
+   "sha256": "5f5da359bf9e1a0443f3dd32306dfedec5caa2722f714aa087a920c2db0f9724",
+   "src_consumers": [
+    "polymarket_alpha_lab.team_research_readiness_dashboard"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_calibration_snapshot.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_readiness_dashboard.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 781,
+   "module": "polymarket_alpha_lab.team_research_coverage_map",
+   "path": "src/polymarket_alpha_lab/team_research_coverage_map.py",
+   "root_exports": [],
+   "sha256": "932498a9f7e46b824208aeb28495e4fb3a4316ae734475f36acac64ed293fa59",
+   "src_consumers": [
+    "polymarket_alpha_lab.team_research_readiness_dashboard"
+   ],
+   "test_consumers": [
+    {
+     "nodeid": "_api",
+     "scope": "function",
+     "test": "tests/test_team_research_coverage_map.py"
+    },
+    {
+     "nodeid": "test_coverage_map_imports_no_db_cli_network_or_filesystem_modules",
+     "scope": "function",
+     "test": "tests/test_team_research_coverage_map.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_readiness_dashboard.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 735,
+   "module": "polymarket_alpha_lab.team_research_handoff",
+   "path": "src/polymarket_alpha_lab/team_research_handoff.py",
+   "root_exports": [],
+   "sha256": "fc2dabcfc3a8c9de951bdc90b84ad8d1338702a96090f908960fd98dfe354ede",
+   "src_consumers": [
+    "polymarket_alpha_lab.team_research_readiness_dashboard"
+   ],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_handoff.py"
+    },
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_readiness_dashboard.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1077,
+   "module": "polymarket_alpha_lab.team_research_memory_compaction_policy",
+   "path": "src/polymarket_alpha_lab/team_research_memory_compaction_policy.py",
+   "root_exports": [],
+   "sha256": "e3d676c47a52e3f28ae0a8b6b151f5885689feb64a40ca10447220ed94d3909b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_memory_compaction_policy.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1682,
+   "module": "polymarket_alpha_lab.team_research_readiness_dashboard",
+   "path": "src/polymarket_alpha_lab/team_research_readiness_dashboard.py",
+   "root_exports": [],
+   "sha256": "db7ec9835b2c14f6f1870123af57bb3fccd49a068e0da5c81575a1524f7763ed",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_readiness_dashboard.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 927,
+   "module": "polymarket_alpha_lab.team_research_review_checklist",
+   "path": "src/polymarket_alpha_lab/team_research_review_checklist.py",
+   "root_exports": [],
+   "sha256": "fb6217e05d6b46c8b0056c3d1f5ce704d0c4eb4beb7f5355126ed52d98a650a6",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_review_checklist.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1111,
+   "module": "polymarket_alpha_lab.team_research_round_robin_scheduler",
+   "path": "src/polymarket_alpha_lab/team_research_round_robin_scheduler.py",
+   "root_exports": [],
+   "sha256": "d8d13f4c0aca1f4bb0cf1e415baa48d6b150ff62aea6196bab11e30c5a7e4732",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_round_robin_scheduler.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1194,
+   "module": "polymarket_alpha_lab.team_research_work_packet",
+   "path": "src/polymarket_alpha_lab/team_research_work_packet.py",
+   "root_exports": [],
+   "sha256": "21115cf2f856e47061891e36b85a22ab344db7f4b6f0be3c38ea11eb94a21884",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_work_packet.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 299,
+   "module": "polymarket_alpha_lab.team_research_work_packet_cli_format",
+   "path": "src/polymarket_alpha_lab/team_research_work_packet_cli_format.py",
+   "root_exports": [],
+   "sha256": "e60d790c3406502753c7bdebe4f83a20c45ff4aafee877677fe89c376cef6be0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_research_work_packet_cli_format.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1305,
+   "module": "polymarket_alpha_lab.team_source_quorum",
+   "path": "src/polymarket_alpha_lab/team_source_quorum.py",
+   "root_exports": [],
+   "sha256": "44d62ec20837a58e90bb1fa897ca167e72870e564f28bf868f324a15074428f0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_source_quorum.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 999,
+   "module": "polymarket_alpha_lab.team_specialist_archetype_memory_refresh_rank_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_archetype_memory_refresh_rank_v2.py",
+   "root_exports": [],
+   "sha256": "36af3dbfdfebe2cafb602b5cc55ccba1c31077c7d25507d53164455df064a1ba",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_archetype_memory_refresh_rank_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1132,
+   "module": "polymarket_alpha_lab.team_specialist_archetype_outcome_learning_score_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_archetype_outcome_learning_score_v2.py",
+   "root_exports": [],
+   "sha256": "e97daece79010e8743027bda7374baf1b04f48317814438092886002846c9ce8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_archetype_outcome_learning_score_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 523,
+   "module": "polymarket_alpha_lab.team_specialist_assignment",
+   "path": "src/polymarket_alpha_lab/team_specialist_assignment.py",
+   "root_exports": [],
+   "sha256": "df983b11b2d0f5fe30e1d8d2a3f4c1b169597f81172a72b7b1c90dcefdf7848e",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "config",
+     "scope": "function",
+     "test": "tests/test_team_specialist_assignment.py"
+    },
+    {
+     "nodeid": "market",
+     "scope": "function",
+     "test": "tests/test_team_specialist_assignment.py"
+    },
+    {
+     "nodeid": "report",
+     "scope": "function",
+     "test": "tests/test_team_specialist_assignment.py"
+    },
+    {
+     "nodeid": "test_assignment_validates_flags_inputs_config_and_generated_at",
+     "scope": "function",
+     "test": "tests/test_team_specialist_assignment.py"
+    },
+    {
+     "nodeid": "test_assignment_module_is_pure_and_api_is_module_local",
+     "scope": "function",
+     "test": "tests/test_team_specialist_assignment.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 810,
+   "module": "polymarket_alpha_lab.team_specialist_backlog_pressure_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_backlog_pressure_score.py",
+   "root_exports": [],
+   "sha256": "d773d74d729b83d0d6ad492638cc6b0a42a5eb294edbfd1be60c6ab6a29880f9",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_backlog_pressure_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 525,
+   "module": "polymarket_alpha_lab.team_specialist_calibration_drift_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_calibration_drift_score.py",
+   "root_exports": [],
+   "sha256": "471a1555cd1805c327659d8ec52c3ef6a5870e929a710861b14499ac4ce76f66",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_calibration_drift_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1057,
+   "module": "polymarket_alpha_lab.team_specialist_calibration_feedback_priority_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_calibration_feedback_priority_v2.py",
+   "root_exports": [],
+   "sha256": "5d5e37e3efa673430adfec3aa8bb3647b406756a4838ca6869448e80f37d80f5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_calibration_feedback_priority_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1022,
+   "module": "polymarket_alpha_lab.team_specialist_calibration_followup_scheduler_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_calibration_followup_scheduler_v2.py",
+   "root_exports": [],
+   "sha256": "faad635e0b2a6f2fbd9726e44cc2891901220f6fec6c7ca78ee2365bd9c9ca45",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_calibration_followup_scheduler_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 978,
+   "module": "polymarket_alpha_lab.team_specialist_calibration_memory_scorecard_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_calibration_memory_scorecard_v2.py",
+   "root_exports": [],
+   "sha256": "b8f6975551519f12e8fc0c3ff655960bf3548523afdebae5f31a49b62f6c468f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_calibration_memory_scorecard_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1023,
+   "module": "polymarket_alpha_lab.team_specialist_calibration_snapshot",
+   "path": "src/polymarket_alpha_lab/team_specialist_calibration_snapshot.py",
+   "root_exports": [],
+   "sha256": "0313fc79e214f159c8bda48f1891f1325726214f0a98cd39ede75faaecff0044",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_calibration_snapshot.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1033,
+   "module": "polymarket_alpha_lab.team_specialist_calibration_transfer_score_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_calibration_transfer_score_v2.py",
+   "root_exports": [],
+   "sha256": "05d2d8bba1ea93578b458ed8e292387da9d18f92d63b2250e0378986e1adf661",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_calibration_transfer_score_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1019,
+   "module": "polymarket_alpha_lab.team_specialist_capacity_allocation_optimizer_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_capacity_allocation_optimizer_v2.py",
+   "root_exports": [],
+   "sha256": "32d7b601786c2decd84ca5f3ff409faea5cca0b57c8ac69c5b35b3193ada5395",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_capacity_allocation_optimizer_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 801,
+   "module": "polymarket_alpha_lab.team_specialist_case_mix_drift_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_case_mix_drift_score.py",
+   "root_exports": [],
+   "sha256": "b565ff2ec3b6c8b3afa39bb1a03833a1b9438bc6a8d7db5cab4a261fc8422d2b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_case_mix_drift_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1017,
+   "module": "polymarket_alpha_lab.team_specialist_category_calibration_memory_score_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_category_calibration_memory_score_v2.py",
+   "root_exports": [],
+   "sha256": "02f0c0cc7365aff17469050ce4a7b2b8f05e7cb2c1f608fc443b35e424a075f7",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_category_calibration_memory_score_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1247,
+   "module": "polymarket_alpha_lab.team_specialist_category_error_budget_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_category_error_budget_v2.py",
+   "root_exports": [],
+   "sha256": "116f5695401c2e6bd4466d1b9fd5f66cd4932f342e5799575bfcb75488b00855",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_category_error_budget_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 974,
+   "module": "polymarket_alpha_lab.team_specialist_category_playbook_reuse_gate_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_category_playbook_reuse_gate_v2.py",
+   "root_exports": [],
+   "sha256": "cfc8ab3ae038cadfca037a95fcb0000449a693bc6c3e4cd24a9baa9f659ecfa8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_category_playbook_reuse_gate_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1035,
+   "module": "polymarket_alpha_lab.team_specialist_confidence_feedback_decay_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_confidence_feedback_decay_v2.py",
+   "root_exports": [],
+   "sha256": "014baacf3b1f8e23f091e9836492cae7c7bb9ef9f7d22a556171e2f9d4c55d82",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_confidence_feedback_decay_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 967,
+   "module": "polymarket_alpha_lab.team_specialist_consensus_drift_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_consensus_drift_score.py",
+   "root_exports": [],
+   "sha256": "29c61c2221cb6085c91f2842b32db66682e83ce100246d5639eeda989a394b4c",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_consensus_drift_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 876,
+   "module": "polymarket_alpha_lab.team_specialist_cross_category_learning_router_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_cross_category_learning_router_v2.py",
+   "root_exports": [],
+   "sha256": "32823d152d95040ed6fdcd4951539caec78768e39f6b90a402d3f62eceef9c08",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_cross_category_learning_router_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 969,
+   "module": "polymarket_alpha_lab.team_specialist_cross_domain_transfer_risk_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_cross_domain_transfer_risk_v2.py",
+   "root_exports": [],
+   "sha256": "186aefbb88411cf76f71fc53fbdba5e4574ecff6f19430ce3400db4c45323ce3",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_cross_domain_transfer_risk_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 582,
+   "module": "polymarket_alpha_lab.team_specialist_decision_memory_replay_score_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_decision_memory_replay_score_v2.py",
+   "root_exports": [],
+   "sha256": "031fd81684ce12e56bb99d05a66f2b0b18f272380b13c2e77f93b90af220900b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_decision_memory_replay_score_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1209,
+   "module": "polymarket_alpha_lab.team_specialist_decision_review_load_router_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_decision_review_load_router_v2.py",
+   "root_exports": [],
+   "sha256": "9c95bce55f94df77652f90a4285bbaf3d363d5484ab13fdcfa2cbb73ea3699ed",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_decision_review_load_router_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 653,
+   "module": "polymarket_alpha_lab.team_specialist_domain_memory_retention_priority_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_domain_memory_retention_priority_v2.py",
+   "root_exports": [],
+   "sha256": "64a647d9f6f4ea286df5224b3d245796895c6272b9bb118f24aa2d7a86336763",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_domain_memory_retention_priority_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1112,
+   "module": "polymarket_alpha_lab.team_specialist_domain_memory_reuse_rank_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_domain_memory_reuse_rank_v2.py",
+   "root_exports": [],
+   "sha256": "0479638968a910699b53f4efd343ed9e33b16e6c06263f7dcdc6cc009517b4f8",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_domain_memory_reuse_rank_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 877,
+   "module": "polymarket_alpha_lab.team_specialist_domain_playbook_gap_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_domain_playbook_gap_v2.py",
+   "root_exports": [],
+   "sha256": "24857d1391f0e156c66fc35bc45460e0c0ac9d0c3fb7d94212b2e7580255f1bf",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_domain_playbook_gap_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 875,
+   "module": "polymarket_alpha_lab.team_specialist_domain_rotation_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_domain_rotation_score.py",
+   "root_exports": [],
+   "sha256": "808306f37be317c5b4fc0de5e27eaf997990d51d2e79c6bce721d22249c53ebf",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_domain_rotation_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1063,
+   "module": "polymarket_alpha_lab.team_specialist_error_pattern_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_error_pattern_score.py",
+   "root_exports": [],
+   "sha256": "70227aa350ce085294a4de45291ba084cfd579f16f32bf5609862033464f1a80",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_error_pattern_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 912,
+   "module": "polymarket_alpha_lab.team_specialist_event_coverage_heatmap_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_event_coverage_heatmap_v2.py",
+   "root_exports": [],
+   "sha256": "1975f0f7d9c8faadde76c28877cfa7e19d31d05743c84ff5fb337d217fa9296d",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_event_coverage_heatmap_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1384,
+   "module": "polymarket_alpha_lab.team_specialist_evidence_collection_sla_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_evidence_collection_sla_v2.py",
+   "root_exports": [],
+   "sha256": "98743069f4f4003dae97cb58dcdd4b7b097587860b42812485c4da6107a4babf",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_evidence_collection_sla_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1069,
+   "module": "polymarket_alpha_lab.team_specialist_evidence_review_coverage_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_evidence_review_coverage_score.py",
+   "root_exports": [],
+   "sha256": "7f0e1c7c23e9f734d5caf24884c59927bd385eab770f3fef6afb166909396ed4",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_evidence_review_coverage_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 598,
+   "module": "polymarket_alpha_lab.team_specialist_forecast_divergence_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_forecast_divergence_score.py",
+   "root_exports": [],
+   "sha256": "ab71d8ec2bc10a7cf5c3069141787e72c4c25d483035d248c5a273936199e64b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_forecast_divergence_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1013,
+   "module": "polymarket_alpha_lab.team_specialist_forecast_error_memory_rank_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_forecast_error_memory_rank_v2.py",
+   "root_exports": [],
+   "sha256": "a9e0e68914bb5508b8c6463f5d752f7fa5a4c096a588e63e3b60daf13853211f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_forecast_error_memory_rank_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 921,
+   "module": "polymarket_alpha_lab.team_specialist_forecast_revision_quality_gate_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_forecast_revision_quality_gate_v2.py",
+   "root_exports": [],
+   "sha256": "e8d2d0011111c8c15ad41306dee4529e3118cdedcbf934279dc625760ad20230",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_forecast_revision_quality_gate_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1114,
+   "module": "polymarket_alpha_lab.team_specialist_handoff_readiness_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_handoff_readiness_score.py",
+   "root_exports": [],
+   "sha256": "a60549fe206a40c9b9d27ba7bf89b5613d99bb1052ca1e0df44d3a975cadb552",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_handoff_readiness_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1044,
+   "module": "polymarket_alpha_lab.team_specialist_learning_feedback_router_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_learning_feedback_router_v2.py",
+   "root_exports": [],
+   "sha256": "7f8e00c709876f130ce24fd14daa18e001a5ac9fe598521d52a06c7a9d12e1e3",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_learning_feedback_router_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1025,
+   "module": "polymarket_alpha_lab.team_specialist_learning_priority_report_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_learning_priority_report_v2.py",
+   "root_exports": [],
+   "sha256": "2f9eb81c2316fd9137e8932ceb3c1f97349a5d77f5bf072ff97f60c893b191a2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_learning_priority_report_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 867,
+   "module": "polymarket_alpha_lab.team_specialist_manual_review_quality_score_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_manual_review_quality_score_v2.py",
+   "root_exports": [],
+   "sha256": "374181b3df2af7592c521b679bd76d0cf537bd852dae9fec8848281f937ef23b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_manual_review_quality_score_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1086,
+   "module": "polymarket_alpha_lab.team_specialist_market_archetype_playbook_score_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_market_archetype_playbook_score_v2.py",
+   "root_exports": [],
+   "sha256": "574d2033dd4305bf36fef74f838f27b43fb20dbf5b8ade19b3e280526b979340",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_market_archetype_playbook_score_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1042,
+   "module": "polymarket_alpha_lab.team_specialist_market_close_handoff_gate_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_market_close_handoff_gate_v2.py",
+   "root_exports": [],
+   "sha256": "d473f4c752e35f54e1abb5e8c15b0d79ef77776402f7fb4fad9a8d3986dfab92",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_market_close_handoff_gate_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 878,
+   "module": "polymarket_alpha_lab.team_specialist_market_memory_priority_queue_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_market_memory_priority_queue_v2.py",
+   "root_exports": [],
+   "sha256": "b45632a933f8351310db7091d535a4d114cf8a8defcbd396cac6ac1094c66016",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_market_memory_priority_queue_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 841,
+   "module": "polymarket_alpha_lab.team_specialist_memory_conflict_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_memory_conflict_score.py",
+   "root_exports": [],
+   "sha256": "acc70d197ed9e9dfc712aa39a896b0b37373b2af8586902cdebeca86310837d3",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_memory_conflict_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 954,
+   "module": "polymarket_alpha_lab.team_specialist_memory_refresh_priority",
+   "path": "src/polymarket_alpha_lab/team_specialist_memory_refresh_priority.py",
+   "root_exports": [],
+   "sha256": "6994e3e53c2a724c06de094e9a39b93801a95a03390609dab52f945863338de6",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_memory_refresh_priority.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1125,
+   "module": "polymarket_alpha_lab.team_specialist_outcome_feedback_learning_rank_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_outcome_feedback_learning_rank_v2.py",
+   "root_exports": [],
+   "sha256": "db7936430191d535b2fbd4e7c293d7bc35dadb97a48c6b430d00c0308b0fec83",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_outcome_feedback_learning_rank_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1047,
+   "module": "polymarket_alpha_lab.team_specialist_outcome_feedback_priority_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_outcome_feedback_priority_v2.py",
+   "root_exports": [],
+   "sha256": "d92b43813396cfda3a32e7749160dbfdd5f961fcb21e73a699c4b4e70bcda7d5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_outcome_feedback_priority_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1121,
+   "module": "polymarket_alpha_lab.team_specialist_playbook_staleness_ranker_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_playbook_staleness_ranker_v2.py",
+   "root_exports": [],
+   "sha256": "08af52dcf359b8692c798505d0763a4dffc84cb35c23e8c954d2caa8380c66f5",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_playbook_staleness_ranker_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1076,
+   "module": "polymarket_alpha_lab.team_specialist_postmortem_action_priority_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_postmortem_action_priority_v2.py",
+   "root_exports": [],
+   "sha256": "72aed04fbd17f4a7f24c2d8fa0ebf69331368117e29e52747525482384bb7152",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_postmortem_action_priority_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1026,
+   "module": "polymarket_alpha_lab.team_specialist_postmortem_readiness_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_postmortem_readiness_score.py",
+   "root_exports": [],
+   "sha256": "d25f2ae046d526a24ad8a6019e71eba43eab8ef2a31e10d644ac4f944fe75b8f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_postmortem_readiness_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 968,
+   "module": "polymarket_alpha_lab.team_specialist_probability_event_playbook_rank_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_probability_event_playbook_rank_v2.py",
+   "root_exports": [],
+   "sha256": "ee92db550ce9f1bea3b6ccaa719b27789ad0631d54a7942bcbf036dfe9256998",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_probability_event_playbook_rank_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 797,
+   "module": "polymarket_alpha_lab.team_specialist_queue_sla_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_queue_sla_score.py",
+   "root_exports": [],
+   "sha256": "b70516c45f091cd0b796b896b56bb0a4ebbe24ce6ef91b3d258aa618c4628707",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_queue_sla_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1261,
+   "module": "polymarket_alpha_lab.team_specialist_recent_error_pattern_gate_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_recent_error_pattern_gate_v2.py",
+   "root_exports": [],
+   "sha256": "aba395d3df4be76270348a7440374d52dc5ce796b244d6a3146e95b281152054",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_recent_error_pattern_gate_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 966,
+   "module": "polymarket_alpha_lab.team_specialist_research_depth_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_research_depth_score.py",
+   "root_exports": [],
+   "sha256": "05868995cdb4363f2f0bf7d92d39a604e0a5ee5aaef6124a5d635641424ef319",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_research_depth_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 943,
+   "module": "polymarket_alpha_lab.team_specialist_research_memory_decay_gate_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_research_memory_decay_gate_v2.py",
+   "root_exports": [],
+   "sha256": "6c1bbfddfb8a108a3fd3540c9edfae57b7f47f475541385d717e9bc392254935",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_research_memory_decay_gate_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1068,
+   "module": "polymarket_alpha_lab.team_specialist_research_quality_coach_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_research_quality_coach_v2.py",
+   "root_exports": [],
+   "sha256": "ca3a3d2a48148a8224ea9c7c946040f7d2b2050f92766ac3b25f83ef0afab1b2",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_research_quality_coach_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 923,
+   "module": "polymarket_alpha_lab.team_specialist_research_queue_learning_value_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_research_queue_learning_value_v2.py",
+   "root_exports": [],
+   "sha256": "fbcacdfee242d302534717f4f71a87312e9823abe6fb6dcab077fc809491972f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_research_queue_learning_value_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1034,
+   "module": "polymarket_alpha_lab.team_specialist_resolution_adjudication_readiness_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_resolution_adjudication_readiness_v2.py",
+   "root_exports": [],
+   "sha256": "acddcfdd0ec42d83bf2c39eae111698980bb53840c1f44035deefb6cbecccb16",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_resolution_adjudication_readiness_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 819,
+   "module": "polymarket_alpha_lab.team_specialist_resolution_feedback_priority_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_resolution_feedback_priority_v2.py",
+   "root_exports": [],
+   "sha256": "d71a1507faf35a0bb16034f1aafb0f54fc0f10d37523a209dafef29468ddac30",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_resolution_feedback_priority_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1138,
+   "module": "polymarket_alpha_lab.team_specialist_resolution_rule_memory_gate_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_resolution_rule_memory_gate_v2.py",
+   "root_exports": [],
+   "sha256": "a25ac8d11e4d3bf8eeb5937e82bdd7ad067b7fc0b0a09c127a5f49c8943f65b0",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_resolution_rule_memory_gate_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 892,
+   "module": "polymarket_alpha_lab.team_specialist_review_consensus_quality_gate_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_review_consensus_quality_gate_v2.py",
+   "root_exports": [],
+   "sha256": "fd648072d0065e1db72c6274c670077fc3e34a6edf0b5fbd2a1d5361d37631f1",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_review_consensus_quality_gate_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 799,
+   "module": "polymarket_alpha_lab.team_specialist_review_latency_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_review_latency_score.py",
+   "root_exports": [],
+   "sha256": "3e2b3b183fdf577d82535bf907cced61bbfe6668dac52e540959877f3effdfcd",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_review_latency_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1218,
+   "module": "polymarket_alpha_lab.team_specialist_review_load_balance_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_review_load_balance_score.py",
+   "root_exports": [],
+   "sha256": "e17333fd63b16ffd274ff6d3db1c6a7d61628e65b3c1ca994a5772dd93caac38",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_review_load_balance_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 880,
+   "module": "polymarket_alpha_lab.team_specialist_review_quality_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_review_quality_score.py",
+   "root_exports": [],
+   "sha256": "53d4673445bb30c7cad08a74d41470b20e905ebcf7f0d66203395c2a1bb452b4",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_review_quality_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 977,
+   "module": "polymarket_alpha_lab.team_specialist_signal_backlog_burnup_report_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_signal_backlog_burnup_report_v2.py",
+   "root_exports": [],
+   "sha256": "e20a205d6b31feba1955cf99973e25937402bc80025254029673b82b325d409b",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_signal_backlog_burnup_report_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1008,
+   "module": "polymarket_alpha_lab.team_specialist_source_collection_load_balancer_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_collection_load_balancer_v2.py",
+   "root_exports": [],
+   "sha256": "4c54d8b1d5d3d88eee15eab400f0c495aa6a884e2c643ec87308edfcfa7955bf",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_source_collection_load_balancer_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 881,
+   "module": "polymarket_alpha_lab.team_specialist_source_coverage_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_coverage_score.py",
+   "root_exports": [],
+   "sha256": "b8b0ecb38311f8e61a186d3051a708ce1fa9b149502a370a0985049103576926",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_source_coverage_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 917,
+   "module": "polymarket_alpha_lab.team_specialist_source_diversity_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_diversity_score.py",
+   "root_exports": [],
+   "sha256": "31a60857ffbd78774b10c9d65f71153916413d35fb142a29972f76a98b35d55f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_source_diversity_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1084,
+   "module": "polymarket_alpha_lab.team_specialist_source_family_rotation_need_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_family_rotation_need_v2.py",
+   "root_exports": [],
+   "sha256": "033f3c6f8d76c33cc41e972e61d3def86127769562107e35b231b360e2d87a0c",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_source_family_rotation_need_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 918,
+   "module": "polymarket_alpha_lab.team_specialist_source_latency_penalty_digest_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_latency_penalty_digest_v2.py",
+   "root_exports": [],
+   "sha256": "6e27a2db8916d3896fb7713c30cd80921f15a4319312ee0c4bb92af7ef64054a",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_source_latency_penalty_digest_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 585,
+   "module": "polymarket_alpha_lab.team_specialist_source_recheck_priority_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_recheck_priority_score.py",
+   "root_exports": [],
+   "sha256": "e0c5d6df7bf7be97961b7c9870115a6e95581919a2d55fdfd9f087e7a7666035",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_source_recheck_priority_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1240,
+   "module": "polymarket_alpha_lab.team_specialist_source_reliability_decay_watch_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_reliability_decay_watch_v2.py",
+   "root_exports": [],
+   "sha256": "01ba1953f60eb496088387a3756e0acf22e1a5501befc5568bdb828d8d54c075",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_source_reliability_decay_watch_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1020,
+   "module": "polymarket_alpha_lab.team_specialist_source_reliability_learning_queue_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_reliability_learning_queue_v2.py",
+   "root_exports": [],
+   "sha256": "c91c4f53e4ab7b0a680a70b2ce6c233ff31973eee48b8d5bcf37c26361a4450a",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_source_reliability_learning_queue_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1005,
+   "module": "polymarket_alpha_lab.team_specialist_source_rotation_learning_score_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_rotation_learning_score_v2.py",
+   "root_exports": [],
+   "sha256": "c76e31f607a31dafbe79e310708d832e66ef1b8b5cc3c76b36c9695defb2101f",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_source_rotation_learning_score_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 1020,
+   "module": "polymarket_alpha_lab.team_specialist_source_rotation_plan_v2",
+   "path": "src/polymarket_alpha_lab/team_specialist_source_rotation_plan_v2.py",
+   "root_exports": [],
+   "sha256": "62e12db5d4e4eb61acb11bab0874bc268722ae4f106087588325bf1330961e58",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_source_rotation_plan_v2.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 933,
+   "module": "polymarket_alpha_lab.team_specialist_topic_novelty_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_topic_novelty_score.py",
+   "root_exports": [],
+   "sha256": "6ba1a66cbd410b123e3e5ecfb81cc93ff68306fce78f252f956926bede61cb7d",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "nodeid": "api",
+     "scope": "function",
+     "test": "tests/test_team_specialist_topic_novelty_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  },
+  {
+   "covered_by_m2_reservation": false,
+   "covered_by_retained_closure": false,
+   "doc_registry_entries": {},
+   "lines": 870,
+   "module": "polymarket_alpha_lab.team_specialist_workload_volatility_score",
+   "path": "src/polymarket_alpha_lab/team_specialist_workload_volatility_score.py",
+   "root_exports": [],
+   "sha256": "25ecd7dd609971831f1183c1b811a35d5c0c08d6d002759e6acdcd59e6f50785",
+   "src_consumers": [],
+   "test_consumers": [
+    {
+     "scope": "module",
+     "test": "tests/test_team_specialist_workload_volatility_score.py"
+    }
+   ],
+   "unknown_consumers": []
+  }
+ ],
+ "m2_reservations_check": [],
+ "test_retirement": {
+  "delete_full": [
+   "tests/test_team_category_learning_readiness_score.py",
+   "tests/test_team_category_queue_balance_score.py",
+   "tests/test_team_domain_watchlist_prioritization_report.py",
+   "tests/test_team_memory_market_regime_learning_digest.py",
+   "tests/test_team_memory_outcome_source_recheck_health_report.py",
+   "tests/test_team_memory_performance_metrics.py",
+   "tests/test_team_memory_policy_gate_readiness_report.py",
+   "tests/test_team_memory_quality_gate.py",
+   "tests/test_team_memory_source_recheck_cadence_queue_report.py",
+   "tests/test_team_memory_source_recheck_cadence_status_report.py",
+   "tests/test_team_memory_source_reliability_scorecard_digest.py",
+   "tests/test_team_paper_exposure_guard.py",
+   "tests/test_team_performance_summary.py",
+   "tests/test_team_probability_calibration_drift_digest.py",
+   "tests/test_team_research_calibration_snapshot.py",
+   "tests/test_team_research_handoff.py",
+   "tests/test_team_research_memory_compaction_policy.py",
+   "tests/test_team_research_review_checklist.py",
+   "tests/test_team_research_round_robin_scheduler.py",
+   "tests/test_team_research_work_packet_cli_format.py",
+   "tests/test_team_source_quorum.py",
+   "tests/test_team_specialist_archetype_outcome_learning_score_v2.py",
+   "tests/test_team_specialist_backlog_pressure_score.py",
+   "tests/test_team_specialist_calibration_drift_score.py",
+   "tests/test_team_specialist_calibration_feedback_priority_v2.py",
+   "tests/test_team_specialist_calibration_followup_scheduler_v2.py",
+   "tests/test_team_specialist_calibration_memory_scorecard_v2.py",
+   "tests/test_team_specialist_calibration_snapshot.py",
+   "tests/test_team_specialist_calibration_transfer_score_v2.py",
+   "tests/test_team_specialist_capacity_allocation_optimizer_v2.py",
+   "tests/test_team_specialist_case_mix_drift_score.py",
+   "tests/test_team_specialist_category_error_budget_v2.py",
+   "tests/test_team_specialist_category_playbook_reuse_gate_v2.py",
+   "tests/test_team_specialist_consensus_drift_score.py",
+   "tests/test_team_specialist_cross_category_learning_router_v2.py",
+   "tests/test_team_specialist_cross_domain_transfer_risk_v2.py",
+   "tests/test_team_specialist_decision_memory_replay_score_v2.py",
+   "tests/test_team_specialist_decision_review_load_router_v2.py",
+   "tests/test_team_specialist_domain_memory_reuse_rank_v2.py",
+   "tests/test_team_specialist_domain_playbook_gap_v2.py",
+   "tests/test_team_specialist_domain_rotation_score.py",
+   "tests/test_team_specialist_error_pattern_score.py",
+   "tests/test_team_specialist_event_coverage_heatmap_v2.py",
+   "tests/test_team_specialist_evidence_review_coverage_score.py",
+   "tests/test_team_specialist_forecast_divergence_score.py",
+   "tests/test_team_specialist_forecast_error_memory_rank_v2.py",
+   "tests/test_team_specialist_forecast_revision_quality_gate_v2.py",
+   "tests/test_team_specialist_handoff_readiness_score.py",
+   "tests/test_team_specialist_learning_feedback_router_v2.py",
+   "tests/test_team_specialist_learning_priority_report_v2.py",
+   "tests/test_team_specialist_manual_review_quality_score_v2.py",
+   "tests/test_team_specialist_market_archetype_playbook_score_v2.py",
+   "tests/test_team_specialist_market_close_handoff_gate_v2.py",
+   "tests/test_team_specialist_market_memory_priority_queue_v2.py",
+   "tests/test_team_specialist_memory_conflict_score.py",
+   "tests/test_team_specialist_outcome_feedback_learning_rank_v2.py",
+   "tests/test_team_specialist_outcome_feedback_priority_v2.py",
+   "tests/test_team_specialist_playbook_staleness_ranker_v2.py",
+   "tests/test_team_specialist_postmortem_action_priority_v2.py",
+   "tests/test_team_specialist_postmortem_readiness_score.py",
+   "tests/test_team_specialist_probability_event_playbook_rank_v2.py",
+   "tests/test_team_specialist_queue_sla_score.py",
+   "tests/test_team_specialist_recent_error_pattern_gate_v2.py",
+   "tests/test_team_specialist_research_depth_score.py",
+   "tests/test_team_specialist_research_memory_decay_gate_v2.py",
+   "tests/test_team_specialist_research_quality_coach_v2.py",
+   "tests/test_team_specialist_research_queue_learning_value_v2.py",
+   "tests/test_team_specialist_resolution_feedback_priority_v2.py",
+   "tests/test_team_specialist_resolution_rule_memory_gate_v2.py",
+   "tests/test_team_specialist_review_consensus_quality_gate_v2.py",
+   "tests/test_team_specialist_review_latency_score.py",
+   "tests/test_team_specialist_review_load_balance_score.py",
+   "tests/test_team_specialist_review_quality_score.py",
+   "tests/test_team_specialist_signal_backlog_burnup_report_v2.py",
+   "tests/test_team_specialist_source_coverage_score.py",
+   "tests/test_team_specialist_source_diversity_score.py",
+   "tests/test_team_specialist_source_family_rotation_need_v2.py",
+   "tests/test_team_specialist_source_recheck_priority_score.py",
+   "tests/test_team_specialist_source_reliability_decay_watch_v2.py",
+   "tests/test_team_specialist_source_reliability_learning_queue_v2.py",
+   "tests/test_team_specialist_source_rotation_learning_score_v2.py",
+   "tests/test_team_specialist_source_rotation_plan_v2.py",
+   "tests/test_team_specialist_workload_volatility_score.py"
+  ],
+  "nodeid_candidate_files": [
+   "tests/test_team_diagnostics.py",
+   "tests/test_team_domain_memory_reliability_rollup_v2.py",
+   "tests/test_team_domain_specialist_capacity_queue_v2.py",
+   "tests/test_team_memory_adjudication_followup_queue.py",
+   "tests/test_team_memory_outcome_source_recheck_coverage_report.py",
+   "tests/test_team_memory_outcome_source_recheck_priority_report.py",
+   "tests/test_team_memory_recency_decay_readiness_report.py",
+   "tests/test_team_memory_replay_gap_queue.py",
+   "tests/test_team_memory_source_recheck_cadence_coverage_report.py",
+   "tests/test_team_memory_source_recheck_cadence_exception_report.py",
+   "tests/test_team_memory_source_recheck_cadence_health_report.py",
+   "tests/test_team_memory_source_recheck_cadence_priority_report.py",
+   "tests/test_team_memory_source_recheck_cadence_readiness_report.py",
+   "tests/test_team_memory_source_recheck_cadence_sla_report.py",
+   "tests/test_team_memory_specialist_playbook_score.py",
+   "tests/test_team_memory_specialist_resolution_latency_score_v2.py",
+   "tests/test_team_paper_exposure_guard_scope.py",
+   "tests/test_team_research_coverage_map.py",
+   "tests/test_team_specialist_archetype_memory_refresh_rank_v2.py",
+   "tests/test_team_specialist_assignment.py",
+   "tests/test_team_specialist_category_calibration_memory_score_v2.py",
+   "tests/test_team_specialist_confidence_feedback_decay_v2.py",
+   "tests/test_team_specialist_domain_memory_retention_priority_v2.py",
+   "tests/test_team_specialist_evidence_collection_sla_v2.py",
+   "tests/test_team_specialist_memory_refresh_priority.py",
+   "tests/test_team_specialist_resolution_adjudication_readiness_v2.py",
+   "tests/test_team_specialist_source_collection_load_balancer_v2.py",
+   "tests/test_team_specialist_source_latency_penalty_digest_v2.py",
+   "tests/test_team_specialist_topic_novelty_score.py"
+  ],
+  "retained_tests_zero_dependency_obligation": "after retiring delete_full files and this batch's nodeid candidates, remaining tests and shared fixtures must show zero references (module-scope, function-scope, strings) to this batch's modules and exports; prove on undeleted source per plan 3.4 step 2 before physical deletion",
+  "shared_conflicts_or_blocked": [
+   "tests/test_domain_team_memory_scorecard.py",
+   "tests/test_init.py",
+   "tests/test_team_memory_readiness_digest_history.py",
+   "tests/test_team_research_readiness_dashboard.py",
+   "tests/test_team_research_work_packet.py"
+  ]
+ },
+ "tool_sha256": "ac4609dd7547efae6e3a07777794b881d27fb9246ca9c7fa1a8ec30198f8c656",
+ "verification_requirements": [
+  "step 1: mark deprecated-pending-prune in the engineering inventory and current module index; no runtime warnings, no shell modules, no selfcheck output change",
+  "step 2: run the full verifier on undeleted source, then prove remaining-test zero dependency for this batch",
+  "step 3: physical deletion of exactly these manifest paths in one atomic commit (source + exclusive tests + root exports + doc registry entries); protection tag pre-prune-2026-11 pushed and read back first (coordinator action)",
+  "step 4: re-run inventory.py --verify on the batch parent commit; record R_before==R_after, unreachable totals, file/line/export counts, retired nodeids, remaining test results"
+ ]
+}

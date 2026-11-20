@@ -4,11 +4,11 @@ Record date: 2026-10-07. Recording revision: main =
 b05b9d6e181d20831a9358fcfb56772920d83c6e (interim status; see 3.8).
 Companion narrative: DELIVERY_PLAN.md sections 63-66.
 
-This is a status handoff. It authorizes nothing: no activation, no real
-provider calls, no acceptance-criteria change, no historical rescoring,
-no claim that L8, L9 or any acceptance gate is closed. Every number below
-comes from DELIVERY_PLAN.md, the commit history, GitHub Actions records,
-or the retained arbitration artifacts named in section 7.
+This handoff records the state on 2026-10-07. Its next steps and dispatch
+rules are historical. Use [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+for current work. The handoff grants no activation or acceptance change.
+Numbers come from DELIVERY_PLAN.md, history, GitHub Actions, or the
+arbitration artifacts in section 7.
 
 ## 1. Objective and scope
 
@@ -156,26 +156,25 @@ parsing, usrmerge dual-guest binds); runner-qualification first round
 with 10 failures (l7-runner-qualification.log); the qualify-version
 false abort; the official-six first 6 failures.
 
-### 3.3 Section 64 model directive (4f84f264)
+### 3.3 Historical September 30 dispatch decision
 
-Owner directive of 2026-09-30 pinned every Codex subagent to model
-gpt-6.1-sol with reasoning effort max (superseding the earlier
-gpt-5.6-sol pin). Fast mode remains forbidden. Under section 66 this
-pin is retained as history and applies only to already-issued
-dispatches.
+The owner revised the dispatch settings in effect on 2026-09-30.
+The original decision is recorded in `4f84f264d8d762c298f4623459aa24923aab4bc0`.
+Follow [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+for current project work.
 
 ### 3.4 Section 65 post-L7 ruling (recorded at db6e2291)
 
 Consult baseline 4f84f264; the amended L8 plan received an independent
-VERDICT: PASS. L8 engineering is approved; real activation is
-withheld. Effective activation requires, verbatim from section 65:
+VERDICT: PASS. L8 engineering was approved. Real activation
+was withheld. The original §65 ruling recorded these prerequisites:
 "accepted final engineering/native/review evidence, delivered
 contained transport, official-image qualification through actual L5
 wiring, a non-shared trusted runtime, reviewed explicit per-call
 credential supply, and a Codex-approved pinned activation record with
-scoped PG evidence writes." (Per section 66, arbitration of such
-decisions is now performed by freshly dispatched native read-only
-review subagents; the Codex wording is the recorded ruling text.) The
+scoped PG evidence writes." In October, §66 then changed the route for
+arbitration. Follow [the root routing rule](../../AGENTS.md#native-codex-subagent-routing)
+for current arbitration. The
 shared production decoder stays authoritative; no second admission
 decoder or relaxed envelope is introduced. The stale probe diagnostic
 is deferred. The then-current cleanup return and survivor-name
@@ -240,17 +239,12 @@ first failure recorded and corrected -- on 111420db plus C's
 then-uncommitted files, content-identical to e88a0c13 but not a formal
 rerun on the final integrated tree.
 
-### 3.6 Section 66 all-native-subagents rule (df137300)
+### 3.6 Historical October 7 dispatch decision
 
-Owner directive of 2026-10-07: all planning, arbitration,
-implementation, testing and review for this project are performed by
-ZCode-native Agent-tool subagents; no new Codex/claude/opencode
-dispatches are issued. The section 63 standing Codex delegation and
-the section 64 model pin are retained as history, applying only to
-already-issued dispatches. Decision arbitration now follows Iron Rule
-4 independence (freshly dispatched, read-only, explicit VERDICT line).
-Parallel development keeps Iron Rule 6 (dynamic capacity, non-
-overlapping write ownership, one independent reviewer per change).
+The owner changed project assignments on 2026-10-07.
+The original decision is recorded in `df137300c7b293a159588650488996da05f9d68d`.
+Follow [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+for current project work.
 
 ### 3.7 L9 in flight (NOT in git at b05b9d6e)
 
@@ -351,7 +345,7 @@ Pending, all blocked on 166 recovery:
 - Do not flip activation_authorized when CI turns green; that
   instruction is explicit in the l8-next-node-consult verdict.
 
-## 6. Operator-facing next steps
+## 6. Operator-facing next steps recorded on 2026-10-07
 
 1. Check the 166 host at the provider. It is a host-level outage (SSH
    refused plus ICMP 100% loss since 2026-10-07). Do not treat it as a
@@ -420,11 +414,11 @@ line each; full messages in git):
 | d21e0adb | predicates for the two approved exceptions (review PASS) |
 | 714efa6c | harness correction: exclusive scenario dirs, symlink drop |
 | 7157fb48 | section 63 reentry PASSED record (subcondition closed) |
-| 4f84f264 | section 64 owner directive: Codex model gpt-6.1-sol/max |
+| 4f84f264 | §64 original dispatch decision, 2026-09-30 |
 | db6e2291 | sections 64-65 record: L8 approved, activation withheld |
 | 35478f53 | L8-D relay and credential-ingress design (design-only) |
 | 111420db | L8-A cleanup suppression and exact official banner |
-| df137300 | section 66 owner directive: all tasks to native subagents |
+| df137300 | §66 original dispatch decision, 2026-10-07 |
 | 3acdf5cc | L8-B contained terminal-reply composition proof |
 | e88a0c13 | L8-C identity cleanup evidence and useful recovery |
 | b05b9d6e | L8 integration-gate status; honest 166-outage record |

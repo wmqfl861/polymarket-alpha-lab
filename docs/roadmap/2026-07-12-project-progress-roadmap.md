@@ -130,26 +130,20 @@ preserve quality and avoid write conflicts.
   at 3, and concurrency should fall when rate limits, memory pressure, shared
   test resources, or ownership overlap would reduce quality.
 - Every implementation node must preserve the Phase 1 boundary, local
-  Supabase/Postgres persistence rule, and Claude Code review rule.
+  Supabase/Postgres persistence rule, and independent review gate.
 
-## Claude Code Review Rule
+## Independent Review
 
-All plan reviews, code reviews, stage audits, post-node external review gates,
-and handoff review gates go directly to local Claude Code using:
-
-- model: `claude-opus-5`;
-- thinking level: `max`;
-- prompt mode: read-only review.
+This roadmap records the July 2026 priorities. Dispatch each plan, code,
+stage, post-node, and handoff reviewer under Project Iron Rule 4 and
+[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing).
 
 Reviewers may inspect plans, diffs, files, reports, and test output. Reviewers
 must not modify, create, delete, migrate, backfill, submit orders, mutate
-databases, mutate exchange state, or alter account state.
+databases, touch credentials, or alter exchange/account state.
+The gate is blocked if no eligible independent reviewer can be dispatched.
 
-If local Claude Code is unavailable, the review gate is blocked. There is no
-fallback reviewer under the current project rule unless the user explicitly
-changes the rule.
-
-Claude Code review invocations must not be wrapped in a fixed elapsed-time
+Review subagents must not be wrapped in a fixed elapsed-time
 timeout. Run long reviews in an inspectable session and check them about every
 30 seconds. At each check, observe process/session liveness and, when available,
 stream growth or event count, stderr or terminal events, CPU, and network
@@ -201,8 +195,8 @@ Every future node should explicitly confirm:
 - no alternate durable persistence backend is introduced;
 - no market score, candidate score, assignment, digest, gate, or memory policy
   is described as a trade instruction;
-- Claude Code review is read-only and uses `claude-opus-5` with thinking
-  level `max`.
+- the independent review is read-only and follows the root subagent
+  routing rule.
 
 ## Audit Source Map
 

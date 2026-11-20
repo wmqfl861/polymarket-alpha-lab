@@ -1,5 +1,9 @@
 # Team Forecast Build Envelope Implementation Plan
 
+This July 2026 plan retains its original review instructions for receipt
+and implementation history. For a current review, follow
+[Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing).
+
 **Goal:** Build the pure Phase 1 Node 3 envelope that binds one validated Node 2 aggregation to complete evaluation scope, explicit run metadata, canonical accepted/rejected evaluator receipts, domain-separated `tea:v1`/`tfr:v1`/`tfe:v1` identifiers, and exact legacy packet projections. A non-ready aggregation produces no forecast or forecast-evidence packets.
 
 **Architecture:** `build_team_forecast_build_envelope` first calls the reviewed Node 2 result validator with the exact `result`, `aggregation_input`, and `config`. It then requires `result.config_digest == team_evidence_aggregation_config_digest(config)`, calls the three Node 2 codec payload functions exactly once, and places the returned config, input, and full validated-result payloads into three separate keys in one canonical evaluation-scope preimage. The preimage also contains domain context, run metadata, and one canonical receipt for every accepted or rejected evaluator input. IDs are computed from complete canonical preimages with distinct domain separators. The Node 2 `core_digest` remains a field inside the validated result fragment and is never used as a run, forecast, evidence, replay, or deduplication identity.

@@ -182,13 +182,13 @@ D1—D3 不再阻塞离线实现；真实调用仍需所选版本的隔离／输
 若写入被平台拒绝，记录具体障碍，不换接口、编码或本地代传绕过；可继续不依赖受阻内容的工作包。
 
 每个 PR 开工前写清 `WP-ID + 要关闭的验收缺口 + 最小改动范围 + 所需授权`。
-开发完成后由协调者作单独自审及反例验证，不宣称第三方／全新 Agent 审核；
+开发完成后由协调者作单独自审及反例验证，另按 [根规则](AGENTS.md#native-codex-subagent-routing) 取得独立只读复审。
 相关测试和适用的最终 CI 必须通过，同步总表证据，再合并。
 只修首版阻断性问题或本次改动引入的缺陷；其他增强登记在文末延期区，不自动扩大首版。
 发现会改变范围或完成条件的需求时必须重新取得用户同意，不能悄悄降低门槛或增加第七个工作包。
 
 **发布判据：G1—G6 全部有可复核证据，D1—D3 已明确且对应授权受遵守，
-无未解决的首版阻断缺陷，同一发布版本通过最终集成与自审。**
+无未解决的首版阻断缺陷，同一发布版本通过最终集成、自审与独立复审。**
 未达到前只能报告“工作包推进／组件完成”，不能报告整个阶段完成。
 到达后冻结 V1；统计样本积累和后续领域扩展使用新的里程碑，不自动变成本期永远做不完的尾项。
 
@@ -2661,7 +2661,7 @@ v0.1.0-linux-preview.1 的发布记录（回执已由 E=a1128a65 补记）。
 > PARTIAL/open. No G2–G6 closure, statistical strategy validation or V1
 > completion follows.
 
-### L7 验收条件变更决策——待决
+### L7 验收条件变更决策——2026-09-29 批准记录
 
 > **L7 acceptance-change decisions — APPROVED (2026-09-29).**
 >
@@ -2674,10 +2674,10 @@ v0.1.0-linux-preview.1 的发布记录（回执已由 E=a1128a65 补记）。
 > retaining the original initial snapshot and raw delta — **APPROVED** per
 > the Codex recommendation; baseline relocation remains excluded.
 >
-> Standing delegation added by the same instruction: from this point, any
-> further item that would otherwise require owner approval may be decided by
-> Codex consultation, with the Codex recommendation governing (recorded here
-> as the owner's advance authorization; Article 0 direct instruction).
+> Historical delegation recorded on 2026-09-29: the instruction then
+> authorized Codex consultation on items otherwise requiring owner approval.
+> Current subagent routing is defined in
+> [AGENTS.md](AGENTS.md#native-codex-subagent-routing).
 >
 > Decoder calibration may proceed through source development and offline
 > validation. Official-six reentry requires explicit approval of both
@@ -2735,9 +2735,9 @@ v0.1.0-linux-preview.1 的发布记录（回执已由 E=a1128a65 补记）。
 > artifacts, and all earlier cohorts, remain preserved without retrospective
 > rescoring.
 >
-> Under the owner's standing delegation, Codex approved handling (a): prevent
-> the harness alias prospectively. The native entry now creates six distinct,
-> exclusively allocated scenario directories using
+> Under the delegation in effect at that review, Codex approved handling
+> (a): prevent the harness alias prospectively. The native entry creates six
+> distinct, exclusively allocated scenario directories using
 > `tmp_path_factory.mktemp(..., numbered=False)`. The exporter and
 > acceptance rule remain unchanged: bounded, exclusive, no-follow export;
 > regular files only; zero unsafe entries required. No workload evidence is
@@ -2782,29 +2782,11 @@ v0.1.0-linux-preview.1 的发布记录（回执已由 E=a1128a65 补记）。
 > incomplete; no statistical strategy validation or live-execution
 > authorization follows.
 
-## 64. Owner 指令：Codex 子代理模型改为 gpt-6.1-sol/max（2026-09-30）
+## 64. 历史派工记录（2026-09-30）
 
-Owner 指令（verbatim）：“修改项目规则，本项目调用codex，指定模型改为
-gpt-6.1-sol 思考等级为max”。据此修改：
-
-- **Project Iron Rule 7 与 Model Defaults（AGENTS.md）**：Codex 子代理
-  固定模型由 `gpt-5.6-sol` 改为 `gpt-6.1-sol`，reasoning effort 保持
-  `max`，禁止省略、继承或替代；fast mode 仍禁止。本指令覆盖 §7 早期
-  记录的 `gpt-5.6-sol` 钉定（该历史值保留于本节与原修订历史中，不
-  改写既有记录文本）。
-- 本会话此前的 `gpt-6-astra/max` 咨询分发为当时有效的会话级授权所用；
-  自本节起，所有新的 Codex 分发（含经 dispatch-wrapper 的只读咨询与
-  常设授权下的审批仲裁）一律使用 `gpt-6.1-sol` + `-c
-  model_reasoning_effort='"max"'`。
-- §63 的常设授权（审批问 Codex、以其建议为准）不受影响，继续有效；
-  仅模型标识变更。
-
-### §64 Post-L7 clarification (2026-09-30)
-All new Codex planning, implementation, test, audit and independent-review
-dispatches must explicitly use gpt-6.1-sol with reasoning effort max.
-Earlier inherited-model reviewer wording is superseded. Fast mode remains
-forbidden. Historical research-profile fixtures and v1 goldens are preserved;
-this dispatch directive does not reconfigure a research client.
+当天的 owner 决定更新了该轮子代理的型号与调用约束。
+原记录见提交 `4f84f264d8d762c298f4623459aa24923aab4bc0` 的本节及英文澄清。
+现行派工见 [AGENTS.md](AGENTS.md#native-codex-subagent-routing)。
 
 ## 65. Post-L7 ruling: L8 engineering approved; real activation withheld
 Consult baseline: 4f84f264d8d762c298f4623459aa24923aab4bc0.
@@ -2819,31 +2801,23 @@ The existing cleanup return and survivor-name assertion are current blockers;
 no surviving process was demonstrated. Historical acceptance is not rescored.
 The shared production decoder remains authoritative; no second admission
 decoder or relaxed envelope is introduced. The stale probe diagnostic is deferred.
-Under §63, Codex may decide the future scoped real-run authorization; another
-generic owner approval is not required. No effective activation is granted here.
+The ruling recorded the delegation in force under §63 at that time.
+Current scoped approval follows [AGENTS.md](AGENTS.md#native-codex-subagent-routing) and the recorded owner gates. No effective activation is granted here.
 activation_authorized=false; real provider calls remain false.
 Effective activation requires accepted final engineering/native/review evidence,
 delivered contained transport, official-image qualification through actual L5
 wiring, a non-shared trusted runtime, reviewed explicit per-call credential supply,
-and a Codex-approved pinned activation record with scoped PG evidence writes.
+and a reviewed, explicitly approved pinned activation record with scoped PG evidence writes.
 D1-D3 and Phase 1 paper-only/report-only/readonly boundaries remain unchanged.
 G2's official synthetic-probe subcondition stays closed; its real-research half,
 final G3, G4, G5 and G6 remain open. V1 remains incomplete.
 
-## 66. Owner 指令：全部任务交由 ZCode 原生子代理（2026-10-07）
+## 66. 历史派工记录（2026-10-07）
 
-Owner 指令（verbatim）："修改项目规则，本项目所有任务交给zcode的子代理工作，
-包括计划，开发和审核。多模块，多子代理，多节点并行开发"。据此：
-
-- 自本节起，本项目的规划、裁决、实现、测试与评审全部由 ZCode 原生
-  Agent-tool 子代理执行；不再发出新的 Codex/claude/opencode 外部分发。
-  §63 的"审批问 Codex"常设授权与 §64 的 Codex 模型钉定保留为历史，
-  仅适用于已发出的分发；后续决策仲裁改由原生子代理承担，沿用铁律 4
-  的独立性要求（新派、只读、VERDICT 行）。
-- 并行开发继续遵循铁律 6：动态发现可用容量、按非重叠文件划分写所有权、
-  每项变更一名独立评审。
-- 进行中的 L8 工作（工作者 B、工作者 C 评审）本就是原生子代理，不受
-  影响；L8 之后的规划节点将由原生子代理承担。
+当天的 owner 决定调整了该轮工程分工，L8 在途工作沿当时流程推进。
+原记录见提交 `df137300c7b293a159588650488996da05f9d68d` 的
+`DELIVERY_PLAN.md` 第 2801、2803 行。
+现行派工与独立复审见 [AGENTS.md](AGENTS.md#native-codex-subagent-routing)。
 
 ### L8 集成门禁状态（2026-10-07，进行中——服务器中断）
 
@@ -3465,10 +3439,10 @@ $150、全部冻结阈值不动。
 
 ### WP-P4 历史影子实现（2026-11-07，分支 codex/wp-p4-optimize）
 
-本任务 owner 单独授权 Codex `gpt-6-astra/max` 实施；基线
-`0dab0bd53d351396a1844ad9c9748b3d7d2774a1`。只提交本地分支，不推送、不
-合并、不改现网扫描或入场；最终独立审查、测试、合并、推送由 ZCode
-协调者完成。以上 §73 过门与影子观察条件保持约束力。
+本任务当时由 owner 单独授权 Codex `gpt-6-astra/max` 实施，基线
+`0dab0bd53d351396a1844ad9c9748b3d7d2774a1`。当时仅交付本地分支，
+最终独立审查、测试、合并和推送当时交由 ZCode 协调者跟进。后续复审按
+[根规则](AGENTS.md#native-codex-subagent-routing)。§73 过门与影子观察条件继续适用。
 
 - **P4-0a 候选实现**：新增迁移
   `supabase/migrations/20261107000000_papersim_perf_view_fix.sql` 及锁清单项；
@@ -3529,10 +3503,10 @@ $150、全部冻结阈值不动。
   把迁移总数固定为 69，本次合法新增后为 70；4 个 backup 测试受主机端口
   占用影响，在精确基线归档上也复现失败。**完整套件未绿，协调者合并前
   必须处理这两类门控**；本任务未以修改旧测试或服务状态掩盖失败。
-  完整发现、首次失败与重跑、使用命令、后续观察轮次在
-  `docs/paper-sim/wp-p4-optimization-2026-11-07.md`；本地交付字节清单在
-  `docs/paper-sim/wp-p4-evidence-manifest.json`。没有推送、没有数据库写入、
-  没有接入扫描，最终晋升决定仍属 owner／ZCode 协调者。
+完整发现、首次失败与重跑、使用命令、后续观察轮次保存在历史交接
+`docs/paper-sim/wp-p4-optimization-2026-11-07.md`，字节校验清单为
+`docs/paper-sim/wp-p4-evidence-manifest.json`。当时未推送、未写库、未接入扫描。
+晋升仍按 owner 和验收门判定。后续派工按[根规则](AGENTS.md#native-codex-subagent-routing)。
 
 ## 74. WP-NBA: 篮球影子模型（2026-11-10，未达入场标准）
 
@@ -4034,7 +4008,7 @@ final CLI 端到端（计划 Z2，s4_cli）：`papersim.cli evaluate --dsn`（�
 
 ### 79.1 审核发现与开发范围
 
-初审由内置 GPT-6.2 Astra / max 对正本完成。对当前体育赛前证据、历史结算归属、统计晋级和无人值守交付的充分性给出 **VERDICT: FAIL**。既有 M1 工程回执见 §78.5。各节点使用 GPT-6.2 Sol / max 开发，整体实现完成后由新派内置 Astra / max 逐项复审。
+初审由内置 GPT-6.2 Astra / max 对正本完成。对当前体育赛前证据、历史结算归属、统计晋级和无人值守交付的充分性给出 **VERDICT: FAIL**。既有 M1 工程回执见 §78.5。该轮各节点由 GPT-6.2 Sol / max 开发，整体实现完成后由当时新派的内置 Astra / max 复审，见 §79.3。
 
 | 审核发现 | 基线证据 | 本轮开发或后续节点 |
 | --- | --- | --- |
@@ -4083,7 +4057,7 @@ final CLI 端到端（计划 Z2，s4_cli）：`papersim.cli evaluate --dsn`（�
 - 完整性校验：审计方提供的校验脚本（bash，保存于仓库外）在服务器全新克隆上运行，最后一行输出 `handoff package verified: b2f09f2cfa8727ee80c22c3ecf01ad0244c1dbb8`，与预期一致；脚本核对项包括交付提交可达性、目录外零文件、目录树对象 `39fdc954…`、23 个文件、清单 2987 字节、清单 SHA-256 `0de36c48…` 及 22 行逐一哈希。
 - 版本链：交付提交 `b2f09f2c` → 保留分支顶端 `27c66cee`（新增 06 号文件）→ 本地合并提交 `cffc3863`（分支 `integrate/audit-optimizer-2026-11-19`）→ PR #69（三条工作流成功：Offline verification 运行 `44564044169`、Research paper bridge 运行 `44564044329`、Native project PostgreSQL 运行 `44567005859`）→ `main` 合并提交 `e25103155015a73b0584eba58b1ffa6d001672cc`。合并采用创建合并提交（非压缩、非变基），交付提交因此保留在 `main` 历史中，后续可随时重跑第 3 节校验。
 - 合并节点门禁：`git diff --check` 干净；秘密扫描无真实凭据（命中均为交接包 evidence/ 内已脱敏的审核证据文本）；独立只读复审（铁律 4）**VERDICT: PASS**，无 P0/P1/P2，4 条 P3：① BASE..HEAD 实为 24 个文件（23 个交付文件 + 顶端新增的 06 号文件，与校验脚本预期一致，属描述偏差）；② 提交身份实际为 `ZCode <zcode@local>`（协调者转述笔误，与主检出一致成立）；③ 建议补记恢复命令（见下）；④ 提示词与 AGENTS.md 的张力点均已有 owner 原话或审计报告 3.7 节记载。
-- 偏差记录（如实）：合并脚本首次运行时，全新克隆未配置 git 身份，`git commit --no-edit` 以 `fatal: empty ident` 失败退出，暂存合并被中断。恢复命令序列（复审建议补记）：在克隆内 `git config user.name "ZCode"`、`git config user.email "zcode@local"`（与主检出 ~/polymarket-alpha-lab 的本地配置一致）→ 重放 `git merge --no-ff --no-commit FETCH_HEAD` → `git diff --cached --name-only <BASE> | grep -v "^docs/handoffs/2026-11-19-audit-optimizer/"` 复核目录外零文件 → `git commit --no-edit` → `git merge-base --is-ancestor <DELIVERY> HEAD` 复验祖先关系。最终提交满足合并脚本强制的全部不变量（父提交、范围、祖先、干净树、未推送、分支名）。另：Native project PostgreSQL 工作流对 PR 事件带路径过滤（仅 papersim/database/project_postgres 等代码路径触发），纯文档 PR 不触发；为满足"三条工作流都成功"的实质要求，以 `workflow_dispatch` 在同一 PR head 提交上补跑一次（运行 `44567005859`，四个 Linux 分区与汇总全部 success，Windows 作业按设计 skip）。
+- 偏差记录（如实）：全新克隆首次因缺少 Git 提交身份，提交在 `fatal: empty ident` 处失败，暂存合并中断。恢复时补齐身份，重放暂存合并，核对交接目录外零文件后提交，并复验交付祖先关系。最终提交满足父提交、范围、祖先、干净树、未推送及分支名约束。原始事故和恢复记录见提交 `7649ad1416c3bf1fafa9cce6e92cc83a277dd9b6` 的 §80.1。纯文档 PR 未触发 Native project PostgreSQL，因而在同一 PR head 用 `workflow_dispatch` 补跑（运行 `44567005859`，四个 Linux 分区与汇总全部成功，Windows 作业按设计跳过）。
 - 保留分支 `handoff/audit-optimizer-2026-11-19` 未删除。
 
 ### 80.2 两个审核结论（2026-11-19）
@@ -4139,6 +4113,10 @@ final CLI 端到端（计划 Z2，s4_cli）：`papersim.cli evaluate --dsn`（�
 | 在同一类模型内部换一种估计程序（例如从"本季与上季混合"换成"指数衰减加层级收缩"） | 仓位档位、单队上限、初始资金、费率表 |
 | 跨联赛强度表的赛季前重估（一季一次，赛季中不动，沿用 FX-17 的规定） | 晋级标准 OD-G 的六条数字和暂停规则 |
 | 新联赛的历史回测与调参（只产出研究结论和建议） | 给任何联赛或盘口开放入场权限；任何真实资金、凭据、下单 |
+
+为什么闸门阈值和仓位不能自动调：它们是"检验模型的尺子"。用结果去调尺子，等于把考试答案抄给考生，之后任何通过都不再说明问题。尺子要改，仍然走 owner 决定。优化器可以出一份"阈值敏感性"的描述性报告（换一个阈值会多几笔、少几笔），只供你看，不触发任何改动。
+
+"模型"在这里只指模拟盘里的统计模型。V1 研究线里调用的大模型不在本设计范围内（OD-A 的现状是未激活）；第 12 节说明将来怎么接。
 
 ### 80.7 优化器规则 v1 的数字（照抄 04 号文件第 6 节；登记日 2026-11-20，登记后冻结）
 
@@ -4282,3 +4260,47 @@ final CLI 端到端（计划 Z2，s4_cli）：`papersim.cli evaluate --dsn`（�
 ### 82.5 落地记录（单提交，2026-11-20）
 
 本节随 `mo5d/crypto-family` 分支单提交落地（计划经独立复审 VERDICT: PASS，6 项 P3 全部落实：六元组钉、防御性短路表述、两种模式短历史语义分开、混合权重元组写死且全 float 字面量、验收措辞限定默认规格、行号以符号为准）。全量 `scripts/verify_local.py --full` 于研究服务器在本分支工作树（代码文件与最终提交逐字节相同，其后仅追加本节文字）通过：八个阶段全 PASS，full pytest **42,579 项通过、203 项跳过、20 条警告，1554.93 秒**（离线套件；终端 `mo5d-full-verify2` 留存；单进程会话回收问题按 MO-1 的登记以持久终端解决）。聚焦命令：`uv run python -m polymarket_alpha_lab.papersim.cli selfcheck`（10/10，crypto-r19×3 的 A/B 与 |dA|/|dB| 输出与基线逐字相同）与 `uv run pytest -q`（本节点 8 个测试文件 162 项通过、1 项跳过）。`git diff --check` 干净；`crypto_model.py` 未触碰（工作树 git diff 为空，另有 LF 哈希钉双保险）。B1 双定义债关闭：provider 与族的基线 sha 相等由两侧测试钉住。未推送，待协调者走 PR 与工作流（纯 optimize 新文件不触发 native 的 PR 路径过滤时，按 MO-1/FX-28 登记流程以 workflow_dispatch 同 head 补跑为等效证据）。
+
+## 83. 治理节点决定：收紧 FX-31 公网地址库存（2026-11-20）
+
+本治理 PR 同时移除两处已登记的出现记录，并更新
+`tests/test_tracked_public_address_hygiene.py` 的 `FROZEN_ALLOWLIST`。
+FX-31 基线为 `ed5eabbd4ff01b1d10a4798e34f505d6186cc57b`，整合所用正本
+`fe5ae538420e3fe060cd1fed2c12121cbd8301ba` 的库存同为 42。治理整合头
+`bad754244d19d0de0e02e19eb7e67eabefe02566` 的 Linux 全量首轮以旧库存校验失败，
+实际库存为 40。下表登记本次收紧的两项决定。
+
+| 路径 | SHA-256 前缀 | 文件内计数 | 跨文件摘要计数 |
+| --- | --- | ---: | ---: |
+| `AGENTS.md` | `fb214e079022` | 1 → 0 | 19 → 18 |
+| `docs/handoffs/g2-activation-readiness.md` | `0a4731266cec` | 5 → 4 | 14 → 13 |
+
+库存总数由 42 收紧至 40，新增出现次数为 0。继续使用原检测器、逐路径摘要计数与相等校验。
+
+## 84. 节点登记簿（第二波，2026-11-20；协调者补记）
+
+本节按 05 号文件第 9 节和 §80.11 补记至 PR #95。协调者核对了库内已发布回执、状态板的 FX-33 记录、GitHub PR 及其工作流，库外回执包括 `ci-main-through-85.json`、`canonical-pr-ci-through-91-reverified.json` 和 #92–#95 的逐 PR 记录。三列运行号依次为 Offline verification、Research paper bridge、Native project PostgreSQL，路径过滤所需的手动运行使用相同提交。未找到的复审原件标为 unknown/unavailable。§80.6 原文与合并回执分为两次聚焦提交，独立复审核出的证据归属问题另以一次修正提交保留。
+
+| 节点 | 实现提交（PR 头） | PR / 合并提交 | 工作流运行号（Offline / 纸面桥 / Native） | 复审链 | 主要偏差或后续事项 |
+| --- | --- | --- | --- | --- | --- |
+| MO-4 历史数据集 | `2f2cd5b3bd3ed577fd76b9c2a8f0432f2dbf0243` | #79 / `4e6ffa871e9a0062e3b752855c6515dcffb8575c` | `44617658037` / `44617657837` / `44617804902` | 未找到可核对的已发布复审回执 | 含数据层整理提交；登记最终 PR 头。 |
+| MO-5a 俱乐部足球模型族 | `905b0c881b11b8c584356840c9fb01afa9601e2b` | #80 / `d148e91a8091e8b8f5569ded340c9bdce3bd73c7` | `44621906044` / `44621905920` / `44624051603` | 未找到可核对的已发布复审回执 | 补记合并及三项 CI。 |
+| B1 扫描 | `2f6f2683ceb2f119acf1895acf21449eb0aba872` | #81 / `8ca60c2781fc4806ca14c468ab9f14656e8dd999` | `44627798316` / `44627798554` / `44627798301` | 未找到可核对的已发布复审回执 | 提供者接口随扫描命令入库。 |
+| MO-5c NBA 模型族 | `3d4b8fda00e008ff5aa4723de75fe69e24cb5bd8` | #82 / `647b81784465b6ce3352f601b5a8124dec0c8b26` | `44631915536` / `44631915549` / `44633472505` | §81.1 计划、§81.5 代码复审通过 | §81 记两次聚焦提交和 138 场默认规格复算。 |
+| MO-2 规格注册表 | `b8fa5d2ad790beee6277813869f7664ec461212f` | #83 / `d95fadecac6da0ce1e18d96234cd89b45565ab63` | `44634645199` / `44634645165` / `44634645390` | 未找到可核对的已发布复审回执 | 补记迁移与存储节点的合并。 |
+| MO-5b 国家队模型族 | `21a5870cdfdd8144ad70f1958d83a63f17ac5bd4` | #84 / `3e52516f71fdadeb86ef0d521521e6384ad9bb68` | `44637469355` / `44637469444` / `44639238535` | 未找到可核对的已发布复审回执 | 补记合并及三项 CI。 |
+| MO-5d 加密模型族 | `dd1b8f36da1b46805632c398dd6fc36f1247c19d` | #85 / `86feaf1ad88be3f9c262a26cdac650cb26c1a573` | `44648477168` / `44648477224` / `44648704455` | §82.5 记计划复审通过 | 本族范围、验证与偏差见 §82。 |
+| MO-3 评估内核 | `c47f2105c3baaa7d7144408ada576a54fb538c76` | #86 / `fa01be0b6b7cc0d01886f5aee40456c4d3b726bd` | `44665983364` / `44665983286` / `44667521884` | 协调者持有该头代码复审 PASS | WP-P4 在服务器执行，后续证据读取修正见 #90、#95。 |
+| MO-5e 跨联赛强度 | `a13a9682767408612e1395e62bfdcbb7146792be` | #87 / `82f6e32c5cadf43b747df2aac56ff2f30ab310ac` | `44669848870` / `44669848988` / `44676183692` | 协调者持有历史输入转交计划及复审回执 | 赛季前重估；本行登记 PR 和 CI。 |
+| FX-31 地址卫生 | `11e030c72bc4485420b2f04b0eec39e8bf4e783a` | #88 / `ed5eabbd4ff01b1d10a4798e34f505d6186cc57b` | `44670265495` / `44670265473` / `44676188403` | 协调者持有该头独立复审 PASS | 保留程序事故；owner 批准只验现有代码和脱敏修改。 |
+| FX-33 状态板时效 | `c06f5e2bb0d93e58e72009268ee8f359513bce23` | #89 / `fe5ae538420e3fe060cd1fed2c12121cbd8301ba` | `44675615818` / `44675615735` / `44677304868` | 计划首审 FAIL，同一复审者复审 PASS。独立代码复审对象为 `bb22fb6e`，该提交的三个文档与最终 PR 头逐字节相同 | 根规则地址库存的后续收紧见 §83。 |
+| WP-P4 托管环境收集修复 | `621085de60594eefb805ce6fc2a4c88ff76f6509` | #90 / `8ca119802d0a08333a0022aaa65b0cfce418eb15` | `44672319491` / `44672319515` / `44673544934` | 当前记录未认定此头为后继修正的复审对象 | 该版本在实际读取时可能跳过异常；#95 修正并复验。 |
+| B2 取价与 FX-34 | `2ed0c948cf7681e99c3e0b52513aa175abe85330` | #91 / `6c549f267edd9cd915476e572e6f3547df68aefb` | `44677013237` / `44677013368` / `44677013157` | 保留初次隔离失败、owner 批准和原复审者复验 | 已确认早于开赛才可计为 CLOSE；旧账报告的测试替身另行修复。 |
+| B3 结算与 FX-29 首次合入 | `3f6fd68dd6978dd1d361307716284e46a269e8d0` | #92 / `f83567eac1f3476e8ccdc8249afda1d23daf9f13` | `44691875950` / `44691876967` / `44691876041` | 后续独立复审在本地 `ed946b6e` 判定 FAIL。该候选与 PR 头 `3f6fd68d` 的产品文件一致，原生测试夹具不同 | 所合测试与本地修订不同；两处夹具直连及两处驱动跳过仍在本 PR。结算费用、旧赛果归属和受管入口须分别处置。 |
+| G7 受管连接事务交接 | `7b98692b2c4d71cb23da237c3f675a63d8adf4d7` | #93 / `e77e9075dc1affd2249c08f7184ca7f4c01a4859` | `44694166620` / `44694166858` / `44694362842` | 同一复审者两次提出测试问题，并对最终头给出 PASS | 保留首次成功后跨进程读回零行记录；隔离库重启、失败回滚与重复登记均实测。 |
+| 项目原生子代理分工 | `825bee041fc1064ff952917baa8303c675e7ce60` | #94 / `3f2142ff233d75238ec749736182898431f57109` | `44695506133` / `44695506164` / `44695506125` | 留存的独立 PASS 回执对应 `bad75424`。PR #94 正文记载最终头 `825bee04` 的库存修正另经独立复审通过。两头根规则正文相同，owner 已确认最终正文 | §83 记录地址库存由 42 收紧至 40；较广 FX-25 草稿另行确认。 |
+| WP-P4 证据读取后继修复 | `bbedc0eaf212adb2f34d4b893de07127a8ff1cec` | #95 / `bb1e056a5ddaed1b2f366b7260bef1808d5cc24a` | `44695631485` / `44695631516` / `44695926341` | 独立只读复审 PASS | Python 3.11 和 3.12 均运行聚焦验证；保留检查成功后真正读取失败的异常。 |
+
+第一波登记簿自身的 PR #78 合并提交为 `a17d1fe2b3160511077272951bf6f952a08d82a3`，三条运行号为 `44608666237` / `44608666224` / `44611213885`。#72、#73、#75 在冲突后关闭，经过见 §80.11。#79–#81、#83、#84 原 PR 缺少各自的计划登记；本节补齐可核实的证据。
+
+FX-31 首稿曾提议在 owner 过目之前合并根规则，并遗漏已许可文件内的重复地址。原计划复审判定 FAIL，第二稿经同一复审者判定 PASS，同时留下关于过期说明的一条非阻断意见。两份计划复审回执 `review-fx-31-plan-4dd18965.md`（FAIL）和 `review-fx-31-plan-4dd18965-s37.md`（PASS）由协调者保留，均未入库。平台拒绝删除演示临时目录后，执行者改用另一接口删除，违反交接包第 8 节。该演示已作废，验收证据不计入该演示。owner 只批准对保留的三处脱敏和六项测试重新验收，事故独立复审回执为库外 `review-fx-31-procedure-incident-2e61b126.md`。

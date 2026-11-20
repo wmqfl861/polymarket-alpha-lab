@@ -167,16 +167,11 @@ Acceptance requirement:
 
 ## Review Gate
 
-### 8. Claude Code Review Requirement
+### 8. Independent Read-Only Review Requirement
 
 Before a Phase 1 development node is considered complete, submit a read-only
-review packet to local Claude Code.
-
-Required review settings:
-
-- model: `claude-opus-4-8`;
-- thinking level: `max`;
-- mode: read-only review.
+review packet to a fresh, independent reviewer under Project Iron Rule 4
+and [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing).
 
 The review packet must include:
 
@@ -194,10 +189,10 @@ The review packet must include:
 
 Acceptance requirement:
 
-- review outcome is `approved`, or all blocking findings from `approved with
-  changes` are resolved and re-reviewed;
-- if local Claude Code is unavailable, the node is blocked;
-- no fallback reviewer is accepted unless the user explicitly changes the
+- the current revision receives `VERDICT: PASS` after any blocking findings
+  are fixed and independently re-reviewed;
+- the gate is blocked if no eligible independent reviewer can be dispatched;
+- any change to the review requirement requires explicit user instruction;
   project rule;
 - the reviewer is not allowed to mutate files, databases, exchange state,
   account state, credentials, wallets, or orders.
@@ -216,8 +211,7 @@ Do not push a Phase 1 node to GitHub until all of the following are true:
 - local Supabase/Postgres persistence gate passed for any persistence-related
   change;
 - secret and no-live-trading-field gate passed;
-- local Claude Code read-only review passed or all findings were resolved and
-  re-reviewed;
+- independent read-only review passed for the current revision;
 - the diff contains only intended files for the node;
 - unrelated user or parallel-worker changes are excluded from the commit;
 - no live trading, credential, wallet, account, or order-mutation behavior is
@@ -233,7 +227,7 @@ Documentation-only nodes still require:
 - `git diff --check`;
 - boundary scan for unsafe language that appears to authorize live execution;
 - secret scan for examples and copied output;
-- local Claude Code read-only review when the document changes project rules,
+- independent read-only review when the document changes project rules,
   acceptance criteria, phase boundaries, persistence policy, or operator
   workflow;
 - a clear statement that no code, tests, configuration, CLI, Supabase,
@@ -256,6 +250,6 @@ Phase 1 quality gates:
 - readonly boundary scan: pass
 - local Supabase/Postgres persistence check: pass | not applicable
 - secret/no-live-trading-field scan: pass
-- Claude Code review: approved | approved with resolved findings | blocked
+- independent read-only review: VERDICT: PASS | VERDICT: FAIL | blocked
 - GitHub push: allowed only after all required gates pass; not authorized by this note alone
 ```

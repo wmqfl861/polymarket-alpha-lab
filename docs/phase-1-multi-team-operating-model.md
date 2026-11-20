@@ -132,11 +132,14 @@ Teams should produce structured research packets with source references, confide
 
 ## Review Workflow
 
-All Phase 1 operating-model plans, code reviews, stage audits, post-node review gates, and handoff review gates go directly to local Claude Code with model `claude-opus-4-8` and thinking level `max`.
+Apply [Native Codex Subagent Routing](../AGENTS.md#native-codex-subagent-routing)
+to project planning and dispatch a fresh, independent reviewer for each
+plan, code, stage, post-node, and handoff review under Project Iron Rule 4.
 
 Review prompts are read-only. Reviewers may inspect plans, diffs, files, reports, and test output, but must not modify, create, delete, migrate, backfill, submit orders, mutate databases, mutate exchange state, or alter account state.
 
-If local Claude Code is unavailable, the review gate is blocked. There is no fallback reviewer under the current project rules.
+The gate is blocked when no eligible independent reviewer can be dispatched.
+There is no fallback reviewer under the current project rules.
 
 Review packets should include:
 
@@ -180,6 +183,6 @@ The docs contract tests for this file guard the following constraints:
 - alternate durable stores and durable file substitutes remain forbidden;
 - Phase 1 stays paper-only, report-only, and readonly;
 - the document forbids automated investing and live order placement rather than promising them;
-- review workflow goes to local Claude Code with `claude-opus-4-8`, thinking level `max`, and no fallback reviewer;
+- planning and the independent review gate follow the root subagent routing rule;
 - review prompts are read-only;
 - redaction rules cover DSNs, secrets, credentials, wallet material, and account/order-sensitive values.

@@ -34,14 +34,34 @@ explicit argument (records, provider, clock, connection), so the
 offline suite exercises everything except the transactional writes,
 which the native lane proves on a disposable cluster.
 
-MO-7 boundary (B1 plan D7 / R2 handoff, 80.8 five-step note): design
-04 section 10 steps 3 and 4 belong to MO-7 -- with the registry empty
-the non-active role set is EMPTY (nothing to shadow), the
-``shadow_predictions`` table belongs to the MO-2 registry migration,
-and the replay-bundle spec extension belongs to MO-7's own change
-list.  The four MO-7 wiring points are marked ``MO-7 SEAM`` below (and
-the fourth one lives in ``store_psycopg`` next to the queue-control
-writers).
+MO-7 (plan 05 node MO-7, plan review R2 PASS -- wired): design 04
+section 10 steps 3 and 4.  The provider consult goes through
+``optimize.provider.RegistryProvider`` (seam 1: constructed by the
+CLI, same ``SpecProvider`` protocol; an empty or unreadable registry
+collapses to the frozen baseline inside the provider, 04 section 11).
+The role loop (seam 2) iterates active+baseline+candidates+guard
+deduplicated by spec digest: the active role prices and enters exactly
+as B1, every OTHER distinct spec produces a pure-gate-only shadow
+prediction (``gates.evaluate_candidate`` -- never an entry, never a
+cash event, never portfolio state).  The scan parameters (seam 3)
+carry the registry-resolved specs' canonical texts plus the shadow
+fit-materials inventory (``shadow`` section, present only when at
+least one role fitted -- an empty registry keeps the parameters
+byte-identical to B1).  Seam 4 is the ``record_shadow_predictions``
+writer in ``store_psycopg``; the shadow write rides AFTER the scan's
+own atomic write in one separate transaction, and its failure is
+recorded without failing the scan (04 section 11: an optimizer fault
+never stops the scan).  Replay-side, ``replay.replay_shadow_prediction``
+recomputes a stored shadow row from the candidate bundle, the spec and
+the pinned snapshots; the entry-bundle codec and
+``REPLAY_BUNDLE_VERSION`` are untouched, so the active decisions still
+replay bit-exactly.
+
+Timing discipline: shadow counts and seconds are properties of THIS
+attempt (the run-scan return dict and the CLI stdout -- the node's
+acceptance registration cites them); the SUCCEEDED receipt evidence
+stays the scan key only, and the time-free parameters never carry
+clock-derived content.
 """
 
 from __future__ import annotations
@@ -50,6 +70,7 @@ import dataclasses
 import datetime
 import json
 import subprocess
+import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -57,6 +78,7 @@ from typing import Any
 
 from polymarket_alpha_lab import replay
 from polymarket_alpha_lab.papersim import evaluation, pipeline, queue_policy, store
+from polymarket_alpha_lab.papersim.optimize import shadow
 from polymarket_alpha_lab.papersim.optimize.provider import LineageSpecs
 
 __all__ = [
@@ -68,6 +90,7 @@ __all__ = [
     "ScanAssembly",
     "ScanConfig",
     "ScanError",
+    "ShadowBinding",
     "assemble_scan",
     "bind_event_key",
     "consult_provider",
@@ -77,13 +100,18 @@ __all__ = [
     "read_portfolio_state",
     "records_from_pack",
     "require_clean_worktree",
+    "role_spec_pairs",
     "run_scan",
 ]
 
 SCAN_COMMAND = "run-scan"
 
-#: The only role B1 binds (MO-7 extends this tuple; see the seam below).
-ACTIVE_ROLES = ("active",)
+#: The role vocabulary of one scan (B1 bound only ``("active",)``;
+#: MO-7 extended the tuple per the seam note).  ``role_spec_pairs``
+#: iterates these roles deduplicated by spec digest -- with the
+#: registry empty the deduplicated set collapses to the active spec
+#: alone (the baseline IS the active), so nothing shadows.
+ACTIVE_ROLES = ("active", "baseline", "candidate", "guard")
 
 
 class ScanError(ValueError):
@@ -606,17 +634,237 @@ def provider_params(specs: Mapping[str, LineageSpecs]) -> dict:
     material (``store.scan_key`` hashes the params text).  MO-7 SEAM
     (third wiring point): the non-active roles' digests are already
     carried here so MO-7's shadow statistics can cite them.
+
+    MO-7 (review decision 3, conditional): lineages the REGISTRY
+    resolved (``fallback_reason is None``) additionally carry each
+    role's canonical spec text (``ModelSpec.canonical_json`` -- the
+    digest AND the parameters of design 04 section 10 step 4) and the
+    consulted registry lineages with their own actives (the MO-8
+    visibility note).  Fallback lineages keep the exact B1 shape, so
+    an empty registry yields byte-identical parameters text.
     """
-    return {"provider": {"specs": {
-        lineage: {
-            "active_spec_sha256": specs[lineage].active.spec_sha256(),
-            "baseline_spec_sha256": specs[lineage].baseline.spec_sha256(),
-            "candidates": tuple(spec.sha256() for spec in specs[lineage].candidates),
-            "guard": (None if specs[lineage].guard is None
-                      else specs[lineage].guard.spec_sha256()),
-            "fallback_reason": specs[lineage].fallback_reason,
-        } for lineage in sorted(specs)
-    }}}
+    entries: dict[str, dict] = {}
+    for lineage in sorted(specs):
+        roles = specs[lineage]
+        entry = {
+            "active_spec_sha256": roles.active.spec_sha256(),
+            "baseline_spec_sha256": roles.baseline.spec_sha256(),
+            "candidates": tuple(spec.spec_sha256() for spec in roles.candidates),
+            "guard": (None if roles.guard is None
+                      else roles.guard.spec_sha256()),
+            "fallback_reason": roles.fallback_reason,
+        }
+        if roles.fallback_reason is None:
+            entry["canonical"] = {
+                "active": roles.active.canonical_json(),
+                "baseline": roles.baseline.canonical_json(),
+                "candidates": tuple(spec.canonical_json() for spec in roles.candidates),
+                "guard": (None if roles.guard is None
+                          else roles.guard.canonical_json()),
+            }
+            if roles.registry is not None:
+                entry["registry_lineages"] = tuple(
+                    {"lineage": registry_lineage, "active": active,
+                     "candidates": tuple(candidates)}
+                    for registry_lineage, active, candidates in roles.registry)
+        entries[lineage] = entry
+    return {"provider": {"specs": entries}}
+
+
+# ---------------------------------------------------------------------------
+# MO-7 shadow predictions (04 section 10 step 3; plan review R2)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class ShadowBinding:
+    """One pending shadow prediction, pre-insert (candidate_id unresolved).
+
+    Everything the ``papersim.shadow_predictions`` row carries except
+    the database identity: the writer resolves ``candidate_key``
+    through ``record_scan``'s returned candidate ids.  ``predicted_at``
+    is the scan-recorded evaluation time (never the writing clock).
+    """
+
+    candidate_key: str
+    lineage: str
+    spec_sha256: str
+    role_at_prediction: str
+    probability: float | None
+    variant_quotes: tuple[float, ...] | None
+    refusal_reason: str | None
+    gate_pass: bool
+    gate_reason: str | None
+    hypothetical_fill_price: float | None
+    predicted_at: datetime.datetime
+
+    def __post_init__(self) -> None:
+        if self.role_at_prediction not in ("BASELINE", "CANDIDATE", "GUARD"):
+            raise ValueError("papersim_shadow_role_invalid")
+        if self.refusal_reason is not None:
+            if self.probability is not None or self.variant_quotes is not None:
+                raise ValueError("papersim_shadow_refusal_conflict")
+        elif self.probability is None or self.variant_quotes is None:
+            raise ValueError("papersim_shadow_quote_missing")
+        if type(self.gate_pass) is not bool:
+            raise ValueError("papersim_shadow_gate_invalid")
+        if not isinstance(self.predicted_at, datetime.datetime) \
+                or self.predicted_at.tzinfo is None:
+            raise ValueError("papersim_shadow_time_invalid")
+
+
+def role_spec_pairs(specs: LineageSpecs) -> tuple[tuple[str, Any], ...]:
+    """The ``(role, spec)`` iteration of one lineage's roles (04 s10 steps 2-3).
+
+    Fixed order active, baseline, candidates, guard, deduplicated by
+    spec digest keeping the FIRST role: with the registry empty (and
+    throughout MO-7) the active IS the production baseline, so the
+    pair collapses to the active alone and nothing shadows (04
+    section 3: the baseline shadows only when it is not the active).
+    After a handover the guard can BE the baseline spec; the first
+    role then labels the pair ``baseline`` and the shadow-prediction
+    key (candidate row + spec + prediction time, no role) stays
+    collision-free.
+    """
+
+    pairs: list[tuple[str, Any]] = [("active", specs.active),
+                                    ("baseline", specs.baseline)]
+    pairs.extend(("candidate", spec) for spec in specs.candidates)
+    if specs.guard is not None:
+        pairs.append(("guard", specs.guard))
+    seen: set[str] = set()
+    ordered: list[tuple[str, Any]] = []
+    for role, spec in pairs:
+        if role not in ACTIVE_ROLES:
+            raise ValueError(f"papersim_shadow_role_unknown:{role}")
+        digest = spec.spec_sha256()
+        if digest in seen:
+            continue
+        seen.add(digest)
+        ordered.append((role, spec))
+    return tuple(ordered)
+
+
+#: A shadow quote whose fee rate the active decision could not resolve
+#: cannot be judged by the pure gate; every check fails explicitly.
+_GATE_FEE_UNRESOLVED = "fee_unresolved"
+
+#: A family raising unexpectedly while predicting one market is an
+#: optimizer fault: recorded as a refusal, never a scan stopper.
+_QUOTE_ERROR = "quote_error"
+
+
+def _pure_gate(quote: shadow.ShadowQuote, request: Any, fee_rate) -> Any:
+    """The pure gate judgement of one shadow quote (04 s10 step 3).
+
+    ``gates.evaluate_candidate`` over the SAME raw book, news and
+    liquidity the active decision used, with ``under_risk=False`` and
+    the active decision's own resolved fee rate -- no bankroll, no
+    team caps, no portfolio state.  Returns ``None`` when the fee rate
+    is unresolved (the caller records the failure explicitly).
+    """
+
+    from polymarket_alpha_lab.papersim import gates
+
+    if fee_rate is None:
+        return None
+    return gates.evaluate_candidate(
+        {"model_median": quote.model_median,
+         "qs_variants": list(quote.qs_variants)},
+        list(request.book), gates.SIDE_ASK,
+        gamma_liquidity=request.gamma_liquidity, news=request.news,
+        under_risk=False, fee_rate=float(fee_rate))
+
+
+class _ShadowRunner:
+    """The per-scan shadow driver (pure over its explicit inputs).
+
+    Fits each distinct spec once (cached by digest; roles are frozen
+    for the run), predicts per market, judges through :func:`_pure_gate`
+    and returns one :class:`ShadowBinding` per (record, spec).  The
+    wall-clock budget drops NEW shadow work when exceeded -- the
+    active path is never touched (plan 05 section 7: drop the shadow
+    first, never the active).  Counts and seconds are attempt
+    properties reported through the run-scan return value, never the
+    time-free scan parameters.
+    """
+
+    def __init__(self, source, records, *, budget_seconds=None, clock=None) -> None:
+        self.source = source
+        self.records_by_lineage: dict[str, list[MarketRecord]] = {}
+        for record in records:
+            self.records_by_lineage.setdefault(record.lineage, []).append(record)
+        self.budget_seconds = budget_seconds
+        self._clock = clock or time.monotonic
+        self._started = self._clock()
+        self.fitted: dict[str, object] = {}
+        self.materials: dict[str, dict[str, dict]] = {}
+        self.stats = {"fits": 0, "predicts": 0, "refusals": 0,
+                      "skipped_no_source": 0, "skipped_budget": 0}
+        self.budget_exceeded = False
+        self.seconds = 0.0
+
+    def _over_budget(self) -> bool:
+        if self.budget_exceeded:
+            return True
+        if self.budget_seconds is None:
+            return False
+        if self._clock() - self._started <= self.budget_seconds:
+            return False
+        self.budget_exceeded = True
+        return True
+
+    def finish(self) -> None:
+        self.seconds = self._clock() - self._started
+
+    def bind(self, lineage: str, role: str, spec: Any, record: MarketRecord,
+             request: Any, fee_rate) -> ShadowBinding | None:
+        if self.source is None:
+            self.stats["skipped_no_source"] += 1
+            return None
+        if self._over_budget():
+            self.stats["skipped_budget"] += 1
+            return None
+        digest = spec.spec_sha256()
+        if digest not in self.fitted:
+            fitted = self.source.fitted_for(
+                lineage, spec, tuple(self.records_by_lineage.get(lineage, ())))
+            self.fitted[digest] = fitted
+            if fitted is not None:
+                self.stats["fits"] += 1
+                self.materials.setdefault(lineage, {})[digest] = \
+                    fitted.materials.params_entry()
+        fitted = self.fitted[digest]
+        if fitted is None:
+            quote = shadow.ShadowQuote(None, None, shadow.REFUSAL_FIT_MATERIALS_MISSING)
+        else:
+            try:
+                quote = self.source.quote_for(fitted, record, request)
+            except (TypeError, ValueError):
+                quote = shadow.ShadowQuote(None, None, _QUOTE_ERROR)
+            self.stats["predicts"] += 1
+        if quote.refusal_reason is not None:
+            self.stats["refusals"] += 1
+            return ShadowBinding(
+                candidate_key=record.candidate_key, lineage=lineage,
+                spec_sha256=digest, role_at_prediction=role.upper(),
+                probability=None, variant_quotes=None,
+                refusal_reason=quote.refusal_reason, gate_pass=False,
+                gate_reason=None, hypothetical_fill_price=None,
+                predicted_at=record.evaluated_at)
+        report = _pure_gate(quote, request, fee_rate)
+        if report is None:
+            gate_pass, gate_reason = False, _GATE_FEE_UNRESOLVED
+            fill = None
+        else:
+            gate_pass = bool(report.decision.passed)
+            gate_reason = ",".join(report.decision.failed) or None
+            fill = None if report.entry_price is None else float(report.entry_price)
+        return ShadowBinding(
+            candidate_key=record.candidate_key, lineage=lineage,
+            spec_sha256=digest, role_at_prediction=role.upper(),
+            probability=quote.model_median, variant_quotes=quote.qs_variants,
+            refusal_reason=None, gate_pass=gate_pass, gate_reason=gate_reason,
+            hypothetical_fill_price=fill, predicted_at=record.evaluated_at)
 
 
 # ---------------------------------------------------------------------------
@@ -631,6 +879,9 @@ class ScanAssembly:
     model_versions: tuple[str, ...] = ()
     suppressed_entries: tuple[str, ...] = ()
     admission: AdmissionReport | None = None
+    shadows: tuple[ShadowBinding, ...] = ()
+    shadow_stats: Mapping[str, int] = field(default_factory=dict)
+    shadow_seconds: float = 0.0
 
 
 def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
@@ -640,7 +891,9 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
                   finished_at: datetime.datetime,
                   code_commit: str,
                   specs: Mapping[str, LineageSpecs] | None = None,
-                  operation_key: str | None = None) -> ScanAssembly:
+                  operation_key: str | None = None,
+                  shadow_source=None,
+                  shadow_budget_seconds: float | None = None) -> ScanAssembly:
     """Bind every record through the frozen stack into one submission.
 
     Both binding paths (``specs`` given = provider-wired; ``specs=None``
@@ -651,6 +904,14 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
     entry (scanning, candidate recording and marks continue; only the
     entry and its cash leg are suppressed) -- the suppression reason is
     recorded in the scan parameters' admission section.
+
+    MO-7: ``shadow_source`` computes one pure-gate-only prediction per
+    NON-ACTIVE role spec (04 section 10 step 3).  The bindings ride on
+    ``ScanAssembly.shadows`` (never an entry, never a cash event); the
+    parameters gain the shadow fit-materials inventory only when at
+    least one role fitted (an empty registry keeps the parameters
+    byte-identical to B1), and the counts/seconds are attempt
+    properties returned to the caller.
     """
     config.validate()
     params: dict[str, Any] = {}
@@ -660,6 +921,9 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
     candidates: list[store.CandidateSubmission] = []
     model_versions: list[str] = []
     suppressed: list[str] = []
+    shadows: list[ShadowBinding] = []
+    shadow_runner = _ShadowRunner(shadow_source, records,
+                                  budget_seconds=shadow_budget_seconds)
     for record in records:
         if record.construction is not None:
             candidates.append(_bind_construction(record))
@@ -675,13 +939,22 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
             team_committed=portfolio.team_committed.get(record.team, 0.0),
         )
         decision = pipeline.decide_entry(request)
-        # MO-7 SEAM (B1 plan D7, second wiring point): the role loop --
-        # B1 binds only the ACTIVE role.  MO-7 extends this loop over
-        # the non-active roles, each producing a pure-gate-only
-        # prediction written to papersim.shadow_predictions (never an
-        # entry, never a cash event); with the registry empty the
-        # non-active role set is empty, so nothing is shadowed here.
-        for _role in ACTIVE_ROLES:
+        # MO-7 (B1 plan D7, second wiring point -- wired): the role
+        # loop over active+baseline+candidates+guard, deduplicated by
+        # spec digest.  The active role below prices and enters exactly
+        # as B1; every OTHER distinct spec produces a pure-gate-only
+        # shadow prediction (never an entry, never a cash event).  With
+        # the registry empty the deduplicated set collapses to the
+        # active spec alone, so nothing is shadowed here.
+        role_pairs = (role_spec_pairs(specs[record.lineage]) if specs is not None
+                      else (("active", None),))
+        for role, spec in role_pairs:
+            if role != "active":
+                binding = shadow_runner.bind(record.lineage, role, spec,
+                                             record, request, decision.fee_rate)
+                if binding is not None:
+                    shadows.append(binding)
+                continue
             if specs is not None:
                 model_version = specs[record.lineage].active.model_version()
             else:
@@ -728,6 +1001,12 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
                     stake=float(entry.stake),
                     fee=float(entry.entry_fee),
                 )
+    shadow_runner.finish()
+    if shadow_runner.materials:
+        params["shadow"] = {"materials": {
+            lineage: {digest: shadow_runner.materials[lineage][digest]
+                      for digest in sorted(shadow_runner.materials[lineage])}
+            for lineage in sorted(shadow_runner.materials)}}
     scan_row = replay.bind_scan_run(
         team=config.team,
         started_at=started_at,
@@ -741,7 +1020,10 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
     submission = store.ScanSubmission(scan=scan_row, candidates=tuple(candidates))
     submission.validate()
     return ScanAssembly(submission=submission, model_versions=tuple(model_versions),
-                        suppressed_entries=tuple(suppressed), admission=admissions)
+                        suppressed_entries=tuple(suppressed), admission=admissions,
+                        shadows=tuple(shadows),
+                        shadow_stats=dict(shadow_runner.stats),
+                        shadow_seconds=shadow_runner.seconds)
 
 
 def _bind_construction(record: MarketRecord) -> store.CandidateSubmission:
@@ -775,7 +1057,9 @@ def run_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
              evaluation_candidates: Iterable[Any] = (),
              operation_key: str | None = None,
              attempt: int = 1,
-             git_bin: str = "git") -> dict:
+             git_bin: str = "git",
+             shadow_source=None,
+             shadow_budget_seconds: float | None = None) -> dict:
     """Run one complete scan against the store (receipts + one atomic write).
 
     Order: clean-worktree commit check (FX-03, refuses before ANY
@@ -840,11 +1124,31 @@ def run_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
             code_commit=code_commit,
             specs=specs,
             operation_key=receipt_key,
+            shadow_source=shadow_source,
+            shadow_budget_seconds=shadow_budget_seconds,
         )
         written = store_psycopg.record_scan(conn, assembly.submission)
+        # MO-7 (seam 4, plan review decision 2): the shadow write rides
+        # AFTER the scan's own atomic write, in ONE separate
+        # transaction; a failure is recorded without failing the scan
+        # (04 section 11: an optimizer fault never stops the scan).
+        shadow_report = {"shadow_rows": 0, "shadow_inserted": 0,
+                         "shadow_error": None}
+        if assembly.shadows:
+            try:
+                written_shadows = store_psycopg.record_shadow_predictions(
+                    conn, assembly.shadows, written["candidate_ids"])
+                shadow_report = {"shadow_rows": written_shadows["rows"],
+                                 "shadow_inserted": written_shadows["inserted"],
+                                 "shadow_error": None}
+            except Exception as error:  # noqa: BLE001 - recorded, never a scan stopper
+                shadow_report = {
+                    "shadow_rows": 0, "shadow_inserted": 0,
+                    "shadow_error": str(getattr(error, "code", type(error).__name__))}
         # The SUCCEEDED receipt stays idempotent under its scheduling
-        # key: the evidence carries the scan key only ("inserted" is a
-        # property of THIS attempt's return value, not of the row).
+        # key: the evidence carries the scan key only ("inserted" -- and
+        # the shadow counts below -- are properties of THIS attempt's
+        # return value, not of the row).
         _receipt("SUCCEEDED", scan_id=written["scan_id"],
                  output_evidence=(written["scan_key"],))
         return {
@@ -858,6 +1162,11 @@ def run_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
             "escalations": [decision.queue_id for decision in admissions.escalations],
             "model_versions": sorted(set(assembly.model_versions)),
             "code_commit": code_commit,
+            "shadow_rows": shadow_report["shadow_rows"],
+            "shadow_inserted": shadow_report["shadow_inserted"],
+            "shadow_error": shadow_report["shadow_error"],
+            "shadow_stats": dict(assembly.shadow_stats),
+            "shadow_seconds": assembly.shadow_seconds,
         }
     except Exception as error:  # noqa: BLE001 - the receipt is the record
         try:

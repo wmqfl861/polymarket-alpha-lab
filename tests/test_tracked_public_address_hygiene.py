@@ -64,15 +64,12 @@ REMEDIATED_PATHS = (
 # The AGENTS.md entry is the narrowly grandfathered root baseline (count 1)
 # that stays until the FX-25 owner-approved alias draft lands.
 FROZEN_ALLOWLIST: dict[str, dict[str, int]] = {
-    "AGENTS.md": {
-        "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 1,
-    },
     "DELIVERY_PLAN.md": {
         "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 7,
         "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 2,
     },
     "docs/handoffs/g2-activation-readiness.md": {
-        "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 5,
+        "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 4,
     },
     "docs/handoffs/g2-first-real-run-runbook-draft.md": {
         "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 1,
@@ -108,10 +105,10 @@ FROZEN_ALLOWLIST: dict[str, dict[str, int]] = {
         "d20004891b6baada0c141972fc179712dfbfa0adcfe16288ba078164be954439": 1,
     },
 }
-FROZEN_TOTAL_OCCURRENCES = 42
+FROZEN_TOTAL_OCCURRENCES = 40
 FROZEN_PER_DIGEST_TOTALS = {
-    "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 19,
-    "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 14,
+    "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 18,
+    "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 13,
     "838c4c2573848f58e74332341a7ca6bc5cd86a8aec7d644137d53b4d597f10f5": 4,
     "0d2fdc313ceb7a434774fd9de6aa70804ccdcbf19c7bee77ed2d7a6f31ac2f68": 3,
     "5ad7ffdf62642216060820c629bc4f186813bcbfb71e5a10d63fcacbd354181f": 1,

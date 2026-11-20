@@ -46,6 +46,7 @@ import json
 from pathlib import Path
 
 from polymarket_alpha_lab.local_postgres_dsn import validate_local_postgres_dsn
+from polymarket_alpha_lab.papersim import settle
 from polymarket_alpha_lab.papersim.store import (
     BANKROLL_BASE_REASONS,
     BankrollCheckRequest,
@@ -102,7 +103,14 @@ def managed_dsn(info: dict, *, owner: bool = False, repo_root: Path = Path('.'))
 
 
 def connect_managed(repo_root: Path, *, info: dict | None = None):
-    """Application connection (pal_app) with per-connection identity assertion."""
+    """Application connection (pal_app) with per-connection identity assertion.
+
+    Returns a verified IDLE connection, or raises with the connection
+    closed: the identity check's read-only transaction is rolled back
+    before hand-off (nothing from the check persists, and a caller's
+    first ``conn.transaction()`` block is the OUTERMOST transaction and
+    therefore commits); any check failure closes the connection first.
+    """
     repo_root = Path(repo_root)
     if info is None:
         info = read_instance(repo_root)
@@ -110,7 +118,12 @@ def connect_managed(repo_root: Path, *, info: dict | None = None):
     import psycopg  # lazy: the audited validation already ran in managed_dsn
     with binding.bound(info['instance_id'], info['root_sha256'], info['system_identifier']):
         connection = psycopg.connect(dsn)
-        binding.verify_connection(connection.cursor())
+        try:
+            binding.verify_connection(connection.cursor())
+            connection.rollback()   # end the check's read-only transaction; hand off IDLE
+        except BaseException:
+            connection.close()      # fail closed: release, never hand off
+            raise
     return connection
 
 
@@ -643,6 +656,74 @@ def settlement_record(conn, record: SettlementRecord) -> dict:
             'bankroll_event_id': bankroll_event_id}
 
 
+# ---------------------------------------------------------------------------
+# B3 settle snapshot loader (05 section 2 B3 row / DELIVERY_PLAN 80.8; the
+# FX-29/N-4 consistent-snapshot read that feeds ``papersim.settle``).
+# ---------------------------------------------------------------------------
+
+_OPEN_ENTRIES_SQL = (
+    'SELECT e.entry_id, e.candidate_id, c.team, c.side, e.stake, e.price, '
+    'e.fee_category, e.fee_source, e.entered_at, c.condition_id, c.market_id, '
+    'c.market_slug, '
+    'EXISTS (SELECT 1 FROM papersim.marks m WHERE m.entry_id = e.entry_id '
+    'AND m.is_close) AS exit_marked '
+    'FROM papersim.entries e JOIN papersim.candidates c ON c.candidate_id = e.candidate_id '
+    'WHERE NOT EXISTS (SELECT 1 FROM papersim.settlements s WHERE s.entry_id = e.entry_id) '
+    'ORDER BY e.entry_id'
+)
+
+
+def _identity_of(row):
+    """The outcome-lookup identity (evaluate-loader precedence)."""
+    for column in ('condition_id', 'market_id', 'market_slug'):
+        if row[column] is not None:
+            return column, row[column]
+    return None, None
+
+
+def open_entries_for_settlement(conn):
+    """Open entries + effective captured outcomes in ONE consistent snapshot.
+
+    FX-29: the FIRST statement of the transaction sets
+    ``SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY``; the
+    open entries (minus already-settled ones) and every entry's effective
+    captured outcome (the audited ``effective_market_outcome`` selection,
+    plus the winning row's ``confirmed_at``) are read inside that single
+    snapshot, so a concurrent capture or settlement cannot split the
+    read.  The settle driver (``papersim.settle.run_settle``) receives
+    this callable as its ``open_entries`` loader; the per-entry
+    settlement writes stay in their own transactions exactly as
+    ``settlement_record`` provides.
+    """
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
+        cursor.execute(_OPEN_ENTRIES_SQL)
+        columns = [description.name for description in cursor.description]
+        rows = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        entries = []
+        for row in rows:
+            captured = settle.CapturedOutcome(None, 'UNKNOWN')
+            column, identity = _identity_of(row)
+            if column is not None:
+                effective = effective_market_outcome(conn, **{column: identity})
+                if effective.outcome_id is not None:
+                    cursor.execute('SELECT confirmed_at FROM papersim.market_outcomes '
+                                   'WHERE outcome_id = %s', (effective.outcome_id,))
+                    confirmed_at = cursor.fetchone()[0]
+                    captured = settle.captured_from_effective(effective,
+                                                              confirmed_at=confirmed_at)
+            entries.append(settle.OpenSettleEntry(
+                entry_id=int(row['entry_id']), candidate_id=int(row['candidate_id']),
+                team=str(row['team']), side=str(row['side']), stake=row['stake'],
+                price=row['price'], fee_category=str(row['fee_category']),
+                entered_at=row['entered_at'], fee_source=str(row['fee_source']),
+                condition_id=row['condition_id'], market_id=row['market_id'],
+                market_slug=row['market_slug'], exit_marked=bool(row['exit_marked']),
+                outcome=captured))
+    return tuple(entries)
+
+
 def bankroll_daily_check(conn, request: BankrollCheckRequest) -> BankrollCheckResult:
     """Recompute the four-way cash identity and append the receipt (M2 5.3).
 
@@ -652,11 +733,22 @@ def bankroll_daily_check(conn, request: BankrollCheckRequest) -> BankrollCheckRe
     highest included event id, and the receipt is appended with the
     day+commit+watermark idempotency key. The row is evidence: it never
     repairs the identity.
+
+    FX-29 (N-4): the multi-statement identity recomputation reads ONE
+    consistent snapshot — the FIRST statement of the transaction raises
+    the isolation level to REPEATABLE READ, so an entry + cash event
+    committed by another connection between this function's statements
+    can never split the read (all sums see the same pre- or post-commit
+    state). The transaction stays read-write because the receipt insert
+    belongs to the same snapshot-bounded transaction; on a static
+    database the results are bit-identical to the previous per-statement
+    default isolation.
     """
     request.validate()
     tolerance = _as_decimal(request.tolerance)
     with conn.transaction():
         cursor = conn.cursor()
+        cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ')
         cursor.execute('SELECT coalesce(max(event_id), 0) FROM papersim.bankroll_events '
                        'WHERE occurred_at <= %s', (request.as_of,))
         watermark = int(cursor.fetchone()[0])
@@ -875,6 +967,107 @@ def latched_pauses(conn) -> dict:
                 stop[queue] = True
     return {queue: (review.get(queue, False), stop.get(queue, False))
             for queue in sorted(set(review) | set(stop))}
+
+
+# ---------------------------------------------------------------------------
+# MO-7 shadow-prediction writes (04 section 10 step 3; plan review R2,
+# decision 2: ONE separate transaction after the scan's own atomic
+# write, so an optimizer fault never stops the scan).
+# ---------------------------------------------------------------------------
+
+_SHADOW_COLUMNS = ('candidate_id, spec_sha256, role_at_prediction, probability, '
+                   'variant_quotes, refusal_reason, gate_pass, gate_reason, '
+                   'hypothetical_fill_price, predicted_at')
+_SHADOW_INSERT = ('INSERT INTO papersim.shadow_predictions (shadow_key, '
+                  + _SHADOW_COLUMNS + ') VALUES (%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s) '
+                    'RETURNING shadow_prediction_id')
+
+
+def record_shadow_predictions(conn, bindings, candidate_ids) -> dict:
+    """Append one scan's shadow predictions in ONE transaction (MO-7).
+
+    Two-layer idempotency like the writers above: same shadow key +
+    same content returns the original row (``inserted`` counts only
+    the fresh rows), a changed content under the same key raises
+    ``papersim_shadow_conflict``, and nothing is ever updated (the
+    append-only triggers on the table).  ``bindings`` are the scan's
+    ``scan.ShadowBinding`` rows (candidate ids still unresolved): each
+    ``candidate_key`` resolves through ``candidate_ids`` -- the map
+    ``record_scan`` returns from the candidate inserts (or reads back
+    on the idempotent replay path) -- and materializes one validated
+    ``store.ShadowPredictionSubmission``.  Shadow predictions never
+    carry an entry or a cash leg (04 section 10 step 3).
+    """
+
+    from polymarket_alpha_lab.papersim.store import (
+        ShadowPredictionSubmission,
+        _require_json_payload,
+    )
+
+    rows = 0
+    inserted = 0
+    with conn.transaction():
+        cursor = conn.cursor()
+        columns = _SHADOW_COLUMNS.replace(' ', '').split(',')
+        for binding in bindings:
+            try:
+                candidate_id = candidate_ids[binding.candidate_key]
+            except (KeyError, TypeError) as error:
+                raise PapersimStoreError('papersim_shadow_candidate_missing') from error
+            variant_text = ('[]' if binding.variant_quotes is None else json.dumps(
+                [float(value) for value in binding.variant_quotes],
+                separators=(',', ':'), allow_nan=False))
+            # numeric columns bind exact decimals (the bind_entry /
+            # PriceEvidenceObservation pattern): psycopg's float literal
+            # is shorter than repr, so a float bind would make the
+            # idempotent replay compare unequal decimals.
+            probability = (None if binding.probability is None
+                           else Decimal(str(binding.probability)))
+            fill_price = (None if binding.hypothetical_fill_price is None
+                          else Decimal(str(binding.hypothetical_fill_price)))
+            submission = ShadowPredictionSubmission(
+                candidate_id=candidate_id,
+                spec_sha256=binding.spec_sha256,
+                role_at_prediction=binding.role_at_prediction,
+                probability=probability,
+                variant_quotes=variant_text,
+                refusal_reason=binding.refusal_reason,
+                gate_pass=binding.gate_pass,
+                gate_reason=binding.gate_reason,
+                hypothetical_fill_price=fill_price,
+                predicted_at=binding.predicted_at)
+            submission.validate()
+            key = submission.key()
+            cursor.execute('SELECT ' + _SHADOW_COLUMNS
+                           + ' FROM papersim.shadow_predictions WHERE shadow_key = %s',
+                           (key,))
+            row = cursor.fetchone()
+            content = submission.comparison()
+            if row is not None:
+                stored = dict(zip(columns, row, strict=True))
+                _compare_stored_row(stored, content, 'papersim_shadow_conflict')
+                rows += 1
+                continue
+            cursor.execute(_SHADOW_INSERT, (key,) + tuple(
+                _require_json_payload(content[name], name)
+                if name == 'variant_quotes' else content[name]
+                for name in columns))
+            cursor.fetchone()
+            rows += 1
+            inserted += 1
+    return {'rows': rows, 'inserted': inserted}
+
+
+def load_shadow_predictions(conn, candidate_id: int) -> list[dict]:
+    """Read back one candidate row's shadow predictions (replay side)."""
+
+    cursor = conn.cursor()
+    cursor.execute('SELECT shadow_key, ' + _SHADOW_COLUMNS
+                   + ' FROM papersim.shadow_predictions WHERE candidate_id = %s'
+                   ' ORDER BY shadow_prediction_id', (candidate_id,))
+    columns = ['shadow_key'] + _SHADOW_COLUMNS.replace(' ', '').split(',')
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
 
 # ---------------------------------------------------------------------------
 # MO-2 model registry writes and reads (04 section 9; 05 node MO-2).
@@ -1293,6 +1486,23 @@ def record_optimizer_control_event(
                 'optimizer_control_key': key, 'inserted': True}
 
 
+def _spec_sequences_to_tuples(value):
+    """Rebuild spec sequences as tuples (MO-7 read-side normalization).
+
+    jsonb round-trips arrays as lists while every family's param
+    vocabulary (and the built specs) uses tuples; the canonical text
+    treats them identically, so the digest round-trip cannot catch the
+    drift -- the type normalization belongs here, at the DB-to-spec
+    boundary, so a rebuilt spec fits exactly like the registered one.
+    """
+
+    if isinstance(value, list):
+        return tuple(_spec_sequences_to_tuples(item) for item in value)
+    if isinstance(value, dict):
+        return {key: _spec_sequences_to_tuples(item) for key, item in value.items()}
+    return value
+
+
 def load_model_spec(conn, spec_sha256: str):
     """Rebuild the ``ModelSpec`` of one row; identity must round-trip.
 
@@ -1311,8 +1521,9 @@ def load_model_spec(conn, spec_sha256: str):
         return None
     columns = _SPEC_COLUMNS.replace(' ', '').split(',')
     stored = dict(zip(columns, row, strict=True))
-    params = normalize_json_number(stored['params'])
-    envelope = tuple(normalize_json_number(item) for item in stored['envelope'])
+    params = _spec_sequences_to_tuples(normalize_json_number(stored['params']))
+    envelope = tuple(_spec_sequences_to_tuples(normalize_json_number(item))
+                     for item in stored['envelope'])
     spec = ModelSpec(family=stored['family'],
                      procedure_version=stored['procedure_version'],
                      params=params, envelope=envelope,
