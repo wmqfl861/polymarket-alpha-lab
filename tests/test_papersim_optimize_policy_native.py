@@ -1,4 +1,4 @@
-"""Opt-in native MO-8 proofs: one full round on a private cluster.
+"""Opt-in native MO-8 proofs on a private cluster.
 
 Runs only inside the disposable native cluster environment (the CI
 papersim partition or an explicitly assembled local cluster); never a
@@ -7,10 +7,12 @@ registry, register a candidate, seed shadow evidence, decide (PROMOTE),
 apply the handover, decide the ROLLBACK look, apply the rollback --
 then assert the fold, the idempotent decision replay and the look
 bookkeeping end to end through the REAL CLI handlers.
+The zero-pairing cases also run score and decide through the CLI parser.
 """
 
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -51,6 +53,9 @@ def candidate_spec() -> ModelSpec:
 
 
 def _connect(dsn, *, autocommit=True):
+    from polymarket_alpha_lab.local_postgres_dsn import validate_local_postgres_dsn
+
+    validate_local_postgres_dsn(dsn, env_var_name='PAPERSIM_NATIVE_MANAGED_OWNER_DSN')
     psycopg = pytest.importorskip('psycopg')
     connection = psycopg.connect(dsn)
     connection.autocommit = autocommit
@@ -63,7 +68,6 @@ def _rebind(dsn: str, database: str) -> str:
 
 
 def _migrated_app():
-    psycopg = pytest.importorskip('psycopg')
     from polymarket_alpha_lab.papersim import migrations as pm
     from polymarket_alpha_lab.project_postgres import sql
     admin = _connect(OWNER_DSN)
@@ -74,8 +78,7 @@ def _migrated_app():
         cursor.execute(f"CREATE DATABASE {name} OWNER pal_owner")
     admin.close()
     owner_dsn = _rebind(OWNER_DSN, name)
-    bootstrap = psycopg.connect(owner_dsn)
-    bootstrap.autocommit = True
+    bootstrap = _connect(owner_dsn)
     with bootstrap.cursor() as cursor:
         cursor.execute(sql.bootstrap_sql(uuid.uuid4().hex, 'b' * 64, system_id))
     bootstrap.close()
@@ -110,12 +113,13 @@ def _seed_scan(owner, *, scan_key: str, day: datetime) -> int:
 
 
 def _seed_pair(owner, *, scan_id: int, index: int, start: datetime,
-               observed: datetime, yes_won: bool, shadow_spec: str,
+               observed: datetime | None, yes_won: bool, shadow_spec: str,
                priced_version: str, priced_probability: float,
-               shadow_is_better: bool, role_at_prediction: str) -> None:
+               shadow_is_better: bool, role_at_prediction: str,
+               market_type: str = 'over_under') -> None:
     """One market: an ACTIVE-priced candidate row, its natural outcome
-    and one SHADOW row (60/40 on the winning side when the shadow is
-    the better model, 40/60 when it is the worse one)."""
+    if observed, and one SHADOW row (60/40 on the winning side when the
+    shadow is the better model, 40/60 when it is the worse one)."""
     evaluated_at = start + timedelta(hours=2)
     market_id = f"market-{scan_id}-{index}"
     with owner.cursor() as cursor:
@@ -124,19 +128,20 @@ def _seed_pair(owner, *, scan_id: int, index: int, start: datetime,
             "market_id, side, market_kind, market_type, team, model_name, "
             "model_version, median_probability, input_payload, conclusion, "
             "gate_report, evaluated_at, event_key, event_start_at) "
-            "VALUES (%s,%s,%s,'YES','terminal','over_under','paper',"
+            "VALUES (%s,%s,%s,'YES','terminal',%s,'paper',"
             "'soccer',%s,%s,'{}'::jsonb,'ACCEPTED','{}'::jsonb,%s,%s,%s) "
             "RETURNING candidate_id",
-            (scan_id, f"ck-{scan_id}-{index}", market_id, priced_version,
-             priced_probability, evaluated_at, f"match-{scan_id}-{index}",
-             start))
+            (scan_id, f"ck-{scan_id}-{index}", market_id, market_type,
+             priced_version, priced_probability, evaluated_at,
+             f"match-{scan_id}-{index}", start))
         candidate_id = int(cursor.fetchone()[0])
-        cursor.execute(
-            "INSERT INTO papersim.market_outcomes (evidence_key, market_id, "
-            "outcome, observed_at, source_kind) VALUES (%s,%s,%s,%s,"
-            "'data_api_resolution')",
-            (f"outcome-{scan_id}-{index}", market_id,
-             'YES' if yes_won else 'NO', observed))
+        if observed is not None:
+            cursor.execute(
+                "INSERT INTO papersim.market_outcomes (evidence_key, market_id, "
+                "outcome, observed_at, source_kind) VALUES (%s,%s,%s,%s,"
+                "'data_api_resolution')",
+                (f"outcome-{scan_id}-{index}", market_id,
+                 'YES' if yes_won else 'NO', observed))
         winner = 0.6 if shadow_is_better else 0.4
         loser = 1.0 - winner
         cursor.execute(
@@ -286,3 +291,83 @@ def test_native_full_round_register_shadow_decide_handover_rollback(
                        capture_output=True)
         owner.close()
         app.close()
+
+
+@NATIVE
+@pytest.mark.parametrize('unpaired', (0, 2), ids=('no-shadow-rows', 'all-unpaired'))
+def test_native_club_candidate_without_pairs(tmp_path, capsys, unpaired):
+    from polymarket_alpha_lab.papersim import cli, store, store_psycopg
+    from polymarket_alpha_lab.papersim.optimize.families.soccer_recalib import (
+        SOCCER_RECALIB,
+        spec_for_params,
+    )
+
+    lineage = 'club-soccer-recalib/match_winner'
+    owner_dsn, app_dsn = _migrated_app()
+    candidate = spec_for_params({'half_life_days': 60.0})
+    candidate_sha = candidate.spec_sha256()
+    baseline = SOCCER_RECALIB.baseline_spec()
+    with _connect(app_dsn) as app:
+        store_psycopg.initialize_registry(
+            app, families=[SOCCER_RECALIB], actor='op', code_commit='c' * 40,
+            effective_at=INIT)
+        store_psycopg.register_model_spec(app, candidate, source='optimizer',
+                                          code_commit='c' * 40)
+        store_psycopg.record_role_events(app, store.RoleEventBatch(events=(
+            store.RoleEventSubmission(
+                lineage=lineage, spec_sha256=candidate_sha, role='CANDIDATE',
+                effective_at=REGISTERED, reason='drill registration',
+                forward_plan={}, actor='auto:promo-rule-v1',
+                code_commit='c' * 40),)))
+        role_events = store_psycopg.load_all_role_events(app)[lineage]
+        assert store_psycopg.load_promotion_decisions(app, lineage) == []
+
+    if unpaired:
+        with _connect(owner_dsn, autocommit=False) as owner:
+            scan_id = _seed_scan(owner, scan_key='zero-pairs', day=_at(3))
+            for index in range(unpaired):
+                _seed_pair(owner, scan_id=scan_id, index=index, start=_at(3),
+                           observed=None, yes_won=True, shadow_spec=candidate_sha,
+                           priced_version=baseline.model_version(),
+                           priced_probability=0.5, shadow_is_better=True,
+                           role_at_prediction='CANDIDATE', market_type='match_winner')
+
+    config = tmp_path / 'scan-config.json'
+    config.write_text(json.dumps({
+        'team': 'paper', 'operator': 'unattended',
+        'queues': [{'queue': 'q1', 'lineage': lineage, 'data_source_version': 'v1'}],
+    }), encoding='utf-8')
+    args = ['--lineage', lineage, '--config', str(config), '--dsn', app_dsn]
+
+    exit_code = cli.main(['optimize', 'score', *args])
+    output = capsys.readouterr()
+    assert (exit_code, output.err) == (0, '')
+    pair, = json.loads(output.out)['pairs']
+    assert pair['pair'] == 'candidate-vs-active'
+    assert pair['spec'] == candidate_sha
+    assert pair['comparator'] == baseline.spec_sha256()
+    assert pair['stats'] == {
+        'n_markets': 0, 'n_event_clusters': 0, 'n_complete_blocks': 0,
+        'span_days': 0, 'watermark': None, 'paired_mean': None,
+        'ci95': [None, None], 'ci99': [None, None], 'close_dev_markets': 0,
+        'close_dev_gap': None, 'unpaired': unpaired,
+    }
+    assert pair['next_look']['due'] is False
+
+    for _ in range(2):
+        exit_code = cli.main(['optimize', 'decide', *args])
+        output = capsys.readouterr()
+        assert (exit_code, output.err) == (0, '')
+        assert json.loads(output.out) == {
+            'lineage': lineage, 'written': [],
+            'looks': [{'class': 'FORWARD', 'spec': candidate_sha, 'due': False,
+                       'n_markets': 0, 'key_counter': 1, 'evidence_ordinal': 0,
+                       'blocked_looks_consumed': 0}],
+        }
+        with _connect(app_dsn) as app:
+            assert store_psycopg.load_promotion_decisions(app, lineage) == []
+            assert store_psycopg.load_all_role_events(app)[lineage] == role_events
+            roles = store_psycopg.load_lineage_roles(app, lineage)
+            assert roles.active == baseline.spec_sha256()
+            assert roles.candidates == (candidate_sha,)
+            assert roles.guard is None
