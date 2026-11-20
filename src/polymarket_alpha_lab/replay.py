@@ -89,6 +89,7 @@ __all__ = [
     "decision_report_json",
     "replay",
     "replay_bundle_payload",
+    "replay_shadow_prediction",
     "request_from_replay_bundle",
 ]
 
@@ -747,3 +748,180 @@ def _replay_decision(conn, row: dict, checks: list) -> dict:
     return {'candidate_id': int(row['candidate_id']), 'scan_id': int(row['scan_id']),
             'candidate_key': row['candidate_key'], 'mode': 'entry_request',
             'matched': True, 'code_commit': row['code_commit'], 'checks': tuple(checks)}
+
+
+class _PinnedRecord:
+    """The replay-side stand-in of one scan record (MO-7).
+
+    Carries exactly the pinned citation set (the scan parameters'
+    ``shadow.materials`` snapshot refs) and, when the candidate row
+    recorded the FX-26 canonical sports key
+    (``league|home|away|day``), the reconstructed event materials --
+    the recorded fixture identity, never a fabrication.
+    """
+
+    def __init__(self, snapshot_refs, event_key) -> None:
+        self.snapshot_refs = tuple(snapshot_refs)
+        self.events = self._events(event_key)
+
+    @staticmethod
+    def _events(event_key):
+        if type(event_key) is not str or event_key.count('|') != 3:
+            return None
+        league, home, away, _day = event_key.split('|')
+        if not league or not home or not away:
+            return None
+
+        class _Events:
+            pass
+
+        events = _Events()
+        events.league = league
+        events.home = home
+        events.away = away
+        return events
+
+
+def replay_shadow_prediction(conn, candidate_id: int, spec_sha256: str, *,
+                             trusted_code_commit: str,
+                             quote_source,
+                             expected_scan_schema_version: int = REPLAY_BUNDLE_VERSION) -> dict:
+    """Read-only forensic recomputation of one stored shadow prediction.
+
+    MO-7 (04 section 10 step 4: a shadow prediction is recomputable
+    from the snapshot plus the spec).  The shadow's inputs are the
+    SAME market evidence the active candidate row recorded (the entry
+    bundle -- book, news, liquidity, fee rate -- reused, never
+    duplicated) plus the spec (``papersim.model_specs``, digest
+    addressed and append-only) and the fit materials the scan pinned
+    in its parameters (``shadow.materials``: snapshot digests and the
+    history cutoff).  This function reloads them, re-fits and
+    re-predicts through the caller-supplied ``quote_source`` (the same
+    source class the scan used), re-runs the SAME pure gate
+    (``gates.evaluate_candidate`` with ``under_risk=False`` and the
+    active decision's recorded fee rate) and compares every stored
+    shadow field -- refusal token included -- under the single
+    rounding policy.  Issues SELECT statements only; never writes.
+    """
+
+    from polymarket_alpha_lab.papersim import gates, store_psycopg
+    from polymarket_alpha_lab.papersim.optimize.shadow import ShadowQuote
+
+    if isinstance(candidate_id, bool) or not isinstance(candidate_id, int):
+        raise PapersimReplayError('papersim_replay_candidate_id_invalid')
+    if not isinstance(spec_sha256, str) or len(spec_sha256) != 64 \
+            or any(c not in '0123456789abcdef' for c in spec_sha256):
+        raise PapersimReplayError('papersim_replay_spec_invalid')
+    trusted = _require_trusted_commit(trusted_code_commit)
+    row = _fetch_one(conn, _CANDIDATE_SQL, (candidate_id,))
+    if row is None:
+        raise PapersimReplayError('papersim_replay_candidate_missing', str(candidate_id))
+    if row['code_commit'] is None:
+        raise PapersimReplayError('papersim_replay_code_commit_missing')
+    if row['code_commit'] != trusted:
+        raise PapersimReplayError('papersim_replay_code_commit_mismatch',
+                                  f'{row["code_commit"]} != {trusted}')
+    if row['conclusion'] == 'CONSTRUCTION_FAILED':
+        raise PapersimReplayError('papersim_replay_shadow_construction')
+    scan_row = _fetch_one(conn, 'SELECT params, schema_version FROM papersim.scan_runs '
+                          'WHERE scan_id = %s', (int(row['scan_id']),))
+    if scan_row is None:
+        raise PapersimReplayError('papersim_replay_scan_missing')
+    if int(scan_row['schema_version']) != expected_scan_schema_version:
+        raise PapersimReplayError('papersim_replay_schema_version_mismatch',
+                                  f'{scan_row["schema_version"]} != '
+                                  f'{expected_scan_schema_version}')
+    params = _as_json(scan_row['params'])
+    if not isinstance(params, Mapping):
+        raise PapersimReplayError('papersim_replay_bundle_invalid', 'scan params')
+    provider_specs = ((params.get('provider') or {}).get('specs') or {})
+    if not isinstance(provider_specs, Mapping) or not provider_specs:
+        raise PapersimReplayError('papersim_replay_shadow_unregistered')
+    materials_index = ((params.get('shadow') or {}).get('materials') or {})
+    if not isinstance(materials_index, Mapping):
+        raise PapersimReplayError('papersim_replay_shadow_unpinned')
+    lineage = None
+    for scan_lineage, entry in sorted(provider_specs.items()):
+        if not isinstance(entry, Mapping):
+            continue
+        digests = list(entry.get('candidates') or ())
+        guard = entry.get('guard')
+        if guard is not None:
+            digests.append(guard)
+        if spec_sha256 in digests:
+            lineage = scan_lineage
+            break
+    if lineage is None:
+        raise PapersimReplayError('papersim_replay_shadow_unregistered')
+    pinned = materials_index.get(lineage)
+    if not isinstance(pinned, Mapping) or spec_sha256 not in pinned:
+        raise PapersimReplayError('papersim_replay_shadow_unpinned')
+    entry = pinned[spec_sha256]
+    if not isinstance(entry, Mapping):
+        raise PapersimReplayError('papersim_replay_shadow_unpinned')
+    stored_shadow = None
+    for candidate_shadow in store_psycopg.load_shadow_predictions(conn, candidate_id):
+        if candidate_shadow['spec_sha256'] == spec_sha256:
+            stored_shadow = candidate_shadow
+            break
+    if stored_shadow is None:
+        raise PapersimReplayError('papersim_replay_shadow_missing')
+    spec = store_psycopg.load_model_spec(conn, spec_sha256)
+    if spec is None:
+        raise PapersimReplayError('papersim_replay_spec_invalid', 'unknown digest')
+    request = request_from_replay_bundle(row['input_payload'])
+    report_payload = _as_json(row['gate_report'])
+    if not isinstance(report_payload, Mapping):
+        raise PapersimReplayError('papersim_replay_bundle_invalid', 'gate_report')
+    fee_rate = report_payload.get('fee_rate')
+    event_row = _fetch_one(conn, 'SELECT event_key FROM papersim.candidates '
+                           'WHERE candidate_id = %s', (candidate_id,))
+    event_key = None if event_row is None else event_row.get('event_key')
+    pinned_record = _PinnedRecord(entry.get('snapshot_refs') or (), event_key)
+    fitted = quote_source.fitted_for(lineage, spec, (pinned_record,))
+    if fitted is None:
+        quote = ShadowQuote(None, None, 'fit_materials_missing')
+    else:
+        try:
+            quote = quote_source.quote_for(fitted, pinned_record, request)
+        except (TypeError, ValueError):
+            quote = ShadowQuote(None, None, 'quote_error')
+    checks = ['code_commit', 'schema_version', 'bundle', 'spec', 'materials']
+    if quote.refusal_reason is not None:
+        _compare(stored_shadow['refusal_reason'], quote.refusal_reason,
+                 'shadow.refusal_reason')
+        recomputed = {'probability': None, 'variant_quotes': None,
+                      'gate_pass': False, 'gate_reason': None,
+                      'hypothetical_fill_price': None}
+    else:
+        if stored_shadow['refusal_reason'] is not None:
+            raise PapersimReplayError('papersim_replay_decision_mismatch',
+                                      'shadow.refusal_reason')
+        gate = gates.evaluate_candidate(
+            {'model_median': quote.model_median,
+             'qs_variants': list(quote.qs_variants)},
+            list(request.book), gates.SIDE_ASK,
+            gamma_liquidity=request.gamma_liquidity, news=request.news,
+            under_risk=False,
+            fee_rate=None if fee_rate is None else float(fee_rate))
+        recomputed = {
+            'probability': quote.model_median,
+            'variant_quotes': list(quote.qs_variants),
+            'gate_pass': bool(gate.decision.passed),
+            'gate_reason': ','.join(gate.decision.failed) or None,
+            'hypothetical_fill_price': None if gate.entry_price is None
+            else float(gate.entry_price),
+        }
+    _compare(stored_shadow['probability'], recomputed['probability'], 'shadow.probability')
+    _compare(_as_json(stored_shadow['variant_quotes']) or [],
+             recomputed['variant_quotes'] if recomputed['variant_quotes'] is not None else [],
+             'shadow.variant_quotes')
+    _compare(stored_shadow['gate_pass'], recomputed['gate_pass'], 'shadow.gate_pass')
+    _compare(stored_shadow['gate_reason'], recomputed['gate_reason'], 'shadow.gate_reason')
+    _compare(stored_shadow['hypothetical_fill_price'],
+             recomputed['hypothetical_fill_price'], 'shadow.hypothetical_fill_price')
+    checks.append('shadow')
+    return {'candidate_id': candidate_id, 'spec_sha256': spec_sha256,
+            'shadow_key': stored_shadow['shadow_key'], 'lineage': lineage,
+            'mode': 'shadow_prediction', 'matched': True,
+            'code_commit': row['code_commit'], 'checks': tuple(checks)}
