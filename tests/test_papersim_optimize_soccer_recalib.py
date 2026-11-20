@@ -136,13 +136,15 @@ def test_family_registry_lists_both_club_soccer_families() -> None:
     # F1: this branch registers its own key; the three-way merge across
     # the parallel MO-5 lanes is owned by the coordinator.
     # MO-5c landing (cherry-pick) extended this pin to the union of the
-    # merged lanes; the MO-5b landing extended it to five; 5d/5e extend
-    # it further on their own landings.
+    # merged lanes; the MO-5b landing extended it to five; the MO-5d
+    # landing extended it to six; the MO-5e landing extended it to seven.
     assert iter_family_ids() == (
         "club-soccer-frozen",
         "club-soccer-recalib",
+        "crypto-gbm",
         "intl-elo-goal-residuals",
         "intl-elo-poisson",
+        "league-bridge",
         "nba-pace-efficiency",
     )
     assert sr.FAMILY_ID == "club-soccer-recalib"

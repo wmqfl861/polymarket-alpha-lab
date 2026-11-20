@@ -122,6 +122,10 @@ CLAUDE_PROBE_FILES = ('tests/test_claude_cli_probe.py', 'tests/test_claude_cli_p
 # partition (five-entry catalog apply/upgrade/columns proof and the
 # candidate event-key round-trip, idempotency/conflict boundary and
 # match-clustered evaluation proofs).
+# B2 (2026-11-20): test_papersim_capture_marks_native.py joins the same
+# partition (the full capture-marks round trip incl. FX-34 refusals,
+# replay idempotency and the conflict boundaries on a disposable
+# cluster).
 PAPERSIM_FILES = ('tests/test_papersim_ledger.py', 'tests/test_papersim_perf_view_fix.py',
                    'tests/test_papersim_store.py', 'tests/test_papersim_store_native.py',
                    'tests/test_papersim_migrations.py', 'tests/test_papersim_import_legacy.py',
@@ -132,6 +136,7 @@ PAPERSIM_FILES = ('tests/test_papersim_ledger.py', 'tests/test_papersim_perf_vie
                    'tests/test_papersim_fx26_migrations.py',
                    'tests/test_papersim_fx26_event_keys_native.py',
                    'tests/test_papersim_scan_store_native.py',
+                   'tests/test_papersim_capture_marks_native.py',
                    'tests/test_papersim_mo2_migrations.py',
                    'tests/test_papersim_optimize_registry_native.py')
 WINDOWS_PARTITIONS = ('storage', 'research', 'dispatch')

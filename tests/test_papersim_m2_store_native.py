@@ -7,7 +7,8 @@ the current complete catalog and proves the transactional contracts of
 ``mark_capture_upsert``, ``settlement_record`` and ``bankroll_daily_check``
 against real PostgreSQL: atomic cash legs, idempotent re-runs,
 changed-content conflicts, the one-close rules, the P3-9 close time-order
-guard and the M2 plan section 5.3 identity.
+guard, the FX-34 event-start refusals (B2: no CLOSE for a NULL-start
+candidate, none at/after the start) and the M2 plan section 5.3 identity.
 
 Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
 original-missing unless a receipt is cited in-line; the reference map with
@@ -118,7 +119,13 @@ def candidate(**overrides):
                   binding_version=1, median_probability=Decimal('0.44'),
                   variant_quotes='[]', snapshot_refs='[]', rejection_reasons='["edge"]',
                   order_book=None, book_fetched_at=None, legacy_source_id=None,
-                  is_legacy=False, price_evidence=(), entry=None)
+                  is_legacy=False, price_evidence=(), entry=None,
+                  # FX-26/FX-34 (B2): the seeded candidate carries an event
+                  # start (120) later than every close observation (30..50)
+                  # in this module, so the legal closes below stay pre-start;
+                  # the NULL-start refusal is proven explicitly with its own
+                  # legacy-shaped candidate.
+                  event_start_at=at(120))
     values.update(overrides)
     return store.CandidateSubmission(**values)
 
@@ -305,6 +312,80 @@ def test_close_evidence_before_the_decision_time_rejects_whole_capture(m2_face):
             entry_id=entry_id, close_evidence=evidence(evidence_role='DECISION',
                                                        observed_at=at(40), market_ref=slug,
                                                        last=Decimal('0.5')))
+    app.close()
+
+
+@NATIVE
+def test_close_capture_refusals_under_fx34(m2_face):
+    """The three FX-34 writer refusals (fix-list section 2, B2).
+
+    Proves what changed with the fixture's event_start_at: (a) a
+    candidate with a NULL stored event start NEVER yields a CLOSE -- the
+    writer hard-refuses the attempt (the orchestrator's downgrade to
+    PERIODIC is the only path such a candidate has); (b) a CLOSE observed
+    AT the event start is refused (equality refused); (c) a CLOSE
+    observed AFTER the start -- the overtime shape, hours past tip-off --
+    is refused; nothing of any refused attempt survives. The one legal
+    form, strictly before the start, writes.
+    """
+    store_psycopg = adapter()
+    _, app_dsn = m2_face
+    app, candidate_id, entry_id, slug = _seed_accepted_entry(store_psycopg, app_dsn)
+    # (a) NULL event_start_at: a pre-FX-26/legacy-shaped candidate.
+    legacy_slug = 'm2-' + uuid.uuid4().hex[:10]
+    legacy_key = 'k-' + legacy_slug
+    legacy = store_psycopg.record_scan(app, store.ScanSubmission(
+        scan=scan_run(), candidates=(candidate(candidate_key=legacy_key,
+                                               market_slug=legacy_slug,
+                                               event_start_at=None),)))
+    legacy_id = legacy['candidate_ids'][legacy_key]
+    with pytest.raises(store.PapersimStoreError, match='papersim_close_event_start_missing'):
+        store_psycopg.mark_capture_upsert(
+            app, capture(candidate_id=legacy_id, sampling_kind='CLOSE', observed_at=at(40),
+                         market_ref=legacy_slug, source_kind='clob_terminal_price',
+                         source_ref='term-legacy', bid=None, ask=None, mid=None,
+                         last=Decimal('1')))
+    with app.cursor() as cursor:
+        cursor.execute('SELECT count(*) FROM papersim.candidate_marks '
+                       'WHERE candidate_id = %s', (legacy_id,))
+        assert cursor.fetchone()[0] == 0
+    # (b) equality and (c) post-start observations are refused for CLOSE.
+    for observed, source_ref in ((at(120), 'at-start'), (at(200), 'overtime')):
+        with pytest.raises(store.PapersimStoreError,
+                           match='papersim_evidence_time_order_invalid'):
+            store_psycopg.mark_capture_upsert(
+                app, capture(candidate_id=candidate_id, sampling_kind='CLOSE',
+                             observed_at=observed, market_ref=slug,
+                             source_kind='clob_terminal_price', source_ref=source_ref,
+                             bid=None, ask=None, mid=None, last=Decimal('1')),
+                entry_id=entry_id,
+                close_evidence=evidence(evidence_role='CLOSE', observed_at=observed,
+                                        market_ref=slug, source_kind='clob_terminal_price',
+                                        source_ref=source_ref, last=Decimal('1')))
+    with app.cursor() as cursor:
+        cursor.execute('SELECT count(*) FROM papersim.candidate_marks '
+                       'WHERE candidate_id = %s', (candidate_id,))
+        assert cursor.fetchone()[0] == 0  # nothing of the refused attempts survived
+        cursor.execute("SELECT count(*) FROM papersim.candidate_price_evidence "
+                       "WHERE candidate_id = %s AND evidence_role = 'CLOSE'",
+                       (candidate_id,))
+        assert cursor.fetchone()[0] == 0
+        cursor.execute('SELECT count(*) FROM papersim.marks WHERE entry_id = %s',
+                       (entry_id,))
+        assert cursor.fetchone()[0] == 0
+    # The one legal form: strictly before the event start (1 second).
+    pre_start = at(120) - timedelta(seconds=1)
+    legal = store_psycopg.mark_capture_upsert(
+        app, capture(candidate_id=candidate_id, sampling_kind='CLOSE',
+                     observed_at=pre_start, market_ref=slug,
+                     source_kind='clob_terminal_price', source_ref='pre-start',
+                     bid=None, ask=None, mid=None, last=Decimal('1')),
+        entry_id=entry_id,
+        close_evidence=evidence(evidence_role='CLOSE', observed_at=pre_start,
+                                market_ref=slug, source_kind='clob_terminal_price',
+                                source_ref='pre-start', last=Decimal('1')))
+    assert legal['candidate_mark_inserted'] is True
+    assert legal['close_evidence_inserted'] is True
     app.close()
 
 

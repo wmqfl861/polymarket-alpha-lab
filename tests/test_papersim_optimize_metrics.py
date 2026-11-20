@@ -20,6 +20,7 @@ import csv
 import hashlib
 import json
 import math
+import os
 import random
 import statistics
 from decimal import Decimal
@@ -443,11 +444,20 @@ def test_anchor2_nba_group_logloss():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skipif(not WP_P4_JSON.exists(), reason="WP-P4 evidence JSON is server-only")
+# os.path.exists() returns False (never raises) when an ancestor directory is
+# non-traversable, e.g. a CI image whose /home/ubuntu denies search permission;
+# Path.exists() would raise PermissionError at import time and break collection.
+@pytest.mark.skipif(
+    not os.path.exists(WP_P4_JSON), reason="WP-P4 evidence JSON is server-only"
+)
 def test_anchor3_wp_p4_paired_comparison():
-    digest = hashlib.sha256(WP_P4_JSON.read_bytes()).hexdigest()
+    try:
+        payload = WP_P4_JSON.read_bytes()
+    except OSError as exc:
+        pytest.skip(f"WP-P4 evidence JSON unreadable here: {exc}")
+    digest = hashlib.sha256(payload).hexdigest()
     assert digest == WP_P4_SHA256
-    rows = json.loads(WP_P4_JSON.read_text(encoding="utf-8"))["fixture_predictions"]
+    rows = json.loads(payload.decode("utf-8"))["fixture_predictions"]
 
     def outcome_of(row) -> int:
         if row["home_goals"] > row["away_goals"]:
