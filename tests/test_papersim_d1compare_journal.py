@@ -9,7 +9,10 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 from io import BytesIO
+from threading import Barrier
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlsplit
 
@@ -309,11 +312,15 @@ def _collect_public_fixture(monkeypatch, fixture, *, clock=lambda: STAMP, tags=(
         assert at is not None and kind == "d1_public_capture_response"
         stored[digest] = body
 
+    class FixtureConnection:
+        def execute(self, sql, params):
+            assert (sql, params) == (acquire._LOCK, (acquire._PUBLICATION_LOCK,))
+
     monkeypatch.setattr(acquire.polymarket, "BoundedPublicOpener", lambda: fixture)
     monkeypatch.setattr(acquire, "_now_utc", clock)
     monkeypatch.setattr(acquire, "_register", register)
     scope = {"tag_slugs": tags, "window_start": start.isoformat(), "window_end": end.isoformat()}
-    return acquire._collect(None, scope, STAMP, start, end), stored
+    return acquire._collect(FixtureConnection(), scope, STAMP, start, end), stored
 
 
 def test_capture_distinguishes_http_error_and_missing_source_time(monkeypatch):
@@ -413,6 +420,96 @@ def test_capture_gamma_drift_is_incomplete_book_coverage_not_a_true_empty_tag(mo
     assert document["coverage"]["rejections_without_books"] == 1
 
 
+def test_capture_stale_source_received_on_time_is_unassessable_without_registered_age(monkeypatch):
+    stale = STAMP - datetime.timedelta(days=3)
+    fixture = _PublicFixtureOpener({token: _book_bytes(token, stale) for token in ("111", "222")})
+    document, stored = _collect_public_fixture(monkeypatch, fixture)
+    assert document["coverage"]["polymarket_complete"] is False
+    assert document["coverage"]["polymarket_transport_complete"] is True
+    assert document["coverage"]["book_freshness"]["status"] == "NOT_ASSESSABLE"
+    for row in document["requests"][-2:]:
+        token = row["request_meta"]["query"]["token_id"]
+        assert stored[row["content_sha256"]] == _book_bytes(token, stale)
+        assert row["freshness"]["source_age_seconds"] == 259_200
+        assert row["freshness"]["receipt_age_seconds"] == 0
+        assert row["freshness"]["status"] == "NOT_ASSESSABLE"
+
+
+def test_capture_book_ages_record_shared_cutoff_instead_of_using_just_receipt_time(monkeypatch):
+    source = (STAMP - datetime.timedelta(seconds=5)).astimezone(datetime.timezone(datetime.timedelta(hours=-5)))
+    cutoff = STAMP + datetime.timedelta(seconds=3, microseconds=125000)
+    clock = STAMP
+
+    fixture = _PublicFixtureOpener({token: _book_bytes(token, source) for token in ("111", "222")})
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    def seal_after_registration(connection, attempts):
+        nonlocal clock
+        original_save(connection, attempts)
+        clock = cutoff
+
+    original_save = acquire._save_responses
+    monkeypatch.setattr(acquire, "_save_responses", seal_after_registration)
+    manifest, _ = _collect_public_fixture(monkeypatch, fixture, clock=lambda: clock)
+    assert manifest["decision_as_of"] == cutoff.isoformat()
+    for row in manifest["requests"][-2:]:
+        assert row["freshness"]["source_age_seconds"] == 8.125
+        assert row["freshness"]["receipt_age_seconds"] == 3.125
+        assert row["source_observed_at"] == source.astimezone(UTC).isoformat()
+
+
+@pytest.mark.parametrize("explicit_first", (True, False))
+def test_capture_refuses_contradictory_raw_labels_for_same_book_tokens(monkeypatch, explicit_first):
+    from tests.test_papersim_adapter_polymarket import _response
+
+    opposed = _GAMMA_PAGE.replace(b"No", b"Over").replace(b"Yes", b"Under")
+    pages = (_GAMMA_PAGE, opposed) if explicit_first else (opposed, _GAMMA_PAGE)
+
+    class ConflictingLabelsFixture(_PublicFixtureOpener):
+        def open(self, url, *, timeout_seconds):
+            offset = parse_qs(urlsplit(url).query).get("offset")
+            if offset in (["0"], ["50"]):
+                self.calls.append(url)
+                return _response(pages[int(offset[0]) // 50], url=url)
+            return super().open(url, timeout_seconds=timeout_seconds)
+
+    fixture = ConflictingLabelsFixture({token: _book_bytes(token, STAMP) for token in ("111", "222")})
+    document, stored = _collect_public_fixture(monkeypatch, fixture)
+    [market] = document["markets"]
+    assert market["binding_status"] == "outcome_label_conflict"
+    assert market["side_tokens"] == {}
+    for row, page in zip(document["requests"], pages):
+        assert stored[row["content_sha256"]] == page
+    assert market["observations"] == [{"sequence": 1, "path": "/0/markets/0"},
+                                      {"sequence": 2, "path": "/0/markets/0"}]
+    assert document["coverage"]["sources"]["polymarket-clob"] == "incomplete"
+    assert document["coverage"]["polymarket_complete"] is False
+
+
+def test_capture_identifies_same_token_label_pair_after_reordering(monkeypatch):
+    from tests.test_papersim_adapter_polymarket import _response
+
+    reordered = _GAMMA_PAGE.replace(b'No\\", \\"Yes', b'Yes\\", \\"No')
+    reordered = reordered.replace(b'111\\", \\"222', b'222\\", \\"111')
+    reordered = reordered.replace(b'0.25\\", \\"0.75', b'0.75\\", \\"0.25')
+
+    class ReorderedPageFixture(_PublicFixtureOpener):
+        def open(self, url, *, timeout_seconds):
+            if parse_qs(urlsplit(url).query).get("offset") == ["50"]:
+                self.calls.append(url)
+                return _response(reordered, url=url)
+            return super().open(url, timeout_seconds=timeout_seconds)
+
+    assert reordered != _GAMMA_PAGE
+    fixture = ReorderedPageFixture({token: _book_bytes(token, STAMP) for token in ("111", "222")})
+    document, _ = _collect_public_fixture(monkeypatch, fixture)
+    [market] = document["markets"]
+    assert market["side_tokens"] == {"YES": "222", "NO": "111"}
+    assert market["binding_status"] == "explicit_yes_no"
+    assert document["coverage"]["outcome_label_conflicts"] == 0
+    assert document["coverage"]["polymarket_transport_complete"] is True
+
+
 def test_capture_scope_validation_precedes_managed_connection(monkeypatch):
     from polymarket_alpha_lab.papersim.d1compare import acquire
 
@@ -448,6 +545,35 @@ def _start_fixture_capture_process():
     runpy.run_path(str(cli), run_name="__main__")
 
 
+def _register_legacy_capture(repo_root, original, window_start):
+    """Build and register the version 1 record from its previously published shape."""
+    from polymarket_alpha_lab.papersim import snapshots, store, store_psycopg
+
+    manifest = deepcopy(original)
+    manifest["scope"]["window_start"] = window_start.isoformat()
+    manifest["capture_version"] = 1
+    coverage = manifest["coverage"]
+    for field in ("book_freshness", "polymarket_transport_complete", "book_responses_in_window", "outcome_label_conflicts"):
+        del coverage[field]
+    coverage["polymarket_complete"] = True
+    coverage["sources"]["polymarket-clob"] = "complete"
+    for request in manifest["requests"]:
+        request.pop("freshness", None)
+    content = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("ascii")
+    scope = json.dumps(manifest["scope"], sort_keys=True, separators=(",", ":")).encode("ascii")
+    scope_digest = hashlib.sha256(scope).hexdigest()
+    sealed = datetime.datetime.fromisoformat(manifest["sealed_at"])
+    source = "d1:public-capture:v1"
+    with store_psycopg.connect_managed(repo_root) as connection:
+        record = snapshots.register_snapshot(connection, snapshots.SnapshotRegistration(
+            content, "d1_public_capture_manifest", source, sealed, schema_version=1))
+        digest = record["content_sha256"]
+        store_psycopg.record_command_run_event(connection, store.CommandRunEventSubmission(
+            operation_key=f"{source}:{scope_digest}", command="capture-inputs", phase="SUCCEEDED",
+            scheduled_for=window_start, occurred_at=sealed, config_digest=scope_digest, output_evidence=[digest]))
+    return manifest, digest
+
+
 @pytest.mark.skipif(
     sys.platform != "linux" or os.environ.get("POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES") != "1",
     reason="explicit Linux native PostgreSQL proof is opt-in",
@@ -480,11 +606,15 @@ def test_capture_cli_native_seals_and_independent_process_reads_exact_bytes(tmp_
 
         receipt = capture(start)
         after = datetime.datetime.now(UTC)
-        assert receipt["status"] == "sealed" and receipt["reused"] is False
-        assert receipt["coverage"]["polymarket_complete"] is True
+        assert receipt["status"] == "partial" and receipt["reused"] is False
+        assert receipt["capture_version"] == 2
+        assert receipt["coverage"]["polymarket_complete"] is False
+        assert receipt["coverage"]["polymarket_transport_complete"] is True
+        assert receipt["coverage"]["book_freshness"]["status"] == "NOT_ASSESSABLE"
         assert receipt["coverage"]["uncollected_sources"]
         assert receipt["request_count"] == receipt["response_count"] == 6
-        assert before <= datetime.datetime.fromisoformat(receipt["decision_as_of"]) <= after
+        assert (before <= datetime.datetime.fromisoformat(receipt["decision_as_of"])
+                <= datetime.datetime.fromisoformat(receipt["registered_at"]) <= after)
 
         restored = process('''
 import base64
@@ -521,6 +651,9 @@ print(json.dumps({"manifest": document, "bodies": [base64.b64encode(e.content).d
             fetched = datetime.datetime.fromisoformat(record["utc_fetched_at"])
             assert source <= fetched <= datetime.datetime.fromisoformat(receipt["decision_as_of"])
             assert body == _book_bytes(record["request_meta"]["query"]["token_id"], source)
+            assert record["freshness"]["status"] == "NOT_ASSESSABLE"
+            assert datetime.datetime.fromisoformat(receipt["decision_as_of"]) - source == datetime.timedelta(
+                seconds=record["freshness"]["source_age_seconds"])
 
         retry = process('''
 from datetime import datetime
@@ -556,3 +689,108 @@ print(json.dumps(acquire.capture_inputs(repo_root=Path(sys.argv[1]), window_star
             assert connection.execute("SELECT fetched_at FROM papersim.snapshots WHERE content_sha256 = %s",
                                       (records[1]["content_sha256"],)).fetchone() == (
                                           datetime.datetime.fromisoformat(records[1]["utc_fetched_at"]),)
+
+        legacy_start = start - datetime.timedelta(seconds=1)
+        legacy, legacy_digest = _register_legacy_capture(project.root, manifest, legacy_start)
+        returned = capture(legacy_start)
+        assert returned["capture_version"] == 1 and returned["reused"] is True
+        assert returned["batch_sha256"] == legacy_digest and returned["status"] == "partial"
+        assert returned["coverage"]["polymarket_complete"] is False
+        assert returned["coverage"]["polymarket_transport_complete"] is None
+        assert returned["coverage"]["original_coverage"] == legacy["coverage"]
+        stored_legacy, legacy_entries = acquire.read_capture(repo_root=project.root, batch_sha256=legacy_digest)
+        assert stored_legacy == legacy
+        assert [entry.content for entry in legacy_entries] == bodies
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux" or os.environ.get("POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES") != "1",
+    reason="explicit Linux native PostgreSQL proof is opt-in",
+)
+def test_capture_overlapping_contracts_publish_opposite_observation_orders(monkeypatch, tmp_path):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+    from tests.test_papersim_adapter_polymarket import _response
+    from tests.test_papersim_d1compare_archive_native import _isolated_project
+
+    # Each collector sees the same two original pages in the opposite order.
+    # No accepted markets means the reproduction uses only capture relations.
+    first = b' [ { "id":"one", "markets":[]} ] \n'
+    second = b' [ { "id":"two", "markets":[]} ] \n'
+    request_barrier = Barrier(2, timeout=15)
+    fetched = {"alpha": [], "beta": []}
+
+    class OppositePages:
+        def open(self, url, *, timeout_seconds):
+            query = parse_qs(urlsplit(url).query)
+            tag = query["tag_slug"][0]
+            offset = query["offset"][0]
+            if offset == "0":
+                request_barrier.wait()
+            pages = (first, second) if tag == "alpha" else (second, first)
+            body = {"0": pages[0], "50": pages[1], "100": b' [] \n'}[offset]
+            response = _response(body, url=url)
+            original_read = response.read
+
+            def read(size):
+                data = original_read(size)
+                fetched[tag].append(datetime.datetime.now(UTC))
+                if offset == "100":
+                    request_barrier.wait()
+                return data
+
+            response.read = read
+            return response
+
+    monkeypatch.setattr(acquire.polymarket, "BoundedPublicOpener", OppositePages)
+    with _isolated_project(tmp_path) as project:
+        # Delay actual inserts so overlapping transactions hold their initial
+        # digest before demanding the other's. This is local disposable SQL.
+        with store_psycopg.connect_owner(project.root) as connection:
+            connection.execute("""
+                CREATE FUNCTION papersim.fixture_pause_snapshot_inserts() RETURNS trigger
+                LANGUAGE plpgsql AS $$
+                BEGIN
+                    IF NEW.kind = 'd1_public_capture_response' THEN
+                        PERFORM pg_sleep(0.5);
+                    END IF;
+                    RETURN NEW;
+                END;
+                $$;
+                CREATE TRIGGER fixture_pause_snapshot_inserts AFTER INSERT ON papersim.snapshots
+                    FOR EACH ROW EXECUTE FUNCTION papersim.fixture_pause_snapshot_inserts();
+            """)
+        before = datetime.datetime.now(UTC)
+
+        def capture(tag):
+            return acquire.capture_inputs(
+                repo_root=project.root, window_start=before - datetime.timedelta(seconds=10),
+                window_end=before + datetime.timedelta(minutes=1), tag_slugs=(tag,), allow_public_fetch=True,
+            )
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            receipts = list(pool.map(capture, ("alpha", "beta")))
+        after = datetime.datetime.now(UTC)
+        assert receipts[0]["batch_sha256"] != receipts[1]["batch_sha256"]
+        observations_per_scope = []
+        for receipt, tag, expected in zip(receipts, ("alpha", "beta"), ((first, second), (second, first)), strict=True):
+            assert receipt["status"] == "sealed"
+            manifest, observations = acquire.read_capture(repo_root=project.root, batch_sha256=receipt["batch_sha256"])
+            assert [row["sequence"] for row in manifest["requests"]] == [1, 2, 3]
+            assert [entry.content for entry in observations] == [*expected, b' [] \n']
+            assert before <= observations[0].utc_fetched_at < observations[1].utc_fetched_at < after
+            assert all(actual <= entry.utc_fetched_at for actual, entry in zip(fetched[tag], observations, strict=True))
+            observations_per_scope.extend(observations)
+
+        with store_psycopg.connect_managed(project.root) as connection:
+            assert connection.execute("SELECT count(*) FROM papersim.snapshots").fetchone() == (5,)
+            assert connection.execute("SELECT count(*) FROM papersim.command_run_events").fetchone() == (2,)
+            for body in (first, second, b' [] \n'):
+                stored_at, = connection.execute(
+                    "SELECT fetched_at FROM papersim.snapshots WHERE content_sha256 = %s",
+                    (hashlib.sha256(body).hexdigest(),),
+                ).fetchone()
+                assert stored_at in {entry.utc_fetched_at for entry in observations_per_scope if entry.content == body}
+            for relation in ("scan_runs", "candidates", "entries", "candidate_marks", "market_outcomes",
+                             "settlements", "bankroll_events"):
+                assert connection.execute(f"SELECT count(*) FROM papersim.{relation}").fetchone() == (0,)

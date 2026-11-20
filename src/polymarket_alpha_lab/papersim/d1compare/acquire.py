@@ -25,11 +25,15 @@ from polymarket_alpha_lab.papersim.d1compare import journal
 from polymarket_alpha_lab.research_resolution import condition
 from polymarket_alpha_lab.team_research_agent_types import strict_json
 
-_VERSION = 1
+_VERSION = 2
 _COMMAND = "capture-inputs"
 _BATCH_KIND = "d1_public_capture_manifest"
 _BODY_KIND = "d1_public_capture_response"
-_BATCH_SOURCE = "d1:public-capture:v1"
+# The operation key is version-independent so an old scope returns its original batch.
+_OPERATION_PREFIX = "d1:public-capture:v1"
+_BATCH_SOURCES = {1: _OPERATION_PREFIX, _VERSION: "d1:public-capture:v2"}
+_PUBLICATION_LOCK = "d1:public-capture:publish"
+_BOOK_AGE_UNREGISTERED = "d1_capture_book_age_policy_unregistered"
 _UNCOLLECTED_SOURCES = (
     "espn-soccer-schedule", "espn-nba-results", "understat-xg", "fotmob-xg",
     "soccer-kappa", "binance-btc-eth", "stooq-wti",
@@ -72,6 +76,25 @@ def _canonical(document: dict) -> bytes:
 
 def _digest(content: bytes) -> str:
     return snapshots.snapshot_content_sha256(content)
+
+
+def _book_ages(source: datetime | None, received: datetime | None,
+               cutoff: datetime | None, request_status: str | None) -> dict:
+    """Record observed ages; the interval registration defines their limits."""
+    if source is None or received is None:
+        reason = "d1_capture_book_times_missing"
+    elif cutoff is None:
+        reason = "d1_capture_book_cutoff_missing"
+    elif request_status != "received" or not source <= received <= cutoff:
+        reason = "d1_capture_book_not_usable"
+    else:
+        reason = _BOOK_AGE_UNREGISTERED
+    return {
+        "source_age_seconds": (cutoff - source).total_seconds() if cutoff and source else None,
+        "receipt_age_seconds": (cutoff - received).total_seconds() if cutoff and received else None,
+        "status": "NOT_ASSESSABLE",
+        "reason_code": reason,
+    }
 
 
 def _request_fields(url: str) -> tuple[str, dict]:
@@ -130,7 +153,7 @@ class _Request:
             status = "received"
         else:
             status = window_status
-        return {
+        row = {
             "sequence": self.sequence, "url": self.url, "source_kind": self.source_kind,
             "request_meta": self.request_meta, "sent": self.sent, "http_status": self.http_status,
             "started_at": _stamp(self.started_at), "finished_at": _stamp(self.finished_at),
@@ -140,6 +163,9 @@ class _Request:
             "byte_length": self.byte_length, "content_sha256": self.content_sha256,
             "page": self.page,
         }
+        if self.source_kind == polymarket.SOURCE_KIND_CLOB:
+            row["freshness"] = _book_ages(self.source_observed_at, fetched, decision_as_of, status)
+        return row
 
 
 class _Response:
@@ -304,15 +330,33 @@ def _add_markets(markets: dict, accepted: tuple, rejections: list, attempts: Seq
                     "book_tokens": sorted(pair) if raw_slots > 0 else [],
                 }
                 raw_slots -= 1
+            if market is not None and identity in unresolved and market["binding_status"] == "explicit_yes_no":
+                market.update(binding_status="unresolved_outcomes", side_tokens={})
+
+
+def _index_market_observations(markets: dict, attempts: Sequence[_Request]) -> None:
+    """Check every captured page, including repeats folded by discovery."""
+    seen: dict[str, dict[str, str]] = {}
+    for attempt in attempts:
+        if attempt.page is None:
+            continue
+        for row in attempt.page["markets"]:
+            identity = row["condition_id"]
+            market = markets.get(identity)
             if market is None:
                 continue
-            if market["book_tokens"] and (row["slug"] != market["slug"]
-                    or row["market_id"] != market["market_id"]
-                    or (_valid_pair(pair) and market["book_tokens"] != sorted(pair))):
-                market.update(binding_status="identity_drift", side_tokens={}, book_tokens=[])
-            elif identity in unresolved and market["binding_status"] == "explicit_yes_no":
-                market.update(binding_status="unresolved_outcomes", side_tokens={})
             market["observations"].append({"sequence": attempt.sequence, "path": row["path"]})
+            tokens = market["book_tokens"]
+            if not tokens:
+                continue
+            pair = row["token_ids"]
+            if (row["slug"] != market["slug"] or row["market_id"] != market["market_id"]
+                    or (_valid_pair(pair) and tokens != sorted(pair))):
+                market.update(binding_status="identity_drift", side_tokens={}, book_tokens=[])
+                continue
+            labels = journal.gamma_outcomes_by_token(row)
+            if labels is not None and sorted(labels) == tokens and seen.setdefault(identity, labels) != labels:
+                market.update(binding_status="outcome_label_conflict", side_tokens={}, book_tokens=[])
 
 
 def _valid_pair(pair: object) -> bool:
@@ -362,13 +406,19 @@ def _book(token: str, condition_id: str, budget: contracts.FetchBudget,
 
 
 def _save_responses(connection, attempts: Sequence[_Request]) -> None:
+    unique = {}
     for attempt in attempts:
         if attempt.body is None:
             continue
         digest = _digest(attempt.body)
-        _register(connection, attempt.body, _BODY_KIND, attempt.url, attempt.fetched_at, digest)
         attempt.byte_length = len(attempt.body)
         attempt.content_sha256 = digest
+        first = unique.get(digest)
+        if first is None or attempt.fetched_at < first.fetched_at:
+            unique[digest] = attempt
+    for digest, attempt in sorted(unique.items()):
+        _register(connection, attempt.body, _BODY_KIND, attempt.url, attempt.fetched_at, digest)
+    for attempt in attempts:
         attempt.body = None
 
 
@@ -385,7 +435,7 @@ def _collect(connection, scope: dict, started_at: datetime,
         discoveries.append(discovery)
         attempts = transport.requests[offset:]
         _add_markets(markets, accepted, discovery["rejections"], attempts)
-        _save_responses(connection, attempts)
+    _index_market_observations(markets, transport.requests)
     token_owners: dict[str, set[str]] = {}
     for identity, market in markets.items():
         for token in market["book_tokens"]:
@@ -393,13 +443,15 @@ def _collect(connection, scope: dict, started_at: datetime,
     books = []
     for token, owners in sorted(token_owners.items()):
         if len(owners) == 1:
-            offset = len(transport.requests)
             books.append(_book(token, next(iter(owners)), budget, transport))
-            _save_responses(connection, transport.requests[offset:])
         else:
             for identity in sorted(owners):
                 books.append({"token_id": token, "condition_id": identity, "request_sequence": None,
                               "reason_code": "d1_capture_token_condition_conflict"})
+    # Two different scopes can share arbitrary raw hashes. Serialize only the
+    # D1 database publication, including the manifest hash computed below.
+    connection.execute(_LOCK, (_PUBLICATION_LOCK,))
+    _save_responses(connection, transport.requests)
     sealed_at = _now_utc()
     cutoff = sealed_at if started_at <= sealed_at < window_end else None
     if started_at >= window_end:
@@ -428,28 +480,41 @@ def _collect(connection, scope: dict, started_at: datetime,
     books_received = sum(
         book["request_sequence"] is not None and
         by_sequence[book["request_sequence"]]["status"] == "received" for book in books)
+    book_responses_in_window = sum(
+        book["request_sequence"] is not None and
+        by_sequence[book["request_sequence"]]["window_status"] == "in_window" for book in books)
     rejections_without_books = sum(
         rejection["reason_code"] != "outcomes_unsupported" or
         not markets.get(rejection["condition_id"], {}).get("book_tokens")
         for discovery in discoveries for rejection in discovery["rejections"])
-    clob_complete = (books_received == len(books) and rejections_without_books == 0
-                     and all(row["book_tokens"] for row in markets.values()))
+    book_targets_known = rejections_without_books == 0 and all(row["book_tokens"] for row in markets.values())
+    clob_transport_complete = book_targets_known and book_responses_in_window == len(books)
+    clob_inputs_complete = book_targets_known and books_received == len(books)
+    no_book_targets = not books and gamma_complete and clob_transport_complete
     response_digests = [row["content_sha256"] for row in request_rows if row["content_sha256"] is not None]
     coverage = {
-        "polymarket_complete": cutoff is not None and gamma_complete and clob_complete,
+        "polymarket_complete": cutoff is not None and no_book_targets,
+        "polymarket_transport_complete": cutoff is not None and gamma_complete and clob_transport_complete,
+        "book_freshness": {
+            "status": "NOT_NEEDED" if no_book_targets else "NOT_ASSESSABLE",
+            "reason_code": None if no_book_targets else _BOOK_AGE_UNREGISTERED,
+            "policy_ref": None,
+        },
         "sources": {
             polymarket.SOURCE_KIND_GAMMA: "complete" if gamma_complete else "incomplete",
             polymarket.SOURCE_KIND_CLOB: (
-                "incomplete" if not clob_complete else "complete" if books
+                "incomplete" if not clob_inputs_complete else "not_assessable" if books
                 else "no_targets" if gamma_complete else "unknown_targets"),
         },
         "uncollected_sources": list(_UNCOLLECTED_SOURCES),
         "window_status": window_status,
         "tags": tag_summaries, "markets_with_mapping": sum(bool(row["side_tokens"]) for row in markets.values()),
         "markets_with_unresolved_binding": sum(not row["side_tokens"] for row in markets.values()),
+        "outcome_label_conflicts": sum(row["binding_status"] == "outcome_label_conflict" for row in markets.values()),
         "books_requested": sum(book["request_sequence"] is not None and
                                by_sequence[book["request_sequence"]]["sent"] for book in books),
         "books_received": books_received, "book_targets": len(books),
+        "book_responses_in_window": book_responses_in_window,
         "rejections_without_books": rejections_without_books,
         "repeated_response_bodies": len(response_digests) - len(set(response_digests)),
         "late_responses": sum(row["window_status"] == "late" for row in request_rows),
@@ -502,11 +567,12 @@ def _snapshot(connection, digest: str) -> dict:
 
 def _load_batch(connection, digest: str) -> dict:
     record = _snapshot(connection, digest)
-    if (record["kind"], record["source"], record["schema_version"]) != (
-            _BATCH_KIND, _BATCH_SOURCE, _VERSION):
+    version = record["schema_version"]
+    if (record["kind"] != _BATCH_KIND or version not in _BATCH_SOURCES
+            or record["source"] != _BATCH_SOURCES[version]):
         raise AcquisitionError("d1_capture_manifest_invalid")
     document = json.loads(record["content"].decode("ascii"))
-    if (not isinstance(document, dict) or document.get("capture_version") != _VERSION
+    if (not isinstance(document, dict) or document.get("capture_version") != version
             or document.get("sealed_at") != _stamp(record["fetched_at"].astimezone(UTC))
             or _canonical(document) != record["content"]):
         raise AcquisitionError("d1_capture_manifest_invalid")
@@ -531,6 +597,8 @@ def _read_entries(connection, document: dict) -> tuple[journal.JournalEntry, ...
         body = bodies[digest]
         if len(body) != row["byte_length"] or row["utc_fetched_at"] is None:
             raise AcquisitionError("d1_capture_manifest_request_invalid")
+        if "freshness" in row:
+            request_meta["freshness"] = row["freshness"]
         entries.append(journal.capture(
             row["url"], datetime.fromisoformat(row["utc_fetched_at"]),
             {**request_meta, "sequence": sequence, "source_kind": source_kind,
@@ -541,16 +609,28 @@ def _read_entries(connection, document: dict) -> tuple[journal.JournalEntry, ...
     return tuple(entries)
 
 
-def _summary(document: dict, digest: str, *, reused: bool) -> dict:
+def _summary(document: dict, digest: str, *, reused: bool, registered_at: datetime) -> dict:
     scope = document["scope"]
+    coverage = document["coverage"]
+    if document["capture_version"] == 1:
+        # Preserve the original manifest for forensic read-back. Its verdict
+        # predates both the freshness record and the raw-label conflict check.
+        coverage = {**coverage, "polymarket_complete": False,
+                    "polymarket_transport_complete": None,
+                    "book_freshness": {"status": "NOT_ASSESSABLE", "reason_code": _BOOK_AGE_UNREGISTERED,
+                                       "policy_ref": None},
+                    "original_coverage": document["coverage"]}
+        coverage["sources"] = {**coverage["sources"], polymarket.SOURCE_KIND_CLOB: "not_assessable"}
     return {
         "batch_sha256": digest, "scope_sha256": _digest(_canonical(scope)),
+        "capture_version": document["capture_version"],
         **scope, "started_at": document["started_at"],
         "decision_as_of": document["decision_as_of"], "sealed_at": document["sealed_at"],
-        "status": "sealed" if document["coverage"]["polymarket_complete"] else "partial",
+        "registered_at": _stamp(registered_at.astimezone(UTC)),
+        "status": "sealed" if coverage["polymarket_complete"] else "partial",
         "reused": reused, "request_count": len(document["requests"]),
         "response_count": sum(row["content_sha256"] is not None for row in document["requests"]),
-        "coverage": document["coverage"],
+        "coverage": coverage,
     }
 
 
@@ -577,7 +657,7 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
         raise AcquisitionError("d1_capture_tags_invalid") from None
     scope = {"window_start": _stamp(start), "window_end": _stamp(end), "tag_slugs": tags}
     scope_sha = _digest(_canonical(scope))
-    operation_key = f"{_BATCH_SOURCE}:{scope_sha}"
+    operation_key = f"{_OPERATION_PREFIX}:{scope_sha}"
     sealed_key = store.command_run_event_key(operation_key, 1, "SUCCEEDED")
     with _managed(repo_root) as connection, connection.transaction():
         cursor = connection.cursor()
@@ -586,16 +666,19 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
         cursor.execute(_SEALED_RECEIPT, (sealed_key,))
         existing = cursor.fetchone()
         if existing is not None:
-            command, saved_scope, evidence, sealed_at = existing
+            command, saved_scope, evidence, registered_at = existing
             if (command != _COMMAND or saved_scope != scope_sha
                     or not isinstance(evidence, list) or len(evidence) != 1):
                 raise AcquisitionError("d1_capture_receipt_conflict")
             digest = snapshots.snapshot_digest_argument(evidence[0])
             document = _load_batch(connection, digest)
-            if document["scope"] != scope or document["sealed_at"] != _stamp(sealed_at.astimezone(UTC)):
+            sealed_at = datetime.fromisoformat(document["sealed_at"])
+            invalid_clock = (registered_at != sealed_at if document["capture_version"] == 1
+                             else registered_at < sealed_at)
+            if document["scope"] != scope or invalid_clock:
                 raise AcquisitionError("d1_capture_receipt_conflict")
             _read_entries(connection, document)
-            return _summary(document, digest, reused=True)
+            return _summary(document, digest, reused=True, registered_at=registered_at)
         started_at = _now_utc()
         if started_at < start:
             raise AcquisitionError("d1_capture_window_not_open")
@@ -603,14 +686,18 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
         sealed_at = datetime.fromisoformat(document["sealed_at"])
         content = _canonical(document)
         digest = _digest(content)
-        record = _register(connection, content, _BATCH_KIND, _BATCH_SOURCE, sealed_at, digest)
+        source = _BATCH_SOURCES[_VERSION]
+        record = _register(connection, content, _BATCH_KIND, source, sealed_at, digest)
         if (record["kind"], record["source"], record["fetched_at"], record["schema_version"]) != (
-                _BATCH_KIND, _BATCH_SOURCE, sealed_at, _VERSION):
+                _BATCH_KIND, source, sealed_at, _VERSION):
             raise AcquisitionError("d1_capture_manifest_registration_conflict")
+        registered_at = _now_utc()
+        if registered_at < sealed_at:
+            raise AcquisitionError("d1_capture_receipt_clock_anomaly")
         store_psycopg.record_command_run_event(connection, store.CommandRunEventSubmission(
             operation_key=operation_key, command=_COMMAND, phase="SUCCEEDED", scheduled_for=start,
-            occurred_at=sealed_at, config_digest=scope_sha, output_evidence=[digest]))
-    return _summary(document, digest, reused=False)
+            occurred_at=registered_at, config_digest=scope_sha, output_evidence=[digest]))
+    return _summary(document, digest, reused=False, registered_at=registered_at)
 
 
 def read_capture(*, repo_root: Path, batch_sha256: str) -> tuple[dict, tuple[journal.JournalEntry, ...]]:
@@ -618,7 +705,8 @@ def read_capture(*, repo_root: Path, batch_sha256: str) -> tuple[dict, tuple[jou
 
     The manifest retains attempts without an admitted body. The returned
     journal contains every retained body, including late or invalid payloads.
-    A consumer must check each request's status before selecting an input.
+    Version 1 preserves the original receipt for audit. Decision consumers
+    need the interval's registered freshness assessment before using a book.
     """
     try:
         digest = snapshots.snapshot_digest_argument(batch_sha256)

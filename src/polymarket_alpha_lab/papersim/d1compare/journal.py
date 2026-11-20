@@ -62,6 +62,7 @@ __all__ = [
     "book_ladder",
     "capture",
     "entry_source_ref",
+    "gamma_outcomes_by_token",
     "journal_digest",
     "journal_document",
     "entries_from_document",
@@ -424,6 +425,15 @@ def gamma_page_index(content: bytes) -> dict[str, Any] | None:
                 "token_ids": label_array(market.get("clobTokenIds")),
             })
     return {"event_count": len(payload), "events": events, "markets": markets}
+
+
+def gamma_outcomes_by_token(row: Mapping[str, Any]) -> dict[str, str] | None:
+    """Compare two literal label/token pairs independently of array order."""
+    labels = row["outcomes"]
+    tokens = row["token_ids"]
+    if labels is None or tokens is None or len(labels) != 2 or len(tokens) != 2 or tokens[0] == tokens[1]:
+        return None
+    return {token: label.strip().casefold() for token, label in zip(tokens, labels, strict=True)}
 
 
 @dataclass(frozen=True)
