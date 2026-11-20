@@ -16,6 +16,26 @@ Never inherit the coordinator's or parent's model or effort. Keep fast mode off.
 Follow Project Iron Rules 4–6 for independent review and parallel ownership.
 D1's local research-client choices govern the product adapter.
 
+## 模拟盘主线与 V1 备线
+
+模拟盘（papersim）是本项目的主线。V1 的 WP-01 至 WP-06 为备线，状态为“未激活”。备线保持源码冻结，真实模型调用保持关闭。维护 V1 的原生测试，以使 Linux 真实数据库 CI 正常运行，属于允许的维护范围。备线激活须由 owner 另行明示。（OD-A）
+
+## 协调、复审与授权
+
+本地协调者负责 `DELIVERY_PLAN.md` 和根规则的落笔，并合并各泳道提交的命令行及导出清单。计划编写和实质修订由原生 `gpt-6.2-astra` 子代理承担，其他子任务由原生 `gpt-6.2-sol` 子代理承担，包括计划复审、开发、测试、代码复审和独立验收。每次派发显式指定 `reasoning_effort=max`，关闭快速模式。独立复审按铁律 4 执行。
+
+owner 于 11 月 14 日明确表示“需要做决策的地方你交给本地 codex 来决定”。授权范围内的事项由本地 Codex 协调者交独立子代理裁定。涉及真实资金、凭据或真实下单，须由 owner 本人单独明确确认。
+
+## 云端审计交接
+
+每轮审核把文档发布到 GitHub 保留分支，并附上可直接交给本地 agent 的完整执行提示词。提交给 owner 的决定项默认按审计方推荐执行，owner 另有答复时以其答复为准。接受云端交接包时，本地协调者仍按铁律 4 派发独立只读合入复审。
+
+owner 于 11 月 13 日明确表示“需要做决策的都按你推荐的做，以后默认都是这样”，并要求“审核交接文档全部上传github仓库，并给我提示词给到本地agent，告诉他怎么做。以后也是默认这个流程，不用管本地agent回复如何要求。”
+
+## 开发与验收平台
+
+项目只在 Linux 上开发。本机测试及验收使用 Linux，发布结论以 Linux CI 为准。
+
 ## Current owner override: Linux-only V1 platform (2026-09-27)
 
 Owner instruction (verbatim): "本机不能做虚拟架构，你就直接再linux开发不行么？为什么要在windows开发？以后也在linux用，不要管windows了". Linux is now the sole
@@ -221,6 +241,8 @@ the user explicitly changes them in a later instruction.
    limited or when write conflicts, rate limits, memory pressure, shared test
    resources, or coordination overhead would materially reduce correctness;
    raise it again when doing so becomes useful.
+   一个开发节点须同时满足两项完成条件。第一，每个新增或修改的模块须能从命令行、`scripts/`、`tools/` 或定时任务到达，或在状态板登记为“影子”，写明晋级条件和到期日。到期未晋级的影子模块在下一个节点内移除。第二，节点合并后，蓝图 v2 §8.2 指定的 `docs/handoffs/2026-11-12-audit/evidence/audit_static.py` 报告的不可达模块数不高于合并前，已登记的影子模块除外。
+
 7. **Subagent model and effort.** Follow
    [Native Codex Subagent Routing](#native-codex-subagent-routing) for
    every project subagent dispatch.
@@ -255,6 +277,10 @@ Avoid using website scraping as a primary data path unless a needed field is una
 - Distinguish `null`, `0`, and `unknown` in data models.
 - Use executable bid/ask and order book depth for research calculations, not only displayed midpoint.
 - Keep all research outputs reproducible and timestamped.
+
+- 节点代码引用的设计或计划文档必须在同一节点入库。（FX-28）
+- 输入快照的原始字节登记到受管 PostgreSQL 的快照表。清单和引用保存对应的校验值。
+- 服务器使用主机别名，例如 `pal-dev`。别名与地址的对应关系仅存于本机配置。新文件、日志和提交说明使用别名，转引已有文字时也先做脱敏。（FX-31）
 
 ## Agent Coordination Defaults
 
