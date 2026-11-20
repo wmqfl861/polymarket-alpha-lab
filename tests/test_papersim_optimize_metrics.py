@@ -17,12 +17,13 @@ against the evaluation module, and the three numeric anchors:
 from __future__ import annotations
 
 import csv
+import errno
 import hashlib
 import json
 import math
-import os
 import random
 import statistics
+import sys
 from decimal import Decimal
 from pathlib import Path
 
@@ -46,6 +47,18 @@ WP_P4_JSON = Path(
     "/home/ubuntu/paper-sim/review/wp-p4-evidence/wp-p4-walkforward-2026-11-07.json"
 )
 WP_P4_SHA256 = "51d7da0e6dd09176b8c6141ba1fd99dc7e63e0995ea4a354f6b5fc1c41ce7899"
+
+
+def _wp_p4_evidence_usable() -> bool:
+    """Check for WP-P4 evidence during collection.
+
+    CI accounts may lack permission to traverse the server-only parent path.
+    Treat that case as non-availability and surface other probe failures.
+    """
+    try:
+        return WP_P4_JSON.exists()
+    except PermissionError:
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -444,20 +457,13 @@ def test_anchor2_nba_group_logloss():
 # ---------------------------------------------------------------------------
 
 
-# os.path.exists() returns False (never raises) when an ancestor directory is
-# non-traversable, e.g. a CI image whose /home/ubuntu denies search permission;
-# Path.exists() would raise PermissionError at import time and break collection.
 @pytest.mark.skipif(
-    not os.path.exists(WP_P4_JSON), reason="WP-P4 evidence JSON is server-only"
+    not _wp_p4_evidence_usable(), reason="WP-P4 evidence JSON is server-only"
 )
 def test_anchor3_wp_p4_paired_comparison():
-    try:
-        payload = WP_P4_JSON.read_bytes()
-    except OSError as exc:
-        pytest.skip(f"WP-P4 evidence JSON unreadable here: {exc}")
-    digest = hashlib.sha256(payload).hexdigest()
+    digest = hashlib.sha256(WP_P4_JSON.read_bytes()).hexdigest()
     assert digest == WP_P4_SHA256
-    rows = json.loads(payload.decode("utf-8"))["fixture_predictions"]
+    rows = json.loads(WP_P4_JSON.read_text(encoding="utf-8"))["fixture_predictions"]
 
     def outcome_of(row) -> int:
         if row["home_goals"] > row["away_goals"]:
@@ -508,3 +514,44 @@ def test_anchor3_wp_p4_paired_comparison():
     assert round(result.mean, 6) == 0.001811
     assert round(result.ci95[0], 6) == -0.007597
     assert round(result.ci95[1], 6) == 0.010589
+
+
+def test_wp_p4_probe_and_read_fault_policy(tmp_path, monkeypatch):
+    """Exercise probe and read results independently of server permissions."""
+    module = sys.modules[__name__]
+    real_server_path = str(WP_P4_JSON)
+    path_type = type(WP_P4_JSON)
+
+    class _DeniedTraversal(path_type):
+        def exists(self):
+            raise PermissionError(errno.EACCES, "simulated non-traversable parent")
+
+    class _FaultyProbe(path_type):
+        def exists(self):
+            raise OSError(errno.EIO, "simulated unrelated probe fault")
+
+    class _LyingUsable(path_type):
+        def exists(self):
+            return True
+
+        def read_bytes(self):
+            raise OSError(errno.EIO, "simulated read fault after positive probe")
+
+    readable = tmp_path / "readable.json"
+    readable.write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(module, "WP_P4_JSON", tmp_path / "absent.json")
+    assert _wp_p4_evidence_usable() is False
+    monkeypatch.setattr(module, "WP_P4_JSON", _DeniedTraversal(real_server_path))
+    assert _wp_p4_evidence_usable() is False
+    monkeypatch.setattr(module, "WP_P4_JSON", _FaultyProbe(real_server_path))
+    with pytest.raises(OSError) as probe_fault:
+        _wp_p4_evidence_usable()
+    assert probe_fault.value.errno == errno.EIO
+    monkeypatch.setattr(module, "WP_P4_JSON", readable)
+    assert _wp_p4_evidence_usable() is True
+    monkeypatch.setattr(module, "WP_P4_JSON", _LyingUsable(real_server_path))
+    assert _wp_p4_evidence_usable() is True
+    with pytest.raises(OSError) as read_fault:
+        test_anchor3_wp_p4_paired_comparison()
+    assert read_fault.value.errno == errno.EIO
