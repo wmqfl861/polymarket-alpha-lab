@@ -1911,7 +1911,7 @@ def test_connect_managed_identity_mismatch_fails_closed(tmp_path, monkeypatch):
 @NATIVE
 def test_native_connect_managed_hands_off_idle_and_writes_persist(managed_face, tmp_path):
     store_psycopg = adapter()
-    psycopg = pytest.importorskip('psycopg')
+    import psycopg
     from polymarket_alpha_lab.papersim import snapshots
     _, app_dsn = managed_face
     probe = store_psycopg.connect_explicit(
