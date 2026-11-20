@@ -154,7 +154,8 @@ PAPERSIM_FILES = ('tests/test_papersim_ledger.py', 'tests/test_papersim_perf_vie
                    'tests/test_papersim_optimize_policy_native.py',
                    'tests/test_papersim_settle_store_native.py',
                    'tests/test_papersim_optimize_runner_native.py',
-                   'tests/test_papersim_report_store_native.py')
+                   'tests/test_papersim_report_store_native.py',
+                   'tests/test_papersim_d1compare_archive_native.py')
 WINDOWS_PARTITIONS = ('storage', 'research', 'dispatch')
 LINUX_PARTITIONS = ('storage', 'research', 'dispatch', 'papersim')
 PUSH_PATHS = (
