@@ -296,7 +296,7 @@ def test_rerun_with_identical_content_is_a_safe_noop(app, repo):
     # open entries and writes nothing.
     second = settle.run_settle(
         'crypto_eth', conn=app, repo_root=repo_root, now_utc=lambda: at(180),
-        open_entries=open_entries_for_settlement,
+        open_entries=store_psycopg.open_entries_for_settlement,
         operation_key='settle|crypto_eth|t2', attempt=2)
     assert second['settled_count'] == 0 and second['pending_count'] == 0
     assert second['snapshot_entries'] == 0
