@@ -1,6 +1,10 @@
 # Claude Code Review Prompt: Team-Agent Architecture
 
-You are reviewing the planning report at:
+This prompt records the July 2026 review request. Use
+[Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing)
+to assign a current independent review.
+
+The original target report was
 
 `docs/superpowers/specs/2026-07-01-team-agent-architecture-review-report.md`
 

@@ -41,9 +41,10 @@ Before dispatching parallel agents, the coordinator must define:
 
 ## Multi-Agent Parallel Development Rules
 
-This section implements Project Iron Rule 6 from `AGENTS.md`. While useful,
-independent work exists, the coordinator must keep useful collaboration
-capacity occupied. The project defines no fixed subagent-thread count; the
+This section implements Project Iron Rule 6 from `AGENTS.md`. Follow
+[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+when dispatching work. While useful, independent work exists, the coordinator
+must keep useful collaboration capacity occupied. The project defines no fixed subagent-thread count; the
 coordinator must discover usable capacity dynamically from the current runtime.
 Nested depth remains capped at **3**. Available capacity may run implementation,
 focused tests, documentation, audit, review, or preparation for a subsequent
@@ -56,8 +57,8 @@ compliant with this rule.
 Parallel work may span multiple modules and multiple development nodes when
 their write scopes are disjoint. Separate nodes should use isolated worktrees
 when practical, and each node must independently pass its focused tests,
-full-suite verification, CodeGraph sync, Claude Code review, commit, and push
-gates.
+full-suite verification, CodeGraph sync, independent read-only review,
+commit, and push gates.
 
 Parallel work is allowed only when the tasks are independent and the write
 surfaces do not overlap. Parallelism is a capacity tool, not a reason to blur
@@ -125,30 +126,25 @@ Capacity may be redeployed only to a new independent scope. If the next task
 touches a file or behavior already edited by a completed agent, run a focused
 review first and then assign one owner for the follow-up.
 
-## Claude Code Review Rules
+## Independent Review Rules
 
-All Phase 1 plan reviews, code reviews, stage audits, post-node review gates,
-and handoff review gates go directly to local Claude Code.
+Dispatch a fresh, independent, read-only reviewer for each plan, code,
+stage, post-node, and handoff review under Project Iron Rule 4 and
+[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing).
+Require the explicit verdict for the reviewed revision.
 
-Required settings:
-
-- model: `claude-opus-5`;
-- thinking level: `max`;
-- mode: read-only review.
-
-Claude Code review prompts must be read-only. Reviewers may inspect plans,
-diffs, files, reports, test output, documentation, and redacted review scratch
-artifacts. Reviewers must not modify files, create files, delete files, run
+Review prompts must be read-only. Reviewers may inspect plans, diffs, files,
+reports, test output, documentation, and redacted review scratch artifacts. Reviewers must not modify files, create files, delete files, run
 migrations, backfill data, mutate databases, touch credentials, call live
 services, mutate exchange/account/order state, submit orders, cancel orders,
 replace orders, sign orders, create commits, or push branches.
 
-If local Claude Code is unavailable, the review gate is blocked. There is no
-fallback reviewer unless the user explicitly changes the rule.
+The gate is blocked when no eligible independent reviewer can be dispatched.
+There is no fallback reviewer under the current project rules.
 
 ### Long-Running Review Monitoring
 
-Claude Code review invocations must not be wrapped in a fixed elapsed-time
+Review subagents must not be wrapped in a fixed elapsed-time
 timeout. Run long reviews in an inspectable session and check them about every
 30 seconds. At each check, observe process/session liveness and, when available,
 stream growth or event count, stderr or terminal events, CPU, and network
@@ -267,7 +263,7 @@ Before any future commit is allowed, the coordinator must verify:
 - focused tests or documentation checks for the changed surface pass;
 - the review packet includes changed paths, test evidence, open risks, and
   Phase 1 boundary assertions;
-- local Claude Code review has no unresolved blocking findings;
+- independent read-only review has passed for the current revision;
 - tracked content contains no unredacted secrets, raw DSNs, credentials, wallet
   material, hosted account details, live-account order identifiers, or unsafe
   execution payloads.
@@ -289,8 +285,8 @@ This document is satisfied when the maintenance rules explicitly cover:
 - multi-agent parallel development rules;
 - non-overlapping file boundaries;
 - prompt reclamation of completed agents;
-- Claude Code read-only review with `claude-opus-5` and thinking level
-  `max`;
+- independent read-only review under Project Iron Rule 4 and the root
+  subagent routing rule;
 - local Supabase/Postgres durable-only persistence;
 - DSN validation before connection;
 - Phase 1 paper-only/report-only/readonly safety gates;

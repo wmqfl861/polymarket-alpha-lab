@@ -1451,9 +1451,9 @@ equivalent requires, in order:
    order, cardinality) through the contained path with dummy credentials and
    a fake service first, then through the approved relay with the reviewed
    trust configuration.
-2. An explicit reviewed decision (Codex consultation under the standing
-   delegation) approving exactly that demonstrated set as additional entries
-   of the relay's required request set, recorded in the activation record.
+2. An explicit decision approving exactly that demonstrated request set,
+   recorded in the activation record. Follow [Native Codex Subagent Routing](../AGENTS.md#native-codex-subagent-routing)
+   for independent review and delegated arbitration. Apply the approval boundary in the activation record.
 3. Relay enforcement of that set with the same fail-closed semantics as the
    Messages entry: zero, extra, duplicated or deviating preflight requests
    fail the call; no request is synthesized, answered locally or retried by

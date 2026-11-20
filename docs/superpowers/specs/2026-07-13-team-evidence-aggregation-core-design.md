@@ -2301,14 +2301,14 @@ test run must execute its child-local two-module checks from
 final unified six-module/package-root scope guard. A child cannot defer a
 local import, export, forbidden-surface, or physical-line failure to Node 2C.
 
-Every child review goes directly to local Claude Code using model
-`claude-opus-4-8` with effort `max`; it is read-only, has fast mode off, and
-must inspect the exact child allowlist. The exact final nonblank output line
-must be `VERDICT: PASS`. Empty output, a missing verdict, or any other final
-line fails the gate. If local Claude Code is unavailable, the gate is blocked
-with no fallback reviewer. A child is not a valid dependency until its focused
-tests, full suite, CodeGraph sync, static gates, diff hygiene, required review,
-focused commit, and non-force push all pass.
+The July 2026 child plans record the review procedure used for their
+historical receipts. Follow [Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing)
+for a current child review. The fresh, independent reviewer inspects the
+exact child allowlist, reads only, keeps fast mode off, and must give the
+final line `VERDICT: PASS` to pass. Missing or alternate verdicts fail the
+gate. If no eligible reviewer can be dispatched, the gate is blocked.
+A dependency still requires passing focused tests, full suite, CodeGraph
+sync, static gates, diff hygiene, review, focused commit, and non-force push.
 
 ## Resolved Design Decisions
 

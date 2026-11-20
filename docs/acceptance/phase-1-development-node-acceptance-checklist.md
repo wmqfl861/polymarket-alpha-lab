@@ -25,7 +25,8 @@ Each node handoff must record:
 - local Supabase/Postgres persistence check result when durable storage,
   database helpers, fixtures, report history, or configuration changed;
 - secret and no-live-trading-field scan result;
-- local Claude Code read-only review outcome;
+- independent read-only review outcome under
+  [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing);
 - explicit push status: blocked or eligible.
 
 ## Must-Pass Checklist
@@ -43,15 +44,15 @@ Before a commit is ready:
 - [ ] Secret scan passed.
 - [ ] No live trading, wallet, credential, account, or order-mutation fields
   were introduced.
-- [ ] Claude Code review is approved, or required changes were made and
-  re-reviewed.
+- [ ] The current revision received an independent read-only `VERDICT: PASS`
+  after any required changes were re-reviewed.
 
 ## GitHub Push Acceptance
 
 GitHub push is allowed only after:
 
 - all required quality gates pass;
-- local Claude Code review is approved or resolved through re-review;
+- the current revision has an independent read-only `VERDICT: PASS`;
 - the commit excludes unrelated worktree changes;
 - no secrets, raw DSNs, credentials, wallet material, account data, hosted
   account details, live-account order ids, or private source payloads are

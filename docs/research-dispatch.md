@@ -634,18 +634,18 @@ default subprocess transport or durable authorization ledger is supplied here.
 ## L8-D activation record template and subsequent transport scope (design only)
 
 Baseline: repository main `db6e2291` (2026-09-30). The post-L7 ruling
-(DELIVERY_PLAN.md sections 64-65) withholds effective activation until a
-Codex-approved pinned activation record binds the delivered engineering, the
-runtime isolation, the credential procedure and the scoped authorization. This
-section supplies the two artifacts that ruling requires from L8-D: the
-**activation record template** and the **precise subsequent source/test scope**.
+(DELIVERY_PLAN.md §65) withheld effective activation pending a reviewed,
+approved record binding engineering, isolation, the credential procedure,
+and scoped authorization. The section records the **activation record
+template** and **precise subsequent source/test scope** for L8-D. Follow
+[Native Codex Subagent Routing](../AGENTS.md#native-codex-subagent-routing) for review and delegated arbitration.
 The provider transport and credential-ingress design itself is specified in
 [the L8-D section of the local-agent guide](research-local-agent.md#provider-transport-and-credential-ingress-design-l8-d-design-only);
 the two documents are one reviewed package. Everything here is design only:
 
-- Filling or approving a record does NOT flip any activation flag;
-  `activation_authorized` changes only through the explicit Codex activation
-  decision, never automatically when CI turns green.
+- Filling or approving a record does NOT flip any activation flag.
+  `activation_authorized` changes only through an explicit activation
+  decision after required owner approvals, never automatically when CI turns green.
 - The template is a review schema, not a runnable command, a new persistence
   table or an API. It is recorded as evidence through the existing
   documentation/PR path; no migration stores it.
@@ -658,7 +658,7 @@ the two documents are one reviewed package. Everything here is design only:
 activation_record_id : <operator-chosen unique ID>
 created_utc          : <UTC>
 status               : blocked | approved-not-yet-effective | effective
-deciding_authority   : Codex consultation <verdict artifact reference>
+deciding_authority   : <independent read-only arbitration verdict under AGENTS.md + owner confirmations>
 valid_window_utc     : <from>/<to> (must cover the whole intended run)
 
 baseline_pins
@@ -745,7 +745,7 @@ evidence
   commands_results   : <exact commands, outputs, first failures,
                         retries, skipped and unexecuted steps>
 
-sign_off             : operator + Codex approval references
+sign_off             : <operator, independent arbitration, and required owner approval references>
 ```
 
 ### Precise subsequent source and test scope
@@ -794,6 +794,6 @@ Scopes 1 and 4 remain parallel-safe.
 3. The relay qualification runs use fake services and dummy credentials first;
    the official-image composition check is the ruling's new prerequisite, not
    a repeat of L7 acceptance.
-4. An activation record filled from a completed tree is returned to Codex for
-   the effective activation decision. Nothing in steps 1-3 activates real
-   research, flips `activation_authorized`, or authorizes real credential use.
+4. Submit the completed record for independent read-only arbitration under
+   the root routing rule and obtain the required owner approvals. Only the
+   recorded effective-activation decision can authorize real research or credential use.

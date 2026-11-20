@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from hashlib import sha256
 import re
 from pathlib import Path
 
@@ -88,11 +89,29 @@ AGENT_POLICY_PATH = Path("AGENTS.md")
 AGENT_CONCURRENCY_PATH = Path(
     "docs/maintenance/phase1-agent-concurrency-and-review-rules.md",
 )
-CLAUDE_REVIEW_MONITORING_PATHS = (
+REVIEW_MONITORING_PATHS = (
     AGENT_POLICY_PATH,
     AGENT_CONCURRENCY_PATH,
     Path("docs/review/2026-07-12-operating-review-rules.md"),
     Path("docs/roadmap/2026-07-12-project-progress-roadmap.md"),
+)
+
+PROJECT_REVIEW_PATHS = (
+    AGENT_CONCURRENCY_PATH,
+    Path("docs/review/2026-07-12-operating-review-rules.md"),
+    Path("docs/review/phase1-claude-review-handoff.md"),
+    Path("docs/quality/phase-1-development-node-quality-gates.md"),
+    Path("docs/acceptance/phase-1-development-node-acceptance-checklist.md"),
+    Path("docs/phase-1-multi-team-operating-model.md"),
+    Path("docs/phases/2026-07-12-phase-1-capability-baseline.md"),
+    Path("docs/reports/phase1-report-registry.md"),
+    Path("docs/roadmap/2026-07-12-project-progress-roadmap.md"),
+)
+ACTIVATION_REVIEW_PATHS = (
+    Path("docs/research-dispatch.md"),
+    Path("docs/research-local-agent.md"),
+    Path("docs/handoffs/g2-activation-readiness.md"),
+    Path("docs/handoffs/g2-first-real-run-runbook-draft.md"),
 )
 
 
@@ -319,7 +338,7 @@ def test_project_policy_freezes_sustained_parallel_development_iron_rule() -> No
 
 
 def test_project_policy_freezes_long_running_review_monitoring() -> None:
-    for path in CLAUDE_REVIEW_MONITORING_PATHS:
+    for path in REVIEW_MONITORING_PATHS:
         text = _normalized(_read(path))
 
         if path == AGENT_POLICY_PATH:
@@ -354,3 +373,95 @@ def test_project_policy_freezes_long_running_review_monitoring() -> None:
         assert "concrete auth/permission/provider failure" in text
         assert "proven stall" in text
         assert "newer user instruction" in text
+
+
+
+def test_current_review_documents_reference_the_root_subagent_routing() -> None:
+    root_policy = AGENT_POLICY_PATH.resolve()
+    for path in PROJECT_REVIEW_PATHS + ACTIVATION_REVIEW_PATHS:
+        text = _read(path)
+        links = re.findall(r"\]\(([^)\s]+)#native-codex-subagent-routing\)", text)
+        assert links, path
+        for link in links:
+            assert (path.parent / link).resolve() == root_policy, path
+
+    for path in PROJECT_REVIEW_PATHS:
+        text = _read(path).lower()
+        assert not re.search(r"\b(?:gpt-\d[\w.-]*|claude-opus-[\w.-]+|zcode)\b", text), path
+
+
+def test_activation_templates_do_not_dispatch_through_retired_approval_rules() -> None:
+    for path in ACTIVATION_REVIEW_PATHS:
+        text = _normalized(_read(path)).lower()
+        for retired_route in (
+            "codex consultation under the standing delegation",
+            "deciding_authority : codex consultation",
+            "returned to codex",
+            "native-subagent arbitration per delivery_plan.md 66",
+            "the §66 native-subagent arbitration",
+        ):
+            assert retired_route not in text, (path, retired_route)
+        assert "owner" in text, path
+
+
+
+def _numbered_section(text: str, heading: str, number: str) -> str:
+    next_heading = rf"^#{{1,{len(heading)}}} "
+    pattern = rf"(?ms)^{heading} {re.escape(number)} [^\n]*\n.*?(?={next_heading}|\Z)"
+    match = re.search(pattern, text)
+    assert match, number
+    return match.group(0).rstrip("\n")
+
+
+def test_reusable_dispatch_receipts_reference_historical_commits() -> None:
+    delivery = _read(Path("DELIVERY_PLAN.md"))
+    handoff = _read(Path("docs/handoffs/l7-l8-status.md"))
+    for number, section, date, commit in (
+        ("64.", "3.3", "2026-09-30", "4f84f264d8d762c298f4623459aa24923aab4bc0"),
+        ("66.", "3.6", "2026-10-07", "df137300c7b293a159588650488996da05f9d68d"),
+    ):
+        receipt = _numbered_section(delivery, "##", number)
+        handoff_receipt = _numbered_section(handoff, "###", section)
+        index_row = next(
+            (line for line in handoff.splitlines() if line.startswith(f"| {commit[:8]} |")),
+            "",
+        )
+        assert index_row, section
+        for source in (receipt, handoff_receipt, index_row):
+            assert not re.search(
+                r"\b(?:gpt-\d[\w.-]*|zcode)\b|all tasks to native subagents|修改项目规则",
+                source,
+                flags=re.IGNORECASE,
+            ), section
+        for source, link in (
+            (receipt, "(AGENTS.md#native-codex-subagent-routing)"),
+            (handoff_receipt, "(../../AGENTS.md#native-codex-subagent-routing)"),
+        ):
+            assert date in source and commit in source, section
+            assert link in source, section
+
+
+def test_incident_receipt_preserves_evidence_without_legacy_identity_commands() -> None:
+    delivery = _read(Path("DELIVERY_PLAN.md"))
+    incident = _numbered_section(delivery, "###", "80.1")
+    assert not re.search(r"git\s+config\s+user\.(?:name|email)\b", incident)
+    for pin in (
+        "fatal: empty ident",
+        "7649ad1416c3bf1fafa9cce6e92cc83a277dd9b6",
+        "b2f09f2cfa8727ee80c22c3ecf01ad0244c1dbb8",
+        "e25103155015a73b0584eba58b1ffa6d001672cc",
+        "VERDICT: PASS",
+        "44567005859",
+    ):
+        assert pin in incident, pin
+
+
+def test_cleanup_preserves_owner_quote_and_optimizer_rules_v1() -> None:
+    delivery = _read(Path("DELIVERY_PLAN.md"))
+    # Body digests bind the original signed-off wording and numeric rules.
+    for section, expected in (
+        ("80.4", "7cd25674956bc2bd600fcb6d7dc7259ab53fdf8c4574484240059c437b4c7723"),
+        ("80.7", "7ab6505e08fae8fb5da33bd08a67e5d994a222a10f808254eec56ab785286dce"),
+    ):
+        _, _, body = _numbered_section(delivery, "###", section).partition("\n\n")
+        assert sha256(body.encode("utf-8")).hexdigest() == expected, section

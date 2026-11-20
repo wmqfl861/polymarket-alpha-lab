@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -116,3 +117,48 @@ def test_research_client_choices_are_separate_from_review_policy():
     assert "independent, freshly dispatched read-only review subagent" in review
     assert "had no role in the reviewed change" in review
     assert "no other reviewer under the current rules" in review
+
+
+
+def test_native_subagent_role_model_and_effort_are_explicit():
+    instructions, _ = _agents_instructions()
+    heading = "## native codex subagent routing"
+    assert heading in instructions
+    section = instructions.split(heading, 1)[1].split("\n## ", 1)[0]
+    routing = " ".join(section.split())
+
+    drafting, delimiter, other_work = routing.partition("- **all other subagent work**")
+    assert delimiter
+    assert "**plan drafting and substantive revision** uses" in drafting
+    assert '`model="gpt-6.2-astra"` and `reasoning_effort="max"`' in drafting
+    assert "plan review" not in drafting
+    assert other_work.startswith(' uses `model="gpt-6.2-sol"` and `reasoning_effort="max"`.')
+    for role in (
+        "plan review",
+        "implementation",
+        "testing",
+        "exploration",
+        "audit",
+        "documentation",
+        "handoffs",
+        "code review",
+        "independent arbitration",
+    ):
+        assert role in other_work
+
+    assert "pass both settings explicitly on every dispatch, including nested dispatches" in routing
+    assert "never inherit the coordinator's or parent's model or effort" in routing
+    assert "keep fast mode off" in routing
+
+
+def test_root_has_one_project_subagent_model_rule():
+    instructions, _ = _agents_instructions()
+    active = instructions.split("## omo / sisyphus session workflow (historical)", 1)[0]
+
+    assert active.count("## native codex subagent routing") == 1
+    assert re.findall(r"\bgpt-\d[\w.-]*\b", active) == [
+        "gpt-6.2-astra",
+        "gpt-6.2-sol",
+    ]
+    assert re.findall(r"\bzcode(?: cli)?\b", active) == ["zcode cli"]
+    assert "inherit the current session model" not in active

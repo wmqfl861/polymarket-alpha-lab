@@ -1,5 +1,9 @@
 # Node 4 Plan: Team Evidence Aggregation Schema
 
+This July 2026 plan retains its original review instructions for receipt
+and implementation history. For a current review, follow
+[Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing).
+
 **Goal:** Add the Phase 1 persistence contract for immutable team-evidence aggregation attempts. The node delivers one append-only aggregation-attempt table, an offline row codec, fail-closed local configuration, exact-format partial indexes, migration-safety documentation, and an operator runbook.
 
 Node 4 does not add a store, psycopg connection path, writer, account access, live trading, or disposable-database test. Store and database execution work belong to Node 5. The schema must preserve the identities and evaluation-scope payload emitted by the reviewed Node 3 module (commit `938a01b5`).

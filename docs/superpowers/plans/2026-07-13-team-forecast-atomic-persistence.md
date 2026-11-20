@@ -1,5 +1,9 @@
 # Node 5 Plan: Team Forecast Atomic Persistence
 
+This July 2026 plan retains its original review instructions for receipt
+and implementation history. For a current review, follow
+[Native Codex Subagent Routing](../../../AGENTS.md#native-codex-subagent-routing).
+
 ## Goal
 
 Enforce one atomic local-Supabase/Postgres write path for validated Node 3 and future Node 7 team-evaluation attempts. Persist complete Node 3 `evaluation_scope_payload` rows through the Node 4 codec, prove `ready`/`watch`/`blocked` round trips, idempotent retry, detached-run orphan rejection, and rollback with zero partial rows, and keep all legacy/public insert APIs unable to write V1 identifiers.
