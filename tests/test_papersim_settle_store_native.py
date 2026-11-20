@@ -28,7 +28,13 @@ acceptance): a writer connection commits an entry + cash event BETWEEN
 the statements of the production readers -- ``bankroll_daily_check``,
 the evaluate loader (``cli._evaluation_candidates_from_store``) and the
 settle snapshot loader -- and every mid-flight reader returns the exact
-PRE-write state while a fresh reader afterwards sees the write.  The
+PRE-write state while a fresh reader afterwards sees the write.  (The
+writer binds the database OWNER role: the choreography's ACCESS
+EXCLUSIVE lock -- the only lock mode that blocks a plain SELECT --
+requires UPDATE privilege, which the least-privilege production app
+role deliberately lacks (the papersim migrations grant it SELECT +
+INSERT only); the readers under proof stay on the production app
+face.)  The
 interleaving is real, not simulated: the writer's transaction takes an
 ACCESS EXCLUSIVE lock on a table the reader's LATER statement reads
 (``settlements`` / ``candidate_price_evidence`` / ``market_outcomes``
@@ -82,8 +88,12 @@ def _rebind_database(dsn: str, database: str) -> str:
                     for token in dsn.split(' '))
 
 
-def _fresh_managed_database() -> str:
-    """A private migrated APP-dsn database inside the throwaway cluster."""
+def _fresh_managed_database() -> tuple[str, str]:
+    """A private migrated database inside the throwaway cluster.
+
+    Returns ``(owner_dsn, app_dsn)``: the OWNER binding is the test
+    infrastructure / FX-29 choreography-writer face, the APP binding is
+    the production runtime role every proved reader connects as."""
     psycopg = pytest.importorskip('psycopg')
     admin = _connect(OWNER_DSN)
     name = 'pal_papersim_b3settle_' + uuid.uuid4().hex[:10]
@@ -105,13 +115,13 @@ def _fresh_managed_database() -> str:
         'pending_before': len(pm.papersim_migration_catalog(ROOT))}
     owner.commit()
     owner.close()
-    return owner_dsn.replace('user=pal_owner', 'user=pal_app')
+    return owner_dsn, owner_dsn.replace('user=pal_owner', 'user=pal_app')
 
 
 @pytest.fixture
 def app():
     from polymarket_alpha_lab.papersim import store_psycopg
-    connection = store_psycopg.connect_explicit(_fresh_managed_database(),
+    connection = store_psycopg.connect_explicit(_fresh_managed_database()[1],
                                                 label='PAPERSIM_MIGRATIONS_PG_DSN')
     connection.autocommit = True
     yield connection
@@ -389,12 +399,21 @@ def _wait_reader_blocked(admin, reader_pid: int, deadline_s: float = 30.0) -> No
 
 def _two_connections():
     """Reader (autocommit) + writer (default explicit transaction) on one
-    fresh private database, plus the cluster-admin poller."""
+    fresh private database, plus the cluster-admin poller.
+
+    The READER is the production app face (pal_app through the audited
+    connect_explicit -- exactly the managed runtime role).  The WRITER
+    binds the database OWNER role: its ACCESS EXCLUSIVE lock -- the
+    only lock mode that can block the reader's plain SELECT -- requires
+    UPDATE privilege, which the least-privilege app role deliberately
+    lacks; the writes themselves still go through the audited
+    ``store_psycopg`` functions, so the committed rows and constraints
+    are exactly the production ones."""
     from polymarket_alpha_lab.papersim import store_psycopg
-    dsn = _fresh_managed_database()
-    reader = store_psycopg.connect_explicit(dsn, label='PAPERSIM_MIGRATIONS_PG_DSN')
+    owner_dsn, app_dsn = _fresh_managed_database()
+    reader = store_psycopg.connect_explicit(app_dsn, label='PAPERSIM_MIGRATIONS_PG_DSN')
     reader.autocommit = True
-    writer = store_psycopg.connect_explicit(dsn, label='PAPERSIM_MIGRATIONS_PG_DSN')
+    writer = store_psycopg.connect_explicit(owner_dsn, label='PAPERSIM_MIGRATIONS_PG_DSN')
     admin = _connect(OWNER_DSN)
     return reader, writer, admin
 
