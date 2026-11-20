@@ -337,13 +337,14 @@ def test_soccer_frozen_family_shape() -> None:
     assert SOCCER_FROZEN.targets() == TARGETS == ("over_under", "btts", "team_total")
     assert "match_winner" not in SOCCER_FROZEN.targets()  # suspended in r23
     # MO-5 lanes each extend this pin; the last lane to merge takes the
-    # union here (5e to follow).
+    # union here (5e landed the seven-family union).
     assert iter_family_ids() == (
         "club-soccer-frozen",
         "club-soccer-recalib",
         "crypto-gbm",
         "intl-elo-goal-residuals",
         "intl-elo-poisson",
+        "league-bridge",
         "nba-pace-efficiency",
     )
 

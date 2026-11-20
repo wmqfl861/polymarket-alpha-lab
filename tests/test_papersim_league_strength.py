@@ -851,3 +851,55 @@ def test_shipped_vs_superseded_table_fixture_displacement() -> None:
     assert new_f == pytest.approx(math.exp(0.021655 - (-0.182982)), rel=1e-15)
     assert old_f == 1.25  # clamped under the superseded table
     assert new_f < old_f
+
+
+# ---------------------------------------------------------------------------
+# kappa_from_report: the pure payload twin (MO-5e)
+# ---------------------------------------------------------------------------
+
+
+def test_kappa_from_report_is_the_loaders_pure_twin(tmp_path, monkeypatch) -> None:
+    """The in-memory rule and the file loader share one spelling: a
+    report payload round-tripped through JSON gives the identical
+    table, the payload path never opens a file, and the malformed
+    cases raise the loader's own messages."""
+    payload = {
+        "generated_at": "2026-11-03T00:00:00Z",
+        "anchor": "uefa_country_coefficients",
+        "backtest": {"seasons": ["2023", "2024"], "status": "PASS"},
+        "kappa": {"EPL": 0.021655, "Ligue_1": -0.182982, "nuisance": -0.300105},
+    }
+    path = tmp_path / "kappa_report.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    via_file = league_strength.load_kappa_report(str(path))
+    via_payload = league_strength.kappa_from_report(payload)
+    assert dict(via_file.kappa) == dict(via_payload.kappa)
+    # Deeply immutable, same as every shipped table.
+    with pytest.raises(TypeError):
+        via_payload.kappa["EPL"] = 9.9  # type: ignore[index]
+    # Pure: the payload path never touches the filesystem.
+    monkeypatch.setattr(
+        "builtins.open",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("no file access")),
+    )
+    again = league_strength.kappa_from_report(payload)
+    assert dict(again.kappa) == dict(via_payload.kappa)
+    # Error parity with the file loader.
+    with pytest.raises(ValueError, match='must contain a "kappa" JSON object'):
+        league_strength.kappa_from_report({"generated_at": "x"})
+    with pytest.raises(ValueError, match="root must be a JSON object"):
+        league_strength.kappa_from_report([1, 2])  # type: ignore[arg-type]
+    # bool and non-finite are invalid; numeric strings ARE coerced
+    # by the loader rule (the pipeline bridge check is the layer
+    # that rejects numeric strings, not the loader).
+    for bad in (
+        {"kappa": {"EPL": True}},
+        {"kappa": {"EPL": float("nan")}},
+        {"kappa": {"EPL": float("inf")}},
+    ):
+        with pytest.raises(ValueError, match="number"):
+            league_strength.kappa_from_report(bad)
+    assert dict(
+        league_strength.kappa_from_report({"kappa": {"EPL": "0.1"}}).kappa
+    ) == {"EPL": 0.1}
+    assert "kappa_from_report" in league_strength.__all__
