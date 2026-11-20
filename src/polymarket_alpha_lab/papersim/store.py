@@ -321,8 +321,23 @@ def binding_token_status(candidate_yes_token, candidate_no_token,
 
 
 def validate_evidence_time_order(decision_observed_at, close_observed_at=None,
-                                 *, scan_finished_at=None) -> None:
-    """Cross-table time-order guards that CHECK constraints cannot express (P3-9)."""
+                                 *, scan_finished_at=None,
+                                 event_start_at=None) -> None:
+    """Cross-table time-order guards that CHECK constraints cannot express (P3-9).
+
+    FX-34 (fix-list section 2): a CLOSE observation must be observed
+    STRICTLY BEFORE the event start (``event_start_at``, the FX-26
+    candidate column; crypto uses the market end/expiry as the boundary).
+    A close observed AT or AFTER the start fails
+    ``papersim_evidence_time_order_invalid`` (equality refused) -- such an
+    observation may only be stored as an ordinary PERIODIC mark, never as
+    a closing price. ``event_start_at=None`` means "no event-start
+    boundary supplied" and keeps the previous behavior for callers
+    without FX-26 data; whether a candidate whose STORED
+    ``event_start_at`` is NULL may carry a CLOSE at all is enforced one
+    layer up (the writer refuses the CLOSE attempt), never by passing a
+    fabricated boundary here.
+    """
     if close_observed_at is not None and decision_observed_at is not None:
         if _require_timestamp(close_observed_at, 'close_observed_at') < \
                 _require_timestamp(decision_observed_at, 'decision_observed_at'):
@@ -330,6 +345,10 @@ def validate_evidence_time_order(decision_observed_at, close_observed_at=None,
     if scan_finished_at is not None:
         if _require_timestamp(decision_observed_at, 'decision_observed_at') > \
                 _require_timestamp(scan_finished_at, 'scan_finished_at'):
+            _fail('papersim_evidence_time_order_invalid')
+    if close_observed_at is not None and event_start_at is not None:
+        if _require_timestamp(close_observed_at, 'close_observed_at') >= \
+                _require_timestamp(event_start_at, 'event_start_at'):
             _fail('papersim_evidence_time_order_invalid')
 
 
@@ -683,7 +702,8 @@ class ScanSubmission:
             if decisions:
                 first_decision = min(decisions)
                 for close_at in closes:
-                    validate_evidence_time_order(first_decision, close_at)
+                    validate_evidence_time_order(first_decision, close_at,
+                                                 event_start_at=candidate.event_start_at)
                 for decision_at in decisions:
                     validate_evidence_time_order(decision_at, scan_finished_at=self.scan.finished_at)
             if candidate.entry is not None and candidate.conclusion != 'ACCEPTED':

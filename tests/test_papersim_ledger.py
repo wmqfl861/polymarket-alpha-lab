@@ -1092,6 +1092,17 @@ def test_report_tool_production_connect_routes_through_the_adapter(
         "polymarket_alpha_lab.papersim.store_psycopg",
         fake_module,
     )
+    # The production builder binds the adapter via the parent-package
+    # from-import (getattr first), which bypasses the sys.modules entry
+    # once an earlier in-process import has bound the real attribute:
+    # bind BOTH mock targets (raising=False covers the pristine process;
+    # teardown restores the real module or deletes the attribute).
+    monkeypatch.setattr(
+        sys.modules["polymarket_alpha_lab.papersim"],
+        "store_psycopg",
+        fake_module,
+        raising=False,
+    )
     dsn = "postgresql://paper_sim@127.0.0.1:55432/paper_sim"
 
     monkeypatch.setenv(ledger.PAPERSIM_PG_PASSWORD_FILE_ENV_VAR, "/tmp/ops-pw")
