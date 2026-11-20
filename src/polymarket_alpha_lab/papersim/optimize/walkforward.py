@@ -108,6 +108,16 @@ def expanding_group_folds(
     ``prior_block_prefix_incomplete_at_cutoff`` (the literal expanding
     prefix of ``build_folds``: a postponed old-round game blocks the
     affected fold). Test/train keys are ordered by (kickoff, event_key).
+
+    ONE deliberate divergence from ``build_folds`` (code-review P3-1,
+    declared here): ``build_folds`` also blocks a target when an earlier
+    ROUND is incomplete (``not complete.get(rnd)`` joins the ``missing``
+    check); this function instead EXCLUDES incomplete earlier groups from
+    the prior set entirely -- they neither train nor block, because
+    completeness here is a caller-supplied property of the data layer
+    (MO-4), not an official-round-map lookup. When parity with
+    ``build_folds`` is required, pass only the complete prefix as records
+    or consult the skipped list for excluded groups.
     """
     if isinstance(min_train_blocks, bool) or min_train_blocks < 1:
         raise ValueError("at least one training block is required")
