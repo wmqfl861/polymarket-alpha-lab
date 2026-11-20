@@ -604,3 +604,66 @@ def test_render_is_deterministic_and_float_exact() -> None:
     rendered = runner._render({"b": 0.1 + 0.2, "a": 1.0})
     assert rendered == {"a": repr(1.0), "b": repr(0.1 + 0.2)}
     assert runner._canonical_bytes({"x": 0.5}) == b'{"x":"0.5"}'
+
+
+# ---------------------------------------------------------------------------
+# Landing fixes: train-label resolution and the failed-row lineage list
+# ---------------------------------------------------------------------------
+
+def test_club_events_cover_train_labels_for_the_boundary_check() -> None:
+    # The walk-forward boundary validator resolves TRAIN keys too, so
+    # the club event stream must carry every completed match of every
+    # fold (train AND test), not only the scored test blocks.
+    from types import SimpleNamespace
+
+    adapter = runner.ADAPTERS["club-soccer-recalib"]
+
+    def match(match_id, kickoff, goals=(2, 1)):
+        return SimpleNamespace(
+            match_id=match_id, league="EPL", season="2026", matchweek=3,
+            kickoff=kickoff, available_at=kickoff,
+            home_team="A", away_team="B",
+            home_goals=goals[0], away_goals=goals[1],
+        )
+
+    early = match(
+        "m-early",
+        dt.datetime(2026, 8, 1, tzinfo=UTC),
+    )
+    late = match(
+        "m-late",
+        dt.datetime(2026, 8, 2, tzinfo=UTC),
+    )
+    mo4_fold = SimpleNamespace(
+        league="EPL", season="2026", matchweek=3,
+        cutoff=dt.datetime(2026, 8, 2, tzinfo=UTC),
+        train=(early,), test=(late,),
+        completed_matchweeks=frozenset(), completion_lag_hours=3.0,
+    )
+    payload = {"audit": None, "mo4": ((mo4_fold,), ())}
+    events = {event.event_key: event for event in adapter.events(payload)}
+    assert set(events) == {"m-early", "m-late"}  # train label included
+    assert events["m-late"].outcomes[0].outcome_index == 0  # 2:1 home win
+
+
+def test_submission_lineage_names_fall_back_to_declared_set() -> None:
+    # An early RUN_FAILED (boundary/integrity before any lineage
+    # finished) carries an empty active_specs map; the failed row still
+    # lands with the family's DECLARED lineage list.
+    from tests.papersim_mo6_synthetic import CoinAdapter, FAMILY
+
+    adapter = CoinAdapter()
+    failed = runner.RunResult(
+        outcome="RUN_FAILED", run_scorecard={}, artifact_bytes=b"{}",
+        dataset_summary={}, snapshot_refs=(), search_space_text_value="{}",
+        active_specs={}, trial_count=0, registered_lineages=(),
+        winner_specs={}, error_code="selection_label_available_after_holdout_boundary",
+    )
+    assert runner._submission_lineage_names(FAMILY, adapter, failed) == [
+        f"{FAMILY}/coin",
+    ]
+    finished = dict(failed.__dict__) | {"active_specs": {f"{FAMILY}/coin": "a" * 64}}
+    ok = runner.RunResult(**finished)
+    assert runner._submission_lineage_names(FAMILY, adapter, ok) == [
+        f"{FAMILY}/coin",
+    ]
