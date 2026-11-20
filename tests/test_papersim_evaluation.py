@@ -30,6 +30,7 @@ in-repo basis is docs/paper-sim/design/README.md (FX-28).
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -1274,6 +1275,74 @@ def test_full_synthetic_queue_assessment_wiring():
     assert verdicts["F"] == ev.VERDICT_NOT_ASSESSABLE_M1
     # M1 never reports a promotion: F needs M2 run evidence.
     assert q.overall_verdict == ev.VERDICT_NOT_ASSESSABLE_M1
+
+
+@pytest.mark.parametrize("keys,expected", [
+    ("", ev.VERDICT_NOT_ASSESSABLE_M1),
+    ("A", ev.VERDICT_NOT_ASSESSABLE),
+    ("ABCDE", ev.VERDICT_NOT_ASSESSABLE),
+    ("FACDE", ev.VERDICT_NOT_ASSESSABLE),
+    ("FECADB", ev.VERDICT_PASS),
+])
+def test_overall_verdict_requires_a_complete_set_of_six_passes(keys, expected):
+    results = (ev.CriterionResult(key, ev.VERDICT_PASS, ()) for key in keys)
+    assert ev.overall_verdict(results) == expected
+
+
+@pytest.mark.parametrize("key,verdict", [
+    ("A", ev.VERDICT_PASS),
+    ("G", ev.VERDICT_PASS),
+    ("A", "UNKNOWN"),
+])
+def test_overall_verdict_rejects_structural_pass_and_preserves_failure(key, verdict):
+    passing = [ev.CriterionResult(name, ev.VERDICT_PASS, ()) for name in "ABCDEF"]
+    extra = ev.CriterionResult(key, verdict, ())
+    assert ev.overall_verdict(iter((*passing, extra))) == ev.VERDICT_NOT_ASSESSABLE
+    failure = ev.CriterionResult("C", ev.VERDICT_FAIL, ())
+    assert ev.overall_verdict(iter((extra, *passing, failure))) == ev.VERDICT_FAIL
+
+
+@pytest.mark.parametrize("verdict", [
+    ev.VERDICT_FAIL, ev.VERDICT_NOT_ASSESSABLE, ev.VERDICT_NOT_ASSESSABLE_M1,
+])
+def test_overall_verdict_preserves_each_non_pass_in_a_complete_set(verdict):
+    results = [
+        ev.CriterionResult(key, verdict if key == "C" else ev.VERDICT_PASS, ())
+        for key in reversed("ABCDEF")
+    ]
+    assert ev.overall_verdict(results) == verdict
+
+
+@pytest.mark.parametrize("basis", [ev.PNL_BASIS_RECORDED, ev.PNL_BASIS_RECOMPUTED])
+def test_no_f_argument_and_explicit_none_have_identical_pnl_reports(basis):
+    from polymarket_alpha_lab.papersim.cli import _jsonify
+
+    candidates = (mk(recorded_pnl=92.0),)
+    omitted = ev.evaluate_queues(candidates, pnl_basis=basis)
+    explicit = ev.evaluate_queues(candidates, pnl_basis=basis, f_evidence=None)
+    assert omitted.queues[0].roi.gross_pnl == (92.0 if basis == "recorded" else 100.0)
+    assert omitted.queues[0].promotion[-1] == ev.criterion_f()
+    assert json.dumps(_jsonify(omitted), sort_keys=True, allow_nan=False).encode() == (
+        json.dumps(_jsonify(explicit), sort_keys=True, allow_nan=False).encode()
+    )
+
+
+def test_report_shares_f_evidence_without_overriding_a_to_e():
+    from tests.test_papersim_evaluation_f import _green
+
+    eligible = _full_passing_queue()
+    lacking_closes = [
+        replace(row, model_key="missing-close", candidate_id=f"gap-{row.candidate_id}",
+                close_price=None)
+        for row in eligible
+    ]
+    report = ev.evaluate_queues((*eligible, *lacking_closes), f_evidence=_green())
+    ready, gap = report.queues
+    assert ready.promotion[-1] == gap.promotion[-1]
+    assert ready.promotion[-1].verdict == ev.VERDICT_PASS
+    assert ready.overall_verdict == ev.VERDICT_PASS
+    assert gap.promotion[2].verdict == ev.VERDICT_NOT_ASSESSABLE
+    assert gap.overall_verdict == ev.VERDICT_NOT_ASSESSABLE
 
 
 def test_failing_queue_propagates_fail_overall():
