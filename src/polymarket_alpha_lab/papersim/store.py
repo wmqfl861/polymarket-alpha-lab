@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import Context, Decimal, Inexact, MAX_EMAX, MIN_EMIN, localcontext
 from hashlib import sha256
 import json
 import math
@@ -112,6 +112,28 @@ def _require_number(value, name: str):
 
 def _as_decimal(value) -> Decimal:
     return value if isinstance(value, Decimal) else Decimal(str(value))
+
+
+def _exact_context(precision: int) -> Context:
+    context = Context(prec=precision, Emin=MIN_EMIN, Emax=MAX_EMAX)
+    context.traps[Inexact] = True
+    return context
+
+
+def exact_sum(first: Decimal, *rest: Decimal) -> Decimal:
+    """Add finite store numerics with enough places for alignment and carry."""
+    operands = (first, *rest)
+    lowest = min(value.as_tuple().exponent for value in operands)
+    highest = max(value.adjusted() for value in operands)
+    precision = highest - lowest + 1 + len(str(len(operands)))
+    with localcontext(_exact_context(precision)):
+        return sum(rest, first)
+
+
+def _exact_product(left: Decimal, right: Decimal) -> Decimal:
+    precision = len(left.as_tuple().digits) + len(right.as_tuple().digits)
+    with localcontext(_exact_context(precision)):
+        return left * right
 
 
 def _require_probability_closed(value, name: str):
@@ -557,7 +579,9 @@ class EntrySubmission:
         _require_text(self.fee_category, 'fee_category')
         _require_text(self.tier, 'tier')
         _require_timestamp(self.entered_at, 'entered_at')
-        if abs(_as_decimal(shares) * _as_decimal(price) - _as_decimal(stake)) >= STAKE_SHARE_TOLERANCE:
+        principal = _exact_product(_as_decimal(shares), _as_decimal(price))
+        difference = exact_sum(principal, _as_decimal(stake).copy_negate())
+        if difference.copy_abs() >= STAKE_SHARE_TOLERANCE:
             _fail('papersim_entry_stake_mismatch')
         return self
 
@@ -974,7 +998,7 @@ def bankroll_identity_difference(cash_total, deployed_total, initial_and_adjustm
               for value, name in zip((cash_total, deployed_total, initial_and_adjustments,
                                       realized_net, open_entry_fees), names, strict=True)]
     cash, deployed, base, realized, fees = values
-    return cash + deployed - base - realized + fees
+    return exact_sum(cash, deployed, base.copy_negate(), realized.copy_negate(), fees)
 
 
 @dataclass(frozen=True)
@@ -1052,7 +1076,8 @@ class SettlementRecord:
     only for the cash leg (proceeds minus exit fee); ``fee_total`` keeps
     the full settlement fee of the pnl identity (M1 CHECK:
     ``pnl_net = pnl_gross - fee_total``). The entry fee was already paid
-    in SCAN_ENTRY and is never charged again here.
+    in SCAN_ENTRY. A void returns it in the cash leg without booking it
+    as a performance fee.
     """
 
     entry_id: int = 0
@@ -1093,7 +1118,7 @@ class SettlementRecord:
             _fail('papersim_fee_total_invalid')
         pnl_gross = _as_decimal(_require_number(self.pnl_gross, 'pnl_gross'))
         pnl_net = _as_decimal(_require_number(self.pnl_net, 'pnl_net'))
-        if pnl_net != pnl_gross - fee_total:
+        if pnl_net != exact_sum(pnl_gross, fee_total.copy_negate()):
             _fail('papersim_settlement_pnl_mismatch')
         if self.fee_source not in FEE_SOURCES:
             _fail('papersim_fee_source_invalid')
@@ -1108,10 +1133,15 @@ class SettlementRecord:
     def cash_reason(self) -> str:
         return SETTLEMENT_CASH_REASONS[self.classification]
 
-    def cash_amount(self) -> Decimal:
+    def cash_amount(self, *, entry_fee: Decimal | None = None) -> Decimal:
         amount = _as_decimal(self.proceeds)
         if self.classification == 'EXIT':
-            amount -= _as_decimal(self.exit_fee)
+            amount = exact_sum(amount, _as_decimal(self.exit_fee).copy_negate())
+        elif self.classification == 'VOIDED_REFUND':
+            fee = _as_decimal(_require_number(entry_fee, 'entry_fee'))
+            if fee < 0:
+                _fail('papersim_entry_fee_invalid')
+            amount = exact_sum(amount, fee)
         if amount < 0:
             _fail('papersim_settlement_cash_invalid')
         return amount
