@@ -73,6 +73,9 @@ from polymarket_alpha_lab.papersim.evaluation import (
 # approval.
 F_WINDOW_DAYS = 30
 
+# The Phase A draw over lexically sorted, normalized candidate IDs.
+F_REPLAY_RULE_VERSION = "sorted-id-python-random-sample-v1"
+
 # Mirrored from scan.py SCAN_COMMAND (:83) — mirrored locally because
 # this module must not import the scan lane.
 SCAN_COMMAND = "run-scan"
@@ -725,6 +728,24 @@ class SettlementWriterRevision:
             raise ValueError("booked_fees must be a bool")
 
 
+class _ReplayOmitted(Enum):
+    VALUE = "omitted replay argument"
+
+
+@dataclass(frozen=True)
+class FReplayRegistration:
+    """The R2 parameters and digest of their prior approval supplied as evidence.
+
+    The replay resolver checks the record so invalid evidence can be reported
+    alongside independently established failures.
+    """
+
+    sample_n: int
+    seed: int
+    rule_version: str
+    source_sha256: str
+
+
 @dataclass(frozen=True)
 class FEvidence:
     """The complete F evidence snapshot (pure records; nothing here is
@@ -733,6 +754,8 @@ class FEvidence:
 
     ``window_start`` is the first registered complete UTC day after the D2
     cutover (R1). ``schedule`` supplies the registered R4 grid.
+    ``replay_registration`` supplies the R2 draw. Explicit ``None`` records
+    missing registration. Omitting it retains the legacy pure-fixture draw.
     ``pending_contracts`` records missing source evidence (R3).
     ``visibility_snapshots`` supplies existing inventories when receipt
     evidence cannot establish the period or could describe idempotent reuse.
@@ -762,6 +785,9 @@ class FEvidence:
     settlement_reads: tuple[SettlementReadEvidence, ...] = field(default=(), kw_only=True)
     settlement_planning: tuple[SettlementPlanningEvidence, ...] = field(default=(), kw_only=True)
     settlement_writer_revisions: tuple[SettlementWriterRevision, ...] = field(default=(), kw_only=True)
+    replay_registration: FReplayRegistration | _ReplayOmitted | None = field(
+        default=_ReplayOmitted.VALUE, kw_only=True, repr=False,
+    )
 
     def __post_init__(self) -> None:
         if self.window_start is not None and (
@@ -1247,16 +1273,60 @@ class ReplaySample:
     shortfalls: tuple[str, ...] = ()
 
 
+def _resolve_replay_parameters(
+    evidence: FEvidence,
+    *,
+    seed: int | _ReplayOmitted = _ReplayOmitted.VALUE,
+    sample_n: int | _ReplayOmitted = _ReplayOmitted.VALUE,
+) -> tuple[int, int] | str:
+    """Return the seed and sample size or the R2 shortfall that prevents drawing."""
+    registration = evidence.replay_registration
+    if registration is _ReplayOmitted.VALUE:
+        return (
+            F_REPLAY_SEED if seed is _ReplayOmitted.VALUE else seed,
+            F_REPLAY_SAMPLE_N if sample_n is _ReplayOmitted.VALUE else sample_n,
+        )
+    if registration is None:
+        return "replay registration is explicitly missing (R2)"
+    if not isinstance(registration, FReplayRegistration):
+        return "replay registration has an unrecognized record (R2)"
+    if type(registration.sample_n) is not int or registration.sample_n <= 0:
+        return "replay registration sample_n must be a positive integer (R2)"
+    if type(registration.seed) is not int:
+        return "replay registration seed must be an integer (R2)"
+    if (
+        type(registration.rule_version) is not str
+        or registration.rule_version != F_REPLAY_RULE_VERSION
+    ):
+        return "replay registration rule_version is unrecognized (R2)"
+    if not _is_sha256(registration.source_sha256):
+        return "replay registration source_sha256 must be a lowercase SHA-256 digest (R2)"
+    if seed is not _ReplayOmitted.VALUE and (type(seed) is not int or seed != registration.seed):
+        raise ValueError("seed must be an integer matching the replay registration")
+    if sample_n is not _ReplayOmitted.VALUE and (
+        type(sample_n) is not int or sample_n != registration.sample_n
+    ):
+        raise ValueError("sample_n must be a positive integer matching the replay registration")
+    return registration.seed, registration.sample_n
+
+
 def draw_replay_sample(
     evidence: FEvidence,
     *,
-    seed: int = F_REPLAY_SEED,
-    sample_n: int = F_REPLAY_SAMPLE_N,
+    seed: int | _ReplayOmitted = _ReplayOmitted.VALUE,
+    sample_n: int | _ReplayOmitted = _ReplayOmitted.VALUE,
 ) -> ReplaySample:
-    """Draw without replacement from sorted IDs at the latest scan commit."""
+    """Draw without replacement from sorted IDs at the latest scan commit.
+
+    With a valid R2 registration, explicit parameters must agree with it.
+    Legacy callers omitting the registration may supply their own parameters.
+    """
+    parameters = _resolve_replay_parameters(evidence, seed=seed, sample_n=sample_n)
+    if isinstance(parameters, str):
+        return ReplaySample(None, (), 0, None, shortfalls=(parameters,))
     if evidence.window_start is None:
         raise ValueError("draw_replay_sample requires a registered window_start")
-    return _draw_replay_sample(_LedgerEvidence(evidence, F_WINDOW_DAYS), seed, sample_n)
+    return _draw_replay_sample(_LedgerEvidence(evidence, F_WINDOW_DAYS), *parameters)
 
 
 def _draw_replay_sample(ledger: _LedgerEvidence, seed: int, sample_n: int) -> ReplaySample:
@@ -3615,7 +3685,11 @@ def evaluate_f_evidence(evidence: FEvidence) -> CriterionResult:
             "schedule descriptor not registered/supplied (R4): expected "
             "slots come from the registered grid (C2)"
         )
-    if shortfalls:
+    window_registered = not shortfalls
+    replay_parameters = _resolve_replay_parameters(evidence)
+    if isinstance(replay_parameters, str):
+        shortfalls.append(replay_parameters)
+    if not window_registered:
         if not evidence.run_events and not evidence.bankroll_checks:
             shortfalls.append("no run receipts and no bankroll checks at all within the visible window")
         return CriterionResult(key, VERDICT_NOT_ASSESSABLE, (*shortfalls, BOUNDARY_SENTENCE))
@@ -3722,8 +3796,9 @@ def evaluate_f_evidence(evidence: FEvidence) -> CriterionResult:
                         f"{attempt.attempt}: {attempt.status}, error {attempt.error_code!r}"
                     )
 
-    if days_elapsed == F_WINDOW_DAYS:
-        _report_replay(ledger, failures, shortfalls, reasons)
+    if days_elapsed == F_WINDOW_DAYS and not isinstance(replay_parameters, str):
+        seed, sample_n = replay_parameters
+        _report_replay(ledger, failures, shortfalls, reasons, seed=seed, sample_n=sample_n)
     disclosed_pre_anchor = sum(family.pre_anchor for family in universe.families)
     if disclosed_pre_anchor:
         reasons.append(f"pre-anchor rows disclosed (R6e): {disclosed_pre_anchor} row(s)")
@@ -3741,8 +3816,16 @@ def _cash_number(value: Decimal | float | int | None) -> str:
 
 def _report_replay(
     ledger: _LedgerEvidence, failures: list[str], shortfalls: list[str], reasons: list[str],
+    *, seed: int, sample_n: int,
 ) -> None:
-    sample = _draw_replay_sample(ledger, F_REPLAY_SEED, F_REPLAY_SAMPLE_N)
+    registration = ledger.evidence.replay_registration
+    registered = isinstance(registration, FReplayRegistration)
+    if registered:
+        reasons.append(
+            f"replay registration (R2) fixes N {sample_n}, seed {seed}, "
+            f"rule {registration.rule_version}, and source SHA-256 {registration.source_sha256}"
+        )
+    sample = _draw_replay_sample(ledger, seed, sample_n)
     shortfalls.extend(sample.shortfalls)
     if sample.older_commit_ids:
         reasons.append(
@@ -3755,16 +3838,31 @@ def _report_replay(
     if sample.selected_ids is None:
         shortfalls.append(
             f"replay evidence absent: {len(sample.eligible_ids)} eligible candidate(s) "
-            f"at trusted commit {sample.trusted_commit!r} < registered N {F_REPLAY_SAMPLE_N}"
+            f"at trusted commit {sample.trusted_commit!r} < registered N {sample_n}"
         )
         return
     results = ledger.evidence.replay_agreements
     count = len(sample.selected_ids)
+    missing = []
+    mismatched = []
+    for candidate_id in sample.selected_ids:
+        agreement = results.get(candidate_id) if results is not None else None
+        if agreement is None:
+            missing.append(candidate_id)
+            status = "missing"
+        elif agreement is False:
+            mismatched.append(candidate_id)
+            status = "mismatched"
+        else:
+            status = "matched"
+        if registered:
+            reasons.append(
+                f"replay result (R2) candidate {candidate_id!r} {status} "
+                f"at trusted commit {sample.trusted_commit!r}"
+            )
     if results is None:
         shortfalls.append(f"replay results not supplied for the {count} selected candidate(s) (R2)")
         return
-    missing = [candidate_id for candidate_id in sample.selected_ids if candidate_id not in results]
-    mismatched = [candidate_id for candidate_id in sample.selected_ids if results.get(candidate_id) is False]
     if mismatched:
         failures.append(
             "replay mismatch (03:146 全部一致): candidate(s) "

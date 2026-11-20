@@ -40,9 +40,10 @@ import hashlib
 import json
 from collections import Counter
 from contextlib import nullcontext
-from dataclasses import replace
+from dataclasses import FrozenInstanceError, replace
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
+from inspect import Parameter, signature
 
 import pytest
 
@@ -661,6 +662,222 @@ def test_seeded_sample_reproducibility_and_insufficiency():
     result = ev.criterion_f(evidence=mismatch)
     assert result.verdict == ev.VERDICT_FAIL
     assert any("replay mismatch" in reason for reason in result.reasons)
+
+
+def _replay_registration(sample_n=3, seed=-41):
+    return ef.FReplayRegistration(
+        sample_n, seed, "sorted-id-python-random-sample-v1",
+        hashlib.sha256(f"synthetic prior approval {sample_n} {seed}".encode()).hexdigest(),
+    )
+
+
+def _replay_evidence(**overrides):
+    scans = _grid(("06:00",))[1]
+    scans[1] = replace(scans[1], code_commit=OLD_COMMIT)
+    current = tuple(
+        replace(candidate, candidate_id=index)
+        for index, candidate in enumerate(_candidates(), 1)
+    )
+    older = _candidates(count=1, day=1, scan_id=2, commit=OLD_COMMIT)[0]
+    parts = dict(
+        scan_runs=tuple(scans),
+        candidates=(*current, current[0], older),
+        replay_agreements={str(row.candidate_id): True for row in current},
+    )
+    parts.update(overrides)
+    return _green(**parts)
+
+
+def _assert_replay_verdict(evidence, verdict):
+    direct = ev.criterion_f(evidence=evidence)
+    (queue,) = ev.evaluate_queues(
+        _a_to_e_green_queue()[:1], f_evidence=evidence,
+    ).queues
+    assert queue.promotion[-1] == direct
+    assert direct.key == "F"
+    assert direct.verdict == verdict
+    return direct.reasons
+
+
+def test_omitted_replay_registration_keeps_legacy_draw_and_report():
+    evidence = _replay_evidence()
+    default = draw_replay_sample(evidence)
+    assert default.selected_ids == (
+        "22", "3", "24", "20", "18", "15", "13", "21", "12", "25",
+        "11", "23", "9", "8", "7", "16", "14", "17", "10", "2",
+    )
+    assert draw_replay_sample(evidence, seed=20261120, sample_n=20) == default
+    assert draw_replay_sample(evidence, seed=-41, sample_n=3).selected_ids == ("20", "19", "16")
+    assert draw_replay_sample(evidence, sample_n=3).selected_ids == ("22", "3", "24")
+    assert draw_replay_sample(evidence, sample_n=0).selected_ids == ()
+    assert draw_replay_sample(evidence, seed=-41).selected_ids == (
+        "20", "19", "16", "14", "9", "3", "18", "25", "17", "5",
+        "21", "2", "23", "4", "1", "12", "8", "7", "10", "15",
+    )
+    reasons = _assert_replay_verdict(evidence, ev.VERDICT_PASS)
+    assert tuple(reason for reason in reasons if "replay" in reason) == (
+        f"replay sample: 20 of 25 eligible at trusted commit {COMMIT!r}, "
+        "all agreed (seeded registered draw)",
+    )
+    assert "1 in-window candidate(s) at older commits listed: day-1-cand-000" in reasons
+
+
+def test_replay_registration_is_immutable_and_keyword_only_on_evidence():
+    registration = _replay_registration()
+    assert signature(FEvidence).parameters["replay_registration"].kind == Parameter.KEYWORD_ONLY
+    evidence = FEvidence(replay_registration=registration)
+    assert evidence.replay_registration is registration
+    with pytest.raises(FrozenInstanceError):
+        registration.seed = 0
+    with pytest.raises(FrozenInstanceError):
+        evidence.replay_registration = None
+
+
+@pytest.mark.parametrize(("sample_n", "seed", "expected"), [
+    (1, 1, ("13",)),
+    (3, -41, ("20", "19", "16")),
+    (7, 0, ("20", "21", "10", "17", "24", "23", "9")),
+])
+def test_registered_replay_draw_results_and_final_denominator(sample_n, seed, expected):
+    registration = _replay_registration(sample_n, seed)
+    supplied = dict.fromkeys(expected, True)
+    evidence = _replay_evidence(replay_registration=registration, replay_agreements=supplied)
+    sample = draw_replay_sample(evidence)
+    assert sample.trusted_commit == COMMIT
+    assert sample.eligible_ids == tuple(sorted(map(str, range(1, 26))))
+    assert sample.older_commit_ids == ("day-1-cand-000",)
+    assert sample.older_commit_count == 1
+    assert sample.selected_ids == expected
+    assert draw_replay_sample(evidence, seed=seed, sample_n=sample_n) == sample
+    assert draw_replay_sample(evidence, seed=seed) == sample
+    assert draw_replay_sample(evidence, sample_n=sample_n) == sample
+
+    reasons = _assert_replay_verdict(evidence, ev.VERDICT_PASS)
+    assert any(
+        all(value in reason for value in (
+            "(R2)", registration.rule_version, registration.source_sha256,
+            f"seed {seed}", f"N {sample_n}",
+        ))
+        for reason in reasons
+    )
+    assert (
+        f"replay sample: {sample_n} of 25 eligible at trusted commit {COMMIT!r}, "
+        "all agreed (seeded registered draw)"
+    ) in reasons
+    assert tuple(reason for reason in reasons if reason.startswith("replay result (R2)")) == tuple(
+        f"replay result (R2) candidate {candidate_id!r} matched at trusted commit {COMMIT!r}"
+        for candidate_id in expected
+    )
+    assert "1 in-window candidate(s) at older commits listed: day-1-cand-000" in reasons
+
+    unselected = set(sample.eligible_ids).difference(expected) | set(sample.older_commit_ids)
+    permuted = replace(
+        evidence,
+        candidates=evidence.candidates[::-1],
+        replay_agreements={**dict.fromkeys(unselected, False), **supplied},
+    )
+    assert draw_replay_sample(permuted) == sample
+    assert _assert_replay_verdict(permuted, ev.VERDICT_PASS) == reasons
+
+
+@pytest.mark.parametrize(("parameter", "wrong"), [
+    ("seed", 20261120), ("sample_n", 20),
+    ("seed", True), ("sample_n", True),
+    ("seed", 1.0), ("sample_n", 1.0),
+    ("seed", None), ("sample_n", None),
+])
+def test_registered_replay_draw_rejects_conflicting_explicit_parameters(parameter, wrong):
+    evidence = _replay_evidence(replay_registration=_replay_registration(1, 1))
+    with pytest.raises(ValueError, match=rf"{parameter}.*registration"):
+        draw_replay_sample(evidence, **{parameter: wrong})
+
+
+def test_registered_replay_discloses_missing_and_mismatched_selected_results():
+    expected = ("20", "19", "16")
+    evidence = _replay_evidence(replay_registration=_replay_registration())
+    agreements = dict(evidence.replay_agreements)
+    del agreements[expected[0]]
+    missing = replace(evidence, replay_agreements=agreements)
+    reasons = _assert_replay_verdict(missing, ev.VERDICT_NOT_ASSESSABLE)
+    assert "replay results incomplete: 1 of 3 selected candidate(s) lack a result: 20" in reasons
+    assert f"replay result (R2) candidate '20' missing at trusted commit {COMMIT!r}" in reasons
+
+    agreements[expected[1]] = False
+    mixed = replace(evidence, replay_agreements=agreements)
+    reasons = _assert_replay_verdict(mixed, ev.VERDICT_FAIL)
+    assert "replay mismatch (03:146 全部一致): candidate(s) 19 did not reproduce" in reasons
+    assert f"replay result (R2) candidate '19' mismatched at trusted commit {COMMIT!r}" in reasons
+    assert f"replay result (R2) candidate '20' missing at trusted commit {COMMIT!r}" in reasons
+    assert f"replay result (R2) candidate '16' matched at trusted commit {COMMIT!r}" in reasons
+
+    no_results = replace(evidence, replay_agreements=None)
+    reasons = _assert_replay_verdict(no_results, ev.VERDICT_NOT_ASSESSABLE)
+    assert "replay results not supplied for the 3 selected candidate(s) (R2)" in reasons
+    assert tuple(reason for reason in reasons if reason.startswith("replay result (R2)")) == tuple(
+        f"replay result (R2) candidate {candidate_id!r} missing at trusted commit {COMMIT!r}"
+        for candidate_id in expected
+    )
+
+
+def test_registered_replay_insufficient_pool_uses_registered_n():
+    evidence = _replay_evidence(replay_registration=_replay_registration(26, 0))
+    sample = draw_replay_sample(evidence)
+    assert len(sample.eligible_ids) == 25
+    assert sample.selected_ids is None
+    assert (
+        f"replay evidence absent: 25 eligible candidate(s) at trusted commit {COMMIT!r} < registered N 26"
+    ) in _assert_replay_verdict(evidence, ev.VERDICT_NOT_ASSESSABLE)
+
+
+def test_registered_replay_does_not_fall_back_to_an_earlier_trusted_scan():
+    evidence = _replay_evidence(replay_registration=_replay_registration())
+    latest = replace(evidence.scan_runs[-1], code_commit=None)
+    untrusted = replace(evidence, scan_runs=(*evidence.scan_runs[:-1], latest))
+    sample = draw_replay_sample(untrusted)
+    assert sample.trusted_commit is None
+    assert sample.selected_ids is None
+    (shortfall,) = sample.shortfalls
+    assert f"latest in-window scan {latest.scan_id}" in shortfall
+    assert shortfall in _assert_replay_verdict(untrusted, ev.VERDICT_NOT_ASSESSABLE)
+
+
+@pytest.mark.parametrize(("field", "invalid"), [
+    ("sample_n", 0), ("sample_n", -1), ("sample_n", True), ("sample_n", 3.0),
+    ("sample_n", None), ("sample_n", "3"), ("seed", False), ("seed", -41.0),
+    ("seed", None), ("seed", "0"), ("rule_version", "next-v9"),
+    ("rule_version", ""), ("rule_version", 1), ("source_sha256", ""),
+    ("source_sha256", "0" * 63), ("source_sha256", "A" * 64),
+    ("source_sha256", "x" * 64), ("source_sha256", None),
+])
+def test_invalid_replay_registration_reports_a_shortfall(field, invalid):
+    registration = replace(_replay_registration(), **{field: invalid})
+    evidence = _replay_evidence(replay_registration=registration)
+    sample = draw_replay_sample(evidence, seed=-41, sample_n=3)
+    assert sample.selected_ids is None
+    shortfall, *_ = sample.shortfalls
+    assert field in shortfall and "(R2)" in shortfall
+    assert shortfall in _assert_replay_verdict(evidence, ev.VERDICT_NOT_ASSESSABLE)
+
+
+@pytest.mark.parametrize("registration", [None, {}], ids=["missing", "invalid record"])
+def test_missing_or_untyped_replay_registration_preserves_known_orphan(registration):
+    evidence = _replay_evidence(replay_registration=registration)
+    sample = draw_replay_sample(evidence, seed=20261120, sample_n=20)
+    assert sample.selected_ids is None
+    shortfall, *_ = sample.shortfalls
+    assert "replay" in shortfall and "(R2)" in shortfall
+    assert shortfall in _assert_replay_verdict(evidence, ev.VERDICT_NOT_ASSESSABLE)
+    assert draw_replay_sample(replace(evidence, window_start=None)).shortfalls == (shortfall,)
+
+    orphan = ScanRunRecord(scan_id=500, started_at=_dt(3, 12), operation_key=None)
+    for as_of in (evidence.as_of, _dt(10, 12)):
+        with_orphan = replace(evidence, as_of=as_of, scan_runs=(*evidence.scan_runs, orphan))
+        reasons = _assert_replay_verdict(with_orphan, ev.VERDICT_FAIL)
+        assert any("NULL operation_key" in reason and "500" in reason for reason in reasons)
+        assert shortfall in reasons
+
+    for window in (replace(evidence, as_of=_dt(10, 12)), replace(evidence, window_start=None)):
+        assert shortfall in _assert_replay_verdict(window, ev.VERDICT_NOT_ASSESSABLE)
 
 
 def test_overall_verdict_ordering_including_new_pass_branch():
