@@ -1914,7 +1914,8 @@ def test_native_connect_managed_hands_off_idle_and_writes_persist(managed_face, 
     psycopg = pytest.importorskip('psycopg')
     from polymarket_alpha_lab.papersim import snapshots
     _, app_dsn = managed_face
-    probe = connect(app_dsn)
+    probe = store_psycopg.connect_explicit(
+        app_dsn, label='PAPERSIM_NATIVE_MANAGED_APP_DSN')
     with probe.cursor() as cursor:
         cursor.execute('SHOW port')
         port = int(cursor.fetchone()[0])
