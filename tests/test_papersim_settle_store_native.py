@@ -382,16 +382,30 @@ def test_voided_outcome_refunds_the_stake(app, repo):
 # THEN commits, so the commit provably lands between the statements.
 # ---------------------------------------------------------------------------
 
-def _wait_reader_blocked(admin, reader_pid: int, deadline_s: float = 30.0) -> None:
-    """Poll until the reader backend is actually waiting on a lock."""
+def _wait_reader_blocked(admin, reader_pid: int, *, blocked_relation_oid: int,
+                         deadline_s: float = 30.0) -> None:
+    """Poll until the reader backend is actually waiting on the writer lock.
+
+    The block is observed through ``pg_locks`` -- an UNGRANTED relation
+    lock request by the reader backend for the exact relation the writer
+    locked -- NOT through ``pg_stat_activity.wait_event_type``:
+    PostgreSQL masks another role's wait_event/wait_event_type/state
+    columns unless the observer holds ``pg_read_all_stats``, and the
+    reader under proof must run as the least-privilege production
+    ``pal_app`` role (the papersim migrations grant pal_owner only
+    SELECT + INSERT, never the predefined stats roles).  ``pg_locks``
+    carries no query text and is not role-masked, and the
+    relation-pinned ungranted request is stronger evidence than a bare
+    wait-event label: the backend is provably queued on THIS table's
+    ACCESS EXCLUSIVE lock."""
     deadline = time.monotonic() + deadline_s
     while time.monotonic() < deadline:
         with admin.cursor() as cursor:
-            cursor.execute('SELECT wait_event_type FROM pg_stat_activity '
-                           'WHERE pid = %s', (reader_pid,))
-            row = cursor.fetchone()
-        if row is not None and row[0] == 'Lock':
-            return
+            cursor.execute('SELECT 1 FROM pg_locks WHERE pid = %s '
+                           'AND relation = %s AND NOT granted',
+                           (reader_pid, blocked_relation_oid))
+            if cursor.fetchone() is not None:
+                return
         time.sleep(0.02)
     raise AssertionError('the reader never blocked on the writer lock '
                          '(choreography failed; no snapshot was proven)')
@@ -449,13 +463,16 @@ def test_fx29_bankroll_check_reads_one_snapshot_across_a_midflight_commit():
         # its production scan write (entry + cash leg) stays uncommitted.
         with writer.cursor() as cursor:
             cursor.execute('LOCK TABLE papersim.settlements IN ACCESS EXCLUSIVE MODE')
+            cursor.execute("SELECT 'papersim.settlements'::regclass::oid")
+            blocked_oid = cursor.fetchone()[0]
         store_psycopg.record_scan(writer, store.ScanSubmission(
             scan=_scan_run(), candidates=(_candidate('fx29a-' + uuid.uuid4().hex[:10]),)))
 
         box, thread = _midflight_reader(
             lambda: store_psycopg.bankroll_daily_check(reader, request))
         try:
-            _wait_reader_blocked(admin, reader.info.backend_pid)
+            _wait_reader_blocked(admin, reader.info.backend_pid,
+                                 blocked_relation_oid=blocked_oid)
             writer.commit()  # the entry + cash event land mid-read
         finally:
             writer.close()
@@ -509,6 +526,8 @@ def test_fx29_evaluate_loader_reads_one_snapshot_across_a_midflight_commit():
         with writer.cursor() as cursor:
             cursor.execute('LOCK TABLE papersim.candidate_price_evidence '
                            'IN ACCESS EXCLUSIVE MODE')
+            cursor.execute("SELECT 'papersim.candidate_price_evidence'::regclass::oid")
+            blocked_oid = cursor.fetchone()[0]
         store_psycopg.record_scan(writer, store.ScanSubmission(
             scan=_scan_run(), candidates=(_candidate('fx29b-' + uuid.uuid4().hex[:10]),)))
         store_psycopg.record_market_outcome(writer, _outcome_observation(slug, 'YES'))
@@ -516,7 +535,8 @@ def test_fx29_evaluate_loader_reads_one_snapshot_across_a_midflight_commit():
         box, thread = _midflight_reader(
             lambda: cli._evaluation_candidates_from_store(reader))
         try:
-            _wait_reader_blocked(admin, reader.info.backend_pid)
+            _wait_reader_blocked(admin, reader.info.backend_pid,
+                                 blocked_relation_oid=blocked_oid)
             writer.commit()  # entry + cash + outcome capture land mid-load
         finally:
             writer.close()
@@ -561,12 +581,15 @@ def test_fx29_settle_loader_snapshot_races_a_late_capture(repo):
         # capture for the seeded market sits uncommitted.
         with writer.cursor() as cursor:
             cursor.execute('LOCK TABLE papersim.market_outcomes IN ACCESS EXCLUSIVE MODE')
+            cursor.execute("SELECT 'papersim.market_outcomes'::regclass::oid")
+            blocked_oid = cursor.fetchone()[0]
         store_psycopg.record_market_outcome(writer, _outcome_observation(slug, 'YES'))
 
         box, thread = _midflight_reader(
             lambda: _run(reader, repo_root, operation_key='settle|crypto_eth|fx29c'))
         try:
-            _wait_reader_blocked(admin, reader.info.backend_pid)
+            _wait_reader_blocked(admin, reader.info.backend_pid,
+                                 blocked_relation_oid=blocked_oid)
             writer.commit()  # the capture lands inside the run's snapshot read
         finally:
             writer.close()
