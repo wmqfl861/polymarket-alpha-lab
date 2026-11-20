@@ -57,7 +57,9 @@ acceptance run, never tuned afterwards):
   interpolation;
 - bootstrap: fixed seed (20000 resamples), cluster resampling by the
   frozen key ``match_key`` if set else ``market_key`` — the finest
-  correlation key the data model carries. Day-level aggregation of
+  correlation key the data model carries. Since the
+  MO-3 extraction (2026-11-20) the two wrappers are public:
+  ``cluster_bootstrap_mean_ci`` / ``cluster_bootstrap_ratio_ci``. Day-level aggregation of
   independent markets is deliberately NOT used: it would coarsen the
   historical regression interval beyond the published numbers.
 
@@ -921,10 +923,17 @@ def _percentile(sorted_values: Sequence[float], percent: float) -> float:
     )
 
 
-def _bootstrap_ratio_ci(
+def cluster_bootstrap_ratio_ci(
     clusters: Sequence[Sequence[tuple[float, float]]],
 ) -> tuple[float | None, float | None]:
-    """Cluster bootstrap of sum(pnl)/sum(stake) with the frozen seed."""
+    """Cluster bootstrap of sum(pnl)/sum(stake) with the frozen seed.
+
+    Public since the MO-3 extraction (2026-11-20): this body is the
+frozen implementation moved verbatim (seed, resample count and
+linear-interpolation percentiles unchanged); the private alias
+below preserves every frozen call site. Exact output equality is
+pinned by tests/test_papersim_evaluation_bootstrap_public.py.
+    """
     if not clusters:
         return (None, None)
     rng = random.Random(BOOTSTRAP_SEED)
@@ -944,10 +953,24 @@ def _bootstrap_ratio_ci(
     )
 
 
-def _bootstrap_mean_ci(
+def _bootstrap_ratio_ci(
+    clusters: Sequence[Sequence[tuple[float, float]]],
+) -> tuple[float | None, float | None]:
+    """Frozen private alias of :func:`cluster_bootstrap_ratio_ci`."""
+    return cluster_bootstrap_ratio_ci(clusters)
+
+
+def cluster_bootstrap_mean_ci(
     clusters: Sequence[Sequence[float]],
 ) -> tuple[float | None, float | None]:
-    """Cluster bootstrap of a mean with the frozen seed."""
+    """Cluster bootstrap of a mean with the frozen seed.
+
+    Public since the MO-3 extraction (2026-11-20): this body is the
+frozen implementation moved verbatim (seed, resample count and
+linear-interpolation percentiles unchanged); the private alias
+below preserves every frozen call site. Exact output equality is
+pinned by tests/test_papersim_evaluation_bootstrap_public.py.
+    """
     if not clusters:
         return (None, None)
     rng = random.Random(BOOTSTRAP_SEED)
@@ -965,6 +988,13 @@ def _bootstrap_mean_ci(
         _percentile(draws, BOOTSTRAP_PERCENTILES[0]),
         _percentile(draws, BOOTSTRAP_PERCENTILES[1]),
     )
+
+
+def _bootstrap_mean_ci(
+    clusters: Sequence[Sequence[float]],
+) -> tuple[float | None, float | None]:
+    """Frozen private alias of :func:`cluster_bootstrap_mean_ci`."""
+    return cluster_bootstrap_mean_ci(clusters)
 
 
 # ---------------------------------------------------------------------------
