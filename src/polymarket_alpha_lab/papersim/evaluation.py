@@ -856,9 +856,14 @@ def overall_verdict(results: Iterable[CriterionResult]) -> str:
         return VERDICT_NOT_ASSESSABLE_M1
     if any(r.verdict == VERDICT_FAIL for r in results):
         return VERDICT_FAIL
-    if any(r.verdict not in _KNOWN_VERDICTS for r in results):
+    if any(type(r.verdict) is not str or r.verdict not in _KNOWN_VERDICTS for r in results):
         # Unknown verdict values fail closed: they never silently rank
         # as a pass (independent review P2-4).
+        return VERDICT_NOT_ASSESSABLE
+    if any(type(r.key) is not str for r in results):
+        return VERDICT_NOT_ASSESSABLE
+    keys = {r.key for r in results}
+    if len(keys) != len(results) or not keys.issubset(PROMOTION_CRITERIA):
         return VERDICT_NOT_ASSESSABLE
     if any(r.verdict == VERDICT_NOT_ASSESSABLE for r in results):
         return VERDICT_NOT_ASSESSABLE
@@ -867,7 +872,7 @@ def overall_verdict(results: Iterable[CriterionResult]) -> str:
     # Every verdict is PASS from here: overall PASS additionally
     # requires the complete registered criterion set — a partial set
     # (e.g. only A) is missing evidence for the absent criteria.
-    if {r.key for r in results} != set(PROMOTION_CRITERIA):
+    if keys != set(PROMOTION_CRITERIA):
         return VERDICT_NOT_ASSESSABLE
     return VERDICT_PASS
 
