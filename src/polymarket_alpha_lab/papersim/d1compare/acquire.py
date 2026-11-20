@@ -9,21 +9,21 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
 from contextlib import closing, contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from decimal import InvalidOperation
 import json
 from pathlib import Path
 import re
 import time
 from typing import Any
 from urllib.error import HTTPError
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from polymarket_alpha_lab.papersim import snapshots, store, store_psycopg
 from polymarket_alpha_lab.papersim.adapters import contracts, polymarket
 from polymarket_alpha_lab.papersim.d1compare import journal
 from polymarket_alpha_lab.research_resolution import condition
-from polymarket_alpha_lab.team_research_agent_types import strict_json
 
 _VERSION = 2
 _COMMAND = "capture-inputs"
@@ -47,8 +47,11 @@ _EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 _TOKEN_ID = re.compile(r"[0-9]{1,%d}" % polymarket.MAX_TOKEN_ID_DIGITS)
 _BINDING_ISSUE_ORDER = (
     "identity_drift", "token_condition_conflict", "outcome_tokens_invalid", "outcome_label_conflict",
-    "contract_terms_unknown", "contract_terms_conflict",
+    "contract_terms_unknown", "contract_terms_conflict", "market_view_conflict", "adapter_rejected",
 )
+_GAMMA_TRANSPORT_FAILURES = {
+    "public_tls_failed", "public_response_too_large", "public_response_invalid", "public_http_rejected",
+}
 
 
 class AcquisitionError(ValueError):
@@ -259,15 +262,15 @@ class _Transport(polymarket.PublicResponseOpener):
         return attempts
 
 
-def _run_adapter(adapter, input_value, budget: contracts.FetchBudget, transport: _Transport):
+def _fetch_clob(token: str, budget: contracts.FetchBudget, transport: _Transport):
     offset = len(transport.requests)
     try:
-        result = adapter(input_value, budget=budget, allow_public_fetch=True,
-                         opener=transport, now_utc=transport.received)
-    except (OverflowError, OSError, ValueError):
-        # Invalid upstream fields can also cause datetime/JSON conversion errors.
+        result = polymarket.fetch_order_books((token,), budget=budget, allow_public_fetch=True,
+                                              opener=transport, now_utc=transport.received)
+    except (OverflowError, OSError):
+        # A typed epoch may be outside the platform's datetime range.
         result = contracts.AdapterResult.failure(contracts.AdapterStatus.UPSTREAM_ERROR,
-                                                 "public_payload_invalid")
+                                                 "book_payload_invalid")
     is_budget_stop = result.status in (contracts.AdapterStatus.BUDGET_EXHAUSTED,
                                        contracts.AdapterStatus.DEADLINE_EXCEEDED)
     reason = result.reason_code
@@ -276,20 +279,160 @@ def _run_adapter(adapter, input_value, budget: contracts.FetchBudget, transport:
     return result, transport.finish(offset, reason, budget_stop=is_budget_stop)
 
 
+def _parse_gamma_market(payload: object, fetched_at: datetime) -> tuple[polymarket.PolymarketMarket | None, str | None]:
+    """Apply the existing Gamma row parser to each unaltered row independently."""
+    try:
+        market = polymarket._parse_market(payload)
+        refusal = None
+    except polymarket._MarketRejected as error:
+        if error.reason_code != "outcomes_unsupported":
+            return None, error.reason_code
+        # A1 checks the label domain first. Validate context for the raw-pair
+        # capture path with A1 too, discarding the synthetic side labels.
+        try:
+            market = polymarket._parse_market({**payload, "outcomes": ["Yes", "No"]})
+        except polymarket._MarketRejected as rejection:
+            return None, rejection.reason_code
+        except (InvalidOperation, OverflowError, RecursionError):
+            return None, "market_payload_invalid"
+        refusal = error.reason_code
+    except (InvalidOperation, OverflowError, RecursionError):
+        return None, "market_payload_invalid"
+    reason = _gamma_ineligible(payload, market.end_at, fetched_at)
+    return (market, refusal) if reason is None else (None, reason)
+
+
+def _gamma_ineligible(payload: dict, end_at: datetime, fetched_at: datetime) -> str | None:
+    """Retain explicit public evidence that the market is unavailable for books."""
+    if end_at <= fetched_at:
+        return "market_expired"
+    for field in ("acceptingOrders", "enableOrderBook", "closed", "archived", "active"):
+        value = payload.get(field)
+        if value is not None and type(value) is not bool:
+            return "market_payload_invalid"
+    if payload.get("acceptingOrders") is False or payload.get("enableOrderBook") is False:
+        return "not_accepting_orders"
+    if payload.get("closed") is True or payload.get("archived") is True or payload.get("active") is False:
+        return "market_not_open"
+    return None
+
+
 def _discovery(tag: str, budget: contracts.FetchBudget, transport: _Transport) -> tuple[dict, tuple]:
-    result, attempts = _run_adapter(polymarket.discover_markets,
-                                    polymarket.DiscoveryQuery(tag), budget, transport)
-    for attempt in attempts:
-        if attempt.body is not None:
-            attempt.source_time_status = "receipt_only"
-            attempt.page = journal.gamma_page_index(attempt.body)
-    value = result.value
+    """Page with the existing A1 limits and retain gaps without losing later offsets."""
+    query = polymarket.DiscoveryQuery(tag)
+    offset = len(transport.requests)
+    accepted: dict[str, polymarket.PolymarketMarket] = {}
+    fingerprints: dict[str, tuple] = {}
+    rejections = []
+    rejected: set[str] = set()
+    identities = set()
+    duplicate_count = 0
+    stopped = "page_cap"
+    reason = None
+    status = contracts.AdapterStatus.SUCCESS
+    for number in range(polymarket.DISCOVERY_MAX_PAGES):
+        if len(identities) >= polymarket.DISCOVERY_ACCUMULATION_CAP:
+            stopped = "accumulation_cap"
+            break
+        url = polymarket.GAMMA_EVENTS_URL + "?" + urlencode({
+            "tag_slug": tag, "closed": "true" if query.closed else "false",
+            "limit": polymarket.GAMMA_EVENTS_PAGE_LIMIT, "offset": number * polymarket.GAMMA_EVENTS_PAGE_LIMIT,
+        })
+        page_offset = len(transport.requests)
+        try:
+            raw, fetched_at = polymarket._fetch_bytes(url, opener=transport, budget=budget, now_utc=transport.received)
+        except contracts.BudgetExhaustedError as error:
+            status = (contracts.AdapterStatus.DEADLINE_EXCEEDED
+                      if error.reason_code == contracts.REASON_DEADLINE_EXCEEDED
+                      else contracts.AdapterStatus.BUDGET_EXHAUSTED)
+            reason = error.reason_code
+            stopped = status.value
+            transport.finish(page_offset, reason, budget_stop=True)
+            break
+        except polymarket._PublicReadError as error:
+            reason = error.reason_code
+            status = contracts.AdapterStatus.UPSTREAM_ERROR
+            stopped = status.value
+            attempts = transport.finish(page_offset, reason)
+            if error.reason_code in _GAMMA_TRANSPORT_FAILURES or (attempts and not attempts[0].sent):
+                break
+            continue
+
+        attempt = transport.requests[-1]
+        attempt.source_time_status = "receipt_only"
+        try:
+            page = journal.decode_public_json(raw)
+        except journal.JournalError as error:
+            page = None
+            attempt.reason_code = error.code
+        attempt.page = journal._gamma_page_index(page)
+        if not isinstance(page, list):
+            attempt.reason_code = "public_payload_invalid"
+        else:
+            raw_markets = []
+            for event in page:
+                if isinstance(event, dict) and isinstance(event.get("markets"), list):
+                    raw_markets.extend(event["markets"])
+                else:
+                    attempt.reason_code = "public_payload_invalid"
+            page_sha = _digest(raw)
+            for raw_market, row in zip(raw_markets, attempt.page["markets"], strict=True):
+                identity = _condition_identity(row)
+                if identity is not None:
+                    identities.add(identity)
+                market, refusal = _parse_gamma_market(raw_market, fetched_at)
+                row["adapter_reason_code"] = refusal
+                if market is not None:
+                    row["fee_rate_bps"] = market.fee_rate_bps
+                if refusal is not None:
+                    rejections.append(_gamma_rejection(row, attempt, page_sha, refusal))
+                    if identity is not None:
+                        rejected.add(identity)
+                        accepted.pop(identity, None)
+                    continue
+                # Compare only after each original quote passed A1. Open-market
+                # reference prices move independently of the executable CLOB.
+                fingerprint = (market.market_id, market.slug, market.yes_token_id, market.no_token_id,
+                               market.fee_rate_bps, row["terms_sha256"])
+                if identity in fingerprints:
+                    if fingerprints[identity] == fingerprint:
+                        duplicate_count += 1
+                    else:
+                        rejected.add(identity)
+                        accepted.pop(identity, None)
+                        rejections.append(_gamma_rejection(row, attempt, page_sha, "identity_drift"))
+                else:
+                    fingerprints[identity] = fingerprint
+                    if identity not in rejected:
+                        accepted[identity] = market
+
+        if attempt.reason_code is not None:
+            status = contracts.AdapterStatus.UPSTREAM_ERROR
+            reason = attempt.reason_code
+        if page == []:
+            stopped = "last_page"
+            break
+
+    selected = sorted(accepted.values(), key=lambda market: (market.end_at, market.slug, market.condition_id))
+    truncated = len(selected) > query.max_markets
+    attempts = transport.requests[offset:]
     return ({
-        "tag_slug": tag, "status": result.status.value, "reason_code": result.reason_code,
+        "tag_slug": tag, "status": status.value, "reason_code": reason,
         "request_sequences": [attempt.sequence for attempt in attempts],
-        "pagination": asdict(value.coverage) if value is not None else None,
-        "rejections": [asdict(row) for row in value.rejections] if value is not None else [],
-    }, value.markets if value is not None else ())
+        "pagination": {
+            "pages_fetched": sum(attempt.fetched_at is not None for attempt in attempts),
+            "unique_markets_seen": len(identities), "duplicates_dropped": duplicate_count,
+            "truncated_to_cap": truncated, "stopped_reason": stopped,
+            "coverage_complete": stopped == "last_page" and not truncated and reason is None,
+        },
+        "rejections": rejections,
+    }, tuple(selected[:query.max_markets]))
+
+
+def _gamma_rejection(row: dict, attempt: _Request, page_sha: str, reason: str) -> dict:
+    return {"condition_id": row["condition_id"], "slug": row["slug"],
+            "reason_code": reason, "evidence_sha256": page_sha,
+            "request_sequence": attempt.sequence, "path": row["path"]}
 
 
 def _add_markets(markets: dict, accepted: tuple, rejections: list, attempts: Sequence[_Request]) -> None:
@@ -376,7 +519,7 @@ def _index_market_observations(markets: dict, attempts: Sequence[_Request]) -> l
         for alias in _market_aliases(row):
             if aliases.setdefault(alias, identity) != identity:
                 aliases[alias] = None  # More than one observed condition claims this identifier.
-        for token in row["token_ids"] or ():
+        for token in row["token_claims"]:
             if _TOKEN_ID.fullmatch(token) and token_owners.setdefault(token, identity) != identity:
                 token_owners[token] = None
     for market in markets.values():
@@ -384,12 +527,13 @@ def _index_market_observations(markets: dict, attempts: Sequence[_Request]) -> l
 
     labels_seen: dict[str, dict[str, str]] = {}
     terms_seen: dict[str, str] = {}
+    fees_seen: dict[str, float | None] = {}
     unbound = []
     for ref, row in _gamma_appearances(attempts):
         identity = _condition_identity(row)
         owners = {aliases[alias] for alias in _market_aliases(row) if alias in aliases}
         tokens = row["token_ids"]
-        claims = {token_owners[token] for token in tokens or () if token in token_owners}
+        claims = {token_owners[token] for token in row["token_claims"] if token in token_owners}
         if identity is None:
             # Attach malformed identity to a uniquely identified market for
             # evidence. It still invalidates that market's binding.
@@ -402,29 +546,35 @@ def _index_market_observations(markets: dict, attempts: Sequence[_Request]) -> l
             identity = next(iter(known))
         market = markets[identity]
         market["observations"].append(ref)
-        issues = []
+        issues = {}
         if (not row["identity_fields_valid"] or row["condition_id"] != identity or owners - {identity}
                 or (row["market_id"], row["slug"]) != (market["market_id"], market["slug"])):
-            issues.append("identity_drift")
+            issues["identity_drift"] = None
 
         if claims - {identity}:
-            issues.append("token_condition_conflict")
+            issues["token_condition_conflict"] = None
         labels = journal.gamma_outcomes_by_token(row)
         if labels is None or not _valid_pair(tokens):
-            issues.append("outcome_tokens_invalid")
+            issues["outcome_tokens_invalid"] = None
         else:
             previous_labels = labels_seen.setdefault(identity, labels)
             if previous_labels.keys() != labels.keys():
-                issues.append("identity_drift")
+                issues["identity_drift"] = None
             elif previous_labels != labels:
-                issues.append("outcome_label_conflict")
+                issues["outcome_label_conflict"] = None
 
         terms = row["terms_sha256"]
         if terms is None:
-            issues.append("contract_terms_unknown")
+            issues["contract_terms_unknown"] = None
         elif terms_seen.setdefault(identity, terms) != terms:
-            issues.append("contract_terms_conflict")
-        market["binding_issues"].extend({**ref, "reason_code": code} for code in dict.fromkeys(issues))
+            issues["contract_terms_conflict"] = None
+        refusal = row["adapter_reason_code"]
+        if refusal is not None and refusal != "outcomes_unsupported":
+            issues["adapter_rejected"] = refusal
+        if "fee_rate_bps" in row and fees_seen.setdefault(identity, row["fee_rate_bps"]) != row["fee_rate_bps"]:
+            issues["market_view_conflict"] = "fee_rate_bps"
+        market["binding_issues"].extend({**ref, "reason_code": code, **({"detail": detail} if detail else {})}
+                                         for code, detail in issues.items())
 
     for market in markets.values():
         codes = {issue["reason_code"] for issue in market["binding_issues"]}
@@ -441,15 +591,15 @@ def _valid_pair(pair: object) -> bool:
 
 def _book(token: str, condition_id: str, budget: contracts.FetchBudget,
           transport: _Transport) -> dict:
-    result, attempts = _run_adapter(polymarket.fetch_order_books, (token,), budget, transport)
+    result, attempts = _fetch_clob(token, budget, transport)
     if not attempts:
         return {"token_id": token, "condition_id": condition_id, "request_sequence": None,
                 "reason_code": result.reason_code}
     attempt = attempts[0]
     if attempt.body is not None:
         try:
-            payload = strict_json(attempt.body.decode("utf-8"))
-        except (ValueError, RecursionError):
+            payload = journal.decode_public_json(attempt.body)
+        except journal.JournalError:
             payload = None
         if isinstance(payload, dict):
             raw_timestamp = payload.get("timestamp")

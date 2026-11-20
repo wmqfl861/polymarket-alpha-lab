@@ -62,6 +62,7 @@ __all__ = [
     "book_from_entry",
     "book_ladder",
     "capture",
+    "decode_public_json",
     "entry_source_ref",
     "gamma_outcomes_by_token",
     "journal_digest",
@@ -403,7 +404,7 @@ def _gamma_terms_sha256(market: Mapping[str, Any]) -> str | None:
     context = {}
     if not market.get("question") or market.get("endDate") is None:
         return None
-    for field in ("question", "description", "umaResolutionStatus", "resolutionSource",
+    for field in ("question", "description", "category", "umaResolutionStatus", "resolutionSource",
                   "groupItemTitle", "marketType", "sportsMarketType"):
         value = market.get(field)
         if value is not None and type(value) is not str:
@@ -415,7 +416,7 @@ def _gamma_terms_sha256(market: Mapping[str, Any]) -> str | None:
         if value is not None and number is None:
             return None
         context[field] = number
-    for field in ("closed", "active", "archived"):
+    for field in ("closed", "active", "archived", "acceptingOrders", "enableOrderBook"):
         value = market.get(field)
         if value is not None and type(value) is not bool:
             return None
@@ -433,32 +434,37 @@ def _gamma_terms_sha256(market: Mapping[str, Any]) -> str | None:
     return _sha256_hex(json.dumps(context, sort_keys=True, ensure_ascii=True).encode("ascii"))
 
 
-def gamma_page_index(content: bytes) -> dict[str, Any] | None:
-    """Locate events and markets inside one unchanged Gamma response.
-
-    Paths are JSON Pointers into the full page bytes. The index retains
-    label and token positions and fingerprints the cited contract text.
-    An empty page is a valid index with an event count of zero.
-    """
+def decode_public_json(content: bytes | str) -> Any:
+    """Strict public JSON with a fixed error for malformed or unrepresentable values."""
     try:
-        payload = strict_json(content.decode("utf-8"))
-    except (ValueError, RecursionError):
+        return strict_json(content.decode("utf-8") if isinstance(content, bytes) else content)
+    except (ValueError, InvalidOperation, RecursionError):
+        raise JournalError("public_payload_invalid") from None
+
+
+def _gamma_array(value: Any) -> list | None:
+    if isinstance(value, str):
+        try:
+            value = decode_public_json(value)
+        except JournalError:
+            return None
+    return value if isinstance(value, list) else None
+
+
+def gamma_page_index(content: bytes) -> dict[str, Any] | None:
+    """Index complete raw Gamma bytes using their strict public JSON form."""
+    try:
+        return _gamma_page_index(decode_public_json(content))
+    except JournalError:
         return None
+
+
+def _gamma_page_index(payload: Any) -> dict[str, Any] | None:
+    """Index the decoded public page with JSON Pointers into its unchanged bytes."""
     if not isinstance(payload, list):
         return None
     events = []
     markets = []
-
-    def label_array(value: Any) -> list[str] | None:
-        if isinstance(value, str):
-            try:
-                value = strict_json(value)
-            except (ValueError, RecursionError):
-                return None
-        if isinstance(value, list) and all(type(item) is str for item in value):
-            return value
-        return None  # Malformed arrays stay available through the raw path.
-
     for event_index, event_value in enumerate(payload):
         event = event_value if isinstance(event_value, dict) else {}
         event_path = f"/{event_index}"
@@ -472,6 +478,13 @@ def gamma_page_index(content: bytes) -> dict[str, Any] | None:
             continue
         for market_index, market_value in enumerate(rows):
             market = market_value if isinstance(market_value, dict) else {}
+            labels = _gamma_array(market.get("outcomes"))
+            tokens = _gamma_array(market.get("clobTokenIds"))
+            # Keep positions in the original page and retain only supplied
+            # strings as claims. Invalid members cannot yield a valid pair.
+            supplied_tokens = [token for token in tokens or () if type(token) is str]
+            token_ids = tokens if tokens is not None and len(tokens) == len(supplied_tokens) else None
+            token_claims = [token for token in supplied_tokens if token and all("0" <= digit <= "9" for digit in token)]
             markets.append({
                 "path": f"{event_path}/markets/{market_index}",
                 "event_id": event_id,
@@ -481,8 +494,9 @@ def gamma_page_index(content: bytes) -> dict[str, Any] | None:
                 "identity_fields_valid": (type(market.get("conditionId")) is str
                                           and type(market.get("slug")) is str
                                           and (market.get("id") is None or type(market["id"]) is str)),
-                "outcomes": label_array(market.get("outcomes")),
-                "token_ids": label_array(market.get("clobTokenIds")),
+                "outcomes": labels if labels is not None and all(type(label) is str for label in labels) else None,
+                "token_ids": token_ids,
+                "token_claims": token_claims,
                 "terms_sha256": _gamma_terms_sha256(market),
             })
     return {"event_count": len(payload), "events": events, "markets": markets}

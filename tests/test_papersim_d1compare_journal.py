@@ -537,6 +537,126 @@ class _GammaPagesFixture(_PublicFixtureOpener):
         return _response(pages[page] if page < len(pages) else b' [] \n', url=url)
 
 
+@pytest.mark.parametrize("array_as_text", (True, False))
+@pytest.mark.parametrize("bad_first", (True, False))
+def test_capture_keeps_valid_token_claims_from_mixed_arrays(monkeypatch, array_as_text, bad_first):
+    mixed = ["111", None, 222, "333", {"other": "444"}]
+    variant = _gamma_market_variant(updates={
+        "id": "other-market", "conditionId": "0x" + "b" * 64, "slug": "other-market",
+        "clobTokenIds": json.dumps(mixed) if array_as_text else mixed,
+    })
+    pages = (variant, _GAMMA_PAGE) if bad_first else (_GAMMA_PAGE, variant)
+    fixture = _GammaPagesFixture({"alpha": (pages[0],), "beta": (pages[1],)})
+    document, stored = _collect_public_fixture(monkeypatch, fixture, tags=("alpha", "beta"))
+    assert len(document["markets"]) == 2
+    assert all(row["binding_status"] == "token_condition_conflict" and row["side_tokens"] == {}
+               and row["book_tokens"] == [] for row in document["markets"])
+    malformed = document["requests"][0 if bad_first else 2]
+    [appearance] = malformed["page"]["markets"]
+    assert appearance["token_ids"] is None and appearance["token_claims"] == ["111", "333"]
+    assert stored[malformed["content_sha256"]] == variant
+    assert document["coverage"]["book_targets"] == 0
+    assert document["coverage"]["polymarket_transport_complete"] is False
+
+
+_HUGE_EXPONENT = b"1e9999999999999999999999999999999999"
+
+
+@pytest.mark.parametrize("bad_index", (0, 1, 2))
+@pytest.mark.parametrize("bad_body", (
+    pytest.param(b'[{"oversized":' + _HUGE_EXPONENT + b'}]', id="decimal-exponent"),
+    pytest.param(b'[{"id":"x","id":"y","markets":[]}]', id="duplicate-json-key"),
+    pytest.param(b'[{"price":NaN}]', id="non-finite-number"),
+))
+def test_capture_keeps_bad_gamma_page_and_continues_other_offsets(monkeypatch, bad_index, bad_body):
+    pages = [_GAMMA_PAGE, _GAMMA_PAGE]
+    pages.insert(bad_index, bad_body)
+    fixture = _GammaPagesFixture({"soccer": pages, "spare": ()})
+    document, stored = _collect_public_fixture(monkeypatch, fixture, tags=("soccer", "spare"))
+    attempts = document["requests"]
+    bad = attempts[bad_index]
+    assert bad["status"] == "failed" and bad["reason_code"] == "public_payload_invalid"
+    assert bad["utc_fetched_at"] is not None and bad["byte_length"] == len(bad_body)
+    assert stored[bad["content_sha256"]] == bad_body
+    assert [stored[request["content_sha256"]] for request in attempts[:3]] == pages
+    assert attempts[3]["page"]["event_count"] == attempts[4]["page"]["event_count"] == 0
+    assert document["coverage"]["sources"]["polymarket-gamma"] == "incomplete"
+    assert document["coverage"]["books_received"] == 2
+    assert document["coverage"]["polymarket_transport_complete"] is False
+
+
+def test_capture_retains_clob_decimal_failure_and_observes_other_token(monkeypatch):
+    bad = b'{"asset_id":"111","bids":[],"asks":[{"price":' + _HUGE_EXPONENT + b',"size":"5"}]}'
+    fixture = _PublicFixtureOpener({"111": bad, "222": _book_bytes("222", STAMP)})
+    document, stored = _collect_public_fixture(monkeypatch, fixture)
+    failed, available = document["requests"][-2:]
+    assert failed["reason_code"] == "public_payload_invalid" and failed["status"] == "failed"
+    assert stored[failed["content_sha256"]] == bad
+    assert available["status"] == "received"
+    assert document["coverage"]["books_received"] == 1
+
+
+@pytest.mark.parametrize("cross_tag", (True, False))
+@pytest.mark.parametrize("changed_first", (True, False))
+def test_capture_reference_price_and_top_quote_updates_keep_same_market(monkeypatch, cross_tag, changed_first):
+    changed = _gamma_market_variant(updates={
+        "outcomePrices": '["0.30", "0.70"]', "bestBid": 0.30, "bestAsk": 0.70,
+        "lastTradePrice": 0.45, "updatedAt": "2026-11-20T00:04:55Z",
+    })
+    pages = (changed, _GAMMA_PAGE) if changed_first else (_GAMMA_PAGE, changed)
+    routes = {"alpha": (pages[0],), "beta": (pages[1],)} if cross_tag else {"soccer": pages}
+    document, stored = _collect_public_fixture(monkeypatch, _GammaPagesFixture(routes), tags=tuple(routes))
+    [market] = document["markets"]
+    assert market["side_tokens"] == {"YES": "222", "NO": "111"}
+    assert market["book_tokens"] == ["111", "222"]
+    first, second = [document["requests"][index] for index in (0, 2 if cross_tag else 1)]
+    assert stored[first["content_sha256"]] == pages[0] and stored[second["content_sha256"]] == pages[1]
+    assert first["content_sha256"] != second["content_sha256"]
+    assert document["coverage"]["polymarket_transport_complete"] is True
+    assert document["coverage"]["polymarket_complete"] is False  # no registered age policy
+
+
+@pytest.mark.parametrize("invalid_first", (True, False))
+@pytest.mark.parametrize("cross_tag", (True, False))
+@pytest.mark.parametrize("updates", (
+    pytest.param({"outcomePrices": '["3", "0.70"]'}, id="invalid-reference-price"),
+    pytest.param({"outcomePrices": [0.30, 0.70]}, id="unsupported-reference-number-format"),
+    pytest.param({"acceptingOrders": False, "outcomePrices": '["0.30", "0.70"]'}, id="not-accepting-orders"),
+    pytest.param({"endDate": "2026-11-20T00:04:00Z", "outcomePrices": '["0.30", "0.70"]'}, id="expired"),
+    pytest.param({"feeRateBps": "invalid", "outcomePrices": '["0.30", "0.70"]'}, id="invalid-fee"),
+))
+def test_capture_does_not_restore_rejected_market_with_a_quote_change(monkeypatch, invalid_first, cross_tag, updates):
+    invalid = _gamma_market_variant(updates=updates)
+    pages = (invalid, _GAMMA_PAGE) if invalid_first else (_GAMMA_PAGE, invalid)
+    routes = {"alpha": (pages[0],), "beta": (pages[1],)} if cross_tag else {"soccer": pages}
+    document, _ = _collect_public_fixture(monkeypatch, _GammaPagesFixture(routes), tags=tuple(routes))
+    [market] = document["markets"]
+    assert market["side_tokens"] == {} and market["book_tokens"] == []
+    assert document["coverage"]["book_targets"] == 0
+    assert document["coverage"]["polymarket_transport_complete"] is False
+
+
+@pytest.mark.parametrize("cross_tag", (True, False))
+def test_capture_detects_fee_drift_even_when_reference_quotes_update(monkeypatch, cross_tag):
+    first = _gamma_market_variant(updates={"feeRateBps": "10"})
+    second = _gamma_market_variant(updates={"feeRateBps": "25", "outcomePrices": '["0.30", "0.70"]'})
+    routes = {"alpha": (first,), "beta": (second,)} if cross_tag else {"soccer": (first, second)}
+    document, _ = _collect_public_fixture(monkeypatch, _GammaPagesFixture(routes), tags=tuple(routes))
+    [market] = document["markets"]
+    assert market["binding_status"] == "market_view_conflict"
+    assert market["side_tokens"] == {} and market["book_tokens"] == []
+    assert document["coverage"]["polymarket_transport_complete"] is False
+
+
+def test_capture_does_not_collect_books_for_unsupported_labels_with_bad_reference(monkeypatch):
+    invalid = _gamma_market_variant(updates={"outcomes": ["Over", "Under"], "outcomePrices": ["1.9", "0.0"]})
+    document, _ = _collect_public_fixture(monkeypatch, _GammaPagesFixture({"soccer": (invalid,)}))
+    [market] = document["markets"]
+    assert market["binding_status"] == "adapter_rejected"
+    assert market["binding_issues"][0]["detail"] == "market_payload_invalid"
+    assert document["coverage"]["book_targets"] == 0
+
+
 @pytest.mark.parametrize("malformed_first", (True, False))
 @pytest.mark.parametrize(("updates", "removed"), (
     pytest.param({"outcomes": ["No", "Yes", "Draw"], "clobTokenIds": ["111", "222", "333"]}, (), id="three-way"),
@@ -654,14 +774,20 @@ def test_capture_scope_validation_precedes_managed_connection(monkeypatch):
         assert error.value.code == reason
 
 
-def _start_fixture_capture_process():
+def _start_fixture_capture_process(*, with_failed_page=False):
     """Replace the transport only, then execute the checked-in CLI."""
     import runpy
     from polymarket_alpha_lab.papersim.adapters import polymarket
 
     source = datetime.datetime.now(UTC) - datetime.timedelta(seconds=1)
-    fixture = _PublicFixtureOpener({"111": _book_bytes("111", source),
-                                   "222": _book_bytes("222", source)})
+    books = {"111": _book_bytes("111", source), "222": _book_bytes("222", source)}
+    if with_failed_page:
+        bad = b'[{"oversized":' + _HUGE_EXPONENT + b'}]'
+        update = _gamma_market_variant(updates={"outcomePrices": '["0.30", "0.70"]'})
+        fixture = _GammaPagesFixture({"empty": (), "soccer": (_GAMMA_PAGE, bad, update)})
+        fixture.books = books
+    else:
+        fixture = _PublicFixtureOpener(books)
     polymarket.BoundedPublicOpener = lambda: fixture
     cli = Path(__file__).resolve().parents[1] / "tools" / "d1_compare.py"
     sys.argv[0] = str(cli)
@@ -688,7 +814,8 @@ def _register_legacy_capture(repo_root, original, window_start):
         request.pop("freshness", None)
         if request["page"] is not None:
             for market in request["page"]["markets"]:
-                del market["terms_sha256"], market["identity_fields_valid"]
+                for field in ("terms_sha256", "identity_fields_valid", "token_claims", "adapter_reason_code", "fee_rate_bps"):
+                    market.pop(field, None)
     content = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("ascii")
     scope = json.dumps(manifest["scope"], sort_keys=True, separators=(",", ":")).encode("ascii")
     scope_digest = hashlib.sha256(scope).hexdigest()
@@ -725,10 +852,10 @@ def test_capture_cli_native_seals_and_independent_process_reads_exact_bytes(monk
             assert not result.stderr
             return json.loads(result.stdout)
 
-        def capture(window_start):
+        def capture(window_start, *, with_failed_page=False):
             return process(
                 "from tests.test_papersim_d1compare_journal import _start_fixture_capture_process; "
-                "_start_fixture_capture_process()",
+                f"_start_fixture_capture_process(with_failed_page={with_failed_page!r})",
                 "capture-inputs", "--repo-root", str(project.root), "--window-start", window_start.isoformat(),
                 "--window-end", end.isoformat(), "--tag-slug", "soccer", "--tag-slug", "empty",
                 "--allow-public-fetch",
@@ -846,6 +973,19 @@ print(json.dumps(acquire.capture_inputs(repo_root=Path(sys.argv[1]), window_star
         assert conflicting_market["side_tokens"] == {} and conflicting_market["book_tokens"] == []
         assert [entry.content for entry in conflict_entries[::2]] == [_GAMMA_PAGE, regulation]
         assert len(conflict.calls) == 4
+
+        gap_receipt = capture(start - datetime.timedelta(seconds=2), with_failed_page=True)
+        assert gap_receipt["status"] == "partial" and gap_receipt["coverage"]["failed_requests"] == 1
+        assert gap_receipt["coverage"]["books_received"] == 2
+        assert gap_receipt["coverage"]["polymarket_transport_complete"] is False
+        gap_manifest, gap_entries = acquire.read_capture(repo_root=project.root, batch_sha256=gap_receipt["batch_sha256"])
+        [market] = gap_manifest["markets"]
+        assert market["side_tokens"] == {"YES": "222", "NO": "111"}
+        bad_request = gap_manifest["requests"][2]
+        assert bad_request["page"] is None and bad_request["reason_code"] == "public_payload_invalid"
+        assert gap_entries[2].content == b'[{"oversized":' + _HUGE_EXPONENT + b'}]'
+        assert gap_entries[1].content == _GAMMA_PAGE and gap_entries[3].content != _GAMMA_PAGE
+        assert [entry.request_meta["sequence"] for entry in gap_entries] == list(range(1, 8))
 
 
 @pytest.mark.skipif(
