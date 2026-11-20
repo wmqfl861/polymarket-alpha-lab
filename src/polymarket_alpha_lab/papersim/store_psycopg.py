@@ -46,6 +46,7 @@ import json
 from pathlib import Path
 
 from polymarket_alpha_lab.local_postgres_dsn import validate_local_postgres_dsn
+from polymarket_alpha_lab.papersim import settle
 from polymarket_alpha_lab.papersim.store import (
     BANKROLL_BASE_REASONS,
     BankrollCheckRequest,
@@ -576,6 +577,74 @@ def settlement_record(conn, record: SettlementRecord) -> dict:
             'bankroll_event_id': bankroll_event_id}
 
 
+# ---------------------------------------------------------------------------
+# B3 settle snapshot loader (05 section 2 B3 row / DELIVERY_PLAN 80.8; the
+# FX-29/N-4 consistent-snapshot read that feeds ``papersim.settle``).
+# ---------------------------------------------------------------------------
+
+_OPEN_ENTRIES_SQL = (
+    'SELECT e.entry_id, e.candidate_id, c.team, c.side, e.stake, e.price, '
+    'e.fee_category, e.fee_source, e.entered_at, c.condition_id, c.market_id, '
+    'c.market_slug, '
+    'EXISTS (SELECT 1 FROM papersim.marks m WHERE m.entry_id = e.entry_id '
+    'AND m.is_close) AS exit_marked '
+    'FROM papersim.entries e JOIN papersim.candidates c ON c.candidate_id = e.candidate_id '
+    'WHERE NOT EXISTS (SELECT 1 FROM papersim.settlements s WHERE s.entry_id = e.entry_id) '
+    'ORDER BY e.entry_id'
+)
+
+
+def _identity_of(row):
+    """The outcome-lookup identity (evaluate-loader precedence)."""
+    for column in ('condition_id', 'market_id', 'market_slug'):
+        if row[column] is not None:
+            return column, row[column]
+    return None, None
+
+
+def open_entries_for_settlement(conn):
+    """Open entries + effective captured outcomes in ONE consistent snapshot.
+
+    FX-29: the FIRST statement of the transaction sets
+    ``SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY``; the
+    open entries (minus already-settled ones) and every entry's effective
+    captured outcome (the audited ``effective_market_outcome`` selection,
+    plus the winning row's ``confirmed_at``) are read inside that single
+    snapshot, so a concurrent capture or settlement cannot split the
+    read.  The settle driver (``papersim.settle.run_settle``) receives
+    this callable as its ``open_entries`` loader; the per-entry
+    settlement writes stay in their own transactions exactly as
+    ``settlement_record`` provides.
+    """
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
+        cursor.execute(_OPEN_ENTRIES_SQL)
+        columns = [description.name for description in cursor.description]
+        rows = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        entries = []
+        for row in rows:
+            captured = settle.CapturedOutcome(None, 'UNKNOWN')
+            column, identity = _identity_of(row)
+            if column is not None:
+                effective = effective_market_outcome(conn, **{column: identity})
+                if effective.outcome_id is not None:
+                    cursor.execute('SELECT confirmed_at FROM papersim.market_outcomes '
+                                   'WHERE outcome_id = %s', (effective.outcome_id,))
+                    confirmed_at = cursor.fetchone()[0]
+                    captured = settle.captured_from_effective(effective,
+                                                              confirmed_at=confirmed_at)
+            entries.append(settle.OpenSettleEntry(
+                entry_id=int(row['entry_id']), candidate_id=int(row['candidate_id']),
+                team=str(row['team']), side=str(row['side']), stake=row['stake'],
+                price=row['price'], fee_category=str(row['fee_category']),
+                entered_at=row['entered_at'], fee_source=str(row['fee_source']),
+                condition_id=row['condition_id'], market_id=row['market_id'],
+                market_slug=row['market_slug'], exit_marked=bool(row['exit_marked']),
+                outcome=captured))
+    return tuple(entries)
+
+
 def bankroll_daily_check(conn, request: BankrollCheckRequest) -> BankrollCheckResult:
     """Recompute the four-way cash identity and append the receipt (M2 5.3).
 
@@ -585,11 +654,22 @@ def bankroll_daily_check(conn, request: BankrollCheckRequest) -> BankrollCheckRe
     highest included event id, and the receipt is appended with the
     day+commit+watermark idempotency key. The row is evidence: it never
     repairs the identity.
+
+    FX-29 (N-4): the multi-statement identity recomputation reads ONE
+    consistent snapshot — the FIRST statement of the transaction raises
+    the isolation level to REPEATABLE READ, so an entry + cash event
+    committed by another connection between this function's statements
+    can never split the read (all sums see the same pre- or post-commit
+    state). The transaction stays read-write because the receipt insert
+    belongs to the same snapshot-bounded transaction; on a static
+    database the results are bit-identical to the previous per-statement
+    default isolation.
     """
     request.validate()
     tolerance = _as_decimal(request.tolerance)
     with conn.transaction():
         cursor = conn.cursor()
+        cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ')
         cursor.execute('SELECT coalesce(max(event_id), 0) FROM papersim.bankroll_events '
                        'WHERE occurred_at <= %s', (request.as_of,))
         watermark = int(cursor.fetchone()[0])

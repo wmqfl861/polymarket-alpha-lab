@@ -628,6 +628,13 @@ def _fetch_rows(conn, sql: str) -> list[dict]:
     return [dict(zip(columns, row, strict=True)) for row in rows]
 
 
+def _snapshot_rows(cursor, sql: str) -> list[dict]:
+    """Execute one SELECT on an open snapshot cursor and dictify its rows."""
+    cursor.execute(sql)
+    columns = [description.name for description in cursor.description]
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
 def _number(value):
     return None if value is None else float(value)
 
@@ -668,20 +675,32 @@ def _evaluation_candidates_from_store(conn) -> tuple:
     basis fails loudly on it (honest gap, never zero-filled).
     ``book_walk`` provenance requires the candidate's recorded walked
     book; legacy imports (no stored order book) stay ``recorded_price``.
+
+    FX-29 (N-4): the three SELECTs run inside ONE REPEATABLE READ
+    READ ONLY transaction — the first statement of the transaction sets
+    the isolation level — so a capture or settlement committed by another
+    connection mid-load can never split the queue: all three row lists
+    come from one consistent snapshot. On a static database the results
+    are bit-identical to the previous per-statement default isolation.
     """
     from polymarket_alpha_lab.papersim import evaluation, ledger, store
 
-    candidate_rows = _fetch_rows(conn, _EVAL_CANDIDATES_SQL)
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        candidate_rows = _snapshot_rows(cursor, _EVAL_CANDIDATES_SQL)
+        evidence_rows = _snapshot_rows(cursor, _EVAL_EVIDENCE_SQL)
+        outcome_rows = _snapshot_rows(cursor, _EVAL_OUTCOMES_SQL)
     decision_evidence: dict[int, dict] = {}
     close_evidence: dict[int, dict] = {}
-    for row in _fetch_rows(conn, _EVAL_EVIDENCE_SQL):
+    for row in evidence_rows:
         candidate_id = int(row["candidate_id"])
         if row["evidence_role"] == "DECISION":
             decision_evidence.setdefault(candidate_id, row)
         elif row["evidence_role"] == "CLOSE":
             close_evidence[candidate_id] = row
     observations: dict[str, list[dict]] = {}
-    for row in _fetch_rows(conn, _EVAL_OUTCOMES_SQL):
+    for row in outcome_rows:
         for column in ("condition_id", "market_id", "market_slug"):
             identity = row[column]
             if identity is not None:
@@ -874,6 +893,35 @@ def _cmd_run_scan(args) -> int:
     return 0
 
 
+def _cmd_settle(args) -> int:
+    # B3 (05 section 2 / 80.8): heavy imports stay inside the handler
+    # (FX-20; tests/test_init_lazy_imports.py pins the startup cap).
+    import datetime as _datetime
+
+    from polymarket_alpha_lab.papersim import settle, store_psycopg
+
+    try:
+        connection = _open_readonly_connection(args, label="PAPERSIM_SETTLE_PG_DSN")
+        try:
+            result = settle.run_settle(
+                args.team,
+                conn=connection,
+                repo_root=args.repo_root,
+                now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
+                open_entries=store_psycopg.open_entries_for_settlement,
+                operator=args.operator,
+                operation_key=args.operation_key,
+                attempt=args.attempt,
+            )
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"settle: FAIL: {error}", file=sys.stderr)
+        return 1
+    print(json.dumps(result, sort_keys=True, allow_nan=False))
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="papersim",
@@ -1010,6 +1058,57 @@ def _build_parser() -> argparse.ArgumentParser:
         "--attempt", type=int, default=1,
         help="attempt number of this operation for the run receipts (default: 1)",
     )
+    settle_parser = subparsers.add_parser(
+        "settle",
+        help="B3 paper settlement: per-entry natural/voided settlement from captured evidence",
+        description=(
+            "Settle open paper entries (plan 05 section 2 / DELIVERY_PLAN "
+            "80.8): refuse a dirty worktree (FX-03), read the open entries "
+            "and their EFFECTIVE captured final-outcome evidence in ONE "
+            "repeatable-read read-only snapshot (FX-29), derive each "
+            "settlement purely from the captured outcome token (NATURAL "
+            "win/loss via the ledger, VOIDED stake refund; basketball "
+            "full-game semantics are OT-inclusive because only "
+            "completed-game evidence settles), and write one idempotent "
+            "settlement row plus its single cash leg per entry (STARTED/"
+            "SUCCEEDED/FAILED run receipts). An entry without captured "
+            "terminal evidence stays open and is reported PENDING with a "
+            "reason; early EXIT settlement stays operator-attested. "
+            "Paper-only: no order, account or credential surface."
+        ),
+    )
+    settle_parser.add_argument(
+        "--team", required=True,
+        help="team identity feeding the run receipts and the default operation key",
+    )
+    settle_source = settle_parser.add_mutually_exclusive_group(required=True)
+    settle_source.add_argument(
+        "--managed", action="store_true",
+        help="write through the project-private managed application instance",
+    )
+    settle_source.add_argument(
+        "--dsn",
+        help="explicit DSN for an isolated/throwaway cluster "
+             "(validated by the single audited local DSN validator)",
+    )
+    settle_parser.add_argument(
+        "--repo-root", default=".",
+        help="repository root for the clean-worktree commit check and the "
+             "managed instance (default: .)",
+    )
+    settle_parser.add_argument(
+        "--operator", default="unattended",
+        help="operator identity recorded on every settlement (default: unattended)",
+    )
+    settle_parser.add_argument(
+        "--operation-key", default=None,
+        help="stable scheduling identity of this unattended run (default: "
+             "settle|<team>|<started UTC stamp>|b3)",
+    )
+    settle_parser.add_argument(
+        "--attempt", type=int, default=1,
+        help="attempt number of this operation for the run receipts (default: 1)",
+    )
     return parser
 
 
@@ -1029,6 +1128,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_replay(args)
     if args.command == "run-scan":
         return _cmd_run_scan(args)
+    if args.command == "settle":
+        return _cmd_settle(args)
     parser.error(f"unknown command {args.command!r}")  # pragma: no cover
     raise AssertionError("unreachable")  # pragma: no cover
 

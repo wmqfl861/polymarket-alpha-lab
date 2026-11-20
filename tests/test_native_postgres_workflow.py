@@ -122,6 +122,11 @@ CLAUDE_PROBE_FILES = ('tests/test_claude_cli_probe.py', 'tests/test_claude_cli_p
 # partition (five-entry catalog apply/upgrade/columns proof and the
 # candidate event-key round-trip, idempotency/conflict boundary and
 # match-clustered evaluation proofs).
+# B3 settle (2026-11-20): the B3 native proof file joins the same
+# partition (settlement + single cash leg + receipts, idempotent re-run,
+# late capture, VOIDED refund, and the FX-29 two-reader/one-writer
+# consistent-snapshot proofs for bankroll_daily_check, the evaluate
+# loader and the settle open-entries loader).
 PAPERSIM_FILES = ('tests/test_papersim_ledger.py', 'tests/test_papersim_perf_view_fix.py',
                    'tests/test_papersim_store.py', 'tests/test_papersim_store_native.py',
                    'tests/test_papersim_migrations.py', 'tests/test_papersim_import_legacy.py',
@@ -133,7 +138,8 @@ PAPERSIM_FILES = ('tests/test_papersim_ledger.py', 'tests/test_papersim_perf_vie
                    'tests/test_papersim_fx26_event_keys_native.py',
                    'tests/test_papersim_scan_store_native.py',
                    'tests/test_papersim_mo2_migrations.py',
-                   'tests/test_papersim_optimize_registry_native.py')
+                   'tests/test_papersim_optimize_registry_native.py',
+                   'tests/test_papersim_settle_store_native.py')
 WINDOWS_PARTITIONS = ('storage', 'research', 'dispatch')
 LINUX_PARTITIONS = ('storage', 'research', 'dispatch', 'papersim')
 PUSH_PATHS = (

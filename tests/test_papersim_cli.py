@@ -318,7 +318,18 @@ class _StubStoreConn:
     candidates query (``has_order_book`` plus the ``papersim.settlements``
     fields; ``None`` when no entry/settlement row exists) so one stub
     serves the whole evaluate surface.
+
+    FX-29 (B3 changed-test proof, fix-list 03 section 0 rule 2): the
+    loader now opens ONE repeatable-read read-only snapshot before its
+    three SELECTs. Old proof: exactly the three SELECT statements
+    reached the store (per-statement default isolation). New proof: the
+    snapshot-level statement -- accepted at its exact text only -- may
+    precede them; anything else still fails loudly, so the stub still
+    proves no write SQL of any kind reaches the store.
     """
+
+    SNAPSHOT_LEVEL = ("SET TRANSACTION ISOLATION LEVEL "
+                      "REPEATABLE READ READ ONLY")
 
     def __init__(self, candidates, evidence=(), outcomes=()):
         self._candidates = candidates
@@ -327,6 +338,8 @@ class _StubStoreConn:
         self.statements: list[str] = []
 
     def _execute(self, sql):
+        if sql == self.SNAPSHOT_LEVEL:
+            return [], []
         if sql.startswith("SELECT c.candidate_id"):
             # FX-26: the candidates statement now selects c.event_key right
             # after market_kind; stub rows without the key read as NULL
@@ -414,7 +427,16 @@ def test_evaluate_reads_the_store_with_selects_only(monkeypatch, capsys) -> None
     code = cli.main(["evaluate", "--managed", "--pnl-basis", "recomputed"])
     out = capsys.readouterr().out
     assert code == 0, out
-    assert conn.statements and all(sql.startswith("SELECT") for sql in conn.statements)
+    # FX-29 (B3 changed-test proof, fix-list 03 section 0 rule 2): one
+    # load is now [snapshot level, three SELECTs] -- the snapshot-level
+    # statement first, then only SELECTs. Old proof: the stream was
+    # exactly SELECTs (per-statement default isolation). New proof: the
+    # stream is exactly the four statements of ONE consistent
+    # repeatable-read read-only snapshot, in order, and still contains
+    # no write SQL of any kind.
+    assert conn.statements[0] == _StubStoreConn.SNAPSHOT_LEVEL
+    assert all(sql.startswith("SELECT") for sql in conn.statements[1:])
+    assert len(conn.statements) == 4
     report = json.loads(out)
     from polymarket_alpha_lab.papersim import evaluation
     assert report["algorithm_version"] == evaluation.ALGORITHM_VERSION
