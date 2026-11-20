@@ -40,7 +40,7 @@ in-repo basis is docs/paper-sim/design/README.md (FX-28).
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 import json
 from pathlib import Path
@@ -1776,3 +1776,314 @@ def initialize_registry(conn, *, families, actor: str, code_commit: str,
                 report[lineage] = {'state': 'initialized',
                                    'spec_sha256': baseline.spec_sha256()}
     return report
+
+
+# ---------------------------------------------------------------------------
+# B4 report pipeline-state readers (plan 05 section 2 / DELIVERY_PLAN 80.8).
+# Read-only SELECTs over the append-only pipeline evidence; the whole
+# multi-query read runs inside ONE transaction opened with REPEATABLE READ
+# READ ONLY, so the report observes a single consistent store snapshot
+# (the B4-local read-consistency technique; the FX-29 deliverables in
+# ``bankroll_daily_check`` and the evaluate loader stay B3's scope). The
+# statement text is lifted verbatim from the B4 native proof module
+# (tests/test_papersim_report_store_native.py), which keeps exercising
+# the same surface end-to-end against a real cluster.
+# ---------------------------------------------------------------------------
+
+from polymarket_alpha_lab.papersim import snapshots  # noqa: E402  (B4 append block)
+
+#: B4 re-export: the report driver (and its native proof module) register
+#: the canonical report bytes through the audited snapshots recording
+#: face, so every papersim write the ``report`` command performs stays
+#: behind this single adapter module.
+register_snapshot = snapshots.register_snapshot
+
+_REPORT_WRITE_TRANSACTION = 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED READ WRITE'
+_REPORT_ARCHIVE_LOCK = 'SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))'
+_REPORT_STORED_PHASES = (
+    'SELECT phase, run_event_id, occurred_at FROM papersim.command_run_events '
+    'WHERE operation_key = %s AND attempt = %s ORDER BY run_event_id')
+
+
+def archive_report(conn, assembly, *, attempt=1, clock=None) -> dict:
+    """Publish both receipts and their immutable bytes in one transaction.
+
+    The post-lock lookup is a separate READ COMMITTED statement. A waiter
+    therefore observes the previous publisher's commit even when the caller's
+    session default is repeatable read. Other commands keep their own locks.
+    """
+    from polymarket_alpha_lab.papersim import report
+
+    if clock is None:
+        clock = lambda: datetime.now(UTC)
+    key = assembly.report_key
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute(_REPORT_WRITE_TRANSACTION)
+        cursor.execute(_REPORT_ARCHIVE_LOCK, (key,))
+        cursor.execute(_REPORT_STORED_PHASES, (key, attempt))
+        phases = {phase: {'run_event_id': row_id, 'occurred_at': at}
+                  for phase, row_id, at in cursor.fetchall()}
+        if tuple(phases) not in ((), ('STARTED',), ('STARTED', 'SUCCEEDED')):
+            raise PapersimStoreError('papersim_report_archive_phase_conflict')
+        stored = snapshots.read_snapshot(conn, assembly.content_sha256)
+        if 'SUCCEEDED' in phases and stored is None:
+            raise PapersimStoreError('papersim_report_archive_snapshot_missing')
+
+        # The common receipt writer validates the entire immutable non-clock
+        # payload on replay. Sample each clock only at its actual operation.
+        def append_phase(phase, evidence=()):
+            previous = phases.get(phase)
+            at = previous['occurred_at'] if previous else clock()
+            saved = record_command_run_event(conn, report.report_receipt(
+                operation_key=key, phase=phase, occurred_at=at,
+                attempt=attempt, output_evidence=evidence))
+            return previous or {'run_event_id': saved['run_event_id'], 'occurred_at': at}
+
+        started = append_phase('STARTED')
+        registration = report.report_snapshot_registration(
+            assembly.content, fetched_at=stored['fetched_at'] if stored else clock())
+        if stored is None:
+            stored = register_snapshot(conn, registration)
+        # Another operator may have registered identical bytes under a different
+        # origin. A matching digest alone does not establish report provenance.
+        if (stored['content_sha256'] != assembly.content_sha256
+                or stored['byte_length'] != len(assembly.content)
+                or stored['kind'] != registration.kind
+                or stored['source'] != registration.source
+                or stored['schema_version'] != registration.schema_version
+                or ('content' in stored and bytes(stored['content']) != assembly.content)):
+            raise PapersimStoreError('papersim_report_archive_snapshot_conflict')
+        succeeded = append_phase('SUCCEEDED', (assembly.content_sha256,))
+    return {'started': started, 'succeeded': succeeded,
+            'snapshot': {'content_sha256': assembly.content_sha256, 'fetched_at': stored['fetched_at']}}
+
+_REPORT_RECEIPTS_SQL = (
+    'SELECT command, operation_key, attempt, phase, occurred_at, run_event_id, '
+    'code_commit, error_code, scan_id FROM papersim.command_run_events '
+    'ORDER BY run_event_id')
+_REPORT_SCANS_SQL = (
+    'SELECT scan_id, team, started_at, finished_at, code_commit, scan_key, '
+    'operation_key FROM papersim.scan_runs ORDER BY scan_id')
+_REPORT_CONTROLS_SQL = (
+    'SELECT control_event_id, queue_id, control_kind, rule, observed_at '
+    'FROM papersim.queue_control_events ORDER BY control_event_id')
+_REPORT_CHECKS_SQL = (
+    'SELECT check_id, as_of, passed, event_watermark, identity_difference '
+    'FROM papersim.bankroll_checks ORDER BY check_id')
+#: Markets with an EFFECTIVE (non-UNKNOWN) outcome observation, matched on
+#: the candidates' strongest bound identity (condition_id, else market_id,
+#: else market_slug) -- the same identity precedence the evaluate loader
+#: uses, joined so coverage never counts a market the outcomes table has
+#: only seen UNKNOWN rows for.
+_REPORT_MARKETS_WITH_OUTCOME_SQL = (
+    'SELECT count(DISTINCT t.ref) FROM ('
+    '  SELECT coalesce(c.condition_id, c.market_id, c.market_slug) AS ref'
+    '  FROM papersim.candidates c'
+    "  WHERE coalesce(c.condition_id, c.market_id, c.market_slug) IS NOT NULL"
+    '    AND EXISTS (SELECT 1 FROM papersim.market_outcomes mo'
+    "                WHERE mo.outcome <> 'UNKNOWN'"
+    '                  AND ((c.condition_id IS NOT NULL'
+    '                       AND mo.condition_id = c.condition_id)'
+    '                   OR (c.condition_id IS NULL AND c.market_id IS NOT NULL'
+    '                       AND mo.market_id = c.market_id)'
+    '                   OR (c.condition_id IS NULL AND c.market_id IS NULL'
+    '                       AND c.market_slug IS NOT NULL'
+    '                       AND mo.market_slug = c.market_slug)))) t')
+#: The eight honest coverage scalars behind the report stage matrix
+#: (name -> SELECT; the effective-outcome join is the member above).
+_REPORT_COVERAGE_SQL = (
+    ('candidates_total',
+     'SELECT count(*) FROM papersim.candidates'),
+    ('candidates_with_marks',
+     'SELECT count(DISTINCT candidate_id) FROM papersim.candidate_marks'),
+    ('mark_observations',
+     'SELECT count(*) FROM papersim.candidate_marks'),
+    ('markets_bound',
+     'SELECT count(DISTINCT coalesce(condition_id, market_id, market_slug)) '
+     'FROM papersim.candidates '
+     'WHERE coalesce(condition_id, market_id, market_slug) IS NOT NULL'),
+    ('markets_with_outcome', _REPORT_MARKETS_WITH_OUTCOME_SQL),
+    ('outcome_observations',
+     'SELECT count(*) FROM papersim.market_outcomes'),
+    ('entries_total',
+     'SELECT count(*) FROM papersim.entries'),
+    ('entries_settled',
+     'SELECT count(*) FROM papersim.entries e JOIN papersim.settlements s '
+     'ON s.entry_id = e.entry_id'),
+)
+
+
+_REPORT_STAGE_TIMES_SQL = (
+    'SELECT (SELECT max(observed_at) FROM papersim.candidate_marks) AS marks, '
+    '(SELECT max(greatest(observed_at, confirmed_at)) FROM papersim.market_outcomes) AS outcomes, '
+    '(SELECT max(s.confirmed_at) FROM papersim.settlements s '
+    ' JOIN papersim.entries e ON e.entry_id = s.entry_id) AS settle')
+
+_REPORT_BASKETBALL_CANDIDATES_SQL = (
+    'SELECT candidate_id, candidate_key, team, model_name, market_type, market_kind, side, '
+    'condition_id, market_id, market_slug, yes_token_id, no_token_id, '
+    'event_key, event_start_at, evaluated_at, snapshot_refs '
+    'FROM papersim.candidates ORDER BY candidate_id')
+_REPORT_BASKETBALL_QUOTES_SQL = """
+    SELECT candidate_id, evidence_role, market_ref_kind, market_ref, token_ref, side,
+           observed_at, snapshot_sha256, source_kind, source_ref
+    FROM (
+        SELECT DISTINCT ON (candidate_id) candidate_id, evidence_role, market_ref_kind,
+               market_ref, token_ref, side, observed_at, snapshot_sha256, source_kind, source_ref
+        FROM papersim.candidate_price_evidence
+        WHERE candidate_id = ANY(%s) AND evidence_role = 'DECISION'
+        ORDER BY candidate_id, evidence_id
+    ) AS decision
+    UNION ALL
+    SELECT candidate_id, evidence_role, market_ref_kind, market_ref, token_ref, side,
+           observed_at, snapshot_sha256, source_kind, source_ref
+    FROM papersim.candidate_price_evidence
+    WHERE candidate_id = ANY(%s) AND evidence_role = 'CLOSE' AND snapshot_sha256 IS NOT NULL
+    UNION ALL
+    SELECT candidate_id, sampling_kind, market_ref_kind, market_ref, token_ref, side,
+           observed_at, snapshot_sha256, source_kind, source_ref
+    FROM papersim.candidate_marks WHERE candidate_id = ANY(%s) AND snapshot_sha256 IS NOT NULL
+    ORDER BY candidate_id, observed_at, evidence_role, snapshot_sha256
+"""
+_REPORT_BASKETBALL_OUTCOMES_SQL = """
+    SELECT c.candidate_id, o.outcome_id, o.outcome, o.observed_at, o.confirmed_at,
+           o.source_snapshot_sha256, o.source_kind, o.source_ref, o.condition_id,
+           o.market_id, o.market_slug, o.yes_token_id, o.no_token_id
+    FROM papersim.candidates c JOIN papersim.market_outcomes o ON (
+        (c.condition_id IS NOT NULL AND o.condition_id = c.condition_id) OR
+        (c.condition_id IS NULL AND c.market_id IS NOT NULL AND o.market_id = c.market_id) OR
+        (c.condition_id IS NULL AND c.market_id IS NULL AND o.market_slug = c.market_slug))
+    WHERE c.candidate_id = ANY(%s)
+    ORDER BY c.candidate_id, o.observed_at, o.outcome_id
+"""
+_REPORT_BASKETBALL_METADATA_SQL = """
+    SELECT content_sha256, byte_length, kind, source, fetched_at, schema_version
+    FROM papersim.snapshots
+    WHERE content_sha256 = ANY(%s) AND kind = ANY(%s) AND schema_version = 1
+      AND byte_length BETWEEN 1 AND %s
+    ORDER BY content_sha256
+"""
+_REPORT_BASKETBALL_BODIES_SQL = (
+    'SELECT content_sha256, content FROM papersim.snapshots '
+    'WHERE content_sha256 = ANY(%s) ORDER BY content_sha256')
+
+
+def _report_rows(conn, sql: str, params=None) -> list[dict]:
+    cursor = conn.cursor()
+    if params is None:
+        cursor.execute(sql)
+    else:
+        cursor.execute(sql, params)
+    columns = _columns_of(cursor)
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
+def _basketball_body_batches(references, metadata):
+    """Keep shared bodies together and apply the round limits to each position."""
+    from polymarket_alpha_lab.papersim import report
+    from polymarket_alpha_lab.papersim.adapters import contracts
+
+    ids, digests, deferred = [], set(), set()
+    byte_count = 0
+    for candidate_id, refs in references.items():
+        needed, oversized = report.bounded_basketball_snapshots(
+            {candidate_id: refs}, metadata,
+            max_bytes=contracts.DEFAULT_MAX_TOTAL_RESPONSE_BYTES,
+            max_rows=contracts.FIRST_VERSION_MAX_REQUESTS_PER_ROUND)
+        extra = set(needed).difference(digests)
+        extra_bytes = sum(metadata[key]['byte_length'] for key in extra)
+        # This target bounds ordinary I/O batches. A single position may need
+        # several larger, individually valid bodies to corroborate its terms.
+        if ids and byte_count + extra_bytes > contracts.HARD_MAX_RESPONSE_BYTES:
+            yield ids, digests, deferred
+            ids, digests, deferred = [], set(), set()
+            extra = set(needed)
+            byte_count = 0
+            extra_bytes = sum(metadata[key]['byte_length'] for key in extra)
+        ids.append(candidate_id)
+        deferred.update(oversized)
+        digests.update(extra)
+        byte_count += extra_bytes
+    if ids:
+        yield ids, digests, deferred
+
+
+def _report_basketball_evidence(conn):
+    from polymarket_alpha_lab.papersim import report
+    from polymarket_alpha_lab.papersim.adapters import contracts
+
+    candidates = [row for row in _report_rows(conn, _REPORT_BASKETBALL_CANDIDATES_SQL)
+                  if report.is_basketball_candidate(row)]
+    finals, unavailable = [], []
+    batch_size = contracts.FIRST_VERSION_MAX_MARKETS_PER_ROUND
+    for start in range(0, len(candidates), batch_size):
+        group = candidates[start:start + batch_size]
+        ids = [row['candidate_id'] for row in group]
+        quotes = _report_rows(conn, _REPORT_BASKETBALL_QUOTES_SQL, (ids, ids, ids))
+        outcomes = _report_rows(conn, _REPORT_BASKETBALL_OUTCOMES_SQL, (ids,))
+        inputs = dict(candidates=group, quotes=quotes, outcomes=outcomes)
+        references = report.basketball_snapshot_references(**inputs)
+        cited = sorted({key for refs in references.values() for key in refs})
+        metadata = {row['content_sha256']: row for row in _report_rows(
+            conn, _REPORT_BASKETBALL_METADATA_SQL,
+            (cited, list(report.BASKETBALL_SNAPSHOT_KINDS), contracts.HARD_MAX_RESPONSE_BYTES))} if cited else {}
+        references = report.basketball_snapshot_references(**inputs, snapshot_metadata=metadata)
+        for batch_ids, digests, deferred in _basketball_body_batches(references, metadata):
+            keys = set(batch_ids)
+            bodies = _report_rows(conn, _REPORT_BASKETBALL_BODIES_SQL, (sorted(digests),)) if digests else ()
+            checked = report.verify_basketball_finals(
+                candidates=[row for row in group if row['candidate_id'] in keys],
+                quotes=[row for row in quotes if row['candidate_id'] in keys],
+                outcomes=[row for row in outcomes if row['candidate_id'] in keys],
+                snapshots={row['content_sha256']: {**metadata[row['content_sha256']], **row}
+                           for row in bodies}, deferred_candidates=frozenset(deferred))
+            finals.extend(checked.finals)
+            unavailable.extend(checked.unavailable)
+    return report.BasketballFinalsEvidence(tuple(finals), tuple(unavailable))
+
+
+def _report_scalar(conn, sql: str) -> int:
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    return int(cursor.fetchone()[0])
+
+
+def read_pipeline_state(conn, *, evaluation_loader=None) -> dict:
+    """Read every B4 report input inside ONE consistent store snapshot.
+
+    The whole multi-query read runs inside a single transaction whose
+    FIRST statement is ``SET TRANSACTION ISOLATION LEVEL REPEATABLE READ
+    READ ONLY``, so the snapshot is taken once for every query: pipeline
+    receipts, scan runs, queue-control latch rows, bankroll checks and
+    the eight coverage scalars. When supplied, ``evaluation_loader(conn)``
+    reads the candidate queue within the repeatable-read, read-only
+    snapshot this function has already opened on ``conn``. The CLI passes
+    ``_evaluation_candidates_in_snapshot`` so the report's queue metrics
+    and pipeline rows observe the same state.  Every statement is a SELECT;
+    nothing here writes, and the transaction is closed by the ``with``
+    block before the caller assembles anything.
+    """
+    with conn.transaction():
+        cursor = conn.cursor()
+        cursor.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
+        receipts = _report_rows(conn, _REPORT_RECEIPTS_SQL)
+        scan_runs = _report_rows(conn, _REPORT_SCANS_SQL)
+        controls = _report_rows(conn, _REPORT_CONTROLS_SQL)
+        checks = _report_rows(conn, _REPORT_CHECKS_SQL)
+        coverage = {name: _report_scalar(conn, sql)
+                    for name, sql in _REPORT_COVERAGE_SQL}
+        stage_evidence_times, = _report_rows(conn, _REPORT_STAGE_TIMES_SQL)
+        basketball = _report_basketball_evidence(conn)
+        evaluation_candidates = (evaluation_loader(conn)
+                                 if evaluation_loader is not None else ())
+    return {
+        'command_run_events': tuple(receipts),
+        'scan_runs': tuple(scan_runs),
+        'queue_control_events': tuple(controls),
+        'bankroll_checks': tuple(checks),
+        'coverage': coverage,
+        'stage_evidence_times': stage_evidence_times,
+        'basketball': basketball,
+        'evaluation_candidates': tuple(evaluation_candidates),
+    }

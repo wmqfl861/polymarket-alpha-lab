@@ -131,6 +131,12 @@ CLAUDE_PROBE_FILES = ('tests/test_claude_cli_probe.py', 'tests/test_claude_cli_p
 # partition (the full capture-marks round trip incl. FX-34 refusals,
 # replay idempotency and the conflict boundaries on a disposable
 # cluster).
+# B4 (2026-11-20): the report native proof file joins the same partition
+# (empty-store report, seeded evaluate-command parity, idempotence of the
+# report record, and the repeatable-read read-only snapshot proof).
+# Changed-test proof: before this append the list was the frozen papersim
+# native inventory above; after it the list is the same inventory plus
+# exactly one report file -- no entry was removed or reordered.
 PAPERSIM_FILES = ('tests/test_papersim_ledger.py', 'tests/test_papersim_perf_view_fix.py',
                    'tests/test_papersim_store.py', 'tests/test_papersim_store_native.py',
                    'tests/test_papersim_migrations.py', 'tests/test_papersim_import_legacy.py',
@@ -147,7 +153,8 @@ PAPERSIM_FILES = ('tests/test_papersim_ledger.py', 'tests/test_papersim_perf_vie
                    'tests/test_papersim_optimize_registry_native.py',
                    'tests/test_papersim_optimize_policy_native.py',
                    'tests/test_papersim_settle_store_native.py',
-                   'tests/test_papersim_optimize_runner_native.py')
+                   'tests/test_papersim_optimize_runner_native.py',
+                   'tests/test_papersim_report_store_native.py')
 WINDOWS_PARTITIONS = ('storage', 'research', 'dispatch')
 LINUX_PARTITIONS = ('storage', 'research', 'dispatch', 'papersim')
 PUSH_PATHS = (
