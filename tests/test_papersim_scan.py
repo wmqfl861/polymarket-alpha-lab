@@ -444,3 +444,282 @@ def test_scan_module_never_imports_the_cli(tmp_path):
     completed = subprocess.run([sys.executable, "-c", script], capture_output=True,
                                text=True, check=True)
     assert completed.stdout.strip().endswith("ok")
+
+
+# ---------------------------------------------------------------------------
+# MO-7 shadow parallel (plan 05 node MO-7; the five registered tests of
+# the node row, the review P3 items -- no shadow params section without
+# shadow roles, canonical texts only on registry-resolved lineages --
+# and the offline halves of the match_winner / fit-materials matrix).
+# ---------------------------------------------------------------------------
+
+from polymarket_alpha_lab.papersim.optimize import shadow as optimize_shadow  # noqa: E402
+from polymarket_alpha_lab.papersim.optimize.provider import (  # noqa: E402
+    LineageSpecs,
+    RegistryProvider,
+)
+from polymarket_alpha_lab.papersim.optimize.shadow import (  # noqa: E402
+    ShadowFitMaterials,
+    SnapshotShadowSource,
+    StaticShadowSource,
+)
+from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec  # noqa: E402
+from hashlib import sha256  # noqa: E402
+
+
+def _digest(text: str) -> str:
+    return sha256(text.encode("utf-8")).hexdigest()
+
+
+def _shadow_spec() -> ModelSpec:
+    return ModelSpec(family="crypto-gbm", procedure_version="crypto-r19e1",
+                     params={"vol_ew_decay": 0.99}, envelope=(),
+                     data_contract="crypto-frozen-v1")
+
+
+def _crypto_baseline_spec() -> ModelSpec:
+    from polymarket_alpha_lab.papersim.optimize.families import crypto
+    return crypto.CRYPTO_GBM.baseline_spec()
+
+
+class _StubProvider:
+    """One answered lineage, counting consults (the role-freeze proof)."""
+
+    def __init__(self, mapping):
+        self._mapping = dict(mapping)
+        self.consults = []
+
+    def specs_for_lineage(self, lineage):
+        self.consults.append(lineage)
+        if lineage in self._mapping:
+            return self._mapping[lineage]
+        return PROVIDER.specs_for_lineage(lineage)
+
+
+def _assemble_with(records, specs, **overrides):
+    admissions = overrides.pop("admissions", None) or scan.AdmissionReport()
+    return scan.assemble_scan(
+        overrides.pop("config", None) or _config(queues=tuple({r.queue for r in records})),
+        records,
+        admissions=admissions,
+        portfolio=scan.PortfolioState(bankroll=10_000.0, cash=10_000.0),
+        started_at=NOW,
+        finished_at=NOW + datetime.timedelta(minutes=5),
+        code_commit="a" * 40,
+        specs=specs,
+        **overrides)
+
+
+def _candidate_roles():
+    baseline = _crypto_baseline_spec()
+    candidate = _shadow_spec()
+    roles = LineageSpecs(
+        active=baseline, baseline=baseline, candidates=(candidate,), guard=None,
+        fallback_reason=None,
+        registry=(("crypto-gbm/terminal", baseline.spec_sha256(),
+                   (candidate.spec_sha256(),)),))
+    return roles, candidate
+
+
+def _static_source(candidate, median=0.4, variants=(0.38, 0.42)):
+    materials = ShadowFitMaterials(
+        family_id="crypto-gbm", spec_sha256=candidate.spec_sha256(),
+        snapshot_refs=(_digest("kline-snapshot"),), as_of=NOW, history={})
+
+    def _quote(_state, _record, _request):
+        return optimize_shadow.ShadowQuote(median, variants, None)
+
+    return StaticShadowSource({candidate.spec_sha256(): (materials, object(), _quote)})
+
+
+def test_registry_provider_empty_registry_is_bit_identical_to_b1():
+    records = (_crypto_record(), _crypto_record(queue="crypto/eth-stale",
+                                                key="eth-2000-stale", stale_book=True),
+               _construction_record())
+    frozen = _assemble_with(records, scan.consult_provider(PROVIDER, records))
+    registry = _assemble_with(
+        records, scan.consult_provider(RegistryProvider(roles={}, specs={}), records))
+    assert len(frozen.submission.candidates) == len(registry.submission.candidates) == 3
+    for frozen_candidate, registry_candidate in zip(frozen.submission.candidates,
+                                                    registry.submission.candidates,
+                                                    strict=True):
+        assert store.ScanSubmission._candidate_payload(frozen_candidate) \
+            == store.ScanSubmission._candidate_payload(registry_candidate)
+    assert frozen.submission.scan.params == registry.submission.scan.params
+    assert frozen.submission.scan.key() == registry.submission.scan.key()
+    params = json.loads(registry.submission.scan.params)
+    assert "shadow" not in params
+    assert registry.shadows == ()
+
+
+def test_registered_candidate_shadows_without_touching_the_active_path():
+    records = (_crypto_record(), _crypto_record(queue="crypto/eth-stale",
+                                                key="eth-2000-stale", stale_book=True),
+               _construction_record())
+    roles, candidate = _candidate_roles()
+    provider = _StubProvider({"crypto/terminal": roles})
+    source = _static_source(candidate)
+    b1 = _assemble_with(records, scan.consult_provider(PROVIDER, records))
+    mo7 = _assemble_with(records, scan.consult_provider(provider, records),
+                         shadow_source=source)
+    assert len(b1.submission.candidates) == len(mo7.submission.candidates) == 3
+    for b1_candidate, mo7_candidate in zip(b1.submission.candidates,
+                                           mo7.submission.candidates, strict=True):
+        assert store.ScanSubmission._candidate_payload(b1_candidate) \
+            == store.ScanSubmission._candidate_payload(mo7_candidate)
+    assert b1.model_versions == mo7.model_versions
+    b1_entries = [c.entry for c in b1.submission.candidates]
+    mo7_entries = [c.entry for c in mo7.submission.candidates]
+    assert b1_entries == mo7_entries  # no entry, no cash leg from shadows
+    assert len(mo7.shadows) == 2  # the construction record never shadows
+    first = mo7.shadows[0]
+    assert first.candidate_key == "eth-2000-term-yes"
+    assert first.role_at_prediction == "CANDIDATE"
+    assert first.spec_sha256 == candidate.spec_sha256()
+    assert first.probability == 0.4
+    assert first.variant_quotes == (0.38, 0.42)
+    assert first.refusal_reason is None
+    assert first.predicted_at == NOW
+    assert type(first.gate_pass) is bool
+    assert mo7.shadow_stats == {"fits": 1, "predicts": 2, "refusals": 0,
+                                "skipped_no_source": 0, "skipped_budget": 0}
+    params = json.loads(mo7.submission.scan.params)
+    assert params["shadow"]["materials"]["crypto/terminal"][
+        candidate.spec_sha256()]["snapshot_refs"] == [_digest("kline-snapshot")]
+    assert "canonical" in params["provider"]["specs"]["crypto/terminal"]
+    assert params["provider"]["specs"]["crypto/terminal"]["registry_lineages"] == [
+        {"lineage": "crypto-gbm/terminal",
+         "active": _crypto_baseline_spec().spec_sha256(),
+         "candidates": [candidate.spec_sha256()]}]
+    b1_params = json.loads(b1.submission.scan.params)
+    assert "canonical" not in b1_params["provider"]["specs"]["crypto/terminal"]
+    assert "shadow" not in b1_params
+    # determinism: the same source reproduces the same bindings
+    again = _assemble_with(records, scan.consult_provider(provider, records),
+                           shadow_source=source)
+    assert again.shadows == mo7.shadows
+
+
+def test_roles_are_frozen_within_one_scan():
+    records = (_crypto_record(), _construction_record())
+    roles, _candidate = _candidate_roles()
+    provider = _StubProvider({"crypto/terminal": roles})
+    _assemble_with(records, scan.consult_provider(provider, records))
+    assert provider.consults == ["club-soccer/over_under", "crypto/terminal"]
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        roles.candidates = ()  # type: ignore[misc]
+
+
+def test_role_spec_pairs_deduplicates_by_spec_digest():
+    spec_a = _shadow_spec()
+    assert scan.role_spec_pairs(LineageSpecs(active=spec_a, baseline=spec_a)) \
+        == (("active", spec_a),)
+    spec_b = _shadow_spec()
+    spec_b = ModelSpec(family="crypto-gbm", procedure_version="crypto-r19e1",
+                       params={"vol_ew_decay": 0.98}, envelope=(),
+                       data_contract="crypto-frozen-v1")
+    spec_c = ModelSpec(family="crypto-gbm", procedure_version="crypto-r19e1",
+                       params={"vol_mode": "ew"}, envelope=(),
+                       data_contract="crypto-frozen-v1")
+    pairs = scan.role_spec_pairs(LineageSpecs(active=spec_b, baseline=spec_a,
+                                              candidates=(spec_c,), guard=spec_a))
+    assert [role for role, _spec in pairs] == ["active", "baseline", "candidate"]
+
+
+def test_shadow_budget_drops_the_shadow_never_the_active():
+    records = (_crypto_record(),)
+    roles, candidate = _candidate_roles()
+    provider = _StubProvider({"crypto/terminal": roles})
+    b1 = _assemble_with(records, scan.consult_provider(PROVIDER, records))
+    mo7 = _assemble_with(records, scan.consult_provider(provider, records),
+                         shadow_source=_static_source(candidate),
+                         shadow_budget_seconds=-1.0)
+    assert mo7.shadows == ()
+    assert mo7.shadow_stats["skipped_budget"] == 1
+    for b1_candidate, mo7_candidate in zip(b1.submission.candidates,
+                                           mo7.submission.candidates, strict=True):
+        assert store.ScanSubmission._candidate_payload(b1_candidate) \
+            == store.ScanSubmission._candidate_payload(mo7_candidate)
+
+
+def test_missing_fit_materials_record_refusals_not_silence():
+    records = (_crypto_record(),)
+    roles, _candidate = _candidate_roles()
+    provider = _StubProvider({"crypto/terminal": roles})
+    empty_source = SnapshotShadowSource(lambda digest: None)
+    mo7 = _assemble_with(records, scan.consult_provider(provider, records),
+                         shadow_source=empty_source)
+    assert len(mo7.shadows) == 1
+    binding = mo7.shadows[0]
+    assert binding.refusal_reason == "fit_materials_missing"
+    assert binding.probability is None and binding.variant_quotes is None
+    assert binding.gate_pass is False and binding.gate_reason is None
+    assert mo7.shadow_stats["refusals"] == 1
+    params = json.loads(mo7.submission.scan.params)
+    assert "shadow" not in params  # nothing fitted, no materials section
+
+
+def test_absent_source_skips_the_shadow_and_records_the_count():
+    records = (_crypto_record(),)
+    roles, _candidate = _candidate_roles()
+    provider = _StubProvider({"crypto/terminal": roles})
+    mo7 = _assemble_with(records, scan.consult_provider(provider, records),
+                         shadow_source=None)
+    assert mo7.shadows == ()
+    assert mo7.shadow_stats["skipped_no_source"] == 1
+    assert "shadow" not in json.loads(mo7.submission.scan.params)
+
+
+def test_frozen_match_winner_shadow_quote_uses_fixture_variants():
+    snapshot = {
+        "EPL_2025": {
+            "dates": [{"isResult": True, "xG": {"h": 1.5, "a": 1.5}}],
+            "teams": {
+                "1": {"title": "Alpha", "history": [{"xG": 1.5, "xGA": 1.5}]},
+                "2": {"title": "Beta", "history": [{"xG": 2.0, "xGA": 1.0}]},
+            },
+        },
+        "EPL_2026": {
+            "dates": [],
+            "teams": {
+                "1": {"title": "Alpha",
+                      "history": [{"xG": 2.0, "xGA": 1.0}, {"xG": 1.0, "xGA": 2.0}]},
+                "2": {"title": "Beta",
+                      "history": [{"xG": 3.0, "xGA": 0.0}, {"xG": 1.0, "xGA": 2.0}]},
+            },
+        },
+    }
+    content = json.dumps(snapshot, separators=(",", ":")).encode("utf-8")
+    digest = _digest("xg-snapshot")
+    reader = {digest: {"kind": "understat_xg", "content": content}}
+    request = EntryRequest(
+        market_id="m-mw-alpha-beta", question="Alpha vs Beta match winner",
+        fixture="ALP-BET", market_kind="match_winner", side="home",
+        book=[(0.5, 100.0)], fee_category="sports",
+        gamma_liquidity=6000.0, news=_news("ALP-BET"),
+        bankroll=10_000.0, cash=10_000.0, reserved=0.0,
+        book_time=NOW, now=NOW, max_book_age_seconds=300.0)
+    record = scan.MarketRecord(
+        queue="club-soccer/epl-mw", candidate_key="mw-alpha-home", team="soccer_desk",
+        side="home", market_kind="match_winner", lineage="club-soccer/match_winner",
+        model_name="soccer", evaluated_at=NOW, market_ref_kind="market_id",
+        market_id="m-mw-alpha-beta", market_type="match_winner",
+        snapshot_refs=(digest,),
+        events=scan.EventKeyMaterials(market_class="sports", league="EPL",
+                                      home="Alpha", away="Beta",
+                                      kickoff_day="2026-11-21"),
+        request_bundle=replay.replay_bundle_payload(request))
+    source = SnapshotShadowSource(lambda sha: reader.get(sha))
+    fitted = source.fitted_for("club-soccer/match_winner",
+                               _soccer_frozen_baseline_spec(), (record,))
+    assert fitted is not None
+    quote = source.quote_for(fitted, record,
+                             replay.request_from_replay_bundle(record.request_bundle))
+    assert quote.refusal_reason is None
+    assert 0.0 < quote.model_median < 1.0
+    assert len(quote.qs_variants) == 10  # the ten sweep variants (r23)
+
+
+def _soccer_frozen_baseline_spec():
+    from polymarket_alpha_lab.papersim.optimize.families import soccer_frozen
+    return soccer_frozen.SOCCER_FROZEN.baseline_spec()

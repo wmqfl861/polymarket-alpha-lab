@@ -968,6 +968,107 @@ def latched_pauses(conn) -> dict:
     return {queue: (review.get(queue, False), stop.get(queue, False))
             for queue in sorted(set(review) | set(stop))}
 
+
+# ---------------------------------------------------------------------------
+# MO-7 shadow-prediction writes (04 section 10 step 3; plan review R2,
+# decision 2: ONE separate transaction after the scan's own atomic
+# write, so an optimizer fault never stops the scan).
+# ---------------------------------------------------------------------------
+
+_SHADOW_COLUMNS = ('candidate_id, spec_sha256, role_at_prediction, probability, '
+                   'variant_quotes, refusal_reason, gate_pass, gate_reason, '
+                   'hypothetical_fill_price, predicted_at')
+_SHADOW_INSERT = ('INSERT INTO papersim.shadow_predictions (shadow_key, '
+                  + _SHADOW_COLUMNS + ') VALUES (%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s,%s,%s) '
+                    'RETURNING shadow_prediction_id')
+
+
+def record_shadow_predictions(conn, bindings, candidate_ids) -> dict:
+    """Append one scan's shadow predictions in ONE transaction (MO-7).
+
+    Two-layer idempotency like the writers above: same shadow key +
+    same content returns the original row (``inserted`` counts only
+    the fresh rows), a changed content under the same key raises
+    ``papersim_shadow_conflict``, and nothing is ever updated (the
+    append-only triggers on the table).  ``bindings`` are the scan's
+    ``scan.ShadowBinding`` rows (candidate ids still unresolved): each
+    ``candidate_key`` resolves through ``candidate_ids`` -- the map
+    ``record_scan`` returns from the candidate inserts (or reads back
+    on the idempotent replay path) -- and materializes one validated
+    ``store.ShadowPredictionSubmission``.  Shadow predictions never
+    carry an entry or a cash leg (04 section 10 step 3).
+    """
+
+    from polymarket_alpha_lab.papersim.store import (
+        ShadowPredictionSubmission,
+        _require_json_payload,
+    )
+
+    rows = 0
+    inserted = 0
+    with conn.transaction():
+        cursor = conn.cursor()
+        columns = _SHADOW_COLUMNS.replace(' ', '').split(',')
+        for binding in bindings:
+            try:
+                candidate_id = candidate_ids[binding.candidate_key]
+            except (KeyError, TypeError) as error:
+                raise PapersimStoreError('papersim_shadow_candidate_missing') from error
+            variant_text = ('[]' if binding.variant_quotes is None else json.dumps(
+                [float(value) for value in binding.variant_quotes],
+                separators=(',', ':'), allow_nan=False))
+            # numeric columns bind exact decimals (the bind_entry /
+            # PriceEvidenceObservation pattern): psycopg's float literal
+            # is shorter than repr, so a float bind would make the
+            # idempotent replay compare unequal decimals.
+            probability = (None if binding.probability is None
+                           else Decimal(str(binding.probability)))
+            fill_price = (None if binding.hypothetical_fill_price is None
+                          else Decimal(str(binding.hypothetical_fill_price)))
+            submission = ShadowPredictionSubmission(
+                candidate_id=candidate_id,
+                spec_sha256=binding.spec_sha256,
+                role_at_prediction=binding.role_at_prediction,
+                probability=probability,
+                variant_quotes=variant_text,
+                refusal_reason=binding.refusal_reason,
+                gate_pass=binding.gate_pass,
+                gate_reason=binding.gate_reason,
+                hypothetical_fill_price=fill_price,
+                predicted_at=binding.predicted_at)
+            submission.validate()
+            key = submission.key()
+            cursor.execute('SELECT ' + _SHADOW_COLUMNS
+                           + ' FROM papersim.shadow_predictions WHERE shadow_key = %s',
+                           (key,))
+            row = cursor.fetchone()
+            content = submission.comparison()
+            if row is not None:
+                stored = dict(zip(columns, row, strict=True))
+                _compare_stored_row(stored, content, 'papersim_shadow_conflict')
+                rows += 1
+                continue
+            cursor.execute(_SHADOW_INSERT, (key,) + tuple(
+                _require_json_payload(content[name], name)
+                if name == 'variant_quotes' else content[name]
+                for name in columns))
+            cursor.fetchone()
+            rows += 1
+            inserted += 1
+    return {'rows': rows, 'inserted': inserted}
+
+
+def load_shadow_predictions(conn, candidate_id: int) -> list[dict]:
+    """Read back one candidate row's shadow predictions (replay side)."""
+
+    cursor = conn.cursor()
+    cursor.execute('SELECT shadow_key, ' + _SHADOW_COLUMNS
+                   + ' FROM papersim.shadow_predictions WHERE candidate_id = %s'
+                   ' ORDER BY shadow_prediction_id', (candidate_id,))
+    columns = ['shadow_key'] + _SHADOW_COLUMNS.replace(' ', '').split(',')
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
 # ---------------------------------------------------------------------------
 # MO-2 model registry writes and reads (04 section 9; 05 node MO-2).
 # Same two-layer idempotency as the blocks above: stable writer-side
@@ -1385,6 +1486,23 @@ def record_optimizer_control_event(
                 'optimizer_control_key': key, 'inserted': True}
 
 
+def _spec_sequences_to_tuples(value):
+    """Rebuild spec sequences as tuples (MO-7 read-side normalization).
+
+    jsonb round-trips arrays as lists while every family's param
+    vocabulary (and the built specs) uses tuples; the canonical text
+    treats them identically, so the digest round-trip cannot catch the
+    drift -- the type normalization belongs here, at the DB-to-spec
+    boundary, so a rebuilt spec fits exactly like the registered one.
+    """
+
+    if isinstance(value, list):
+        return tuple(_spec_sequences_to_tuples(item) for item in value)
+    if isinstance(value, dict):
+        return {key: _spec_sequences_to_tuples(item) for key, item in value.items()}
+    return value
+
+
 def load_model_spec(conn, spec_sha256: str):
     """Rebuild the ``ModelSpec`` of one row; identity must round-trip.
 
@@ -1403,8 +1521,9 @@ def load_model_spec(conn, spec_sha256: str):
         return None
     columns = _SPEC_COLUMNS.replace(' ', '').split(',')
     stored = dict(zip(columns, row, strict=True))
-    params = normalize_json_number(stored['params'])
-    envelope = tuple(normalize_json_number(item) for item in stored['envelope'])
+    params = _spec_sequences_to_tuples(normalize_json_number(stored['params']))
+    envelope = tuple(_spec_sequences_to_tuples(normalize_json_number(item))
+                     for item in stored['envelope'])
     spec = ModelSpec(family=stored['family'],
                      procedure_version=stored['procedure_version'],
                      params=params, envelope=envelope,

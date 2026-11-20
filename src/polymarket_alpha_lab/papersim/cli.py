@@ -857,7 +857,12 @@ def _cmd_run_scan(args) -> int:
     import datetime as _datetime
 
     from polymarket_alpha_lab.papersim import scan
-    from polymarket_alpha_lab.papersim.optimize.provider import FrozenBaselineProvider
+    # MO-7 (coordinator-lane one-liner, plan 05 node MO-7 / review
+    # P2-3): the scan consults the registry-backed provider.  An empty
+    # or unreadable registry collapses to the frozen baseline INSIDE
+    # the provider (04 section 11), so this swap alone changes nothing
+    # until candidates are registered.
+    from polymarket_alpha_lab.papersim.optimize.provider import RegistryProvider
 
     try:
         config_path = Path(args.config)
@@ -878,7 +883,7 @@ def _cmd_run_scan(args) -> int:
                 records,
                 conn=connection,
                 repo_root=args.repo_root,
-                provider=FrozenBaselineProvider(),
+                provider=RegistryProvider.from_connection(connection),
                 now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
                 evaluation_candidates=evaluation_candidates,
                 operation_key=args.operation_key,
