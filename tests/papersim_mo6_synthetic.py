@@ -194,13 +194,71 @@ class CoinAdapter(FamilyRunAdapter):
         spread = None
         if self._spreads is not None:
             spread = self._spreads.get(theta)
+        # The row count follows the event's DECLARED lines, so a shaped
+        # payload (fewer/more rows per match) needs no adapter change.
+        count = len(event.outcomes_for(target))
         return EventRows(
             event.event_key, None,
             tuple(
                 RowScore(_line_key(index), (1.0 - theta, theta), spread)
-                for index in range(ROWS_PER_EVENT)
+                for index in range(count)
             ),
         )
+
+
+def make_shaped_input(*, q: float, seed: int, wf_blocks: int, holdout_blocks: int,
+                      rows_per_event: int) -> RegisteredInput:
+    """A shaped payload: block i carries ONE event of ``rows_per_event``
+    binary rows (a match with that many market lines).  Blocks
+    0..wf_blocks-1 are the walk-forward region, the rest holdout."""
+    rng = random.Random(seed)
+    blocks = []
+    for _ in range(wf_blocks + holdout_blocks):
+        block = []
+        for _ in range(rows_per_event):
+            yes = 1 if rng.random() < q else 0
+            yes2 = 1 if rng.random() < q else 0
+            block.append([yes, yes2])
+        blocks.append(block)
+    content = json.dumps({"q": q, "seed": seed, "blocks": blocks},
+                         sort_keys=True).encode("utf-8")
+    return RegisteredInput("synthetic-payload.json", "synthetic_payload", content)
+
+
+def make_shaped_profile(*, wf_blocks: int) -> RunProfile:
+    return make_profile(
+        holdout_start_utc=dt.datetime.combine(
+            BASE_DATE + dt.timedelta(days=wf_blocks), dt.time(), dt.timezone.utc
+        )
+    )
+
+
+def run_shaped(*, q: float, seed: int, wf_blocks: int, holdout_blocks: int,
+               rows_per_event: int, family_id: str = FAMILY):
+    """Drive the core over a shaped coin layout (P1-2 style tests)."""
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    adapter = CoinAdapter()
+    profile = make_shaped_profile(wf_blocks=wf_blocks)
+    registry, incumbent = make_registry(adapter, family_id=family_id)
+    incumbents = {
+        f"{family_id}/{target}": incumbent for target in adapter.targets()
+    }
+    result = runner.run_optimize_core(
+        family_id=family_id,
+        adapter=adapter,
+        inputs=(make_shaped_input(
+            q=q, seed=seed, wf_blocks=wf_blocks,
+            holdout_blocks=holdout_blocks, rows_per_event=rows_per_event,
+        ),),
+        profile=profile,
+        as_of=dt.datetime(2026, 12, 1, tzinfo=dt.timezone.utc),
+        seed=seed,
+        incumbents=incumbents,
+        registry=registry,
+        code_commit="t" * 40,
+    )
+    return result
 
 
 def make_registry(adapter: CoinAdapter, *, initialized: bool = True,

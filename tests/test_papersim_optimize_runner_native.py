@@ -278,7 +278,8 @@ def test_native_registration_write_path_and_status(capsys):
             role="CANDIDATE",
             effective_at=LATER,
             reason="native proof: stage-1 gates passed (rules v1)",
-            forward_plan=runner._forward_plan("intl-elo-poisson", AT),
+            forward_plan=runner._forward_plan(
+                "intl-elo-poisson", "match_winner", AT),
             actor="auto:v1",
             code_commit=COMMIT,
         ),
@@ -292,12 +293,22 @@ def test_native_registration_write_path_and_status(capsys):
             role="CANDIDATE",
             effective_at=LATER,
             reason="native proof: stage-1 gates passed (rules v1)",
-            forward_plan=runner._forward_plan("intl-elo-poisson", AT),
+            forward_plan=runner._forward_plan(
+                "intl-elo-poisson", "match_winner", AT),
             actor="auto:v1",
             code_commit=COMMIT,
         ),
     )))
     assert replay["inserted"] is False
+    # P1-1: the stored plan is the LINEAGE's registered row.
+    with app.cursor() as cursor:
+        cursor.execute("SELECT forward_plan FROM papersim.model_role_events "
+                       "WHERE lineage = 'intl-elo-poisson/match_winner' "
+                       "AND role = 'CANDIDATE'")
+        plan = cursor.fetchone()[0]
+    assert plan["first_look_min_events"] == 60
+    assert plan["final_look_min_events"] == 120
+    assert plan["max_shadow_days"] == 365
     app.close()
 
     report = _run_optimize(dsn, ["status", "--lineage",

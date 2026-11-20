@@ -31,6 +31,7 @@ from tests.papersim_mo6_synthetic import (
     make_profile,
     make_registry,
     run_coin,
+    run_shaped,
     theta_spec,
 )
 from polymarket_alpha_lab.papersim.optimize import runner
@@ -241,6 +242,85 @@ def test_mixed_lineage_outcomes_report_honestly() -> None:
         other = result.run_scorecard["lineages"][f"{FAMILY}/coin2"]
         assert other["registered"] is False
         assert result.outcome == "CANDIDATE_REGISTERED"
+
+
+# ---------------------------------------------------------------------------
+# Review P1-1: the forward plan is per LINEAGE (letter assertions)
+# ---------------------------------------------------------------------------
+
+def test_forward_plan_numbers_are_per_lineage_letters() -> None:
+    from polymarket_alpha_lab.papersim.optimize.runner import _forward_plan
+
+    as_of = dt.datetime(2026, 11, 21, tzinfo=UTC)
+    letters = {
+        # (family, target): (first, final, shadow days) — 80.7 rows.
+        ("club-soccer-recalib", "match_winner"): (300, 600, 84),
+        ("club-soccer-frozen", "match_winner"): (300, 600, 84),
+        ("club-soccer-recalib", "over_under"): (150, 300, 84),
+        ("club-soccer-frozen", "btts"): (150, 300, 84),
+        ("club-soccer-frozen", "team_total"): (150, 300, 84),
+        ("nba-pace-efficiency", "moneyline"): (120, 240, 70),
+        ("nba-pace-efficiency", "totals"): (120, 240, 70),
+        ("intl-elo-poisson", "match_winner"): (60, 120, 365),
+        ("intl-elo-goal-residuals", "over_under"): (60, 120, 365),
+        ("crypto-gbm", "touch"): (60, 120, 182),
+        ("crypto-gbm", "terminal"): (60, 120, 182),
+    }
+    for (family_id, target), (first, final, days) in letters.items():
+        plan = _forward_plan(family_id, target, as_of)
+        assert plan["first_look_min_events"] == first, (family_id, target)
+        assert plan["final_look_min_events"] == final, (family_id, target)
+        assert plan["max_shadow_days"] == days, (family_id, target)
+        assert plan["primary_metric"] == "mean_log_loss"
+    # The transcription pin and the policy table agree row by row (the
+    # T12 closing direction: one source, the other the pin).
+    stage2 = RUN_RULES_V1["stage2_forward_minimums"]
+    assert stage2["club-soccer(match_winner)"]["min_events"] == 300
+    assert stage2["club-soccer(ou/btts/tt)"]["min_events"] == 150
+    assert stage2["nba"]["min_events"] == 120
+    assert stage2["intl"]["min_events"] == 60
+    assert stage2["crypto"]["min_events"] == 60
+    # A test-double family with no policy row falls back to the
+    # family-class default instead of guessing a policy row.
+    fallback = _forward_plan(FAMILY, "coin", as_of)
+    assert fallback["first_look_min_events"] == 60  # the else-class default
+
+
+# ---------------------------------------------------------------------------
+# Review P1-2: the holdout floor counts MATCHES, never rows
+# ---------------------------------------------------------------------------
+
+def test_holdout_floor_counts_matches_not_lines() -> None:
+    # 100 matches x 3 lines each = 300 rows: the row-count reading met
+    # the 300 floor; the registered unit is MATCHES (场), so this is
+    # INSUFFICIENT_DATA with the honest numbers on the record.
+    result = run_shaped(
+        q=0.60, seed=41, wf_blocks=80, holdout_blocks=100,
+        rows_per_event=3, family_id="club-soccer-recalib",
+    )
+    record = result.run_scorecard["lineages"]["club-soccer-recalib/coin"]
+    assert record["sample_status"] == "insufficient"
+    sample = record["gate"]["sample"]
+    assert sample["holdout_events"] == 100
+    assert sample["holdout_rows"] == 300
+    assert sample["min_events"] == 300
+    assert result.outcome == "INSUFFICIENT_DATA"
+    assert result.registered_lineages == ()
+
+
+def test_synthetic_family_has_no_registered_floor() -> None:
+    # The synthetic family itself has no registered floor (synthetic
+    # id): the sample record still reports matches AND rows honestly,
+    # and no insufficient path bites.
+    result = run_shaped(
+        q=0.60, seed=41, wf_blocks=80, holdout_blocks=100,
+        rows_per_event=3,
+    )
+    record = result.run_scorecard["lineages"][f"{FAMILY}/coin"]
+    assert record["sample_status"] == "ok"
+    if record.get("gate") is not None:
+        assert record["gate"]["sample"]["holdout_events"] == 100
+        assert record["gate"]["sample"]["holdout_rows"] == 300
 
 
 # ---------------------------------------------------------------------------

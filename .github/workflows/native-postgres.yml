@@ -421,7 +421,7 @@ jobs:
               "tests/test_papersim_optimize_registry_native.py",
               "tests/test_papersim_optimize_policy_native.py",
               "tests/test_papersim_settle_store_native.py",
-              "tests/test_papersim_optimize_runner_native.py" origin/main
+              "tests/test_papersim_optimize_runner_native.py"
             ]
           }
         ]

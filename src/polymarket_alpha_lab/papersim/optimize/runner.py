@@ -1555,16 +1555,26 @@ def _run_lineages(
         if not fallback_incumbent and state is None:
             raise RegistryLineageMissing(lineage)
 
-        holdout_events = [
-            events_map[key] for fold in holdout for key in fold.test_keys
-        ]
-        n_holdout = sum(len(event.outcomes_for(target)) for event in holdout_events)
+        holdout_keys = sorted(
+            {key for fold in holdout for key in fold.test_keys}
+        )
+        # Review P1-2: the registered floor unit is MATCHES (场) — the
+        # same unit as policy.STAGE1_HOLDOUT_MIN_MARKETS — and the
+        # interval clusters by match ("同一场比赛的多条盘口线算一个
+        # 簇").  Counting ROWS would let 100 three-line matches pose as
+        # the 300-match floor; the row count stays on the sample record
+        # for transparency only.
+        n_holdout = len(holdout_keys)
+        n_holdout_rows = sum(
+            len(events_map[key].outcomes_for(target)) for key in holdout_keys
+        )
         n_blocks = len(holdout)
         minimums = RUN_RULES_V1["stage1_holdout_minimums"].get(
             family_id, {"min_events": 0, "min_blocks": 0}
         )
         sample = {
             "holdout_events": n_holdout,
+            "holdout_rows": n_holdout_rows,
             "holdout_blocks": n_blocks,
             "min_events": minimums["min_events"],
             "min_blocks": minimums["min_blocks"],
@@ -1937,26 +1947,55 @@ def resolve_run_inputs(document: Mapping[str, Any]) -> tuple[RegisteredInput, ..
 OPTIMIZE_RUN_COMMAND = "optimize-run"
 
 
-def _forward_plan(family_id: str, as_of: dt.datetime) -> dict:
-    stage2 = RUN_RULES_V1["stage2_forward_minimums"]
-    if family_id.startswith("club-soccer"):
-        first = stage2["club-soccer(ou/btts/tt)"]
-        window = RUN_RULES_V1["max_shadow_windows"]["club"]
-    elif family_id.startswith("nba"):
-        first = stage2["nba"]
-        window = RUN_RULES_V1["max_shadow_windows"]["nba"]
-    elif family_id.startswith("intl"):
-        first = stage2["intl"]
-        window = RUN_RULES_V1["max_shadow_windows"]["intl"]
+def _forward_plan(family_id: str, target: str, as_of: dt.datetime) -> dict:
+    """The pre-registered forward plan of ONE lineage (design §5-7).
+
+    Review P1-1: the plan is per LINEAGE, never per family — a
+    club-soccer match_winner registration carries the WDL row (300
+    first / 600 final), an over_under registration the O/U row (150 /
+    300).  The single source of the (family, target) table is MO-8's
+    ``policy.FORWARD_THRESHOLDS`` (DELIVERY_PLAN 80.7, frozen); the
+    ``RUN_RULES_V1["stage2_forward_minimums"]`` transcription is the
+    T12 pin policy must keep matching (closing path: once MO-6 may
+    depend on policy unconditionally, the transcription test flips to
+    a direct policy-vs-pin comparison and the fallback below shrinks
+    to synthetic test families only).
+    """
+    from polymarket_alpha_lab.papersim.optimize.policy import (
+        FORWARD_THRESHOLDS,
+    )
+
+    row = FORWARD_THRESHOLDS.get((family_id, target))
+    if row is not None:
+        first = row.min_markets
+        window_days = row.max_shadow_days
     else:
-        first = stage2["crypto"]
-        window = RUN_RULES_V1["max_shadow_windows"]["crypto"]
+        # Test-double families only: the transcription's family-class
+        # default, with the WDL row picked out by target.
+        stage2 = RUN_RULES_V1["stage2_forward_minimums"]
+        if family_id.startswith("club-soccer"):
+            key = (
+                "club-soccer(match_winner)"
+                if target == "match_winner"
+                else "club-soccer(ou/btts/tt)"
+            )
+            first = stage2[key]["min_events"]
+            window_days = 84
+        elif family_id.startswith("nba"):
+            first = stage2["nba"]["min_events"]
+            window_days = 70
+        elif family_id.startswith("intl"):
+            first = stage2["intl"]["min_events"]
+            window_days = 365
+        else:
+            first = stage2["crypto"]["min_events"]
+            window_days = 182
     return {
         "primary_metric": "mean_log_loss",
         "start": as_of.astimezone(UTC).isoformat(),
-        "first_look_min_events": first["min_events"],
-        "final_look_min_events": 2 * first["min_events"],
-        "max_shadow_window": window,
+        "first_look_min_events": first,
+        "final_look_min_events": 2 * first,
+        "max_shadow_days": window_days,
         "rule_version": RULE_VERSION,
     }
 
@@ -2121,7 +2160,11 @@ def run_and_record(
                                 f"optimizer run {written['optimization_key']}: "
                                 "stage-1 gates passed (rules v1)"
                             ),
-                            forward_plan=_forward_plan(family_id, as_of),
+                            forward_plan=_forward_plan(
+                            family_id,
+                            result.run_scorecard["lineages"][lineage]["target"],
+                            as_of,
+                        ),
                             actor=f"auto:{RULE_VERSION}",
                             code_commit=code_commit,
                         ),

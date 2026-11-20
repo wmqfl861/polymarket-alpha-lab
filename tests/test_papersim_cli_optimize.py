@@ -69,15 +69,21 @@ def test_optimize_requires_a_subcommand() -> None:
     assert excinfo.value.code == 2
 
 
-def test_optimize_run_requires_a_connection_source() -> None:
-    with pytest.raises(SystemExit) as excinfo:
+def test_optimize_run_requires_a_connection_source(capsys) -> None:
+    # In the merged optimize group (MO-8 skeleton) the connection args
+    # come from _optimize_source without a required mutex group: a
+    # missing source fails in the handler with the FAIL line (exit 1),
+    # the same semantics as MO-8's own subcommands.
+    assert (
         main([
             "optimize", "run",
             "--family", "nba-pace-efficiency",
             "--as-of", "2026-11-10T07:10:08Z",
             "--input", "whatever.json",
-        ])
-    assert excinfo.value.code == 2
+            "--repo-root", ".",
+        ]) == 1
+    )
+    assert "FAIL" in capsys.readouterr().err
 
 
 def test_optimize_run_missing_input_fails_fast_without_connection(
