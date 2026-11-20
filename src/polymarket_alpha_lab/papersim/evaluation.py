@@ -128,6 +128,16 @@ BOOTSTRAP_PERCENTILES = (2.5, 97.5)
 # day cluster.
 CLUSTER_PRIORITY = ("match_key", "market_key")
 
+# FX-35 (Phase A; plan v4 section 7 R2 as amended by v5 section 3)
+# replay-sample registration placeholders. These are OWNER-REGISTRATION
+# PLACEHOLDERS, not tuned values: the owner registers the real seed and
+# sample size N with documented evidence before D2's 30-day window
+# starts. They are never tuned to outcomes, never derived from observed
+# data ("never optimize rules"), and are consumed only through
+# papersim.evaluation_f's deterministic draw.
+F_REPLAY_SEED = 20261120
+F_REPLAY_SAMPLE_N = 20
+
 PNL_BASIS_RECORDED = ledger.PNL_SOURCE_RECORDED
 PNL_BASIS_RECOMPUTED = ledger.PNL_SOURCE_RECOMPUTED
 _PNL_BASES = (PNL_BASIS_RECORDED, PNL_BASIS_RECOMPUTED)
@@ -784,27 +794,53 @@ def criterion_e(
     return CriterionResult("E", VERDICT_PASS, ())
 
 
-def criterion_f() -> CriterionResult:
+def criterion_f(evidence: object | None = None) -> CriterionResult:
     """F operations: 30 days of unattended scheduled scans with no manual
-    database edits, daily bankroll identity and per-row replay. Depends on
-    M2 run evidence; M1 must never claim it."""
-    return CriterionResult(
-        "F", VERDICT_NOT_ASSESSABLE_M1,
-        ("requires M2 unattended-run evidence: 30 days of scheduled scans, "
-         "no manual DB edits, daily bankroll identity, per-candidate "
-         "replay",),
-    )
+    database edits, daily bankroll identity and per-row replay.
+
+    Without run evidence (``evidence is None``, the only state M1 could
+    produce) F stays ``NOT_ASSESSABLE_M1`` with byte-identical output
+    (FX-35 Phase A). With an evidence snapshot the verdict is derived by
+    ``papersim.evaluation_f.evaluate_f_evidence``: slot-level coverage
+    from the registered schedule (C1/C2 — one successful slot never
+    masks another registered slot, expected slots never come from
+    observed receipts), PROVEN PAUSE attribution with fail-closed
+    semantics (C3), the tri-state UNKNOWN / known-orphan distinction,
+    and never PASS until the owner registers the R1 cutover anchor and
+    the R4 slot grid (and the B2/B3 contracts land).
+    """
+    if evidence is None:
+        return CriterionResult(
+            "F", VERDICT_NOT_ASSESSABLE_M1,
+            ("requires M2 unattended-run evidence: 30 days of scheduled scans, "
+             "no manual DB edits, daily bankroll identity, per-candidate "
+             "replay",),
+        )
+    from polymarket_alpha_lab.papersim import evaluation_f
+
+    return evaluation_f.evaluate_f_evidence(evidence)
 
 
 def overall_verdict(results: Iterable[CriterionResult]) -> str:
-    """FAIL beats NOT_ASSESSABLE; a queue with A-E PASS is still
-    NOT_ASSESSABLE_M1 because F needs M2 run evidence."""
+    """FAIL beats NOT_ASSESSABLE beats NOT_ASSESSABLE_M1; PASS only when
+    at least one result is present and every criterion passes.
+
+    Exactly backward-compatible (FX-35 Phase A, v4 section 3.6 / v5
+    section 4): without F evidence F stays ``NOT_ASSESSABLE_M1``, so no
+    pre-existing output, frozen number, or frozen test can change; the
+    PASS branch becomes reachable only through a full F evidence
+    snapshot (synthetic until D2 registers the R1 anchor and R4 grid).
+    """
     results = tuple(results)
     if any(r.verdict == VERDICT_FAIL for r in results):
         return VERDICT_FAIL
     if any(r.verdict == VERDICT_NOT_ASSESSABLE for r in results):
         return VERDICT_NOT_ASSESSABLE
-    return VERDICT_NOT_ASSESSABLE_M1
+    if any(r.verdict == VERDICT_NOT_ASSESSABLE_M1 for r in results):
+        return VERDICT_NOT_ASSESSABLE_M1
+    if not results:
+        return VERDICT_NOT_ASSESSABLE_M1
+    return VERDICT_PASS
 
 
 def pause_recommendation(
@@ -1311,6 +1347,7 @@ def _evaluate_queue(
     key: QueueKey,
     candidates: Sequence[EvaluationCandidate],
     pnl_basis: str,
+    f_evidence: object | None = None,
 ) -> QueueEvaluation:
     entered = [
         c for c in candidates if c.accepted and c.stake is not None
@@ -1510,7 +1547,7 @@ def _evaluate_queue(
             ),
             stake=roi.stake,
         ),
-        criterion_f(),
+        criterion_f(evidence=f_evidence),
     )
     pause = pause_recommendation(
         entered=counts.entered,
@@ -1539,6 +1576,7 @@ def evaluate_queues(
     candidates: Iterable[EvaluationCandidate],
     *,
     pnl_basis: str = PNL_BASIS_RECORDED,
+    f_evidence: object | None = None,
 ) -> EvaluationReport:
     """Evaluate every queue in ``candidates``.
 
@@ -1547,6 +1585,11 @@ def evaluate_queues(
     book-of-record export as published) or ``"recomputed"`` (V-6 primary:
     natural resolutions and win/loss labels recomputed from first
     principles, exits keep their recorded PnL). Pure computation.
+
+    ``f_evidence`` (FX-35 Phase A), when supplied, is the store-wide F
+    evidence snapshot handed to ``criterion_f`` for EVERY queue (F is a
+    store-wide operations criterion, not a per-queue metric); absent
+    (``None``) every output is byte-identical to the pre-FX-35 behavior.
     """
     if pnl_basis not in _PNL_BASES:
         raise ValueError(f"pnl_basis must be one of {_PNL_BASES}")
@@ -1567,7 +1610,7 @@ def evaluate_queues(
         )
         grouped.setdefault(key, []).append(candidate)
     queues = tuple(
-        _evaluate_queue(key, group, pnl_basis)
+        _evaluate_queue(key, group, pnl_basis, f_evidence)
         for key, group in grouped.items()
     )
     return EvaluationReport(
