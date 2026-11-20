@@ -1025,17 +1025,54 @@ def adapter():
     return pytest.importorskip('polymarket_alpha_lab.papersim.store_psycopg')
 
 
-def connect(dsn, *, autocommit=False):
-    psycopg = pytest.importorskip('psycopg')
-    connection = psycopg.connect(dsn)
+def connect(dsn, *, label, autocommit=False):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    connection = store_psycopg.connect_explicit(dsn, label=label)
     connection.autocommit = autocommit
     return connection
+
+
+@pytest.mark.parametrize('label', ['PAPERSIM_NATIVE_MANAGED_OWNER_DSN',
+                                   'PAPERSIM_NATIVE_MANAGED_APP_DSN'])
+def test_native_fixture_validates_before_opening_connection(monkeypatch, label) -> None:
+    from types import SimpleNamespace
+
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    validate = store_psycopg.validate_local_postgres_dsn
+    calls = []
+    connection = SimpleNamespace(autocommit=None)
+
+    def observed_validate(dsn, *, env_var_name):
+        calls.append(('validate', env_var_name))
+        return validate(dsn, env_var_name=env_var_name)
+
+    def driver_connect(dsn):
+        calls.append(('open', label))
+        assert dsn == LOCAL_DSNS[0]
+        return connection
+
+    monkeypatch.setattr(store_psycopg, 'validate_local_postgres_dsn', observed_validate)
+    monkeypatch.setitem(sys.modules, 'psycopg', SimpleNamespace(connect=driver_connect))
+
+    assert connect(LOCAL_DSNS[0], label=label) is connection
+    assert connection.autocommit is False
+    assert calls == [('validate', label), ('open', label)]
+    calls.clear()
+    assert connect(LOCAL_DSNS[0], label=label, autocommit=True) is connection
+    assert connection.autocommit is True
+    assert calls == [('validate', label), ('open', label)]
+    calls.clear()
+    with pytest.raises(ValueError):
+        connect(HOSTED_DSN, label=label)
+    assert calls == [('validate', label)]
 
 
 @pytest.fixture(scope='module')
 def managed_face():
     from polymarket_alpha_lab.papersim import migrations as pm
-    owner = connect(OWNER_DSN)
+    owner = connect(OWNER_DSN, label='PAPERSIM_NATIVE_MANAGED_OWNER_DSN')
     # Cluster-preparation wiring (M2 plan section 6.3): the applied count
     # follows the CURRENT catalog size; migration-history count assertions
     # live against the frozen M1 catalog fixture.
@@ -1059,7 +1096,7 @@ def test_native_evaluate_and_replay_over_the_managed_store(managed_face, capsys)
     from polymarket_alpha_lab.papersim.store import PriceEvidenceObservation
 
     _, app_dsn = managed_face
-    app = connect(app_dsn)
+    app = connect(app_dsn, label='PAPERSIM_NATIVE_MANAGED_APP_DSN')
     scan = replay.bind_scan_run(team='crypto_eth',
                                 started_at=STUB_NOW - datetime.timedelta(minutes=10),
                                 finished_at=STUB_NOW + datetime.timedelta(minutes=5),
@@ -1121,3 +1158,603 @@ def test_native_evaluate_and_replay_over_the_managed_store(managed_face, capsys)
     out = capsys.readouterr().out
     assert code == 0, out
     assert json.loads(out)['matched'] is True
+
+
+# ---------------------------------------------------------------------------
+# report (B4 final CLI wiring) -- offline driver proofs
+#
+# Import-order note (release base cc1e15a8): these tests drive the real
+# CLI, whose lazy in-function import binds the real
+# ``polymarket_alpha_lab.papersim.store_psycopg`` attribute, and that side
+# effect now SURVIVES normally -- the upstream ledger-test fix
+# (9061cf6730ec3c5ba07cc9fbffbb60c5542f8401) binds its fake on both
+# resolution paths, so the earlier provisional
+# ``pristine_store_adapter_import_state`` fixture (popping the module from
+# sys.modules and deleting the package attribute post-yield) was removed:
+# with both orderings green, the suite itself keeps exercising genuine
+# order isolation.  No assertion changed with that removal.
+# ---------------------------------------------------------------------------
+
+
+class _StubParamsCursor(_StubCursor):
+    """A stub cursor that also forwards bind parameters to the stub."""
+
+    def execute(self, sql, params=None):
+        sql = ' '.join(sql.split())
+        self._conn.statements.append(sql)
+        self._conn.sql_trace.append((self._conn.transaction_depth, sql))
+        self._rows, self._columns = self._conn._execute(sql, params)
+
+
+class _StubReportConn:
+    """Offline stand-in for the whole B4 report store surface.
+
+    The READ face (receipts, scan runs, control latch rows, bankroll
+    checks, the eight coverage scalars) is handed in as ready mappings,
+    and the evaluation candidate queue falls through to the evaluate
+    stub -- the same store loader the real driver reuses. The WRITE
+    face speaks the receipt idempotency pre-read/INSERT and the
+    snapshot ON CONFLICT registration, so the REAL
+    ``store_psycopg.record_command_run_event`` and the REAL
+    ``snapshots.register_snapshot`` (through the store adapter alias)
+    execute against this stub: the offline proofs exercise the actual
+    write path, not a mock of it.
+    """
+
+    _RECEIPT_COLUMNS = ('command', 'operation_key', 'attempt', 'phase',
+                        'occurred_at', 'run_event_id', 'code_commit',
+                        'error_code', 'scan_id')
+    _SCAN_COLUMNS = ('scan_id', 'team', 'started_at', 'finished_at',
+                     'code_commit', 'scan_key', 'operation_key')
+    _CONTROL_COLUMNS = ('control_event_id', 'queue_id', 'control_kind',
+                        'rule', 'observed_at')
+    _CHECK_COLUMNS = ('check_id', 'as_of', 'passed', 'event_watermark',
+                      'identity_difference')
+    _RECEIPT_EVENT_COLUMNS = ('operation_key', 'attempt', 'phase', 'command',
+                              'queue_id', 'scheduled_for', 'code_commit',
+                              'config_digest', 'input_evidence',
+                              'output_evidence', 'error_code', 'scan_id')
+    _SNAPSHOT_COLUMNS = ('content', 'byte_length', 'kind', 'source',
+                         'fetched_at', 'schema_version')
+
+    def __init__(self, receipts=(), scan_runs=(), controls=(), checks=(),
+                 coverage=None):
+        # The evaluate stub carries two market-outcome observations for
+        # its own recomputed-basis tests; the report stub drops them
+        # because at this node the outcome lane is unwired (no
+        # market_outcomes rows exist), which is exactly the honest
+        # stage matrix the report must render -- and the loader then
+        # leaves every entered row unsettled, so the report's recorded
+        # basis (the evaluate command default) evaluates cleanly.
+        self._evaluate = _stub_store()
+        self._evaluate._outcomes = ()
+        self._receipts = tuple(receipts)
+        self._scan_runs = tuple(scan_runs)
+        self._controls = tuple(controls)
+        self._checks = tuple(checks)
+        self._coverage = dict(coverage or {
+            'candidates_total': 0, 'candidates_with_marks': 0,
+            'mark_observations': 0, 'markets_bound': 0,
+            'markets_with_outcome': 0, 'outcome_observations': 0,
+            'entries_total': 0, 'entries_settled': 0})
+        # The write face: run-event rows keyed by run_event_key and
+        # snapshot rows keyed by content digest (append-only, exactly
+        # like the real tables), plus an ordered write journal.
+        self._receipt_events: dict[str, dict] = {}
+        self._snapshot_rows: dict[str, tuple] = {}
+        self.writes: list[tuple] = []
+        self.statements: list[str] = []
+        self.sql_trace = []
+        self.transaction_spans = []
+        self.transaction_depth = 0
+
+    def _execute(self, sql, params=None):
+        if sql.startswith('SET TRANSACTION ISOLATION LEVEL'):
+            return [], []
+        if sql.startswith('SELECT pg_advisory_xact_lock'):
+            return [(None,)], ['pg_advisory_xact_lock']
+        if sql.startswith('SELECT phase, run_event_id, occurred_at'):
+            rows = [(row['phase'], row['run_event_id'], row['occurred_at'])
+                    for row in self._receipt_events.values()
+                    if (row['operation_key'], row['attempt']) == params]
+            return sorted(rows, key=lambda row: row[1]), ['phase', 'run_event_id', 'occurred_at']
+        if sql.startswith('SELECT (SELECT max(observed_at)'):
+            return [(None, None, None)], ['marks', 'outcomes', 'settle']
+        if sql.startswith('SELECT candidate_id, candidate_key, team'):
+            return [], ['candidate_id', 'candidate_key', 'team']
+        if sql.startswith('SELECT command, operation_key'):
+            return ([tuple(row[name] for name in self._RECEIPT_COLUMNS)
+                     for row in self._receipts], list(self._RECEIPT_COLUMNS))
+        if sql.startswith('SELECT scan_id, team'):
+            return ([tuple(row[name] for name in self._SCAN_COLUMNS)
+                     for row in self._scan_runs], list(self._SCAN_COLUMNS))
+        if sql.startswith('SELECT control_event_id'):
+            return ([tuple(row[name] for name in self._CONTROL_COLUMNS)
+                     for row in self._controls], list(self._CONTROL_COLUMNS))
+        if sql.startswith('SELECT check_id'):
+            return ([tuple(row[name] for name in self._CHECK_COLUMNS)
+                     for row in self._checks], list(self._CHECK_COLUMNS))
+        # The write face (only reached with bind parameters).
+        if sql.startswith('SELECT operation_key, attempt'):
+            stored = self._receipt_events.get(params[0])
+            columns = list(self._RECEIPT_EVENT_COLUMNS)
+            if stored is None:
+                return [], columns
+            return [tuple(stored[name] for name in columns)], columns
+        if sql.startswith('INSERT INTO papersim.command_run_events'):
+            # INSERT params: (run_event_key, operation_key, attempt,
+            # phase, command, queue_id, scheduled_for, occurred_at,
+            # code_commit, config_digest, input_evidence,
+            # output_evidence, error_code, scan_id); the stored row
+            # replays the idempotency pre-read's comparison columns
+            # (jsonb text arrives parsed, like the real driver).
+            self._receipt_events[params[0]] = dict(zip(
+                self._RECEIPT_EVENT_COLUMNS,
+                (params[1], params[2], params[3], params[4], params[5],
+                 params[6], params[8], params[9], json.loads(params[10]),
+                 json.loads(params[11]), params[12], params[13]), strict=True))
+            self._receipt_events[params[0]].update(
+                run_event_id=len(self._receipt_events), occurred_at=params[7])
+            self.writes.append(('receipt', params[3], tuple(params)))
+            return [(len(self._receipt_events),)], ['run_event_id']
+        if sql.startswith('INSERT INTO papersim.snapshots'):
+            digest = params[0]
+            if digest in self._snapshot_rows:
+                return [], ['content_sha256']  # ON CONFLICT DO NOTHING
+            self._snapshot_rows[digest] = tuple(params)
+            self.writes.append(('snapshot', digest, tuple(params)))
+            return [(digest,)], ['content_sha256']
+        if sql.startswith('SELECT content, byte_length'):
+            stored = self._snapshot_rows.get(params[0])
+            columns = list(self._SNAPSHOT_COLUMNS)
+            if stored is None:
+                return [], columns
+            return [tuple(stored[1:])], columns
+        scalar = {
+            'SELECT count(*) FROM papersim.candidates':
+                self._coverage['candidates_total'],
+            'SELECT count(DISTINCT candidate_id) FROM papersim.candidate_marks':
+                self._coverage['candidates_with_marks'],
+            'SELECT count(*) FROM papersim.candidate_marks':
+                self._coverage['mark_observations'],
+            'SELECT count(DISTINCT coalesce(condition_id, market_id, market_slug)) '
+            'FROM papersim.candidates WHERE coalesce(condition_id, market_id, '
+            'market_slug) IS NOT NULL': self._coverage['markets_bound'],
+            'SELECT count(DISTINCT t.ref)':
+                self._coverage['markets_with_outcome'],
+            'SELECT count(*) FROM papersim.market_outcomes':
+                self._coverage['outcome_observations'],
+            # The settled join MUST be matched before the bare entries
+            # count (its text starts with the same prefix).
+            'SELECT count(*) FROM papersim.entries e JOIN '
+            'papersim.settlements s ON s.entry_id = e.entry_id':
+                self._coverage['entries_settled'],
+            'SELECT count(*) FROM papersim.entries':
+                self._coverage['entries_total'],
+        }
+        for prefix, value in scalar.items():
+            if sql.startswith(prefix):
+                return [(value,)], ['count']
+        return self._evaluate._execute(sql)
+
+    def cursor(self):
+        return _StubParamsCursor(self)
+
+    def transaction(self):
+        from contextlib import contextmanager
+
+        @contextmanager
+        def recording():
+            outer = self.transaction_depth == 0
+            if outer:
+                span = [len(self.statements), None]
+                self.transaction_spans.append(span)
+            self.transaction_depth += 1
+            try:
+                yield
+            finally:
+                self.transaction_depth -= 1
+                if outer:
+                    span[1] = len(self.statements)
+
+        return recording()
+
+    def close(self):
+        pass
+
+
+def _stub_report_store() -> _StubReportConn:
+    """One wired scan plus zero B2/B3 evidence: the honest stage matrix."""
+    from polymarket_alpha_lab.papersim import store
+
+    receipts = [
+        {'command': 'run-scan', 'operation_key': 'run-scan|pal-b1|t1|b1',
+         'attempt': 1, 'phase': 'STARTED',
+         'occurred_at': STUB_NOW - datetime.timedelta(minutes=5),
+         'run_event_id': 1, 'code_commit': 'a' * 40, 'error_code': None,
+         'scan_id': 1},
+        {'command': 'run-scan', 'operation_key': 'run-scan|pal-b1|t1|b1',
+         'attempt': 1, 'phase': 'SUCCEEDED', 'occurred_at': STUB_NOW,
+         'run_event_id': 2, 'code_commit': 'a' * 40, 'error_code': None,
+         'scan_id': 1},
+    ]
+    scan_runs = [
+        {'scan_id': 1, 'team': 'pal-b1',
+         'started_at': STUB_NOW - datetime.timedelta(minutes=5),
+         'finished_at': STUB_NOW, 'code_commit': 'a' * 40,
+         'scan_key': 'sk1', 'operation_key': 'run-scan|pal-b1|t1|b1'},
+    ]
+    controls = [
+        {'control_event_id': 1, 'queue_id': 'crypto/eth',
+         'control_kind': 'PAUSE', 'rule': store.QUEUE_CONTROL_RULE_FX17,
+         'observed_at': STUB_NOW + datetime.timedelta(minutes=1)},
+    ]
+    checks = [
+        {'check_id': 1, 'as_of': STUB_NOW + datetime.timedelta(minutes=2),
+         'passed': True, 'event_watermark': 4,
+         'identity_difference': Decimal('0.001')},
+    ]
+    coverage = {'candidates_total': 2, 'candidates_with_marks': 0,
+                'mark_observations': 0, 'markets_bound': 2,
+                'markets_with_outcome': 0, 'outcome_observations': 0,
+                'entries_total': 1, 'entries_settled': 0}
+    return _StubReportConn(receipts, scan_runs, controls, checks, coverage)
+
+
+def test_report_help_documents_the_read_only_contract(capsys) -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(['report', '--help'])
+    assert excinfo.value.code == 0
+    out = capsys.readouterr().out
+    assert 'ead-only' in out
+    for flag in ('--managed', '--dsn', '--repo-root', '--scope', '--attempt'):
+        assert flag in out
+
+
+def test_report_reads_one_snapshot_assembles_then_writes_evidence(
+        monkeypatch, capsys) -> None:
+    from hashlib import sha256
+
+    from polymarket_alpha_lab.papersim import report as report_module
+
+    conn = _stub_report_store()
+    monkeypatch.setattr(cli, '_open_readonly_connection', lambda args, label: conn)
+    partial_registry = cli._wired_subcommands() - {'capture-marks', 'settle'}
+    monkeypatch.setattr(cli, '_wired_subcommands', lambda: partial_registry)
+
+    code = cli.main(['report', '--managed', '--attempt', '3'])
+    out = capsys.readouterr().out
+    assert code == 0, out
+
+    # Read proof: everything before the first write statement is the
+    # read-only snapshot marker followed by SELECTs only (the
+    # one-snapshot read face never writes), and no statement ever
+    # mutates a row (the writes are INSERTs only).
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    assert len(conn.transaction_spans) == 2
+    reader, writer = conn.transaction_spans
+    first_write = writer[0]
+    assert reader == [0, first_write]
+    assert writer[1] == len(conn.statements)
+    assert all(depth == 1 for depth, _ in conn.sql_trace[:first_write])
+    assert all(depth >= 1 for depth, _ in conn.sql_trace[first_write:])
+    assert conn.statements[first_write:first_write + 3] == [
+        store_psycopg._REPORT_WRITE_TRANSACTION, store_psycopg._REPORT_ARCHIVE_LOCK,
+        store_psycopg._REPORT_STORED_PHASES]
+    assert conn.statements[0] == (
+        'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
+    assert all(sql.startswith('SELECT')
+               for sql in conn.statements[1:first_write])
+    assert all(not sql.startswith(('UPDATE', 'DELETE', 'DROP', 'TRUNCATE'))
+               for sql in conn.statements)
+
+    document = json.loads(out)
+    assert document['stage_order'] == ['scan', 'marks', 'outcomes', 'settle',
+                                       'evaluate']
+    assert document['scope'] == '*'
+    assert document['stages']['scan']['status'] == 'OK'
+    assert document['stages']['scan']['row_count'] == 1
+    assert document['stages']['marks']['status'] == 'STAGE_NOT_WIRED'
+    assert document['stages']['outcomes']['status'] == 'STAGE_NOT_WIRED'
+    assert document['stages']['settle']['status'] == 'STAGE_NOT_WIRED'
+    assert document['stages']['evaluate']['status'] == 'OK'
+    # Honest zero handling: real 0-of-N coverage, never a filled value.
+    assert document['stages']['marks']['coverage_ratio'] == 0.0
+    assert document['stages']['settle']['coverage_ratio'] == 0.0
+    assert document['queue_controls']['latch_by_queue']['crypto/eth'] == {
+        'pause_review': True, 'auto_stop': False}
+    assert document['bankroll']['check_count'] == 1
+
+    # Write order and identities (the REAL store functions ran): STARTED
+    # receipt -> one papersim-report snapshot of the printed bytes ->
+    # SUCCEEDED receipt carrying the content digest, all under the
+    # content-addressed report key.
+    assert [kind for kind, *_ in conn.writes] == [
+        'receipt', 'snapshot', 'receipt']
+    started = conn.writes[0][2]
+    snapshot = conn.writes[1][2]
+    succeeded = conn.writes[2][2]
+    assert started[3] == 'STARTED' and succeeded[3] == 'SUCCEEDED'
+    assert started[4] == succeeded[4] == 'report'
+    assert started[2] == succeeded[2] == 3  # --attempt surface
+    printed = out.strip().encode('utf-8')
+    digest = sha256(printed).hexdigest()
+    expected_key = report_module.report_operation_key(
+        '*', datetime.datetime.fromisoformat(document['as_of']), digest)
+    assert started[1] == succeeded[1] == expected_key
+    assert json.loads(started[11]) == []
+    assert json.loads(succeeded[11]) == [digest]
+    assert snapshot[0] == digest
+    assert snapshot[1] == printed  # the registered bytes ARE the output
+    assert snapshot[2] == len(printed) and snapshot[3] == 'papersim-report'
+
+    # Driver-level idempotence: a second invocation (a later writing
+    # clock) prints the identical document and duplicates NOTHING --
+    # both receipts and the snapshot replay the stored rows through the
+    # real idempotency pre-reads, so no fourth INSERT ever happens.
+    code = cli.main(['report', '--managed', '--attempt', '3'])
+    assert code == 0
+    assert capsys.readouterr().out == out
+    assert len(conn.writes) == 3
+    assert len(conn._receipt_events) == 2
+    assert list(conn._snapshot_rows) == [digest]
+
+    # Single metric face: the embedded evaluation block is bit-for-bit
+    # the evaluate command's output over the same store (both at their
+    # shared default basis, exactly like the native parity proof).
+    code = cli.main(['evaluate', '--managed'])
+    evaluate_out = capsys.readouterr().out.strip()
+    assert code == 0
+    assert json.dumps(document['evaluation'], sort_keys=True) == evaluate_out
+
+
+def test_integrated_report_reads_one_snapshot_and_reports_wired_empty_stages(
+        monkeypatch, capsys) -> None:
+    from contextlib import contextmanager
+
+    from polymarket_alpha_lab.papersim import report, store_psycopg
+
+    conn = _stub_report_store()
+    expected_queries = [
+        store_psycopg._REPORT_RECEIPTS_SQL, store_psycopg._REPORT_SCANS_SQL,
+        store_psycopg._REPORT_CONTROLS_SQL, store_psycopg._REPORT_CHECKS_SQL,
+        *(query for _, query in store_psycopg._REPORT_COVERAGE_SQL),
+        store_psycopg._REPORT_STAGE_TIMES_SQL, store_psycopg._REPORT_BASKETBALL_CANDIDATES_SQL,
+        cli._EVAL_CANDIDATES_SQL, cli._EVAL_EVIDENCE_SQL, cli._EVAL_OUTCOMES_SQL,
+    ]
+    boundaries = []
+    store_read = store_psycopg.read_pipeline_state
+    assemble = report.assemble_report
+    transaction = conn.transaction
+
+    @contextmanager
+    def observed_transaction():
+        with transaction():
+            boundaries.append('enter')
+            try:
+                yield
+            finally:
+                boundaries.append('exit')
+
+    def observed_read(connection, **kwargs):
+        assert connection is conn
+        with monkeypatch.context() as patch:
+            patch.setattr(conn, 'transaction', observed_transaction)
+            state = store_read(connection, **kwargs)
+        assert boundaries == ['enter', 'exit']
+        assert conn.statements == [
+            'SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY',
+            *(' '.join(sql.split()) for sql in expected_queries),
+        ]
+        assert conn.writes == []
+        boundaries.append('reader returned')
+        return state
+
+    def observed_assemble(inputs):
+        assert boundaries == ['enter', 'exit', 'reader returned']
+        assert conn.writes == []
+        boundaries.append('assemble')
+        return assemble(inputs)
+
+    assert {'capture-marks', 'settle'} <= cli._wired_subcommands()
+    monkeypatch.setattr(cli, '_open_readonly_connection', lambda args, label: conn)
+    monkeypatch.setattr(store_psycopg, 'read_pipeline_state', observed_read)
+    monkeypatch.setattr(report, 'assemble_report', observed_assemble)
+    assert cli.main(['report', '--managed']) == 0
+    document = json.loads(capsys.readouterr().out)
+    stages = document['stages']
+    assert document['stage_order'] == ['scan', 'marks', 'outcomes', 'settle', 'evaluate']
+    assert [stages[key]['status'] for key in document['stage_order']] == [
+        'OK', 'NO_DATA', 'NO_DATA', 'NO_DATA', 'OK']
+    for key in ('marks', 'outcomes', 'settle'):
+        assert stages[key]['wired'] is True
+        assert stages[key]['row_count'] == 0
+        assert stages[key]['coverage_ratio'] == 0.0
+    assert boundaries == ['enter', 'exit', 'reader returned', 'assemble']
+    assert [entry[0] for entry in conn.writes] == ['receipt', 'snapshot', 'receipt']
+
+
+def test_report_archive_reuses_original_times_and_ids_for_replay():
+    from hashlib import sha256
+    from polymarket_alpha_lab.papersim import report, store_psycopg
+
+    content = b'{"scope":"archive-test"}'
+    digest = sha256(content).hexdigest()
+    key = report.report_operation_key('archive-test', None, digest)
+    assembly = report.ReportAssembly({'scope': 'archive-test'}, content, digest, key, None)
+    conn = _StubReportConn()
+    t0 = STUB_NOW
+    times = [t0, t0 + datetime.timedelta(milliseconds=15), t0 + datetime.timedelta(seconds=7)]
+    first = store_psycopg.archive_report(conn, assembly, clock=iter(times).__next__)
+    assert first['started'] == {'run_event_id': 1, 'occurred_at': times[0]}
+    assert first['snapshot'] == {'content_sha256': digest, 'fetched_at': times[1]}
+    assert first['succeeded'] == {'run_event_id': 2, 'occurred_at': times[2]}
+    assert store_psycopg.archive_report(conn, assembly, clock=iter(()).__next__) == first
+    same_instant = t0 + datetime.timedelta(days=1)
+    second = store_psycopg.archive_report(conn, assembly, attempt=2, clock=lambda: same_instant)
+    assert second['snapshot'] == first['snapshot']
+    assert second['started'] == {'run_event_id': 3, 'occurred_at': same_instant}
+    assert second['succeeded'] == {'run_event_id': 4, 'occurred_at': same_instant}
+    assert [row[0] for row in conn.writes] == ['receipt', 'snapshot', 'receipt', 'receipt', 'receipt']
+
+
+def test_report_evaluation_clock_uses_only_selected_decisions_closes_and_outcomes():
+    source = _stub_store()
+    candidate = cli._read_evaluation_rows(source.cursor())[0][0]
+    candidate.update(evaluated_at=STUB_NOW, entered_at=STUB_NOW, confirmed_at=None)
+    cid = candidate['candidate_id']
+    minutes = lambda n: STUB_NOW + datetime.timedelta(minutes=n)
+    decision = dict(candidate_id=cid, evidence_role='DECISION', model_probability=.6,
+                    bid=.4, ask=.6, mid=.5, last=None, observed_at=minutes(1))
+    losing_decision = dict(decision, observed_at=minutes(99))
+    close = dict(decision, evidence_role='CLOSE', observed_at=minutes(2), last=.52)
+    chosen_outcome = dict(outcome_id=7, condition_id=candidate['condition_id'],
+                          market_id=candidate['market_id'], market_slug=candidate['market_slug'],
+                          outcome='YES', source_kind='gamma_close',
+                          observed_at=minutes(5), confirmed_at=minutes(4))
+    outcomes = [chosen_outcome, dict(chosen_outcome, outcome_id=8, outcome='UNKNOWN',
+                                     observed_at=minutes(70), confirmed_at=None)]
+    times = {}
+    same_rows = ([candidate], [decision, losing_decision, close], outcomes)
+    with_times = cli._evaluation_candidates_from_rows(*same_rows, evidence_times=times)
+    assert with_times == cli._evaluation_candidates_from_rows(*same_rows)
+    assert times == {'evaluate': minutes(5)}
+    times = {}
+    cli._evaluation_candidates_from_rows([candidate], [decision, losing_decision, close], [],
+                                         evidence_times=times)
+    assert times == {'evaluate': minutes(2)}
+
+    # These selected rows supply neither a usable decision probability or
+    # midpoint nor the close price used in the shared evaluation mapping.
+    empty_decision = dict(decision, model_probability=None, mid=None, ask=None)
+    empty_close = dict(close, last=None, mid=None)
+    times = {}
+    cli._evaluation_candidates_from_rows([candidate], [empty_decision, empty_close], [],
+                                         evidence_times=times)
+    assert times == {'evaluate': STUB_NOW}
+
+
+def test_report_body_batches_keep_all_positions_and_count_shared_bytes_once():
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.adapters.contracts import HARD_MAX_RESPONSE_BYTES
+
+    digests = ['a' * 64, 'b' * 64, 'c' * 64]
+    sizes = [HARD_MAX_RESPONSE_BYTES, 1, 2]
+    metadata = {
+        digest: dict(content_sha256=digest, kind='polymarket-gamma', source='fixture',
+                     schema_version=1, fetched_at=STUB_NOW, byte_length=size)
+        for digest, size in zip(digests, sizes, strict=True)
+    }
+    a, b, c = digests
+    references = {1: (a,), 2: (a,), 3: (a, b), 4: (c,), 5: ()}
+    batches = list(store_psycopg._basketball_body_batches(references, metadata))
+    assert batches == [([1, 2], {a}, set()), ([3], {a, b}, set()), ([4, 5], {c}, set())]
+
+
+@pytest.mark.parametrize('observed', ['YES', 'NO', 'YES-basket'])
+def test_report_scores_an_observed_market_while_its_entry_awaits_booking(
+        monkeypatch, capsys, observed) -> None:
+    conn = _stub_report_store()
+    rows = _stub_store()
+    pending = rows._candidates[0]
+    same_market = dict(rows._candidates[1], condition_id=None, market_id='m-1',
+                       market_slug=None)
+    booked = dict(pending, candidate_id=3, candidate_key='k-booked', market_id='m-booked',
+                  **_exit_settlement(pnl_gross=Decimal('0.00'), exit_price=pending['price']))
+    rows._candidates = [pending, same_market, booked]
+    rows._outcomes = [dict(rows._outcomes[0], outcome=observed),
+                      dict(rows._outcomes[0], market_id='m-booked', outcome_id=3)]
+    rows._evidence += [dict(rows._evidence[0], candidate_id=3)]
+    conn._evaluate = rows
+    monkeypatch.setattr(cli, '_open_readonly_connection', lambda args, label: conn)
+
+    assert cli.main(['report', '--managed']) == 0
+    output = capsys.readouterr()
+    assert output.err == ''
+    document = json.loads(output.out)
+    stage = document['stages']['evaluate']
+    assert stage['status'] == 'PARTIAL'
+    assert stage['recorded_pnl_gap'] == {
+        'reason': 'settlement_not_recorded', 'entries': 1,
+        'by_queue': [{'model_key': 'gbm:r19', 'market_type': 'terminal',
+                      'gate_version': pending['gate_version'], 'entries': 1, 'recorded_pnl': None}],
+    }
+    queues = {row['queue']['model_key']: row for row in document['evaluation']['queues']}
+    assert queues['gbm:r19']['counts']['entered'] == 2
+    assert queues['gbm:r19']['counts']['unresolved'] == 1
+    assert queues['gbm:r19']['roi']['counted'] == 1
+    assert queues['gbm:r19']['roi']['gross_pnl'] == 0.0
+    assert queues['gbm:r19']['scoring']['markets_scored'] == 2
+    assert queues['gbm:r19']['clv']['entries_with_close'] == 1
+    assert queues['soccer:r23']['counts']['entered'] == 0
+    assert [write[0] for write in conn.writes] == ['receipt', 'snapshot', 'receipt']
+
+    # The standalone evaluator still requires a realized trade in recorded mode.
+    monkeypatch.setattr(cli, '_open_readonly_connection', lambda args, label: rows)
+    assert cli.main(['evaluate', '--managed', '--pnl-basis', 'recorded']) == 1
+    failure = capsys.readouterr()
+    assert failure.out == ''
+    assert "require a recorded 'pnl'" in failure.err
+    assert cli.main(['evaluate', '--managed', '--pnl-basis', 'recomputed']) == 0
+    assert json.loads(capsys.readouterr().out)['queues']
+
+
+def test_report_scores_prior_market_result_without_marking_a_reentry_pending(
+        monkeypatch, capsys) -> None:
+    conn = _stub_report_store()
+    rows = _stub_store()
+    entry = rows._candidates[0]
+    observed = entry['entered_at'] - datetime.timedelta(minutes=1)
+    rows._outcomes[0].update(observed_at=observed, confirmed_at=observed)
+    conn._evaluate = rows
+    monkeypatch.setattr(cli, '_open_readonly_connection', lambda args, label: conn)
+
+    assert cli.main(['report', '--managed']) == 0
+    output = capsys.readouterr()
+    assert output.err == ''
+    document = json.loads(output.out)
+    assert 'recorded_pnl_gap' not in document['stages']['evaluate']
+    queue = next(q for q in document['evaluation']['queues']
+                 if q['queue']['model_key'] == 'gbm:r19')
+    assert queue['scoring']['markets_scored'] == 1
+    assert queue['counts']['unresolved'] == 1
+    assert queue['roi']['counted'] == 0
+
+
+@pytest.mark.parametrize(('fault', 'diagnostic'), [
+    ('booked_missing_label', 'papersim_eval_settlement_win_loss_missing'),
+    ('duplicate_id', 'duplicate candidate_id'),
+])
+def test_pending_report_preserves_unrelated_mapping_and_evaluation_failures(
+        monkeypatch, capsys, fault, diagnostic) -> None:
+    conn = _stub_report_store()
+    rows = _stub_store()
+    shadow = dict(rows._candidates[0])
+    if fault == 'booked_missing_label':
+        shadow.update(candidate_id=3, candidate_key='k-3', classification='NATURAL', win_loss=None)
+    rows._candidates.append(shadow)
+    conn._evaluate = rows
+    monkeypatch.setattr(cli, '_open_readonly_connection', lambda args, label: conn)
+
+    assert cli.main(['report', '--managed']) == 1
+    output = capsys.readouterr()
+    assert output.out == ''
+    assert diagnostic in output.err
+    assert conn.writes == []
+
+
+def test_report_failure_writes_no_evidence(
+        monkeypatch, capsys) -> None:
+    conn = _stub_report_store()
+    monkeypatch.setattr(cli, '_open_readonly_connection', lambda args, label: conn)
+
+    code = cli.main(['report', '--managed', '--scope', 'with|pipe'])
+    captured = capsys.readouterr()
+    assert code == 1
+    assert 'report: FAIL' in captured.err
+    assert captured.out == ''
+    # A refused assembly writes no evidence at all: no receipt, no
+    # snapshot (the read happened, the writes never did).
+    assert conn.writes == []
+    assert not any(sql.startswith('INSERT') for sql in conn.statements)

@@ -420,7 +420,8 @@ jobs:
               "tests/test_papersim_mo2_migrations.py",
               "tests/test_papersim_optimize_registry_native.py",
               "tests/test_papersim_optimize_policy_native.py",
-              "tests/test_papersim_settle_store_native.py"
+              "tests/test_papersim_settle_store_native.py",
+              "tests/test_papersim_report_store_native.py"
             ]
           }
         ]
