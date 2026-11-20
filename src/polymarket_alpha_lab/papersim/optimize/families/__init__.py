@@ -25,6 +25,7 @@ _FAMILY_MODULES: dict[str, str] = {
     # MO-5 lanes each add their own key on their own branch; the
     # three-way merge of these lines is owned by the coordinator.
     "club-soccer-recalib": "soccer_recalib",
+    "crypto-gbm": "crypto",
     "intl-elo-goal-residuals": "intl",
     "intl-elo-poisson": "intl",
     "nba-pace-efficiency": "nba",

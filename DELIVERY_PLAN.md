@@ -4246,3 +4246,39 @@ final CLI 端到端（计划 Z2，s4_cli）：`papersim.cli evaluate --dsn`（�
 ### 81.5 落地记录（cherry-pick，2026-11-20）
 
 本节随 `mo5c/nba-family-v2` 分支落地：原分支 `mo5c/nba-family`（提交 `b05f5b9e`/`f3512e73`）经独立只读代码复审 VERDICT: PASS（复审者独立重跑了 138 场双 worktree 对照，逐字节一致；3 条 P3 观察无需整改）后，按既定流程 cherry-pick 到已含 MO-4/MO-5a 的 `main @ d148e91a`。冲突按并集解决共四处：`optimize/families/__init__.py` 注册表（club-soccer-frozen + club-soccer-recalib + nba-pace-efficiency，键序字典序）；`test_papersim_optimize_spec.py` 与 `test_papersim_optimize_soccer_recalib.py` 两处`iter_family_ids()` 钉子均并为三元组（后者是 MO-5a 测试内的同款钉子，非 git 冲突、因注册表并集而需同步扩展；注释保留"5b 后落者再并"）；本文件 §80.11 与 §81 为纯相邻追加，两侧保留。落地版仅做上述合并解决与本小节登记，模型与族代码与复审过的提交逐字节相同，故 138 场对照不重跑（以聚焦+全量验证为准）。
+
+## 82. MO-5d：加密模型族适配器——波动率估计器（模型泳道，2026-11-20）
+
+### 82.1 范围与提交
+
+- 节点：05 号文件 MO-5 表 5d 行（`optimize/families/crypto.py`；波动率估计器——多窗口加权、指数加权；只做状态函数和单元测试；验收 `crypto_model.py` 一字不改、默认规格复现三个冻结锚点）。基线 `3e52516f`（main @ 实施日），分支 `mo5d/crypto-family`，单提交（见 82.5）。
+- 新增 `papersim/optimize/families/crypto.py` 与 `tests/test_papersim_optimize_crypto_family.py`（24 项）。`crypto_model.py`、`pipeline.py`、`cli.py`、`scan.py` 零改动。
+- 跨泳道改动（均为计划复审 PASS 范围内）：`optimize/provider.py`——按 B1 登记的债（原 provider.py 模块 docstring "MO-5d/MO-7 should consume or replace this definition so the spec identity stays single-sourced"）**consume** 加密族基线：`_FAMILY_SINGLETONS` 注册 `crypto-gbm`，`_LINEAGE_FAMILIES` 的 crypto 行由 `None` 改指 `crypto-gbm`，`crypto_frozen_baseline()` 变薄委托（公共接缝函数名/常量名不变，常量随族更新为 `crypto-r19e1`，测试双侧钉住相等）；`optimize/families/__init__.py` 注册表加 `crypto-gbm`；`tests/test_papersim_optimize_spec.py` 与 `tests/test_papersim_optimize_soccer_recalib.py` 两处 `iter_family_ids()` 钉子按字典序扩为六元组；`tests/test_papersim_optimize_provider.py` 形状钉更新（params 从空改为估计器三默认参数）并新增"provider 基线 sha == 族基线 sha"单源钉。
+- 基线规格身份变化登记：`crypto-gbm` 基线 `spec_sha256` 因（且仅因）`procedure_version` `crypto-r19`→`crypto-r19e1` 与 `params` 空集→估计器默认而改变；`model_version()` 仍为 `pipeline.MODEL_VERSION_CRYPTO`（"crypto-r19+fx13-2026-11-12"，pipeline.py:122），B1 逐位锚（队列身份）不变。MO-2 注册表为空（迁移 20261119210907 纯存储），无存量规格被重标识；scan 侧仅 `provider_params` 摘要（scan.py:599-618）中的 sha 随之更新，无冻结输出依赖旧值（scan 测试只钉结构）。
+
+### 82.2 第一版搜索空间（版本化冻结；04 §7 加密行与本节为唯一权威记录）
+
+| 参数 | kind | 默认 | 冻结选择集 |
+| --- | --- | --- | --- |
+| `vol_mode` | choice | `"window"` | `("window", "ew")` |
+| `vol_weights`（序=7d/30d/60d/87d，全部 float 字面量） | choice | `(0.0, 1.0, 0.0, 0.0)`（30d 单窗=r19 定价路径） | 四个单窗 + `(0.0, 0.5, 0.5, 0.0)`、`(0.25, 0.25, 0.25, 0.25)` 共六元 |
+| `vol_ew_decay`（每 6h 杆衰减 λ） | choice | `0.995` | `(0.99, 0.995, 0.999)`（半衰期约 69/138/693 杆＝17.3/34.6/173 天；默认仅 ew 模式生效） |
+
+估计器语义（均为日频、无中心 RMS，r19 一致：不减样本均值）：window 模式按方差权重池化冻结多窗表（`realized_vol_windows` 委托、不重实现；恰一个非零权重时原样返回该窗值——防御性短路，免除对 IEEE 舍入细节的依赖）；ew 模式为最近 348 根（87d 支撑）上的归一化指数加权 RMS `sqrt(Σλ^k r_k²/Σλ^k)·2`，最新杆权重 1。短历史语义分开写明：window 模式族层拒绝少于**所选**最大窗长的 closes（30d 需 120、87d 需 348；堵住 r19 兼容静默切片，与 `adapters/prices.closes_for_vol_window` 同向）；ew 模式要求 ≥348 根、恰取最近 348 根。04 §7 的"按期限分层的尺度修正"**不纳入 v1**（需 MO-10 的到期分层数据），登记为后续版本化扩格——扩大须另立节点计划过复审。包络：规格 envelope 为空元组，A/B 漂移约定对即代码内冻结的敏感带（双约定恒返回、`conservative_edges` 取 min/max，任何规格无法收窄），与 `intl-elo-goal-residuals` 的空包络先例一致，空包络的记分卡语义由 MO-6 明定。
+
+### 82.3 验收证据（三个冻结锚点仅约束默认规格）
+
+- 锚点复现（仅默认规格——window/30d 单窗）：fixture `tests/fixtures/papersim/regression_r19_crypto.json` 的冻结 σ 表（sig_table="30d"：ETH 0.02430307766195731、BTC 0.01583874457257652）经族 `vol_table` 回放路径 fit 基线规格后 `predict` 三个 touch 锚点（期限按 selfcheck `_r19_horizon_hours` 公式复算=1595.12h）：ETH-2000 A/B=0.444892/0.478835（|dA|=8.06e-06、|dB|=3.52e-05）、ETH-2250 0.865413/0.879525（1.26e-05/2.53e-05）、BTC-65k 0.100773/0.111877（2.67e-05/2.33e-05）——对 fixture 四位小数冻结值 ≤1e-4（与 selfcheck `_CHECK_TOLERANCE` 同义），且与直接调 `crypto_model.touch_probability`（同 σ 同输入）**逐位相等**；dA/dB 与 selfcheck 输出逐项一致（同一条浮点路径）。ew 模式无冻结锚点，以合成 closes 单元测试钉住：λ→1 逼近同支撑平 RMS（≤1e-12，不主张逐位——求和次序不同）、恒定收益权重归一（|log2|·2，差 −2.2e-16）、新旧波动两构造下的近因单调、支撑恰为最近 348 根（更长的历史逐位不可见）、347 根拒绝。
+- 估计器委托逐位：默认 30d 单窗与四个单窗选择各自 ==`realized_vol_windows` 对应窗值 ==`realized_vol_daily` 对应切片；混合权重池化与手算式逐位相等且落在窗值带内。
+- 冻结文件钉：`crypto_model.py` LF 流 SHA-256 = `5d31a34263a6346d284385572a41a80a5942a42c25e63f322339833f732e8713`（d95fadec 与 3e52516f 两点复算一致；仓库内 0 CRLF，LF 归一防 autocrlf 假失败）；基线规格 `spec_sha256` = `33b3b294b44eac5a00e48021b84320f30946fdd507dd73989da7c2312b8915b9`（实现时一次算得钉进测试）；rebase 移动该文件时先停、复核差异、再刻意重登记。
+- 聚焦验证（服务器，2026-11-20）：`uv run python -m polymarket_alpha_lab.papersim.cli selfcheck` 10/10 PASS（crypto-r19×3 数字与基线逐字相同）；`uv run pytest -q tests/test_papersim_optimize_crypto_family.py tests/test_papersim_optimize_spec.py tests/test_papersim_optimize_provider.py tests/test_papersim_optimize_soccer_recalib.py tests/test_papersim_optimize_nba_family.py tests/test_papersim_optimize_families_intl.py tests/test_papersim_cli.py tests/test_papersim_scan.py` 全绿；全量 `scripts/verify_local.py --full` 结果见 82.5 提交登记。`git diff --check` 干净。
+
+### 82.4 边界与遗留
+
+- `TARGETS`（"touch"/"terminal"）词汇对齐 pipeline 加密盘口词（`crypto_touch`/`crypto_terminal`），与 MO-3/MO-6 的谱系词表对齐仍待办（首次真实 `optimize init` 前可调，同 nba/intl 的登记）。搜索运行需 MO-10 历史市场数据集，本节点不含任何数据集构造、搜索或 CLI 接线（MO-6）。
+- `DATA_CONTRACT="crypto-frozen-v1"` 沿用 B1 串；MO-10 落地后如需换契约，属重标识动作，须在 MO-10 节点计划中显式处理。
+- provider 的 `None`（未注册族）回落机制保留未删（当前无使用方），供后续族沿用；B1 登记的双定义债就此关闭。
+
+### 82.5 落地记录（单提交，2026-11-20）
+
+本节随 `mo5d/crypto-family` 分支单提交落地（计划经独立复审 VERDICT: PASS，6 项 P3 全部落实：六元组钉、防御性短路表述、两种模式短历史语义分开、混合权重元组写死且全 float 字面量、验收措辞限定默认规格、行号以符号为准）。全量 `scripts/verify_local.py --full` 于研究服务器在本分支工作树（代码文件与最终提交逐字节相同，其后仅追加本节文字）通过：八个阶段全 PASS，full pytest **42,579 项通过、203 项跳过、20 条警告，1554.93 秒**（离线套件；终端 `mo5d-full-verify2` 留存；单进程会话回收问题按 MO-1 的登记以持久终端解决）。聚焦命令：`uv run python -m polymarket_alpha_lab.papersim.cli selfcheck`（10/10，crypto-r19×3 的 A/B 与 |dA|/|dB| 输出与基线逐字相同）与 `uv run pytest -q`（本节点 8 个测试文件 162 项通过、1 项跳过）。`git diff --check` 干净；`crypto_model.py` 未触碰（工作树 git diff 为空，另有 LF 哈希钉双保险）。B1 双定义债关闭：provider 与族的基线 sha 相等由两侧测试钉住。未推送，待协调者走 PR 与工作流（纯 optimize 新文件不触发 native 的 PR 路径过滤时，按 MO-1/FX-28 登记流程以 workflow_dispatch 同 head 补跑为等效证据）。

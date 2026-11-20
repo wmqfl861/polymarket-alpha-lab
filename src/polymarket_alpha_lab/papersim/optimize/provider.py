@@ -20,11 +20,19 @@ pipeline's frozen constants (``MODEL_VERSION_SOCCER`` /
 ``MODEL_VERSION_CRYPTO``), so every candidate the scan records carries
 the same queue-partition string the unwired stack produces.
 
-Crypto lineages have no registered family until MO-5d; their frozen
-baseline spec is defined HERE (same field shape as
-``soccer_frozen.baseline_spec()``: nothing to tune, no envelope, the
-legacy crypto version string).  MO-5d/MO-7 should consume or replace
-this definition so the spec identity stays single-sourced.
+Crypto lineages: the MO-5d family (``optimize/families/crypto.py``)
+registered its baseline, so the local placeholder definition B1
+carried ("MO-5d/MO-7 should consume or replace this definition so the
+spec identity stays single-sourced") is RETIRED --
+``crypto_frozen_baseline()`` below is a thin delegation to the family
+and the spec identity lives in exactly one place.  The delegation
+carries the estimator default
+params (empty at B1 only because no family existed yet); the baseline
+``model_version()`` still returns ``pipeline.MODEL_VERSION_CRYPTO``,
+so the empty-registry scan keeps the queue-partition string and the
+B1 bit-identity anchor holds.  The MO-2 registry is empty (no stored
+spec references the old placeholder sha), so the re-identification is
+free of existing data.
 """
 
 from __future__ import annotations
@@ -33,7 +41,6 @@ from dataclasses import dataclass
 from importlib import import_module
 from typing import Protocol, runtime_checkable
 
-from polymarket_alpha_lab.papersim import pipeline
 from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
 
 __all__ = [
@@ -56,41 +63,44 @@ FALLBACK_REGISTRY_EMPTY = "registry_empty"
 #: Registered family singletons (module name, attribute).  The registry
 #: provider (MO-7) replaces this table with the MO-2 registry read; the
 #: family modules themselves stay lazy (PEP 562, see
-#: ``optimize/families/__init__.py``).
+#: ``optimize/families/__init__.py``).  MO-5d registered the crypto
+#: family (single-sourced baseline; see ``crypto_frozen_baseline``).
 _FAMILY_SINGLETONS: dict[str, tuple[str, str]] = {
     "club-soccer-frozen": ("soccer_frozen", "SOCCER_FROZEN"),
+    "crypto-gbm": ("crypto", "CRYPTO_GBM"),
 }
 
 #: Lineage prefix -> family id (a lineage is family x target x range,
 #: design 04 section 3).  ``None`` marks a family no MO-5 adapter has
-#: registered yet -- its frozen baseline is defined in this module.
+#: registered yet -- its frozen baseline is defined in this module
+#: (vacuous since MO-5d; the mechanism stays for future families).
 _LINEAGE_FAMILIES: tuple[tuple[str, str | None], ...] = (
     ("club-soccer", "club-soccer-frozen"),
-    ("crypto", None),
+    ("crypto", "crypto-gbm"),
 )
 
+#: Crypto family id and estimation-code generation, kept as the frozen
+#: public seam B1 published.  MUST equal ``families.crypto.FAMILY_ID``
+#: and ``families.crypto.PROCEDURE_VERSION``; the family-side and
+#: provider-side tests pin the equality.
 CRYPTO_FROZEN_FAMILY_ID = "crypto-gbm"
-CRYPTO_FROZEN_PROCEDURE_VERSION = "crypto-r19"
+CRYPTO_FROZEN_PROCEDURE_VERSION = "crypto-r19e1"
 
 
 def crypto_frozen_baseline() -> ModelSpec:
-    """The frozen crypto baseline spec (no registered family until MO-5d).
+    """The frozen crypto baseline spec (delegated to the MO-5d family).
 
-    Same field shape as ``soccer_frozen.baseline_spec()``: empty
-    params (the crypto model's variant pair is code-frozen inside
-    ``crypto_model``), an empty envelope, and the legacy
-    queue-partition string so the empty-registry scan is bit-identical
-    to the unwired stack.
+    Thin delegation to ``families.crypto.CRYPTO_GBM.baseline_spec()``:
+    the identity lives in the family, single-sourced (B1's local
+    definition was consumed on MO-5d landing).  The baseline carries
+    the estimator default params (window mode, 30d single window --
+    the r19 pricing path), an empty envelope (the A/B drift
+    conventions are the code-frozen sensitivity band), and the legacy
+    queue-partition string so the empty-registry scan keeps today's
+    model-version identity.
     """
 
-    return ModelSpec(
-        family=CRYPTO_FROZEN_FAMILY_ID,
-        procedure_version=CRYPTO_FROZEN_PROCEDURE_VERSION,
-        params={},
-        envelope=(),
-        data_contract="crypto-frozen-v1",
-        legacy_model_version=pipeline.MODEL_VERSION_CRYPTO,
-    )
+    return _registered_baseline(CRYPTO_FROZEN_FAMILY_ID)
 
 
 @dataclass(frozen=True)
@@ -133,10 +143,12 @@ class FrozenBaselineProvider:
     """The empty-registry provider: every lineage collapses to its frozen baseline.
 
     Registered families (``optimize.families``) contribute their
-    ``baseline_spec()``; unregistered ones (crypto until MO-5d) use the
-    frozen baseline defined here.  ``fallback_reason`` is always set --
-    with no registry there is nothing else to read (04 section 11), and
-    the scan records it in its parameters.
+    ``baseline_spec()`` (both current lineages are registered since
+    MO-5d); a lineage whose family has no adapter yet (the ``None``
+    mapping in ``_LINEAGE_FAMILIES``) uses the frozen baseline defined
+    in this module.  ``fallback_reason`` is always set -- with no
+    registry there is nothing else to read (04 section 11), and the
+    scan records it in its parameters.
     """
 
     def specs_for_lineage(self, lineage: str) -> LineageSpecs:
