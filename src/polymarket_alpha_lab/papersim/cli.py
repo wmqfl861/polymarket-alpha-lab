@@ -61,6 +61,17 @@ Subcommands (WP-P1 final commit):
   it, never against the ambient HEAD); read-only SELECTs through the
   reviewed connection adapter; prints the replay match summary as
   JSON. No network, no code execution from the record.
+- ``report`` (B4, M2 paper-loop closeout): one idempotent, reproducible,
+  timestamped pipeline report. Reads only project-private PostgreSQL
+  evidence inside ONE repeatable-read read-only transaction (pipeline
+  receipts, scan runs, queue-control latch rows, bankroll checks and
+  honest coverage scalars) and reuses the evaluate command's store
+  loader as the single metric face; the capture->settle stages are
+  presented in causal order, stages whose command is not wired stay
+  ``STAGE_NOT_WIRED``, and missing evidence is never zero-filled or
+  synthesized. The canonical report bytes are registered as one
+  ``papersim-report`` snapshot plus ``report`` run receipts (the only
+  writes: paper evidence). Paper-only / report-only / readonly.
 
 Out-of-repo design/plan references (09D design v2 / M1 / M2 / M3 plans) are
 original-missing unless a receipt is cited in-line; the reference map with
@@ -567,14 +578,14 @@ _EVAL_CANDIDATES_SQL = (
     "e.entry_id, e.entered_at, "
     "(c.order_book is not null) AS has_order_book, "
     "st.classification, st.win_loss, st.exit_price, st.proceeds, st.pnl_gross, "
-    "st.fee_total, st.pnl_net, st.confirmed_at "
+    "st.fee_total, st.pnl_net, st.confirmed_at, e.entered_at "
     "FROM papersim.candidates c JOIN papersim.scan_runs s ON s.scan_id = c.scan_id "
     "LEFT JOIN papersim.entries e ON e.candidate_id = c.candidate_id "
     "LEFT JOIN papersim.settlements st ON st.entry_id = e.entry_id "
     "ORDER BY c.candidate_id"
 )
 _EVAL_EVIDENCE_SQL = (
-    "SELECT candidate_id, evidence_role, model_probability, mid, bid, ask, last "
+    "SELECT candidate_id, evidence_role, model_probability, mid, bid, ask, last, observed_at "
     "FROM papersim.candidate_price_evidence ORDER BY evidence_id"
 )
 _EVAL_OUTCOMES_SQL = (
@@ -698,14 +709,33 @@ def _evaluation_candidates_from_store(conn) -> tuple:
     come from one consistent snapshot. On a static database the results
     are bit-identical to the previous per-statement default isolation.
     """
-    from polymarket_alpha_lab.papersim import evaluation, ledger, settle, store
-
     with conn.transaction():
         cursor = conn.cursor()
         cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
-        candidate_rows = _snapshot_rows(cursor, _EVAL_CANDIDATES_SQL)
-        evidence_rows = _snapshot_rows(cursor, _EVAL_EVIDENCE_SQL)
-        outcome_rows = _snapshot_rows(cursor, _EVAL_OUTCOMES_SQL)
+        rows = _read_evaluation_rows(cursor)
+    return _evaluation_candidates_from_rows(*rows)
+
+
+def _evaluation_candidates_in_snapshot(conn, *, evidence_times=None, pending_settlements=None) -> tuple:
+    """Read the queue inside the caller's repeatable-read, read-only transaction."""
+    return _evaluation_candidates_from_rows(
+        *_read_evaluation_rows(conn.cursor()), evidence_times=evidence_times,
+        pending_settlements=pending_settlements)
+
+
+def _read_evaluation_rows(cursor) -> tuple[list[dict], list[dict], list[dict]]:
+    """Read all queue inputs on one open snapshot cursor."""
+    return (
+        _snapshot_rows(cursor, _EVAL_CANDIDATES_SQL),
+        _snapshot_rows(cursor, _EVAL_EVIDENCE_SQL),
+        _snapshot_rows(cursor, _EVAL_OUTCOMES_SQL),
+    )
+
+
+def _evaluation_candidates_from_rows(candidate_rows, evidence_rows, outcome_rows,
+                                     *, evidence_times=None, pending_settlements=None) -> tuple:
+    from polymarket_alpha_lab.papersim import evaluation, ledger, settle, store
+
     decision_evidence: dict[int, dict] = {}
     close_evidence: dict[int, dict] = {}
     for row in evidence_rows:
@@ -715,7 +745,10 @@ def _evaluation_candidates_from_store(conn) -> tuple:
         elif row["evidence_role"] == "CLOSE":
             close_evidence[candidate_id] = row
     observations: dict[str, list[dict]] = {}
+    outcomes_by_id = {}
     for row in outcome_rows:
+        if evidence_times is not None:
+            outcomes_by_id[row["outcome_id"]] = row
         for column in ("condition_id", "market_id", "market_slug"):
             identity = row[column]
             if identity is not None:
@@ -728,6 +761,7 @@ def _evaluation_candidates_from_store(conn) -> tuple:
         close = close_evidence.get(candidate_id)
         identity = row["condition_id"] or row["market_id"] or row["market_slug"]
         outcome, settled_at = None, None
+        effective = None
         if identity is not None:
             effective = store.select_effective_outcome(observations.get(identity, ()))
             if effective.is_effective:
@@ -739,9 +773,12 @@ def _evaluation_candidates_from_store(conn) -> tuple:
         if close is not None:
             close_price = _number(close["last"] if close["last"] is not None
                                   else close["mid"])
+        model_probability = None if decision is None else _number(decision["model_probability"])
+        market_mid = _decision_mid(decision)
         entered = row["stake"] is not None
         recorded_pnl = None
         classification = row["classification"] if entered else None
+        trade_observation = None
         if entered and classification is None:
             typed_identity = settle.MarketIdentity.from_row(row)
             captured = settle.select_entry_outcome(
@@ -749,6 +786,7 @@ def _evaluation_candidates_from_store(conn) -> tuple:
                 settle.captured_for_identity(entry_observations, typed_identity))
             if captured is not None and captured.is_effective:
                 outcome, settled_at = captured.outcome, settle.utc_instant(captured.evidence_time)
+                trade_observation = captured
             else:
                 outcome, settled_at = None, None
         elif classification is not None:
@@ -777,15 +815,29 @@ def _evaluation_candidates_from_store(conn) -> tuple:
                     "papersim_eval_settlement_classification_unknown: "
                     f"{classification!r} on candidate {candidate_id}"
                 )
+        if evidence_times is not None:
+            # Market scoring and the pending trade can use different observations.
+            market_observation = outcomes_by_id.get(effective.outcome_id) if effective else None
+            used_decision = model_probability is not None or market_mid is not None
+            moments = (
+                evidence_times.get("evaluate"), row["evaluated_at"],
+                row.get("entered_at"), row.get("confirmed_at"),
+                decision.get("observed_at") if used_decision else None,
+                close.get("observed_at") if close_price is not None else None,
+                market_observation.get("observed_at") if market_observation else None,
+                market_observation.get("confirmed_at") if market_observation else None,
+                trade_observation.observed_at if trade_observation else None,
+                trade_observation.confirmed_at if trade_observation else None,
+            )
+            evidence_times["evaluate"] = max(t for t in moments if t is not None)
         built.append(evaluation.EvaluationCandidate(
             candidate_id=str(candidate_id),
             model_key=f"{row['model_name']}:{row['model_version']}",
             market_type=row["market_type"] or row["market_kind"],
             gate_version=row["gate_version"],
             market_key=identity or row["candidate_key"],
-            model_probability=None if decision is None
-            else _number(decision["model_probability"]),
-            market_mid=_decision_mid(decision),
+            model_probability=model_probability,
+            market_mid=market_mid,
             accepted=row["conclusion"] == "ACCEPTED",
             construction_failed=row["conclusion"] == "CONSTRUCTION_FAILED",
             stake=_number(row["stake"]) if entered else None,
@@ -807,6 +859,9 @@ def _evaluation_candidates_from_store(conn) -> tuple:
             # NULL keeps the frozen market-key fallback bit-for-bit.
             match_key=row["event_key"],
         ))
+        if (pending_settlements is not None and entered and classification is None
+                and row["conclusion"] == "ACCEPTED" and outcome in ledger.NATURAL_OUTCOMES):
+            pending_settlements.add(str(candidate_id))
     return tuple(built)
 
 
@@ -1982,6 +2037,96 @@ def _cmd_optimize(args) -> int:
 RUN_SCAN_SHADOW_BUDGET_SECONDS = 30.0
 
 
+# ---------------------------------------------------------------------------
+# report (B4: the fourth M2 operational command; plan 05 section 2 /
+# DELIVERY_PLAN 80.8)
+# ---------------------------------------------------------------------------
+
+
+def _wired_subcommands() -> frozenset[str]:
+    """The real runtime subcommand registry (B4 report wiring evidence).
+
+    The report labels a pipeline stage ``STAGE_NOT_WIRED`` exactly when
+    its M2 command is absent from the CLI, so the wired set must be the
+    live parser registry, never a hand-maintained copy that could drift.
+    Argparse exposes the registered subcommands only through the
+    ``choices`` mapping of its subparsers action, so the set is derived
+    from a freshly built parser.
+    """
+    subparsers = next(
+        action for action in _build_parser()._actions
+        if isinstance(action, argparse._SubParsersAction))
+    return frozenset(subparsers.choices)
+
+
+def _cmd_report(args) -> int:
+    # B4 (plan 05 section 2 / DELIVERY_PLAN 80.8): every heavy import
+    # stays inside the function body so the CLI startup module count is
+    # untouched (FX-20; tests/test_init_lazy_imports.py pins the limit).
+    from collections import Counter
+    from dataclasses import replace
+    from functools import partial
+    from polymarket_alpha_lab.papersim import evaluation, report, store_psycopg
+
+    try:
+        connection = _open_readonly_connection(args, label="PAPERSIM_REPORT_PG_DSN")
+        try:
+            # Driver order (B4 contract): ONE repeatable-read read-only
+            # snapshot feeds every input -- pipeline receipts, scan runs,
+            # latch rows, checks, coverage scalars AND the evaluation
+            # candidate queue through the same store loader the evaluate
+            # command uses (one metric face, one read) -- then the read
+            # transaction closes before the pure assembly, and only then
+            # the paper-evidence writes happen: STARTED receipt, one
+            # papersim-report snapshot of the canonical bytes, SUCCEEDED
+            # receipt carrying the content digest.  The operation
+            # identity is the content-addressed report key, so a replay
+            # over unchanged evidence inserts nothing (no duplicate
+            # snapshot row, no duplicate succeeded receipt).
+            evaluation_times = {}
+            pending_settlements = set()
+            state = store_psycopg.read_pipeline_state(
+                connection, evaluation_loader=partial(
+                    _evaluation_candidates_in_snapshot, evidence_times=evaluation_times,
+                    pending_settlements=pending_settlements))
+            candidates = state["evaluation_candidates"]
+            pending_by_queue = Counter()
+            if pending_settlements:
+                # The market result is known. Only the trade's booked result
+                # and settlement time are pending in this report snapshot.
+                reported = []
+                for candidate in candidates:
+                    if candidate.candidate_id in pending_settlements:
+                        pending_by_queue[(candidate.model_key, candidate.market_type, candidate.gate_version)] += 1
+                        candidate = replace(candidate, outcome=None, settled_time=None)
+                    reported.append(candidate)
+                candidates = reported
+            queue_report = evaluation.evaluate_queues(candidates)
+            inputs = report.ReportInputs(
+                scope=args.scope,
+                wired_commands=_wired_subcommands(),
+                command_run_events=state["command_run_events"],
+                scan_runs=state["scan_runs"],
+                queue_control_events=state["queue_control_events"],
+                bankroll_checks=state["bankroll_checks"],
+                coverage=report.PipelineCoverage(**state["coverage"]),
+                stage_evidence_times={**state["stage_evidence_times"], **evaluation_times},
+                basketball_evidence=state["basketball"],
+                pending_recorded_by_queue=pending_by_queue,
+                evaluation=queue_report)
+            assembly = report.assemble_report(inputs)
+            store_psycopg.archive_report(connection, assembly, attempt=args.attempt)
+        finally:
+            connection.close()
+    except (ValueError, OSError) as error:
+        print(f"report: FAIL: {error}", file=sys.stderr)
+        return 1
+    # stdout is presentation only: the exact canonical bytes that were
+    # registered (durable evidence lives in papersim.snapshots).
+    print(assembly.content.decode("utf-8"))
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="papersim",
@@ -2415,6 +2560,51 @@ def _build_parser() -> argparse.ArgumentParser:
                        "of active-changing batches")
     _control("unfreeze", "unfreeze (human actor only; never an automatic "
                          "rule)")
+
+    report_parser = subparsers.add_parser(
+        "report",
+        help="B4 pipeline report: the capture->settle stage matrix from stored evidence",
+        description=(
+            "Assemble one pipeline report (plan 05 section 2 / DELIVERY_PLAN "
+            "80.8): read every pipeline receipt, scan run, queue-control "
+            "latch row, bankroll check and honest coverage scalar inside "
+            "ONE repeatable-read read-only transaction, reuse the evaluate "
+            "command's queue metrics as the single metric face, and present "
+            "the capture->settle stages in causal order. Stages whose "
+            "command is not wired stay STAGE_NOT_WIRED and missing evidence "
+            "is never zero-filled or synthesized. The canonical report bytes "
+            "are registered as one papersim-report snapshot plus report run "
+            "receipts (paper-evidence writes only). Paper-only / "
+            "report-only / readonly: no order, account or credential "
+            "surface."
+        ),
+    )
+    report_source = report_parser.add_mutually_exclusive_group(required=True)
+    report_source.add_argument(
+        "--managed", action="store_true",
+        help="read through the project-private managed application instance",
+    )
+    report_source.add_argument(
+        "--dsn",
+        help="explicit DSN for an isolated/throwaway cluster "
+             "(validated by the single audited local DSN validator)",
+    )
+    report_parser.add_argument(
+        "--repo-root", default=".",
+        help="repository root of the managed instance (default: .)",
+    )
+    report_parser.add_argument(
+        # Equals report.REPORT_SCOPE_ALL ("*"); the report module is
+        # imported lazily at run time, so the parser states the literal
+        # default (FX-20 startup-module cap).
+        "--scope", default="*",
+        help="report scope stamped into the document and its "
+             "content-addressed key (default: * = the whole managed store)",
+    )
+    report_parser.add_argument(
+        "--attempt", type=int, default=1,
+        help="attempt number of this operation for the report receipts (default: 1)",
+    )
     return parser
 
 
@@ -2440,6 +2630,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _cmd_settle(args)
     if args.command == "capture-marks":
         return _cmd_capture_marks(args)
+    if args.command == "report":
+        return _cmd_report(args)
     parser.error(f"unknown command {args.command!r}")  # pragma: no cover
     raise AssertionError("unreachable")  # pragma: no cover
 
