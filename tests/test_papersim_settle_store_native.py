@@ -392,7 +392,7 @@ def _wait_reader_blocked(admin, reader_pid: int, *, blocked_relation_oid: int,
     PostgreSQL masks another role's wait_event/wait_event_type/state
     columns unless the observer holds ``pg_read_all_stats``, and the
     reader under proof must run as the least-privilege production
-    ``pal_app`` role (the papersim migrations grant pal_owner only
+    ``pal_app`` role (the papersim migrations grant pal_app only
     SELECT + INSERT, never the predefined stats roles).  ``pg_locks``
     carries no query text and is not role-masked, and the
     relation-pinned ungranted request is stronger evidence than a bare
