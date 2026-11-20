@@ -564,6 +564,7 @@ _EVAL_CANDIDATES_SQL = (
     "c.market_kind, c.event_key, c.model_name, c.model_version, c.evaluated_at, "
     "c.condition_id, "
     "c.market_id, c.market_slug, s.gate_version, e.stake, e.price, e.fee_category, "
+    "e.entry_id, e.entered_at, "
     "(c.order_book is not null) AS has_order_book, "
     "st.classification, st.win_loss, st.exit_price, st.proceeds, st.pnl_gross, "
     "st.fee_total, st.pnl_net, st.confirmed_at "
@@ -577,7 +578,8 @@ _EVAL_EVIDENCE_SQL = (
     "FROM papersim.candidate_price_evidence ORDER BY evidence_id"
 )
 _EVAL_OUTCOMES_SQL = (
-    "SELECT outcome_id, condition_id, market_id, market_slug, outcome, observed_at "
+    "SELECT outcome_id, condition_id, market_id, market_slug, outcome, observed_at, "
+    "confirmed_at, source_kind "
     "FROM papersim.market_outcomes ORDER BY outcome_id"
 )
 
@@ -683,9 +685,9 @@ def _evaluation_candidates_from_store(conn) -> tuple:
     ``VOIDED_REFUND`` voids the trade. The market's natural result stays
     available as the independent whole-market scoring input
     (``natural_outcome``) but never re-prices a settled trade. An entered
-    row WITHOUT a settlement record keeps the market natural result for
-    the recomputed basis and carries no recorded PnL, so the recorded
-    basis fails loudly on it (honest gap, never zero-filled).
+    row without a settlement record uses evidence applicable to its
+    own entry. An eligible outcome can inform recomputation, while the
+    recorded basis requires its stored realization.
     ``book_walk`` provenance requires the candidate's recorded walked
     book; legacy imports (no stored order book) stay ``recorded_price``.
 
@@ -696,7 +698,7 @@ def _evaluation_candidates_from_store(conn) -> tuple:
     come from one consistent snapshot. On a static database the results
     are bit-identical to the previous per-statement default isolation.
     """
-    from polymarket_alpha_lab.papersim import evaluation, ledger, store
+    from polymarket_alpha_lab.papersim import evaluation, ledger, settle, store
 
     with conn.transaction():
         cursor = conn.cursor()
@@ -718,6 +720,7 @@ def _evaluation_candidates_from_store(conn) -> tuple:
             identity = row[column]
             if identity is not None:
                 observations.setdefault(identity, []).append(row)
+    entry_observations = settle.index_captured_outcomes(outcome_rows)
     built = []
     for row in candidate_rows:
         candidate_id = int(row["candidate_id"])
@@ -739,7 +742,16 @@ def _evaluation_candidates_from_store(conn) -> tuple:
         entered = row["stake"] is not None
         recorded_pnl = None
         classification = row["classification"] if entered else None
-        if classification is not None:
+        if entered and classification is None:
+            typed_identity = settle.MarketIdentity.from_row(row)
+            captured = settle.select_entry_outcome(
+                row["entry_id"], row["entered_at"], typed_identity,
+                settle.captured_for_identity(entry_observations, typed_identity))
+            if captured is not None and captured.is_effective:
+                outcome, settled_at = captured.outcome, settle.utc_instant(captured.evidence_time)
+            else:
+                outcome, settled_at = None, None
+        elif classification is not None:
             if classification == "EXIT":
                 # The ledger's actual exit: recorded gross PnL (the exit
                 # price is reconstructed from it in evaluation), never the
@@ -786,6 +798,7 @@ def _evaluation_candidates_from_store(conn) -> tuple:
             ),
             outcome=outcome,
             natural_outcome=natural_outcome,
+            market_outcome_authoritative=True,
             recorded_pnl=recorded_pnl,
             decision_time=row["evaluated_at"],
             settled_time=settled_at,

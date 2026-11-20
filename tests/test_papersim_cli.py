@@ -315,9 +315,8 @@ class _StubStoreConn:
     """In-memory stand-in speaking only the evaluate SELECT surface.
 
     Candidate rows carry the settlement-join columns of the fixed
-    candidates query (``has_order_book`` plus the ``papersim.settlements``
-    fields; ``None`` when no entry/settlement row exists) so one stub
-    serves the whole evaluate surface.
+    candidates query, including entry attribution and the settlement
+    fields, so one stub serves the whole evaluate surface.
 
     FX-29 (B3 changed-test proof, fix-list 03 section 0 rule 2): the
     loader now opens ONE repeatable-read read-only snapshot before its
@@ -348,7 +347,7 @@ class _StubStoreConn:
                        "market_type", "market_kind", "event_key", "model_name",
                        "model_version", "evaluated_at", "condition_id", "market_id",
                        "market_slug", "gate_version", "stake", "price", "fee_category",
-                       "has_order_book", "classification", "win_loss",
+                       "entry_id", "entered_at", "has_order_book", "classification", "win_loss",
                        "exit_price", "proceeds", "pnl_gross", "fee_total",
                        "pnl_net", "confirmed_at"]
             return [tuple(row.get(name) for name in columns) for row in self._candidates], columns
@@ -358,7 +357,7 @@ class _StubStoreConn:
             return [tuple(row[name] for name in columns) for row in self._evidence], columns
         if sql.startswith("SELECT outcome_id, condition_id"):
             columns = ["outcome_id", "condition_id", "market_id", "market_slug",
-                       "outcome", "observed_at"]
+                       "outcome", "observed_at", "confirmed_at", "source_kind"]
             return [tuple(row[name] for name in columns) for row in self._outcomes], columns
         raise AssertionError(f"unexpected SQL reached the stub: {sql}")
 
@@ -380,6 +379,7 @@ def _stub_store() -> _StubStoreConn:
          "condition_id": None, "market_id": "m-1", "market_slug": None,
          "gate_version": "gates-2026-11-07", "stake": Decimal("250"),
          "price": Decimal("0.56"), "fee_category": "crypto",
+         "entry_id": 11, "entered_at": STUB_NOW,
          "has_order_book": True},
         {"candidate_id": 2, "candidate_key": "k-rej", "conclusion": "REJECTED",
          "side": "NO", "market_type": None, "market_kind": "other",
@@ -401,9 +401,11 @@ def _stub_store() -> _StubStoreConn:
     outcomes = [
         {"outcome_id": 1, "condition_id": None, "market_id": "m-1",
          "market_slug": None, "outcome": "YES",
+         "confirmed_at": None, "source_kind": "gamma_close",
          "observed_at": STUB_NOW + datetime.timedelta(hours=2)},
         {"outcome_id": 2, "condition_id": None, "market_id": None,
          "market_slug": "m-2", "outcome": "NO",
+         "confirmed_at": None, "source_kind": "gamma_close",
          "observed_at": STUB_NOW + datetime.timedelta(hours=2)},
     ]
     return _StubStoreConn(candidates, evidence, outcomes)
@@ -463,7 +465,8 @@ def _decision_evidence(candidate_id: int, probability, mid):
 def _market_outcome(market_id: str, outcome: str, hours: float):
     return {"outcome_id": abs(hash(market_id)) % 1000, "condition_id": None,
             "market_id": market_id, "market_slug": None, "outcome": outcome,
-            "observed_at": STUB_NOW + datetime.timedelta(hours=hours)}
+            "observed_at": STUB_NOW + datetime.timedelta(hours=hours),
+            "confirmed_at": None, "source_kind": "gamma_close"}
 
 
 def _entered_candidate(candidate_id: int, market_id: str, *, side: str,
@@ -476,6 +479,7 @@ def _entered_candidate(candidate_id: int, market_id: str, *, side: str,
            "condition_id": None, "market_id": market_id, "market_slug": None,
            "gate_version": "gates-2026-11-07", "stake": Decimal(stake),
            "price": Decimal(price), "fee_category": "sports",
+           "entry_id": candidate_id + 100, "entered_at": STUB_NOW,
            "has_order_book": has_order_book}
     if settlement is not None:
         row.update(settlement)

@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
-from decimal import Decimal
+from decimal import Decimal, localcontext
 import inspect
 import json
 from pathlib import Path
@@ -44,19 +44,20 @@ COMMIT = "a" * 40
 def _entry(entry_id=7, *, candidate_id=70, side="YES", outcome="YES", outcome_id=101,
            materials=None, confirmed=T_CONFIRMED, observed=T_OBSERVED,
            stake=Decimal("250"), price=Decimal("0.56"), fee_category="crypto",
-           fee_source="schedule", exit_marked=False, team="crypto_eth"):
+           entry_fee=Decimal("7.70"), fee_source="schedule", exit_marked=False,
+           team="crypto_eth"):
     captured = None
     if outcome is not None:
         captured = settle.CapturedOutcome(
             outcome_id=outcome_id, outcome=outcome, observed_at=observed,
             confirmed_at=confirmed, source_kind="gamma_close",
-            score_materials=materials)
+            score_materials=materials, identity=settle.MarketIdentity(market_id="m-1"))
     return settle.OpenSettleEntry(
         entry_id=entry_id, candidate_id=candidate_id, team=team, side=side,
         stake=stake, price=price, fee_category=fee_category,
         entered_at=NOW - datetime.timedelta(days=2), fee_source=fee_source,
         condition_id=None, market_id="m-1", market_slug=None,
-        exit_marked=exit_marked, outcome=captured)
+        exit_marked=exit_marked, outcome=captured, entry_fee=entry_fee)
 
 
 class Harness:
@@ -133,6 +134,7 @@ def test_natural_win_loss_follows_the_side_rule(side, outcome, expected):
         assert float(record.proceeds) == 0.0
     fee_total = stake * fees.taker_fee_rate("crypto") * (1.0 - price)
     assert float(record.fee_total) == pytest.approx(fee_total)
+    assert record.fee_total == Decimal("7.70")
     assert float(record.pnl_gross) == pytest.approx(float(record.proceeds) - stake)
     assert float(record.pnl_net) == pytest.approx(float(record.pnl_gross)
                                                   - float(record.fee_total))
@@ -142,10 +144,11 @@ def test_natural_win_loss_follows_the_side_rule(side, outcome, expected):
 
 
 def test_natural_economics_equal_ledger_settle_natural_exactly():
-    entry = _entry(side="YES", outcome="YES", fee_category="sports")
-    record = settle.plan_settlement(entry).record
     paper = ledger.settle_natural(250.0, 0.56, "YES", "YES",
                                   fee_rate=fees.taker_fee_rate("sports"))
+    entry = _entry(side="YES", outcome="YES", fee_category="sports",
+                   entry_fee=Decimal(str(paper.fee_total)))
+    record = settle.plan_settlement(entry).record
     assert float(record.proceeds) == paper.proceeds
     assert float(record.pnl_gross) == paper.pnl
     assert float(record.fee_total) == paper.fee_total
@@ -173,6 +176,50 @@ def test_voided_refund_returns_the_stake_with_zero_pnl():
     assert record.source_outcome_id == 55
     assert record.cash_reason() == "VOIDED_REFUND"
     assert record.event_key() == "settle:7"
+    assert record.cash_amount(entry_fee=Decimal("7.70")) == Decimal("257.70")
+    assert record.cash_amount(entry_fee=Decimal(0)) == Decimal("250")
+    with pytest.raises(store.PapersimStoreError, match="papersim_entry_fee_invalid"):
+        record.cash_amount()
+
+
+@pytest.mark.parametrize("precision", [2, 28, 50])
+def test_wide_money_planning_validation_and_bankroll_cancellation_are_exact(precision):
+    fee = Decimal("0.1234567890123456789012345")
+    with localcontext(prec=precision):
+        entry = _entry(price=Decimal("0.0015"), entry_fee=fee)
+        record = settle.plan_settlement(entry).record.validate()
+        assert record.proceeds == Decimal("166666.66666666666")
+        assert record.pnl_gross == Decimal("166416.66666666666")
+        assert record.pnl_net == Decimal("166416.5432098776476543210987655")
+        assert record.cash_amount() == record.proceeds
+        manual_exit = dataclasses.replace(
+            record, classification="EXIT", win_loss=None, exit_price=Decimal("0.5"),
+            proceeds=Decimal("250"), exit_fee=fee).validate()
+        assert manual_exit.cash_amount() == Decimal("249.8765432109876543210987655")
+        assert store.bankroll_identity_difference(
+            Decimal("9.74299876543210987654321098765E+3"), 250, Decimal("1E+4"), 0,
+            Decimal("7.00123456789012345678901235")) == 0
+        assert store.exact_sum(Decimal("9.99999999999999999999999999E+30"),
+                               Decimal("1E+4")) == Decimal("1E+31")
+        assert store.exact_sum(Decimal("9E+120000"), Decimal("1E-16000"),
+                               Decimal("-9E+120000")) == Decimal("1E-16000")
+
+
+@pytest.mark.parametrize(("shares", "stake", "valid"), [
+    ("502", "250", False), ("502", "251", True), ("500.019998", "250", True),
+    ("500.02", "250", False), ("500.020002", "250", False),
+    ("499.98", "250", False), ("499.980002", "250", True),
+])
+def test_entry_share_product_validation_under_precision_two(shares, stake, valid):
+    entry = store.EntrySubmission(
+        stake=Decimal(stake), price=Decimal("0.5"), shares=Decimal(shares),
+        fee_category="crypto", entry_fee=Decimal("7.70"), tier="standard", entered_at=NOW)
+    with localcontext(prec=2):
+        if valid:
+            assert entry.validate() is entry
+        else:
+            with pytest.raises(store.PapersimStoreError, match="papersim_entry_stake_mismatch"):
+                entry.validate()
 
 
 # ---------------------------------------------------------------------------
@@ -246,7 +293,7 @@ def test_nba_full_game_moneyline_settles_ot_inclusive_via_the_captured_token():
                                      away_score=125, note="final after OT")
     decision = settle.plan_settlement(_entry(
         entry_id=11, side="YES", outcome="YES", outcome_id=901,
-        fee_category="sports", materials=final_ot))
+        fee_category="sports", entry_fee=Decimal("5.50"), materials=final_ot))
     assert decision.status == "SETTLED"
     record = decision.record
     assert record.classification == "NATURAL" and record.win_loss == "win"
@@ -260,7 +307,7 @@ def test_nba_full_game_totals_settle_on_the_token_not_the_score_arithmetic():
                                      away_score=125)  # total 253, over line missed
     decision = settle.plan_settlement(_entry(
         entry_id=12, side="YES", outcome="NO", outcome_id=902,
-        fee_category="sports", materials=final_ot))
+        fee_category="sports", entry_fee=Decimal("5.50"), materials=final_ot))
     record = decision.record
     assert record.classification == "NATURAL" and record.win_loss == "loss"
     assert record.outcome_label == "NO"
@@ -313,6 +360,32 @@ def test_evidence_without_any_timestamp_cannot_confirm():
     with pytest.raises(settle.SettleError) as error:
         settle.plan_settlement(entry)
     assert error.value.code == "papersim_settle_evidence_time_missing"
+
+
+class _OffsetMissing(datetime.tzinfo):
+    def utcoffset(self, dt):
+        return None
+
+
+@pytest.mark.parametrize(("observed", "confirmed"), [
+    (None, T_CONFIRMED),
+    (T_OBSERVED.replace(tzinfo=None), T_CONFIRMED),
+    (T_OBSERVED, T_CONFIRMED.replace(tzinfo=None)),
+    (T_OBSERVED.replace(tzinfo=_OffsetMissing()), T_CONFIRMED),
+])
+def test_pure_planner_rejects_malformed_instants(observed, confirmed):
+    with pytest.raises(settle.SettleError) as error:
+        settle.plan_settlement(_entry(confirmed=confirmed, observed=observed))
+    assert error.value.code == "papersim_settle_evidence_time_invalid"
+
+
+def test_pure_planner_cannot_use_an_outcome_from_before_entry():
+    stale = _entry(observed=NOW, confirmed=NOW - datetime.timedelta(minutes=1))
+    stale = dataclasses.replace(stale, entered_at=NOW)
+    assert settle.plan_settlement(stale).reason == "no_captured_outcome"
+    with pytest.raises(settle.SettleError) as error:
+        settle.plan_settlement(dataclasses.replace(stale, entered_at=None))
+    assert error.value.code == "papersim_settle_snapshot_invalid"
 
 
 def test_market_identity_precedence_and_lift_helper():

@@ -3,20 +3,18 @@
 One settle run: a clean-worktree code-commit check (FX-03 discipline,
 reusing :func:`papersim.scan.require_clean_worktree` lazily and refusing
 to start -- before ANY write -- on a dirty worktree), ONE consistent
-snapshot of the open paper entries and their EFFECTIVE captured
-final-outcome evidence, a pure per-entry settlement plan, and one
-idempotent :func:`papersim.store_psycopg.settlement_record` write per
-settleable entry (settlement row + its single cash leg, one transaction
-per entry).  Run receipts follow the ``run_scan`` pattern through
+snapshot of the open paper entries, their opening debits and applicable
+captured outcome evidence, a pure per-entry settlement plan, and one
+guarded idempotent write per settleable entry. The settlement row and its
+single cash leg share a transaction. Run receipts follow the ``run_scan`` pattern through
 :func:`papersim.store_psycopg.record_command_run_event` (STARTED ->
 SUCCEEDED, FAILED on error), default operation key
 ``settle|<team>|<stamp>|b3``.
 
 Causality (B2 ordering): settle reads ONLY outcome evidence already
-captured in ``papersim.market_outcomes`` (the
-``store_psycopg.effective_market_outcome`` selection semantics: latest
-non-UNKNOWN observation per market identity, UNKNOWN-only coverage kept
-as an explicit gap).  An entry with no captured terminal outcome (no
+captured in ``papersim.market_outcomes``. Each open entry needs an
+observation attributable to its own holding period and typed identity.
+An entry with no applicable terminal outcome (no
 observation at all, or UNKNOWN-only) is recorded in the receipt as
 PENDING with a reason and stays open; a late capture settles on the next
 run.  ``confirmed_at`` of every settlement is taken from the captured
@@ -71,18 +69,12 @@ store_psycopg.py``).  The contract is::
 
 One REPEATABLE READ READ ONLY transaction per call; the first statement
 is ``SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY``; the
-open entries (``papersim.entries`` LEFT JOIN their candidates, minus
-already-settled ones) and every entry's effective captured outcome are
-read inside that single snapshot.  The planned shared-file-pass
-promotes the test-side loader
-``tests/test_papersim_settle_store_native.py::open_entries_for_settlement``
-into ``store_psycopg.open_entries_for_settlement`` verbatim; the CLI then
-passes ``open_entries=store_psycopg.open_entries_for_settlement``.  The
-per-entry writes stay in their own transactions exactly as
-``settlement_record`` provides.
+open entries, their applicable captured outcomes and their opening cash
+are read inside that snapshot. Per-entry writes revalidate the selected
+immutable source and opening cash in their own transactions.
 
 Import purity: this module imports only the pure layers
-(``fees``, ``ledger``, ``store``) at module import time; ``scan`` (for
+(``ledger``, ``store``) at module import time; ``scan`` (for
 the worktree check) and ``store_psycopg`` (for the writers) are imported
 lazily inside functions, so importing ``settle`` never loads a database
 driver, an adapter, the CLI or the optimize/provider surface (the
@@ -92,12 +84,12 @@ model registry is irrelevant to settle: no provider consult exists).
 from __future__ import annotations
 
 import datetime
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
-from polymarket_alpha_lab.papersim import fees, ledger, store
+from polymarket_alpha_lab.papersim import ledger, store
 
 __all__ = [
     "CapturedOutcome",
@@ -125,6 +117,7 @@ REASON_NO_OUTCOME = "no_captured_outcome"
 REASON_UNKNOWN = "outcome_unknown"
 REASON_SCORES_INCOMPLETE = "score_materials_incomplete"
 REASON_EXIT_MANUAL = "exit_manual_attestation"
+REASON_ENTRY_CASH = "entry_cash_mismatch"
 
 #: FX-03 scan refusal codes mapped onto the settle error alphabet.
 _COMMIT_CODE_MAP = {
@@ -183,16 +176,41 @@ def is_completed_game(materials: ScoreMaterials) -> bool:
     return True
 
 
+MARKET_IDENTITY_COLUMNS = ("condition_id", "market_id", "market_slug")
+
+
+@dataclass(frozen=True)
+class MarketIdentity:
+    condition_id: str | None = None
+    market_id: str | None = None
+    market_slug: str | None = None
+
+    @classmethod
+    def from_row(cls, row: Mapping) -> "MarketIdentity":
+        return cls(*(row[column] for column in MARKET_IDENTITY_COLUMNS))
+
+    def keys(self) -> tuple[tuple[str, str], ...]:
+        return tuple((column, value) for column in MARKET_IDENTITY_COLUMNS
+                     if (value := getattr(self, column)) is not None)
+
+    def match(self, other: "MarketIdentity") -> tuple[str, str] | None:
+        for column in MARKET_IDENTITY_COLUMNS[:2]:
+            left, right = getattr(self, column), getattr(other, column)
+            if left is not None and right is not None and left != right:
+                return None
+        return next((key for key in self.keys() if key in other.keys()), None)
+
+
+def utc_instant(value: datetime.datetime | None) -> datetime.datetime | None:
+    if (isinstance(value, datetime.datetime) and value.tzinfo is not None
+            and value.utcoffset() is not None):
+        return value.astimezone(datetime.UTC)
+    return None
+
+
 @dataclass(frozen=True)
 class CapturedOutcome:
-    """The effective captured outcome of one market (evidence only).
-
-    Mirrors ``store.EffectiveMarketOutcome`` (latest non-UNKNOWN
-    observation per market identity, UNKNOWN kept as an explicit
-    coverage gap) plus the two fields settlement needs that the store
-    dataclass does not carry: ``confirmed_at`` (the plan's
-    confirmed-at-from-evidence rule) and the optional score materials.
-    """
+    """One captured market observation, including its typed identities."""
 
     outcome_id: int | None
     outcome: str
@@ -200,6 +218,15 @@ class CapturedOutcome:
     confirmed_at: datetime.datetime | None = None
     source_kind: str | None = None
     score_materials: ScoreMaterials | None = None
+    identity: MarketIdentity = MarketIdentity()
+
+    @classmethod
+    def from_row(cls, row: Mapping) -> "CapturedOutcome":
+        return cls(
+            outcome_id=row["outcome_id"], outcome=row["outcome"],
+            observed_at=row["observed_at"], confirmed_at=row["confirmed_at"],
+            source_kind=row["source_kind"], identity=MarketIdentity.from_row(row),
+        )
 
     @property
     def is_effective(self) -> bool:
@@ -217,10 +244,7 @@ def captured_from_effective(effective: store.EffectiveMarketOutcome, *,
                             ) -> CapturedOutcome:
     """Lift one ``store.EffectiveMarketOutcome`` into a ``CapturedOutcome``.
 
-    The loader (FX-29 snapshot) calls the audited
-    ``store_psycopg.effective_market_outcome`` selection and re-reads the
-    winning row's ``confirmed_at``; this helper keeps that lift in ONE
-    place so the wired path and the tests share it.
+    Market-level consumers may carry that result independently of an entry.
     """
     return CapturedOutcome(
         outcome_id=effective.outcome_id,
@@ -232,24 +256,103 @@ def captured_from_effective(effective: store.EffectiveMarketOutcome, *,
     )
 
 
+def index_captured_outcomes(rows: Iterable[Mapping]) -> dict:
+    """Index the captured history by each typed identity it carries."""
+    indexed: dict[tuple[str, str], list[CapturedOutcome]] = {}
+    for row in rows:
+        captured = CapturedOutcome.from_row(row)
+        for key in captured.identity.keys():
+            indexed.setdefault(key, []).append(captured)
+    return indexed
+
+
+def captured_for_identity(index: Mapping, identity: MarketIdentity):
+    return {row.outcome_id: row for key in identity.keys()
+            for row in index.get(key, ())}.values()
+
+
+def select_entry_outcome(entry_id: int, entered_at: datetime.datetime,
+                         identity: MarketIdentity,
+                         observations: Iterable[CapturedOutcome]) -> CapturedOutcome | None:
+    """Select the highest-priority captured outcome attributable to this entry."""
+    entered = utc_instant(entered_at)
+    if entered is None:
+        raise SettleError("papersim_settle_snapshot_invalid",
+                          f"entry {entry_id}: entered_at must be timezone-aware")
+    ranked = []
+    prior_terminal = False
+    for captured in observations:
+        match = identity.match(captured.identity)
+        if match is None or (captured.outcome_id is None and not captured.is_effective):
+            continue
+        if captured.outcome not in store.OUTCOME_TOKENS:
+            raise SettleError("papersim_settle_outcome_token_invalid", str(captured.outcome))
+        detail = f"entry {entry_id}: outcome {captured.outcome_id}"
+        if captured.observed_at is None and captured.confirmed_at is None:
+            raise SettleError("papersim_settle_evidence_time_missing", detail)
+        observed = utc_instant(captured.observed_at)
+        confirmed = utc_instant(captured.confirmed_at)
+        if observed is None or (captured.confirmed_at is not None and confirmed is None):
+            raise SettleError("papersim_settle_evidence_time_invalid", detail)
+        if type(captured.outcome_id) is not int or captured.outcome_id < 1:
+            raise SettleError("papersim_settle_evidence_id_invalid", detail)
+        if observed < entered or (confirmed is not None and confirmed < entered):
+            prior_terminal |= captured.is_effective
+            continue
+        strength = -MARKET_IDENTITY_COLUMNS.index(match[0])
+        priority = (captured.is_effective, strength, observed, captured.outcome_id)
+        ranked.append((priority, captured))
+
+    eligible = ((priority, row) for priority, row in ranked
+                if not prior_terminal or not row.is_effective or row.confirmed_at is not None)
+    return max(eligible, default=(None, None), key=lambda item: item[0])[1]
+
+
+@dataclass(frozen=True)
+class OpeningCash:
+    event_id: int
+    amount: Decimal
+    paid_fee: Decimal
+
+
+@dataclass(frozen=True)
+class EntryCashDiscrepancy:
+    entry_id: int
+    state: str
+    event_ids: tuple[int, ...] = ()
+    expected_amount: Decimal | None = None
+    actual_amount: Decimal | None = None
+
+    def as_dict(self) -> dict:
+        return {
+            "state": self.state,
+            "event_ids": list(self.event_ids),
+            "expected_amount": None if self.expected_amount is None
+            else str(self.expected_amount),
+            "actual_amount": None if self.actual_amount is None else str(self.actual_amount),
+        }
+
+
+class EntryCashMismatch(store.PapersimStoreError):
+    def __init__(self, discrepancy: EntryCashDiscrepancy):
+        super().__init__(REASON_ENTRY_CASH)
+        self.discrepancy = discrepancy
+
+
+@dataclass(frozen=True)
+class AutomaticSettlement:
+    outcome: CapturedOutcome
+    market_match: tuple[str, str]
+    opening_cash: OpeningCash
+
+
 # ---------------------------------------------------------------------------
 # The open-entry snapshot (produced by the injected FX-29 loader)
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
 class OpenSettleEntry:
-    """One open paper entry joined with its candidate identity + evidence.
-
-    Produced by the injected ``open_entries`` loader inside ONE
-    repeatable-read read-only snapshot: the entry row, its candidate's
-    market identity (used, in ``condition_id`` / ``market_id`` /
-    ``market_slug`` precedence, as the effective-outcome lookup key --
-    the same precedence the evaluate loader uses), and the entry's
-    effective captured outcome (``None`` when the loader found no
-    observation at all).  Entries whose candidates carry no market
-    identity can never match captured evidence and stay pending with
-    ``no_captured_outcome`` -- no key is fabricated.
-    """
+    """One open entry with the outcome and opening cash visible in its snapshot."""
 
     entry_id: int
     candidate_id: int
@@ -265,6 +368,14 @@ class OpenSettleEntry:
     market_slug: str | None = None
     exit_marked: bool = False
     outcome: CapturedOutcome | None = None
+    entry_fee: Decimal | float | int | None = None
+    is_legacy: bool = False
+    opening_cash: OpeningCash | None = None
+    cash_discrepancy: EntryCashDiscrepancy | None = None
+
+    @property
+    def identity(self) -> MarketIdentity:
+        return MarketIdentity(self.condition_id, self.market_id, self.market_slug)
 
     @property
     def market_identity(self) -> str | None:
@@ -296,11 +407,11 @@ class OpenSettleEntry:
             _snapshot_fail("price must be inside the open interval (0, 1)")
         if self.fee_source not in store.FEE_SOURCES:
             _snapshot_fail(f"fee_source {self.fee_source!r}")
-        if self.entered_at is not None and (not isinstance(self.entered_at, datetime.datetime)
-                                            or self.entered_at.tzinfo is None):
+        if utc_instant(self.entered_at) is None:
             _snapshot_fail("entered_at must be timezone-aware")
-        if type(self.exit_marked) is not bool:
-            _snapshot_fail("exit_marked must be bool")
+        for name in ("exit_marked", "is_legacy"):
+            if type(getattr(self, name)) is not bool:
+                _snapshot_fail(f"{name} must be bool")
         if self.outcome is not None and not isinstance(self.outcome, CapturedOutcome):
             _snapshot_fail("outcome must be a CapturedOutcome or None")
         return self
@@ -319,112 +430,74 @@ class SettleDecision:
     reason: str | None = None
     classification: str | None = None
     record: store.SettlementRecord | None = None
+    automatic: AutomaticSettlement | None = None
+    cash_discrepancy: EntryCashDiscrepancy | None = None
 
 
 def plan_settlement(entry: OpenSettleEntry, *,
                     operator: str = "unattended") -> SettleDecision:
-    """Derive one entry's settlement purely from captured evidence.
-
-    Decision order (fixed and deterministic):
-
-    1. No effective terminal token (no observation, or UNKNOWN-only
-       coverage) -> PENDING: ``exit_manual_attestation`` when the entry
-       is exit-marked (EXIT stays manual), else ``no_captured_outcome``
-       (no observation row at all) or ``outcome_unknown`` (UNKNOWN-only).
-       The entry stays open; a late capture settles on the next run.
-    2. Terminal token accompanied by score materials that are NOT a
-       completed game -> PENDING ``score_materials_incomplete``
-       (in-progress/partial scores are non-evidence).
-    3. Token ``VOIDED`` -> VOIDED_REFUND: the stake is refunded
-       (``proceeds = stake``, ``pnl_gross = fee_total = pnl_net = 0``,
-       never a win or a loss -- the frozen voided rule).
-    4. Token in natural outcome tokens (YES / NO / YES-basket) ->
-       NATURAL: economics via ``ledger.settle_natural`` (win pays
-       ``stake / price`` at $1.00, loss pays 0; win/loss via the
-       ``_natural_hit`` side semantics YES/YES-basket vs NO/NO-basket;
-       fee via ``fees.taker_fee_rate(entry.fee_category)``).
-    5. Any other token is snapshot corruption and fails loudly.
-
-    ``confirmed_at`` of the produced record is the captured evidence's
-    ``confirmed_at`` (fallback ``observed_at``) only; ``confirmed_by``
-    is the settle operator identity; ``source_outcome_id`` binds the
-    settlement to its evidence row (FK provenance).
-    """
+    """Derive the ledger realization from applicable evidence and booked cash."""
     entry.validate()
-    captured = entry.outcome
+    observations = () if entry.outcome is None else (entry.outcome,)
+    captured = select_entry_outcome(entry.entry_id, entry.entered_at, entry.identity,
+                                    observations)
     if captured is None or not captured.is_effective:
         if entry.exit_marked:
             reason = REASON_EXIT_MANUAL
-        elif captured is None or captured.outcome_id is None:
+        elif captured is None:
             reason = REASON_NO_OUTCOME
         else:
             reason = REASON_UNKNOWN
         return SettleDecision(entry.entry_id, STATUS_PENDING, reason=reason)
-    if captured.score_materials is not None \
-            and not is_completed_game(captured.score_materials):
-        return SettleDecision(entry.entry_id, STATUS_PENDING,
-                              reason=REASON_SCORES_INCOMPLETE)
-    confirmed_at = captured.evidence_time
-    if confirmed_at is None:
-        raise SettleError("papersim_settle_evidence_time_missing",
-                          f"entry {entry.entry_id}: outcome {captured.outcome_id}"
-                          " carries neither confirmed_at nor observed_at")
+    if captured.score_materials is not None and not is_completed_game(captured.score_materials):
+        return SettleDecision(entry.entry_id, STATUS_PENDING, reason=REASON_SCORES_INCOMPLETE)
+    if entry.cash_discrepancy is not None:
+        return SettleDecision(entry.entry_id, STATUS_PENDING, reason=REASON_ENTRY_CASH,
+                              cash_discrepancy=entry.cash_discrepancy)
+
+    stake = store._as_decimal(entry.stake)
+    fee = store._as_decimal(store._require_number(entry.entry_fee, "entry_fee"))
+    if fee < 0:
+        raise SettleError("papersim_settle_snapshot_invalid",
+                          f"entry {entry.entry_id}: entry_fee must be nonnegative")
+    automatic = None
+    if entry.opening_cash is not None:
+        automatic = AutomaticSettlement(captured, entry.identity.match(captured.identity),
+                                        entry.opening_cash)
+        fee = entry.opening_cash.paid_fee
+
     if captured.outcome == "VOIDED":
-        record = store.SettlementRecord(
-            entry_id=entry.entry_id,
-            classification="VOIDED_REFUND",
-            outcome_label="VOIDED",
-            win_loss=None,
-            exit_price=None,
-            exit_fee=0,
-            proceeds=entry.stake,
-            pnl_gross=0,
-            fee_total=0,
-            fee_source=entry.fee_source,
-            pnl_net=0,
-            source_outcome_id=captured.outcome_id,
-            exit_mark_id=None,
-            evidence=None,
-            confirmed_by=operator,
-            confirmed_at=confirmed_at,
-            is_legacy=False,
-        )
-        return SettleDecision(entry.entry_id, STATUS_SETTLED,
-                              classification="VOIDED_REFUND", record=record)
-    if captured.outcome in store.NATURAL_OUTCOME_TOKENS:
-        fee_rate = fees.taker_fee_rate(entry.fee_category)
+        classification = "VOIDED_REFUND"
+        win_loss = None
+        proceeds = stake
+        gross = fee_total = net = Decimal(0)
+    else:
+        classification = "NATURAL"
         paper = ledger.settle_natural(float(entry.stake), float(entry.price),
-                                      entry.side, captured.outcome,
-                                      fee_rate=fee_rate)
-        # The store CHECK (and its validator) require the exact decimal
-        # identity ``pnl_net = pnl_gross - fee_total``; the ledger floats
-        # are the canonical arithmetic, and the recorded triple carries
-        # them as their exact repr decimals with the difference computed
-        # in Decimal so the identity holds bit-for-bit in PostgreSQL.
-        pnl_gross = Decimal(str(paper.pnl))
-        fee_total = Decimal(str(paper.fee_total))
-        record = store.SettlementRecord(
-            entry_id=entry.entry_id,
-            classification="NATURAL",
-            outcome_label=captured.outcome,
-            win_loss=paper.win_loss,
-            exit_price=None,
-            exit_fee=0,
-            proceeds=Decimal(str(paper.proceeds)),
-            pnl_gross=pnl_gross,
-            fee_total=fee_total,
-            fee_source=entry.fee_source,
-            pnl_net=pnl_gross - fee_total,
-            source_outcome_id=captured.outcome_id,
-            exit_mark_id=None,
-            evidence=None,
-            confirmed_by=operator,
-            confirmed_at=confirmed_at,
-            is_legacy=False,
-        )
-        return SettleDecision(entry.entry_id, STATUS_SETTLED,
-                              classification="NATURAL", record=record)
-    raise SettleError("papersim_settle_outcome_token_invalid", str(captured.outcome))
+                                      entry.side, captured.outcome)
+        win_loss = paper.win_loss
+        # Keep the frozen payoff representation, then account for it exactly.
+        proceeds = Decimal(str(paper.proceeds))
+        gross = store.exact_sum(proceeds, stake.copy_negate())
+        fee_total = fee
+        net = store.exact_sum(gross, fee_total.copy_negate())
+    record = store.SettlementRecord(
+        entry_id=entry.entry_id,
+        classification=classification,
+        outcome_label=captured.outcome,
+        win_loss=win_loss,
+        proceeds=proceeds,
+        pnl_gross=gross,
+        fee_total=fee_total,
+        fee_source=entry.fee_source,
+        pnl_net=net,
+        source_outcome_id=captured.outcome_id,
+        confirmed_by=operator,
+        confirmed_at=utc_instant(captured.evidence_time),
+        is_legacy=entry.is_legacy,
+    )
+    return SettleDecision(entry.entry_id, STATUS_SETTLED, classification=classification,
+                          record=record, automatic=automatic)
 
 
 def plan_all(entries: Iterable[OpenSettleEntry], *,
@@ -476,12 +549,12 @@ def run_settle(team: str, *, conn, repo_root, now_utc: Callable[[], datetime.dat
 
     Every external dependency is an explicit argument so the offline
     suite can drive the whole orchestration through injected fakes and
-    the shared-file pass can wire the real faces with a minimal delta:
+    the CLI uses the guarded store interfaces:
     ``conn`` is the managed/explicit application connection (as the CLI
     opens it), ``open_entries`` is the FX-29 repeatable-read snapshot
-    loader (the planned ``store_psycopg.open_entries_for_settlement``),
+    loader (``store_psycopg.open_entries_for_settlement``),
     ``commit_check`` defaults to :func:`settle_commit_check`,
-    ``settle_writer`` defaults to ``store_psycopg.settlement_record``
+    ``settle_writer`` defaults to the guarded automatic store writer
     and ``receipt_writer`` to ``store_psycopg.record_command_run_event``
     (both resolved lazily).
 
@@ -522,8 +595,6 @@ def run_settle(team: str, *, conn, repo_root, now_utc: Callable[[], datetime.dat
         raise SettleError("papersim_settle_loader_invalid")
     check = commit_check if commit_check is not None \
         else (lambda: settle_commit_check(repo_root, git_bin=git_bin))
-    write_settlement = settle_writer if settle_writer is not None \
-        else store_psycopg.settlement_record
     write_receipt = receipt_writer if receipt_writer is not None \
         else store_psycopg.record_command_run_event
 
@@ -554,13 +625,27 @@ def run_settle(team: str, *, conn, repo_root, now_utc: Callable[[], datetime.dat
         settled: list[dict] = []
         pending: list[dict] = []
         evidence: list[str] = []
+
+        def _pending(entry_id, reason, discrepancy=None) -> None:
+            row = {"entry_id": entry_id, "reason": reason}
+            if discrepancy is not None:
+                row["cash_discrepancy"] = discrepancy.as_dict()
+            pending.append(row)
+            evidence.append(f"pending:{entry_id}:{reason}")
+
         for decision in decisions:
             if decision.status == STATUS_PENDING:
-                pending.append({"entry_id": decision.entry_id,
-                                "reason": decision.reason})
-                evidence.append(f"pending:{decision.entry_id}:{decision.reason}")
+                _pending(decision.entry_id, decision.reason, decision.cash_discrepancy)
                 continue
-            written = write_settlement(conn, decision.record)
+            try:
+                if settle_writer is None:
+                    written = store_psycopg.record_automatic_settlement(
+                        conn, decision.record, decision.automatic)
+                else:
+                    written = settle_writer(conn, decision.record)
+            except EntryCashMismatch as error:
+                _pending(decision.entry_id, error.code, error.discrepancy)
+                continue
             settled.append({
                 "entry_id": decision.entry_id,
                 "classification": decision.classification,
