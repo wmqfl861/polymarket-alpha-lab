@@ -1779,3 +1779,179 @@ def test_views_reconcile_with_ledger_sums_and_the_evaluator():
     assert scored['rec-a2']['brier_pair_diff'] == Decimal('0.141856')
     owner.close()
     app.close()
+
+
+# ---------------------------------------------------------------------------
+# G7 managed hand-off repair (2026-11-20): connect_managed must hand back a
+# VERIFIED IDLE connection. Offline fake-driver proofs (T1/T2) plus the
+# native managed-face regression (T3) the original G7 failure exposed --
+# writes through the managed adapter survive connection close.
+# ---------------------------------------------------------------------------
+
+
+class _HandoffFakeCursor:
+    """Records executes; models psycopg's implicit transaction per call."""
+
+    def __init__(self, connection) -> None:
+        self._connection = connection
+
+    def execute(self, statement: str, params: tuple = ()) -> None:
+        from polymarket_alpha_lab.project_postgres import binding
+        self._connection.executed.append(statement)
+        # The binding context active when the statement ran (identity
+        # proof: None would mean the SELECT escaped the bound block).
+        self._connection.bound_contexts.append(binding._EXPECTED.get())
+        # psycopg default (autocommit=False): the first execute begins an
+        # implicit transaction that only commit()/rollback() ends.
+        self._connection.open_transaction = True
+
+    def fetchall(self):
+        return [(*self._connection.server_identity,
+                 'polymarket_alpha_lab', 'pal_app')]
+
+
+class _HandoffFakeConnection:
+    """Call-recording stand-in for a psycopg Connection."""
+
+    def __init__(self, server_identity) -> None:
+        self.server_identity = tuple(server_identity)
+        self.executed: list[str] = []
+        self.bound_contexts: list[tuple | None] = []
+        self.calls: list[str] = []
+        self.rollback_count = 0
+        self.commit_count = 0
+        self.closed = False
+        self.open_transaction = False
+
+    def cursor(self) -> _HandoffFakeCursor:
+        self.calls.append('cursor')
+        return _HandoffFakeCursor(self)
+
+    def rollback(self) -> None:
+        self.calls.append('rollback')
+        self.rollback_count += 1
+        self.open_transaction = False
+
+    def commit(self) -> None:
+        self.calls.append('commit')
+        self.commit_count += 1
+        self.open_transaction = False
+
+    def close(self) -> None:
+        self.calls.append('close')
+        self.closed = True
+
+
+def _write_managed_instance(root, triple, *, port) -> None:
+    """Faithful six-key private instance.json (server.py _state schema)."""
+    import json
+    import os
+    home = Path(root) / '.local' / 'postgres'
+    home.mkdir(parents=True)
+    instance = {'format': 'project-postgres-v1', 'instance_id': triple[0],
+                'root_sha256': triple[1], 'system_identifier': triple[2],
+                'version': '18.6', 'port': port}
+    path = home / 'instance.json'
+    path.write_text(json.dumps(instance), encoding='utf-8')
+    os.chmod(path, 0o600)
+
+
+def test_connect_managed_hands_off_a_verified_idle_connection(tmp_path, monkeypatch):
+    import types
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    triple = ('a' * 32, 'b' * 64, '1234567890123456')
+    root = tmp_path / 'managed-root'
+    _write_managed_instance(root, triple, port=55433)
+    connection = _HandoffFakeConnection(triple)
+    connect_calls: list[str] = []
+    monkeypatch.setitem(sys.modules, 'psycopg', types.SimpleNamespace(
+        connect=lambda dsn: connect_calls.append(dsn) or connection))
+
+    returned = store_psycopg.connect_managed(root)
+
+    assert returned is connection and connection.closed is False
+    assert len(connect_calls) == 1  # one connection, DSN through the audited face
+    # The identity SELECT ran exactly once, under the bound context, and
+    # the returned identity matched (a mismatch raises instead).
+    assert len(connection.executed) == 1
+    assert 'project_private.instance' in connection.executed[0]
+    assert connection.bound_contexts == [triple]
+    # Exactly one rollback ends the check's read-only transaction...
+    assert connection.calls == ['cursor', 'rollback']
+    assert connection.rollback_count == 1 and connection.commit_count == 0
+    # ...so the handed-off connection carries no open transaction.
+    assert connection.open_transaction is False
+
+
+def test_connect_managed_identity_mismatch_fails_closed(tmp_path, monkeypatch):
+    import types
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
+
+    bound = ('a' * 32, 'b' * 64, '1234567890123456')
+    served = ('f' * 32, 'b' * 64, '1234567890123456')
+    root = tmp_path / 'managed-root'
+    _write_managed_instance(root, bound, port=55433)
+    connection = _HandoffFakeConnection(served)
+    monkeypatch.setitem(sys.modules, 'psycopg', types.SimpleNamespace(
+        connect=lambda dsn: connection))
+
+    with pytest.raises(ProjectDatabaseError,
+                       match='project_postgres_connection_identity_mismatch'):
+        store_psycopg.connect_managed(root)
+
+    # Fail closed AND released: the connection is closed before the raise,
+    # nothing is handed off and no rollback ran after the failed check.
+    assert connection.closed is True
+    assert connection.rollback_count == 0
+    assert connection.calls == ['cursor', 'close']
+
+
+@NATIVE
+def test_native_connect_managed_hands_off_idle_and_writes_persist(managed_face, tmp_path):
+    store_psycopg = adapter()
+    import psycopg
+    from polymarket_alpha_lab.papersim import snapshots
+    _, app_dsn = managed_face
+    probe = store_psycopg.connect_explicit(
+        app_dsn, label='PAPERSIM_NATIVE_MANAGED_APP_DSN')
+    with probe.cursor() as cursor:
+        cursor.execute('SHOW port')
+        port = int(cursor.fetchone()[0])
+        cursor.execute('SELECT instance_id, root_sha256, system_identifier '
+                       'FROM project_private.instance WHERE singleton IS TRUE')
+        triple = cursor.fetchone()
+    probe.close()
+    root = tmp_path / 'managed-root'
+    _write_managed_instance(root, triple, port=port)
+
+    conn = store_psycopg.connect_managed(root)
+    try:
+        # Pre-fix this was INTRANS: the binding SELECT left its implicit
+        # transaction open, so every later conn.transaction() block only
+        # issued SAVEPOINT/RELEASE and close() discarded the writes.
+        assert conn.info.transaction_status is psycopg.pq.TransactionStatus.IDLE
+        registration = snapshots.SnapshotRegistration(
+            content=b'g7-connect-managed-idle-handoff-proof',
+            kind='book', source='g7-connect-managed-t3', fetched_at=at(1))
+        digest = sha256(registration.content).hexdigest()
+        row = snapshots.register_snapshot(conn, registration)
+        assert row['inserted'] is True
+    finally:
+        conn.close()
+
+    # A second managed connection must observe the write: the hand-off
+    # left the block OUTERMOST, so it committed instead of rolling back
+    # at close.
+    verify = store_psycopg.connect_managed(root)
+    try:
+        assert verify.info.transaction_status is psycopg.pq.TransactionStatus.IDLE
+        stored = snapshots.read_snapshot(verify, digest)
+        assert stored is not None
+        assert stored['content'] == registration.content
+        check = snapshots.verify_snapshot(verify, digest, expected_schema_version=1)
+        assert check['byte_length'] == len(registration.content)
+        assert check['kind'] == 'book' and check['source'] == 'g7-connect-managed-t3'
+    finally:
+        verify.close()

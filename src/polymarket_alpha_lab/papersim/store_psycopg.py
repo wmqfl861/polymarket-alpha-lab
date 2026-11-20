@@ -103,7 +103,14 @@ def managed_dsn(info: dict, *, owner: bool = False, repo_root: Path = Path('.'))
 
 
 def connect_managed(repo_root: Path, *, info: dict | None = None):
-    """Application connection (pal_app) with per-connection identity assertion."""
+    """Application connection (pal_app) with per-connection identity assertion.
+
+    Returns a verified IDLE connection, or raises with the connection
+    closed: the identity check's read-only transaction is rolled back
+    before hand-off (nothing from the check persists, and a caller's
+    first ``conn.transaction()`` block is the OUTERMOST transaction and
+    therefore commits); any check failure closes the connection first.
+    """
     repo_root = Path(repo_root)
     if info is None:
         info = read_instance(repo_root)
@@ -111,7 +118,12 @@ def connect_managed(repo_root: Path, *, info: dict | None = None):
     import psycopg  # lazy: the audited validation already ran in managed_dsn
     with binding.bound(info['instance_id'], info['root_sha256'], info['system_identifier']):
         connection = psycopg.connect(dsn)
-        binding.verify_connection(connection.cursor())
+        try:
+            binding.verify_connection(connection.cursor())
+            connection.rollback()   # end the check's read-only transaction; hand off IDLE
+        except BaseException:
+            connection.close()      # fail closed: release, never hand off
+            raise
     return connection
 
 
