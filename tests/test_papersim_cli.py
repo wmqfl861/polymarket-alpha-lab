@@ -1635,6 +1635,29 @@ def test_report_evaluation_clock_uses_only_selected_decisions_closes_and_outcome
     assert times == {'evaluate': STUB_NOW}
 
 
+@pytest.mark.parametrize(('observed_minutes', 'confirmed_minutes'), [(10, 20), (20, 10)])
+def test_report_evaluation_clock_includes_the_separately_selected_trade_outcome(
+        observed_minutes, confirmed_minutes):
+    candidate = dict(_entered_candidate(
+        1, 'm-entry', side='YES', stake='250', price='0.50', has_order_book=True),
+        classification=None, condition_id='c-entry', event_key=None)
+    market_outcome = dict(_market_outcome(1, 'm-entry', 'NO', 0), condition_id='c-entry',
+                          observed_at=STUB_NOW + datetime.timedelta(minutes=15),
+                          confirmed_at=STUB_NOW - datetime.timedelta(minutes=2))
+    observed = STUB_NOW + datetime.timedelta(minutes=observed_minutes)
+    confirmed = STUB_NOW + datetime.timedelta(minutes=confirmed_minutes)
+    trade_outcome = dict(_market_outcome(2, 'm-entry', 'YES', 0),
+                         observed_at=observed, confirmed_at=confirmed)
+    unknown = dict(_market_outcome(3, 'm-entry', 'UNKNOWN', 1), condition_id='c-entry')
+    times = {}
+
+    mapped, = cli._evaluation_candidates_from_rows(
+        [candidate], [], [market_outcome, trade_outcome, unknown], evidence_times=times)
+
+    assert (mapped.natural_outcome, mapped.outcome, mapped.settled_time) == ('NO', 'YES', confirmed)
+    assert times == {'evaluate': max(observed, confirmed)}
+
+
 def test_report_body_batches_keep_all_positions_and_count_shared_bytes_once():
     from polymarket_alpha_lab.papersim import store_psycopg
     from polymarket_alpha_lab.papersim.adapters.contracts import HARD_MAX_RESPONSE_BYTES

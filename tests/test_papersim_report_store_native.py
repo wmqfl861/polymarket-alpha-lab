@@ -1839,6 +1839,61 @@ def test_report_keeps_market_scoring_while_natural_pnl_is_pending(app, repo, out
     _assert_native_archives_retained(root, (initial, partial, complete), record_property)
 
 
+def test_report_evaluation_clock_includes_the_outcome_selected_for_a_pending_trade(
+        app, repo, record_property):
+    root, _ = repo
+    record = _crypto_record()
+    _seed_initial_cash(app)
+    candidate_id = _priced_crypto_scan(app, repo, (record,))[record.candidate_key]
+    entry = _crypto_entry(app, candidate_id)
+    assert entry is not None
+    _write_crypto_close(app, candidate_id, record.market_id, entry_id=entry[0])
+    initial = _capture_native_report(app, root)
+    assert initial.document["stages"]["evaluate"]["as_of"] == _CLOSE_AT.isoformat()
+    entered, = app.execute(
+        "SELECT entered_at FROM papersim.entries WHERE entry_id = %s", (entry[0],)).fetchone()
+    trade_observed = entered + datetime.timedelta(minutes=10)
+    trade_confirmed = entered + datetime.timedelta(minutes=20)
+    market_observed = entered + datetime.timedelta(minutes=15)
+    _write_crypto_outcome(app, record.market_id, "YES",
+                          observed_at=trade_observed, confirmed_at=trade_confirmed)
+    _write_crypto_outcome(app, record.market_id, "NO", observed_at=market_observed,
+                          confirmed_at=entered - datetime.timedelta(minutes=2))
+
+    sources = _pipeline_rows(app)
+    archive_counts = _report_archive_counts(app)
+    diagnostic = b"evaluate: FAIL: recorded mode and EXITED rows require a recorded 'pnl'\n"
+    for options in ((), ("--pnl-basis", "recorded")):
+        strict = _native_cli(root, "evaluate", *options)
+        assert (strict.returncode, strict.stdout, strict.stderr) == (1, b"", diagnostic)
+    recomputed = _native_cli(root, "evaluate", "--pnl-basis", "recomputed")
+    assert recomputed.returncode == 0 and not recomputed.stderr
+    hypothetical, = json.loads(recomputed.stdout)["queues"]
+    assert hypothetical["fills"]["hits"] == hypothetical["roi"]["counted"] == 1
+    assert hypothetical["scoring"]["markets_scored"] == 1
+    assert hypothetical["scoring"]["model_brier"] == pytest.approx(0.2224 ** 2)
+    assert _pipeline_rows(app) == sources
+    assert _report_archive_counts(app) == archive_counts
+
+    partial = _capture_native_report(app, root)
+    document = partial.document
+    stages = document["stages"]
+    _assert_pnl_gap(document, _expected_crypto_queue())
+    queue, = document["evaluation"]["queues"]
+    assert queue["scoring"] == hypothetical["scoring"]
+    assert queue["counts"]["unresolved"] == 1 and queue["roi"]["counted"] == 0
+    assert stages["outcomes"]["row_count"] == 2 and stages["outcomes"]["markets_with_outcome"] == 1
+    assert stages["settle"]["entries_settled"] == 0 and stages["settle"]["as_of"] is None
+    assert stages["outcomes"]["as_of"] == document["as_of"] == trade_confirmed.isoformat()
+    record_property("report_watermarks", json.dumps({
+        "evaluate": stages["evaluate"]["as_of"], "outcomes": stages["outcomes"]["as_of"],
+        "overall": document["as_of"], "trade_confirmed": trade_confirmed.isoformat(),
+    }, sort_keys=True))
+    assert stages["evaluate"]["as_of"] == trade_confirmed.isoformat()
+    _capture_native_report(app, root, replay=partial)
+    _assert_native_archives_retained(root, (initial, partial), record_property)
+
+
 def test_report_keeps_booked_zero_and_a_complete_queue_during_pending_pnl(app, repo, record_property):
     root, _ = repo
     _seed_initial_cash(app)

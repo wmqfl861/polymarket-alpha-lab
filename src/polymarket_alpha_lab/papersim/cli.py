@@ -776,18 +776,9 @@ def _evaluation_candidates_from_rows(candidate_rows, evidence_rows, outcome_rows
         model_probability = None if decision is None else _number(decision["model_probability"])
         market_mid = _decision_mid(decision)
         entered = row["stake"] is not None
-        if evidence_times is not None:
-            selected = outcomes_by_id.get(effective.outcome_id) if effective else None
-            used_decision = model_probability is not None or market_mid is not None
-            moments = (evidence_times.get("evaluate"), row["evaluated_at"],
-                       row.get("entered_at"), row.get("confirmed_at"),
-                       decision.get("observed_at") if used_decision else None,
-                       close.get("observed_at") if close_price is not None else None,
-                       selected.get("observed_at") if selected else None,
-                       selected.get("confirmed_at") if selected else None)
-            evidence_times["evaluate"] = max(t for t in moments if t is not None)
         recorded_pnl = None
         classification = row["classification"] if entered else None
+        trade_observation = None
         if entered and classification is None:
             typed_identity = settle.MarketIdentity.from_row(row)
             captured = settle.select_entry_outcome(
@@ -795,6 +786,7 @@ def _evaluation_candidates_from_rows(candidate_rows, evidence_rows, outcome_rows
                 settle.captured_for_identity(entry_observations, typed_identity))
             if captured is not None and captured.is_effective:
                 outcome, settled_at = captured.outcome, settle.utc_instant(captured.evidence_time)
+                trade_observation = captured
             else:
                 outcome, settled_at = None, None
         elif classification is not None:
@@ -823,6 +815,21 @@ def _evaluation_candidates_from_rows(candidate_rows, evidence_rows, outcome_rows
                     "papersim_eval_settlement_classification_unknown: "
                     f"{classification!r} on candidate {candidate_id}"
                 )
+        if evidence_times is not None:
+            # Market scoring and the pending trade can use different observations.
+            market_observation = outcomes_by_id.get(effective.outcome_id) if effective else None
+            used_decision = model_probability is not None or market_mid is not None
+            moments = (
+                evidence_times.get("evaluate"), row["evaluated_at"],
+                row.get("entered_at"), row.get("confirmed_at"),
+                decision.get("observed_at") if used_decision else None,
+                close.get("observed_at") if close_price is not None else None,
+                market_observation.get("observed_at") if market_observation else None,
+                market_observation.get("confirmed_at") if market_observation else None,
+                trade_observation.observed_at if trade_observation else None,
+                trade_observation.confirmed_at if trade_observation else None,
+            )
+            evidence_times["evaluate"] = max(t for t in moments if t is not None)
         built.append(evaluation.EvaluationCandidate(
             candidate_id=str(candidate_id),
             model_key=f"{row['model_name']}:{row['model_version']}",
