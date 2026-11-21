@@ -1,0 +1,10 @@
+commit: 2bdc4cccacc925ea8e6569c8865b90c0b0c671e6
+04 section 2, the scope table and its two paragraphs (lines 20-29): 8 non-empty lines; verbatim in DELIVERY_PLAN.md: 8
+04 section 6, both tables and the envelope paragraph (lines 75-95): 18 non-empty lines; verbatim in DELIVERY_PLAN.md: 18
+04 section 6, the closing two bullets (lines 97-100): 3 non-empty lines; verbatim in DELIVERY_PLAN.md: 0
+owner's 2026-11-19 sentence present verbatim in DELIVERY_PLAN.md: True
+docs/paper-sim/blueprint.md: 168 lines; 02-blueprint-v4.md: 166 lines
+  lines of the 02 file missing from blueprint.md: 0
+  lines of blueprint.md not in the 02 file: 1
+    + > 本文件由 2026-11-19 审核交接包的 [02 号文件](../handoffs/2026-11-19-audit-optimizer/02-blueprint-v4.md)替换而来（节点 MO-0，2026-
+DELIVERY_PLAN.md: 4452 lines; last heading: ### 84.1 MO-8 俱乐部候选的空前向样本

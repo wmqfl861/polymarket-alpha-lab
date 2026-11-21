@@ -1,0 +1,21 @@
+queried: 2026-11-21T06:55:01Z
+
+== open pull requests
+#118 created=2026-11-21 head=f09850ba8ef010895d6a959cbeff401fbc706363 base=2bdc4ccc M2 D1：恢复取价、终局取证和逐笔模拟结算
+#116 created=2026-11-21 head=8c7b536514eda6dfc772bf7fc6a4fc597892a294 base=11fb457c 标记 FX-18 B1 归档批次并登记仍在使用的测试
+#114 created=2026-11-20 head=26dfa2a05357121665009981cd600e23c91e093a base=2bdc4ccc 按受管快照完成模拟优化并验证跨进程运行回执
+#41 created=2026-09-15 head=3056c1526d85e7f9a9fc3e53f6c6c964cb234010 base=f331d71d WP-06: first-invocation PowerShell handoff evidence without
+#35 created=2026-09-15 head=103e6763112fdc065c56a17682ec0288eaa37499 base=4a6e787e WP-05: original research to explicit-cost hypothetical paper
+#34 created=2026-09-15 head=ee0a3c07be2b2a3255dbb2c6365731145d218e16 base=4a6e787e WP-05: cost-aware paper scenarios joined to original strict
+
+== merge refs fetched (refs/pull/N/merge) and their parents
+#114 merge=a0086b82bb2f1c05af5867cdfc7a64118d2b90c3 parents=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 26dfa2a05357121665009981cd600e23c91e093a
+#116 merge=fb69b63d909fddd9182a2d051a5a37d5a510e65a parents=11fb457c6e714844ec2ee1c0eb3c90dbd145eaa7 8c7b536514eda6dfc772bf7fc6a4fc597892a294
+#118 merge=eea87f79131cd3326b2badf5c0a3763191218a6d parents=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 f09850ba8ef010895d6a959cbeff401fbc706363
+
+== pull request 114 against main
+merge-base with 2bdc4ccc: af4ff553262a7ee532e36e1b0d8ba4939522f4ba
+commits on main not in the PR head: 16
+ 23 files changed, 17102 insertions(+), 925 deletions(-)
+
+== remote branches: 220

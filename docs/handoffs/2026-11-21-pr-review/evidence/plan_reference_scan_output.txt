@@ -1,0 +1,21 @@
+######## PR #114: node-plan / review references in files changed vs main
+base=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 head=refs/audit/m_main+114
+files ADDED since base (new modules): 0; citing a node plan, review item or ruling: 0 files, 0 lines
+files MODIFIED since base: 8; citing a node plan, review item or ruling: 8 files, 29 lines
+    8  src/polymarket_alpha_lab/papersim/cli.py: 48, 564, 691, 959, 963, 1323, 1813, 2332
+    2  src/polymarket_alpha_lab/papersim/optimize/metrics.py: 8, 37
+    5  src/polymarket_alpha_lab/papersim/optimize/policy.py: 22, 32, 149, 252, 555
+    2  src/polymarket_alpha_lab/papersim/optimize/registry.py: 12, 304
+    5  src/polymarket_alpha_lab/papersim/optimize/runner.py: 3, 948, 1030, 1693, 1730
+    1  src/polymarket_alpha_lab/papersim/optimize/scorecard.py: 15
+    1  src/polymarket_alpha_lab/papersim/optimize/search.py: 3
+    5  src/polymarket_alpha_lab/papersim/store_psycopg.py: 485, 972, 975, 1137, 1846
+entries under docs/paper-sim/design at head: ['MANIFEST.sha256', 'README.md', 'd1-frozen-preflight-plan.md', 'd1-frozen-preflight-same-instance.md', 'server-evidence']
+######## PR #118: node-plan / review references in files changed vs main
+base=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 head=refs/audit/m_main+118
+files ADDED since base (new modules): 1; citing a node plan, review item or ruling: 0 files, 0 lines
+files MODIFIED since base: 5; citing a node plan, review item or ruling: 3 files, 17 lines
+    2  src/polymarket_alpha_lab/papersim/capture.py: 24, 44
+    9  src/polymarket_alpha_lab/papersim/cli.py: 48, 564, 690, 958, 962, 1072, 1421, 1827, 2034
+    6  src/polymarket_alpha_lab/papersim/store_psycopg.py: 592, 1267, 1270, 1471, 1906, 2009
+entries under docs/paper-sim/design at head: ['MANIFEST.sha256', 'README.md', 'd1-frozen-preflight-plan.md', 'd1-frozen-preflight-same-instance.md', 'd1-operation-recovery-plan.md', 'server-evidence']
