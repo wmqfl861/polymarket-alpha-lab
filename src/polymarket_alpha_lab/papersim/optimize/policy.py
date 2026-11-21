@@ -3,18 +3,16 @@
 Design ``docs/handoffs/2026-11-19-audit-optimizer/04-optimizer-design.md``
 sections 5/6 and plan 05 node MO-8; the registered numbers are frozen
 verbatim in ``DELIVERY_PLAN.md`` section 80.7 (registered 2026-11-20,
-OD-J).  This module is the ONE place the rule numbers live: every
-threshold, interval level and window length below is part of the
-versioned rule -- changing any of them means a new ``RULE_VERSION``
-and a fresh registration, never an in-place edit.
+OD-J). Shared rule facts come from the pure registry. The final
+evidence percentiles come from evaluation's frozen bootstrap.
+Changing a threshold, interval or window requires a new
+``RULE_VERSION`` and a fresh registration.
 
-Pure: standard library only, plus the evaluation module's frozen
-cluster bootstrap through :func:`decide` inputs already computed by
-the caller.  No I/O, no network, no database driver, no clock reads
-(every timestamp arrives as an explicit argument), and no import of
-``papersim.store``/``store_psycopg``/``provider`` -- the CLI assembles
-:class:`LineageFacts` and :class:`ForwardStats` from the database and
-calls the judgement functions here.
+Importing policy loads the registry and evaluation for their rule facts.
+Evaluation also loads ``research_probability_scores``,
+``team_research_agent_types`` and ``team_taxonomy``. Policy performs no
+I/O or clock reads. The CLI assembles :class:`LineageFacts` and
+:class:`ForwardStats` with the computed intervals and timestamps.
 
 Conclusions are exactly the seven closed tokens of
 ``papersim.store.DECISION_CONCLUSIONS`` (mirrored by the database
@@ -45,6 +43,21 @@ from __future__ import annotations
 import datetime as _datetime
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+
+# The second evidence look uses the frozen default interval.
+from polymarket_alpha_lab.papersim.evaluation import (
+    BOOTSTRAP_PERCENTILES as SECOND_EVIDENCE_CI_PERCENTILES,
+)
+from polymarket_alpha_lab.papersim.optimize.registry import (
+    _ENVELOPE_MIN_RATIO,
+    _FIRST_EVIDENCE_CI_PERCENTILES,
+    _FORWARD_ROWS,
+    _FORWARD_TARGET_ROWS,
+    _PROMOTE_CI_UPPER_MAX,
+    _SECOND_LOOK_SAMPLE_MULTIPLIER,
+    _STAGE1_HOLDOUT_FLOORS,
+    _shadow_window_days,
+)
 
 __all__ = [
     "BLOCK_REASON_CODES",
@@ -110,18 +123,18 @@ RULE_REGISTERED = "2026-11-20"
 PROMOTE_PAIRED_MEAN_MAX = 0.0
 
 #: 95% 区间上界 ≤ +0.005（含）。
-PROMOTE_CI_UPPER_MAX = 0.005
+PROMOTE_CI_UPPER_MAX = _PROMOTE_CI_UPPER_MAX
+
+#: 换回守卫的 95% 区间下界严格大于 0。
+_ROLLBACK_CI_LOWER_MIN = 0.0
 
 #: 第一次证据判把区间从 95% 收紧到 99%（percentile pair; the frozen
 #: bootstrap draws themselves are unchanged -- evaluation lane exposes
 #: the parameterized extraction).
-FIRST_EVIDENCE_CI_PERCENTILES = (0.5, 99.5)
-
-#: 第二次（最后一次）证据判用 95%。
-SECOND_EVIDENCE_CI_PERCENTILES = (2.5, 97.5)
+FIRST_EVIDENCE_CI_PERCENTILES = _FIRST_EVIDENCE_CI_PERCENTILES
 
 #: 第一次没过：样本翻倍时判第二次（也是最后一次）。
-SECOND_LOOK_SAMPLE_MULTIPLIER = 2
+SECOND_LOOK_SAMPLE_MULTIPLIER = _SECOND_LOOK_SAMPLE_MULTIPLIER
 
 #: "候选会下注的那些市场"的收盘价偏离均值不比现役低 1 美分以上：
 #: gap（候选均值 − 现役均值）≤ −0.01 即拦截（"以上"含本数，钉死解释）。
@@ -137,12 +150,13 @@ OWNER_CONFIRM_QUEUE_ENTRIES = 30
 HANDOVER_WINDOW_DAYS = 28
 
 #: 登记门（第一阶段，MO-6 消费）：候选包络离散度中位数不得低于现役
-#: 的 0.8 倍。数字的唯一出处仍在此模块。
-ENVELOPE_MIN_RATIO = 0.8
+#: 的 0.8 倍。
+ENVELOPE_MIN_RATIO = _ENVELOPE_MIN_RATIO
 
 #: 第一次判的留出期下限（第一阶段，MO-6 消费）：登记行样本数口径。
-STAGE1_HOLDOUT_MIN_MARKETS = 300
-STAGE1_HOLDOUT_MIN_BLOCKS = 20
+STAGE1_HOLDOUT_MIN_MARKETS, STAGE1_HOLDOUT_MIN_BLOCKS = (
+    _STAGE1_HOLDOUT_FLOORS["club-soccer"]
+)
 
 
 @dataclass(frozen=True)
@@ -165,33 +179,22 @@ class ForwardThreshold:
     min_span_days: int | None = None
 
 
-_OU = ForwardThreshold(min_markets=150, max_shadow_days=84,
-                       family_class="club-soccer-ou", min_complete_blocks=2)
-_WDL = ForwardThreshold(min_markets=300, max_shadow_days=84,
-                        family_class="club-soccer-wdl", min_complete_blocks=2)
-_NBA = ForwardThreshold(min_markets=120, max_shadow_days=70,
-                        family_class="nba", min_span_days=14)
-_INTL = ForwardThreshold(min_markets=60, max_shadow_days=365,
-                         family_class="intl", min_complete_blocks=2)
-_CRYPTO = ForwardThreshold(min_markets=60, max_shadow_days=182,
-                           family_class="crypto", min_span_days=28)
+_THRESHOLDS = {
+    key: ForwardThreshold(
+        min_markets=row.min_events,
+        max_shadow_days=_shadow_window_days(row.shadow_window),
+        family_class=key,
+        min_complete_blocks=row.min_complete_blocks,
+        min_span_days=row.min_span_days,
+    )
+    for key, row in _FORWARD_ROWS.items()
+}
 
 #: The full (family_id, target) → threshold mapping.  Unregistered
 #: combinations fail :func:`classify_threshold` -- never a guessed row.
 FORWARD_THRESHOLDS: Mapping[tuple[str, str], ForwardThreshold] = {
-    ("club-soccer-frozen", "over_under"): _OU,
-    ("club-soccer-frozen", "btts"): _OU,
-    ("club-soccer-frozen", "team_total"): _OU,
-    ("club-soccer-recalib", "over_under"): _OU,
-    ("club-soccer-recalib", "match_winner"): _WDL,
-    ("nba-pace-efficiency", "moneyline"): _NBA,
-    ("nba-pace-efficiency", "totals"): _NBA,
-    ("intl-elo-poisson", "match_winner"): _INTL,
-    ("intl-elo-poisson", "over_under"): _INTL,
-    ("intl-elo-goal-residuals", "match_winner"): _INTL,
-    ("intl-elo-goal-residuals", "over_under"): _INTL,
-    ("crypto-gbm", "touch"): _CRYPTO,
-    ("crypto-gbm", "terminal"): _CRYPTO,
+    key: _THRESHOLDS[row_id]
+    for key, row_id in _FORWARD_TARGET_ROWS.items()
 }
 
 # ---------------------------------------------------------------------------
@@ -645,7 +648,7 @@ def decide_rollback(facts: LineageFacts, stats: ForwardStats, *,
                        interval_level="ci95", metrics=metrics,
                        evidence_watermark=_watermark_dict(stats), **base)
     lower = stats.ci95[0]
-    if lower is not None and lower > 0.0:
+    if lower is not None and lower > _ROLLBACK_CI_LOWER_MIN:
         return Verdict(conclusion=CONCLUSION_ROLLBACK, block_reason=None,
                        interval_level="ci95", metrics=metrics,
                        evidence_watermark=_watermark_dict(stats), **base)

@@ -26,7 +26,9 @@ from tests.test_papersim_optimize_registry_native import (
     NATIVE, OWNER_DSN, ROOT, _connect, _migrated_app, _rebind_database,
 )
 from tests.test_papersim_optimize_runner import Harness, SyntheticFamily
-from tests.test_papersim_report_store_native import _managed_test_postgres, repo as managed_repo
+from tests.test_papersim_report_store_native import (
+    _managed_test_postgres, pytestmark as MANAGED_NATIVE, repo as managed_repo,
+)
 
 AT = datetime(2026, 11, 19, 0, tzinfo=UTC)
 COMMIT = 'b' * 40
@@ -2557,6 +2559,207 @@ def test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline(
     record_property('confirmation', _json({**observed, 'severed_ns': severed,
                                            'stage': details['stage'], 'command_events': len(events),
                                            'runs': len(runs)}).decode())
+
+
+@MANAGED_NATIVE
+@pytest.mark.parametrize(('scenario', 'outcome'), [
+    ('registered', 'CANDIDATE_REGISTERED'),
+    ('unregistered', 'NO_IMPROVEMENT'),
+    ('rejected', 'NO_IMPROVEMENT'),
+    ('budget', 'RUN_FAILED'),
+])
+def test_native_rule_source_cli_and_readback(managed_runtime, managed_repo, monkeypatch, tmp_path, capsysbinary,
+                                             record_property, scenario, outcome):
+    """Run the real CLI/store and crypto model over a sealed synthetic experiment."""
+    from polymarket_alpha_lab.papersim import cli, snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.optimize import runner
+    from polymarket_alpha_lab.papersim.optimize.families.crypto import CRYPTO_GBM
+    from tests.test_papersim_optimize_runner import _actual_crypto_inputs, _crypto_holdout, _crypto_search_records
+
+    _, app = managed_runtime
+    repo, _ = managed_repo
+    cutoff = datetime(2026, 11, 20, 6, tzinfo=UTC)
+    at = cutoff + timedelta(hours=1)
+    lineage = 'crypto-gbm/touch'
+    evidence_commit = os.environ.get('PAL_MO6_RULE_EVIDENCE_COMMIT')
+    if evidence_commit is not None:
+        assert cli.require_clean_worktree_path(ROOT) == evidence_commit
+    code_commit = evidence_commit or COMMIT
+    receipt_dir = os.environ.get('PAL_MO6_RULE_EVIDENCE_DIR')
+    sources = {'scenario': scenario, 'settled_markets': 150, 'expiry_days': 20}
+    content = _json(sources)
+    content_sha = sha256(content).hexdigest()
+    protocol = {
+        'family': CRYPTO_GBM.family_id, 'rule_version': 'v1', 'procedure_version': CRYPTO_GBM.procedure_version,
+        'schedule_id': 'rule-source-crypto-fixture-v1', 'targets': ['touch'], 'seed': SEED,
+        'data_cutoff': cutoff.isoformat(), 'source_calendar': 'UTC expiry days', 'cohort': 'synthetic',
+    }
+    manifest = _json({'schema_version': 1, 'protocol': protocol, 'sources': [{
+        'role': 'evidence', 'key': 'rule-source-crypto.json', 'kind': SOURCE_KIND, 'schema_version': 1,
+        'sha256': content_sha, 'byte_length': len(content),
+    }]})
+    manifest_sha = sha256(manifest).hexdigest()
+    with app.transaction():
+        for raw, kind in ((content, SOURCE_KIND), (manifest, 'optimizer_experiment_manifest')):
+            snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
+                content=raw, kind=kind, source='rule-source-native-fixture', fetched_at=at,
+            ))
+    pointer = {'schema_version': 1, 'manifest_sha256': manifest_sha, 'manifest_byte_length': len(manifest)}
+    pointer_path = tmp_path / 'rule-source-crypto-pointer.json'
+    pointer_path.write_bytes(_json(pointer))
+
+    holdout = _crypto_holdout(sources['settled_markets'], sources['expiry_days'])
+    records = _crypto_search_records() + holdout
+    arguments, calls = _actual_crypto_inputs(
+        records, {row.group_id for row in holdout}, dataset_summary=sources, schedule_id=protocol['schedule_id'],
+    )
+    if scenario == 'rejected':
+        holdout_keys = {row.event_key for row in holdout}
+        arguments['fixture_lines'] = tuple(
+            replace(row, outcome_index=0) if row.event_key in holdout_keys else row
+            for row in arguments['fixture_lines']
+        )
+    if scenario == 'unregistered':
+        evaluate = arguments['evaluate']
+
+        def equal_search(spec, fold, targets):
+            return evaluate(CRYPTO_GBM.baseline_spec(), fold, targets)
+
+        arguments['evaluate'] = equal_search
+    if scenario == 'budget':
+        monkeypatch.setattr(runner, 'MAX_TRIALS', 3)
+        arguments['max_trials'] = 3
+
+    def synthetic_inputs(*, family, manifest, source_artifacts, deadline):
+        assert family is CRYPTO_GBM and _json(manifest['protocol']) == _json(protocol)
+        assert source_artifacts == {content_sha: content} and not deadline()
+        return arguments
+
+    class FixedDatetimeMeta(type):
+        def __instancecheck__(cls, value):
+            return isinstance(value, datetime)
+
+    class FixedDatetime(datetime, metaclass=FixedDatetimeMeta):
+        @classmethod
+        def now(cls, tz=None):
+            return at.astimezone(tz)
+
+    monkeypatch.setattr(store_psycopg, 'datetime', FixedDatetime)
+    monkeypatch.setattr(runner, '_historical_family', lambda _: CRYPTO_GBM)
+    monkeypatch.setattr(runner, 'historical_protocol', lambda family: protocol)
+    monkeypatch.setattr(runner, 'historical_run_arguments', synthetic_inputs)
+    monkeypatch.setattr(cli, 'require_clean_worktree_path', lambda _: code_commit)
+    assert cli.main(['optimize', 'init', '--families', 'crypto-gbm', '--actor', 'native-rule-proof',
+                     '--effective-at', cutoff.isoformat(), '--managed', '--repo-root', str(repo)]) == 0
+    initialized = capsysbinary.readouterr()
+    assert initialized.err == b''
+    assert json.loads(initialized.out)[lineage]['state'] == 'initialized'
+
+    run = ['optimize', 'run', '--family', 'crypto-gbm', '--as-of', cutoff.isoformat(),
+           '--input-manifest', str(pointer_path), '--managed', '--repo-root', str(repo)]
+    exit_code = int(outcome == 'RUN_FAILED')
+    assert cli.main(run) == exit_code
+    published = capsysbinary.readouterr()
+    assert published.err == b''
+    receipt = json.loads(published.out)
+    assert receipt['outcome'] == outcome and receipt['exit_code'] == exit_code and receipt['replayed'] is False
+    assert receipt['registered_lineages'] == ([lineage] if scenario == 'registered' else [])
+    assert receipt['counts']['completed_holdout_callbacks'] == (2 if scenario in {'registered', 'rejected'} else 0)
+    assert len(calls['holdout']) == receipt['counts']['completed_holdout_callbacks']
+
+    digest = receipt['artifacts_sha256']
+    with store_psycopg.connect_managed(repo) as fresh:
+        row = store_psycopg.latest_optimization_for_lineage(fresh, lineage)
+        blob = snapshots.read_snapshot(fresh, digest)
+        roles = fresh.execute(
+            "SELECT lineage, spec_sha256, effective_at, forward_plan, code_commit, reason, actor, decision_id "
+            "FROM papersim.model_role_events WHERE role = 'CANDIDATE' ORDER BY lineage"
+        ).fetchall()
+        events = fresh.execute(
+            "SELECT phase, occurred_at, operation_key, run_event_key, config_digest, error_code, "
+            "code_commit, input_evidence, output_evidence "
+            "FROM papersim.command_run_events WHERE command = 'optimize-run' ORDER BY run_event_id"
+        ).fetchall()
+        rejections = store_psycopg._optimization_rejections(fresh, CRYPTO_GBM.family_id)
+    assert blob['schema_version'] == 2
+    artifact = blob['content']
+    assert sha256(artifact).hexdigest() == digest == row['artifacts_sha256']
+    assert len(artifact) == blob['byte_length'] == row['artifact_byte_length'] == receipt['artifact_byte_length']
+    assert row['scorecard'] == receipt['scorecard']
+    assert row['code_commit'] == code_commit
+    assert [event[0] for event in events] == ['STARTED', 'FAILED' if exit_code else 'SUCCEEDED']
+    assert all(event[1] == at for event in events)
+    payload = json.loads(artifact)
+    assert payload['request']['code_commit'] == code_commit
+    assert payload['pure']['code_commit'] == code_commit
+    assert sha256(_json(payload['pure'])).hexdigest() == payload['pure_sha256']
+    assert payload['pure']['statistical_parameters'] == {
+        'bootstrap_resamples': 20000, 'ci_confidence_level': 0.95, 'holm_alpha': 0.05,
+        'sign_flip_reps': 2000, 'sign_flip_seed': 20261119,
+    }
+    old_plan = runner._forward_plan('crypto-gbm', 'touch', at)
+    assert old_plan == {
+        'primary_metric': 'mean_log_loss', 'start': at.isoformat(), 'first_look_min_events': 60,
+        'final_look_min_events': 120, 'max_shadow_days': 182, 'rule_version': 'v1',
+    }
+    plan = None
+    if scenario == 'registered':
+        candidate, = payload['pure']['proposed_specs'].values()
+        incumbent = CRYPTO_GBM.baseline_spec().spec_sha256()
+        plan = {
+            **old_plan, 'start': at.isoformat().replace('+00:00', 'Z'), 'rule_version': 'promo-rule-v1',
+            'stage1_rule_version': 'v1', 'source_run_key': receipt['run_key'],
+            'source_manifest': {'sha256': manifest_sha, 'byte_length': len(manifest)},
+            'active_spec_sha256': incumbent, 'candidate_spec_sha256': candidate,
+            'min_complete_blocks': None, 'min_span_days': 28,
+            'first_look_ci_percentiles': [0.5, 99.5], 'final_look_ci_percentiles': [2.5, 97.5],
+            'paired_mean_max': 0.0, 'ci_upper_max': 0.005,
+            'close_deviation_min_gap': -0.01, 'close_deviation_min_markets': 30,
+        }
+        assert receipt['dispositions'][lineage]['forward_plan'] == payload['dispositions'][lineage]['forward_plan'] == plan
+        assert roles == [(lineage, candidate, at, plan, code_commit,
+                          f"stage-one eligibility for {receipt['run_key']}", 'auto:v1', None)]
+    else:
+        assert roles == []
+    if scenario == 'rejected':
+        rejection = rejections[0]
+        assert len(rejections) == 1
+        assert rejection['lineage'] == lineage and rejection['artifact_sha256'] == digest
+        assert payload['rejections'][lineage]['reasons'] == ['holdout_ci_upper_nonnegative', 'calibration_regression']
+        assert payload['pure']['decisions'][0]['status'] == 'statistically_rejected'
+    else:
+        assert not rejections and not payload['rejections']
+    if scenario == 'budget':
+        assert receipt['budget']['stopping_causes'] == ['trial_cap']
+        assert receipt['counts']['evaluated_trials'] == 3
+
+    calls_before_replay = {name: list(history) for name, history in calls.items()}
+    assert cli.main(run) == exit_code
+    replay = capsysbinary.readouterr()
+    assert replay.err == b''
+    assert json.loads(replay.out) == {**receipt, 'replayed': True}
+    assert calls == calls_before_replay
+
+    evidence = {
+        'source': sources, 'source_sha256': content_sha, 'manifest': pointer, 'code_commit': code_commit,
+        'run_key': receipt['run_key'], 'outcome': outcome, 'exit_code': exit_code, 'artifact_sha256': digest,
+        'artifact_length': len(artifact), 'pure_sha256': payload['pure_sha256'], 'legacy_forward_plan': old_plan,
+        'managed_forward_plan': plan, 'readback_counts': row['trial_count'], 'registered_roles': len(roles),
+        'verified_rejections': len(rejections),
+    }
+    record_property('registered_rule_evidence', _json(evidence).decode())
+    if receipt_dir:
+        directory = Path(receipt_dir) / scenario
+        directory.mkdir(parents=True)
+        for name, data in (
+            ('evidence.json', _json(evidence)), ('init.stdout', initialized.out),
+            ('run.stdout', published.out), ('run.stderr', published.err), ('replay.stdout', replay.out),
+            ('artifact.json', artifact), ('source.json', content), ('manifest.json', manifest),
+            ('readback.json', json.dumps(row, sort_keys=True, default=str).encode()),
+            ('roles.json', json.dumps(roles, sort_keys=True, default=str).encode()),
+            ('command-events.json', json.dumps(events, sort_keys=True, default=str).encode()),
+        ):
+            (directory / name).write_bytes(data)
 
 
 if __name__ == '__main__':

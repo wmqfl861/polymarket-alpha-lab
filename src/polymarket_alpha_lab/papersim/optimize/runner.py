@@ -45,20 +45,27 @@ from itertools import pairwise
 from pathlib import Path
 from typing import Any, TYPE_CHECKING
 from polymarket_alpha_lab.papersim import store
+from polymarket_alpha_lab.papersim.evaluation import (
+    BOOTSTRAP_PERCENTILES as _BOOTSTRAP_PERCENTILES,
+)
+from polymarket_alpha_lab.papersim.optimize import registry as _rule_registry
 from polymarket_alpha_lab.papersim.optimize import search
 from polymarket_alpha_lab.papersim.optimize.metrics import (
     ScoredEvent,
+    _HOLM_ALPHA_DEFAULT as HOLM_ALPHA,
+    _SIGN_FLIP_REPS_DEFAULT as SIGN_FLIP_REPS,
     cluster_mean_ci,
     holm,
     multiclass_log_loss,
     sign_flip_pvalue,
 )
-from polymarket_alpha_lab.papersim.optimize.registry import LineageRoles, lineage_id
+from polymarket_alpha_lab.papersim.optimize.registry import LineageRoles, MAX_CANDIDATES, lineage_id
 from polymarket_alpha_lab.papersim.optimize.scorecard import (
     GateResult,
     VERDICT_FAIL,
     VERDICT_NOT_ASSESSABLE,
     VERDICT_PASS,
+    _SIGN_FLIP_SEED_DEFAULT as SIGN_FLIP_SEED,
     build_scorecard,
     gate_abc_stat,
     gate_d_walkforward,
@@ -191,11 +198,15 @@ UTC = dt.timezone.utc
 #: Rule version string written into every run row and receipt context.
 RULE_VERSION = "v1"
 
-#: Stage-1 (holdout) minimums, alpha, the 0.8 envelope ratio, the 28-day
-#: re-submission block and the rule-acceptance rates are REGISTERED
-#: numbers (DELIVERY_PLAN 80.7, registration day 2026-11-20).  The
-#: stage-2 / forward numbers below them are transcribed verbatim for
-#: MO-8's policy.py convergence and are NOT enforced by MO-6.
+#: Section 80.7 projections (registered 2026-11-20).
+CI_CONFIDENCE_LEVEL = (_BOOTSTRAP_PERCENTILES[1] - _BOOTSTRAP_PERCENTILES[0]) / 100
+ENVELOPE_MIN_RATIO = _rule_registry._ENVELOPE_MIN_RATIO
+RESUBMISSION_BAN_DAYS = _rule_registry._RESUBMISSION_BAN_DAYS
+STAGE1_HOLDOUT_FLOORS: Mapping[str, tuple[int, int]] = _rule_registry._STAGE1_HOLDOUT_FLOORS
+_STAGE1_CI_UPPER_BOUND = _rule_registry._STAGE1_CI_UPPER_BOUND
+
+#: Legacy, JSON-ready projection of the registered rules and the MO-6
+#: synthetic acceptance thresholds.
 #:
 #: OPERATIONALIZATIONS — this block is the frozen rules-v1 reading of
 #: 80.7's wording; revising any of them follows the same number-change
@@ -230,31 +241,35 @@ RULE_VERSION = "v1"
 #:   deterministic evidence time), never from the writing clock.
 RUN_RULES_V1: Mapping[str, Any] = {
     "rule_version": RULE_VERSION,
-    "alpha": 0.05,
-    "envelope_width_ratio": 0.8,
-    "resubmission_days": 28,
-    "fp_rate_max": 0.05,
-    "detection_min": 0.80,
+    "alpha": HOLM_ALPHA,
+    "envelope_width_ratio": ENVELOPE_MIN_RATIO,
+    "resubmission_days": RESUBMISSION_BAN_DAYS,
+    "fp_rate_max": _rule_registry._FALSE_POSITIVE_RATE_MAX,
+    "detection_min": _rule_registry._DETECTION_RATE_MIN,
     "stage1_holdout_minimums": {
-        "club-soccer-recalib": {"min_events": 300, "min_blocks": 20},
-        "club-soccer-frozen": {"min_events": 300, "min_blocks": 20},
-        "intl-elo-poisson": {"min_events": 300, "min_blocks": 0},
-        "intl-elo-goal-residuals": {"min_events": 300, "min_blocks": 0},
-        "nba-pace-efficiency": {"min_events": 300, "min_blocks": 30},
-        "crypto-gbm": {"min_events": 150, "min_blocks": 20},
+        family_id: {"min_events": STAGE1_HOLDOUT_FLOORS[floor_class][0],
+                    "min_blocks": STAGE1_HOLDOUT_FLOORS[floor_class][1]}
+        for family_id, floor_class in _rule_registry._STAGE1_FAMILY_CLASSES.items()
     },
+    # The legacy min_blocks field can mean complete blocks or span days.
     "stage2_forward_minimums": {
-        "club-soccer(ou/btts/tt)": {"min_events": 150, "min_blocks": 2},
-        "club-soccer(match_winner)": {"min_events": 300, "min_blocks": 2},
-        "nba": {"min_events": 120, "min_blocks": 14},
-        "intl": {"min_events": 60, "min_blocks": 2},
-        "crypto": {"min_events": 60, "min_blocks": 28},
+        key: {
+            "min_events": row.min_events,
+            "min_blocks": (
+                row.min_complete_blocks if row.min_complete_blocks is not None else row.min_span_days
+            ),
+        }
+        for key, row in _rule_registry._LEGACY_FORWARD_ROWS.items()
     },
     "max_shadow_windows": {
-        "club": "12w", "nba": "10w", "intl": "12mo", "crypto": "6mo",
+        key: _rule_registry._shadow_window_label(key)
+        for key in _rule_registry._SHADOW_WINDOWS
     },
-    "promote_ci_upper_max": 0.005,
-    "first_look_ci_tighten": "99pct",
+    "promote_ci_upper_max": _rule_registry._PROMOTE_CI_UPPER_MAX,
+    "first_look_ci_tighten": "%gpct" % (
+        _rule_registry._FIRST_EVIDENCE_CI_PERCENTILES[1]
+        - _rule_registry._FIRST_EVIDENCE_CI_PERCENTILES[0]
+    ),
 }
 
 #: Gate-D min_events conventions quoted from the scorecard module
@@ -1715,7 +1730,7 @@ def _run_lineages(
         # final registration decision (plan r2 section 1.2c'').
         if fallback_incumbent:
             record["_registration_block"] = "registry_empty_or_unreadable"
-        elif state is not None and len(state.candidate_shas) >= 2:
+        elif state is not None and len(state.candidate_shas) >= MAX_CANDIDATES:
             record["_registration_block"] = "candidate_cap"
 
         # Holdout rows for winner / incumbent, variant spreads included.
@@ -1786,7 +1801,7 @@ def _run_lineages(
         ci_lower, ci_upper = cluster_mean_ci(clusters)
         block_sums = [sum(block) for block in clusters]
         p_value = (
-            sign_flip_pvalue(block_sums, seed=seed, reps=2000)
+            sign_flip_pvalue(block_sums, seed=seed, reps=SIGN_FLIP_REPS)
             if block_sums else 1.0
         )
 
@@ -1890,7 +1905,7 @@ def _apply_holm(lineage_records: dict[str, dict], seed: int) -> None:
         upper = gate["paired"]["ci95"][1]
         gate["holm_p_adjusted"] = _number(adjusted[index])
         gate["condition_a"] = bool(
-            upper is not None and float(upper) < 0.0 and rejected[index]
+            upper is not None and float(upper) < _STAGE1_CI_UPPER_BOUND and rejected[index]
         )
 
 
@@ -2065,21 +2080,14 @@ OPTIMIZE_RUN_COMMAND = "optimize-run"
 
 
 def _forward_plan(family_id: str, target: str, as_of: dt.datetime) -> dict:
-    """The pre-registered forward plan of ONE lineage (design §5-7).
+    """The pre-registered forward plan of one lineage (design 04 section 5).
 
-    Review P1-1: the plan is per LINEAGE, never per family — a
-    club-soccer match_winner registration carries the WDL row (300
-    first / 600 final), an over_under registration the O/U row (150 /
-    300).  The single source of the (family, target) table is MO-8's
-    ``policy.FORWARD_THRESHOLDS`` (DELIVERY_PLAN 80.7, frozen); the
-    ``RUN_RULES_V1["stage2_forward_minimums"]`` transcription is the
-    T12 pin policy must keep matching (closing path: once MO-6 may
-    depend on policy unconditionally, the transcription test flips to
-    a direct policy-vs-pin comparison and the fallback below shrinks
-    to synthetic test families only).
+    Registered combinations use the policy row. The legacy fallback
+    resolves other combinations by family prefix and the club target.
     """
     from polymarket_alpha_lab.papersim.optimize.policy import (
         FORWARD_THRESHOLDS,
+        SECOND_LOOK_SAMPLE_MULTIPLIER,
     )
 
     row = FORWARD_THRESHOLDS.get((family_id, target))
@@ -2087,31 +2095,27 @@ def _forward_plan(family_id: str, target: str, as_of: dt.datetime) -> dict:
         first = row.min_markets
         window_days = row.max_shadow_days
     else:
-        # Test-double families only: the transcription's family-class
-        # default, with the WDL row picked out by target.
-        stage2 = RUN_RULES_V1["stage2_forward_minimums"]
         if family_id.startswith("club-soccer"):
             key = (
                 "club-soccer(match_winner)"
                 if target == "match_winner"
                 else "club-soccer(ou/btts/tt)"
             )
-            first = stage2[key]["min_events"]
-            window_days = 84
         elif family_id.startswith("nba"):
-            first = stage2["nba"]["min_events"]
-            window_days = 70
+            key = "nba"
         elif family_id.startswith("intl"):
-            first = stage2["intl"]["min_events"]
-            window_days = 365
+            key = "intl"
         else:
-            first = stage2["crypto"]["min_events"]
-            window_days = 182
+            key = "crypto"
+        first = RUN_RULES_V1["stage2_forward_minimums"][key]["min_events"]
+        window_days = _rule_registry._shadow_window_days(
+            _rule_registry._LEGACY_FORWARD_ROWS[key].shadow_window
+        )
     return {
         "primary_metric": "mean_log_loss",
         "start": as_of.astimezone(UTC).isoformat(),
         "first_look_min_events": first,
-        "final_look_min_events": 2 * first,
+        "final_look_min_events": SECOND_LOOK_SAMPLE_MULTIPLIER * first,
         "max_shadow_days": window_days,
         "rule_version": RULE_VERSION,
     }
@@ -2324,28 +2328,6 @@ def status_report(conn, lineage_filter: str | None = None) -> dict:
     }
 
 
-# ---------------------------------------------------------------------------
-# Delta D4 -- the single constants home for the registered v1 numbers
-# ---------------------------------------------------------------------------
-
-
-#: Section 80.7 "holdout paired-difference 95% interval upper < 0" -- the
-#: confidence level of the holdout interval (the kernel bootstrap's frozen
-#: 2.5/97.5 linear-interpolation percentiles implement exactly this level).
-CI_CONFIDENCE_LEVEL = 0.95
-
-#: Section 80.7 "Holm-corrected across multiple lineages" -- the familywise
-#: error rate of the Holm step-down correction (equals the kernel default
-#: of ``metrics.holm``; pinned equal by test).
-HOLM_ALPHA = 0.05
-
-#: Sign-flip permutation test parameters (frozen; equal to the
-#: ``scorecard.build_scorecard`` kernel defaults -- pinned equal by test
-#: so the algorithmic numbers keep their single home in the kernel).
-SIGN_FLIP_SEED = 20261119
-SIGN_FLIP_REPS = 2000
-
-
 def bootstrap_resamples() -> int:
     """The kernel-frozen cluster-bootstrap resample count (lazy, no re-home).
 
@@ -2357,26 +2339,6 @@ def bootstrap_resamples() -> int:
 
     return BOOTSTRAP_RESAMPLES
 
-
-#: Section 80.7 envelope guard: "the median dispersion of the candidate's
-#: envelope must not fall below 0.8x the incumbent's" -- below is NOT
-#: auto-registered, the owner decides.
-ENVELOPE_MIN_RATIO = 0.8
-
-#: Section 80.7 / hard-block spacing: "a spec that did not pass may not be
-#: re-submitted within 28 days".
-RESUBMISSION_BAN_DAYS = 28
-
-#: Section 80.7 stage-1 holdout floors, verbatim per model-family class:
-#: (minimum settled events, minimum holdout blocks; 0 blocks = no block
-#: floor registered for that class). Both club-soccer rows share the same
-#: stage-1 floors (they differ only in stage-2 forward minimums).
-STAGE1_HOLDOUT_FLOORS: Mapping[str, tuple[int, int]] = MappingProxyType({
-    "club-soccer": (300, 20),  # 300 matches, >= 20 match-week blocks
-    "crypto": (150, 20),       # 150 settled markets, >= 20 expiry blocks
-    "intl": (300, 0),          # 300 matches (no block floor registered)
-    "nba": (300, 30),          # 300 matches, >= 30 game-day blocks
-})
 
 #: V1 compute caps. A trial is one candidate on one fold, so a complete
 #: grid can exceed the cap across folds even when the grid fits by itself.
@@ -2551,7 +2513,7 @@ def evaluate_stage1_rule(
         ]
         rejected, _adjusted = holm(pvalues, alpha=HOLM_ALPHA)
     for index, stat in enumerate(stats):
-        ci_passes = stat.ci95_upper is not None and stat.ci95_upper < 0.0
+        ci_passes = stat.ci95_upper is not None and stat.ci95_upper < _STAGE1_CI_UPPER_BOUND
         holm_rejected = None if rejected is None else rejected[index]
         significance = ci_passes and (
             True if holm_rejected is None else holm_rejected
@@ -5730,7 +5692,7 @@ def _publication_block(policy, lineage, spec, verified, baseline):
     digest = spec.spec_sha256()
     if digest == baseline or digest in {roles.active, roles.baseline, *roles.retired, *roles.candidates}:
         return "spec_already_has_registry_role"
-    if len(roles.candidates) >= 2:
+    if len(roles.candidates) >= MAX_CANDIDATES:
         return "registry_candidate_capacity"
     if policy.global_frozen or lineage in policy.frozen_lineages:
         return "registry_frozen"
@@ -6346,7 +6308,7 @@ def execute_optimization_run(
         decisions = tuple(LineageDecision(
             stat.lineage, stat.n_events, stat.n_blocks, False,
             stat.attempted and stat.n_events >= min_events and stat.n_blocks >= min_blocks,
-            stat.ci95_upper is not None and stat.ci95_upper < 0, None,
+            stat.ci95_upper is not None and stat.ci95_upper < _STAGE1_CI_UPPER_BOUND, None,
             stat.calibration_regression, stat.gate_regression, stat.envelope_status,
             attempted=stat.attempted, status=stat.status,
         ) for stat in stats.values())

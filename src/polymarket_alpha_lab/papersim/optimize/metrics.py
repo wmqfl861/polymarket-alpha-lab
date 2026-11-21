@@ -62,6 +62,9 @@ from polymarket_alpha_lab.papersim.evaluation import (
 )
 from polymarket_alpha_lab.research_probability_scores import CONTEXT, QUANTUM
 
+_SIGN_FLIP_REPS_DEFAULT = 2000
+_HOLM_ALPHA_DEFAULT = 0.05
+
 __all__ = (
     "NewSoccerCell",
     "NbaGroup",
@@ -324,7 +327,7 @@ def sign_flip_pvalue(
     block_sums: Sequence[float],
     *,
     seed: int,
-    reps: int = 2000,
+    reps: int = _SIGN_FLIP_REPS_DEFAULT,
 ) -> float:
     """Two-sided sign-flip permutation p-value on block sums.
 
@@ -347,7 +350,7 @@ def sign_flip_pvalue(
 
 
 def holm(
-    pvalues: Sequence[float], *, alpha: float = 0.05
+    pvalues: Sequence[float], *, alpha: float = _HOLM_ALPHA_DEFAULT
 ) -> tuple[tuple[bool, ...], tuple[float, ...]]:
     """Holm step-down correction (FWER) over ``k = len(pvalues)`` p-values.
 

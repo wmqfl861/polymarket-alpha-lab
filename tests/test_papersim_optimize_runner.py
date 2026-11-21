@@ -1908,6 +1908,28 @@ def test_trial_limit_just_below_equal_above_plan(cap, started, outcome):
 
 def _actual_crypto_run(records, holdout_groups, *, refused_day=None, lines=None, reported_times=None,
                        sensitive_truth=None, data_cutoff=DATA_CUTOFF, **overrides):
+    arguments, calls = _actual_crypto_inputs(
+        records, holdout_groups, refused_day=refused_day, lines=lines, reported_times=reported_times,
+        sensitive_truth=sensitive_truth, **overrides,
+    )
+
+    def run():
+        baseline = arguments["family"].baseline_spec()
+        digest = baseline.spec_sha256()
+        lineage = "crypto-gbm/touch"
+        return execute_optimization_run(
+            data_cutoff=data_cutoff, random_seed=1, code_commit=CODE_COMMIT,
+            policy_context=PolicyContext(max(STARTED_AT, data_cutoff), {
+                lineage: RegistryComparison(LineageRoles(lineage, digest, digest), baseline),
+            }),
+            deadline=lambda: False, **arguments,
+        )
+
+    return run, calls
+
+
+def _actual_crypto_inputs(records, holdout_groups, *, refused_day=None, lines=None,
+                          reported_times=None, sensitive_truth=None, **overrides):
     from polymarket_alpha_lab.papersim.optimize.families.crypto import (
         CRYPTO_GBM, CryptoFamilyFixture, CryptoFamilyHistory, spec_with,
     )
@@ -1972,21 +1994,11 @@ def _actual_crypto_run(records, holdout_groups, *, refused_day=None, lines=None,
         calls["builder"].append(params)
         return spec_with(**params)
 
-    def run():
-        digest = baseline.spec_sha256()
-        lineage = "crypto-gbm/touch"
-        return execute_optimization_run(
-            family=family, targets=("touch",), records=records, fixture_lines=lines,
-            holdout_group_ids=holdout_groups, evaluate=search, evaluate_holdout=holdout,
-            data_cutoff=data_cutoff, random_seed=1, code_commit=CODE_COMMIT,
-            policy_context=PolicyContext(max(STARTED_AT, data_cutoff), {
-                lineage: RegistryComparison(LineageRoles(lineage, digest, digest), baseline),
-            }),
-            build_candidate_spec=build, deadline=lambda: False,
-            **overrides,
-        )
-
-    return run, calls
+    return dict(
+        family=family, targets=("touch",), records=records, fixture_lines=lines,
+        holdout_group_ids=holdout_groups, evaluate=search, evaluate_holdout=holdout,
+        build_candidate_spec=build, **overrides,
+    ), calls
 
 
 def _crypto_search_records():
