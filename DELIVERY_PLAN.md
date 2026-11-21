@@ -4654,3 +4654,11 @@ PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并�
 - **O-5 和 O-6。** [受管校准失败与重放](docs/paper-sim/design/o-5-calibration-regression/review.md)有独立隔离 PostgreSQL 回执。O-6 对应 `tests/test_papersim_optimize_metrics.py::test_anchor3_wp_p4_paired_comparison`。#114 最终离线运行 `44928160743` 的既有跳过理由为服务器专用 WP-P4 evidence JSON 未提供。
 
 实质提交 `372f9cbebe2b60c84a39237efb62551f77c315dc` 的实际本机专项为 251 项离线、15 项原生 PostgreSQL，通过且原生零跳过。[独立只读源码复审](docs/paper-sim/design/fx-38-fx-39-step1/source-review.md) · [测试改动与审计脚本对照](docs/paper-sim/design/fx-38-fx-39-step1/tests-before-after.md)
+
+## 87. PR #118 受管操作、取价与结算恢复的当前合并验收
+
+本节点依据两轮审核的 MC-4、MC-5，在联合 PR #121 实际合并 `01a3d6d208fb7a22886f3cc0b54f4b6499d83400` 之后刷新。此前已发布的 #118 头为 `f09850ba8ef010895d6a959cbeff401fbc706363`，实质候选 `a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c` 的两父依次为此前 #118 的头和上述主线合并。两侧只在 `store_psycopg.py` 的导入与连接交接发生冲突。保留主线身份及时限校验，在两路正常交接成功后赋予 D1 所需的已验证项目根标记。工作流与原生矩阵的 `papersim` 清单均保留 28 个文件及其先后顺序。
+
+本机 Linux ZCode 完整验证实质头。离线专项 479 通过，按原生条件跳过 1 项并在完整原生分区实跑。隔离 PostgreSQL 专项 35 通过，完整原生分区 845 通过，原生均为零跳过。Linux 离线全量为 `43951 passed, 437 skipped, 20 warnings in 2699.92s (0:44:59)`，自检 10/10，CodeGraph、编译及敏感信息检查通过。首轮资源故障、后续复验和原有跳过条目见[本机与冲突回执](docs/paper-sim/design/pr-118-review.md)。
+
+独立本机 ZCode `sess_077a1f26-359e-4f3e-a678-332077d02d51` 于 `2026-11-21T23:36:32.392367+00:00` 对精确实质头签署 `VERDICT: PASS`。已审计划、历次复审和本机证据有[逐件校验清单](docs/paper-sim/design/pr-118/manifest.json)。三条远端工作流、实际合并提交和最终头的独立复核由本 PR 的精确验收回执登记。

@@ -1,0 +1,18 @@
+a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c
+f09850ba8ef010895d6a959cbeff401fbc706363 01a3d6d208fb7a22886f3cc0b54f4b6499d83400
+09643735652b406977d4ac3bfc7edd0209b7dad9
+M	.github/workflows/native-postgres.yml
+A	docs/paper-sim/design/d1-operation-recovery-plan.md
+M	src/polymarket_alpha_lab/papersim/capture.py
+M	src/polymarket_alpha_lab/papersim/cli.py
+M	src/polymarket_alpha_lab/papersim/d1compare/acquire.py
+A	src/polymarket_alpha_lab/papersim/d1compare/operations.py
+M	src/polymarket_alpha_lab/papersim/settle.py
+M	src/polymarket_alpha_lab/papersim/store_psycopg.py
+M	tests/test_native_postgres_workflow.py
+M	tests/test_papersim_capture_marks_native.py
+A	tests/test_papersim_d1_operations_native.py
+M	tests/test_papersim_d1compare_journal.py
+M	tests/test_papersim_settle_store_native.py
+M	tests/test_papersim_store_native.py
+M	tools/d1_compare.py

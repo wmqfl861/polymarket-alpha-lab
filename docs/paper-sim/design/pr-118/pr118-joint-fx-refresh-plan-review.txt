@@ -1,0 +1,37 @@
+# #118 刷新补记复核（原独立只读 ZCode 计划会话）
+
+**范围与约束**：本次只读复核附件 `refresh-addendum.md`（提交方链证号 `8ef70c72…`，无工具未重算，以附件文本为复核对象），并对照 `approved-merge-plan.md`、`prior-review.txt` 与 `pr114-landed.json`。未运行命令、未写入、未联网、未读附件外文件。附件不含服务器地址、凭据或连接串（`POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX` 仅以变量名出现且明文规定"连接配置值不入回执"），本报告无可披露、亦不披露。
+
+**记录链**：`approved-merge-plan.md` 与本会话第二轮签署 PASS 的第二稿逐字一致；`prior-review.txt` 为该 PASS 原文。原审记录（首签 FAIL、二稿 PASS）均留存，本结论仅针对补记新增内容。
+
+## 按指定检查点逐项复核
+
+**1. #114 已落地 — 成立。** 补记锚定 A＝`d2160593…`，与 `pr114-landed.json` 的 `mergeCommit.oid`、`observed_main` 一致（state MERGED，mergedAt 2026-11-21T18:36:29Z），JSON 同时留有该轮 headRefOid、tested_merge、base、evidence_commit，链条自洽。
+
+**2. 联合节点尚未合入 — 成立且被正确阻塞。** J＝`372f9cbe…` 仅标为"本地候选、唯一父为 A"，即建在已落地的 #114 之上而未进 `main`；补记明示"等联合节点经独立审核、CI、普通合并落到规范仓库 `main`，并核实实际合并提交的两父和树"后方可刷新，并要求执行 `git merge-base --is-ancestor "$joint_merge" "$B"` 及按已签计划核对 A 为联合起点祖先。"合入前的操作约束仍依原计划执行"维持禁令窗口。
+
+**3. #118 在实际合入之后才更新 — 成立。** B 取联合节点落地"当时的 `main`"，O₀ 取 #118 实际头；J 上已有的 251 项聚焦离线与 15 项原生结果明确归属联合候选、不得挪用，#118 的源码测试与回执"绑定其自己的新提交"，无证据冒充。
+
+**4. 已验证根标记位置 — 成立。** O 侧 `store_psycopg.py:128` 的唯一赋值 `connection._papersim_managed_root = repo_root.resolve()` 接在两路共同成功出口：位于有 clock 上下文退出之后、外层 `try` 之内、`except BaseException` 之前，即验证＋回滚之后；身份、回滚、时限或赋值失败按原逻辑关闭并抛出、不留标记；`connect_owner`、`connect_explicit`、legacy 路径保留。O 的 `d1_managed_identity`（解析根＋IDLE＋重核身份）、`d1_resolution_identity`（同连接 INTRANS 只读视图复核）、`_record_settlement`（凭标记决定逐笔结算锁）一并保留并列入核验。
+
+**5. 两侧事务、回滚、时限与 CLI 修正均保留 — 成立。** J 侧：`connect_managed(repo_root, *, info=None, clock=None)`、`managed_dsn(..., owner=False)` 先验证、`binding.bound(...)` 内开应用连接、无 clock 走 `psycopg.connect` / 有 clock 走 `_connect_with_deadline` 且握手上限取两限较早者、clock 路径的身份查询与回滚在 `optimization_database_phase(..., stage='connection_identity', closeout=True)` 内、两路 `verify_connection`＋`rollback()` 交 IDLE 连接、J 的 `store_psycopg.py:135–166` 与 A 相同。CLI：O 对共同祖先的全部差异仅 `_cmd_settle` 的 `managed=args.managed` 一行接入 J；保留 J 的 `_optimize_close_deviation`、29 只标注/30 起含等号一美分边界、`forward_comparison`、扫描出价身份与不可用原因、`_cmd_optimize_apply` 在回放/校验/写角色前对 PROMOTE 类返回 `papersim_optimize_apply_promotion_unavailable`（与禁令一致），RETIRE/ROLLBACK 与原回放保留；优化器发布时限、提交确认与重连仍用原事务边界。
+
+**6. 工作流及测试矩阵 27+1、先专项后全套 — 成立。** J 固定 27 个 papersim 文件，O 在 YAML 与 `PAPERSIM_FILES` 同位置各插 `test_papersim_d1_operations_native.py` 共 28，保留 A 排定的五段顺序，用 `git diff --unified=0 B S` 对照两个固定断言。顺序为：`test_native_postgres_workflow.py` 自检 → 离线专项（JUnit）→ 工作流等价一次性 PG18 原生专项（含 #114/#118 两组关键 nodeid、O-5 非收敛必运行项、跨进程恢复、原子封存、握手/发布时限）→ 以模块自身 `PAPERSIM_FILES` 清单按工作流旗标跑完整 papersim 分区（JUnit 核对 D1、registered runner、CLV 数值边界、进程恢复、单例后果、提交失败回滚、兼容入口）→ `scripts/verify_local.py --full`（compileall＋全套 pytest）→ CodeGraph、敏感信息与推送门。全部在已提交的干净 S 上执行，子进程克隆检出 HEAD 故未提交内容不会混入。
+
+**7. 实际冲突与新头再次只读复审 — 成立。** 实际冲突由刷新当日 B、O₀ 与未合并索引确定（`--diff-filter=U`＋`git ls-files --unmerged`），首集成提交 I 核验父序 `%P = O0 B`；S 的实质审核涵盖实际冲突解决及测试证据，B＋S 与 B＋H 各过三条工作流与 checkout 证明，精确 H 独立审核、最终回执、普通合并与父/树核验依已签计划执行——即冲突解决与新头均须新的独立只读复审，不由本补记替代。
+
+## 阻塞（设计内门禁，非缺陷）
+
+- 联合节点未落地：#118 一切实操（工作树、合并、测试）被阻塞，直至其经独立审核、CI、普通合并落地并核验两父与树。
+- 任何应运行作业缺当前版本实际 checkout 证明，阻塞对应 PR 合并（已签计划第 27 行）。
+
+## 发现（不阻塞）
+
+1. 补记自述"O 的测试没有直接断言 `_papersim_managed_root`"且 J 的 fake 用例仅覆盖无 clock 路径，则带 clock 路径的标记断言缺口按补记自身事实即已存在；第 39 行"必要时扩展"在执行时应默认为需要扩展，除非最终树证明确有等效覆盖。建议执行者按此理解落记。
+2. 链证哈希未重算（无工具约束），与前两轮做法一致，属提交方自证。
+
+## 结论
+
+补记与已签第二稿完全相容：#114 落地有据、联合节点未合入且刷新被正确阻塞在其实际落地与核验之后、证据归属不冒充、标记位置与两侧语义保留完整、27+1 矩阵与先专项后全套的顺序明确、冲突与新头均安排新的独立只读复审。两项发现均不构成必改。原审记录保持不变。
+
+VERDICT: PASS

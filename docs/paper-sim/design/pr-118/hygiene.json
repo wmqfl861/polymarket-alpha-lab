@@ -1,0 +1,26 @@
+{
+  "base": "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+  "head": "a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c",
+  "diff_check": true,
+  "classes": {
+    "service_token": {
+      "base_path_count": 3,
+      "head_path_count": 3,
+      "new_paths": 0,
+      "new_lines": 0
+    },
+    "private_key": {
+      "base_path_count": 0,
+      "head_path_count": 0,
+      "new_paths": 0,
+      "new_lines": 0
+    },
+    "database_credentials": {
+      "base_path_count": 243,
+      "head_path_count": 243,
+      "new_paths": 0,
+      "new_lines": 0
+    }
+  },
+  "passed": true
+}

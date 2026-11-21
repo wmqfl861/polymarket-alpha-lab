@@ -1,0 +1,27 @@
+{
+  "started": "2026-11-21T22:19:59.563002+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "8397d1cfedec76c38e875d2a3a410b86c45f981f8bf89bd8b886406ead6e715c",
+  "purpose": "pr118-final-head-plan-original-rereview",
+  "resume": "sess_5494f412-df8f-4590-a658-1bd586454a5e",
+  "attachments": {
+    "proposed-addendum.md": "86e7481558bedf78a922bce00c2d94b1c2a8d6f1d3524899d5261cd069bc001e",
+    "signed-merge-conditions.md": "38a0dc8e2a36208fb15ed7bdca71870f65a6a4fc4fc1fbcfe983d5d26cd22aad",
+    "signed-refresh-addendum.md": "8ef70c722a90c2cf5d4b2bcb661a8cae5cc76101cb8dcaec524223030309f6e0",
+    "your-previous-signature.txt": "970763f645f59dd9f03e13a555a8d40173790f1ebf3f1021d96c702c7ad8e943",
+    "fixed-mc.txt": "79a2c8a693c60579450866b477600fd7b7f6051bb7278c83a3c866320341f0df",
+    "fixed-prompt.txt": "7b512f5115f57d31af829877125059de55f83c17de73237cf31eae7118c70589",
+    "pr114-archive.md": "321eceaaf11668e40fde10ffccf071fa490f8f218df9e2f01a969bfd2422f13d"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T22:22:16.090420+00:00",
+  "exit": 0,
+  "stdout_sha256": "efaa5093d45a94e808d77797079bd84fe725c78ff78556a6fefede3903c2bb4f",
+  "stderr_sha256": "7740fde6f65532fdfc4d589f919de7fe81afd25e56bfdce07d5bf6791e18f79c",
+  "stdout_bytes": 5611,
+  "stderr_bytes": 110,
+  "safe_diagnostics": []
+}
