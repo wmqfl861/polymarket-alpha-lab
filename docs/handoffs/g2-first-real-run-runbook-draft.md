@@ -189,7 +189,7 @@ window, per the deciding authority's wording) opens Step C.
 
 ## 4. Step C — runtime host assembly and re-verification (execution conveniences re-measured, not trusted)
 
-On the D-1-attested host (ubuntu@154.89.153.24 — Ubuntu 24.04.1,
+On the D-1-attested host (ubuntu@SERVER_HOST_REDACTED — Ubuntu 24.04.1,
 kernel 6.8, 16 cores, 31 GiB; dedicated/non-shared in the §65 sense per
 the owner's 2026-10-10 attestation, §68:3113-3115):
 
