@@ -1,11 +1,12 @@
-"""Tracked public-address hygiene guard (FX-31, 2026-11-20).
+"""Tracked public-address hygiene guard (FX-31 and FX-36).
 
 Remediates finding FX-31 / N-6 (2026-11-19 audit fix list): three tracked
 files that re-quoted the server public address were redacted in place (see
 docs/handoffs/m3-cleanup/REDACTIONS.md and the FX-31 section of
 docs/remediation-evidence/2026-11-14/MANIFEST.md), and this guard freezes the
-remaining tracked stock so that any new or unexplained public-address
-occurrence anywhere in the repository fails the suite.
+remaining stock so that any new or unexplained public-address occurrence
+anywhere in the repository fails the suite. FX-36 removed the two server
+addresses from the current files (docs/paper-sim/design/fx-36/REDACTIONS.md).
 
 Detector behavior is identical to
 docs/handoffs/2026-11-13-m0-review/evidence/address_occurrence_diff.py
@@ -23,11 +24,8 @@ Hygiene rules for this module itself:
 
 Allowlist governance (project rule for this constant):
 FROZEN_ALLOWLIST changes only through an explicit node decision recorded in
-the same PR that changes the stock. Known hooks: FX-25 (owner-approved
-AGENTS.md alias replacement shrinks the grandfathered root entry below),
-FX-33, and FX-18 archival batches — moving or renaming a grandfathered file
-fails this guard loudly until that batch's own node decision regrows the
-map; that fail-loud behavior is intentional.
+the same PR that changes the stock. An approved archival move or rename
+requires updating the exact paths for the grandfathered occurrences.
 """
 from __future__ import annotations
 
@@ -59,42 +57,11 @@ REMEDIATED_PATHS = (
     "docs/remediation-evidence/2026-11-14/MANIFEST.md",
 )
 
-# Frozen at FX-31 (2026-11-20) from the post-redaction scan of the tracked +
-# untracked working-tree stock: 6 distinct values, 42 occurrences in 13 files.
-# The AGENTS.md entry is the narrowly grandfathered root baseline (count 1)
-# that stays until the FX-25 owner-approved alias draft lands.
+# FX-36 removed both server digests from the per-file allowlist. These
+# remaining four digests account for nine occurrences in three files.
 FROZEN_ALLOWLIST: dict[str, dict[str, int]] = {
-    "DELIVERY_PLAN.md": {
-        "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 7,
-        "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 2,
-    },
-    "docs/handoffs/g2-activation-readiness.md": {
-        "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 4,
-    },
-    "docs/handoffs/g2-first-real-run-runbook-draft.md": {
-        "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 1,
-    },
-    "docs/handoffs/l7-l8-status.md": {
-        "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 3,
-    },
-    "docs/handoffs/l8-l9-status.md": {
-        "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 3,
-        "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 5,
-    },
     "docs/paper-sim/server-mirror/tools/tests/test_understat_refresh.py": {
         "0d2fdc313ceb7a434774fd9de6aa70804ccdcbf19c7bee77ed2d7a6f31ac2f68": 3,
-    },
-    "docs/releases/linux-preview-release.md": {
-        "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 2,
-    },
-    "docs/releases/v0.1.0-linux-preview.1/handoff.md": {
-        "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 2,
-    },
-    "docs/releases/v0.1.0-linux-preview.1/release-manifest.json": {
-        "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 1,
-    },
-    "docs/reviews/model-review-2026-11-07.md": {
-        "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 1,
     },
     "tests/test_cli_probability_selection_scorer_agreement.py": {
         "838c4c2573848f58e74332341a7ca6bc5cd86a8aec7d644137d53b4d597f10f5": 1,
@@ -105,10 +72,11 @@ FROZEN_ALLOWLIST: dict[str, dict[str, int]] = {
         "d20004891b6baada0c141972fc179712dfbfa0adcfe16288ba078164be954439": 1,
     },
 }
-FROZEN_TOTAL_OCCURRENCES = 40
+FROZEN_TOTAL_OCCURRENCES = 9
+# Keep the two remediated digest totals explicit at zero.
 FROZEN_PER_DIGEST_TOTALS = {
-    "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 18,
-    "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 13,
+    "fb214e0790225f76fafe112263bfd20ea879fc63bef24ad451994ab61a301530": 0,
+    "0a4731266cecbe0bc45ea8a91a21c1e202ee88990f7c5e8f8e69c79a19377789": 0,
     "838c4c2573848f58e74332341a7ca6bc5cd86a8aec7d644137d53b4d597f10f5": 4,
     "0d2fdc313ceb7a434774fd9de6aa70804ccdcbf19c7bee77ed2d7a6f31ac2f68": 3,
     "5ad7ffdf62642216060820c629bc4f186813bcbfb71e5a10d63fcacbd354181f": 1,
@@ -258,7 +226,7 @@ def test_t1_detector_flags_only_global_unicast_samples() -> None:
 
 
 def test_t2_tracked_public_address_stock_equals_frozen_allowlist() -> None:
-    totals: dict[str, int] = {}
+    totals = dict.fromkeys(FROZEN_PER_DIGEST_TOTALS, 0)
     for counts in FROZEN_ALLOWLIST.values():
         for digest, count in counts.items():
             totals[digest] = totals.get(digest, 0) + count

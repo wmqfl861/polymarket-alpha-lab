@@ -4,6 +4,11 @@ This is the complete GitHub-first handoff for the §61/§62 Linux pivot
 delivery. Everything referenced below is published and reachable at immutable
 revisions. Companion narrative record: DELIVERY_PLAN.md sections 61-62.
 
+The published SHA-256 values and byte counts below apply to the immutable
+release downloads. The manifest pin also verifies its original Git blob.
+Verify the redacted repository copies of this handoff and the manifest
+against the [FX-36 redaction index](../../paper-sim/design/fx-36/REDACTIONS.md).
+
 ## Pinned identities
 
 | Item | Value |
@@ -15,7 +20,7 @@ revisions. Companion narrative record: DELIVERY_PLAN.md sections 61-62.
 | C (release source commit) | `06e49d0fde20c837cda80f0b3e61fcb1f3806ca2` (tree `027996b04f44c0340deb8e73fcf9825ad061c657`) |
 | E (publication-receipt commit) | `a1128a65ed09fce11d46b90782393af1e55c35fa` (tree `679894cac498275dcf89d00e87c8de77a2c2d7b9`) |
 | Tuple | Ubuntu 26.04.1 x86_64 / kernel 7.0.0-34-generic / Python 3.12.14 / PostgreSQL 18.6 (Ubuntu build 18.6-0ubuntu0.26.04.1) |
-| Build/acceptance host | ubuntu@166.1.232.93 (designated) |
+| Build/acceptance host | ubuntu@SERVER_HOST_REDACTED_RETIRED (designated) |
 
 ## Published assets (six, immutable)
 
@@ -106,6 +111,6 @@ persists only to the project-private native PostgreSQL.
   tuple-prefix provenance (1,468-line inventory, ldd, binary digests),
   first failures preserved separately.
 - Release runbook: docs/releases/linux-preview-release.md (repo at C).
-- Server evidence root: ubuntu@166.1.232.93:~/pal-artifacts/
+- Server evidence root: ubuntu@SERVER_HOST_REDACTED_RETIRED:~/pal-artifacts/
   (verify-full-C-06e49d0f.log, release-v0.1.0-linux-preview.1/,
   release-v0.1.0-linux-preview.1-attempt1-FAILED-timing/).

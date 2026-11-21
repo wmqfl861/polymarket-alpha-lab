@@ -1472,7 +1472,7 @@ owner 于同日批准第 45 节停止点的两项解锁；执行结果如下：
   探针继续 BLOCKED：探针测试架已交付并通过评审，映像元数据已记录（240,767,648 字节，
   SHA256 `39be063c2512b43347fe7b0ab18c46f1596141701c9c5fc895ddfca9a051067c`，
   `--version` 报告 2.1.278，与 profile 钉定一致）。
-- **开发服务器部署（owner 指示）**：`ubuntu@166.1.232.93`（Ubuntu 26.04.1 LTS，
+- **开发服务器部署（owner 指示）**：`ubuntu@SERVER_HOST_REDACTED_RETIRED`（Ubuntu 26.04.1 LTS，
   16 核 EPYC 7571／15GB 内存，共享机器）。项目部署于 `~/polymarket-alpha-lab` @
   `4bb734db`，uv 管理 Python 3.12.14 ＋锁定依赖；全量离线验证 **39,566 通过／
   63 跳过／0 失败（46 分 39 秒）**，日志 SHA256 前 16 位 `97699bdb6e57f420`。
@@ -1486,7 +1486,7 @@ owner 于同日批准第 45 节停止点的两项解锁；执行结果如下：
 ## 50. 服务器 Linux 原生验证矩阵：跨平台原生证据扩充（工程验证记录）
 
 基线 `a218fe53`（2026-09-24）。本节为**工程验证事实记录**：在第 49 节部署的开发服务器
-（ubuntu@166.1.232.93，Ubuntu 26.04.1）上，以自组装的 PostgreSQL 18 便携前缀（apt 包
+（ubuntu@SERVER_HOST_REDACTED_RETIRED，Ubuntu 26.04.1）上，以自组装的 PostgreSQL 18 便携前缀（apt 包
 `postgresql-18` 的 bin／lib 与 `/usr/share/postgresql/18` 的 share 合并为真实文件前缀
 `~/pg-runtime-src`，无符号链接，49MB）运行项目原生测试矩阵。
 
@@ -2316,7 +2316,7 @@ D1—D3、受保护模型配置、任务身份／重放、失败历史与独立�
 
 ### 选定运行设计
 
-开发主机 ubuntu@166.1.232.93（共享、dev-only）即刻复用；发布三元组
+开发主机 ubuntu@SERVER_HOST_REDACTED_RETIRED（共享、dev-only）即刻复用；发布三元组
 Ubuntu 26.04.1 x86_64／Python 3.12.14／精确固定 PG18；探针边界＝rootless
 （非 setuid bubblewrap 类）用户／挂载／PID／网络／IPC／UTS 命名空间，
 INPUT/IMAGE/CONTROL 只读、tmpfs scratch、有界 OUTPUT、外部网络不可达、
@@ -2609,7 +2609,7 @@ v0.1.0-linux-preview.1 的发布记录（回执已由 E=a1128a65 补记）。
 > operator reports one contained diagnostic cohort comprising success,
 > rate_limit, server_error, invalid_action, tool_use and truncated, each
 > executed once. Evidence is retained at
-> `ubuntu@166.1.232.93:~/pal-artifacts/l7-work/diag/`.
+> `ubuntu@SERVER_HOST_REDACTED_RETIRED:~/pal-artifacts/l7-work/diag/`.
 >
 > The qualification predicates, request-counter semantics and
 > original-initial-snapshot baseline were unchanged. The diagnostic
@@ -2755,7 +2755,7 @@ v0.1.0-linux-preview.1 的发布记录（回执已由 E=a1128a65 补记）。
 > official-six invocation under the delegated cgroup
 > `/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/pal-l7-*` with
 > systemd-run --user --scope; export at
-> `ubuntu@166.1.232.93:~/pal-artifacts/l7-work/final7/export/` (52 files,
+> `ubuntu@SERVER_HOST_REDACTED_RETIRED:~/pal-artifacts/l7-work/final7/export/` (52 files,
 > 172,649 bytes; junit.xml + run-record.json + export-manifest.json +
 > per-scenario evidence and diagnostic sidecars; launcher sha
 > `0e9ba04e315c…`/1,405 B, plan sha256 prefix `0208c44fdeb9515c`).
@@ -2832,7 +2832,7 @@ final G3, G4, G5 and G6 remain open. V1 remains incomplete.
   native driver loss / native useful recovery），首败一次已记录并修正。
   该实跑基于 111420db + C 未提交文件，与 e88a0c13 内容一致，但非最终
   集成树的正式重跑。
-- **阻塞**：ubuntu@166.1.232.93 自 2026-10-07 起完全不可达（SSH
+- **阻塞**：ubuntu@SERVER_HOST_REDACTED_RETIRED 自 2026-10-07 起完全不可达（SSH
   "Connection closed"、ICMP 100% 丢失——主机级中断，非守护进程问题；
   本地与评审子代理双路径确认）。最终集成树上的原生验证（B 的 3 项
   opt-in、C 的 5 项、修正横幅受控往返）与 verify_local --full 全量
@@ -2979,8 +2979,8 @@ wrapper），仅从 W3 的启动门移至合并/推送门——服务器 T1 通�
 保留；C6 安全边界重申不变；C7 本记录即随 W3 派发落账。
 
 **服务器更替与约束性 T1 通过（2026-10-09，所有者指令）**：所有者
-退役 166.1.232.93（"这个服务器已经不用了"，宕机 30+ 小时后）并指定
-新承载机 ubuntu@154.89.153.24（Ubuntu 24.04.1 / 内核 6.8 / 16 核 /
+退役 SERVER_HOST_REDACTED_RETIRED（"这个服务器已经不用了"，宕机 30+ 小时后）并指定
+新承载机 ubuntu@SERVER_HOST_REDACTED（Ubuntu 24.04.1 / 内核 6.8 / 16 核 /
 31Gi；共享机器，仅触碰 ~/polymarket-alpha-lab；一次性密码仅用于安装
 本机公钥，未存储）。166 独有内容随主机退役：~/pal-artifacts 含 L7
 final7 再入验收导出树（52 文件）——账本记录、提交历史与本地日志
@@ -3048,7 +3048,7 @@ activation 仅出现在拒绝断言）、待定状态诚实（无人声称 T8 �
 **节点关闭：pending 仅 T8/D-1。**
 
 **D-1 主机事实补记（2026-10-10，协调者实测，来源为部署时服务器
-核查输出）**：154.89.153.24 上 `ls /home/` 仅含 `ubuntu`；
+核查输出）**：SERVER_HOST_REDACTED 上 `ls /home/` 仅含 `ubuntu`；
 `/etc/passwd` 无其他 UID≥1000 人类用户；`who` 显示的全部终端会话
 （tmux，15 个）均属 ubuntu（所有者本人操作，最早可追溯 2026-08-29）；
 `sudo -n true` 通过（NOPASSWD）。该四项事实与 §68:3025-3027 的
