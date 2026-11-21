@@ -1397,7 +1397,7 @@ def test_active_cash_enforcement_matches_the_released_migrations(cash_faces):
 
 
 def _d1_seed_settlement_entry(project, slug, *, side="YES", entered_at=None, team="crypto_eth",
-                               mismatch_token=False):
+                               mismatch_token=False, market=None, extra_sources=()):
     from polymarket_alpha_lab import replay
     from polymarket_alpha_lab.papersim import snapshots, store_psycopg
     from polymarket_alpha_lab.papersim.adapters import polymarket
@@ -1408,11 +1408,19 @@ def _d1_seed_settlement_entry(project, slug, *, side="YES", entered_at=None, tea
     decided = entered - datetime.timedelta(seconds=1)
     received = entered - datetime.timedelta(seconds=2)
     source_at = entered - datetime.timedelta(seconds=3)
-    condition = "0x" + hashlib.sha256(slug.encode()).hexdigest()
-    book_id = int(condition[2:16], 16)
-    yes, no = str(2 * book_id + 1), str(2 * book_id + 2)
+    if market is None:
+        condition = "0x" + hashlib.sha256(slug.encode()).hexdigest()
+        book_id = int(condition[2:16], 16)
+        yes, no = str(2 * book_id + 1), str(2 * book_id + 2)
+        market_id = slug
+        question = "Will Ethereum be below 2,000 at the end of this period?"
+        event = {}
+    else:
+        condition, market_id, question = (market[key] for key in ("conditionId", "id", "question"))
+        no, yes = json.loads(market["clobTokenIds"])
+        event = {"event_key": f"gamma:{market['events'][0]['id']}",
+                 "event_start_at": datetime.datetime.fromisoformat(market["gameStartTime"])}
     token = yes if side == "YES" else no
-    question = "Will Ethereum be below 2,000 at the end of this period?"
     epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
     book = {"asset_id": token, "market": condition,
             "timestamp": str((source_at - epoch) // datetime.timedelta(milliseconds=1)),
@@ -1425,7 +1433,7 @@ def _d1_seed_settlement_entry(project, slug, *, side="YES", entered_at=None, tea
         digest = snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
             json.dumps(book, sort_keys=True).encode(), polymarket.SOURCE_KIND_CLOB, url,
             received))["content_sha256"]
-        request = replace(_eth_request(), market_id=slug, question=question, book=[(0.56, 5000.0)],
+        request = replace(_eth_request(), market_id=market_id, question=question, book=[(0.56, 5000.0)],
                           side=side.lower(), buy_side=side.lower(), book_time=received, now=decided,
                           yes_token=yes, no_token=no, buy_token=token)
         scan = replace(_scan_run(), team=team, code_commit=project.head, operation_key=scan_key,
@@ -1436,9 +1444,10 @@ def _d1_seed_settlement_entry(project, slug, *, side="YES", entered_at=None, tea
                            bid=Decimal("0.54"), ask=Decimal("0.56"), source_kind="clob_book",
                            source_ref=f"{url}#{digest}", snapshot_sha256=digest)
         candidate = replace(_candidate(slug), team=team, side=side, condition_id=condition,
-                            market_id=slug, yes_token_id=yes, no_token_id=no, evaluated_at=decided,
-                            input_payload=replay.replay_bundle_payload(request), snapshot_refs=json.dumps([digest]),
-                            entry=replace(_entry_submission(), entered_at=entered), price_evidence=(decision,))
+                            market_id=market_id, yes_token_id=yes, no_token_id=no, evaluated_at=decided,
+                            input_payload=replay.replay_bundle_payload(request),
+                            snapshot_refs=json.dumps([digest, *extra_sources]),
+                            entry=replace(_entry_submission(), entered_at=entered), price_evidence=(decision,), **event)
         store_psycopg.record_command_run_event(app, store.CommandRunEventSubmission(
             operation_key=scan_key, phase="STARTED", command="run-scan", occurred_at=received,
             code_commit=project.head))
@@ -1450,7 +1459,7 @@ def _d1_seed_settlement_entry(project, slug, *, side="YES", entered_at=None, tea
         entry_id, = app.execute("SELECT entry_id FROM papersim.entries WHERE candidate_id = %s",
                                 (candidate_id,)).fetchone()
     return {"entry_id": entry_id, "candidate_id": candidate_id, "scan_id": result["scan_id"],
-            "condition_id": condition, "market_id": slug, "market_slug": slug, "yes_token_id": yes,
+            "condition_id": condition, "market_id": market_id, "market_slug": slug, "yes_token_id": yes,
             "no_token_id": no, "question": question, "entered_at": entered}
 
 
@@ -1796,3 +1805,75 @@ def test_d1_settle_validates_opposite_purchases_and_preexisting_source_per_entry
         assert all(target["binding"]["outcome_first_write"] is None for target in targets[:2])
         assert targets[5]["outcomes"][0]["outcome_id"] == outcome
         assert targets[5]["cash_rows"][0]["event_key"] == f"entry:{ids[5]}:cash"
+
+
+@_D1_NATIVE
+def test_d1_settle_books_completed_basketball_including_overtime_and_explicit_push(d1_capture_project):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from tests.test_papersim_report import _FIXTURE_FULL_GAME_RULE, _nba_fixture, _nba_gamma_snapshot, _nba_score_snapshot
+
+    project = d1_capture_project
+    moneyline, score = _nba_fixture()
+    tip = datetime.datetime.now(datetime.UTC).replace(microsecond=0) - datetime.timedelta(hours=5)
+    closed = tip + datetime.timedelta(hours=3)
+    fetched = closed + datetime.timedelta(minutes=2)
+    day = tip.date().isoformat()
+    event, = moneyline["events"]
+    event.update(slug=f"nba-orl-gsw-{day}", eventDate=day, startTime=tip.isoformat())
+    moneyline.update(slug=event["slug"], gameStartTime=tip.isoformat(), closedTime=closed.isoformat())
+    score["header"]["competitions"][0]["date"] = tip.isoformat()
+    total = {**moneyline, "id": "914", "conditionId": "0x" + "b" * 64,
+             "slug": event["slug"] + "-total-230", "sportsMarketType": "totals",
+             "question": "Magic vs. Warriors: O/U 230", "outcomes": '["Over","Under"]',
+             "clobTokenIds": '["1000000101","1000000102"]', "outcomePrices": '["0.5","0.5"]', "line": 230,
+             "description": "\n".join((
+                 'If the combined final score is more than 230 points, the market will resolve to "Over".',
+                 'If the combined final score is less than 230 points, the market will resolve to "Under".',
+                 'If the combined final score is exactly 230 points, the market will resolve 50-50.',
+                 _FIXTURE_FULL_GAME_RULE))}
+    score_row = _nba_score_snapshot(score)
+    with store_psycopg.connect_managed(project.root) as app:
+        score_digest = snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
+            score_row["content"], score_row["kind"], score_row["source"], fetched))["content_sha256"]
+    rows, outcomes = [], []
+    for market, outcome in ((moneyline, "YES"), (total, "VOIDED")):
+        gamma = _nba_gamma_snapshot(market)
+        with store_psycopg.connect_managed(project.root) as app:
+            market_digest = snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
+                gamma["content"], gamma["kind"], gamma["source"], fetched))["content_sha256"]
+        entry = _d1_seed_settlement_entry(project, market["slug"], market=market, team="basketball",
+                                          entered_at=tip - datetime.timedelta(minutes=5),
+                                          extra_sources=(score_digest, market_digest))
+        rows.append(entry)
+        with store_psycopg.connect_managed(project.root) as app:
+            observation = store.MarketOutcomeObservation(
+                **{key: entry[key] for key in ("condition_id", "market_id", "market_slug", "yes_token_id", "no_token_id")},
+                observed_at=fetched, confirmed_at=fetched, outcome=outcome, source_kind="gamma_close",
+                source_ref=gamma["source"], source_snapshot_sha256=market_digest)
+            outcomes.append(store_psycopg.record_market_outcome(app, observation)["outcome_id"])
+
+    ids = [row["entry_id"] for row in rows]
+    slot = _d1_register_settle_slot(project, ids, team="basketball")
+    cli = _d1_settle_cli(project, slot, team="basketball")
+    assert cli.returncode == 0, cli.stderr
+    result = json.loads(cli.stdout)
+    assert [(row["entry_id"], row["classification"]) for row in result["settled"]] == [
+        (ids[0], "NATURAL"), (ids[1], "VOIDED_REFUND")]
+    assert result["pending"] == []
+    with store_psycopg.connect_managed(project.root) as reader, reader.transaction():
+        reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        settlements, cash = _d1_entry_sql(reader, ids)
+        money, refund = settlements
+        assert money[2:6] == (outcomes[0], "NATURAL", "YES", "win")
+        assert refund[2:9] == (outcomes[1], "VOIDED_REFUND", "VOIDED", None, Decimal(250), Decimal(0), Decimal(0))
+        refund_cash, = [row for row in cash if row[4] == "VOIDED_REFUND"]
+        assert refund_cash[1:9] == (f"settle:{ids[1]}", ids[1], None, "VOIDED_REFUND", "USD", Decimal("257.70"),
+                                    fetched, None)
+        prepared = next(row for row in _d1_receipts(reader, slot[0]) if row[2] == "PREPARED")
+        plan = _d1_witness(reader, prepared[5])["plan"]["targets"]
+        for target in plan:
+            proof = target["binding"]["outcome_proof"]
+            assert proof["regulation_score"] == {"home": 110, "away": 110}
+            assert proof["final_score"] == {"home": 118, "away": 112}
+            assert proof["overtime_periods"] == 1 and proof["resolution_period"] == "full_game_including_overtime"
+        assert plan[1]["binding"]["winning_token_id"] is None
