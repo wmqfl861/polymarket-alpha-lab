@@ -1,0 +1,123 @@
+
+== 1. package files at the package commit
+package commit: 09cf06f8ff57382b121470ad67c18994204db02b
+parents: 2bdc4cccacc925ea8e6569c8865b90c0b0c671e6  (first parent is M: True)
+files in docs/handoffs/2026-11-21-optimizer-review: ['MANIFEST.tsv', 'README.md', 'evidence.md', 'reviewer-prompt.md']
+files changed outside the package directory (vs M): 0
+MANIFEST.tsv: 252 bytes, 3 lines, sha256 8919f34523e26ea172bb6001c353e601ce3988fd3d900e3cf668b82374b60303
+  ok   README.md: 7803 bytes, sha256 1fdc49e16817ec6338e4b14f3b53bf8b24745dbaa1af1936d89028d44d1a61bf
+  ok   evidence.md: 29705 bytes, sha256 f21bfe7c392d0be52cc5bb0878342916339e58805aa2ec60b97a2f61821e86df
+  ok   reviewer-prompt.md: 8440 bytes, sha256 9321ecf0261a972997781d27fe9592086222da9a697aaa10d60a3c157dc6940f
+
+== 2. evidence.md section 1 against the first-parent chain B..M
+table rows: 44; first-parent commits: 44
+rows whose PR number, merge commit and second parent all match: 44 of 44
+first-parent commits that are not two-parent merges: 0
+last first-parent commit equals M: True
+all commits in B..M: 137
+
+== 3. open pull requests: file-level lists
+-- #114 vs M (re-opened base): merge-base af4ff553 (base is ancestor of head: False)
+   two-dot diff 49 file(s); diff from merge-base 23 file(s)
+   M	.github/workflows/native-postgres.yml
+   M	DELIVERY_PLAN.md
+   M	src/polymarket_alpha_lab/papersim/cli.py
+   M	src/polymarket_alpha_lab/papersim/optimize/metrics.py
+   M	src/polymarket_alpha_lab/papersim/optimize/policy.py
+   M	src/polymarket_alpha_lab/papersim/optimize/registry.py
+   M	src/polymarket_alpha_lab/papersim/optimize/runner.py
+   M	src/polymarket_alpha_lab/papersim/optimize/scorecard.py
+   M	src/polymarket_alpha_lab/papersim/optimize/search.py
+   M	src/polymarket_alpha_lab/papersim/store_psycopg.py
+   M	tests/test_native_postgres_workflow.py
+   M	tests/test_papersim_cli_optimize.py
+   M	tests/test_papersim_optimize_cli.py
+   A	tests/test_papersim_optimize_false_positive_200.py
+   M	tests/test_papersim_optimize_metrics.py
+   M	tests/test_papersim_optimize_policy.py
+   A	tests/test_papersim_optimize_registered_runner_native.py
+   A	tests/test_papersim_optimize_rule_sources.py
+   M	tests/test_papersim_optimize_runner.py
+   M	tests/test_papersim_optimize_runner_native.py
+   M	tests/test_papersim_optimize_runner_rules.py
+   M	tests/test_papersim_optimize_scorecard.py
+   M	tests/test_papersim_optimize_search.py
+-- #114 vs 11fb457c (historical base): merge-base af4ff553 (base is ancestor of head: False)
+   two-dot diff 29 file(s); diff from merge-base 23 file(s)
+   M	.github/workflows/native-postgres.yml
+   M	DELIVERY_PLAN.md
+   M	src/polymarket_alpha_lab/papersim/cli.py
+   M	src/polymarket_alpha_lab/papersim/optimize/metrics.py
+   M	src/polymarket_alpha_lab/papersim/optimize/policy.py
+   M	src/polymarket_alpha_lab/papersim/optimize/registry.py
+   M	src/polymarket_alpha_lab/papersim/optimize/runner.py
+   M	src/polymarket_alpha_lab/papersim/optimize/scorecard.py
+   M	src/polymarket_alpha_lab/papersim/optimize/search.py
+   M	src/polymarket_alpha_lab/papersim/store_psycopg.py
+   M	tests/test_native_postgres_workflow.py
+   M	tests/test_papersim_cli_optimize.py
+   M	tests/test_papersim_optimize_cli.py
+   A	tests/test_papersim_optimize_false_positive_200.py
+   M	tests/test_papersim_optimize_metrics.py
+   M	tests/test_papersim_optimize_policy.py
+   A	tests/test_papersim_optimize_registered_runner_native.py
+   A	tests/test_papersim_optimize_rule_sources.py
+   M	tests/test_papersim_optimize_runner.py
+   M	tests/test_papersim_optimize_runner_native.py
+   M	tests/test_papersim_optimize_runner_rules.py
+   M	tests/test_papersim_optimize_scorecard.py
+   M	tests/test_papersim_optimize_search.py
+-- #116 vs 11fb457c: merge-base 11fb457c (base is ancestor of head: True)
+   two-dot diff 2 file(s); diff from merge-base 2 file(s)
+   A	docs/handoffs/m3-cleanup/pr-b-20261120/B1-status.json
+   M	docs/index/phase1-module-index.md
+-- #118 vs M: merge-base 2bdc4ccc (base is ancestor of head: True)
+   two-dot diff 14 file(s); diff from merge-base 14 file(s)
+   M	.github/workflows/native-postgres.yml
+   A	docs/paper-sim/design/d1-operation-recovery-plan.md
+   M	src/polymarket_alpha_lab/papersim/capture.py
+   M	src/polymarket_alpha_lab/papersim/cli.py
+   M	src/polymarket_alpha_lab/papersim/d1compare/acquire.py
+   A	src/polymarket_alpha_lab/papersim/d1compare/operations.py
+   M	src/polymarket_alpha_lab/papersim/settle.py
+   M	src/polymarket_alpha_lab/papersim/store_psycopg.py
+   M	tests/test_native_postgres_workflow.py
+   M	tests/test_papersim_capture_marks_native.py
+   A	tests/test_papersim_d1_operations_native.py
+   M	tests/test_papersim_d1compare_journal.py
+   M	tests/test_papersim_settle_store_native.py
+   M	tools/d1_compare.py
+-- #118 registered paths: 14; actual: 14; identical: True
+
+== 4. pinned Europe research files at B
+  ok   docs/paper-sim/research/league-admission-20261119/europe-basketball/verification.json: sha256 d0ffe021b75ffdea95014bc77c271e0625609f98b50ade26180d86500876f635
+  ok   docs/paper-sim/research/league-admission-20261119/europe-football/summary.json: sha256 cbed42762971f55bcdbd4a44a4c022808b83540006632c59a726247423573388
+
+== 5. sensitive-content scan of the package text
+  README.md: public IPv4-looking strings: 0
+  README.md: absolute server path: 0
+  README.md: connection string: 0
+  README.md: token-like string: 0
+  README.md: private key block: 0
+  README.md: password assignment: 0
+  evidence.md: public IPv4-looking strings: 0
+  evidence.md: absolute server path: 0
+  evidence.md: connection string: 0
+  evidence.md: token-like string: 0
+  evidence.md: private key block: 0
+  evidence.md: password assignment: 0
+  reviewer-prompt.md: public IPv4-looking strings: 0
+  reviewer-prompt.md: absolute server path: 0
+  reviewer-prompt.md: connection string: 0
+  reviewer-prompt.md: token-like string: 0
+  reviewer-prompt.md: private key block: 0
+  reviewer-prompt.md: password assignment: 0
+  MANIFEST.tsv: public IPv4-looking strings: 0
+  MANIFEST.tsv: absolute server path: 0
+  MANIFEST.tsv: connection string: 0
+  MANIFEST.tsv: token-like string: 0
+  MANIFEST.tsv: private key block: 0
+  MANIFEST.tsv: password assignment: 0
+
+== summary
+problems found: 0

@@ -1,0 +1,39 @@
+base=c4367b6b3ce4d957ce79ce645a7ab3425be5a133 head=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6
+files ADDED since base (new modules): 32; citing a node plan, review item or ruling: 19 files, 64 lines
+    2  src/polymarket_alpha_lab/papersim/capture.py: 24, 44
+    1  src/polymarket_alpha_lab/papersim/d1compare/__init__.py: 24
+    3  src/polymarket_alpha_lab/papersim/d1compare/diff.py: 6, 57, 85
+    5  src/polymarket_alpha_lab/papersim/d1compare/frozenrun.py: 9, 178, 1602, 1629, 1773
+    2  src/polymarket_alpha_lab/papersim/d1compare/journal.py: 11, 89
+    2  src/polymarket_alpha_lab/papersim/evaluation_f.py: 276, 833
+    2  src/polymarket_alpha_lab/papersim/optimize/dataset.py: 804, 845
+   10  src/polymarket_alpha_lab/papersim/optimize/families/league_bridge.py: 30, 36, 56, 70, 175, 444, 451, 635, 726, 752
+    2  src/polymarket_alpha_lab/papersim/optimize/metrics.py: 8, 37
+    5  src/polymarket_alpha_lab/papersim/optimize/policy.py: 24, 34, 136, 249, 552
+    4  src/polymarket_alpha_lab/papersim/optimize/provider.py: 203, 228, 264, 294
+    2  src/polymarket_alpha_lab/papersim/optimize/registry.py: 12, 205
+    7  src/polymarket_alpha_lab/papersim/optimize/runner.py: 3, 837, 919, 1582, 1619, 1974, 2042
+    1  src/polymarket_alpha_lab/papersim/optimize/scorecard.py: 15
+    1  src/polymarket_alpha_lab/papersim/optimize/search.py: 3
+    7  src/polymarket_alpha_lab/papersim/optimize/shadow.py: 4, 14, 24, 53, 120, 202, 252
+    2  src/polymarket_alpha_lab/papersim/optimize/walkforward.py: 112, 349
+    1  src/polymarket_alpha_lab/papersim/report.py: 110
+    5  src/polymarket_alpha_lab/papersim/scan.py: 37, 612, 675, 942, 1131
+files MODIFIED since base: 23; citing a node plan, review item or ruling: 16 files, 52 lines
+    1  src/polymarket_alpha_lab/papersim/adapters/__init__.py: 3
+    3  src/polymarket_alpha_lab/papersim/adapters/contracts.py: 3, 64, 69
+    5  src/polymarket_alpha_lab/papersim/adapters/polymarket.py: 3, 13, 29, 124, 753
+    1  src/polymarket_alpha_lab/papersim/adapters/prices.py: 3
+    1  src/polymarket_alpha_lab/papersim/adapters/sports.py: 3
+    1  src/polymarket_alpha_lab/papersim/adapters/understat.py: 3
+    9  src/polymarket_alpha_lab/papersim/cli.py: 48, 564, 690, 958, 962, 1071, 1420, 1826, 2033
+    4  src/polymarket_alpha_lab/papersim/espn_nba.py: 31, 338, 360, 495
+    8  src/polymarket_alpha_lab/papersim/evaluation.py: 131, 190, 511, 512, 780, 842, 861, 1486
+    3  src/polymarket_alpha_lab/papersim/fotmob.py: 29, 251, 273
+    2  src/polymarket_alpha_lab/papersim/nba_model.py: 129, 1246
+    1  src/polymarket_alpha_lab/papersim/pipeline.py: 1171
+    1  src/polymarket_alpha_lab/papersim/queue_policy.py: 3
+    4  src/polymarket_alpha_lab/papersim/store.py: 801, 989, 1165, 1247
+    6  src/polymarket_alpha_lab/papersim/store_psycopg.py: 446, 933, 936, 1098, 1533, 1636
+    2  src/polymarket_alpha_lab/replay.py: 3, 851
+entries under docs/paper-sim/design at head: ['MANIFEST.sha256', 'README.md', 'd1-frozen-preflight-plan.md', 'd1-frozen-preflight-same-instance.md', 'server-evidence']
