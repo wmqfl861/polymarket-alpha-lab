@@ -1,0 +1,6 @@
+# #118 job 136739251077 (linux-native-papersim) on merge eea87f79 (f09850ba into 2bdc4ccc)
+745: 760 passed in 632.21s (0:10:32)
+# --durations=20 entries naming the new d1compare native tests:
+9.11s call     tests/test_papersim_d1compare_journal.py::test_resolution_capture_cli_seals_atomically_and_recovers_across_processes
+5.98s call     tests/test_papersim_d1compare_journal.py::test_capture_cli_native_seals_and_independent_process_reads_exact_bytes
+# the four new test_d1_* tests in test_papersim_capture_marks_native.py are not named in the top-20 durations; the job reports 0 skipped
