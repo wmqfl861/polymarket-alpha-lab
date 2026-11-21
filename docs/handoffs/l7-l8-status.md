@@ -5,7 +5,7 @@ b05b9d6e181d20831a9358fcfb56772920d83c6e (interim status; see 3.8).
 Companion narrative: DELIVERY_PLAN.md sections 63-66.
 
 This handoff records the state on 2026-10-07. Its next steps and dispatch
-rules are historical. Use [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+rules are historical. Use [Project Agent Routing](../../AGENTS.md#project-agent-routing)
 for current work. The handoff grants no activation or acceptance change.
 Numbers come from DELIVERY_PLAN.md, history, GitHub Actions, or the
 arbitration artifacts in section 7.
@@ -160,7 +160,7 @@ false abort; the official-six first 6 failures.
 
 The owner revised the dispatch settings in effect on 2026-09-30.
 The original decision is recorded in `4f84f264d8d762c298f4623459aa24923aab4bc0`.
-Follow [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+Follow [Project Agent Routing](../../AGENTS.md#project-agent-routing)
 for current project work.
 
 ### 3.4 Section 65 post-L7 ruling (recorded at db6e2291)
@@ -173,7 +173,7 @@ contained transport, official-image qualification through actual L5
 wiring, a non-shared trusted runtime, reviewed explicit per-call
 credential supply, and a Codex-approved pinned activation record with
 scoped PG evidence writes." In October, §66 then changed the route for
-arbitration. Follow [the root routing rule](../../AGENTS.md#native-codex-subagent-routing)
+arbitration. Follow [Project Agent Routing](../../AGENTS.md#project-agent-routing)
 for current arbitration. The
 shared production decoder stays authoritative; no second admission
 decoder or relaxed envelope is introduced. The stale probe diagnostic
@@ -243,7 +243,7 @@ rerun on the final integrated tree.
 
 The owner changed project assignments on 2026-10-07.
 The original decision is recorded in `df137300c7b293a159588650488996da05f9d68d`.
-Follow [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+Follow [Project Agent Routing](../../AGENTS.md#project-agent-routing)
 for current project work.
 
 ### 3.7 L9 in flight (NOT in git at b05b9d6e)

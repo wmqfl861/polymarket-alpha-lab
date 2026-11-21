@@ -55,7 +55,7 @@ charter's Revision 1 F1 numbering.
 ## 1. The §65 activation-prerequisite mapping
 
 The original §65 ruling quoted below records the approval wording at that
-time. Use [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing) for current arbitration.
+time. Use [Project Agent Routing](../../AGENTS.md#project-agent-routing) for current arbitration.
 
 > "Effective activation requires accepted final engineering/native/review
 > evidence, delivered contained transport, official-image qualification
@@ -80,7 +80,7 @@ node is FULLY CLOSED ("L9 节点自此彻底关闭（无剩余门）", §68:3125
 | 4 | "a non-shared trusted runtime" | **SATISFIED — D-1 RESOLVED by owner attestation (§68:3113-3115)** | The owner's explicit instruction "按你推荐的做" (2026-10-10) adopted the coordinator recommendation: 154.89.153.24 constitutes a dedicated/non-shared host in the §65 sense (option 1 of the D-1 shapes below), on the complete fact base of §68:3025-3027 plus the §68:3044-3050 coordinator-measured four items (`ls /home/` shows only `ubuntu`; `/etc/passwd` has no other UID≥1000 human user; all 15 tmux terminal sessions belong to ubuntu, owner-operated, earliest traceable 2026-08-29; `sudo -n true` passes, NOPASSWD). The attestation satisfies R-W16 F1's owner-attestation requirement and the W13 runbook's ISOLATED_HOST premise; T8 subsequently ran with POLYMARKET_ALPHA_LAB_CLAUDE_PROBE_ISOLATED_HOST=1 under it (§68:3116-3117). The earlier shared-machine record (§68:2975-2981) is superseded for §65 purposes by this later owner ruling. The record's runtime_isolation fields are now filled from this attestation (§3 below). |
 | 5 | "reviewed explicit per-call credential supply" | **PENDING-DECISION D-4 — designed, not approved, not executed (HELD, §68:3137-3139)** | The operator procedure is designed and landed as design text (research-local-agent.md:1513-1551: dedicated principal, private local channel, `FiniteInMemoryApiKeySupplier` one-slot-per-team, delayed model-phase delivery, no-erasure honesty, no credential in evidence). The supplier type and its stop-token identity binding are implemented and natively proven in the §54 composition (tests/test_project_postgres_uncapped_audit_native.py:347). Its D-1 precondition is now discharged (row 4), but the approval to execute remains owner-gated (§53:1681-1685) and is HELD at the credential boundary: the final go/no-go and the credential-supply window require the owner's explicit statement before the fully pinned record (§68:3137-3139). |
 | 6 | "a … pinned activation record with scoped PG evidence writes" | **RECORD PINNED WITH ALL AVAILABLE EVIDENCE (this N5 update); D-2 APPROVAL REMAINS THE GATE** | The record template was delivered at 35478f53 (§66:2819-2820, design gate PASS). The §3 fill is now pinned with all available evidence: the T8-dependent fields carry the §68 NOW-MEASURED values (`contained_qualification` cites the executed T8 run), and the runtime_isolation fields carry the D-1 attestation. The remaining PENDING fields are exactly D-4 (credential procedure + window) and the final owner go/no-go (§68:3137-3139), plus the approval-time measurements re-taken on the exact run host/tree at pinning. Flipping `status` to `approved-not-yet-effective`/`effective` remains the D-2 decision (native-subagent arbitration + owner confirmation); approval flips no flag by itself. |
-| 7 | "Codex-approved" (historical wording) | **D-2 approval authority** | Obtain fresh, independent read-only arbitration with an explicit verdict under Project Iron Rule 4 and [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing). Owner confirmation remains required for the owner-gated decisions, including D-4 and the final go/no-go. |
+| 7 | "Codex-approved" (historical wording) | **D-2 approval authority** | Obtain fresh, independent read-only arbitration with an explicit verdict under Project Iron Rule 4 and [Project Agent Routing](../../AGENTS.md#project-agent-routing). Owner confirmation remains required for the owner-gated decisions, including D-4 and the final go/no-go. |
 
 Downstream (not §65 prerequisites, recorded for honesty): the G2 real-research
 half itself — at least one reviewed real execution per `crypto_btc`/
@@ -158,7 +158,7 @@ them (plan-review question 2).
   documentation-only commits to e76361d7, and will move again when this
   update lands).
 - D-2 requires independent read-only arbitration under the
-  [root subagent routing rule](../../AGENTS.md#native-codex-subagent-routing) and owner confirmation (row 7).
+  [Project Agent Routing](../../AGENTS.md#project-agent-routing) and owner confirmation (row 7).
 - Approval flips no flag by itself: `activation_authorized` changes only
   through the explicit activation decision recorded with the record
   (research-dispatch.md:646-648, 797-799). The record's `status` stays
@@ -236,7 +236,7 @@ Template source: [research-dispatch.md](../research-dispatch.md) lines
 flip any activation flag; the template is a review schema recorded through
 the documentation/PR path; fields without evidence references stay
 placeholders. The draft's authority fields follow the
-[root subagent routing rule](../../AGENTS.md#native-codex-subagent-routing)
+[Project Agent Routing](../../AGENTS.md#project-agent-routing)
 and the owner gates listed above. T8 HAS run (§68:3116-3125) and is
 recorded without credential material in this fill. It is
 pinned below as ENGINEERING evidence only; nothing here claims activation

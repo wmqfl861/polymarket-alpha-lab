@@ -8,7 +8,7 @@ Scope: documentation-only handoff node
 
 This packet records the July 2026 review target and retains its evidence
 checklist for reference. Follow
-[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+[Project Agent Routing](../../AGENTS.md#project-agent-routing)
 for a current independent read-only review.
 
 The reviewer may inspect diffs, source files, tests, docs, and local scratch

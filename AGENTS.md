@@ -1,20 +1,35 @@
 # Project Instructions
 
-## Native Codex Subagent Routing
+<a name="native-codex-subagent-routing"></a>
 
-Effective 2026-11-20, use native Codex subagents for project work.
+## Project Agent Routing
 
-- **Plan drafting and substantive revision** uses `model="gpt-6.2-astra"` and
-  `reasoning_effort="max"`.
-- **All other subagent work** uses `model="gpt-6.2-sol"` and
-  `reasoning_effort="max"`. This includes plan review, implementation,
-  testing, exploration, audit, documentation, handoffs, code review,
-  and independent arbitration within delegated authority.
+The owner's 2026-11-21 instruction applies to newly assigned project work
+from the time it was issued.
 
-Pass both settings explicitly on every dispatch, including nested dispatches.
-Never inherit the coordinator's or parent's model or effort. Keep fast mode off.
-Follow Project Iron Rules 4–6 for independent review and parallel ownership.
-D1's local research-client choices govern the product adapter.
+- **Plan drafting and substantive revision** use native Codex
+  `model="gpt-6.2-astra"` and `reasoning_effort="max"`.
+- **Development, implementation, and fixes** use native Codex
+  `model="gpt-6.2-sol"` and `reasoning_effort="max"`, including changes to test code.
+- **All other project work, including unspecified tasks**, goes to the actual
+  local ZCode client on Linux. This includes plan review, code review,
+  independent review, stage and handoff reviews, investigation, test execution,
+  independent acceptance, documentation inventory, handoff preparation, and
+  independent arbitration within delegated authority.
+
+Apply the same routing to nested dispatches. Pass both settings explicitly on
+every native dispatch, including nested dispatches. Never inherit the
+coordinator's or parent's model or effort. Keep fast mode off for every role.
+Record the actual ZCode session identity and result, and record the backend
+only if the client discloses it. Follow Project Iron Rules 4–6 for independent
+review and parallel ownership.
+
+Preserve the original executor, progress, and actual receipts for work
+already started before the instruction. Record any newly required ZCode gates
+with their own evidence.
+
+D1's local research-client choices govern the product adapter. OpenCode
+invocation settings apply only to OpenCode calls.
 
 ## 模拟盘主线与 V1 备线
 
@@ -22,9 +37,12 @@ D1's local research-client choices govern the product adapter.
 
 ## 协调、复审与授权
 
-本地协调者负责 `DELIVERY_PLAN.md` 和根规则的落笔，并合并各泳道提交的命令行及导出清单。计划编写和实质修订由原生 `gpt-6.2-astra` 子代理承担，其他子任务由原生 `gpt-6.2-sol` 子代理承担，包括计划复审、开发、测试、代码复审和独立验收。每次派发显式指定 `reasoning_effort=max`，关闭快速模式。独立复审按铁律 4 执行。
+本地协调者负责 `DELIVERY_PLAN.md` 和根规则的最终落笔、归集各泳道的证据及命令行和导出清单、提交 owner 审阅和通过门禁后的普通合并。
+根规则须由 owner 明确确认拟合入的完整正文，方可经 PR 合入。
 
-owner 于 11 月 14 日明确表示“需要做决策的地方你交给本地 codex 来决定”。授权范围内的事项由本地 Codex 协调者交独立子代理裁定。涉及真实资金、凭据或真实下单，须由 owner 本人单独明确确认。
+计划编写和实质修订由原生 Codex `gpt-6.2-astra` 子代理承担。开发、实施及修复由原生 Codex `gpt-6.2-sol` 子代理承担，包括修改测试代码。其余所有项目工作，包括未列明的任务，交本机实际 ZCode 客户端，涵盖计划审核、代码审核、独立复审、阶段和交接审核、调查、测试执行、独立验收、文档清点、交接准备及既有授权内的独立裁定。嵌套派工沿用同一分工。每次原生派工显式指定模型和 `reasoning_effort=max`，各角色关闭快速模式。独立复审按铁律 4 执行。
+
+owner 于 11 月 14 日明确表示“需要做决策的地方你交给本地 codex 来决定”。既有授权范围内的独立裁定依现行派工执行。涉及真实资金、凭据或真实下单，须由 owner 本人单独明确确认。
 
 ## 云端审计交接
 
@@ -46,8 +64,8 @@ Sandbox, no Hyper-V, no OS upgrade); Windows-specific acceptance obligations are
 retired as active duties and frozen as historical evidence. See DELIVERY_PLAN.md
 section 61 for the rebaselined G2-G6 wording, the Windows asset disposition table,
 and the L0-L6 node plan. All other iron rules (PostgreSQL-only persistence,
-paper-only/report-only/readonly, independent review subagents, no live trading,
-no credential handling) are unchanged.
+paper-only/report-only/readonly, independent review under Project Iron Rule 4,
+no live trading, no credential handling) are unchanged.
 
 ## Current owner instruction: freeze V1 and close six work packages (2026-09-14)
 
@@ -81,7 +99,8 @@ roadmaps and team lists are long-term references, not evidence of completed V1.
   prices, huge ceilings or fee attestations to represent an uncapped policy.
   Implement and review that distinction before real-run acceptance; do not send
   local agents to rediscover credentials or repeat completed acceptance.
-- Perform a separate self-review/test pass, accurately labeled as self-review.
+- Perform the separately authorized self-review and label it as self-review.
+  Assign test execution through [Project Agent Routing](#project-agent-routing).
   Require relevant final-revision gates and no unresolved release-blocking finding
   before merge. Claim V1 completion only when G1-G6 and required owner decisions
   are evidenced. Software acceptance is not statistical strategy validation or
@@ -160,7 +179,7 @@ not automatically imported, migrated, modified or deleted.
 The owner-authorized separate self-review is a supplementary check.
 Record it as self-review. The mandatory independent plan, code, stage,
 and handoff review gates follow Project Iron Rule 4 and
-[Native Codex Subagent Routing](#native-codex-subagent-routing).
+[Project Agent Routing](#project-agent-routing).
 
 ## Scope
 
@@ -207,22 +226,31 @@ the user explicitly changes them in a later instruction.
    `paper_only=True`, `report_only=True`, and `readonly=True` where those flags
    exist, and must describe any DB persistence as local paper evidence storage
    rather than execution authorization.
-4. **Reviews are performed by an independent review subagent.** All plan
-   reviews, code reviews, stage audits, post-node external review gates, and
-   handoff review gates must be performed by an independent, freshly dispatched
-   read-only review subagent that had no role in planning or implementing the
-   reviewed change. Do not reuse an implementation, planning, or test subagent
-   as the reviewer for the same change. Review prompts must be read-only:
-   reviewers may inspect plans, diffs, and files, but must not modify, create,
-   or delete files. Every review must end with an explicit verdict line
+4. **Independent ZCode review.** Assign each new plan review, code review,
+   stage audit, post-node external review, and handoff review gate to an
+   independent, freshly dispatched read-only ZCode session. The reviewer must
+   have had no role in planning or implementing the reviewed change or
+   executing its tests. Review prompts must be read-only. Reviewers may inspect
+   plans, diffs, and files, but must not modify, create, or delete files.
+   For headless review on Linux, start the actual ZCode client in `guarded` mode
+   with shell, editing, writing, and all other state-changing tools explicitly
+   disabled. Verify that the session started and supply the minimum read-only
+   materials needed for review. Record the reviewed plan or candidate revision.
+   Every review must end with an explicit verdict line
    (`VERDICT: PASS` or `VERDICT: FAIL` with findings). Do not impose a fixed
-   elapsed-time deadline on a review subagent; let it run to an explicit
+   elapsed-time deadline on a review session. Let it run to an explicit
    conclusion, and do not interrupt, duplicate, or replace it while it is still
-   working. This rule replaces the earlier local Claude Code reviewer
-   requirement by explicit owner instruction (2026-09-24).
-5. **Fast mode is forbidden.** Do not use fast mode for the main Codex agent,
-   Codex subagents, review subagents, implementation workers, planning workers,
-   or audit workers.
+   working. After correction, return a signed failure to the original reviewer
+   for re-review. Record the original session, original verdict, and re-review
+   result. Preserve the original `VERDICT: FAIL` even when a new ZCode gate
+   is required. If a required ZCode session cannot be dispatched, ZCode cannot
+   produce a valid verdict, or the original reviewer is unreachable, treat the
+   review gate as blocked and report it to the owner. Only the required reviewer
+   may clear that gate.
+   On 2026-09-24, the owner replaced the then local Claude Code reviewer with
+   an independent reviewer.
+5. **Fast mode is forbidden.** Keep fast mode off for the coordinator and every
+   assigned role.
 6. **Sustained parallel development is a project iron rule.** Whenever useful,
    independent, non-conflicting work exists, keep useful collaboration capacity
    occupied with implementation, testing, review, audit, documentation, or
@@ -232,7 +260,8 @@ the user explicitly changes them in a later instruction.
    available. Parallel work may span multiple modules and multiple development
    nodes, but write ownership must be split by non-overlapping files or isolated
    worktrees, and every node must retain its own focused tests, full-suite
-   verification, CodeGraph sync, independent review subagent, commit, and push gates.
+   verification, CodeGraph sync, independent review under Iron Rule 4, commit,
+   and push gates.
    Reclaim agents immediately when they complete, fail, or become blocked,
    inspect any work they left on disk, and redeploy the freed capacity to the
    next independent task. Do not impose a permanent lower coordinator-side
@@ -243,9 +272,8 @@ the user explicitly changes them in a later instruction.
    raise it again when doing so becomes useful.
    一个开发节点须同时满足两项完成条件。第一，每个新增或修改的模块须能从命令行、`scripts/`、`tools/` 或定时任务到达，或在状态板登记为“影子”，写明晋级条件和到期日。到期未晋级的影子模块在下一个节点内移除。第二，节点合并后，蓝图 v2 §8.2 指定的 `docs/handoffs/2026-11-12-audit/evidence/audit_static.py` 报告的不可达模块数不高于合并前，已登记的影子模块除外。
 
-7. **Subagent model and effort.** Follow
-   [Native Codex Subagent Routing](#native-codex-subagent-routing) for
-   every project subagent dispatch.
+7. **Project agent routing.** Follow
+   [Project Agent Routing](#project-agent-routing) for every project dispatch.
 
 ## CodeGraph
 
@@ -299,25 +327,24 @@ Avoid using website scraping as a primary data path unless a needed field is una
 
 ## Model Defaults
 
-[Native Codex Subagent Routing](#native-codex-subagent-routing) defines the
-explicit settings for all roles.
+[Project Agent Routing](#project-agent-routing) defines the native dispatch
+settings and the ZCode client role.
 
 ## Review / Audit Defaults
 
-- All plan reviews, code reviews, stage audits, and post-node external review gates go to an independent, freshly dispatched read-only review subagent that had no role in the reviewed change (Project Iron Rule 4).
-- Do not reuse an implementation, planning, or test subagent as the reviewer for the same change.
-- If no independent review subagent can be dispatched, treat the review gate as blocked; there is no other reviewer under the current rules.
-- Review prompts must be read-only: reviewers may inspect plans, diffs, and files, but must not modify, create, or delete files.
-- Every review must end with an explicit verdict line (`VERDICT: PASS` or `VERDICT: FAIL` with findings).
-- Do not impose a fixed elapsed-time deadline on a review subagent, and do not
-  interrupt, duplicate, or replace a review that is still working; wait for its
-  explicit conclusion.
+Apply Project Iron Rule 4 to the independent ZCode gates for plans, code,
+stages, and handoffs. Obtain `VERDICT: PASS` on the applicable plan review
+before implementation and on the applicable code or stage review before
+landing a stage. Bind verification and independent acceptance receipts to
+the candidate revision and the actual executor.
 
 ## Codex Node Push Policy
 
 The prior remote-pin workflow was a Sisyphus handoff constraint, not a standing Codex rule. When Codex is the active implementation agent, do not intentionally keep `origin/main` pinned behind completed local work.
 
-Push a completed Codex node to GitHub after all of the following are true:
+Use ZCode for node verification under
+[Project Agent Routing](#project-agent-routing). Push a completed Codex node
+to GitHub after all of the following are true:
 
 - The node has a focused local commit with a clean worktree.
 - Focused tests for the changed surface pass.
@@ -326,8 +353,8 @@ Push a completed Codex node to GitHub after all of the following are true:
 - Python compile verification passes.
 - CodeGraph is synced when `.codegraph/` exists.
 - A secret scan finds no leaked credentials or tokens in tracked content.
-- The configured post-node external review gate passes through an independent read-only review subagent (Project Iron Rule 4) with `VERDICT: PASS`.
-- If no independent review subagent can be dispatched, treat the review gate as blocked; there is no other reviewer under the current rules.
+- The configured post-node external review gate passes through an independent
+  read-only ZCode session (Project Iron Rule 4) with `VERDICT: PASS`.
 
 Do not push half-finished work, failing tests, unreviewed code, or work that still has unresolved review findings.
 

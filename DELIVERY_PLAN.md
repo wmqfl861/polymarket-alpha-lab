@@ -2817,7 +2817,7 @@ final G3, G4, G5 and G6 remain open. V1 remains incomplete.
 当天的 owner 决定调整了该轮工程分工，L8 在途工作沿当时流程推进。
 原记录见提交 `df137300c7b293a159588650488996da05f9d68d` 的
 `DELIVERY_PLAN.md` 第 2801、2803 行。
-现行派工与独立复审见 [AGENTS.md](AGENTS.md#native-codex-subagent-routing)。
+现行项目派工与独立复审见 [根规则](AGENTS.md#project-agent-routing)。
 
 ### L8 集成门禁状态（2026-10-07，进行中——服务器中断）
 
