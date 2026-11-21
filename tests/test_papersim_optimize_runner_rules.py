@@ -358,3 +358,139 @@ def test_run_rules_v1_numbers_are_the_registered_table() -> None:
     assert RUN_RULES_V1["promote_ci_upper_max"] == 0.005
     assert RUN_RULES_V1["first_look_ci_tighten"] == "99pct"
     assert RUN_RULES_V1["rule_version"] == "v1"
+
+
+@pytest.mark.parametrize(("candidate", "incumbent", "status", "ratio", "managed", "outcome"), [
+    (0.01732755748083972, 0.02165944685104965, "narrower_owner_decision",
+     "0.7999999999999999", "ok", "NO_IMPROVEMENT"),
+    (0.0, 0.0, "narrower_owner_decision", None, "ok", "NO_IMPROVEMENT"),
+    (None, None, "not_assessable_empty_envelope", None, "not_assessable", "CANDIDATE_REGISTERED"),
+    (None, 0.5, "narrower_owner_decision", None, "not_assessable", "NO_IMPROVEMENT"),
+    (0.5, None, None, None, "not_assessable", "RUN_FAILED"),
+])
+def test_envelope_paths_keep_their_original_arithmetic(candidate, incumbent, status, ratio, managed, outcome):
+    adapter = CoinAdapter(spreads={0.50: incumbent, 0.60: candidate})
+    result, _ = run_coin(adapter=adapter, q=0.60, seed=21)
+    assert result.outcome == outcome
+    assert runner.envelope_status(candidate, incumbent) == managed
+    if status is None:
+        assert result.error_code == "envelope_shape_illegal"
+        assert not result.registered_lineages
+    else:
+        record = result.run_scorecard["lineages"][f"{FAMILY}/coin"]
+        assert record["gate"]["condition_c"] == {
+            "candidate_spread": None if candidate is None else repr(candidate),
+            "incumbent_spread": None if incumbent is None else repr(incumbent),
+            "ratio": ratio, "status": status,
+        }
+        assert record["registered"] is (outcome == "CANDIDATE_REGISTERED")
+        if status == "narrower_owner_decision":
+            assert record["blocked_reason"] == "envelope_narrower_owner_decision"
+
+
+@pytest.mark.parametrize(("offset_us", "legacy", "managed"), [
+    (-1, True, True), (0, True, False), (1, False, False),
+])
+def test_resubmission_paths_keep_their_original_28_day_endpoints(offset_us, legacy, managed):
+    cutoff = dt.datetime(2026, 9, 1, tzinfo=UTC)
+    rejected_at = cutoff + dt.timedelta(hours=5)
+    delta = dt.timedelta(days=28, microseconds=offset_us)
+    candidate = theta_spec(0.60).spec_sha256()
+    lineage = f"{FAMILY}/coin"
+    runs = (_recent_run(cutoff, lineage, candidate, registered=False),)
+    assert runner.resubmission_blocked(
+        runs, lineage, candidate, cutoff + delta, days=RUN_RULES_V1["resubmission_days"],
+    ) is legacy
+    receipt = runner.RejectionReceipt(
+        f"or|{FAMILY}|prior", FAMILY, lineage, candidate, "receipt/7", "d" * 64, rejected_at,
+    )
+    def bans(now, *, run_key=f"or|{FAMILY}|current"):
+        return runner.banned_spec_digests((receipt,), now=now, family=FAMILY, run_key=run_key)
+
+    assert (candidate in bans(rejected_at + delta)) is managed
+    assert not bans(rejected_at - dt.timedelta(microseconds=1))
+    assert candidate in bans(rejected_at)
+    assert not bans(rejected_at, run_key=receipt.run_key)
+    if offset_us == 0:
+        # Compare at one physical instant while the two clocks differ.
+        assert candidate in bans(cutoff + delta)
+        same_time = rejected_at + delta
+        assert not runner.resubmission_blocked(runs, lineage, candidate, same_time, days=28)
+        assert candidate not in bans(same_time)
+
+
+@pytest.mark.parametrize(("family", "targets", "min_events", "min_blocks"), [
+    ("club-soccer", ("club-soccer-recalib", "club-soccer-frozen"), 300, 20),
+    ("crypto", ("crypto-gbm",), 150, 20),
+    ("intl", ("intl-elo-poisson", "intl-elo-goal-residuals"), 300, 0),
+    ("nba", ("nba-pace-efficiency",), 300, 30),
+])
+def test_each_stage1_floor_requires_the_registered_event_and_block_minimum(family, targets, min_events, min_blocks):
+    assert runner.resolve_stage1_floors(family) == (min_events, min_blocks)
+    for target in targets:
+        assert runner.resolve_stage1_floors(target) == (min_events, min_blocks)
+        assert RUN_RULES_V1["stage1_holdout_minimums"][target] == {
+            "min_events": min_events, "min_blocks": min_blocks,
+        }
+    for events, blocks, expected in (
+        (min_events - 1, min_blocks, False),
+        (min_events, min_blocks - 1, False),
+        (min_events, min_blocks, True),
+    ):
+        stat = runner.LineageStat(f"{targets[0]}/synthetic", events, blocks, -0.01, 0.001)
+        decisions, insufficient = runner.evaluate_stage1_rule(
+            (stat,), min_events=min_events, min_blocks=min_blocks,
+        )
+        assert insufficient is not expected
+        assert decisions[0].floors_met is decisions[0].registered is expected
+
+
+@pytest.mark.parametrize(("upper", "passes"), [
+    (None, False), (-1e-20, True), (-0.0, False), (0.0, False), (1e-20, False),
+])
+def test_stage1_zero_is_excluded_with_and_without_legacy_serialization(upper, passes):
+    lineage = "synthetic/target"
+    stats = runner.LineageStat(lineage, 150, 20, upper, 0.005)
+    decisions, insufficient = runner.evaluate_stage1_rule((stats,), min_events=150, min_blocks=20)
+    assert not insufficient
+    assert decisions[0].ci_passes is decisions[0].registered is passes
+
+    record = {"_holm_p": 0.005, "gate": {"paired": {"ci95": [None, None if upper is None else repr(upper)]}}}
+    runner._apply_holm({lineage: record}, seed=7)
+    assert record["gate"]["condition_a"] is passes
+    assert record["gate"]["holm_p_adjusted"] == "0.005"
+
+
+@pytest.mark.parametrize(("family", "target", "min_events", "day_window"), [
+    ("club-soccer-future", "match_winner", 300, 84),
+    ("club-soccer-future", "future_target", 150, 84),
+    ("nbaFuture", "future_target", 120, 70),
+    ("intlFuture", "future_target", 60, 365),
+    ("synthetic", "future_target", 60, 182),
+])
+def test_unregistered_forward_pair_uses_legacy_fallback_and_managed_rejection(family, target, min_events, day_window):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.optimize import policy
+
+    at = dt.datetime(2026, 11, 21, tzinfo=UTC)
+    assert runner._forward_plan(family, target, at) == {
+        "primary_metric": "mean_log_loss", "start": at.isoformat(),
+        "first_look_min_events": min_events, "final_look_min_events": min_events * 2,
+        "max_shadow_days": day_window, "rule_version": "v1",
+    }
+    for plan in (
+        lambda: policy.classify_threshold(family, target),
+        lambda: store_psycopg._optimizer_forward_plan({"family": family}, f"{family}/{target}", at, "a", "b"),
+    ):
+        with pytest.raises(ValueError, match="^papersim_policy_threshold_unknown$"):
+            plan()
+
+
+def test_managed_holdout_floor_requires_valid_unambiguous_override():
+    with pytest.raises(ValueError, match="pass floor_class explicitly"):
+        runner.resolve_stage1_floors("synthetic")
+    with pytest.raises(ValueError, match="unknown stage-1 floor class"):
+        runner.resolve_stage1_floors("synthetic", floor_class="unregistered")
+    with pytest.raises(ValueError, match="requires the 'club-soccer' stage-1 floors"):
+        runner.resolve_stage1_floors("club-soccer-future", floor_class="intl")
+    assert runner.resolve_stage1_floors("synthetic", floor_class="intl") == (300, 0)

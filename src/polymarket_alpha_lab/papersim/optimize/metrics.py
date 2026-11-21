@@ -53,7 +53,7 @@ import random
 import statistics
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_EVEN, localcontext
+from decimal import Context, Decimal, ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, localcontext
 from typing import Callable
 
 from polymarket_alpha_lab.papersim.evaluation import (
@@ -61,6 +61,9 @@ from polymarket_alpha_lab.papersim.evaluation import (
     cluster_bootstrap_ratio_ci,
 )
 from polymarket_alpha_lab.research_probability_scores import CONTEXT, QUANTUM
+
+_SIGN_FLIP_REPS_DEFAULT = 2000
+_HOLM_ALPHA_DEFAULT = 0.05
 
 __all__ = (
     "NewSoccerCell",
@@ -324,7 +327,7 @@ def sign_flip_pvalue(
     block_sums: Sequence[float],
     *,
     seed: int,
-    reps: int = 2000,
+    reps: int = _SIGN_FLIP_REPS_DEFAULT,
 ) -> float:
     """Two-sided sign-flip permutation p-value on block sums.
 
@@ -347,7 +350,7 @@ def sign_flip_pvalue(
 
 
 def holm(
-    pvalues: Sequence[float], *, alpha: float = 0.05
+    pvalues: Sequence[float], *, alpha: float = _HOLM_ALPHA_DEFAULT
 ) -> tuple[tuple[bool, ...], tuple[float, ...]]:
     """Holm step-down correction (FWER) over ``k = len(pvalues)`` p-values.
 
@@ -422,53 +425,345 @@ def one_vs_rest_calibration(
     return binary_calibration(observations)
 
 
+_CalibrationGroups = Sequence[tuple[float, int, int]]
+_DecimalCalibrationGroups = Sequence[tuple[Decimal, int, int]]
+_DecimalInterval = tuple[Decimal, Decimal]
+_CALIBRATION_PRECISIONS = (34, 68, 136)  # 2, 4, 8 times binary64's 17 round-trip digits.
+
+
+class _CalibrationBounds:
+    """Outward-rounded Decimal enclosures for one fit comparison."""
+
+    def __init__(self, precision: int) -> None:
+        self.lower = Context(prec=precision, rounding=ROUND_FLOOR)
+        self.upper = Context(prec=precision, rounding=ROUND_CEILING)
+
+    def add(self, left: _DecimalInterval, right: _DecimalInterval) -> _DecimalInterval:
+        return self.lower.add(left[0], right[0]), self.upper.add(left[1], right[1])
+
+    def subtract(self, left: _DecimalInterval, right: _DecimalInterval) -> _DecimalInterval:
+        return self.lower.subtract(left[0], right[1]), self.upper.subtract(left[1], right[0])
+
+    def scale(self, value: _DecimalInterval, factor: Decimal) -> _DecimalInterval:
+        lo, hi = value if factor >= 0 else value[::-1]
+        return self.lower.multiply(lo, factor), self.upper.multiply(hi, factor)
+
+    def multiply(self, left: _DecimalInterval, right: _DecimalInterval) -> _DecimalInterval:
+        return (
+            min(self.lower.multiply(a, b) for a in left for b in right),
+            max(self.upper.multiply(a, b) for a in left for b in right),
+        )
+
+    def divide(self, numerator: _DecimalInterval, denominator: _DecimalInterval) -> _DecimalInterval:
+        # The fitting equations only divide by positive probabilities or information.
+        lo, hi = numerator
+        return (
+            self.lower.divide(lo, denominator[0] if lo < 0 else denominator[1]),
+            self.upper.divide(hi, denominator[1] if hi < 0 else denominator[0]),
+        )
+
+    def total(self, terms: Iterable[_DecimalInterval]) -> _DecimalInterval:
+        lo = hi = Decimal(0)
+        for term_lo, term_hi in terms:
+            lo = self.lower.add(lo, term_lo)
+            hi = self.upper.add(hi, term_hi)
+        return lo, hi
+
+    def square(self, value: _DecimalInterval) -> _DecimalInterval:
+        lo, hi = self.absolute(value)
+        return self.lower.multiply(lo, lo), self.upper.multiply(hi, hi)
+
+    @staticmethod
+    def absolute(value: _DecimalInterval) -> _DecimalInterval:
+        lo, hi = value
+        if lo >= 0:
+            return value
+        if hi <= 0:
+            return hi.copy_negate(), lo.copy_negate()
+        return Decimal(0), max(lo.copy_negate(), hi)
+
+    def exponential(self, value: _DecimalInterval) -> _DecimalInterval:
+        # Decimal exp and ln round to nearest even. Take the adjacent Decimal
+        # at each end before propagating bounds through the next operation.
+        lo, hi = value
+        return (
+            max(Decimal(0), self.lower.next_minus(self.lower.exp(lo))) if lo else Decimal(1),
+            self.upper.next_plus(self.upper.exp(hi)) if hi else Decimal(1),
+        )
+
+    def softplus(self, value: _DecimalInterval) -> _DecimalInterval:
+        def endpoint(x: Decimal, ctx: Context, lower: bool) -> Decimal:
+            tail = ctx.exp(x.copy_abs().copy_negate())
+            if x:
+                tail = max(Decimal(0), ctx.next_minus(tail)) if lower else ctx.next_plus(tail)
+            log = ctx.ln(ctx.add(Decimal(1), tail))
+            log = max(Decimal(0), ctx.next_minus(log)) if lower else ctx.next_plus(log)
+            return ctx.add(max(Decimal(0), x), log)
+
+        return endpoint(value[0], self.lower, True), endpoint(value[1], self.upper, False)
+
+
+def _calibration_groups(observations: Sequence[tuple[float, bool]]) -> _CalibrationGroups:
+    counts: dict[float, list[int]] = {}
+    for probability, outcome in observations:
+        probability = min(max(probability, 1e-6), 1.0 - 1e-6)
+        logit = math.log(probability / (1.0 - probability))
+        if not math.isfinite(logit):
+            raise ValueError("calibration requires finite logits")
+        counts.setdefault(logit, [0, 0])[int(bool(outcome))] += 1
+    return [(x, no, yes) for x, (no, yes) in sorted(counts.items())]
+
+
+def _calibration_newton_step(
+    groups: _CalibrationGroups, point: tuple[float, float],
+) -> tuple[float, float] | None:
+    intercept, slope = point
+    rows = []
+    for x, no, yes in groups:
+        eta = intercept + slope * x
+        if not math.isfinite(eta):
+            return None
+        q = math.exp(-abs(eta))
+        denominator = 1.0 + q
+        if yes == no:
+            residual = yes * math.expm1(-abs(eta)) / denominator
+            if eta < 0:
+                residual = -residual
+        else:
+            residual = (yes * q - no if eta >= 0 else yes - no * q) / denominator
+        rows.append((x, residual, (no + yes) * q / (denominator * denominator)))
+
+    # Work near a point carrying information so that closely spaced logits
+    # retain their differences even when they are far from zero.
+    origin = max(rows, key=lambda row: row[2])[0]
+    shifted = [(x - origin, residual, weight) for x, residual, weight in rows]
+    weight = math.fsum(w for _, _, w in shifted)
+    if weight == 0:
+        return None
+    mean = math.fsum(x * w for x, _, w in shifted) / weight
+    centered = [(x - mean, residual, w) for x, residual, w in shifted]
+    information = math.fsum(w * x * x for x, _, w in centered)
+    if information == 0:
+        return None
+    slope_step = math.fsum(x * r for x, r, _ in centered) / information
+    intercept_step = math.fsum(r for _, r, _ in centered) / weight - (origin + mean) * slope_step
+    if not math.isfinite(slope_step) or not math.isfinite(intercept_step):
+        return None
+    return intercept_step, slope_step
+
+
+def _calibration_eta(
+    bounds: _CalibrationBounds, point: tuple[_DecimalInterval, _DecimalInterval], x: Decimal,
+) -> _DecimalInterval:
+    intercept, slope = point
+    return bounds.add(intercept, bounds.scale(slope, x))
+
+
+def _calibration_decimal_point(point: tuple[float, float]) -> tuple[_DecimalInterval, _DecimalInterval]:
+    intercept, slope = map(Decimal.from_float, point)
+    return (intercept, intercept), (slope, slope)
+
+
+def _calibration_tail(bounds: _CalibrationBounds, eta: _DecimalInterval) -> _DecimalInterval:
+    return bounds.exponential(bounds.scale(bounds.absolute(eta), Decimal(-1)))
+
+
+def _calibration_score(
+    bounds: _CalibrationBounds, eta: _DecimalInterval, tail: _DecimalInterval,
+    denominator: _DecimalInterval, no: int, yes: int,
+) -> _DecimalInterval:
+    no_count, yes_count = Decimal(no), Decimal(yes)
+    numerators = []
+    if eta[1] >= 0:
+        numerators.append(bounds.subtract(bounds.scale(tail, yes_count), (no_count, no_count)))
+    if eta[0] < 0:
+        numerators.append(bounds.subtract((yes_count, yes_count), bounds.scale(tail, no_count)))
+    # If the linear predictor interval crosses zero, enclose both forms.
+    numerator = min(lo for lo, _ in numerators), max(hi for _, hi in numerators)
+    return bounds.divide(numerator, denominator)
+
+
+def _calibration_precise_step(
+    groups: _DecimalCalibrationGroups, point: tuple[float, float], tolerance: float,
+) -> tuple[bool, tuple[float, float] | None]:
+    """Certify the original-coordinate full step, or recompute its direction."""
+    decimal_point = _calibration_decimal_point(point)
+    limit = Decimal.from_float(tolerance)
+    origin = groups[len(groups) // 2][0]
+    one = Decimal(1), Decimal(1)
+    for precision in _CALIBRATION_PRECISIONS:
+        bounds = _CalibrationBounds(precision)
+        rows = []
+        for x, no, yes in groups:
+            eta = _calibration_eta(bounds, decimal_point, x)
+            tail = _calibration_tail(bounds, eta)
+            denominator = bounds.add(one, tail)
+            score = _calibration_score(bounds, eta, tail, denominator, no, yes)
+            weight = bounds.scale(bounds.divide(tail, bounds.square(denominator)), Decimal(no + yes))
+            rows.append((bounds.subtract((x, x), (origin, origin)), score, weight))
+        weight = bounds.total(w for _, _, w in rows)
+        if weight[0] <= 0:
+            continue
+        mean = bounds.divide(bounds.total(bounds.multiply(x, w) for x, _, w in rows), weight)
+        centered = [(bounds.subtract(x, mean), r, w) for x, r, w in rows]
+        information = bounds.total(bounds.multiply(w, bounds.square(x)) for x, _, w in centered)
+        if information[0] <= 0:
+            continue
+        slope = bounds.divide(bounds.total(bounds.multiply(x, r) for x, r, _ in centered), information)
+        intercept = bounds.subtract(
+            bounds.divide(bounds.total(r for _, r, _ in centered), weight),
+            bounds.multiply(bounds.add((origin, origin), mean), slope),
+        )
+        magnitude = bounds.add(bounds.absolute(intercept), bounds.absolute(slope))
+        if magnitude[1] <= limit:
+            return True, None
+        if magnitude[0] > limit:
+            with localcontext(Context(prec=precision)):
+                step = tuple(float((lo + hi) / 2) for lo, hi in (intercept, slope))
+            if all(map(math.isfinite, step)):
+                return False, (step[0], step[1])
+    return False, None
+
+
+def _calibration_float_loss(groups: _CalibrationGroups, point: tuple[float, float]) -> float:
+    intercept, slope = point
+    terms = []
+    for x, no, yes in groups:
+        eta = intercept + slope * x
+        if not math.isfinite(eta):
+            return math.inf
+        softplus_tail = math.log1p(math.exp(-abs(eta)))
+        terms.append((no + yes) * softplus_tail + (no if eta >= 0 else yes) * abs(eta))
+    try:
+        return math.fsum(terms)
+    except OverflowError:
+        return math.inf
+
+
+def _calibration_loss_bounds(
+    bounds: _CalibrationBounds, groups: _DecimalCalibrationGroups,
+    point: tuple[_DecimalInterval, _DecimalInterval],
+) -> _DecimalInterval:
+    terms = []
+    for x, no, yes in groups:
+        eta = _calibration_eta(bounds, point, x)
+        if no:
+            terms.append(bounds.scale(bounds.softplus(eta), Decimal(no)))
+        if yes:
+            terms.append(bounds.scale(bounds.softplus(bounds.scale(eta, Decimal(-1))), Decimal(yes)))
+    return bounds.total(terms)
+
+
+def _calibration_taylor_upper(
+    bounds: _CalibrationBounds, groups: _DecimalCalibrationGroups,
+    current: tuple[_DecimalInterval, _DecimalInterval], trial: tuple[_DecimalInterval, _DecimalInterval],
+) -> Decimal:
+    change = bounds.subtract(trial[0], current[0]), bounds.subtract(trial[1], current[1])
+    one = Decimal(1), Decimal(1)
+    terms = []
+    for x, no, yes in groups:
+        eta = _calibration_eta(bounds, current, x)
+        step = _calibration_eta(bounds, change, x)
+        tail = _calibration_tail(bounds, eta)
+        residual = _calibration_score(bounds, eta, tail, bounds.add(one, tail), no, yes)
+        # L' = -score and L'' <= 1/4 in each observation's linear predictor.
+        linear = bounds.multiply(bounds.scale(residual, Decimal(-1)), step)
+        quadratic = bounds.scale(bounds.scale(bounds.square(step), Decimal(no + yes)), Decimal("0.125"))
+        terms.append(bounds.add(linear, quadratic))
+    return bounds.total(terms)[1]
+
+
+def _calibration_descends(
+    groups: _DecimalCalibrationGroups, point: tuple[float, float], candidate: tuple[float, float],
+    *, taylor_first: bool,
+) -> bool:
+    current = _calibration_decimal_point(point)
+    trial = _calibration_decimal_point(candidate)
+    for precision in _CALIBRATION_PRECISIONS:
+        bounds = _CalibrationBounds(precision)
+        if taylor_first and _calibration_taylor_upper(bounds, groups, current, trial) < 0:
+            return True
+        difference = bounds.subtract(
+            _calibration_loss_bounds(bounds, groups, trial),
+            _calibration_loss_bounds(bounds, groups, current),
+        )
+        if difference[1] < 0:
+            return True
+        if difference[0] > 0:
+            return False
+        taylor_first = True
+    return False
+
+
+def _calibration_backtrack(
+    groups: _CalibrationGroups, decimal_groups: _DecimalCalibrationGroups,
+    point: tuple[float, float], direction: tuple[float, float],
+) -> tuple[float, float] | None:
+    loss = _calibration_float_loss(groups, point)
+    scale = 1.0
+    while scale:
+        trial = point[0] + scale * direction[0], point[1] + scale * direction[1]
+        if trial == point:
+            break
+        if all(map(math.isfinite, trial)):
+            trial_loss = _calibration_float_loss(groups, trial)
+            # Try the cheaper descent certificate unless the float estimate
+            # predicts an increase beyond rounding. Decimal bounds decide.
+            taylor_first = trial_loss - loss <= math.ulp(loss) + math.ulp(trial_loss)
+            if _calibration_descends(decimal_groups, point, trial, taylor_first=taylor_first):
+                return trial
+        scale *= 0.5
+    return None
+
+
 def calibration_slope_intercept(
     observations: Sequence[tuple[float, bool]],
     *,
     iterations: int = 100,
     tolerance: float = 1e-10,
-) -> tuple[float, float]:
-    """Logistic recalibration slope and intercept.
+) -> tuple[float, float] | tuple[None, None]:
+    """Fit the unpenalized binary logistic calibration and return ``(slope, intercept)``.
 
-    Fits ``logit(p_calibrated) = intercept + slope * logit(p)`` by
-    Newton-Raphson (IRLS) on the binary observations; probabilities are
-    clipped to ``[1e-6, 1 - 1e-6]`` before the logit. Perfect calibration
-    gives slope ~1 and intercept ~0; a shrunken/overconfident forecaster
-    gives slope < 1. Returns ``(slope, intercept)``.
+    Probabilities are clipped to ``[1e-6, 1 - 1e-6]`` before the logit.
+    A single outcome class, constant clipped logits, or separation yields
+    ``(None, None)`` because there is no finite unique two-parameter fit.
+    ``iterations`` bounds accepted Newton updates. Convergence requires the
+    full step's L1 norm in the original coefficients to be within ``tolerance``.
+    A fit that cannot be certified within the budget raises ``ValueError``.
     """
     if not observations:
         raise ValueError("calibration of empty sequence")
-    clip_lo, clip_hi = 1e-6, 1.0 - 1e-6
-    xs = [
-        math.log(min(max(p, clip_lo), clip_hi) / (1.0 - min(max(p, clip_lo), clip_hi)))
-        for p, _ in observations
-    ]
-    ys = [1.0 if y else 0.0 for _, y in observations]
-    beta = [0.0, 1.0]  # [intercept, slope], perfectly calibrated start
-    for _ in range(iterations):
-        gradient = [0.0, 0.0]
-        hessian = [[0.0, 0.0], [0.0, 0.0]]
-        for x, y in zip(xs, ys):
-            eta = beta[0] + beta[1] * x
-            probability = 1.0 / (1.0 + math.exp(-eta))
-            weight = max(probability * (1.0 - probability), 1e-12)
-            residual = y - probability
-            gradient[0] += residual
-            gradient[1] += residual * x
-            hessian[0][0] += weight
-            hessian[0][1] += weight * x
-            hessian[1][0] += weight * x
-            hessian[1][1] += weight * x * x
-        determinant = hessian[0][0] * hessian[1][1] - hessian[0][1] * hessian[1][0]
-        if abs(determinant) < 1e-30:
+    groups = _calibration_groups(observations)
+    negatives = [x for x, no, _ in groups if no]
+    positives = [x for x, _, yes in groups if yes]
+    if not negatives or not positives or len(groups) == 1:
+        return None, None
+    if negatives[-1] <= positives[0] or positives[-1] <= negatives[0]:
+        return None, None
+
+    decimal_groups = [(Decimal.from_float(x), no, yes) for x, no, yes in groups]
+    point = (0.0, 1.0)  # intercept, slope
+    budget = max(0, iterations)
+    for updates in range(budget + 1):
+        step = _calibration_newton_step(groups, point)
+        precise = step is None or abs(step[0]) + abs(step[1]) <= tolerance or updates == budget
+        if precise:
+            converged, step = _calibration_precise_step(decimal_groups, point, tolerance)
+            if converged:
+                return point[1], point[0]
+        if step is None or updates == budget:
             break
-        step0 = (hessian[1][1] * gradient[0] - hessian[0][1] * gradient[1]) / determinant
-        step1 = (hessian[0][0] * gradient[1] - hessian[0][1] * gradient[0]) / determinant
-        beta[0] += step0
-        beta[1] += step1
-        if abs(step0) + abs(step1) < tolerance:
+        trial = _calibration_backtrack(groups, decimal_groups, point, step)
+        if trial is None and not precise:
+            converged, refined = _calibration_precise_step(decimal_groups, point, tolerance)
+            if converged:
+                return point[1], point[0]
+            if refined is not None and refined != step:
+                trial = _calibration_backtrack(groups, decimal_groups, point, refined)
+        if trial is None:
             break
-    return beta[1], beta[0]
+        point = trial
+    raise ValueError("calibration fit did not converge")
 
 
 # ---------------------------------------------------------------------------

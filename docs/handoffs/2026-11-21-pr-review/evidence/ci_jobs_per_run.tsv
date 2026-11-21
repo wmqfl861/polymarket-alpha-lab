@@ -1,0 +1,28 @@
+pr	run_id	workflow	event	job_id	job_name	job_conclusion
+#114	44859358224	Offline verification	pull_request	136708906590	offline	success
+#114	44859358299	Native project PostgreSQL	pull_request	136708907087	linux-native-storage	success
+#114	44859358299	Native project PostgreSQL	pull_request	136708907271	linux-native-papersim	success
+#114	44859358299	Native project PostgreSQL	pull_request	136708907283	linux-native-research	success
+#114	44859358299	Native project PostgreSQL	pull_request	136708907314	linux-native-dispatch	success
+#114	44859358299	Native project PostgreSQL	pull_request	136708908296	windows-native	skipped
+#114	44859358299	Native project PostgreSQL	pull_request	136708908517	windows-native-${{ matrix.partition }}	skipped
+#114	44859358299	Native project PostgreSQL	pull_request	136714144553	linux-native	success
+#114	44859358236	Research paper bridge	pull_request	136708906617	windows-paper	success
+#116	44850543464	Offline verification	pull_request	136680617790	offline	success
+#116	44850545864	Native project PostgreSQL	workflow_dispatch	136680629500	linux-native-papersim	success
+#116	44850545864	Native project PostgreSQL	workflow_dispatch	136680629793	linux-native-storage	success
+#116	44850545864	Native project PostgreSQL	workflow_dispatch	136680629811	linux-native-research	success
+#116	44850545864	Native project PostgreSQL	workflow_dispatch	136680630218	linux-native-dispatch	success
+#116	44850545864	Native project PostgreSQL	workflow_dispatch	136680630965	windows-native-${{ matrix.partition }}	skipped
+#116	44850545864	Native project PostgreSQL	workflow_dispatch	136680631188	windows-native	skipped
+#116	44850545864	Native project PostgreSQL	workflow_dispatch	136683285241	linux-native	success
+#116	44850542816	Research paper bridge	pull_request	136680616576	windows-paper	success
+#118	44869068160	Offline verification	pull_request	136739251486	offline	success
+#118	44869067934	Native project PostgreSQL	pull_request	136739250942	linux-native-dispatch	success
+#118	44869067934	Native project PostgreSQL	pull_request	136739251071	linux-native-storage	success
+#118	44869067934	Native project PostgreSQL	pull_request	136739251077	linux-native-papersim	success
+#118	44869067934	Native project PostgreSQL	pull_request	136739251111	linux-native-research	success
+#118	44869067934	Native project PostgreSQL	pull_request	136739252113	windows-native-${{ matrix.partition }}	skipped
+#118	44869067934	Native project PostgreSQL	pull_request	136739252278	windows-native	skipped
+#118	44869067934	Native project PostgreSQL	pull_request	136742171479	linux-native	success
+#118	44869068049	Research paper bridge	pull_request	136739251238	windows-paper	success

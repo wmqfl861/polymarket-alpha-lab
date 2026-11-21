@@ -7,13 +7,11 @@ private managed-shaped database on the throwaway cluster.  Proves:
 
 - ``optimize init`` (through the real CLI main) initializes every
   family's lineages and a second invocation is idempotent (all SKIP);
-- ``optimize run`` writes the complete receipt/write sequence: two
-  receipt phases, input + artifact snapshots, the optimization_runs
-  row; re-running the SAME command (bumped attempt) is idempotent
-  (same run row, byte-identical artifact, no duplicate anything);
-- a budget-exhausted run (fresh seed, tiny trial cap per the
-  pre-registered retry discipline) lands RUN_FAILED with a FAILED
-  receipt and a partial artifact;
+- ``optimize run`` writes two receipt phases, input and artifact snapshots
+  and one optimization run. The same command replays its IDs and bytes.
+  Substituting a different manifest under the same experiment is a conflict;
+- on a separate fresh archive, a real compute deadline seals the observed
+  three-trial prefix and replays the failed result after a restart;
 - the registration write path the runner uses (optimizer-sourced spec
   row + CANDIDATE role event with the pre-registered forward plan)
   round-trips through the registry and shows up in ``optimize status``.
@@ -36,6 +34,7 @@ import pytest
 from polymarket_alpha_lab.papersim import migrations as pm
 from polymarket_alpha_lab.papersim import store
 from polymarket_alpha_lab.papersim.cli import main as cli_main
+from tests.test_papersim_optimize_registered_runner_native import managed_repo, managed_runtime
 
 ROOT = Path(__file__).resolve().parents[1]
 ENABLED = os.environ.get('POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES') == '1'
@@ -53,8 +52,10 @@ LATER = AT + dt.timedelta(hours=2)
 
 
 def _connect(dsn, *, autocommit=True):
-    psycopg = pytest.importorskip('psycopg')
-    connection = psycopg.connect(dsn)
+    from polymarket_alpha_lab.papersim.store_psycopg import connect_explicit
+
+    pytest.importorskip('psycopg')
+    connection = connect_explicit(dsn)
     connection.autocommit = autocommit
     return connection
 
@@ -66,7 +67,6 @@ def _rebind_database(dsn: str, database: str) -> str:
 
 def _migrated_app() -> str:
     """A fully migrated private database; returns the application DSN."""
-    psycopg = pytest.importorskip('psycopg')
     admin = _connect(OWNER_DSN)
     name = 'pal_papersim_mo6run_' + uuid.uuid4().hex[:10]
     with admin.cursor() as cursor:
@@ -75,8 +75,7 @@ def _migrated_app() -> str:
         cursor.execute(f"CREATE DATABASE {name} OWNER pal_owner")
     admin.close()
     owner_dsn = _rebind_database(OWNER_DSN, name)
-    bootstrap = psycopg.connect(owner_dsn)
-    bootstrap.autocommit = True
+    bootstrap = _connect(owner_dsn)
     with bootstrap.cursor() as cursor:
         from polymarket_alpha_lab.project_postgres import sql
         cursor.execute(sql.bootstrap_sql(uuid.uuid4().hex, 'b' * 64, system_id))
@@ -90,39 +89,27 @@ def _migrated_app() -> str:
     return owner_dsn.replace('user=pal_owner', 'user=pal_app')
 
 
-def _mini_snapshot() -> bytes:
-    """Eight games across eight dates straddling the NBA holdout window
-    (2026-11-04): walk-forward dates 10-30..11-03, holdout 11-04..11-06."""
+def _registered_request(conn, directory, *, source_bytes, filename):
+    from polymarket_alpha_lab.papersim import snapshots
+    from polymarket_alpha_lab.papersim.optimize.runner import historical_protocol
 
-    def row(date_s, opponent, is_home, hp, ap):
-        return {
-            "date": date_s, "home": is_home, "opponent": opponent,
-            "poss": 100.0, "pts": hp, "opp_pts": ap, "ortg": 112.0,
-            "drtg": 112.0, "rest_days": 1, "b2b": False,
-        }
-
-    games = [
-        ("2026-10-30", "AAA", "BBB", 113, 110),
-        ("2026-10-31", "BBB", "AAA", 111, 108),
-        ("2026-11-01", "AAA", "BBB", 112, 109),
-        ("2026-11-02", "BBB", "AAA", 108, 104),
-        ("2026-11-03", "AAA", "BBB", 120, 100),
-        ("2026-11-04", "BBB", "AAA", 105, 99),
-        ("2026-11-05", "AAA", "BBB", 114, 111),
-        ("2026-11-06", "BBB", "AAA", 103, 101),
-    ]
-    teams: dict[str, dict] = {}
-    for date_s, home, away, hp, ap in games:
-        teams.setdefault(home, {"display": home, "games": []})
-        teams.setdefault(away, {"display": away, "games": []})
-        teams[home]["games"].append(row(date_s, away, True, hp, ap))
-        teams[away]["games"].append(row(date_s, home, False, ap, hp))
-    return json.dumps({
-        "generated_at": "2026-11-07T00:00:00+00:00",
-        "season": "2026-27",
-        "teams": teams,
-        "injuries": {},
-    }, sort_keys=True).encode("utf-8")
+    family = "nba-pace-efficiency"
+    source = {"role": "nba_snapshot", "key": "snapshot", "kind": "espn_nba_snapshot",
+              "sha256": sha256(source_bytes).hexdigest(), "byte_length": len(source_bytes),
+              "schema_version": 1}
+    manifest = {"schema_version": 1, "protocol": historical_protocol(family), "sources": [source]}
+    encoded = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()
+    with conn.transaction():
+        snapshots.register_snapshot(conn, snapshots.SnapshotRegistration(
+            content=source_bytes, kind=source["kind"], source="test-nba-archive", fetched_at=AT))
+        snapshots.register_snapshot(conn, snapshots.SnapshotRegistration(
+            content=encoded, kind="optimizer_experiment_manifest", source="test-nba-protocol", fetched_at=AT))
+    request = directory / filename
+    request.write_text(json.dumps({
+        "schema_version": 1, "manifest_sha256": sha256(encoded).hexdigest(),
+        "manifest_byte_length": len(encoded),
+    }), encoding="utf-8")
+    return request
 
 
 def _run_optimize(dsn: str, argv, capsys) -> dict:
@@ -132,123 +119,316 @@ def _run_optimize(dsn: str, argv, capsys) -> dict:
 
 
 @NATIVE
-def test_native_init_run_receipts_and_idempotent_replay(capsys, tmp_path):
-    dsn = _migrated_app()
+def test_native_init_run_receipts_and_idempotent_replay(capsys, tmp_path, monkeypatch):
+    from polymarket_alpha_lab.papersim import snapshots
+    from polymarket_alpha_lab.papersim.optimize import runner
+    from tests.test_papersim_optimize_registered_runner_native import _nba_fixture_snapshot, _preview_storage_facts
 
-    # init: every family with targets gets BASELINE+ACTIVE; league-bridge
-    # has no lineages; the second call is a full SKIP.
-    report = _run_optimize(dsn, [
-        "init", "--actor", "op", "--effective-at", AT.isoformat(),
-    ], capsys)
+    dsn = _migrated_app()
+    init = ["init", "--actor", "op", "--effective-at", AT.isoformat()]
+    report = _run_optimize(dsn, init, capsys)
     assert report
-    assert all(
-        item["state"] in ("initialized", "skipped")
-        for item in report.values()
-    )
-    again = _run_optimize(dsn, [
-        "init", "--actor", "op", "--effective-at", AT.isoformat(),
-    ], capsys)
+    assert all(item["state"] in ("initialized", "skipped") for item in report.values())
+    with _connect(dsn) as conn:
+        initialized = _preview_storage_facts(conn)
+    again = _run_optimize(dsn, init, capsys)
     assert {item["state"] for item in again.values()} == {"skipped"}
     assert "club-soccer-frozen/over_under" in report
     assert "nba-pace-efficiency/moneyline" in report
+    with _connect(dsn) as conn:
+        assert _preview_storage_facts(conn) == initialized
 
-    # run: the full write sequence on the frozen NBA profile (1125-point
-    # registered grid; the mini sample cannot meet the 300-match floor,
-    # so the honest outcome is INSUFFICIENT_DATA or NO_IMPROVEMENT).
-    snapshot = tmp_path / "snapshot.json"
-    snapshot.write_bytes(_mini_snapshot())
-    document = tmp_path / "input.json"
-    document.write_text(json.dumps({
-        "inputs": [{
-            "path": str(snapshot),
-            "kind": "espn_nba_snapshot",
-            "sha256": sha256(snapshot.read_bytes()).hexdigest(),
-        }],
-    }), encoding="utf-8")
-    first = _run_optimize(dsn, [
-        "run", "--family", "nba-pace-efficiency",
-        "--as-of", "2026-11-07T00:00:00Z",
-        "--input", str(document), "--seed", "1",
-    ], capsys)
+    raw = _nba_fixture_snapshot()
+    with _connect(dsn) as conn:
+        request = _registered_request(conn, tmp_path, source_bytes=raw, filename="request.json")
+    registered = request.read_bytes()
+    argv = ["run", "--family", "nba-pace-efficiency", "--as-of", "2026-11-10T05:00:00Z",
+            "--seed", "20261120", "--input-manifest", str(request)]
+    execute = runner.execute_optimization_run
+    observed = []
+
+    def observe_search(**options):
+        evaluate = options["evaluate"]
+
+        def observe(spec, fold, targets):
+            result = evaluate(spec, fold, targets)
+            observed.append((spec.spec_sha256(), fold.block_id))
+            return result
+
+        return execute(**{**options, "evaluate": observe})
+
+    monkeypatch.setattr(runner, "execute_optimization_run", observe_search)
+    first = _run_optimize(dsn, argv, capsys)
     assert first["outcome"] in ("INSUFFICIENT_DATA", "NO_IMPROVEMENT")
-    assert first["inserted"] is True
-    artifacts_sha = first["artifacts_sha256"]
-
-    # Same command, bumped attempt: content-idempotent healing.
-    second = _run_optimize(dsn, [
-        "run", "--family", "nba-pace-efficiency",
-        "--as-of", "2026-11-07T00:00:00Z",
-        "--input", str(document), "--seed", "1",
-        "--attempt", "2",
-    ], capsys)
-    assert second["inserted"] is False
-    assert second["optimization_id"] == first["optimization_id"]
-    assert second["artifacts_sha256"] == artifacts_sha
-
-    psycopg = pytest.importorskip('psycopg')
-    app = _connect(dsn)
-    with app.cursor() as cursor:
-        cursor.execute("SELECT outcome, artifacts_sha256, trial_count FROM "
-                       "papersim.optimization_runs")
-        runs = cursor.fetchall()
+    assert first["replayed"] is False
+    assert observed
+    artifact = first["artifacts_sha256"]
+    with _connect(dsn) as conn:
+        runs = conn.execute("SELECT optimization_id, outcome, artifacts_sha256, trial_count FROM "
+                            "papersim.optimization_runs").fetchall()
         assert len(runs) == 1
-        assert runs[0][0] in ("INSUFFICIENT_DATA", "NO_IMPROVEMENT")
-        assert runs[0][1] == artifacts_sha
-        cursor.execute("SELECT phase, attempt FROM "
-                       "papersim.command_run_events "
-                       "WHERE command = 'optimize-run' ORDER BY run_event_id")
-        phases = cursor.fetchall()
-        # Seed-1 run + its idempotent replay (attempt 2).
-        assert [phase for phase, _ in phases] == [
-            "STARTED", "SUCCEEDED", "STARTED", "SUCCEEDED",
-        ]
-        assert [attempt for _, attempt in phases] == [1, 1, 2, 2]
-        cursor.execute("SELECT count(*) FROM papersim.snapshots "
-                       "WHERE kind = 'optimizer_run_artifact'")
-        assert cursor.fetchone()[0] == 1
-        cursor.execute("SELECT count(*) FROM papersim.snapshots "
-                       "WHERE kind = 'espn_nba_snapshot'")
-        assert cursor.fetchone()[0] == 1
-    app.close()
+        assert runs[0][:3] == (first["optimization_id"], first["outcome"], artifact)
+        assert runs[0][3] == len(observed)
+        events = conn.execute("SELECT phase, attempt, run_event_id FROM papersim.command_run_events "
+                              "ORDER BY run_event_id").fetchall()
+        assert events == [("STARTED", 1, first["started_event_id"]),
+                          ("SUCCEEDED", 1, first["terminal_event_id"])]
+        assert conn.execute("SELECT count(*) FROM papersim.snapshots "
+                            "WHERE kind = 'optimizer_run_artifact'").fetchone()[0] == 1
+        assert conn.execute("SELECT count(*) FROM papersim.snapshots "
+                            "WHERE kind = 'espn_nba_snapshot'").fetchone()[0] == 1
+        original = snapshots.read_snapshot(conn, artifact)["content"]
+        assert sha256(original).hexdigest() == artifact
+        assert len(original) == first["artifact_byte_length"]
+        sealed = _preview_storage_facts(conn)
 
-    # Budget exhaustion (fresh seed per the pre-registered retry
-    # discipline: budget failures change the run content, so a retry
-    # takes a new identity): RUN_FAILED row, FAILED receipt, partial
-    # artifact preserved.
-    starved = _run_optimize(dsn, [
-        "run", "--family", "nba-pace-efficiency",
-        "--as-of", "2026-11-07T00:00:00Z",
-        "--input", str(document), "--seed", "2", "--max-trials", "3",
-    ], capsys)
-    assert starved["outcome"] == "RUN_FAILED"
-    assert starved["error_code"] == "budget_exhausted"
-    app = _connect(dsn)
-    with app.cursor() as cursor:
-        cursor.execute("SELECT outcome FROM papersim.optimization_runs "
-                       "ORDER BY optimization_id")
-        outcomes = [row[0] for row in cursor.fetchall()]
-        assert outcomes.count("RUN_FAILED") == 1
-        cursor.execute("SELECT phase FROM papersim.command_run_events "
-                       "WHERE command = 'optimize-run' "
-                       "ORDER BY run_event_id")
-        all_phases = [row[0] for row in cursor.fetchall()]
-        # The seed-2 budget failure appends its own STARTED + FAILED
-        # receipts under its own operation key (the default key carries
-        # the seed).
-        assert all_phases == [
-            "STARTED", "SUCCEEDED", "STARTED", "SUCCEEDED",
-            "STARTED", "FAILED",
-        ]
-        cursor.execute("SELECT content FROM papersim.snapshots "
-                       "WHERE kind = 'optimizer_run_artifact'")
-        artifacts = [row[0] for row in cursor.fetchall()]
-        failed = [bytes(item) for item in artifacts
-                  if b'"budget_exhausted":true' in bytes(item)]
-        assert len(failed) == 1
-        document_failed = json.loads(failed[0].decode("utf-8"))
-        assert document_failed["budget_exhausted"] is True
-        assert "failed_phase" in document_failed
+    def forbidden(**_):
+        pytest.fail("replay or conflicting manifest reached computation")
+
+    monkeypatch.setattr(runner, "historical_run_arguments", forbidden)
+    sealed_fields = ("optimization_id", "started_event_id", "terminal_event_id", "started_event_key",
+                     "terminal_event_key", "artifacts_sha256", "artifact_byte_length", "outcome")
+
+    def prove_replay(attempt, facts):
+        replay = _run_optimize(dsn, [*argv, "--attempt", str(attempt)], capsys)
+        assert replay["replayed"] is True
+        assert {key: replay[key] for key in sealed_fields} == {key: first[key] for key in sealed_fields}
+        assert len(observed) == runs[0][3]
+        with _connect(dsn) as conn:
+            assert snapshots.read_snapshot(conn, replay["artifacts_sha256"])["content"] == original
+            assert _preview_storage_facts(conn) == facts
+
+    for attempt in (1, 2):
+        prove_replay(attempt, sealed)
+
+    # Registration is test setup. Swapping the pointer still names the same run key.
+    with _connect(dsn) as conn:
+        other = _registered_request(conn, tmp_path, source_bytes=raw + b"\n", filename="other.json")
+        before_conflict = _preview_storage_facts(conn)
+    assert len(before_conflict["snapshots"]) == len(sealed["snapshots"]) + 2
+    assert set(sealed["snapshots"]) <= set(before_conflict["snapshots"])
+    assert all(before_conflict[table] == sealed[table] for table in sealed if table != "snapshots")
+    assert other.read_bytes() != registered
+    request.write_bytes(other.read_bytes())
+    for extra in (["--dry-run"], []):
+        assert cli_main(["optimize", *argv, "--dsn", dsn, "--repo-root", str(ROOT), *extra]) == 1
+        captured = capsys.readouterr()
+        assert not captured.out
+        assert "FAIL: papersim_optimize_request_conflict " in captured.err
+        assert len(observed) == runs[0][3]
+        with _connect(dsn) as conn:
+            assert _preview_storage_facts(conn) == before_conflict
+    request.write_bytes(registered)
+    prove_replay(2, before_conflict)
+
+
+@pytest.mark.skipif(not os.environ.get("POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX"),
+                    reason="native managed calibration proof requires the qualified PG18 binary prefix")
+@NATIVE
+def test_native_managed_cli_seals_and_replays_calibration_nonconvergence(
+        managed_repo, managed_runtime, tmp_path, capsys, monkeypatch):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.optimize import metrics, runner, scorecard
+    from polymarket_alpha_lab.papersim.optimize.search import TRIAL_COMPLETED
+    from tests.test_papersim_optimize_registered_runner_native import _nba_fixture_snapshot, _preview_storage_facts
+
+    root, head = managed_repo
+    _, app = managed_runtime
+    family = "nba-pace-efficiency"
+    protocol = runner.historical_protocol(family)
+    request = _registered_request(app, tmp_path, source_bytes=_nba_fixture_snapshot(), filename="request.json")
+    source = ["--managed", "--repo-root", str(root)]
+    assert cli_main(["optimize", "init", *source, "--families", family]) == 0
+    assert capsys.readouterr().err == ""
+    before = _preview_storage_facts(app)
+
+    # Give the real solver zero Newton updates on the scorecard's actual binary observations.
+    failures = []
+
+    def calibrate_without_updates(observations):
+        try:
+            return metrics.calibration_slope_intercept(observations, iterations=0)
+        except ValueError as error:
+            failures.append((str(error), tuple(observations)))
+            raise
+
+    monkeypatch.setattr(scorecard, "calibration_slope_intercept", calibrate_without_updates)
+    argv = ["optimize", "run", *source, "--family", family, "--as-of", protocol["data_cutoff"],
+            "--input-manifest", str(request), "--seed", str(protocol["seed"])]
+
+    def run():
+        exit_code = cli_main(argv)
+        output = capsys.readouterr()
+        assert output.err == "", output.err
+        assert exit_code == 1
+        return json.loads(output.out)
+
+    failed = run()
+    assert failed["outcome"] == "RUN_FAILED" and failed["exit_code"] == 1
+    assert failed["error_code"] == "papersim_optimize_scientific_failure"
+    assert failed["replayed"] is False and failed["registered_lineages"] == []
+    [(reason, observations)] = failures
+    assert reason == "calibration fit did not converge"
+    negatives = [p for p, yes in observations if not yes]
+    positives = [p for p, yes in observations if yes]
+    assert negatives and positives
+    assert min(negatives) < max(positives) and min(positives) < max(negatives)
+
+    run_key, digest = failed["run_key"], failed["artifacts_sha256"]
+    with store_psycopg.connect_managed(root) as reader:
+        reader.autocommit = True
+        runs = reader.execute(
+            "SELECT optimization_id, outcome, trial_count, artifacts_sha256 FROM papersim.optimization_runs "
+            "WHERE optimization_key = %s", (run_key,),
+        ).fetchall()
+        events = store_psycopg._optimization_events(reader, store_psycopg._optimize_operation_key(run_key))
+        snapshot = snapshots.read_snapshot(reader, digest)
+        sealed = _preview_storage_facts(reader)
+
+    assert runs == [(failed["optimization_id"], "RUN_FAILED", failed["counts"]["evaluated_trials"], digest)]
+    assert [(event["phase"], event["attempt"]) for event in events] == [("STARTED", 1), ("FAILED", 1)]
+    started, terminal = events
+    for event, receipt_prefix in ((started, "started"), (terminal, "terminal")):
+        assert event["run_event_id"] == failed[f"{receipt_prefix}_event_id"]
+        assert event["run_event_key"] == failed[f"{receipt_prefix}_event_key"]
+    assert started["error_code"] is None and terminal["error_code"] == failed["error_code"]
+    assert started["input_evidence"][0]["request"]["run_key"] == run_key
+    [attempt_link] = terminal["input_evidence"]
+    assert attempt_link["original_started_event_id"] == started["run_event_id"]
+    assert attempt_link["original_started_event_key"] == started["run_event_key"]
+    [linkage] = terminal["output_evidence"]
+    for field in ("run_key", "optimization_id", "outcome", "exit_code", "artifacts_sha256", "artifact_byte_length"):
+        assert linkage[field] == failed[field]
+    assert linkage["role_event_ids"] == {}
+
+    assert snapshot is not None and snapshot["kind"] == "optimizer_run_artifact"
+    archived = snapshot["content"]
+    assert len(archived) == snapshot["byte_length"] == failed["artifact_byte_length"]
+    assert sha256(archived).hexdigest() == digest
+    artifact = json.loads(archived)
+    assert artifact["request"]["code_commit"] == head and artifact["request"]["run_key"] == run_key
+    assert artifact["outcome"] == "RUN_FAILED"
+    assert artifact["budget"]["stopping_causes"] == ["scientific_failure"]
+    pure = artifact["pure"]
+    assert pure["issue"] == reason and "evaluation_integrity_failure" in pure["flags"]
+    assert pure["holdout"]["callbacks"] == []
+    assert pure["proposed_specs"] == artifact["rejections"] == {}
+    counts = pure["counts"]
+    assert counts == failed["counts"]
+    assert len(pure["trials"]) == counts["evaluated_trials"] == counts["planned_trials"] > 0
+    assert sum(row["status"] == TRIAL_COMPLETED for row in pure["trials"]) == counts["completed_trials"] > 0
+    assert counts["aborted_trials"] == 0
+    active = pure["active_specs"][f"{family}/moneyline"]
+    archived_observations = [
+        (row["probabilities"][1], row["outcome_index"] == 1)
+        for batch in pure["search_trial_forecasts"] if batch["target"] == "moneyline"
+        for row in batch["predictions"] if row["spec_sha256"] == active
+    ]
+    assert sorted(archived_observations) == sorted(observations)
+    added = {"snapshots": 1, "optimization_runs": 1, "command_run_events": 2}
+    for table, original in before.items():
+        assert set(original) <= set(sealed[table]), table
+        assert len(sealed[table]) - len(original) == added.get(table, 0), table
+
+    def forbid_compute(**_):
+        pytest.fail("terminal replay entered historical evaluation")
+
+    monkeypatch.setattr(runner, "historical_run_arguments", forbid_compute)
+    assert run() == {**failed, "replayed": True}
+    with store_psycopg.connect_managed(root) as reader:
+        reader.autocommit = True
+        assert snapshots.read_snapshot(reader, digest)["content"] == archived
+        assert _preview_storage_facts(reader) == sealed
+
+
+@pytest.mark.skipif(not os.environ.get("POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX"),
+                    reason="native managed restart proof requires the qualified PG18 binary prefix")
+@pytest.mark.parametrize("lost_reply", [False, True], ids=["acknowledged", "commit-reply-lost"])
+@NATIVE
+def test_native_cli_seals_three_completed_trials_after_real_deadline(
+        managed_repo, managed_runtime, tmp_path, lost_reply):
+    import time
+
+    from polymarket_alpha_lab.papersim.optimize.search import TRIAL_COMPLETED
+    from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+    from tests.test_papersim_optimize_registered_runner_native import (
+        _advance_past, _invocation, _nba_archived_forecasts, _nba_fixture_snapshot, _process, _reply, _wait_path,
+    )
+
+    root, head = managed_repo
+    owner, app = managed_runtime
+    request = _registered_request(app, tmp_path, source_bytes=_nba_fixture_snapshot(), filename="request.json")
+    archive = str(root), request
+    trace, barrier, clock = (tmp_path / filename for filename in ("observed.json", "compute.hold", "clock.json"))
+    finished, artifact_path = (tmp_path / filename for filename in ("finished.json", "archived.json"))
+    _invocation("nba-cli", archive, command="init")
+    before_facts = _invocation("nba-facts", archive)
+    before = _invocation("nba-read", archive)
+    assert before["row"] is None and before["events"] == []
+    with _process("nba-cli", archive, trace=str(trace), barrier=str(barrier), clock=str(clock),
+                  finished=str(finished), barrier_trial=3, lose_commit_reply=lost_reply) as process:
+        _wait_path(barrier, process)
+        times = json.loads(clock.read_bytes())
+        assert time.monotonic_ns() < times["compute"]
+        _advance_past(times["compute"])
+        barrier.with_suffix(".release").touch()
+        failed = _reply(process, 1)
+    assert failed["outcome"] == "RUN_FAILED"
+    assert failed["error_code"] == "papersim_optimize_budget_exhausted"
+    assert failed["replayed"] is lost_reply
+    observed = json.loads(trace.read_bytes())
+    completion = json.loads(finished.read_bytes())
+    assert times["compute"] < completion.pop("acknowledged_ns") < times["hard"]
+    assert completion == observed
+    assert "fit" in observed["model_calls"] and "prediction" in observed["model_calls"]
+    assert len(observed["callbacks"]) == 3
+
+    after = _invocation("nba-read", archive, artifact_output=str(artifact_path))
+    assert after["events"] == [["STARTED", 1, failed["started_event_id"]],
+                               ["FAILED", 1, failed["terminal_event_id"]]]
+    assert after["row"]["optimization_id"] == failed["optimization_id"]
+    assert after["row"]["outcome"] == "RUN_FAILED" and after["row"]["trial_count"] == 3
+    archived = artifact_path.read_bytes()
+    assert len(archived) == failed["artifact_byte_length"] == after["row"]["artifact_byte_length"]
+    assert sha256(archived).hexdigest() == failed["artifacts_sha256"] == after["row"]["artifacts_sha256"]
+    payload = json.loads(archived)
+    assert payload["request"]["code_commit"] == head
+    assert payload["outcome"] == "RUN_FAILED"
+    assert payload["budget"]["stopping_causes"] == ["compute_time"]
+    assert payload["budget"]["stopping_stage"] == "search"
+    assert payload["rejections"] == {}
+    pure = payload["pure"]
+    assert pure["holdout"]["callbacks"] == []
+    assert [row["status"] for row in pure["trials"]] == [TRIAL_COMPLETED] * 3
+    assert [[row["spec_sha256"], row["fold_block_id"], row["targets"]]
+            for row in pure["trials"]] == observed["callbacks"]
+    witnessed = {(row["fold"], row["spec"], row["target"]): (row["predictions"], row["refusals"])
+                 for row in observed["batches"]}
+    forecasts = _nba_archived_forecasts(pure)
+    assert forecasts == witnessed
+    assert any(predictions for predictions, _ in forecasts.values())
+    after_facts = _invocation("nba-facts", archive)
+    added = {"snapshots": 1, "optimization_runs": 1, "command_run_events": 2}
+    for table, original in before_facts.items():
+        assert set(original) <= set(after_facts[table])
+        assert len(after_facts[table]) - len(original) == added.get(table, 0)
+
+    owner.close()
     app.close()
+    postgres = ProjectPostgres(root)
+    assert postgres.down()["status"] == "stopped"
+    assert postgres.up()["status"] == "running"
+    for attempt in (1, 2):
+        replay_trace = tmp_path / f"replay-{attempt}.json"
+        replay = _invocation("nba-cli", archive, code=1, attempt=attempt,
+                             forbid_compute=True, finished=str(replay_trace))
+        assert replay == {**failed, "replayed": True}
+        replayed = json.loads(replay_trace.read_bytes())
+        assert replayed["model_calls"] == replayed["callbacks"] == replayed["batches"] == []
+        readback = tmp_path / f"readback-{attempt}.json"
+        assert _invocation("nba-read", archive, artifact_output=str(readback)) == after
+        assert readback.read_bytes() == archived
+        assert _invocation("nba-facts", archive) == after_facts
 
 
 @NATIVE

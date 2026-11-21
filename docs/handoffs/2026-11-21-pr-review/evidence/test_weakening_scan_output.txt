@@ -1,0 +1,22 @@
+################ PR #114  (base = main 2bdc4cccacc925ea8e6569c8865b90c0b0c671e6[:8] vs fresh merge of main+PR)
+base=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 head=refs/audit/m_main+114
+test python files: added=3 modified=10 deleted=0
+modified files: test functions 134 -> 293
+totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0
+added files: 3 with 48 test functions
+################ PR #116  (base = main 2bdc4cccacc925ea8e6569c8865b90c0b0c671e6[:8] vs fresh merge of main+PR)
+base=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 head=refs/audit/m_main+116
+test python files: added=0 modified=0 deleted=0
+modified files: test functions 0 -> 0
+totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0
+added files: 0 with 0 test functions
+################ PR #118  (base = main 2bdc4cccacc925ea8e6569c8865b90c0b0c671e6[:8] vs fresh merge of main+PR)
+base=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 head=refs/audit/m_main+118
+test python files: added=1 modified=4 deleted=0
+tests/test_papersim_capture_marks_native.py: tests 6 -> 10
+    skip markers/calls: 6 -> 8
+tests/test_papersim_d1compare_journal.py: tests 40 -> 49
+    skip markers/calls: 4 -> 6
+modified files: test functions 80 -> 97
+totals: removed tests=0 tests with fewer checks=0 new skip markers=4 new xfail markers=0
+added files: 1 with 5 test functions

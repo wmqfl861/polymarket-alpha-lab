@@ -32,7 +32,7 @@ b05b9d6e; see 3.7.
 | Current main | b05b9d6e181d20831a9358fcfb56772920d83c6e |
 | Publication receipt | commit a1128a65 (section 62 amendment, E) |
 | Release | ID 398244797, immutable prerelease, published and verified |
-| Designated Linux host | ubuntu@166.1.232.93 (see 3.8) |
+| Designated Linux host | ubuntu@SERVER_HOST_REDACTED_RETIRED (see 3.8) |
 | CI workflow | "Offline verification" (GitHub Actions) |
 
 Prerelease tag lineage, unwrapped values on their own lines:
@@ -69,7 +69,7 @@ Acquisition and qualification:
   " (Claude Code)" in scripts/claude_probe_environment.py), plus
   teardown and post-run integrity checks. Its earlier false abort is
   preserved as a first failure at
-  ubuntu@166.1.232.93:~/pal-artifacts/l7-work/final/export/
+  ubuntu@SERVER_HOST_REDACTED_RETIRED:~/pal-artifacts/l7-work/final/export/
   (run-record.json).
 
 First official-six cohort (source under review a2e32a13): 6 executed /
@@ -264,7 +264,7 @@ plan is integrated into the repository.
 
 ### 3.8 The honest blocker: 166 host outage
 
-ubuntu@166.1.232.93 has been fully unreachable since 2026-10-07: SSH
+ubuntu@SERVER_HOST_REDACTED_RETIRED has been fully unreachable since 2026-10-07: SSH
 "Connection closed" and ICMP 100% loss -- a host-level outage, not a
 daemon or project failure, confirmed over two independent paths
 (local and review subagent). Consequences, recorded honestly at

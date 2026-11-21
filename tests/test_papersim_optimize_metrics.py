@@ -24,7 +24,7 @@ import math
 import random
 import statistics
 import sys
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 
 import pytest
@@ -287,6 +287,86 @@ def test_calibration_diagnostics_and_slope_intercept():
         _event(f"m{i}", "1x2", f"m{i}", (0.25, 0.5, 0.25), 1) for i in range(4)
     ]
     assert mx.one_vs_rest_calibration(events, 1).sample_count == 4
+
+
+@pytest.mark.parametrize(
+    "observations",
+    [
+        [(0.2, False), (0.8, False)],
+        [(0.2, True), (0.8, True)],
+        [(0.4, False), (0.4, True)],
+        [(0.0, False), (1e-7, True)],  # Identical after clipping.
+        [(0.2, False), (0.8, True)],
+        [(0.2, True), (0.8, False)],
+        [(0.2, False), (0.4, False), (0.4, True), (0.8, True)],
+        [(0.2, True), (0.4, False), (0.4, True), (0.8, False)],
+    ],
+)
+def test_calibration_has_no_finite_unique_fit(observations):
+    assert mx.calibration_slope_intercept(observations) == (None, None)
+
+
+def test_calibration_one_outcome_at_an_interior_logit_is_estimable():
+    observations = [(0.25, False), (0.5, True), (0.75, False)]
+    assert mx.calibration_slope_intercept(observations) == pytest.approx(
+        (0.0, -math.log(2)), rel=0, abs=1e-10,
+    )
+
+
+def test_calibration_empty_input_and_zero_iteration_budget():
+    with pytest.raises(ValueError, match="calibration of empty sequence"):
+        mx.calibration_slope_intercept([])
+
+    calibrated = [(0.25, True)] + [(0.25, False)] * 3
+    calibrated += [(0.75, False)] + [(0.75, True)] * 3
+    assert mx.calibration_slope_intercept(calibrated, iterations=0) == (1.0, 0.0)
+    with pytest.raises(ValueError, match="calibration fit did not converge"):
+        mx.calibration_slope_intercept(calibrated + [(0.75, False)], iterations=0)
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "left_yes", "right_yes"),
+    [(0.2, 0.7, 1, 2), (0.0, 1.0, 2, 1), (0.01, 0.99, 2, 1), (0.500001, 0.500002, 1, 2)],
+)
+def test_calibration_matches_the_two_cohort_analytic_fit(left, right, left_yes, right_yes):
+    observations = [
+        (p, outcome < yes) for p, yes in ((left, left_yes), (right, right_yes))
+        for outcome in range(3)
+    ]
+    clipped = (min(max(left, 1e-6), 1 - 1e-6), min(max(right, 1e-6), 1 - 1e-6))
+    left_x, right_x = (math.log(p / (1 - p)) for p in clipped)
+    left_eta, right_eta = (math.log(yes / (3 - yes)) for yes in (left_yes, right_yes))
+    slope = (right_eta - left_eta) / (right_x - left_x)
+    intercept = left_eta - slope * left_x
+    assert mx.calibration_slope_intercept(observations) == pytest.approx(
+        (slope, intercept), rel=0, abs=1e-10,
+    )
+
+
+def test_calibration_confirms_descent_when_binary64_loss_totals_tie():
+    probability = 0.500025
+    forecasts = (probability, 1.0 - probability)
+    observations = [(p, outcome) for p in forecasts for outcome in (False, True)]
+
+    # At each repeated predictor the empirical rate is 1/2. The first
+    # full Newton update is x - sinh(x), and the exact optimum is zero.
+    with localcontext() as ctx:
+        ctx.prec = 68
+        xs = [Decimal.from_float(math.log(p / (1.0 - p))) for p in forecasts]
+        updated = [x - (x.exp() - (-x).exp()) / 2 for x in xs]
+        slope = (updated[1] - updated[0]) / (xs[1] - xs[0])
+        assert abs(slope) > Decimal("1e-10")
+        updated_loss = sum((1 + x.exp()).ln() + (1 + (-x).exp()).ln() for x in updated)
+        optimum_loss = 4 * Decimal(2).ln()
+        assert updated_loss > optimum_loss
+        assert float(updated_loss) == float(optimum_loss)
+
+    with pytest.raises(ValueError, match="calibration fit did not converge"):
+        mx.calibration_slope_intercept(observations, iterations=1)
+    for iterations in (2, 100):
+        assert mx.calibration_slope_intercept(observations, iterations=iterations) == pytest.approx(
+            (0.0, 0.0), rel=0, abs=1e-10,
+        )
 
 
 def test_mad_and_flips():

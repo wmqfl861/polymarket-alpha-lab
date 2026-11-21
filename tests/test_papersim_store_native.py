@@ -1856,19 +1856,57 @@ def _write_managed_instance(root, triple, *, port) -> None:
     os.chmod(path, 0o600)
 
 
-def test_connect_managed_hands_off_a_verified_idle_connection(tmp_path, monkeypatch):
+def _mock_managed_handoff(monkeypatch, connection, clock):
+    from contextlib import contextmanager
     import types
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    connect_calls: list[str] = []
+    original_rollback = connection.rollback
+
+    def direct_connect(dsn):
+        assert clock is None
+        connect_calls.append(dsn)
+        return connection
+
+    def clocked_connect(dsn, supplied_clock):
+        assert clock is not None and supplied_clock is clock
+        connect_calls.append(dsn)
+        return connection
+
+    def rollback():
+        assert not hasattr(connection, '_papersim_managed_root')
+        original_rollback()
+
+    @contextmanager
+    def identity_phase(conn, supplied_clock, *, stage, closeout):
+        assert conn is connection and supplied_clock is clock and clock is not None
+        assert stage == 'connection_identity' and closeout is True
+        conn.calls.append('identity_phase_enter')
+        try:
+            yield
+        finally:
+            assert not hasattr(conn, '_papersim_managed_root')
+            conn.calls.append('identity_phase_exit')
+
+    monkeypatch.setitem(sys.modules, 'psycopg', types.SimpleNamespace(connect=direct_connect))
+    monkeypatch.setattr(store_psycopg, '_connect_with_deadline', clocked_connect)
+    monkeypatch.setattr(store_psycopg, 'optimization_database_phase', identity_phase)
+    monkeypatch.setattr(connection, 'rollback', rollback)
+    return connect_calls
+
+
+@pytest.mark.parametrize('clock', [None, object()], ids=['direct', 'clocked'])
+def test_connect_managed_hands_off_a_verified_idle_connection(tmp_path, monkeypatch, clock):
     from polymarket_alpha_lab.papersim import store_psycopg
 
     triple = ('a' * 32, 'b' * 64, '1234567890123456')
     root = tmp_path / 'managed-root'
     _write_managed_instance(root, triple, port=55433)
     connection = _HandoffFakeConnection(triple)
-    connect_calls: list[str] = []
-    monkeypatch.setitem(sys.modules, 'psycopg', types.SimpleNamespace(
-        connect=lambda dsn: connect_calls.append(dsn) or connection))
+    connect_calls = _mock_managed_handoff(monkeypatch, connection, clock)
 
-    returned = store_psycopg.connect_managed(root)
+    returned = store_psycopg.connect_managed(root / '..' / root.name, clock=clock)
 
     assert returned is connection and connection.closed is False
     assert len(connect_calls) == 1  # one connection, DSN through the audited face
@@ -1878,14 +1916,18 @@ def test_connect_managed_hands_off_a_verified_idle_connection(tmp_path, monkeypa
     assert 'project_private.instance' in connection.executed[0]
     assert connection.bound_contexts == [triple]
     # Exactly one rollback ends the check's read-only transaction...
-    assert connection.calls == ['cursor', 'rollback']
+    expected_calls = ['cursor', 'rollback']
+    if clock is not None:
+        expected_calls = ['identity_phase_enter', *expected_calls, 'identity_phase_exit']
+    assert connection.calls == expected_calls
     assert connection.rollback_count == 1 and connection.commit_count == 0
     # ...so the handed-off connection carries no open transaction.
     assert connection.open_transaction is False
+    assert connection._papersim_managed_root == root.resolve()
 
 
-def test_connect_managed_identity_mismatch_fails_closed(tmp_path, monkeypatch):
-    import types
+@pytest.mark.parametrize('clock', [None, object()], ids=['direct', 'clocked'])
+def test_connect_managed_identity_mismatch_fails_closed(tmp_path, monkeypatch, clock):
     from polymarket_alpha_lab.papersim import store_psycopg
     from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
 
@@ -1894,18 +1936,43 @@ def test_connect_managed_identity_mismatch_fails_closed(tmp_path, monkeypatch):
     root = tmp_path / 'managed-root'
     _write_managed_instance(root, bound, port=55433)
     connection = _HandoffFakeConnection(served)
-    monkeypatch.setitem(sys.modules, 'psycopg', types.SimpleNamespace(
-        connect=lambda dsn: connection))
+    _mock_managed_handoff(monkeypatch, connection, clock)
 
     with pytest.raises(ProjectDatabaseError,
                        match='project_postgres_connection_identity_mismatch'):
-        store_psycopg.connect_managed(root)
+        store_psycopg.connect_managed(root, clock=clock)
 
     # Fail closed AND released: the connection is closed before the raise,
     # nothing is handed off and no rollback ran after the failed check.
     assert connection.closed is True
     assert connection.rollback_count == 0
-    assert connection.calls == ['cursor', 'close']
+    expected_calls = ['cursor', 'close']
+    if clock is not None:
+        expected_calls = ['identity_phase_enter', 'cursor', 'identity_phase_exit', 'close']
+    assert connection.calls == expected_calls
+    assert not hasattr(connection, '_papersim_managed_root')
+
+
+@pytest.mark.parametrize('clock', [None, object()], ids=['direct', 'clocked'])
+def test_connect_managed_rollback_failure_fails_closed(tmp_path, monkeypatch, clock):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    triple = ('a' * 32, 'b' * 64, '1234567890123456')
+    root = tmp_path / 'managed-root'
+    _write_managed_instance(root, triple, port=55433)
+    connection = _HandoffFakeConnection(triple)
+
+    def fail_rollback():
+        raise RuntimeError('identity rollback failed')
+
+    monkeypatch.setattr(connection, 'rollback', fail_rollback)
+    _mock_managed_handoff(monkeypatch, connection, clock)
+
+    with pytest.raises(RuntimeError, match='identity rollback failed'):
+        store_psycopg.connect_managed(root, clock=clock)
+
+    assert connection.closed is True
+    assert not hasattr(connection, '_papersim_managed_root')
 
 
 @NATIVE

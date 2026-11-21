@@ -40,11 +40,16 @@ in-repo basis is docs/paper-sim/design/README.md (FX-28).
 from __future__ import annotations
 
 from collections.abc import Mapping
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from decimal import Decimal
+from hashlib import sha256
 import json
-from pathlib import Path
+from math import isfinite
+from pathlib import Path, PurePosixPath
+from selectors import DefaultSelector
+import time
 
 from polymarket_alpha_lab.local_postgres_dsn import validate_local_postgres_dsn
 from polymarket_alpha_lab.papersim import settle
@@ -106,7 +111,29 @@ def managed_dsn(info: dict, *, owner: bool = False, repo_root: Path = Path('.'))
     return _validated(dsn, OWNER_DSN_LABEL if owner else MANAGED_DSN_LABEL)
 
 
-def connect_managed(repo_root: Path, *, info: dict | None = None):
+def _connect_with_deadline(dsn: str, clock: OptimizationCommandClock):
+    """Open one audited DSN within the shorter of its timeout and the command bound."""
+    from psycopg import Connection
+    from psycopg.conninfo import conninfo_to_dict, timeout_from_conninfo
+    from psycopg.generators import connect
+
+    stage = 'connect'
+    connect_start = time.monotonic_ns()
+    _remaining_ns(clock.hard_ns, stage, minimum_ns=1)
+    timeout = timeout_from_conninfo(conninfo_to_dict(dsn))
+    cutoff_ns = min(clock.hard_ns, connect_start + timeout * _NS_PER_SECOND)
+    with closing(connect(dsn, timeout=timeout)) as generator:
+        pgconn = _wait_for_database(generator, cutoff_ns, stage)
+    try:
+        connection = Connection(pgconn)
+        _remaining_ns(cutoff_ns, stage, minimum_ns=1)
+    except BaseException:
+        pgconn.finish()
+        raise
+    return connection
+
+
+def connect_managed(repo_root: Path, *, info: dict | None = None, clock=None):
     """Application connection (pal_app) with per-connection identity assertion.
 
     Returns a verified IDLE connection, or raises with the connection
@@ -119,12 +146,21 @@ def connect_managed(repo_root: Path, *, info: dict | None = None):
     if info is None:
         info = read_instance(repo_root)
     dsn = managed_dsn(info, owner=False, repo_root=repo_root)
-    import psycopg  # lazy: the audited validation already ran in managed_dsn
     with binding.bound(info['instance_id'], info['root_sha256'], info['system_identifier']):
-        connection = psycopg.connect(dsn)
+        if clock is None:
+            import psycopg  # lazy: the audited validation already ran in managed_dsn
+
+            connection = psycopg.connect(dsn)
+        else:
+            connection = _connect_with_deadline(dsn, clock)
         try:
-            binding.verify_connection(connection.cursor())
-            connection.rollback()   # end the check's read-only transaction; hand off IDLE
+            if clock is None:
+                binding.verify_connection(connection.cursor())
+                connection.rollback()
+            else:
+                with optimization_database_phase(connection, clock, stage='connection_identity', closeout=True):
+                    binding.verify_connection(connection.cursor())
+                    connection.rollback()
             connection._papersim_managed_root = repo_root.resolve()
         except BaseException:
             connection.close()      # fail closed: release, never hand off
@@ -225,9 +261,11 @@ def connect_owner(repo_root: Path, *, info: dict | None = None):
     return psycopg.connect(dsn)
 
 
-def connect_explicit(dsn: str, *, label: str = EXPLICIT_DSN_LABEL):
+def connect_explicit(dsn: str, *, label: str = EXPLICIT_DSN_LABEL, clock=None):
     """Validated explicit DSN connection (isolated/throwaway clusters only)."""
     dsn = _validated(dsn, label)  # pure Python: rejects before any driver import
+    if clock is not None:
+        return _connect_with_deadline(dsn, clock)
     import psycopg  # lazy: only a validated DSN may load the driver
     return psycopg.connect(dsn)
 
@@ -1624,6 +1662,150 @@ _CONTROL_INSERT = ('INSERT INTO papersim.optimizer_control_events '
                    'VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING optimizer_control_id')
 
 
+def _advisory_lock_number(label: str) -> int:
+    return int.from_bytes(sha256(label.encode('utf-8')).digest()[:4], 'big', signed=True)
+
+
+# The two-integer key space is separate from the project's bigint migration lock.
+_REGISTRY_LOCK = (_advisory_lock_number('papersim.registry.writer.v1'), 0)
+_OPERATION_NAMESPACE = _advisory_lock_number('papersim.optimization.operation.v1')
+_NS_PER_SECOND = 1_000_000_000
+_NS_PER_MILLISECOND = 1_000_000
+_OPTIMIZATION_CLOSEOUT_NS = 60 * _NS_PER_SECOND
+_REGISTRY_WAIT_NS = 30 * _NS_PER_SECOND
+
+
+class ManagedOptimizationError(PapersimStoreError):
+    """A sanitized failure with the last proven command stage and receipt IDs."""
+
+    def __init__(self, code, *, stage, indeterminate=False, retryable=False,
+                 started_event_id=None, attempt_event_id=None):
+        super().__init__(code)
+        self.stage = stage
+        self.indeterminate = indeterminate
+        self.retryable = retryable or indeterminate
+        self.started_event_id = started_event_id
+        self.attempt_event_id = attempt_event_id
+
+
+@dataclass(frozen=True)
+class OptimizationCommandClock:
+    start_ns: int
+    compute_ns: int
+    hard_ns: int
+
+    def compute_expired(self) -> bool:
+        return time.monotonic_ns() >= self.compute_ns
+
+    def allocation(self) -> dict:
+        return {'command_nanoseconds': self.hard_ns - self.start_ns,
+                'compute_nanoseconds': self.compute_ns - self.start_ns,
+                'closeout_nanoseconds': self.hard_ns - self.compute_ns}
+
+
+def optimization_command_clock(start_ns: int) -> OptimizationCommandClock:
+    """Allocate the command's single one-hour bound at CLI entry."""
+    return _registered_optimization_clock(start_ns)
+
+
+def _registered_optimization_clock(start_ns: int) -> OptimizationCommandClock:
+    from polymarket_alpha_lab.papersim.optimize.runner import TIME_BUDGET_SECONDS
+
+    hard_ns = start_ns + round(TIME_BUDGET_SECONDS * _NS_PER_SECOND)
+    return OptimizationCommandClock(start_ns, hard_ns - _OPTIMIZATION_CLOSEOUT_NS, hard_ns)
+
+
+def _validate_optimization_clock(clock):
+    if (type(clock) is not OptimizationCommandClock
+            or any(type(value) is not int for value in (clock.start_ns, clock.compute_ns, clock.hard_ns))
+            or not 0 <= clock.start_ns <= time.monotonic_ns()
+            or not clock.start_ns < clock.compute_ns < clock.hard_ns
+            or clock != _registered_optimization_clock(clock.start_ns)):
+        raise PapersimStoreError('papersim_optimize_clock_invalid')
+
+
+def _remaining_ns(cutoff_ns: int, stage: str, *, minimum_ns: int = _NS_PER_MILLISECOND) -> int:
+    remaining = cutoff_ns - time.monotonic_ns()
+    if remaining < minimum_ns:
+        raise ManagedOptimizationError('papersim_optimize_deadline', stage=stage, retryable=True)
+    return remaining
+
+
+def _wait_for_database(generator, cutoff_ns, stage, *, connection=None, before_send=None):
+    """Drive psycopg's nonblocking I/O with the same absolute bound as SQL."""
+    minimum_ns = 1 if connection is None else _NS_PER_MILLISECOND
+    _remaining_ns(cutoff_ns, stage, minimum_ns=minimum_ns)
+    if before_send is not None:
+        before_send()
+    try:
+        wait = next(generator)
+        with DefaultSelector() as selector:
+            while True:
+                fileno, interest = wait if connection is None else (connection.fileno(), wait)
+                selector.register(fileno, interest)
+                remaining = _remaining_ns(cutoff_ns, stage, minimum_ns=minimum_ns)
+                ready = selector.select(remaining / _NS_PER_SECOND)
+                selector.unregister(fileno)
+                _remaining_ns(cutoff_ns, stage, minimum_ns=minimum_ns)
+                if ready:
+                    wait = generator.send(ready[0][1])
+    except StopIteration as done:
+        return done.value
+    except (ManagedOptimizationError, OSError):
+        if connection is not None:
+            generator.close()
+            connection.close()
+        raise
+
+
+@contextmanager
+def optimization_database_phase(conn, clock, *, stage, closeout=False, _before_send=None):
+    """Bound the socket of a validated connection for the enclosing phase."""
+    cutoff_ns = clock.hard_ns if closeout else clock.compute_ns
+    _remaining_ns(cutoff_ns, stage)
+    original_wait = conn.wait
+
+    def wait(generator, interval=None):
+        return _wait_for_database(generator, cutoff_ns, stage, connection=conn,
+                                  before_send=_before_send)
+
+    conn.wait = wait
+    try:
+        yield
+    finally:
+        conn.wait = original_wait
+
+
+def _try_advisory_lock(conn, *, key, transaction, cutoff_ns, stage):
+    query = ('SELECT pg_try_advisory_xact_lock(%s, %s)' if transaction
+             else 'SELECT pg_try_advisory_lock(%s, %s)')
+    with conn.cursor() as cursor:
+        while True:
+            _remaining_ns(cutoff_ns, stage)
+            cursor.execute(query, key)
+            acquired = cursor.fetchone()[0]
+            remaining = _remaining_ns(cutoff_ns, stage)
+            if acquired:
+                return
+            time.sleep(min(0.02, remaining / _NS_PER_SECOND))
+
+
+@contextmanager
+def registry_write_transaction(conn):
+    """Serialize registry state reads and append-only mutations in one transaction."""
+    with conn.transaction():
+        # A lock serializes writers, but cannot refresh a caller-owned
+        # REPEATABLE READ or SERIALIZABLE snapshot established before it.
+        with conn.cursor() as cursor:
+            cursor.execute('SHOW transaction_isolation')
+            if cursor.fetchone()[0] != 'read committed':
+                raise PapersimStoreError('papersim_registry_write_requires_read_committed')
+        _try_advisory_lock(conn, key=_REGISTRY_LOCK, transaction=True,
+                           cutoff_ns=time.monotonic_ns() + _REGISTRY_WAIT_NS,
+                           stage='registry_lock')
+        yield
+
+
 def _json_like(value):
     """Normalize one comparison operand: JSON text parses, structures stay.
 
@@ -1714,7 +1896,7 @@ def register_model_spec(conn, spec, *, source, code_commit,
         spec, source=source, code_commit=code_commit,
         parent_spec_sha256=parent_spec_sha256, optimization_id=optimization_id)
     submission.validate()
-    with conn.transaction():
+    with registry_write_transaction(conn):
         cursor = conn.cursor()
         cursor.execute('SELECT ' + _SPEC_COLUMNS + ' FROM papersim.model_specs '
                        'WHERE spec_sha256 = %s', (submission.spec_sha256,))
@@ -1743,7 +1925,7 @@ def record_optimization_run(conn, submission: OptimizationRunSubmission) -> dict
 
     submission.validate()
     key = submission.key()
-    with conn.transaction():
+    with registry_write_transaction(conn):
         cursor = conn.cursor()
         cursor.execute('SELECT optimization_id, ' + _RUN_COLUMNS
                        + ' FROM papersim.optimization_runs WHERE optimization_key = %s',
@@ -1786,7 +1968,7 @@ def record_promotion_decision(conn, submission: PromotionDecisionSubmission) -> 
 
     submission.validate()
     key = submission.key()
-    with conn.transaction():
+    with registry_write_transaction(conn):
         cursor = conn.cursor()
         cursor.execute('SELECT decision_id, ' + _PROMOTION_COLUMNS
                        + ' FROM papersim.promotion_decisions WHERE decision_key = %s',
@@ -1870,91 +2052,107 @@ def load_lineage_roles(conn, lineage: str):
     (04 section 11).
     """
 
-    from polymarket_alpha_lab.papersim.optimize.registry import derive_lineage_roles
+    from polymarket_alpha_lab.papersim.optimize.registry import (
+        derive_lineage_roles,
+        group_events_by_lineage,
+    )
 
     with conn.transaction():
         cursor = conn.cursor()
         cursor.execute(_ROLE_EVENT_SELECT + ' WHERE lineage = %s '
                        'ORDER BY effective_at, role_event_id', (lineage,))
         events = [_row_to_role_event(row) for row in cursor.fetchall()]
-    if not events:
-        return None
-    batches = []
-    current = []
-    stamp = None
-    for event in events:
-        if current and event.effective_at != stamp:
-            batches.append(current)
-            current = []
-        current.append(event)
-        stamp = event.effective_at
-    if current:
-        batches.append(current)
-    return derive_lineage_roles(batches)
+    batches = group_events_by_lineage([[event] for event in events]).get(lineage)
+    return derive_lineage_roles(batches) if batches else None
+
+
+def load_decision_role_events(conn, lineage: str, decision_id: int) -> tuple:
+    """Return the original linked batch, with its full timestamp membership verified."""
+    with conn.transaction(), conn.cursor() as cursor:
+        cursor.execute(_ROLE_EVENT_SELECT + ' WHERE decision_id = %s ORDER BY role_event_id',
+                       (decision_id,))
+        events = tuple(_row_to_role_event(row) for row in cursor.fetchall())
+        if not events:
+            return ()
+        instant = events[0].effective_at
+        if any(event.lineage != lineage or event.effective_at != instant for event in events):
+            raise PapersimStoreError('papersim_role_decision_batch_conflict')
+        cursor.execute('SELECT role_event_id FROM papersim.model_role_events '
+                       'WHERE lineage = %s AND effective_at = %s ORDER BY role_event_id',
+                       (lineage, instant))
+        if tuple(row[0] for row in cursor.fetchall()) != tuple(event.role_event_id for event in events):
+            raise PapersimStoreError('papersim_role_decision_batch_conflict')
+    return events
+
+
+def _validate_role_decision(conn, batch, *, replay_ids):
+    ids = {event.decision_id for event in batch.events}
+    if ids == {None}:
+        return
+    if len(ids) != 1 or None in ids:
+        raise PapersimStoreError('papersim_role_decision_batch_conflict')
+    decision_id = next(iter(ids))
+    first = batch.events[0]
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT lineage, decided_at FROM papersim.promotion_decisions '
+                       'WHERE decision_id = %s', (decision_id,))
+        if cursor.fetchone() != (first.lineage, first.effective_at):
+            raise PapersimStoreError('papersim_role_decision_batch_conflict')
+    linked = load_decision_role_events(conn, first.lineage, decision_id)
+    if tuple(event.role_event_id for event in linked) != tuple(replay_ids):
+        raise PapersimStoreError('papersim_role_decision_batch_conflict')
 
 
 def record_role_events(conn, batch: RoleEventBatch) -> dict:
-    """Write one transaction's role events atomically (MO-2, 05).
-
-    The batch IS the promotion-handover transaction unit: the prior
-    state is loaded and validated by the pure registry FIRST, then all
-    events insert inside ONE database transaction -- a handover can
-    never land as half a pair. Idempotent replay: when every key of
-    the batch already exists with identical content the original ids
-    return (``inserted=False``); a PARTIAL replay is a conflict.
-
-    Concurrency window (plan review P3): the prior check is not
-    mutually exclusive -- two concurrent writers could both read the
-    same prior and each validate a legal batch, breaching a cap (e.g.
-    two different candidate registrations meeting MAX_CANDIDATES=2).
-    The registered mitigation is the optimizer's single-writer rhythm
-    (role events come from the scheduled decide/apply nodes, MO-8) --
-    do NOT call this function from concurrent contexts; an advisory
-    lock can be added if a second writer ever appears.
-    """
-
-    from polymarket_alpha_lab.papersim.optimize.registry import (
-        derive_lineage_roles,
-        validate_role_event_batch,
-    )
+    """Append a complete forward-only role batch or verify its exact replay."""
+    from polymarket_alpha_lab.papersim.optimize.registry import validate_role_event_batch
 
     batch.validate()
-    lineage = batch.events[0].lineage
-    with conn.transaction():
+    first = batch.events[0]
+    lineage, instant = first.lineage, first.effective_at.astimezone(UTC)
+    keys = [event.key() for event in batch.events]
+    if len(set(keys)) != len(keys):
+        raise PapersimStoreError('papersim_role_event_duplicate_key')
+    with registry_write_transaction(conn):
         cursor = conn.cursor()
-        keys = [event.key() for event in batch.events]
-        cursor.execute('SELECT role_event_key FROM papersim.model_role_events '
-                       'WHERE role_event_key = ANY(%s)', (keys,))
-        present = {row[0] for row in cursor.fetchall()}
-        if present:
-            if len(present) != len(keys):
+        columns = _ROLE_EVENT_COLUMNS.replace(' ', '').split(',')
+        cursor.execute('SELECT role_event_key, role_event_id, ' + _ROLE_EVENT_COLUMNS
+                       + ' FROM papersim.model_role_events WHERE role_event_key = ANY(%s) '
+                       'OR (lineage = %s AND effective_at = %s) ORDER BY role_event_id',
+                       (keys, lineage, instant))
+        stored = [dict(zip(['role_event_key', 'role_event_id', *columns], row, strict=True))
+                  for row in cursor.fetchall()]
+        existing_keys = [row['role_event_key'] for row in stored]
+        if set(keys).intersection(existing_keys):
+            if existing_keys != keys:
                 raise PapersimStoreError('papersim_role_event_partial_replay')
             ids = {}
-            for event in batch.events:
-                cursor.execute('SELECT role_event_id, ' + _ROLE_EVENT_COLUMNS
-                               + ' FROM papersim.model_role_events '
-                               'WHERE role_event_key = %s', (event.key(),))
-                columns = ['role_event_id'] \
-                    + _ROLE_EVENT_COLUMNS.replace(' ', '').split(',')
-                row = cursor.fetchone()
-                stored = dict(zip(columns, row, strict=True))
-                _compare_stored_row(stored, event.comparison(),
+            for event, row in zip(batch.events, stored, strict=True):
+                _compare_stored_row(row, event.comparison(),
                                     'papersim_role_event_conflict')
-                ids[event.role] = int(stored['role_event_id'])
+                ids[event.role] = int(row['role_event_id'])
+            _validate_role_decision(conn, batch, replay_ids=ids.values())
             return {'lineage': lineage, 'role_event_ids': ids, 'inserted': False}
+        cursor.execute('SELECT max(effective_at) FROM papersim.model_role_events WHERE lineage = %s',
+                       (lineage,))
+        watermark = cursor.fetchone()[0]
+        if watermark is not None and instant <= watermark:
+            raise PapersimStoreError('papersim_role_event_out_of_order')
         prior = load_lineage_roles(conn, lineage)
         registry_events = [_submission_to_registry_event(event)
                            for event in batch.events]
-        validate_role_event_batch(prior, registry_events)
+        expected = validate_role_event_batch(prior, registry_events)
+        _validate_role_decision(conn, batch, replay_ids=())
         ids = {}
         for event in batch.events:
-            columns = _ROLE_EVENT_COLUMNS.replace(' ', '').split(',')
             values = event.comparison()
             cursor.execute(_ROLE_EVENT_INSERT, (event.key(),) + tuple(
                 _require_json_payload(values[name], name)
                 if name == 'forward_plan' else values[name]
                 for name in columns))
             ids[event.role] = int(cursor.fetchone()[0])
+        if load_lineage_roles(conn, lineage) != expected:
+            raise PapersimStoreError('papersim_role_event_fold_mismatch')
     return {'lineage': lineage, 'role_event_ids': ids, 'inserted': True}
 
 
@@ -1964,7 +2162,7 @@ def record_optimizer_control_event(
 
     submission.validate()
     key = submission.key()
-    with conn.transaction():
+    with registry_write_transaction(conn):
         cursor = conn.cursor()
         cursor.execute('SELECT optimizer_control_id, ' + _CONTROL_COLUMNS
                        + ' FROM papersim.optimizer_control_events '
@@ -1977,10 +2175,21 @@ def record_optimizer_control_event(
                                 'papersim_optimizer_control_conflict')
             return {'optimizer_control_id': int(stored['optimizer_control_id']),
                     'optimizer_control_key': key, 'inserted': False}
+        cursor.execute('SELECT occurred_at, optimizer_control_id '
+                       'FROM papersim.optimizer_control_events WHERE scope = %s '
+                       'AND lineage IS NOT DISTINCT FROM %s '
+                       'ORDER BY occurred_at DESC, optimizer_control_id DESC LIMIT 1',
+                       (submission.scope, submission.lineage))
+        predecessor = cursor.fetchone()
+        if predecessor is not None and submission.occurred_at < predecessor[0]:
+            raise PapersimStoreError('papersim_optimizer_control_out_of_order')
         cursor.execute(_CONTROL_INSERT, (key,) + tuple(
             submission.comparison()[name]
             for name in _CONTROL_COLUMNS.replace(' ', '').split(',')))
-        return {'optimizer_control_id': int(cursor.fetchone()[0]),
+        control_id = int(cursor.fetchone()[0])
+        if predecessor is not None and (submission.occurred_at, control_id) <= predecessor:
+            raise PapersimStoreError('papersim_optimizer_control_out_of_order')
+        return {'optimizer_control_id': control_id,
                 'optimizer_control_key': key, 'inserted': True}
 
 
@@ -2031,7 +2240,8 @@ def load_model_spec(conn, spec_sha256: str):
                      params=params, envelope=envelope,
                      data_contract=stored['data_contract'],
                      legacy_model_version=stored['legacy_model_version'])
-    if spec.spec_sha256() != spec_sha256:
+    if (spec.spec_sha256() != spec_sha256 or spec.canonical_json() != stored['canonical_text']
+            or spec.model_version() != stored['model_version']):
         raise PapersimStoreError('papersim_model_spec_roundtrip_mismatch')
     return spec
 
@@ -2069,6 +2279,27 @@ def load_promotion_decisions(conn, lineage: str | None = None) -> list[dict]:
     return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
 
 
+def _registry_controls(conn) -> dict:
+    controls = {'global': None, 'lineages': {}}
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT DISTINCT ON (scope, lineage) scope, lineage, control_kind, '
+                       'occurred_at, optimizer_control_id FROM papersim.optimizer_control_events '
+                       'ORDER BY scope, lineage, occurred_at DESC, optimizer_control_id DESC')
+        for scope, lineage, kind, occurred_at, control_id in cursor.fetchall():
+            event = {'kind': kind, 'occurred_at': _optimize_time(occurred_at), 'id': control_id}
+            if scope == 'GLOBAL':
+                controls['global'] = event
+            else:
+                controls['lineages'][lineage] = event
+    return controls
+
+
+def _freeze_state(controls) -> dict:
+    return {'global_frozen': (controls['global'] or {}).get('kind') == 'FREEZE',
+            'frozen_lineages': sorted(lineage for lineage, event in controls['lineages'].items()
+                                      if event['kind'] == 'FREEZE')}
+
+
 def registry_freeze_state(conn) -> dict:
     """The effective freeze state: global plus per-lineage.
 
@@ -2077,78 +2308,1275 @@ def registry_freeze_state(conn) -> dict:
     log; the MO-8 decide node consults this before any handover.
     """
 
-    cursor = conn.cursor()
-    cursor.execute('SELECT scope, lineage, control_kind FROM '
-                   'papersim.optimizer_control_events '
-                   'ORDER BY occurred_at, optimizer_control_id')
-    global_frozen = False
-    frozen_lineages: set[str] = set()
-    for scope, lineage, control_kind in cursor.fetchall():
-        if scope == 'GLOBAL':
-            global_frozen = control_kind == 'FREEZE'
-        else:
-            if control_kind == 'FREEZE':
-                frozen_lineages.add(lineage)
-            else:
-                frozen_lineages.discard(lineage)
-    return {'global_frozen': global_frozen,
-            'frozen_lineages': sorted(frozen_lineages)}
+    return _freeze_state(_registry_controls(conn))
 
 
 def initialize_registry(conn, *, families, actor: str, code_commit: str,
                         effective_at) -> dict:
-    """Write every family's baseline spec and initial roles; idempotent.
-
-    One lineage at a time (each in its own transaction): when a
-    ``role='BASELINE'`` row already exists for the lineage the stored
-    digest must equal the family's current ``baseline_spec()`` digest
-    -- equal means SKIP (the idempotent path), different means
-    ``papersim_registry_init_conflict`` (the code re-identified the
-    baseline; never silently rewritten, a human decides). A fresh
-    lineage registers the spec row (``source='frozen_baseline'``) and
-    the initialization pair ``[BASELINE, ACTIVE]`` of the same digest.
-    The ``optimize init`` CLI wiring is MO-6; MO-2 provides the
-    function only.
-    """
+    """Atomically verify or initialize all requested lineage baselines."""
 
     from polymarket_alpha_lab.papersim.optimize.registry import lineage_id
 
     if not isinstance(families, (list, tuple)) or not families:
         raise PapersimStoreError('papersim_registry_init_families_invalid')
     report = {}
-    for family in families:
-        baseline = family.baseline_spec()
-        for target in family.targets():
-            lineage = lineage_id(family.family_id, target)
-            with conn.transaction():
-                cursor = conn.cursor()
-                cursor.execute("SELECT spec_sha256 FROM papersim.model_role_events "
-                               "WHERE lineage = %s AND role = 'BASELINE'",
-                               (lineage,))
-                row = cursor.fetchone()
-                if row is not None:
-                    if row[0] != baseline.spec_sha256():
+    with registry_write_transaction(conn):
+        for family in sorted(families, key=lambda item: item.family_id):
+            baseline = family.baseline_spec()
+            digest = baseline.spec_sha256()
+            registered = load_model_spec(conn, digest)
+            if registered is not None and (registered != baseline or registered.model_version() != baseline.model_version()):
+                raise PapersimStoreError('papersim_registry_init_conflict')
+            for target in sorted(family.targets()):
+                lineage = lineage_id(family.family_id, target)
+                roles = load_lineage_roles(conn, lineage)
+                if roles is not None:
+                    if roles.baseline != digest or registered != baseline:
                         raise PapersimStoreError('papersim_registry_init_conflict')
                     report[lineage] = {'state': 'skipped',
-                                       'spec_sha256': row[0]}
+                                       'spec_sha256': digest}
                     continue
-                register_model_spec(conn, baseline, source='frozen_baseline',
-                                    code_commit=code_commit)
+                if registered is None:
+                    register_model_spec(conn, baseline, source='frozen_baseline',
+                                        code_commit=code_commit)
+                    registered = baseline
                 batch = RoleEventBatch(events=(
                     RoleEventSubmission(lineage=lineage,
-                                        spec_sha256=baseline.spec_sha256(),
+                                        spec_sha256=digest,
                                         role='BASELINE', effective_at=effective_at,
                                         reason='registry initialization',
                                         actor=actor, code_commit=code_commit),
                     RoleEventSubmission(lineage=lineage,
-                                        spec_sha256=baseline.spec_sha256(),
+                                        spec_sha256=digest,
                                         role='ACTIVE', effective_at=effective_at,
                                         reason='registry initialization',
                                         actor=actor, code_commit=code_commit)))
                 record_role_events(conn, batch)
                 report[lineage] = {'state': 'initialized',
-                                   'spec_sha256': baseline.spec_sha256()}
+                                   'spec_sha256': digest}
     return report
+
+
+# MO-6 managed experiments. The session lock serializes one logical request.
+# The transaction lock protects only the claim and final publication views.
+_OPTIMIZE_COMMAND = 'optimize-run'
+_OPTIMIZE_CLAIM = 'papersim.optimize/claim/v1'
+_OPTIMIZE_ATTEMPT = 'papersim.optimize/attempt/v1'
+_OPTIMIZE_TERMINAL = 'papersim.optimize/terminal/v1'
+_OPTIMIZE_ARTIFACT = 'papersim.optimize/managed-artifact/v2'
+_OPTIMIZE_MANIFEST_KIND = 'optimizer_experiment_manifest'
+_OPTIMIZE_ARTIFACT_KIND = 'optimizer_run_artifact'
+_OPTIMIZE_BUDGET_CONFLICT = 'papersim_optimize_budget_conflict'
+
+
+def _optimize_time(moment: datetime) -> str:
+    if not isinstance(moment, datetime) or moment.utcoffset() is None:
+        raise PapersimStoreError('papersim_optimize_timestamp_invalid')
+    return moment.astimezone(UTC).isoformat().replace('+00:00', 'Z')
+
+
+def _optimize_json(value) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode('utf-8')
+
+
+def _optimize_digest(value) -> str:
+    return sha256(_optimize_json(value)).hexdigest()
+
+
+def _optimize_operation_key(run_key):
+    return 'optimize-run|' + sha256(run_key.encode('utf-8')).hexdigest()
+
+
+def _optimize_snapshot(conn, digest, length, kind, schema_version):
+    from polymarket_alpha_lab.papersim.snapshots import read_snapshot
+
+    row = read_snapshot(conn, digest)
+    if (row is None or row['kind'] != kind or row['schema_version'] != schema_version
+            or row['byte_length'] != length or len(row['content']) != length
+            or sha256(row['content']).hexdigest() != digest):
+        raise PapersimStoreError('papersim_optimize_snapshot_identity_invalid')
+    return row['content']
+
+
+def _optimize_manifest_sources(manifest, manifest_sha256):
+    from polymarket_alpha_lab.papersim.snapshots import snapshot_digest_argument
+
+    error = 'papersim_optimize_manifest_invalid'
+    fields = {'role', 'key', 'kind', 'schema_version', 'sha256', 'byte_length'}
+    allowed = fields | {'required', 'absent_reason', 'provenance'}
+    entries = manifest['sources']
+    if not isinstance(entries, list) or not entries:
+        raise PapersimStoreError(error)
+    sources, roles = {}, {}
+    for source in entries:
+        if not isinstance(source, dict) or not fields <= set(source) <= allowed:
+            raise PapersimStoreError(error)
+        role, key, kind = (source[name] for name in ('role', 'key', 'kind'))
+        if any(not isinstance(value, str) or not value.strip() for value in (role, key, kind)):
+            raise PapersimStoreError(error)
+        path = PurePosixPath(key)
+        if (path.is_absolute() or '..' in path.parts or str(path) != key or key == '.'
+                or ':' in key or '\\' in key or (role, key) in roles):
+            raise PapersimStoreError(error)
+        provenance = source.get('provenance', {})
+        if (not isinstance(provenance, dict) or set(provenance) - {'clock_basis', 'captured_at', 'provider_published_at'}
+                or ('clock_basis' in provenance and provenance['clock_basis'] not in (
+                    'snapshot_generated_at', 'provider_timestamp', 'retained_archive_mtime'))):
+            raise PapersimStoreError(error)
+        for name in ('captured_at', 'provider_published_at'):
+            if name in provenance:
+                _optimize_time(datetime.fromisoformat(provenance[name]))
+        digest, length, schema = (source[name] for name in ('sha256', 'byte_length', 'schema_version'))
+        required = source.get('required', True)
+        if type(schema) is not int or schema < 1 or type(required) is not bool:
+            raise PapersimStoreError(error)
+        roles[role, key] = source
+        if digest is None:
+            reason = source.get('absent_reason')
+            if required or length is not None or not isinstance(reason, str) or not reason.strip():
+                raise PapersimStoreError(error)
+            continue
+        if (digest == manifest_sha256 or snapshot_digest_argument(digest) != digest
+                or type(length) is not int or length < 1 or 'absent_reason' in source):
+            raise PapersimStoreError(error)
+        metadata = (length, kind, schema)
+        if sources.setdefault(digest, metadata) != metadata:
+            raise PapersimStoreError(error)
+    return sources, roles
+
+
+def _verify_optimizer_source_roles(family_id, roles, archives):
+    """Verify the registered reader's source inventory before admitting a claim."""
+    from re import fullmatch
+
+    code = 'papersim_optimize_manifest_source_unregistered'
+    known = set(roles)
+    present = {item for item, source in roles.items() if source['sha256'] is not None}
+    if family_id in {'intl-elo-goal-residuals', 'intl-elo-poisson'}:
+        if known != {('intl_snapshot', 'snapshot')} or present != known:
+            raise PapersimStoreError(code)
+    elif family_id == 'nba-pace-efficiency':
+        base = ('nba_snapshot', 'snapshot')
+        if base not in present:
+            raise PapersimStoreError(code)
+        from polymarket_alpha_lab.papersim.espn_nba import NBA_TEAMS, season_year
+
+        season = season_year(json.loads(archives[roles[base]['sha256']])['season'])
+        schedules = {('team_schedule', f'team_schedule/schedule_{team}_{season}.json') for team in NBA_TEAMS}
+        for role, key in present - {base} - schedules:
+            if role != 'event_summary' or not fullmatch(r'event_summary/summary_[0-9]+\.json', key):
+                raise PapersimStoreError(code)
+        absent_reasons = {
+            ('event_summary', 'original_nov10_event_summaries'):
+                'matching_original_nov10_event_summary_bundle_unavailable',
+            ('team_schedule', 'original_nov10_team_schedules'):
+                'matching_original_nov10_team_schedule_bundle_unavailable',
+        }
+        for role, key in known - present:
+            reason = absent_reasons.get((role, key))
+            if reason is None or roles[role, key] != {
+                'role': role, 'key': key, 'absent_reason': reason,
+                'kind': 'registered_research_input', 'schema_version': 1,
+                'required': False, 'sha256': None, 'byte_length': None,
+            }:
+                raise PapersimStoreError(code)
+    elif family_id == 'club-soccer-recalib':
+        from polymarket_alpha_lab.papersim.optimize import dataset
+
+        required = {('club_archive', key) for key in (
+            dataset.ARCHIVE_POINTER_PATH, dataset.ARCHIVE_BIG5_PATH, *dataset.ARCHIVE_LEAGUE_PATHS.values(),
+        )}
+        if not required <= present:
+            raise PapersimStoreError(code)
+        files = {key: archives[roles[role, key]['sha256']] for role, key in present if role == 'club_archive'}
+        allowed = {('club_archive', key) for key in (*dataset.archive_read_paths(), *dataset.archive_fixture_paths(files))}
+        if not known <= allowed:
+            raise PapersimStoreError(code)
+
+
+def _optimize_request(*, clock, family, data_cutoff, random_seed, code_commit, attempt,
+                      targets, schedule_id, manifest_sha256, manifest_byte_length, manifest, source_refs):
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    family_id = getattr(family, 'family_id', None)
+    try:
+        registered = runner._historical_family(family_id) if type(family_id) is str else None
+    except ValueError:
+        registered = None
+    if registered is None or family is not registered:
+        raise PapersimStoreError('papersim_optimize_family_unregistered')
+    protocol = runner.historical_protocol(registered)
+    cutoff = _optimize_time(data_cutoff)
+    if (type(random_seed) is not int or random_seed != protocol['seed']
+            or cutoff != _optimize_time(datetime.fromisoformat(protocol['data_cutoff']))
+            or schedule_id != protocol['schedule_id'] or isinstance(targets, (str, bytes))
+            or list(targets) != protocol['targets']):
+        raise PapersimStoreError('papersim_optimize_request_conflict')
+    if (not isinstance(manifest, dict) or set(manifest) != {'schema_version', 'protocol', 'sources'}
+            or type(manifest['schema_version']) is not int or manifest['schema_version'] != 1
+            or _optimize_json(manifest['protocol']) != _optimize_json(protocol)):
+        raise PapersimStoreError('papersim_optimize_request_conflict')
+    normalized = _optimize_json(manifest)
+    if (type(attempt) is not int or attempt < 1 or type(manifest_byte_length) is not int
+            or manifest_byte_length != len(normalized) or sha256(normalized).hexdigest() != manifest_sha256):
+        raise PapersimStoreError('papersim_optimize_request_invalid')
+    sources, _ = _optimize_manifest_sources(manifest, manifest_sha256)
+    if (not sources or not isinstance(source_refs, Mapping)
+            or any(type(length) is not int for length in source_refs.values())
+            or {digest: metadata[0] for digest, metadata in sources.items()} != dict(source_refs)):
+        raise PapersimStoreError('papersim_optimize_request_conflict')
+    descriptor = runner.optimization_search_descriptor(
+        registered, targets=protocol['targets'], schedule_id=protocol['schedule_id'], data_cutoff=data_cutoff,
+    )
+    lineages = [f'{family_id}/{target}' for target in protocol['targets']]
+    submission = OptimizationRunSubmission(
+        family=family_id, data_cutoff=data_cutoff, lineages=lineages,
+        search_space=descriptor, rule_version=protocol['rule_version'], random_seed=random_seed,
+        snapshot_refs=sorted(sources), code_commit=code_commit,
+    ).validate()
+    identity = {'run_key': submission.key(), 'family': family.family_id,
+                'rule_version': protocol['rule_version'], 'data_cutoff': cutoff, 'random_seed': random_seed,
+                'search_space': descriptor, 'lineages': lineages, 'code_commit': code_commit,
+                'manifest': {'sha256': manifest_sha256, 'byte_length': manifest_byte_length},
+                'sources': {digest: list(metadata) for digest, metadata in sorted(sources.items())},
+                'budget': {**clock.allocation(), 'max_trials': runner.MAX_TRIALS}}
+    return identity
+
+
+def _verify_optimizer_inputs(conn, identity, manifest):
+    manifest_ref = identity['manifest']
+    content = _optimize_snapshot(conn, manifest_ref['sha256'], manifest_ref['byte_length'],
+                                 _OPTIMIZE_MANIFEST_KIND, 1)
+    document = json.loads(content)
+    if content != _optimize_json(manifest):
+        raise PapersimStoreError('papersim_optimize_request_conflict')
+    _, roles = _optimize_manifest_sources(document, manifest_ref['sha256'])
+    archives = {digest: _optimize_snapshot(conn, digest, *metadata)
+                for digest, metadata in identity['sources'].items()}
+    _verify_optimizer_source_roles(identity['family'], roles, archives)
+    return archives
+
+
+def _role_watermarks(conn, lineage):
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT DISTINCT ON (role) role, spec_sha256, effective_at, role_event_id '
+                       'FROM papersim.model_role_events WHERE lineage = %s '
+                       'ORDER BY role, effective_at DESC, role_event_id DESC', (lineage,))
+        return {role: {'spec_sha256': digest, 'effective_at': _optimize_time(at), 'id': event_id}
+                for role, digest, at, event_id in cursor.fetchall()}
+
+
+def _registry_comparison_snapshot(conn, family, lineages):
+    from polymarket_alpha_lab.papersim.optimize.registry import RegistryInvariantError
+
+    baseline = family.baseline_spec()
+    facts = {}
+    for lineage in sorted(lineages):
+        watermarks = _role_watermarks(conn, lineage)
+        issue, roles, spec = None, None, None
+        try:
+            roles = load_lineage_roles(conn, lineage)
+        except RegistryInvariantError:
+            issue = 'registry_role_history_invalid'
+        if roles is not None:
+            if roles.baseline != baseline.spec_sha256():
+                issue = 'registry_baseline_digest_mismatch'
+            try:
+                for digest in sorted({roles.active, roles.baseline, *roles.candidates,
+                                      *roles.retired} | ({roles.guard} if roles.guard else set())):
+                    registered = load_model_spec(conn, digest)
+                    if registered is None:
+                        issue = 'registry_referenced_spec_missing'
+                    elif (registered.family, registered.procedure_version, registered.data_contract) != (
+                            baseline.family, baseline.procedure_version, baseline.data_contract):
+                        issue = 'registry_spec_contract_mismatch'
+                    elif digest == roles.active:
+                        spec = registered
+            except (ValueError, TypeError, KeyError):
+                issue = 'registry_referenced_spec_invalid'
+        spec_payload = None if spec is None else {
+            'family': spec.family, 'procedure_version': spec.procedure_version,
+            'params': _plain_json(spec.params), 'envelope': _plain_json(spec.envelope),
+            'data_contract': spec.data_contract, 'legacy_model_version': spec.legacy_model_version,
+        }
+        facts[lineage] = {'roles': None if roles is None else _plain_json(asdict(roles)),
+                          'spec': spec_payload, 'baseline_spec_sha256': baseline.spec_sha256(),
+                          'issue': issue, 'watermarks': watermarks,
+                          'head': max(watermarks.values(), default=None,
+                                      key=lambda row: (datetime.fromisoformat(row['effective_at']), row['id']))}
+    return facts
+
+
+def _optimization_registry_snapshot(conn, family, lineages):
+    declared = [f'{family.family_id}/{target}' for target in family.targets()]
+    controls = _registry_controls(conn)
+    controls['lineages'] = {lineage: event for lineage, event in controls['lineages'].items()
+                            if lineage in declared}
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT DISTINCT ON (lineage) lineage, decision_id, decided_at '
+                       'FROM papersim.promotion_decisions WHERE lineage = ANY(%s) '
+                       'ORDER BY lineage, decided_at DESC, decision_id DESC', (declared,))
+        decisions = {lineage: {'id': decision_id, 'decided_at': _optimize_time(decided_at)}
+                     for lineage, decision_id, decided_at in cursor.fetchall()}
+    return {'lineages': _registry_comparison_snapshot(conn, family, lineages), 'controls': controls,
+            'decision_heads': decisions, 'prior_rejections': _optimization_rejections(conn, family.family_id)}
+
+
+def _optimization_policy(original):
+    from polymarket_alpha_lab.papersim.optimize.registry import LineageRoles
+    from polymarket_alpha_lab.papersim.optimize.runner import PolicyContext, RegistryComparison
+    from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
+
+    fact = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
+    snapshot = fact['registry']
+    if fact['registry_sha256'] != _optimize_digest(snapshot):
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    registry = {}
+    for lineage, row in snapshot['lineages'].items():
+        roles, spec = row['roles'], row['spec']
+        if spec is not None:
+            spec = ModelSpec(**_spec_sequences_to_tuples(spec))
+        registry[lineage] = RegistryComparison(None if roles is None else LineageRoles(**roles), spec,
+                                               row['issue'])
+    return PolicyContext(original['occurred_at'], registry, _rejection_receipts(snapshot['prior_rejections']),
+                         watermark=fact['registry_sha256'], **_freeze_state(snapshot['controls']))
+
+
+def _rejection_receipts(rows):
+    from polymarket_alpha_lab.papersim.optimize.runner import LegacyRejection, RejectionReceipt
+
+    receipts = []
+    for row in rows:
+        if 'rejected_at' in row:
+            receipts.append(RejectionReceipt(**{**row, 'rejected_at': datetime.fromisoformat(row['rejected_at'])}))
+        else:
+            receipts.append(LegacyRejection(**row))
+    return tuple(receipts)
+
+
+def _optimization_event_evidence(event, column, schema):
+    evidence = event[column]
+    if (not isinstance(evidence, list) or len(evidence) != 1 or not isinstance(evidence[0], dict)
+            or evidence[0].get('schema') != schema):
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    return evidence[0]
+
+
+def _optimization_events(conn, operation_key):
+    columns = ('run_event_id', 'run_event_key', 'attempt', 'phase', 'occurred_at', 'scheduled_for',
+               'code_commit', 'config_digest', 'input_evidence', 'output_evidence', 'error_code')
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT ' + ', '.join(columns) + ' FROM papersim.command_run_events '
+                       'WHERE operation_key = %s AND command = %s ORDER BY run_event_id',
+                       (operation_key, _OPTIMIZE_COMMAND))
+        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
+def _optimization_run_row(cursor, where, params):
+    columns = ['optimization_id', 'optimization_key'] + _RUN_COLUMNS.replace(' ', '').split(',')
+    cursor.execute('SELECT ' + ', '.join(columns) + ' FROM papersim.optimization_runs '
+                   + where + ' ORDER BY optimization_id DESC LIMIT 1', params)
+    row = cursor.fetchone()
+    return None if row is None else dict(zip(columns, row, strict=True))
+
+
+def _attempt_link(original, identity):
+    return {'schema': _OPTIMIZE_ATTEMPT, 'original_started_event_id': original['run_event_id'],
+            'original_started_event_key': original['run_event_key'], 'request_sha256': _optimize_digest(identity)}
+
+
+def _optimization_operation(conn, run_key, identity=None):
+    events = _optimization_events(conn, _optimize_operation_key(run_key))
+    with conn.cursor() as cursor:
+        run = _optimization_run_row(cursor, 'WHERE optimization_key = %s', (run_key,))
+    if not events:
+        if run is not None and identity is not None:
+            raise PapersimStoreError('papersim_optimize_linkage_invalid')
+        return None, events, run, None
+    original = events[0]
+    if original['phase'] != 'STARTED' or original['error_code'] is not None or original['output_evidence'] != []:
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    claim = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
+    registered_request = claim['request']
+    if registered_request['run_key'] != run_key:
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    if identity is not None and identity != registered_request:
+        raise PapersimStoreError('papersim_optimize_request_conflict')
+    expected_config = _optimize_digest(registered_request)
+    expected_cutoff = registered_request['data_cutoff']
+    started_attempts = {original['attempt']}
+    finished_attempts = set()
+    linked_terminal = None
+    attempt_link = [_attempt_link(original, registered_request)]
+    operation_key = _optimize_operation_key(run_key)
+    from polymarket_alpha_lab.papersim.store import command_run_event_key
+
+    for event in events:
+        attempt, phase = event['attempt'], event['phase']
+        if (event['config_digest'] != expected_config or event['code_commit'] != registered_request['code_commit']
+                or _optimize_time(event['scheduled_for']) != expected_cutoff
+                or event['occurred_at'] < original['occurred_at']
+                or event['run_event_key'] != command_run_event_key(operation_key, attempt, phase)):
+            raise PapersimStoreError('papersim_optimize_linkage_invalid')
+        if event is original:
+            continue
+        if linked_terminal is not None or event['input_evidence'] != attempt_link or attempt in finished_attempts:
+            raise PapersimStoreError('papersim_optimize_linkage_invalid')
+        if phase == 'STARTED' and attempt not in started_attempts and event['output_evidence'] == []:
+            started_attempts.add(attempt)
+        elif phase in {'SUCCEEDED', 'FAILED'} and attempt in started_attempts:
+            finished_attempts.add(attempt)
+            output = event['output_evidence']
+            if isinstance(output, list) and len(output) == 1 and isinstance(output[0], dict):
+                if output[0].get('schema') == _OPTIMIZE_TERMINAL:
+                    linked_terminal = event
+                    continue
+                if phase == 'FAILED' and event['error_code'] and output[0].get('schema') == _OPTIMIZE_ATTEMPT:
+                    continue
+            raise PapersimStoreError('papersim_optimize_linkage_invalid')
+        else:
+            raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    if (run is None) != (linked_terminal is None):
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    return original, events, run, linked_terminal
+
+
+def _publication_role_ids(conn, run_key, dispositions, code_commit):
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT lineage, role_event_id, spec_sha256, effective_at, forward_plan, "
+                       "code_commit, reason, actor, decision_id "
+                       "FROM papersim.model_role_events WHERE role = 'CANDIDATE' "
+                       "AND forward_plan->>'source_run_key' = %s ORDER BY lineage", (run_key,))
+        ids = {}
+        for lineage, event_id, digest, instant, plan, commit, reason, actor, decision_id in cursor.fetchall():
+            disposition = dispositions.get(lineage, {})
+            if (lineage in ids or disposition.get('status') != 'registered'
+                    or digest != disposition.get('spec_sha256') or commit != code_commit
+                    or _optimize_time(instant) != disposition.get('effective_at')
+                    or plan != disposition.get('forward_plan') or reason != disposition.get('reason')
+                    or actor != f'auto:{plan.get("stage1_rule_version")}' or decision_id is not None):
+                raise PapersimStoreError('papersim_optimize_linkage_invalid')
+            ids[lineage] = event_id
+    if ids.keys() != {lineage for lineage, row in dispositions.items() if row['status'] == 'registered'}:
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    return ids
+
+
+def _optimization_terminal(conn, original, run, terminal, *, replayed):
+    claim = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
+    identity = claim['request']
+    linkage = _optimization_event_evidence(terminal, 'output_evidence', _OPTIMIZE_TERMINAL)
+    failed = run['outcome'] == 'RUN_FAILED'
+    snapshot_refs = sorted(set(identity['sources']) | {identity['manifest']['sha256']})
+    if (linkage['run_key'] != run['optimization_key'] or linkage['optimization_id'] != run['optimization_id']
+            or linkage['artifacts_sha256'] != run['artifacts_sha256'] or linkage['outcome'] != run['outcome']
+            or terminal['phase'] != ('FAILED' if failed else 'SUCCEEDED')
+            or bool(terminal['error_code']) != failed or linkage['exit_code'] != int(failed)
+            or run['optimization_key'] != identity['run_key'] or run['code_commit'] != identity['code_commit']
+            or run['rule_version'] != identity['rule_version'] or run['family'] != identity['family']
+            or run['search_space'] != identity['search_space'] or run['random_seed'] != identity['random_seed']
+            or run['lineages'] != identity['lineages'] or run['snapshot_refs'] != snapshot_refs
+            or _optimize_time(run['data_cutoff']) != identity['data_cutoff']):
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    content = _optimize_snapshot(conn, linkage['artifacts_sha256'], linkage['artifact_byte_length'],
+                                 _OPTIMIZE_ARTIFACT_KIND, 2)
+    artifact = json.loads(content)
+    pure = artifact['pure']
+    dispositions = artifact['dispositions']
+    rejections = artifact['rejections']
+    scorecard = {name: pure[name] for name in ('candidate_scorecards', 'incumbent_scorecards', 'diagnostic_scorecards')}
+    scorecard['stage1_rejections'] = [rejections[lineage] for lineage in sorted(rejections)]
+    if (_optimize_json(artifact) != content or artifact['schema'] != _OPTIMIZE_ARTIFACT
+            or artifact['request'] != identity or artifact['original_started'] != _original_start_proof(original, claim)
+            or claim['registry_sha256'] != _optimize_digest(claim['registry'])
+            or artifact['outcome'] != run['outcome'] or artifact['budget'] != run['budget']
+            or any(run['budget'].get(name) != value for name, value in identity['budget'].items())
+            or bool(run['budget'].get('violations')) != (terminal['error_code'] == _OPTIMIZE_BUDGET_CONFLICT)
+            or artifact['pure_sha256'] != _optimize_digest(pure)
+            or pure['active_specs'] != run['active_specs'] or pure['counts']['evaluated_trials'] != run['trial_count']
+            or pure['dataset_summary'] != run['dataset_summary'] or scorecard != run['scorecard']
+            or pure['family'] != run['family'] or pure['run_key'] != run['optimization_key']
+            or pure['code_commit'] != run['code_commit'] or pure['rule_version'] != run['rule_version']
+            or pure['data_cutoff'] != identity['data_cutoff'] or pure['search_space'] != run['search_space']
+            or pure['random_seed'] != run['random_seed'] or pure['snapshot_refs'] != sorted(identity['sources'])
+            or pure['policy_started_at'] != _optimize_time(original['occurred_at'])
+            or pure['policy_watermark'] != claim['registry_sha256']
+            or dispositions != linkage['dispositions'] or set(dispositions) != set(run['lineages'])
+            or _publication_role_ids(conn, run['optimization_key'], dispositions, run['code_commit']) != linkage['role_event_ids']
+            or bool(linkage['role_event_ids']) != (run['outcome'] == 'CANDIDATE_REGISTERED')
+            or not set(rejections).issubset(run['lineages'])
+            or (run['outcome'] in {'RUN_FAILED', 'INSUFFICIENT_DATA'} and rejections)
+            or not all(_verified_rejection(pure, lineage, row) for lineage, row in rejections.items())):
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    return {'outcome': run['outcome'], 'run_key': run['optimization_key'], 'optimization_id': run['optimization_id'],
+            'started_event_id': original['run_event_id'], 'terminal_event_id': terminal['run_event_id'],
+            'started_event_key': original['run_event_key'], 'terminal_event_key': terminal['run_event_key'],
+            'artifacts_sha256': run['artifacts_sha256'], 'artifact_byte_length': len(content),
+            'artifact_bytes': content, 'registered_lineages': sorted(linkage['role_event_ids']),
+            'dispositions': dispositions, 'replayed': replayed, 'scorecard': run['scorecard'],
+            'exit_code': linkage['exit_code'], 'error_code': terminal['error_code'],
+            'counts': pure['counts'], 'flags': pure['flags'], 'budget': artifact['budget'],
+            'attempt_telemetry': linkage['attempt_telemetry']}
+
+
+def _original_start_proof(original, claim):
+    return {'event_key': original['run_event_key'], 'occurred_at': _optimize_time(original['occurred_at']),
+            'registry_sha256': claim['registry_sha256'], 'registry': claim['registry']}
+
+
+def _verified_rejection(pure, lineage, row):
+    holdout = pure['holdout']
+    coverage = holdout['comparisons'].get(lineage, {}).get('coverage', {})
+    sides = {item['side']: item for item in holdout['callbacks']
+             if item['lineage'] == lineage and item['status'] == 'completed'}
+    decision = next((item for item in pure['decisions'] if item['lineage'] == lineage), {})
+    return (row['lineage'] == lineage and row in pure['statistical_rejections']
+            and decision.get('attempted') is True and decision.get('status') == 'statistically_rejected'
+            and row['n_events'] == coverage.get('paired_games') and row['n_blocks'] == coverage.get('paired_blocks')
+            and row['n_events'] >= holdout['floors']['min_events'] and row['n_blocks'] >= holdout['floors']['min_blocks']
+            and set(sides) == {'candidate', 'incumbent'}
+            and sides['candidate']['spec_sha256'] == row['spec_sha256']
+            and sides['incumbent']['spec_sha256'] == pure['active_specs'].get(lineage)
+            and lineage in pure['candidate_scorecards'] and lineage in pure['incumbent_scorecards'])
+
+
+def _optimization_rejections(conn, family):
+    """Accept only floor-qualified judgments joined to their committed terminal."""
+    evidence = []
+    for run in load_optimization_runs(conn, family):
+        # Managed rows index their verified rejection lineage/digest pairs in scorecard.
+        # Older rows can identify a suspected judgment, but lack its proof chain.
+        card = run['scorecard']
+        if not isinstance(card, dict):
+            continue
+        rows = card.get('stage1_rejections', [])
+        legacy = card.get('lineages', {})
+        if not isinstance(legacy, dict):
+            legacy = {}
+        rows = rows or [{'lineage': lineage, 'spec_sha256': row['winner_spec']}
+                        for lineage, row in legacy.items() if isinstance(row, dict) and row.get('winner_spec') and not row.get('registered')
+                        and row['winner_spec'] != row.get('incumbent_spec')]
+        if not rows or run['outcome'] in {'RUN_FAILED', 'INSUFFICIENT_DATA'}:
+            continue
+        verified, terminal, artifact = None, None, None
+        try:
+            original, _, linked_run, terminal = _optimization_operation(conn, run['optimization_key'])
+            if terminal is not None and terminal['phase'] == 'SUCCEEDED':
+                verified = _optimization_terminal(conn, original, linked_run, terminal, replayed=True)
+                artifact = json.loads(verified['artifact_bytes'])
+        except (ValueError, TypeError, KeyError):
+            pass
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            lineage, digest = row.get('lineage'), row.get('spec_sha256')
+            if (not isinstance(lineage, str) or lineage not in run['lineages'] or not lineage.startswith(family + '/')
+                    or not isinstance(digest, str) or len(digest) != 64
+                    or any(char not in '0123456789abcdef' for char in digest)):
+                continue
+            claim = {'run_key': run['optimization_key'], 'family': family, 'lineage': lineage, 'spec_sha256': digest}
+            if artifact is not None and artifact['rejections'].get(lineage) == row:
+                evidence.append({**claim, 'receipt_id': str(terminal['run_event_id']),
+                                 'artifact_sha256': verified['artifacts_sha256'],
+                                 'rejected_at': _optimize_time(terminal['occurred_at'])})
+            else:
+                evidence.append({**claim, 'reason': 'unverified_stage1_terminal'})
+    return evidence
+
+
+def latest_optimization_for_lineage(conn, lineage: str) -> dict | None:
+    """Read the last run containing this lineage inside the caller's snapshot."""
+    with conn.transaction(), conn.cursor() as cursor:
+        run = _optimization_run_row(cursor, 'WHERE lineages @> %s::jsonb', (_json_text([lineage]),))
+        if run is None:
+            return None
+        original, _, _, terminal = _optimization_operation(conn, run['optimization_key'])
+        if terminal is None:
+            from polymarket_alpha_lab.papersim.snapshots import verify_snapshot
+
+            size, issue = None, 'papersim_optimize_legacy_terminal_unverified'
+            digest = run['artifacts_sha256']
+            if digest is not None:
+                try:
+                    size = verify_snapshot(conn, digest)['byte_length']
+                except ValueError:
+                    issue = 'papersim_optimize_snapshot_identity_invalid'
+            return {**run, 'artifact_byte_length': size, 'terminal_event_id': None, 'artifact_issue': issue}
+        result = _optimization_terminal(conn, original, run, terminal, replayed=True)
+        return {**run, 'artifact_byte_length': result['artifact_byte_length'],
+                'terminal_event_id': result['terminal_event_id'], 'artifact_issue': None}
+
+
+def _validate_optimization_result(result, identity, policy):
+    from polymarket_alpha_lab.papersim.optimize.runner import OptimizationRunResult, _judgment_reasons, _trial_payload
+    from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
+
+    code = 'papersim_optimize_pure_result_invalid'
+    if not isinstance(result, OptimizationRunResult):
+        raise PapersimStoreError(code)
+    submission = result.submission.validate()
+    pure = json.loads(result.artifact_bytes)
+    planned_trials = pure['planned_evaluations']
+    expected_active = {lineage: row.roles.active for lineage, row in policy.registry.items()
+                       if row.roles is not None and row.spec is not None and row.issue is None}
+    if (_optimize_json(pure) != result.artifact_bytes or not isinstance(result.artifact_bytes, bytes)
+            or sha256(result.artifact_bytes).hexdigest() != result.artifacts_sha256
+            or submission.artifacts_sha256 != result.artifacts_sha256 or result.registered_lineages
+            or result.run_key != identity['run_key'] or submission.key() != identity['run_key']
+            or list(submission.lineages) != identity['lineages'] or submission.code_commit != identity['code_commit']
+            or sorted(submission.snapshot_refs) != sorted(identity['sources'])
+            or submission.trial_count != len(result.trials) or submission.outcome != result.outcome
+            or submission.active_specs != dict(result.verified_active_specs) or submission.active_specs != expected_active
+            or pure['outcome'] != result.outcome or pure['run_key'] != identity['run_key']
+            or pure['data_cutoff'] != identity['data_cutoff'] or pure['code_commit'] != identity['code_commit']
+            or pure['family'] != identity['family'] or pure['random_seed'] != identity['random_seed']
+            or pure['search_space'] != identity['search_space'] or pure['snapshot_refs'] != sorted(identity['sources'])
+            or pure['policy_started_at'] != _optimize_time(policy.started_at) or pure['policy_watermark'] != policy.watermark
+            or pure['active_specs'] != expected_active or pure['counts']['evaluated_trials'] != len(result.trials)
+            or pure['trials'] != _plain_json([_trial_payload(trial) for trial in result.trials])
+            or pure['counts']['planned_trials'] != len(planned_trials) or len(result.trials) > len(planned_trials)
+            or pure['decisions'] != _plain_json([asdict(decision) for decision in result.decisions])):
+        raise PapersimStoreError(code)
+    for index, trial in enumerate(result.trials):
+        plan = planned_trials[index]
+        if (index != trial.trial_index or index != plan['index'] or trial.fold_block_id != plan['fold']
+                or trial.spec_sha256 != plan['spec_sha256'] or list(trial.targets) != plan['targets']
+                or trial.model_context != plan['model_context']):
+            raise PapersimStoreError(code)
+    if ((result.outcome in {'RUN_FAILED', 'INSUFFICIENT_DATA'} and result.statistical_rejections)
+            or (result.budget_exhausted and result.outcome != 'RUN_FAILED')
+            or bool(result.proposed_specs) != (result.outcome == 'CANDIDATE_REGISTERED')):
+        raise PapersimStoreError(code)
+    decisions = {decision.lineage: decision for decision in result.decisions}
+    if set(decisions) != set(identity['lineages']) or len(decisions) != len(result.decisions):
+        raise PapersimStoreError(code)
+    proposals = {}
+    for lineage, spec in result.proposed_specs.items():
+        active = result.comparison_specs.get(lineage)
+        if (lineage not in expected_active or not isinstance(spec, ModelSpec) or not isinstance(active, ModelSpec)
+                or spec != result.winner_specs.get(lineage) or active.spec_sha256() != expected_active[lineage]
+                or (spec.family, spec.procedure_version, spec.data_contract) != (
+                    identity['family'], active.procedure_version, active.data_contract)
+                or not decisions[lineage].statistically_eligible or decisions[lineage].status != 'proposed'):
+            raise PapersimStoreError(code)
+        proposals[lineage] = spec.spec_sha256()
+    if proposals != pure['proposed_specs']:
+        raise PapersimStoreError(code)
+    rejections = {}
+    for rejection in result.statistical_rejections:
+        lineage = rejection.lineage
+        decision, winner = decisions.get(lineage), result.winner_specs.get(lineage)
+        coverage = pure['holdout']['comparisons'].get(lineage, {}).get('coverage', {})
+        floors = pure['holdout']['floors']
+        if (lineage in rejections or not decision or not winner
+                or decision.status != 'statistically_rejected' or not decision.attempted
+                or winner.spec_sha256() != rejection.spec_sha256 or not rejection.reasons
+                or _judgment_reasons(decision) != rejection.reasons
+                or rejection.n_events != decision.n_events or rejection.n_blocks != decision.n_blocks
+                or rejection.n_events != coverage.get('paired_games') or rejection.n_blocks != coverage.get('paired_blocks')
+                or rejection.n_events < floors['min_events'] or rejection.n_blocks < floors['min_blocks']):
+            raise PapersimStoreError(code)
+        rejections[lineage] = _plain_json(asdict(rejection))
+    if list(rejections.values()) != pure['statistical_rejections']:
+        raise PapersimStoreError(code)
+    return pure, rejections
+
+
+def _optimizer_forward_plan(identity, lineage, instant, digest, active_digest):
+    from polymarket_alpha_lab.papersim.optimize import policy
+
+    row = policy.classify_threshold(identity['family'], lineage.split('/', 1)[1])
+    return {
+        'rule_version': policy.RULE_VERSION, 'stage1_rule_version': identity['rule_version'],
+        'source_run_key': identity['run_key'], 'source_manifest': identity['manifest'],
+        'active_spec_sha256': active_digest, 'candidate_spec_sha256': digest,
+        'start': _optimize_time(instant), 'primary_metric': 'mean_log_loss',
+        'first_look_min_events': row.min_markets,
+        'final_look_min_events': policy.SECOND_LOOK_SAMPLE_MULTIPLIER * row.min_markets,
+        'min_complete_blocks': row.min_complete_blocks, 'min_span_days': row.min_span_days,
+        'max_shadow_days': row.max_shadow_days,
+        'first_look_ci_percentiles': list(policy.FIRST_EVIDENCE_CI_PERCENTILES),
+        'final_look_ci_percentiles': list(policy.SECOND_EVIDENCE_CI_PERCENTILES),
+        'paired_mean_max': policy.PROMOTE_PAIRED_MEAN_MAX,
+        'ci_upper_max': policy.PROMOTE_CI_UPPER_MAX,
+        'close_deviation_min_gap': policy.CLOSE_DEVIATION_MIN_GAP,
+        'close_deviation_min_markets': policy.CLOSE_DEVIATION_MIN_MARKETS,
+    }
+
+
+def _optimizer_publication_veto(lineage, digest, start, publish, bans):
+    prior, current = start['lineages'][lineage], publish['lineages'][lineage]
+    for context in (start, publish):
+        freeze = _freeze_state(context['controls'])
+        if freeze['global_frozen'] or lineage in freeze['frozen_lineages']:
+            return 'registry_frozen'
+    if current['issue']:
+        return current['issue']
+    if prior['roles'] is None or current['roles'] is None:
+        return 'registry_lineage_uninitialized'
+    if prior['watermarks'].get('ACTIVE') != current['watermarks'].get('ACTIVE'):
+        return 'registry_active_changed'
+    if digest in bans:
+        return bans[digest]['reason']
+    return None
+
+
+def _optimizer_dispositions(result, rejections, identity, original, publication, instant):
+    from polymarket_alpha_lab.papersim.optimize.registry import MAX_CANDIDATES
+    from polymarket_alpha_lab.papersim.optimize.runner import banned_spec_digests
+
+    claim = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
+    bans = banned_spec_digests(_rejection_receipts(publication['prior_rejections']), now=instant,
+                             family=identity['family'], run_key=identity['run_key'])
+    dispositions, publishable = {}, {}
+    for decision in result.decisions:
+        lineage = decision.lineage
+        spec = result.winner_specs.get(lineage)
+        digest = spec.spec_sha256() if spec is not None else None
+        row = {'status': decision.status, 'spec_sha256': digest}
+        dispositions[lineage] = row
+        if lineage not in result.proposed_specs and lineage not in rejections:
+            continue
+        veto = _optimizer_publication_veto(lineage, digest, claim['registry'], publication, bans)
+        if lineage in result.proposed_specs and veto is None:
+            current = publication['lineages'][lineage]
+            roles = current['roles']
+            if digest in {roles['baseline'], roles['active'], roles['guard'], *roles['candidates'], *roles['retired']}:
+                veto = 'spec_already_has_registry_role'
+            elif len(roles['candidates']) >= MAX_CANDIDATES:
+                veto = 'registry_candidate_capacity'
+            elif instant <= datetime.fromisoformat(current['head']['effective_at']):
+                veto = 'registry_role_chronology_veto'
+        if veto is not None:
+            row.update(status=veto, statistical_status=decision.status)
+            rejections.pop(lineage, None)
+            continue
+        if lineage in result.proposed_specs:
+            plan = _optimizer_forward_plan(identity, lineage, instant, digest, roles['active'])
+            reason = f'stage-one eligibility for {identity["run_key"]}'
+            row.update(status='registered', effective_at=_optimize_time(instant), forward_plan=plan, reason=reason)
+            publishable[lineage] = spec
+    outcome = result.outcome
+    if result.proposed_specs and not publishable:
+        outcome = 'RUN_FAILED'
+    if outcome in {'RUN_FAILED', 'INSUFFICIENT_DATA'}:
+        for lineage in rejections:
+            dispositions[lineage].update(status='judgment_not_published', statistical_status='statistically_rejected')
+        rejections.clear()
+    return outcome, dispositions, publishable
+
+
+def _optimization_budget(identity, result, pure, *, compute_expired):
+    budget = identity['budget']
+    reported = _json_like(result.submission.budget)
+    limits = reported if isinstance(reported, dict) else {}
+    maximum = budget['max_trials']
+    duration = budget['command_nanoseconds'] / _NS_PER_SECOND
+    trial_count, planned = result.submission.trial_count, pure['counts']['planned_trials']
+    cap_reached = trial_count == maximum and planned > maximum
+    violations = []
+    if type(limits.get('max_trials')) is not int or limits['max_trials'] != maximum:
+        violations.append('reported_max_trials')
+    if type(limits.get('time_budget_seconds')) not in (int, float) or limits['time_budget_seconds'] != duration:
+        violations.append('reported_time_budget_seconds')
+    if trial_count > maximum:
+        violations.append('physical_trial_cap_exceeded')
+    if result.outcome != 'RUN_FAILED' and (planned > maximum or compute_expired):
+        violations.append('outcome_exceeds_registered_budget')
+    if result.budget_exhausted and not (cap_reached or compute_expired):
+        violations.append('unverified_exhaustion')
+    if violations:
+        reported_limits = {}
+        for name in ('max_trials', 'time_budget_seconds'):
+            value = limits.get(name)
+            reported_limits[name] = value if type(value) is int or type(value) is float and isfinite(value) else None
+        return {**budget, 'stopping_causes': ['registered_budget_conflict'], 'stopping_stage': 'validate_result',
+                'reported_limits': reported_limits, 'violations': violations,
+                'unexecuted_planned_trials': planned - trial_count}
+    if result.budget_exhausted:
+        causes = []
+        if compute_expired:
+            causes.append('compute_time')
+        if cap_reached:
+            causes.append('trial_cap')
+        stopped = (pure['failure'] or {}).get('step') or ('search' if planned > trial_count else 'scientific_finalization')
+    else:
+        causes = ['scientific_failure'] if result.outcome == 'RUN_FAILED' else []
+        stopped = (pure['failure'] or {}).get('step') or (causes[0] if causes else 'completed')
+    return {**budget, 'stopping_causes': causes, 'stopping_stage': stopped,
+            'unexecuted_planned_trials': planned - trial_count}
+
+
+def _optimizer_attempt_telemetry(events, original, attempt, pure, *, resumed_attempt):
+    attempts = {}
+    for event in events:
+        number = event['attempt']
+        if event['phase'] == 'STARTED' and number != attempt:
+            attempts[number] = {'attempt': number, 'progress': 'unknown_interrupted', 'trial_ids': []}
+        elif event['phase'] == 'FAILED' and number in attempts:
+            output = _optimization_event_evidence(event, 'output_evidence', _OPTIMIZE_ATTEMPT)
+            if output.get('witnessed') is not None:
+                attempts[number] = {'attempt': number, 'progress': 'witnessed', **output['witnessed']}
+    witness = _optimizer_progress(pure)
+    attempts[attempt] = {'attempt': attempt, 'progress': 'witnessed', **witness}
+    admitted = [tuple(identity) for row in attempts.values() for identity in row['trial_ids']]
+    return {'original_attempt': original['attempt'], 'terminal_attempt': attempt,
+            'attempts': [attempts[number] for number in sorted(attempts)],
+            'physical_starts_lower_bound': len(admitted), 'distinct_trial_ids_observed': len(set(admitted)),
+            'known_duplicate_starts': len(admitted) - len(set(admitted)),
+            'reused_started_attempt': resumed_attempt,
+            'has_unknown_predecessor_progress': resumed_attempt or any(
+                row['progress'] == 'unknown_interrupted' for row in attempts.values())}
+
+
+def _optimizer_progress(pure):
+    return {'trial_ids': [[row['trial_index'], row['spec_sha256'],
+                           pure['planned_evaluations'][row['trial_index']]['fold_sha256'],
+                           row['model_context']] for row in pure['trials']],
+            'counts': {key: pure['counts'][key] for key in ('evaluated_trials', 'completed_trials',
+                       'empty_trials', 'aborted_trials', 'holdout_callbacks', 'completed_holdout_callbacks',
+                       'aborted_holdout_callbacks')}}
+
+
+def _set_optimization_timeouts(conn, cutoff_ns, stage):
+    ms = str(_remaining_ns(cutoff_ns, stage) // _NS_PER_MILLISECOND)
+    conn.execute("SELECT set_config('statement_timeout', %s, true), "
+                 "set_config('lock_timeout', %s, true), set_config('transaction_timeout', %s, true)", (ms, ms, ms))
+
+
+@contextmanager
+def optimization_read_transaction(conn, clock, *, stage, closeout):
+    """Read a repeatable snapshot on the idle command connection within its deadline."""
+    cutoff_ns = clock.hard_ns if closeout else clock.compute_ns
+    with optimization_database_phase(conn, clock, stage=stage, closeout=closeout), conn.transaction():
+        conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
+        _set_optimization_timeouts(conn, cutoff_ns, stage)
+        yield
+        _remaining_ns(cutoff_ns, stage)
+
+
+_managed_read_transaction = optimization_read_transaction
+
+
+@contextmanager
+def _managed_write_transaction(conn, clock, *, stage, closeout):
+    """Own an outer READ COMMITTED transaction and its exact COMMIT boundary."""
+    from psycopg import Error
+    from psycopg.pq import TransactionStatus
+
+    if not conn.autocommit or conn.info.transaction_status != TransactionStatus.IDLE:
+        raise PapersimStoreError('papersim_optimize_connection_not_idle')
+    cutoff_ns = clock.hard_ns if closeout else clock.compute_ns
+    with optimization_database_phase(conn, clock, stage=stage, closeout=closeout):
+        conn.execute('BEGIN ISOLATION LEVEL READ COMMITTED')
+        sent = False
+
+        def sending_commit():
+            nonlocal sent
+            sent = True
+
+        try:
+            lock_stage = f'{stage}_lock'
+            with optimization_database_phase(conn, clock, stage=lock_stage, closeout=closeout):
+                _try_advisory_lock(conn, key=_REGISTRY_LOCK, transaction=True,
+                                   cutoff_ns=cutoff_ns, stage=lock_stage)
+            _set_optimization_timeouts(conn, cutoff_ns, stage)
+            yield
+            with optimization_database_phase(conn, clock, stage=f'{stage}_precommit', closeout=closeout,
+                                             _before_send=sending_commit):
+                conn.execute('COMMIT')
+                _remaining_ns(cutoff_ns, f'{stage}_acknowledgment')
+        except BaseException as error:
+            uncertain = sent and (conn.closed or isinstance(error, (ManagedOptimizationError, OSError))
+                                  or isinstance(error, Error) and error.sqlstate is None)
+            if uncertain:
+                conn.close()
+                raise ManagedOptimizationError('papersim_optimize_commit_unconfirmed',
+                                               stage=f'{stage}_acknowledgment', indeterminate=True) from None
+            if not conn.closed:
+                try:
+                    conn.execute('ROLLBACK')
+                except (Error, ManagedOptimizationError, OSError):
+                    conn.close()
+            raise
+
+
+@contextmanager
+def _optimizer_operation_lock(conn, clock, run_key, *, confirmation=False):
+    key = (_OPERATION_NAMESPACE, _advisory_lock_number(run_key))
+    locked = False
+    from psycopg import Error
+
+    try:
+        if not confirmation:
+            with optimization_database_phase(conn, clock, stage='operation_lock', closeout=True):
+                locked = conn.execute('SELECT pg_try_advisory_lock(%s, %s)', key).fetchone()[0]
+        if not locked:
+            cutoff_ns = clock.hard_ns if confirmation else clock.compute_ns
+            with optimization_database_phase(conn, clock, stage='operation_lock', closeout=confirmation):
+                _try_advisory_lock(conn, key=key, transaction=False, cutoff_ns=cutoff_ns, stage='operation_lock')
+                locked = True
+        yield
+    finally:
+        if not conn.closed:
+            if locked:
+                try:
+                    with optimization_database_phase(conn, clock, stage='operation_unlock', closeout=True):
+                        conn.execute('SELECT pg_advisory_unlock(%s, %s)', key)
+                except (Error, ManagedOptimizationError, OSError):
+                    conn.close()
+            else:
+                # Even a try-lock whose reply was interrupted may hold a session lock.
+                conn.close()
+
+
+def _optimizer_write_event(conn, identity, *, phase, attempt, at, inputs, outputs=(), error_code=None):
+    operation_key = _optimize_operation_key(identity['run_key'])
+    event = CommandRunEventSubmission(
+        operation_key=operation_key, attempt=attempt, phase=phase, command=_OPTIMIZE_COMMAND,
+        scheduled_for=datetime.fromisoformat(identity['data_cutoff']), occurred_at=at,
+        code_commit=identity['code_commit'], config_digest=_optimize_digest(identity),
+        input_evidence=list(inputs), output_evidence=list(outputs), error_code=error_code,
+    )
+    written = record_command_run_event(conn, event)
+    readback = next((row for row in _optimization_events(conn, operation_key)
+                     if row['run_event_key'] == written['run_event_key']), None)
+    if (not written['inserted'] or readback is None or readback['run_event_id'] != written['run_event_id']
+            or readback['occurred_at'] != at or readback['input_evidence'] != list(inputs)
+            or readback['output_evidence'] != list(outputs)):
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    return readback
+
+
+def _optimizer_claim(conn, clock, identity, family, attempt, original, events):
+    if any(event['phase'] == 'FAILED' and event['attempt'] == attempt for event in events):
+        raise ManagedOptimizationError('papersim_optimize_attempt_already_failed', stage='claim',
+                                       retryable=True, started_event_id=original['run_event_id'])
+    if events and attempt < max(event['attempt'] for event in events):
+        raise ManagedOptimizationError('papersim_optimize_attempt_out_of_order', stage='claim',
+                                       retryable=True, started_event_id=original['run_event_id'])
+    if any(event['phase'] == 'STARTED' and event['attempt'] == attempt for event in events):
+        _remaining_ns(clock.compute_ns, 'claim')
+        return original, events
+    with _managed_write_transaction(conn, clock, stage='claim', closeout=False):
+        instant = datetime.now(UTC)
+        if original is None:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT 1 FROM papersim.command_run_events WHERE command = %s "
+                               "AND phase = 'STARTED' AND scheduled_for = %s "
+                               "AND input_evidence->0->>'schema' = %s "
+                               "AND input_evidence->0->'request'->>'family' = %s "
+                               "AND input_evidence->0->'request'->'search_space'->>'schedule_id' = %s "
+                               "AND input_evidence->0->'request'->>'rule_version' = %s LIMIT 1",
+                               (_OPTIMIZE_COMMAND, identity['data_cutoff'], _OPTIMIZE_CLAIM, identity['family'],
+                                identity['search_space']['schedule_id'], identity['rule_version']))
+                if cursor.fetchone() is not None:
+                    raise PapersimStoreError('papersim_optimize_existing_holdout_assignment')
+            if instant < datetime.fromisoformat(identity['data_cutoff']):
+                raise PapersimStoreError('papersim_optimize_cutoff_in_future')
+            facts = _optimization_registry_snapshot(conn, family, identity['lineages'])
+            original = _optimizer_write_event(conn, identity, phase='STARTED', attempt=attempt, at=instant,
+                                              inputs=[{'schema': _OPTIMIZE_CLAIM, 'request': identity,
+                                                       'registry': facts, 'registry_sha256': _optimize_digest(facts)}])
+            added = original
+        else:
+            added = _optimizer_write_event(conn, identity, phase='STARTED', attempt=attempt, at=instant,
+                                           inputs=[_attempt_link(original, identity)])
+    return original, [*events, added]
+
+
+def _optimizer_record_failed_attempt(conn, clock, identity, original, attempt, error, pure):
+    from psycopg import Error
+
+    if original is None or conn.closed or error.indeterminate or error.stage == 'claim':
+        return
+    if error.stage == 'operation_lock':
+        return
+    try:
+        with _managed_write_transaction(conn, clock, stage='attempt_failure', closeout=True):
+            current, events, _, terminal = _optimization_operation(conn, identity['run_key'], identity)
+            if (terminal is not None or current != original
+                    or not any(event['phase'] == 'STARTED' and event['attempt'] == attempt for event in events)
+                    or any(event['phase'] == 'FAILED' and event['attempt'] == attempt for event in events)):
+                return
+            row = _optimizer_write_event(conn, identity, phase='FAILED', attempt=attempt, at=datetime.now(UTC),
+                                         inputs=[_attempt_link(original, identity)], error_code=error.code,
+                                         outputs=[{'schema': _OPTIMIZE_ATTEMPT, 'stage': error.stage,
+                                                   'witnessed': None if pure is None else _optimizer_progress(pure)}])
+        error.attempt_event_id = row['run_event_id']
+    except (Error, ValueError, OSError) as receipt_error:
+        if isinstance(receipt_error, ManagedOptimizationError) and receipt_error.indeterminate:
+            raise receipt_error from None
+
+
+def _optimizer_publish(conn, clock, identity, family, original, events, attempt, result, pure,
+                       rejections, budget, *, resumed_attempt):
+    from polymarket_alpha_lab.papersim.snapshots import SnapshotRegistration, register_snapshot
+
+    budget_conflict = bool(budget.get('violations'))
+    stage = 'failure_publication' if result.outcome == 'RUN_FAILED' or budget_conflict else 'publication'
+    with _managed_write_transaction(conn, clock, stage=stage, closeout=True):
+        publication = _optimization_registry_snapshot(conn, family, identity['lineages'])
+        instant = datetime.now(UTC)
+        if instant < original['occurred_at']:
+            raise PapersimStoreError('papersim_optimize_publication_time_invalid')
+        rejections = rejections.copy()
+        if budget_conflict:
+            outcome, publishable = 'RUN_FAILED', {}
+            rejections.clear()
+            dispositions = {decision.lineage: {'status': 'registered_budget_conflict',
+                            'statistical_status': decision.status} for decision in result.decisions}
+        else:
+            outcome, dispositions, publishable = _optimizer_dispositions(
+                result, rejections, identity, original, publication, instant)
+            if outcome != result.outcome:
+                budget = {**budget, 'stopping_causes': ['publication_veto'], 'stopping_stage': 'publication_veto'}
+        claim = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
+        artifact = _optimize_json({
+            'schema': _OPTIMIZE_ARTIFACT, 'request': identity, 'budget': budget, 'outcome': outcome,
+            'original_started': _original_start_proof(original, claim),
+            'publication': {'observed_at': _optimize_time(instant), 'registry': publication},
+            'pure_sha256': result.artifacts_sha256, 'pure': pure, 'dispositions': dispositions, 'rejections': rejections,
+        })
+        _remaining_ns(clock.hard_ns, f'{stage}_serialization')
+        stored = register_snapshot(conn, SnapshotRegistration(
+            content=artifact, kind=_OPTIMIZE_ARTIFACT_KIND, source=_OPTIMIZE_COMMAND,
+            fetched_at=instant, schema_version=2,
+        ))
+        digest = sha256(artifact).hexdigest()
+        if (stored['content_sha256'] != digest or stored['byte_length'] != len(artifact)
+                or stored['kind'] != _OPTIMIZE_ARTIFACT_KIND or stored['schema_version'] != 2):
+            raise PapersimStoreError('papersim_optimize_linkage_invalid')
+        scorecard = {name: pure[name] for name in ('candidate_scorecards', 'incumbent_scorecards', 'diagnostic_scorecards')}
+        scorecard['stage1_rejections'] = [rejections[lineage] for lineage in sorted(rejections)]
+        submission = replace(result.submission, budget=budget, artifacts_sha256=digest, outcome=outcome, scorecard=scorecard,
+                             snapshot_refs=sorted(set(identity['sources']) | {identity['manifest']['sha256']}))
+        written = record_optimization_run(conn, submission)
+        if not written['inserted']:
+            raise PapersimStoreError('papersim_optimize_linkage_invalid')
+        role_event_ids = {}
+        for lineage, spec in sorted(publishable.items()):
+            row = dispositions[lineage]
+            registered = load_model_spec(conn, spec.spec_sha256())
+            if registered is None:
+                register_model_spec(conn, spec, source='optimizer', code_commit=identity['code_commit'],
+                                    parent_spec_sha256=result.verified_active_specs[lineage],
+                                    optimization_id=written['optimization_id'])
+            elif registered != spec:
+                raise PapersimStoreError('papersim_optimize_spec_identity_invalid')
+            batch = RoleEventBatch(events=(RoleEventSubmission(
+                lineage=lineage, spec_sha256=spec.spec_sha256(), role='CANDIDATE', effective_at=instant,
+                reason=row['reason'], forward_plan=row['forward_plan'], actor=f'auto:{identity["rule_version"]}',
+                code_commit=identity['code_commit'],
+            ),))
+            role = record_role_events(conn, batch)
+            if not role['inserted']:
+                raise PapersimStoreError('papersim_optimize_linkage_invalid')
+            role_event_ids[lineage] = role['role_event_ids']['CANDIDATE']
+        linkage = {
+            'schema': _OPTIMIZE_TERMINAL, 'run_key': identity['run_key'], 'optimization_id': written['optimization_id'],
+            'artifacts_sha256': digest, 'artifact_byte_length': len(artifact), 'outcome': outcome,
+            'dispositions': dispositions, 'role_event_ids': role_event_ids, 'exit_code': int(outcome == 'RUN_FAILED'),
+            'attempt_telemetry': _optimizer_attempt_telemetry(events, original, attempt, pure,
+                                                              resumed_attempt=resumed_attempt),
+        }
+        error_code = None
+        if outcome == 'RUN_FAILED':
+            if budget_conflict:
+                error_code = _OPTIMIZE_BUDGET_CONFLICT
+            elif result.budget_exhausted:
+                error_code = 'papersim_optimize_budget_exhausted'
+            elif result.outcome != outcome:
+                error_code = 'papersim_optimize_publication_veto'
+            else:
+                error_code = 'papersim_optimize_scientific_failure'
+        terminal = _optimizer_write_event(conn, identity, phase='FAILED' if error_code else 'SUCCEEDED',
+                                          attempt=attempt, at=datetime.now(UTC), inputs=[_attempt_link(original, identity)],
+                                          outputs=[linkage], error_code=error_code)
+        with conn.cursor() as cursor:
+            run = _optimization_run_row(cursor, 'WHERE optimization_key = %s', (identity['run_key'],))
+        confirmed = _optimization_terminal(conn, original, run, terminal, replayed=False)
+    return confirmed
+
+
+def _optimizer_error(error, *, stage, original=None):
+    if isinstance(error, ManagedOptimizationError):
+        failure = error
+    elif isinstance(error, PapersimStoreError):
+        failure = ManagedOptimizationError(error.code, stage=stage)
+    elif isinstance(error, (TypeError, KeyError, ValueError)):
+        code = 'papersim_optimize_input_invalid' if stage in {'request', 'compute'} else 'papersim_optimize_linkage_invalid'
+        failure = ManagedOptimizationError(code, stage=stage)
+    else:
+        failure = ManagedOptimizationError('papersim_optimize_transport_failure', stage=stage, retryable=True)
+    if original is not None:
+        failure.started_event_id = original['run_event_id']
+    return failure
+
+
+def _execute_optimizer_operation(conn, clock, identity, family, manifest, attempt, compute, state):
+    from psycopg import Error
+
+    run_key = identity['run_key']
+    stage = 'operation_lock'
+    try:
+        with _optimizer_operation_lock(conn, clock, run_key):
+            stage = 'read_operation'
+            with _managed_read_transaction(conn, clock, stage=stage, closeout=True):
+                original, events, run, terminal = _optimization_operation(conn, run_key, identity)
+                state['original'] = original
+                if terminal is not None:
+                    _verify_optimizer_inputs(conn, identity, manifest)
+                    return _optimization_terminal(conn, original, run, terminal, replayed=True)
+            stage = 'verify_inputs'
+            with _managed_read_transaction(conn, clock, stage=stage, closeout=False):
+                archives = _verify_optimizer_inputs(conn, identity, manifest)
+            stage = 'claim'
+            resumed_attempt = any(event['phase'] == 'STARTED' and event['attempt'] == attempt for event in events)
+            original, events = _optimizer_claim(conn, clock, identity, family, attempt, original, events)
+            state['original'] = original
+            pure = None
+            stage = 'compute'
+            try:
+                observed_expiry = False
+
+                def deadline():
+                    nonlocal observed_expiry
+                    observed_expiry = observed_expiry or clock.compute_expired()
+                    return observed_expiry
+
+                _remaining_ns(clock.compute_ns, stage)
+                policy = _optimization_policy(original)
+                result = compute(policy_context=policy, deadline=deadline, source_artifacts=archives)
+                stage = 'validate_result'
+                _remaining_ns(clock.hard_ns, stage)
+                pure, rejections = _validate_optimization_result(result, identity, policy)
+                budget = _optimization_budget(identity, result, pure, compute_expired=observed_expiry)
+                stage = 'failure_publication' if result.outcome == 'RUN_FAILED' or budget.get('violations') else 'publication'
+                state['publication'] = (original, events, attempt, result, pure, rejections, budget, resumed_attempt)
+                return _optimizer_publish(conn, clock, identity, family, original, events, attempt, result, pure,
+                                          rejections, budget, resumed_attempt=resumed_attempt)
+            except (Error, OSError, TypeError, KeyError, ValueError) as error:
+                failure = _optimizer_error(error, stage=stage, original=original)
+                _optimizer_record_failed_attempt(conn, clock, identity, original, attempt, failure, pure)
+                raise failure from None
+    except (Error, OSError, TypeError, KeyError, ValueError) as error:
+        raise _optimizer_error(error, stage=stage, original=state.get('original')) from None
+
+
+def _confirm_optimizer_commit(clock, identity, family, manifest, attempt, compute, reconnect, state, error):
+    from psycopg import Error
+
+    run_key = identity['run_key']
+    original, confirmed_absence = None, False
+    try:
+        _remaining_ns(clock.hard_ns, 'confirm_commit')
+        with reconnect() as fresh:
+            fresh.autocommit = True
+            with _optimizer_operation_lock(fresh, clock, run_key, confirmation=True):
+                with _managed_read_transaction(fresh, clock, stage='confirm_commit', closeout=True):
+                    original, events, run, terminal = _optimization_operation(fresh, run_key, identity)
+                    _verify_optimizer_inputs(fresh, identity, manifest)
+                    if terminal is not None:
+                        return _optimization_terminal(fresh, original, run, terminal, replayed=True)
+                    confirmed_absence = True
+                    failed_attempt = next((row for row in events if row['phase'] == 'FAILED'
+                                           and row['attempt'] == attempt), None)
+                    if failed_attempt is not None:
+                        raise ManagedOptimizationError('papersim_optimize_attempt_already_failed', stage='confirm_commit',
+                                                       retryable=True, started_event_id=original['run_event_id'],
+                                                       attempt_event_id=failed_attempt['run_event_id'])
+                proved = state.get('publication')
+                if proved is not None and proved[0] == original:
+                    start, events, number, result, pure, rejections, budget, resumed = proved
+                    return _optimizer_publish(fresh, clock, identity, family, start, events, number, result, pure,
+                                              rejections, budget, resumed_attempt=resumed)
+            if not clock.compute_expired() and not error.stage.startswith('attempt_failure'):
+                return _execute_optimizer_operation(fresh, clock, identity, family, manifest, attempt, compute, state)
+    except (Error, OSError, TypeError, KeyError, ValueError) as confirmation_error:
+        if not confirmed_absence and not isinstance(confirmation_error, (ValueError, KeyError, TypeError)):
+            raise error from None
+        if (not confirmed_absence and isinstance(confirmation_error, ManagedOptimizationError)
+                and confirmation_error.retryable):
+            raise error from None
+        raise _optimizer_error(confirmation_error, stage='confirm_commit', original=original) from None
+    raise ManagedOptimizationError('papersim_optimize_commit_absent', stage='confirm_commit', retryable=True,
+                                   started_event_id=None if original is None else original['run_event_id']) from None
+
+
+def _managed_optimizer_request(conn, *, clock, family, data_cutoff, random_seed, code_commit, attempt, targets,
+                               schedule_id, manifest_sha256, manifest_byte_length, manifest, source_refs,
+                               operation_key):
+    from psycopg.pq import TransactionStatus
+
+    if not conn.autocommit or conn.info.transaction_status != TransactionStatus.IDLE:
+        raise ManagedOptimizationError('papersim_optimize_connection_not_idle', stage='connect')
+    try:
+        _validate_optimization_clock(clock)
+        _remaining_ns(clock.hard_ns, 'request')
+        identity = _optimize_request(clock=clock, family=family, data_cutoff=data_cutoff, random_seed=random_seed,
+                                     code_commit=code_commit, attempt=attempt, targets=targets, schedule_id=schedule_id,
+                                     manifest_sha256=manifest_sha256, manifest_byte_length=manifest_byte_length,
+                                     manifest=manifest, source_refs=source_refs)
+        if operation_key is not None and operation_key != _optimize_operation_key(identity['run_key']):
+            raise PapersimStoreError('papersim_optimize_request_conflict')
+        return identity
+    except (TypeError, KeyError, ValueError) as error:
+        raise _optimizer_error(error, stage='request') from None
+
+
+def preview_managed_optimization(conn, *, clock, family, data_cutoff, random_seed, code_commit, attempt, targets,
+                                 schedule_id, manifest_sha256, manifest_byte_length, manifest, source_refs,
+                                 operation_key=None) -> dict:
+    """Verify the registered request and read its current state in one read-only snapshot."""
+    from psycopg import Error
+
+    identity = _managed_optimizer_request(
+        conn, clock=clock, family=family, data_cutoff=data_cutoff, random_seed=random_seed, code_commit=code_commit,
+        attempt=attempt, targets=targets, schedule_id=schedule_id, manifest_sha256=manifest_sha256,
+        manifest_byte_length=manifest_byte_length, manifest=manifest, source_refs=source_refs,
+        operation_key=operation_key,
+    )
+    run_key = identity['run_key']
+    preview = {'dry_run': True, 'family': identity['family'], 'run_key': run_key,
+               'operation_key': _optimize_operation_key(run_key), 'manifest_sha256': manifest_sha256,
+               'manifest_byte_length': manifest_byte_length}
+    original, stage = None, 'verify_inputs'
+    try:
+        with _managed_read_transaction(conn, clock, stage=stage, closeout=True):
+            _verify_optimizer_inputs(conn, identity, manifest)
+            stage = 'read_operation'
+            original, _, run, terminal = _optimization_operation(conn, run_key, identity)
+            if terminal is not None:
+                result = _optimization_terminal(conn, original, run, terminal, replayed=True)
+                return {**result, **preview, 'status': 'sealed',
+                        'run_scorecard': result['scorecard'], 'trial_count': run['trial_count']}
+            if original is not None:
+                preview.update(started_event_id=original['run_event_id'], started_event_key=original['run_event_key'])
+            return {**preview, 'status': 'not_run' if original is None else 'in_progress',
+                    'outcome': None, 'run_scorecard': None, 'trial_count': None, 'artifacts_sha256': None,
+                    'artifact_byte_length': None, 'exit_code': 0}
+    except (Error, OSError, TypeError, KeyError, ValueError) as error:
+        raise _optimizer_error(error, stage=stage, original=original) from None
+
+
+def run_managed_optimization(conn, *, clock, family, data_cutoff, random_seed, code_commit, attempt, targets,
+                             schedule_id, manifest_sha256, manifest_byte_length, manifest, source_refs,
+                             compute, reconnect=None, operation_key=None) -> dict:
+    """Claim, compute outside a transaction, and seal one managed experiment."""
+    identity = _managed_optimizer_request(
+        conn, clock=clock, family=family, data_cutoff=data_cutoff, random_seed=random_seed, code_commit=code_commit,
+        attempt=attempt, targets=targets, schedule_id=schedule_id, manifest_sha256=manifest_sha256,
+        manifest_byte_length=manifest_byte_length, manifest=manifest, source_refs=source_refs,
+        operation_key=operation_key,
+    )
+    state = {}
+    try:
+        return _execute_optimizer_operation(conn, clock, identity, family, manifest, attempt, compute, state)
+    except ManagedOptimizationError as error:
+        if error.indeterminate and reconnect is not None:
+            return _confirm_optimizer_commit(clock, identity, family, manifest, attempt, compute, reconnect, state, error)
+        raise
 
 
 # ---------------------------------------------------------------------------

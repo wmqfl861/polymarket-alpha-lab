@@ -39,6 +39,7 @@ from typing import Callable
 
 from polymarket_alpha_lab.papersim.optimize.metrics import (
     ScoredEvent,
+    _SIGN_FLIP_REPS_DEFAULT,
     calibration_slope_intercept,
     cluster_mean_ci,
     favorite_flips,
@@ -52,6 +53,8 @@ from polymarket_alpha_lab.papersim.optimize.metrics import (
     sign_flip_pvalue,
 )
 from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
+
+_SIGN_FLIP_SEED_DEFAULT = 20261119
 
 __all__ = (
     "GateResult",
@@ -231,8 +234,8 @@ def build_scorecard(
     variant_spread_median: float | None = None,
     refusals: int = 0,
     gates: tuple[GateResult, ...] = (),
-    sign_flip_seed: int = 20261119,
-    sign_flip_reps: int = 2000,
+    sign_flip_seed: int = _SIGN_FLIP_SEED_DEFAULT,
+    sign_flip_reps: int = _SIGN_FLIP_REPS_DEFAULT,
 ) -> Scorecard:
     """Build one scorecard from a spec's scored events.
 
