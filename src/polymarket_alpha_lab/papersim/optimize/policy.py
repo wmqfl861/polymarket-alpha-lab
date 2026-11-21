@@ -43,6 +43,8 @@ from __future__ import annotations
 import datetime as _datetime
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from decimal import Decimal, localcontext
+from fractions import Fraction
 
 # The second evidence look uses the frozen default interval.
 from polymarket_alpha_lab.papersim.evaluation import (
@@ -58,6 +60,7 @@ from polymarket_alpha_lab.papersim.optimize.registry import (
     _STAGE1_HOLDOUT_FLOORS,
     _shadow_window_days,
 )
+from polymarket_alpha_lab.research_probability_scores import CONTEXT
 
 __all__ = [
     "BLOCK_REASON_CODES",
@@ -73,6 +76,7 @@ __all__ = [
     "CONCLUSION_PROMOTE_PENDING_CONFIRM",
     "CONCLUSION_RETIRE",
     "CONCLUSION_ROLLBACK",
+    "CloseDeviationSample",
     "FIRST_EVIDENCE_CI_PERCENTILES",
     "ForwardStats",
     "ForwardThreshold",
@@ -94,6 +98,7 @@ __all__ = [
     "STAGE1_HOLDOUT_MIN_MARKETS",
     "Verdict",
     "classify_threshold",
+    "close_deviation_metrics",
     "complete_matchweek_blocks",
     "decide_forward",
     "decide_rollback",
@@ -136,11 +141,11 @@ FIRST_EVIDENCE_CI_PERCENTILES = _FIRST_EVIDENCE_CI_PERCENTILES
 #: 第一次没过：样本翻倍时判第二次（也是最后一次）。
 SECOND_LOOK_SAMPLE_MULTIPLIER = _SECOND_LOOK_SAMPLE_MULTIPLIER
 
-#: "候选会下注的那些市场"的收盘价偏离均值不比现役低 1 美分以上：
+#: 候选过闸和现役实际入场各自取买入方向的收盘价减成交价的均值。
 #: gap（候选均值 − 现役均值）≤ −0.01 即拦截（"以上"含本数，钉死解释）。
 CLOSE_DEVIATION_MIN_GAP = -0.01
 
-#: 这类市场不足 30 个时只标注，不拦截。
+#: 候选过闸的市场不足 30 个时只标注，不拦截。
 CLOSE_DEVIATION_MIN_MARKETS = 30
 
 #: 现役所在的队列累计 30 笔以上入场（含 30）→"晋级，待确认"。
@@ -287,6 +292,27 @@ class LineageFacts:
 
 
 @dataclass(frozen=True)
+class CloseDeviationSample:
+    """One side's qualifying rows and exact sum of CLOSE minus fill."""
+
+    markets: int = 0
+    n_prices: int = 0
+    missing_close: int = 0
+    missing_fill: int = 0
+    sum_delta: Fraction = Fraction(0)
+
+    @property
+    def mean(self) -> Fraction | None:
+        return self.sum_delta / self.n_prices if self.n_prices else None
+
+    def gap_from(self, active: CloseDeviationSample) -> Fraction | None:
+        candidate_mean, active_mean = self.mean, active.mean
+        if candidate_mean is None or active_mean is None:
+            return None
+        return candidate_mean - active_mean
+
+
+@dataclass(frozen=True)
 class ForwardStats:
     """One pair's forward statistics (recomputable, clock-free).
 
@@ -295,9 +321,10 @@ class ForwardStats:
     the guard (ROLLBACK).  ``paired_mean``/``ci95``/``ci99`` are the
     cluster-bootstrap paired differences "spec minus comparator"
     (negative favours the judged spec).  ``close_dev_gap`` is
-    candidate's mean |close − probability| minus the incumbent's on
-    the would-bet subset (None = no computable deviation: annotated,
-    never a hard block -- completeness belongs to ``integrity_ok``).
+    the candidate's mean CLOSE minus hypothetical fill on its gate-pass
+    rows, less the active's mean CLOSE minus entry price on its entered
+    rows. Each side uses the buy-side CLOSE and its own complete prices.
+    The exact samples take precedence over the legacy float gap.
     """
 
     spec: str
@@ -313,6 +340,8 @@ class ForwardStats:
     close_dev_markets: int = 0
     close_dev_gap: float | None = None
     unpaired: int = 0
+    close_dev_candidate: CloseDeviationSample | None = None
+    close_dev_active: CloseDeviationSample | None = None
 
     def __post_init__(self) -> None:
         for name in (self.spec, self.comparator):
@@ -481,6 +510,41 @@ def _number(value: float | None) -> str | None:
     return None if value is None else repr(value)
 
 
+def _close_deviation_gap(stats: ForwardStats) -> Fraction | float | None:
+    candidate, active = stats.close_dev_candidate, stats.close_dev_active
+    if candidate is None and active is None:
+        return stats.close_dev_gap
+    if candidate is None or active is None:
+        return None
+    return candidate.gap_from(active)
+
+
+def _close_deviation_number(value: Fraction | float | None) -> str | None:
+    if isinstance(value, Fraction):
+        with localcontext(CONTEXT):
+            return str(Decimal(value.numerator) / Decimal(value.denominator))
+    return _number(value)
+
+
+def close_deviation_metrics(stats: ForwardStats) -> dict:
+    """Recomputable CLV sample sizes, missing prices and buy-side means."""
+    candidate = stats.close_dev_candidate or CloseDeviationSample()
+    active = stats.close_dev_active or CloseDeviationSample()
+    return {
+        "close_dev_markets": stats.close_dev_markets,
+        "close_dev_active_entries": active.markets,
+        "close_dev_n_candidate": candidate.n_prices,
+        "close_dev_n_active": active.n_prices,
+        "close_dev_missing_candidate": candidate.missing_close,
+        "close_dev_missing_active": active.missing_close,
+        "close_dev_missing_candidate_fill": candidate.missing_fill,
+        "close_dev_missing_active_fill": active.missing_fill,
+        "close_dev_candidate_mean": _close_deviation_number(candidate.mean),
+        "close_dev_active_mean": _close_deviation_number(active.mean),
+        "close_dev_gap": _close_deviation_number(_close_deviation_gap(stats)),
+    }
+
+
 def _watermark_dict(stats: ForwardStats) -> dict:
     return {
         "n_complete_blocks": stats.n_complete_blocks,
@@ -506,8 +570,7 @@ def _forward_metrics(stats: ForwardStats, facts: LineageFacts,
         "ci99_lower": _number(stats.ci99[0]),
         "ci99_upper": _number(stats.ci99[1]),
         "close_dev_flagged_only": close_flagged,
-        "close_dev_gap": _number(stats.close_dev_gap),
-        "close_dev_markets": stats.close_dev_markets,
+        **close_deviation_metrics(stats),
         "close_dev_violation": close_blocked,
         "interval_upper_applied": _number(upper),
         "paired_mean": _number(stats.paired_mean),
@@ -522,10 +585,14 @@ def _close_deviation_check(stats: ForwardStats) -> tuple[bool, bool, bool]:
     the minimum a gap at or below :data:`CLOSE_DEVIATION_MIN_GAP`
     blocks ("低 1 美分以上"含本数).
     """
-    if stats.close_dev_markets < CLOSE_DEVIATION_MIN_MARKETS \
-            or stats.close_dev_gap is None:
+    gap = _close_deviation_gap(stats)
+    if stats.close_dev_markets < CLOSE_DEVIATION_MIN_MARKETS or gap is None:
         return (True, True, False)
-    blocked = stats.close_dev_gap <= CLOSE_DEVIATION_MIN_GAP
+    # Fraction uses exact integer cross multiplication, including when
+    # the two sample sizes produce repeating decimal means.
+    cutoff = (Fraction(str(CLOSE_DEVIATION_MIN_GAP)) if isinstance(gap, Fraction)
+              else CLOSE_DEVIATION_MIN_GAP)
+    blocked = gap <= cutoff
     return (not blocked, False, blocked)
 
 

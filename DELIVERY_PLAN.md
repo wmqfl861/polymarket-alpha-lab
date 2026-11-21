@@ -4527,3 +4527,5 @@ PR #114 的首个组合头 `17dced4763fadc8505511fcac7b7ed3cf95db62e` 通过了�
 基线 `cd53ce25f65716e6151238beba253618caca7e98` 合入实质候选 `c4791fb8448da999ae6a23dae9efef2c9c002406` 后，GitHub 合并对象为 `620048a7597d4155f1658fe4750f707df3c94158`。三条工作流 attempt 1 全部通过并检出该对象。运行分别为 Offline verification `44918091022`、Native project PostgreSQL `44918091078`、Research paper bridge `44918091023`。本机完整验证通过 43,915 项，Native papersim 通过 792 项。
 
 [当前基线复审回执](docs/paper-sim/design/pr-114-review.md)保留首轮附件不完整的 FAIL 和同一 ZCode 会话读完全部分页后的 PASS。该复审针对实质候选及上述合并对象。归档产生的文档后续头另经三条工作流和准确对象复审，最终证据由 #114 PR 描述指向同仓库保留提交。O-5 失败路径测试在后继节点验收。O-6 对应 `test_anchor3_wp_p4_paired_comparison` 的既有服务器专用输入条件。
+
+PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并检出为 `1feabe950a1f93c9fc694564a11e79b4244e8ec9`。Offline verification `44928160743` / attempt 1、Native project PostgreSQL `44928160706` / attempt 1、Research paper bridge `44928160726` / attempt 1 均为 `success`，六个测试作业均检出该合并对象。本机独立只读 ZCode 对精确 H 的 CI 后签署为 `VERDICT: PASS`。[最终核验回执](docs/paper-sim/design/pr-114-final-verification.md)记录原件、作业及验收证据。
