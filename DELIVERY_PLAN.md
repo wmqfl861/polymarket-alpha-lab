@@ -4540,7 +4540,7 @@ Owner 的审核指示原话为“按照规则，直接进行审核”。
 
 §84 的五项均在 2026-11-21 由实际 ZCode 完成独立事后复审。原合入时缺少回执的事实保留在各行。按首次审查或主机资源中断恢复的实际会话入档。
 
-[P1-4 第一处实测](docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md)中，隔离扫描写入一条影子预测。按实际出价版本可配到一条，按登记现役版本可配到零条。扫描和评分期间新增角色事件和判定均为零。另两次记录确认扫描处理市场包的 `variant_quotes` 数组时会在持久化前遇到 `42846`。该缺陷独立留证。
+[P1-4 第一处实测](docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md)中，隔离扫描写入一条原因是 `fit_materials_missing`、概率为空的影子拒绝记录。按实际出价版本 `soccer-r23` 关联到 1 条，按登记现役版本关联到 0 条。两种版本口径下的可评分配对均为 0。扫描和评分期间新增角色事件和判定均为零。另两次记录确认扫描处理市场包的 `variant_quotes` 数组时会在持久化前遇到 `42846`。该缺陷独立留证。
 
 对比 #116 job `136680617790`、#118 job `136739251486` 的 `-rs` 输出及本机回执，两份对应 CI 各多跳过一项，均为 `tests/test_papersim_optimize_metrics.py::test_anchor3_wp_p4_paired_comparison`。原因是托管运行器缺少服务器专用的 WP-P4 证据 JSON。原有测试及条件照审计时的声明保留。
 
