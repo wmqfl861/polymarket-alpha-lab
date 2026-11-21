@@ -1,0 +1,41 @@
+queried: 2026-11-21T06:55:01Z (GitHub REST API through gh; read-only)
+
+== gh api repos/wmqfl861/polymarket-alpha-lab
+private=false visibility=public default_branch=main created_at=2026-09-12T00:41:38Z forks=1
+
+== gh api repos/wmqfl861/polymarket-alpha-lab/branches/main
+protected=false commit=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6
+
+== gh api repos/wmqfl861/polymarket-alpha-lab/forks
+Lordakee/polymarket-alpha-lab-contrib private=false created_at=2026-11-19T02:55:44Z pushed_at=2026-11-19T03:03:24Z
+
+== gh api repos/wmqfl861/polymarket-alpha-lab/events (pages 1-2, 181 events; page 3 empty)
+The feed holds one PublicEvent. Its own created_at equals the repository creation time, so it does
+not date the change; its POSITION in the feed does. Entries around it, newest first
+(page index id type actor created_at ref):
+  2 39 27385787116 DeleteEvent wmqfl861 2026-11-16T06:22:54Z feature/wp04-forecast-bound-confirmation-20260915
+  2 40 27385536827 DeleteEvent wmqfl861 2026-11-16T06:20:15Z feature/resolution-evidence-review-20260913
+  2 41 27367049403 PushEvent wmqfl861 2026-11-16T14:19:34Z refs/heads/main
+  2 42 27355435046 PushEvent wmqfl861 2026-11-16T12:00:06Z refs/heads/main
+  2 43 20262449890 PublicEvent wmqfl861 2026-09-12T00:41:38Z
+  2 44 27334522809 DeleteEvent wmqfl861 2026-11-16T06:26:03Z fix/research-evidence-utc-20260914
+  2 45 27331833705 DeleteEvent wmqfl861 2026-11-16T05:57:25Z feature/native-cold-backup-20260913
+  2 46 27331822599 DeleteEvent wmqfl861 2026-11-16T05:57:18Z feature/crypto-observation-time-20260914
+  2 47 27326196451 PushEvent wmqfl861 2026-11-16T07:15:23Z refs/heads/main
+
+event types in the feed:
+       15 CreateEvent
+       22 DeleteEvent
+        1 ForkEvent
+        3 IssueCommentEvent
+        1 PublicEvent
+      104 PullRequestEvent
+       35 PushEvent
+
+== statements in earlier review packages
+  docs/handoffs/2026-11-12-audit/01-audit-report.md:464 says the repository is private (2026-11-12).
+  The 2026-11-13 and 2026-11-19 packages did not re-check visibility.
+
+== search of the tree at 2bdc4ccc for a record of the change
+  patterns: --visibility, 'gh repo edit', 转为公开/改为公开/设为公开/仓库公开/公开仓库, 'made public', 'public repository'
+  matches in DELIVERY_PLAN.md, docs/handoffs/2026-11-13-m0-remediation.md, docs/handoffs/m3-cleanup/*.log: 0 relevant

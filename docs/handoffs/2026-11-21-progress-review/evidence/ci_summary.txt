@@ -1,0 +1,47 @@
+source: GitHub Actions REST API, repos/wmqfl861/polymarket-alpha-lab/actions/runs?head_sha=<commit>, queried 2026-11-21 (UTC) for the 44 first-parent merge commits of c4367b6b..2bdc4ccc ('merge') and their second parents ('head').
+rows: 216 (see ci_runs.tsv)
+
+== conclusions by kind / workflow / event
+     15 head	Native project PostgreSQL	pull_request	success
+     32 head	Native project PostgreSQL	workflow_dispatch	success
+      4 head	Native project distribution	pull_request	success
+     44 head	Offline verification	pull_request	success
+     44 head	Research paper bridge	pull_request	success
+      2 merge	Native project PostgreSQL	push	cancelled
+     31 merge	Native project PostgreSQL	push	success
+      6 merge	Offline verification	push	cancelled
+      1 merge	Offline verification	push	failure
+     37 merge	Offline verification	push	success
+
+== PR heads: workflows with at least one successful run (out of 44 heads)
+  Offline verification: 44
+  Research paper bridge: 44
+  Native project PostgreSQL: 44
+
+== merge commits on main whose push runs did not succeed
+  #86 fa01be0b Offline verification failure run=44668388945 2026-11-20T03:32:12Z
+  #91 6c549f26 Native project PostgreSQL cancelled run=44678037886 2026-11-20T04:59:44Z
+  #91 6c549f26 Offline verification cancelled run=44678037973 2026-11-20T04:59:44Z
+  #87 82f6e32c Offline verification cancelled run=44678082239 2026-11-20T05:00:08Z
+  #88 ed5eabbd Offline verification cancelled run=44678091953 2026-11-20T05:00:13Z
+  #94 3f2142ff Offline verification cancelled run=44696610408 2026-11-20T07:39:46Z
+  #101 e8994088 Offline verification cancelled run=44734994604 2026-11-20T12:20:42Z
+  #112 63506df2 Offline verification cancelled run=44834995174 2026-11-20T23:11:59Z
+  #112 63506df2 Native project PostgreSQL cancelled run=44834995324 2026-11-20T23:11:59Z
+
+== runs at the reviewed head 2bdc4ccc and at the last merge with both push workflows green
+  #115 8cba9d37 Offline verification push success run=44850802255
+  #115 8cba9d37 Native project PostgreSQL push success run=44850802098
+  #117 2bdc4ccc Offline verification push success run=44858594587
+
+== test totals read from the job logs
+  Offline verification 44858594587 (2bdc4ccc): 43490 passed, 340 skipped, 20 warnings
+  Offline verification 44850802255 (8cba9d37): 43490 passed, 340 skipped, 20 warnings
+  Native project PostgreSQL 44850802098 (8cba9d37): research 1227 passed / 18 skipped; dispatch 1933 / 15; storage 320 / 2 plus version switch 89; papersim 715 passed; summary job success; windows jobs skipped by design
+
+== the one failed push run
+  Offline verification 44668388945 at fa01be0b (merge of #86): collection error in tests/test_papersim_optimize_metrics.py, PermissionError reading the server evidence path of regression anchor 3; fixed by #90 (621085de)
+
+== pull request 114: what its three latest runs checked out
+  runs 44859358224, 44859358299, 44859358236 (created 2026-11-21T03:06:06Z, head 26dfa2a0): 'HEAD is now at 0e9210f0 Merge 26dfa2a0... into 8cba9d37...'
+  0e9210f0 parents: 8cba9d37 (merge of #115) + 26dfa2a0; refs/pull/114/merge at review time: a0086b82, parents 2bdc4ccc + 26dfa2a0
