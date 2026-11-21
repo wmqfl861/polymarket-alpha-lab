@@ -15,7 +15,7 @@ need a short, auditable checklist.
 
 Dispatch a fresh, independent, read-only reviewer for each plan, code,
 stage, post-node, and handoff review under Project Iron Rule 4 and
-[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing).
+[Project Agent Routing](../../AGENTS.md#project-agent-routing).
 The gate is blocked when no eligible independent reviewer can be dispatched.
 There is no fallback reviewer under the current project rules.
 

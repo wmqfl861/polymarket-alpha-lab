@@ -103,8 +103,10 @@ PROJECT_REVIEW_PATHS = (
     Path("docs/quality/phase-1-development-node-quality-gates.md"),
     Path("docs/acceptance/phase-1-development-node-acceptance-checklist.md"),
     Path("docs/phase-1-multi-team-operating-model.md"),
-    Path("docs/phases/2026-07-12-phase-1-capability-baseline.md"),
     Path("docs/reports/phase1-report-registry.md"),
+)
+HISTORICAL_PROJECT_REVIEW_PATHS = (
+    Path("docs/phases/2026-07-12-phase-1-capability-baseline.md"),
     Path("docs/roadmap/2026-07-12-project-progress-roadmap.md"),
 )
 ACTIVATION_REVIEW_PATHS = (
@@ -113,6 +115,7 @@ ACTIVATION_REVIEW_PATHS = (
     Path("docs/handoffs/g2-activation-readiness.md"),
     Path("docs/handoffs/g2-first-real-run-runbook-draft.md"),
 )
+REUSABLE_HANDOFF_PATH = Path("docs/handoffs/l7-l8-status.md")
 
 
 def _read(path: Path) -> str:
@@ -342,14 +345,12 @@ def test_project_policy_freezes_long_running_review_monitoring() -> None:
         text = _normalized(_read(path))
 
         if path == AGENT_POLICY_PATH:
-            # Owner rule change (2026-09-24): reviews run as independent
-            # read-only subagents. The no-fixed-deadline and no-live-
-            # interruption protections carry over in the new phrasing.
+            # The monitoring protections apply to the current review sessions.
             assert (
                 "Do not impose a fixed elapsed-time deadline on a review"
-                " subagent"
+                " session"
             ) in text
-            assert "let it run to an explicit conclusion" in text
+            assert "Let it run to an explicit conclusion" in text
             assert (
                 "do not interrupt, duplicate, or replace it while it is still"
                 " working"
@@ -378,14 +379,44 @@ def test_project_policy_freezes_long_running_review_monitoring() -> None:
 
 def test_current_review_documents_reference_the_root_subagent_routing() -> None:
     root_policy = AGENT_POLICY_PATH.resolve()
-    for path in PROJECT_REVIEW_PATHS + ACTIVATION_REVIEW_PATHS:
-        text = _read(path)
-        links = re.findall(r"\]\(([^)\s]+)#native-codex-subagent-routing\)", text)
-        assert links, path
-        for link in links:
-            assert (path.parent / link).resolve() == root_policy, path
+    root_text = _read(AGENT_POLICY_PATH)
+    # GitHub derives the new fragment from this heading. The named anchor
+    # points historical links to the same section.
+    legacy_anchor = '<a name="native-codex-subagent-routing"></a>'
+    assert root_text.count(legacy_anchor) == 1
+    assert re.search(
+        rf"(?m)^{re.escape(legacy_anchor)}\n\n## Project Agent Routing$",
+        root_text,
+    )
 
-    for path in PROJECT_REVIEW_PATHS:
+    active_paths = PROJECT_REVIEW_PATHS + ACTIVATION_REVIEW_PATHS + (REUSABLE_HANDOFF_PATH,)
+    for paths, label, fragment in (
+        (active_paths, "Project Agent Routing", "project-agent-routing"),
+        (
+            HISTORICAL_PROJECT_REVIEW_PATHS,
+            "Native Codex Subagent Routing",
+            "native-codex-subagent-routing",
+        ),
+    ):
+        for path in paths:
+            markdown_links = re.findall(
+                r"\[([^\]\n]+)\]\(([^)#\s]+)#([^)#\s]+)\)",
+                _read(path),
+            )
+            links = [
+                (link_label, target, link_fragment)
+                for link_label, target, link_fragment in markdown_links
+                if Path(target).name == AGENT_POLICY_PATH.name
+                or link_fragment in ("project-agent-routing", "native-codex-subagent-routing")
+            ]
+            assert links, path
+            if path == REUSABLE_HANDOFF_PATH:
+                assert len(links) == 4, path
+            for actual_label, target, actual_fragment in links:
+                assert (path.parent / target).resolve() == root_policy, path
+                assert (actual_label, actual_fragment) == (label, fragment), path
+
+    for path in PROJECT_REVIEW_PATHS + HISTORICAL_PROJECT_REVIEW_PATHS:
         text = _read(path).lower()
         assert not re.search(r"\b(?:gpt-\d[\w.-]*|claude-opus-[\w.-]+|zcode)\b", text), path
 
@@ -415,10 +446,16 @@ def _numbered_section(text: str, heading: str, number: str) -> str:
 
 def test_reusable_dispatch_receipts_reference_historical_commits() -> None:
     delivery = _read(Path("DELIVERY_PLAN.md"))
-    handoff = _read(Path("docs/handoffs/l7-l8-status.md"))
-    for number, section, date, commit in (
-        ("64.", "3.3", "2026-09-30", "4f84f264d8d762c298f4623459aa24923aab4bc0"),
-        ("66.", "3.6", "2026-10-07", "df137300c7b293a159588650488996da05f9d68d"),
+    handoff = _read(REUSABLE_HANDOFF_PATH)
+    for number, section, date, commit, fragment in (
+        (
+            "64.", "3.3", "2026-09-30", "4f84f264d8d762c298f4623459aa24923aab4bc0",
+            "native-codex-subagent-routing",
+        ),
+        (
+            "66.", "3.6", "2026-10-07", "df137300c7b293a159588650488996da05f9d68d",
+            "project-agent-routing",
+        ),
     ):
         receipt = _numbered_section(delivery, "##", number)
         handoff_receipt = _numbered_section(handoff, "###", section)
@@ -434,8 +471,8 @@ def test_reusable_dispatch_receipts_reference_historical_commits() -> None:
                 flags=re.IGNORECASE,
             ), section
         for source, link in (
-            (receipt, "(AGENTS.md#native-codex-subagent-routing)"),
-            (handoff_receipt, "(../../AGENTS.md#native-codex-subagent-routing)"),
+            (receipt, f"(AGENTS.md#{fragment})"),
+            (handoff_receipt, "[Project Agent Routing](../../AGENTS.md#project-agent-routing)"),
         ):
             assert date in source and commit in source, section
             assert link in source, section

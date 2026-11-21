@@ -132,7 +132,7 @@ Teams should produce structured research packets with source references, confide
 
 ## Review Workflow
 
-Apply [Native Codex Subagent Routing](../AGENTS.md#native-codex-subagent-routing)
+Apply [Project Agent Routing](../AGENTS.md#project-agent-routing)
 to project planning and dispatch a fresh, independent reviewer for each
 plan, code, stage, post-node, and handoff review under Project Iron Rule 4.
 

@@ -59,7 +59,7 @@ flags.
 
 ## Review Notes
 
-Follow [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+Follow [Project Agent Routing](../../AGENTS.md#project-agent-routing)
 for current registry changes.
 
 - `tests/test_cli_report_discovery.py` is the registry contract: it asserts the

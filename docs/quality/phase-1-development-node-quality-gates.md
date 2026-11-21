@@ -171,7 +171,7 @@ Acceptance requirement:
 
 Before a Phase 1 development node is considered complete, submit a read-only
 review packet to a fresh, independent reviewer under Project Iron Rule 4
-and [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing).
+and [Project Agent Routing](../../AGENTS.md#project-agent-routing).
 
 The review packet must include:
 

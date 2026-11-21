@@ -638,7 +638,7 @@ Baseline: repository main `db6e2291` (2026-09-30). The post-L7 ruling
 approved record binding engineering, isolation, the credential procedure,
 and scoped authorization. The section records the **activation record
 template** and **precise subsequent source/test scope** for L8-D. Follow
-[Native Codex Subagent Routing](../AGENTS.md#native-codex-subagent-routing) for review and delegated arbitration.
+[Project Agent Routing](../AGENTS.md#project-agent-routing) for review and delegated arbitration.
 The provider transport and credential-ingress design itself is specified in
 [the L8-D section of the local-agent guide](research-local-agent.md#provider-transport-and-credential-ingress-design-l8-d-design-only);
 the two documents are one reviewed package. Everything here is design only:
