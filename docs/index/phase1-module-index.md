@@ -65,7 +65,7 @@ classes create research gaps, not execution instructions.
 
 | Module | Test | Phase 1 role |
 | --- | --- | --- |
-| `src/polymarket_alpha_lab/research_source_discovery_coverage_sla_report.py` | `tests/test_research_source_discovery_coverage_sla_report.py` | Reports source-class discovery coverage, missing-class pressure, parse readiness, retry backlog, and manual review urgency. |
+| `src/polymarket_alpha_lab/research_source_discovery_coverage_sla_report.py` | `tests/test_research_source_discovery_coverage_sla_report.py` | Reports source-class discovery coverage, missing-class pressure, parse readiness, retry backlog, and manual review urgency. [B1 · deprecated-pending-prune](../handoffs/m3-cleanup/pr-b-20261120/B1-status.json) |
 | `src/polymarket_alpha_lab/evidence_queue_traceability_audit.py` | `tests/test_evidence_queue_traceability_audit.py` | Audits evidence queue traceability for review readiness. |
 | `src/polymarket_alpha_lab/evidence_traceability_sla_monitor.py` | `tests/test_evidence_traceability_sla_monitor.py` | Monitors evidence traceability SLA status. |
 | `src/polymarket_alpha_lab/market_candidate_due_diligence_depth_report.py` | `tests/test_market_candidate_due_diligence_depth_report.py` | Reports due-diligence depth for candidate markets. |
@@ -84,8 +84,8 @@ watch, research, or block status; they must not trigger live exchange mutation.
 | Module | Test | Phase 1 role |
 | --- | --- | --- |
 | `src/polymarket_alpha_lab/market_context_source_freshness_ladder_report.py` | `tests/test_market_context_source_freshness_ladder_report.py` | Builds a ladder of source freshness status from public payloads or observations. |
-| `src/polymarket_alpha_lab/research_market_cost_input_refresh_sla_report.py` | `tests/test_research_market_cost_input_refresh_sla_report.py` | Reports whether cost inputs are fresh enough for paper cost review. |
-| `src/polymarket_alpha_lab/research_market_settlement_cost_refresh_report.py` | `tests/test_research_market_settlement_cost_refresh_report.py` | Reports settlement-cost refresh age and stale settlement-cost pressure. |
+| `src/polymarket_alpha_lab/research_market_cost_input_refresh_sla_report.py` | `tests/test_research_market_cost_input_refresh_sla_report.py` | Reports whether cost inputs are fresh enough for paper cost review. [B1 · deprecated-pending-prune](../handoffs/m3-cleanup/pr-b-20261120/B1-status.json) |
+| `src/polymarket_alpha_lab/research_market_settlement_cost_refresh_report.py` | `tests/test_research_market_settlement_cost_refresh_report.py` | Reports settlement-cost refresh age and stale settlement-cost pressure. [B1 · deprecated-pending-prune](../handoffs/m3-cleanup/pr-b-20261120/B1-status.json) |
 | `src/polymarket_alpha_lab/information_freshness_refresh_sla_readiness_report.py` | `tests/test_information_freshness_refresh_sla_readiness_report.py` | Checks readiness of information refresh SLAs. |
 | `src/polymarket_alpha_lab/market_data_freshness_guard.py` | `tests/test_market_data_freshness_guard.py` | Guards market data freshness for paper/report calculations. |
 | `src/polymarket_alpha_lab/market_data_refresh_failure_fallback_report.py` | `tests/test_market_data_refresh_failure_fallback_report.py` | Reports safe fallback status when market data refresh fails. |
@@ -184,7 +184,7 @@ strategy weights, size positions, rank investments, or authorize execution.
 
 | Module | Test | Phase 1 role |
 | --- | --- | --- |
-| `src/polymarket_alpha_lab/research_strategy_post_settlement_calibration_queue_report.py` | `tests/test_research_strategy_post_settlement_calibration_queue_report.py` | Builds a queue of settled candidates needing calibration review. |
+| `src/polymarket_alpha_lab/research_strategy_post_settlement_calibration_queue_report.py` | `tests/test_research_strategy_post_settlement_calibration_queue_report.py` | Builds a queue of settled candidates needing calibration review. [B1 · deprecated-pending-prune](../handoffs/m3-cleanup/pr-b-20261120/B1-status.json) |
 | `src/polymarket_alpha_lab/specialist_team_post_settlement_calibration_evidence_report.py` | `tests/test_specialist_team_post_settlement_calibration_evidence_report.py` | Reports specialist-team calibration evidence after settlement. |
 | `src/polymarket_alpha_lab/forecast_calibration.py` | `tests/test_forecast_calibration.py` | Computes forecast calibration diagnostics for paper/report evidence. |
 | `src/polymarket_alpha_lab/forecast_calibration_trend.py` | `tests/test_forecast_calibration_trend.py` | Reports calibration trends over persisted local evidence. |

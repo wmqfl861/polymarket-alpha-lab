@@ -1,0 +1,27 @@
+base=c4367b6b3ce4d957ce79ce645a7ab3425be5a133 head=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6
+files added or modified=295 scanned as text=295 (text members incl. archives=295) binary or unreadable=0
+hit counts: {'email_other': 9, 'email_placeholder_or_noreply': 8, 'ipv4_public': 17, 'secret:dsn_password': 3}
+      1 x email_other DELIVERY_PLAN.md
+      1 x email_other docs/paper-sim/design/README.md
+      2 x email_other docs/paper-sim/design/server-evidence/m1-fx10/added-lines.txt
+      1 x email_other tests/test_papersim_capture_marks.py
+      1 x email_other tests/test_papersim_cli.py
+      3 x email_other tests/test_papersim_ledger.py
+      9 x ipv4_public DELIVERY_PLAN.md
+      4 x ipv4_public docs/handoffs/g2-activation-readiness.md
+      1 x ipv4_public docs/handoffs/g2-first-real-run-runbook-draft.md
+      3 x ipv4_public docs/handoffs/l7-l8-status.md
+      3 x secret:dsn_password docs/handoffs/m3-cleanup/codex-b0-pause-decisions-20261116.log
+largest files:
+     3149082 docs/handoffs/m3-cleanup/test-retirement-nodeids.tsv
+     1196486 docs/handoffs/m3-cleanup/refreshed-20261120-86feaf1a/prune-manifest.json
+     1196094 docs/handoffs/m3-cleanup/refreshed-20261120/prune-manifest.json
+     1187704 docs/handoffs/m3-cleanup/prune-manifest.json
+      866321 docs/remediation-evidence/2026-11-14/decision/m1-final-review-rerun-20261116.log
+      797393 docs/handoffs/m3-cleanup/refreshed-20261120/B1-manifest.json
+      797393 docs/handoffs/m3-cleanup/refreshed-20261120-86feaf1a/B1-manifest.json
+      796360 docs/handoffs/m3-cleanup/B1-manifest.json
+      603750 docs/handoffs/m3-cleanup/refreshed-20261120-86feaf1a/source-inventory.tsv
+      603564 docs/handoffs/m3-cleanup/refreshed-20261120/source-inventory.tsv
+      599748 docs/handoffs/m3-cleanup/source-inventory.tsv
+      588298 docs/handoffs/m3-cleanup/codex-b0-pause-decisions-20261116.log

@@ -26,7 +26,7 @@ Each node handoff must record:
   database helpers, fixtures, report history, or configuration changed;
 - secret and no-live-trading-field scan result;
 - independent read-only review outcome under
-  [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing);
+  [Project Agent Routing](../../AGENTS.md#project-agent-routing);
 - explicit push status: blocked or eligible.
 
 ## Must-Pass Checklist

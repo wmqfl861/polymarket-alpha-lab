@@ -42,7 +42,7 @@ Before dispatching parallel agents, the coordinator must define:
 ## Multi-Agent Parallel Development Rules
 
 This section implements Project Iron Rule 6 from `AGENTS.md`. Follow
-[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing)
+[Project Agent Routing](../../AGENTS.md#project-agent-routing)
 when dispatching work. While useful, independent work exists, the coordinator
 must keep useful collaboration capacity occupied. The project defines no fixed subagent-thread count; the
 coordinator must discover usable capacity dynamically from the current runtime.
@@ -130,7 +130,7 @@ review first and then assign one owner for the follow-up.
 
 Dispatch a fresh, independent, read-only reviewer for each plan, code,
 stage, post-node, and handoff review under Project Iron Rule 4 and
-[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing).
+[Project Agent Routing](../../AGENTS.md#project-agent-routing).
 Require the explicit verdict for the reviewed revision.
 
 Review prompts must be read-only. Reviewers may inspect plans, diffs, files,

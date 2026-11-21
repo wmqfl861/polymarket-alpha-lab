@@ -1,0 +1,37 @@
+# files changed by #117 (8cba9d37..2bdc4ccc) = the difference between the merge #114's CI used (0e9210f0, base 8cba9d37) and the current merge (a0086b82, base 2bdc4ccc)
+AGENTS.md
+DELIVERY_PLAN.md
+docs/acceptance/phase-1-development-node-acceptance-checklist.md
+docs/handoffs/g2-activation-readiness.md
+docs/handoffs/g2-first-real-run-runbook-draft.md
+docs/handoffs/l7-l8-status.md
+docs/maintenance/phase1-agent-concurrency-and-review-rules.md
+docs/phase-1-multi-team-operating-model.md
+docs/quality/phase-1-development-node-quality-gates.md
+docs/reports/phase1-report-registry.md
+docs/research-dispatch.md
+docs/research-local-agent.md
+docs/review/2026-07-12-operating-review-rules.md
+docs/review/phase1-claude-review-handoff.md
+tests/test_codex_node_push_policy_rules.py
+tests/test_phase1_docs_required_terms.py
+
+# files changed by both #117 and #114:
+DELIVERY_PLAN.md
+
+# tests/scripts/workflows at the current merge that name a file #117 changed (file -> referencing files):
+AGENTS.md -> tests/test_codex_node_push_policy_rules.py tests/test_phase1_docs_required_terms.py tests/test_project_database_persistence_rules.py tests/test_research_codex_profile_native.py tests/test_tracked_public_address_hygiene.py
+DELIVERY_PLAN.md -> .github/workflows/native-distribution.yml .github/workflows/native-postgres.yml .github/workflows/t1-relay-crossing-preview.yml tests/test_native_postgres_workflow.py tests/test_papersim_evaluation.py tests/test_papersim_optimize_policy_numbers.py tests/test_papersim_optimize_runner.py tests/test_papersim_queue_policy.py tests/test_papersim_replay.py tests/test_papersim_soccer_model.py tests/test_phase1_docs_required_terms.py tests/test_project_quickstart.py tests/test_research_linux_relay_helper_gates.py tests/test_tracked_public_address_hygiene.py
+docs/acceptance/phase-1-development-node-acceptance-checklist.md -> tests/test_phase1_docs_links_and_terms.py tests/test_phase1_docs_no_secret_tokens.py tests/test_phase1_docs_required_terms.py tests/test_phase1_merge_readiness_file_set.py
+docs/handoffs/g2-activation-readiness.md -> tests/test_phase1_docs_required_terms.py tests/test_tracked_public_address_hygiene.py
+docs/handoffs/g2-first-real-run-runbook-draft.md -> tests/test_phase1_docs_required_terms.py tests/test_tracked_public_address_hygiene.py
+docs/handoffs/l7-l8-status.md -> tests/test_phase1_docs_required_terms.py tests/test_tracked_public_address_hygiene.py
+docs/maintenance/phase1-agent-concurrency-and-review-rules.md -> tests/test_phase1_docs_no_secret_tokens.py tests/test_phase1_docs_required_terms.py tests/test_phase1_merge_readiness_file_set.py
+docs/phase-1-multi-team-operating-model.md -> tests/test_phase1_docs_links_and_terms.py tests/test_phase1_docs_required_terms.py
+docs/quality/phase-1-development-node-quality-gates.md -> tests/test_phase1_docs_links_and_terms.py tests/test_phase1_docs_no_secret_tokens.py tests/test_phase1_docs_required_terms.py tests/test_phase1_merge_readiness_file_set.py
+docs/reports/phase1-report-registry.md -> tests/test_phase1_docs_no_secret_tokens.py tests/test_phase1_docs_required_terms.py tests/test_phase1_merge_readiness_file_set.py
+docs/research-dispatch.md -> .github/workflows/native-distribution.yml .github/workflows/native-postgres.yml tests/test_phase1_docs_required_terms.py
+docs/research-local-agent.md -> .github/workflows/native-distribution.yml .github/workflows/native-postgres.yml tests/test_phase1_docs_required_terms.py tests/test_research_codex_uncapped_review.py
+docs/review/2026-07-12-operating-review-rules.md -> tests/test_phase1_docs_no_secret_tokens.py tests/test_phase1_docs_required_terms.py tests/test_phase1_merge_readiness_file_set.py
+docs/review/phase1-claude-review-handoff.md -> tests/test_phase1_docs_no_secret_tokens.py tests/test_phase1_docs_required_terms.py tests/test_phase1_merge_readiness_file_set.py
+tests/test_phase1_docs_required_terms.py -> tests/test_phase1_merge_readiness_file_set.py tests/test_phase1_targeted_test_manifest.py
