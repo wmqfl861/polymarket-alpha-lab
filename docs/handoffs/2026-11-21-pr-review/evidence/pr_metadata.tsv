@@ -1,0 +1,4 @@
+pr	title	state	draft	mergeable	mergeable_state	base_sha	head_sha	changed_files	additions	deletions	created_at	updated_at
+#114	按受管快照完成模拟优化并验证跨进程运行回执	open	false	true	clean	2bdc4cccacc925ea8e6569c8865b90c0b0c671e6	26dfa2a05357121665009981cd600e23c91e093a	23	17102	925	2026-11-20T23:22:36Z	2026-11-21T03:06:05Z
+#116	标记 FX-18 B1 归档批次并登记仍在使用的测试	open	false	true	clean	11fb457c6e714844ec2ee1c0eb3c90dbd145eaa7	8c7b536514eda6dfc772bf7fc6a4fc597892a294	2	287	4	2026-11-21T01:30:09Z	2026-11-21T01:30:09Z
+#118	M2 D1：恢复取价、终局取证和逐笔模拟结算	open	false	true	clean	2bdc4cccacc925ea8e6569c8865b90c0b0c671e6	f09850ba8ef010895d6a959cbeff401fbc706363	14	5145	54	2026-11-21T05:03:40Z	2026-11-21T05:03:40Z

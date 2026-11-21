@@ -1,0 +1,15 @@
+# Run of the local agent's 2026-11-21 20:00 review prompt, copied verbatim to local_agent_prompt_verify.sh
+# Result: exit status 0. Every pinned value matched. Stdout began with 'MANIFEST.tsv: OK' and then printed the package's README.md and evidence.md.
+# stderr (git fetch progress):
+#   From https://github.com/wmqfl861/polymarket-alpha-lab
+#    * [new branch]        main                                -> refs/audit/main
+#    * [new branch]        handoff/optimizer-review-2026-11-21 -> refs/audit/package
+#    * [new branch]        handoff/progress-review-2026-11-21  -> refs/audit/findings
+#    * [new ref]           refs/pull/114/head                  -> refs/audit/pr114
+#    * [new ref]           refs/pull/116/head                  -> refs/audit/pr116
+#    * [new ref]           refs/pull/118/head                  -> refs/audit/pr118
+# Pinned values checked by the script (all matched):
+#   main contains 2bdc4cccacc925ea8e6569c8865b90c0b0c671e6; package branch contains 09cf06f8ff57382b121470ad67c18994204db02b
+#   findings branch tip 5e4033c4a7820c0f7bea85c54923f46bc376fdc3
+#   PR heads 26dfa2a05357121665009981cd600e23c91e093a (#114), 8c7b536514eda6dfc772bf7fc6a4fc597892a294 (#116), f09850ba8ef010895d6a959cbeff401fbc706363 (#118)
+#   MANIFEST.tsv 252 bytes, 3 lines, sha256 8919f34523e26ea172bb6001c353e601ce3988fd3d900e3cf668b82374b60303; three listed files match size and sha256
