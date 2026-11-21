@@ -82,7 +82,7 @@
     "old_tree": "d6f6750b1068a3c75ab6249d5ca4f1ef7e010ee4",
     "result": "3 passed in 455.21s at C on the same qualified PG18 prefix"
   },
-  "host": "ubuntu@166.1.232.93 (designated dev/acceptance host)",
+  "host": "ubuntu@SERVER_HOST_REDACTED_RETIRED (designated dev/acceptance host)",
   "limits": "Engineering prerelease. G2-G6 open; official Claude Linux artifact unmeasured; six official probe scenarios 0/6; activation_authorized=false; real provider execution false; not V1 completion, not statistical validation, not execution authorization. Windows retired-frozen.",
   "release": "v0.1.0-linux-preview.1",
   "repository": "Lordakee/polymarket-alpha-lab",

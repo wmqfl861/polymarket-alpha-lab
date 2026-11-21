@@ -25,9 +25,9 @@ Closed with evidence since the l7-l8-status.md record:
   (dd668cd1). Verdict details in sections 3 and 8.
 - The relay fd-crossing property is demonstrated twice: non-binding CI
   preview 12/12 (run 37719238674) and the BINDING server T1 12/12 on
-  ubuntu@154.89.153.24 (69e35331, zero C4 divergence). The section-67
+  ubuntu@SERVER_HOST_REDACTED (69e35331, zero C4 divergence). The section-67
   no-fallback worst case is retired for the pre-L9.1 digests.
-- The 166.1.232.93 outage ended by owner-ordered server substitution
+- The SERVER_HOST_REDACTED_RETIRED outage ended by owner-ordered server substitution
   (166 retired; 154 provisioned with the preview-proven recipe); the
   W3 push hold (arbitration C2) lifted.
 
@@ -61,8 +61,8 @@ Pending, and why:
 | Working tree at record time | 5 modified files, uncommitted (+397/-27): the L9.1 batch (section 6) |
 | CI workflow (binding, per push) | "Offline verification" |
 | CI workflow (manual, non-binding) | "T1 relay-crossing fd-survival PREVIEW" (7834a203) |
-| Designated Linux host | ubuntu@154.89.153.24 (Ubuntu 24.04.1, kernel 6.8, 16 cores, 31 GiB; SHARED machine, touch only ~/polymarket-alpha-lab) |
-| Retired host | 166.1.232.93 (owner order 2026-10-09 after a 30+ h outage; 166-only artifacts lost with it, recorded at 69e35331) |
+| Designated Linux host | ubuntu@SERVER_HOST_REDACTED (Ubuntu 24.04.1, kernel 6.8, 16 cores, 31 GiB; SHARED machine, touch only ~/polymarket-alpha-lab) |
+| Retired host | SERVER_HOST_REDACTED_RETIRED (owner order 2026-10-09 after a 30+ h outage; 166-only artifacts lost with it, recorded at 69e35331) |
 | bubblewrap pin | 0.11.1, official tarball sha256 c1b7455a1283b1295879a46d5f001dfd088c0bb0f238abb5e128b3583a246f71 |
 | Official CLI image (T8) | 2.1.278, sha256 5c4735937844e84f8a93306e841a5b0e12252909b07870f789b190468da147ab, 234,119,480 bytes |
 
@@ -198,9 +198,9 @@ section 13).
 
 ### 3.5 Server substitution and binding T1 (69e35331; 68:2972-2991)
 
-The owner retired 166.1.232.93 (verbatim instruction recorded in
+The owner retired SERVER_HOST_REDACTED_RETIRED (verbatim instruction recorded in
 section 68) after the 30+ hour outage and designated
-ubuntu@154.89.153.24 (shared machine; one-time password used only to
+ubuntu@SERVER_HOST_REDACTED (shared machine; one-time password used only to
 install the coordinator public key, never stored). 166-only losses are
 recorded honestly (notably the L7 final7 reentry export tree, 52
 files, under ~/pal-artifacts); ledger records, commit history and
@@ -421,7 +421,7 @@ runbook/README.md, 2026-10-09): Step 1 (binding T1), Step 3.1 (W3
 native), Step 3.2 (T8 matrix), Step 4 (the verbatim section-65
 five-file block + verify_local --full + git diff --check) and Step 5
 (records checklist) govern. Two substitutions since it was authored
-for the 166 recovery: the host is now 154.89.153.24, and its Step 0
+for the 166 recovery: the host is now SERVER_HOST_REDACTED, and its Step 0
 host expectations are superseded by the section-68 substitution record
 (venv = system CPython 3.12.3, an accepted recorded deviation - the
 runbook's 3.12.14 STOP expectation no longer applies as written;
@@ -450,7 +450,7 @@ independently anchored, so re-verify at use):
 
 | Fact | Value | Source |
 |---|---|---|
-| Host / access | ubuntu@154.89.153.24, pubkey-installed (one-time password not stored) | 68:2972-2976 |
+| Host / access | ubuntu@SERVER_HOST_REDACTED, pubkey-installed (one-time password not stored) | 68:2972-2976 |
 | Repo / venv | /home/ubuntu/polymarket-alpha-lab on main; .venv from system CPython 3.12.3 (recorded deviation from the 3.12.14 release tuple) | 68:2977-2981 |
 | bubblewrap | 0.11.1 built into ~/pal-runtime from tarball sha256 c1b7455a1283b1295879a46d5f001dfd088c0bb0f238abb5e128b3583a246f71; non-setuid asserted | 68:2981-2984; W13 :22 |
 | userns / cgroup | AppArmor userns sysctl lifted (recorded system-level change); delegated /sys/fs/cgroup/pal (memory+pids, ubuntu-owned); shells migrate in for the v2 common-ancestor rule | 68:2984-2986 |
