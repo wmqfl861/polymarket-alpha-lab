@@ -1481,6 +1481,19 @@ def _policy_cli_worker(database, root, options):
             raise OSError('test interruption during manual role publication')
 
         adapter.record_role_events = abort_manual_role
+    elif options.get('fault') == 'rollback_only':
+        original_write = cli._optimize_write_decision
+
+        def rollback_only(conn, **request):
+            assert request['decision_class'] == 'ROLLBACK'
+            return original_write(conn, **request)
+
+        cli._optimize_write_decision = rollback_only
+    elif options.get('fault') == 'forbid_role_write':
+        def unexpected_role_write(conn, batch):
+            raise AssertionError('rejected decision reached the role writer')
+
+        _adapter().record_role_events = unexpected_role_write
     return cli.main(['optimize', *options['argv'], '--dsn', dsn, '--repo-root', str(root)])
 
 
@@ -1493,15 +1506,12 @@ def _policy_cli(archive, *argv, expected_failure=None, fault=None):
         assert expected_failure in stderr
 
 
-def _policy_batch(conn, lineage, moment, roles):
-    from polymarket_alpha_lab.papersim import store
+def _policy_fixture_roles(database, lineage, moment, roles):
+    from tests.test_papersim_optimize_policy_native import _seed_role_history
 
-    return _adapter().record_role_events(conn, store.RoleEventBatch(events=tuple(
-        store.RoleEventSubmission(lineage=lineage, spec_sha256=digest, role=role,
-            effective_at=moment, reason='policy native fixture', actor='operator', code_commit=COMMIT,
-            forward_plan={} if role == 'CANDIDATE' else None)
-        for digest, role in roles
-    )))
+    with _connect(_rebind_database(OWNER_DSN, database), autocommit=False) as owner:
+        _seed_role_history(owner, lineage, moment, roles,
+                           reason='policy native fixture', code_commit=COMMIT)
 
 
 @pytest.fixture
@@ -1526,11 +1536,11 @@ def judged_rollback(archive, managed_repo, tmp_path):
                                     code_commit=COMMIT, effective_at=INIT)
         for spec in (active, standby, extra):
             adapter.register_model_spec(conn, spec, source='manual', code_commit=COMMIT)
-        _policy_batch(conn, lineage, INIT + timedelta(days=1), ((active.spec_sha256(), 'CANDIDATE'),))
-        _policy_batch(conn, lineage, INIT + timedelta(days=2), ((standby.spec_sha256(), 'CANDIDATE'),))
-        _policy_batch(conn, lineage, INIT + timedelta(days=3), (
-            (guard.spec_sha256(), 'GUARD'), (active.spec_sha256(), 'ACTIVE'),
-        ))
+    _policy_fixture_roles(name, lineage, INIT + timedelta(days=1), ((active.spec_sha256(), 'CANDIDATE'),))
+    _policy_fixture_roles(name, lineage, INIT + timedelta(days=2), ((standby.spec_sha256(), 'CANDIDATE'),))
+    _policy_fixture_roles(name, lineage, INIT + timedelta(days=3), (
+        (guard.spec_sha256(), 'GUARD'), (active.spec_sha256(), 'ACTIVE'),
+    ))
     with _connect(_rebind_database(OWNER_DSN, name), autocommit=False) as owner:
         scan_id = _seed_scan(owner, scan_key='native-judged-rollback', day=INIT + timedelta(days=18))
         dates = [datetime(2026, 11, day, 18, tzinfo=UTC) for day in (10, 11, 12, 17, 18, 19)]
@@ -1551,7 +1561,8 @@ def judged_rollback(archive, managed_repo, tmp_path):
                        shadow_spec=shadow.spec_sha256(), priced_version=priced.model_version(),
                        priced_probability=0.5, shadow_is_better=True, role_at_prediction=role)
     cli_archive = (name, root)
-    decided = _policy_cli(cli_archive, 'decide', '--lineage', lineage, '--config', str(config))
+    decided = _policy_cli(cli_archive, 'decide', '--lineage', lineage, '--config', str(config),
+                          fault='rollback_only')
     judgments = [row for row in decided['written'] if row['class'] == 'ROLLBACK']
     assert len(judgments) == 1 and judgments[0]['conclusion'] == 'ROLLBACK'
     with _worker_connection(name) as conn:
@@ -1572,14 +1583,14 @@ def test_native_cli_rejects_stale_rollback_judgment(judged_rollback, change):
     at = decision['decided_at']
     with _worker_connection(name) as conn:
         if change == 'pair':
-            _policy_batch(conn, lineage, at - timedelta(hours=1), (
+            _policy_fixture_roles(name, lineage, at - timedelta(hours=1), (
                 (active.spec_sha256(), 'GUARD'), (standby.spec_sha256(), 'ACTIVE'),
                 (guard.spec_sha256(), 'RETIRED'),
             ))
             expected = 'papersim_optimize_decision_pair_mismatch'
         else:
             boundary = at + timedelta(seconds=int(change == 'later_candidate'))
-            _policy_batch(conn, lineage, boundary, ((extra.spec_sha256(), 'CANDIDATE'),))
+            _policy_fixture_roles(name, lineage, boundary, ((extra.spec_sha256(), 'CANDIDATE'),))
             expected = 'papersim_role_event_out_of_order'
         before = _role_state(conn, lineage)
         histories = adapter.load_all_role_events(conn)
@@ -1625,7 +1636,7 @@ def test_native_cli_exact_rollback_replay_after_later_handover(judged_rollback, 
         rolled = _role_state(conn, lineage)
         assert rolled.active == guard.spec_sha256() and rolled.guard is None
         assert active.spec_sha256() in rolled.retired
-        _policy_batch(conn, lineage, at + timedelta(seconds=1), (
+        _policy_fixture_roles(name, lineage, at + timedelta(seconds=1), (
             (guard.spec_sha256(), 'GUARD'), (standby.spec_sha256(), 'ACTIVE'),
         ))
         history_after = adapter.load_all_role_events(conn)
@@ -1644,6 +1655,7 @@ def test_native_cli_exact_rollback_replay_after_later_handover(judged_rollback, 
 @NATIVE
 def test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair(judged_rollback, conclusion):
     from polymarket_alpha_lab.papersim.store import PromotionDecisionSubmission
+    from tests.test_papersim_optimize_policy_native import _seed_forward_decision
 
     archive, config, lineage, judgment, active, guard, standby, extra = judged_rollback
     name, _ = archive
@@ -1652,24 +1664,34 @@ def test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair(judged
     rollback = conclusion == 'ROLLBACK'
     candidate = active if rollback else standby
     evidence = {'spec': candidate.spec_sha256()}
-    if not rollback:
+    metrics = {'reason': 'paired_performance'}
+    if rollback:
+        with _worker_connection(name) as conn:
+            decision_id = adapter.record_promotion_decision(conn, PromotionDecisionSubmission(
+                lineage=lineage, decision_class='ROLLBACK',
+                candidate_spec_sha256=candidate.spec_sha256(), active_spec_sha256=active.spec_sha256(),
+                rule_version=judgment['rule_version'], look_number=2, decided_at=instant, decided_by='operator',
+                evidence_watermark=evidence, metrics=metrics, conclusion=conclusion,
+            ))['decision_id']
+    else:
         evidence['comparator'] = active.spec_sha256()
-    with _worker_connection(name) as conn:
-        row = adapter.record_promotion_decision(conn, PromotionDecisionSubmission(
-            lineage=lineage, decision_class='ROLLBACK' if rollback else 'FORWARD',
-            candidate_spec_sha256=candidate.spec_sha256(), active_spec_sha256=active.spec_sha256(),
-            rule_version=judgment['rule_version'], look_number=2, decided_at=instant, decided_by='operator',
-            evidence_watermark=evidence, metrics={'reason': 'paired_performance'}, conclusion=conclusion,
+        with _connect(_rebind_database(OWNER_DSN, name), autocommit=False) as owner:
+            decision_id = _seed_forward_decision(
+                owner, lineage=lineage, candidate_sha=candidate.spec_sha256(),
+                active_sha=active.spec_sha256(), conclusion=conclusion, look_number=2,
+                decided_at=instant, evidence=evidence, metrics=metrics)
+        _policy_fixture_roles(name, lineage, instant - timedelta(hours=2),
+                              ((extra.spec_sha256(), 'CANDIDATE'),))
+        _policy_fixture_roles(name, lineage, instant - timedelta(hours=1), (
+            (active.spec_sha256(), 'GUARD'), (extra.spec_sha256(), 'ACTIVE'), (guard.spec_sha256(), 'RETIRED'),
         ))
-        if not rollback:
-            _policy_batch(conn, lineage, instant - timedelta(hours=2), ((extra.spec_sha256(), 'CANDIDATE'),))
-            _policy_batch(conn, lineage, instant - timedelta(hours=1), (
-                (active.spec_sha256(), 'GUARD'), (extra.spec_sha256(), 'ACTIVE'), (guard.spec_sha256(), 'RETIRED'),
-            ))
+    with _worker_connection(name) as conn:
         before = adapter.load_all_role_events(conn)
         decisions = adapter.load_promotion_decisions(conn, lineage)
-    _policy_cli(archive, 'apply', '--decision-id', str(row['decision_id']), '--config', str(config),
-                expected_failure='papersim_optimize_decision_pair_mismatch')
+    expected = ('papersim_optimize_apply_promotion_unavailable' if conclusion == 'PROMOTE'
+                else 'papersim_optimize_decision_pair_mismatch')
+    _policy_cli(archive, 'apply', '--decision-id', str(decision_id), '--config', str(config),
+                expected_failure=expected, fault='forbid_role_write')
     with _worker_connection(name) as fresh:
         assert adapter.load_all_role_events(fresh) == before
         assert adapter.load_promotion_decisions(fresh, lineage) == decisions

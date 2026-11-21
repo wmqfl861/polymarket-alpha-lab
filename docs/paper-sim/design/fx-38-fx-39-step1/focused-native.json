@@ -1,0 +1,99 @@
+{
+  "cases": [
+    {
+      "name": "tests.test_papersim_optimize_policy_native::test_native_full_round_register_shadow_decide_handover_rollback",
+      "seconds": 20.959,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_policy_native::test_native_club_candidate_without_pairs[no-shadow-rows]",
+      "seconds": 0.632,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_policy_native::test_native_club_candidate_without_pairs[all-unpaired]",
+      "seconds": 0.708,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_policy_native::test_native_status_and_score_report_scan_identity",
+      "seconds": 1.603,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_policy_native::test_native_clv_one_cent_boundary_on_numeric_fills",
+      "seconds": 6.251,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_policy_native::test_native_clv_uses_own_side_and_complete_prices_per_population",
+      "seconds": 1.035,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_registered_runner_native::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair[PROMOTE]",
+      "seconds": 11.275,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_registered_runner_native::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair[RETIRE]",
+      "seconds": 10.118,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_registered_runner_native::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair[ROLLBACK]",
+      "seconds": 9.764,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_registered_runner_native::test_native_cli_rejects_stale_rollback_judgment[pair]",
+      "seconds": 11.25,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_registered_runner_native::test_native_cli_rejects_stale_rollback_judgment[later_candidate]",
+      "seconds": 10.97,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_registered_runner_native::test_native_cli_rejects_stale_rollback_judgment[equal_candidate]",
+      "seconds": 12.108,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_registered_runner_native::test_native_cli_exact_rollback_replay_after_later_handover[False]",
+      "seconds": 11.515,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_registered_runner_native::test_native_cli_exact_rollback_replay_after_later_handover[True]",
+      "seconds": 15.182,
+      "verdict": "passed"
+    },
+    {
+      "name": "tests.test_papersim_optimize_runner_native::test_native_managed_cli_seals_and_replays_calibration_nonconvergence",
+      "seconds": 20.6,
+      "verdict": "passed"
+    }
+  ],
+  "counts": {
+    "error": 0,
+    "failure": 0,
+    "passed": 15,
+    "skipped": 0
+  },
+  "exit_code": 0,
+  "finished_at": "2026-11-21T19:06:47.311307+00:00",
+  "head": "372f9cbebe2b60c84a39237efb62551f77c315dc",
+  "native_pg": "18.6",
+  "python": "3.12.3",
+  "selectors": [
+    "tests/test_papersim_optimize_policy_native.py",
+    "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair",
+    "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_rejects_stale_rollback_judgment",
+    "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_exact_rollback_replay_after_later_handover",
+    "tests/test_papersim_optimize_runner_native.py::test_native_managed_cli_seals_and_replays_calibration_nonconvergence"
+  ],
+  "started_at": "2026-11-21T19:04:16.495284+00:00",
+  "task": "papersim"
+}

@@ -223,6 +223,125 @@ def test_native_init_run_receipts_and_idempotent_replay(capsys, tmp_path, monkey
 
 
 @pytest.mark.skipif(not os.environ.get("POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX"),
+                    reason="native managed calibration proof requires the qualified PG18 binary prefix")
+@NATIVE
+def test_native_managed_cli_seals_and_replays_calibration_nonconvergence(
+        managed_repo, managed_runtime, tmp_path, capsys, monkeypatch):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.optimize import metrics, runner, scorecard
+    from polymarket_alpha_lab.papersim.optimize.search import TRIAL_COMPLETED
+    from tests.test_papersim_optimize_registered_runner_native import _nba_fixture_snapshot, _preview_storage_facts
+
+    root, head = managed_repo
+    _, app = managed_runtime
+    family = "nba-pace-efficiency"
+    protocol = runner.historical_protocol(family)
+    request = _registered_request(app, tmp_path, source_bytes=_nba_fixture_snapshot(), filename="request.json")
+    source = ["--managed", "--repo-root", str(root)]
+    assert cli_main(["optimize", "init", *source, "--families", family]) == 0
+    assert capsys.readouterr().err == ""
+    before = _preview_storage_facts(app)
+
+    # Give the real solver zero Newton updates on the scorecard's actual binary observations.
+    failures = []
+
+    def calibrate_without_updates(observations):
+        try:
+            return metrics.calibration_slope_intercept(observations, iterations=0)
+        except ValueError as error:
+            failures.append((str(error), tuple(observations)))
+            raise
+
+    monkeypatch.setattr(scorecard, "calibration_slope_intercept", calibrate_without_updates)
+    argv = ["optimize", "run", *source, "--family", family, "--as-of", protocol["data_cutoff"],
+            "--input-manifest", str(request), "--seed", str(protocol["seed"])]
+
+    def run():
+        exit_code = cli_main(argv)
+        output = capsys.readouterr()
+        assert output.err == "", output.err
+        assert exit_code == 1
+        return json.loads(output.out)
+
+    failed = run()
+    assert failed["outcome"] == "RUN_FAILED" and failed["exit_code"] == 1
+    assert failed["error_code"] == "papersim_optimize_scientific_failure"
+    assert failed["replayed"] is False and failed["registered_lineages"] == []
+    [(reason, observations)] = failures
+    assert reason == "calibration fit did not converge"
+    negatives = [p for p, yes in observations if not yes]
+    positives = [p for p, yes in observations if yes]
+    assert negatives and positives
+    assert min(negatives) < max(positives) and min(positives) < max(negatives)
+
+    run_key, digest = failed["run_key"], failed["artifacts_sha256"]
+    with store_psycopg.connect_managed(root) as reader:
+        reader.autocommit = True
+        runs = reader.execute(
+            "SELECT optimization_id, outcome, trial_count, artifacts_sha256 FROM papersim.optimization_runs "
+            "WHERE optimization_key = %s", (run_key,),
+        ).fetchall()
+        events = store_psycopg._optimization_events(reader, store_psycopg._optimize_operation_key(run_key))
+        snapshot = snapshots.read_snapshot(reader, digest)
+        sealed = _preview_storage_facts(reader)
+
+    assert runs == [(failed["optimization_id"], "RUN_FAILED", failed["counts"]["evaluated_trials"], digest)]
+    assert [(event["phase"], event["attempt"]) for event in events] == [("STARTED", 1), ("FAILED", 1)]
+    started, terminal = events
+    for event, receipt_prefix in ((started, "started"), (terminal, "terminal")):
+        assert event["run_event_id"] == failed[f"{receipt_prefix}_event_id"]
+        assert event["run_event_key"] == failed[f"{receipt_prefix}_event_key"]
+    assert started["error_code"] is None and terminal["error_code"] == failed["error_code"]
+    assert started["input_evidence"][0]["request"]["run_key"] == run_key
+    [attempt_link] = terminal["input_evidence"]
+    assert attempt_link["original_started_event_id"] == started["run_event_id"]
+    assert attempt_link["original_started_event_key"] == started["run_event_key"]
+    [linkage] = terminal["output_evidence"]
+    for field in ("run_key", "optimization_id", "outcome", "exit_code", "artifacts_sha256", "artifact_byte_length"):
+        assert linkage[field] == failed[field]
+    assert linkage["role_event_ids"] == {}
+
+    assert snapshot is not None and snapshot["kind"] == "optimizer_run_artifact"
+    archived = snapshot["content"]
+    assert len(archived) == snapshot["byte_length"] == failed["artifact_byte_length"]
+    assert sha256(archived).hexdigest() == digest
+    artifact = json.loads(archived)
+    assert artifact["request"]["code_commit"] == head and artifact["request"]["run_key"] == run_key
+    assert artifact["outcome"] == "RUN_FAILED"
+    assert artifact["budget"]["stopping_causes"] == ["scientific_failure"]
+    pure = artifact["pure"]
+    assert pure["issue"] == reason and "evaluation_integrity_failure" in pure["flags"]
+    assert pure["holdout"]["callbacks"] == []
+    assert pure["proposed_specs"] == artifact["rejections"] == {}
+    counts = pure["counts"]
+    assert counts == failed["counts"]
+    assert len(pure["trials"]) == counts["evaluated_trials"] == counts["planned_trials"] > 0
+    assert sum(row["status"] == TRIAL_COMPLETED for row in pure["trials"]) == counts["completed_trials"] > 0
+    assert counts["aborted_trials"] == 0
+    active = pure["active_specs"][f"{family}/moneyline"]
+    archived_observations = [
+        (row["probabilities"][1], row["outcome_index"] == 1)
+        for batch in pure["search_trial_forecasts"] if batch["target"] == "moneyline"
+        for row in batch["predictions"] if row["spec_sha256"] == active
+    ]
+    assert sorted(archived_observations) == sorted(observations)
+    added = {"snapshots": 1, "optimization_runs": 1, "command_run_events": 2}
+    for table, original in before.items():
+        assert set(original) <= set(sealed[table]), table
+        assert len(sealed[table]) - len(original) == added.get(table, 0), table
+
+    def forbid_compute(**_):
+        pytest.fail("terminal replay entered historical evaluation")
+
+    monkeypatch.setattr(runner, "historical_run_arguments", forbid_compute)
+    assert run() == {**failed, "replayed": True}
+    with store_psycopg.connect_managed(root) as reader:
+        reader.autocommit = True
+        assert snapshots.read_snapshot(reader, digest)["content"] == archived
+        assert _preview_storage_facts(reader) == sealed
+
+
+@pytest.mark.skipif(not os.environ.get("POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX"),
                     reason="native managed restart proof requires the qualified PG18 binary prefix")
 @pytest.mark.parametrize("lost_reply", [False, True], ids=["acknowledged", "commit-reply-lost"])
 @NATIVE

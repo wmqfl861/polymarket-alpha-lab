@@ -4641,3 +4641,16 @@ PR #114 的首个组合头 `17dced4763fadc8505511fcac7b7ed3cf95db62e` 通过了�
 基线 `cd53ce25f65716e6151238beba253618caca7e98` 合入实质候选 `c4791fb8448da999ae6a23dae9efef2c9c002406` 后，GitHub 合并对象为 `620048a7597d4155f1658fe4750f707df3c94158`。三条工作流 attempt 1 全部通过并检出该对象。运行分别为 Offline verification `44918091022`、Native project PostgreSQL `44918091078`、Research paper bridge `44918091023`。本机完整验证通过 43,915 项，Native papersim 通过 792 项。
 
 [当前基线复审回执](docs/paper-sim/design/pr-114-review.md)保留首轮附件不完整的 FAIL 和同一 ZCode 会话读完全部分页后的 PASS。该复审针对实质候选及上述合并对象。归档产生的文档后续头另经三条工作流和准确对象复审，最终证据由 #114 PR 描述指向同仓库保留提交。O-5 失败路径测试在后继节点验收。O-6 对应 `test_anchor3_wp_p4_paired_comparison` 的既有服务器专用输入条件。
+
+PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并检出为 `1feabe950a1f93c9fc694564a11e79b4244e8ec9`。Offline verification `44928160743` / attempt 1、Native project PostgreSQL `44928160706` / attempt 1、Research paper bridge `44928160726` / attempt 1 均为 `success`，六个测试作业均检出该合并对象。本机独立只读 ZCode 对精确 H 的 CI 后签署为 `VERDICT: PASS`。[最终核验回执](docs/paper-sim/design/pr-114-final-verification.md)记录原件、作业及验收证据。
+
+
+## 86. 收盘价偏离实现更正与晋级应用拦截
+
+联合节点从 #114 实际合并提交 `d216059339dba9c3ca34d65813e9cf2ba98a0dd5` 建立。最终验证基线为 `0c64a98946dcbdb5ed550c5a57c0f6127837fb76`，保留已合入的 #120 两侧登记。#120 实际 CI 合并对象为 `a73fb3d3780cba679b126c5f46fc8ac7d5cdced6`，Offline verification `44941245957` / attempt 1，Native project PostgreSQL `44941382116` / attempt 1，Research paper bridge `44941245960` / attempt 1 均通过。#114 当前合并结果、复审原件和 §85.4 最终证据由同仓库保留提交 `b8c1571d5135a833939f31869d36c6e19eacd445` 原样纳入本节点。
+
+- **FX-38 实现更正。** 按买入方向分别用候选过闸行的收盘价减假想成交价、现役接受并实际入场行的收盘价减入场均价。两边各取自己的均值，逐边记缺价格行。沿用 v1 的一分边界与候选过闸市场下限，使用精确有理数比较。用历史扫描有无完整规格摘要区分可核对证据的范围。
+- **FX-39 第一步。** 首次与重放的两种晋级结论都须在角色写入前拒绝。状态与评分将现役未被实际选作报价规格的谱系列为不可用。退役、回退与可比谱系的真实零样本原生回归保留。后续依 FX-40 接入真正的报价与换届链路。
+- **O-5 和 O-6。** [受管校准失败与重放](docs/paper-sim/design/o-5-calibration-regression/review.md)有独立隔离 PostgreSQL 回执。O-6 对应 `tests/test_papersim_optimize_metrics.py::test_anchor3_wp_p4_paired_comparison`。#114 最终离线运行 `44928160743` 的既有跳过理由为服务器专用 WP-P4 evidence JSON 未提供。
+
+实质提交 `372f9cbebe2b60c84a39237efb62551f77c315dc` 的实际本机专项为 251 项离线、15 项原生 PostgreSQL，通过且原生零跳过。[独立只读源码复审](docs/paper-sim/design/fx-38-fx-39-step1/source-review.md) · [测试改动与审计脚本对照](docs/paper-sim/design/fx-38-fx-39-step1/tests-before-after.md)
