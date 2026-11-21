@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 import json
 import os
@@ -12,12 +12,13 @@ import time
 
 import pytest
 
-from polymarket_alpha_lab.papersim import store_psycopg as pg
+from polymarket_alpha_lab.papersim import store, store_psycopg as pg
 from tests.test_papersim_capture_marks_native import (
     _D1_NATIVE,
     _d1_capture_cli,
     _d1_capture_receipt,
     _d1_capture_rows,
+    _d1_register_binding,
     _d1_register_capture_slot,
     _d1_seed_capture_case,
     d1_capture_project,
@@ -307,3 +308,127 @@ def test_d1_native_late_recovery_proves_committed_rows_and_expires_unwritten_row
     assert reused["document"]["write_finished_at"] == written["document"]["write_finished_at"]
     assert expired["document"]["business_ids"] == {"candidate_mark_id": None, "close_evidence_id": None}
     assert _d1_capture_receipt(project, slot, "SUCCEEDED", attempt=2) is None
+
+
+def test_d1_native_competing_settlement_parents_preserve_one_cash_leg(
+        d1_capture_project, record_property):
+    from tests.test_papersim_settle_store_native import (
+        _d1_register_settle_slot,
+        _d1_seed_settlement_entry,
+        _d1_seed_settlement_outcome,
+        _d1_settle_cli,
+    )
+
+    project = d1_capture_project
+    entry = _d1_seed_settlement_entry(project, "operation-competing-settle")
+    source_id = _d1_seed_settlement_outcome(project, entry, "YES")
+    entry_id = entry["entry_id"]
+    first = _d1_register_settle_slot(project, [entry_id])
+    second = _d1_register_settle_slot(project, [entry_id])
+    assert first[0] != second[0]
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        with pg.connect_managed(project.root) as gate, gate.transaction():
+            gate.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+                         (f"papersim/settlement-entry/{entry_id}",))
+            submitted = [workers.submit(_d1_settle_cli, project, slot) for slot in (first, second)]
+            _wait_for(lambda: _advisory_waiters(project) == 2, "both settle handlers to reach their entry lock")
+            with pg.connect_managed(project.root) as reader, reader.transaction():
+                reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+                rows = reader.execute(
+                    "SELECT (SELECT count(*) FROM papersim.settlements WHERE entry_id = %s), "
+                    "(SELECT count(*) FROM papersim.bankroll_events WHERE event_key = %s)",
+                    (entry_id, f"settle:{entry_id}"),
+                ).fetchone()
+                assert rows == (0, 0)
+        results = [work.result() for work in submitted]
+    assert sorted(result.returncode for result in results) == [0, 1]
+    winner, = [json.loads(result.stdout) for result in results if result.returncode == 0]
+    rejected, = [result for result in results if result.returncode == 1]
+    assert "d1_settlement_unattributed_rows" in rejected.stderr
+    settled, = winner["settled"]
+    written, = winner["items"]
+    with pg.connect_managed(project.root) as reader, reader.transaction():
+        reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        rows = reader.execute(
+            "SELECT s.settlement_id, s.source_outcome_id, s.classification, s.proceeds, s.fee_total, s.pnl_net, "
+            "b.event_id, b.event_key, b.occurred_at, b.amount, b.reason, b.currency, b.reverses_event_id "
+            "FROM papersim.settlements s JOIN papersim.bankroll_events b USING (entry_id) "
+            "WHERE s.entry_id = %s AND b.reason <> 'SCAN_ENTRY' ORDER BY b.event_id",
+            (entry_id,),
+        ).fetchall()
+        opening, = reader.execute(
+            "SELECT event_id, amount FROM papersim.bankroll_events "
+            "WHERE entry_id = %s AND reason = 'SCAN_ENTRY'", (entry_id,),
+        ).fetchall()
+    row, = rows
+    assert row[:3] == (settled["settlement_id"], source_id, "NATURAL")
+    assert row[6:8] == (settled["bankroll_event_id"], f"settle:{entry_id}")
+    assert row[9:] == (row[3], "SETTLE_NATURAL", "USD", None)
+    booked_cash = written["locked_read"]["opening_cash"]
+    assert (booked_cash["event_id"], booked_cash["amount"]) == (opening[0], str(opening[1]))
+    witnesses = [witness for witness in _read_witnesses(project, command="d1-settlement-item")
+                 if witness["document"]["operation_key"] in (first[0], second[0])]
+    assert [proof["phase"] for proof in witnesses] == ["SUCCEEDED", "FAILED"]
+    assert witnesses[0]["receipt_id"] == written["first_write"]["run_event_id"]
+    conflict = witnesses[1]["document"]
+    assert conflict["status"] == "CONFLICT" and conflict["reason"] == "d1_settlement_unattributed_rows"
+    assert conflict["before"]["settlements"][0]["settlement_id"] == row[0]
+    assert conflict["before"]["cash"][0]["event_id"] == row[6]
+    record_property("competing_settlement", json.dumps({
+        "operations": [first[0], second[0]], "exits": [result.returncode for result in results],
+        "winner": written, "conflict": conflict, "settlement_and_cash": row, "opening_cash": opening,
+    }, sort_keys=True, default=str))
+
+
+def test_d1_native_resolution_scope_keeps_empty_markets_and_checks_nominated_entries(d1_capture_project):
+    from polymarket_alpha_lab.papersim.d1compare import operations
+    from tests.test_papersim_settle_store_native import _d1_seed_settlement_entry
+
+    project = d1_capture_project
+    team = "crypto_eth"
+    entry = _d1_seed_settlement_entry(project, "operation-resolution-scope", team=team)
+    held_market = {
+        "market_id": entry["market_id"], "condition_id": entry["condition_id"], "slug": entry["market_slug"],
+        "side_tokens": {"YES": entry["yes_token_id"], "NO": entry["no_token_id"]},
+        "side_labels": {"YES": "Yes", "NO": "No"},
+        "entry_ids": [entry["entry_id"]], "terminal_rule": "gamma_clob_binary",
+    }
+    empty_market = {
+        "market_id": "native-zero-entry", "condition_id": "0x" + "e" * 64, "slug": None,
+        "side_tokens": {"YES": "980001", "NO": "980002"}, "side_labels": {"YES": "Yes", "NO": "No"},
+        "entry_ids": [], "terminal_rule": "gamma_clob_binary",
+    }
+
+    def registered_scope(conn, markets):
+        scheduled = pg.d1_database_time(conn) + timedelta(seconds=2)
+        deadline = scheduled + timedelta(minutes=1)
+        scope = {"window_start": scheduled, "window_end": deadline, "targets": markets}
+        config = sha256(operations.document_bytes({"team": team, "scope": scope})).hexdigest()
+        document = {"version": 1, "instance_id": project.instance_id, "interval_sha256": project.interval_sha256,
+                    "scheduled_for": scheduled, "deadline": deadline, "write_deadline": deadline,
+                    "command": "capture-inputs-resolution", "leg": "crypto", "team": team,
+                    "code_commit": project.head, "config_digest": config, "input_evidence": [], "scope": scope}
+        key = operations.slot_operation_key(document)
+        digest = _d1_register_binding(
+            conn, document=document, kind="d1_operation_slot", source="d1:operation:slot:v1",
+            command="d1-register-slot", key_for=lambda _: f"d1:slot-binding:v1:{key.rsplit(':', 1)[1]}",
+            scheduled_for=scheduled, code_commit=project.head, config_digest=config,
+        )
+        return {"slot_sha256": digest, "operation_key": key, "window_start": scheduled, "window_end": deadline}
+
+    with pg.connect_managed(project.root) as conn:
+        targets = [held_market, empty_market]
+        registered = registered_scope(conn, targets)
+        with operations.open_resolution_capture(conn, repo_root=project.root, attempt=1, **registered) as binding:
+            assert binding["targets"] == targets and binding["application_role"] == "pal_app"
+            assert binding["scope_read_started_at"] <= binding["scope_read_finished_at"]
+        with pg.d1_read_view(conn):
+            readback = operations.read_resolution_capture_binding(
+                conn, instance_id=project.instance_id, code_commit=project.head, **registered)
+        assert readback["targets"] == targets and readback["slot_sha256"] == binding["slot_sha256"]
+        invalid = registered_scope(conn, [held_market | {"side_tokens": {
+            "YES": held_market["side_tokens"]["NO"], "NO": held_market["side_tokens"]["YES"],
+        }}])
+        with pytest.raises(store.PapersimStoreError, match="d1_resolution_entry_scope_conflict"):
+            with operations.open_resolution_capture(conn, repo_root=project.root, attempt=1, **invalid):
+                pytest.fail("Contradictory scope reached the public caller")
