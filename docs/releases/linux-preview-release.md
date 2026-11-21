@@ -22,7 +22,7 @@ Release before its Actions copy expires.
 | Input | Value |
 | --- | --- |
 | Repository | `wmqfl861/polymarket-alpha-lab` — canonical per OD-C (DELIVERY_PLAN.md §77.3.1) and the section 19 correction; `--repo` is always explicit; the section 2 clone makes local `origin` point there; `Lordakee/polymarket-alpha-lab` is the historical source, currently unverifiable |
-| Build host | `ubuntu@166.1.232.93` (shared, dev-only) |
+| Build host | `ubuntu@SERVER_HOST_REDACTED_RETIRED` (shared, dev-only) |
 | Release tuple | Ubuntu 26.04.1 x86_64 / Python 3.12.14 / one precisely identified PostgreSQL 18 build (DELIVERY_PLAN.md section 61) |
 | Proposed tag | `v0.1.0-linux-preview.1` — subject to the absence check in section 11 |
 | Kit filename | `polymarket-alpha-lab-v0.1.0-linux-preview.1-linux-x86_64.zip` |
@@ -546,7 +546,7 @@ following; it is the complete objective, and this document is the procedure:
 
 > You are executing the reviewed L6 release runbook
 > `docs/releases/linux-preview-release.md` in `wmqfl861/polymarket-alpha-lab`
-> on `ubuntu@166.1.232.93` (release tuple Ubuntu 26.04.1 x86_64 / Python
+> on `ubuntu@SERVER_HOST_REDACTED_RETIRED` (release tuple Ubuntu 26.04.1 x86_64 / Python
 > 3.12.14 / pinned PostgreSQL 18). Follow its sections in order: sanitize the
 > environment, verify the frozen PG18 prefix and tuple provenance, run
 > `.venv/bin/python scripts/verify_local.py --full`, run the decisive native

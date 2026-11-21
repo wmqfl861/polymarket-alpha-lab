@@ -1,7 +1,7 @@
 # Model-Layer Review — 2026-11-07 (codex gpt-6-astra/max)
 
 **Provenance**: server codex-cli 0.166.0, model `gpt-6-astra`, reasoning effort
-`max`, `--sandbox read-only`, run on ubuntu@154.89.153.24 against repo commit
+`max`, `--sandbox read-only`, run on ubuntu@SERVER_HOST_REDACTED against repo commit
 `5bdae2e3`. Owner authorization (verbatim): "调用服务器codex审核项目，特别是
 模型，是否可以优化。指定模型为gpt-6-astra/max。审核好以后，你按照审核意见
 修改，然后服务器本地和仓库同步更新到最新。"
