@@ -961,6 +961,60 @@ print(json.dumps(acquire.capture_inputs(repo_root=Path(sys.argv[1]), window_star
         assert stored_legacy == legacy
         assert [entry.content for entry in legacy_entries] == bodies
 
+        # Keep the caller's backend, snapshot and savepoint intact across
+        # v1/v2 reads, a snapshot miss, and a publication from another process.
+        from psycopg import errors, pq
+
+        def borrowed(connection, digest):
+            return acquire.read_capture(repo_root=project.root, batch_sha256=digest, _connection=connection)
+
+        def snapshot_state(connection):
+            return connection.execute(
+                "SELECT pg_backend_pid(), pg_current_snapshot()::text, "
+                "current_setting('transaction_isolation'), current_setting('transaction_read_only')"
+            ).fetchone()
+
+        with store_psycopg.connect_managed(project.root) as reader:
+            with pytest.raises(acquire.AcquisitionError, match="^d1_capture_read_transaction_invalid$"):
+                borrowed(reader, legacy_digest)
+            assert reader.info.transaction_status == pq.TransactionStatus.IDLE
+            for statement in ("SET TRANSACTION ISOLATION LEVEL READ COMMITTED READ ONLY",
+                              "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ WRITE"):
+                with reader.transaction():
+                    reader.execute(statement)
+                    previous = snapshot_state(reader)
+                    with pytest.raises(acquire.AcquisitionError, match="^d1_capture_read_transaction_invalid$"):
+                        borrowed(reader, legacy_digest)
+                    current = snapshot_state(reader)
+                    assert current[0] == previous[0] and current[2:] == previous[2:]
+                    assert reader.info.transaction_status == pq.TransactionStatus.INTRANS
+            with reader.transaction():
+                reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+                original = snapshot_state(reader)
+                reader.execute("SAVEPOINT capture_caller")
+                assert borrowed(reader, legacy_digest) == (stored_legacy, legacy_entries)
+                current, events = borrowed(reader, receipt["batch_sha256"])
+                assert current == manifest and [event.content for event in events] == bodies
+                later = capture(start + datetime.timedelta(seconds=9))
+                with pytest.raises(acquire.AcquisitionError, match="^d1_capture_snapshot_missing$"):
+                    borrowed(reader, later["batch_sha256"])
+                assert snapshot_state(reader) == original
+                reader.execute("ROLLBACK TO SAVEPOINT capture_caller")
+                reader.execute("RELEASE SAVEPOINT capture_caller")
+            with reader.transaction():
+                reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+                assert borrowed(reader, later["batch_sha256"])[0]["scope"]["window_start"] == (
+                    start + datetime.timedelta(seconds=9)).isoformat()
+            with pytest.raises(errors.DivisionByZero):
+                reader.execute("SELECT 1/0")
+            assert reader.info.transaction_status == pq.TransactionStatus.INERROR
+            with pytest.raises(acquire.AcquisitionError, match="^d1_capture_read_transaction_invalid$"):
+                borrowed(reader, legacy_digest)
+            assert reader.info.transaction_status == pq.TransactionStatus.INERROR
+            reader.rollback()
+        with pytest.raises(acquire.AcquisitionError, match="^d1_capture_read_transaction_invalid$"):
+            borrowed(reader, legacy_digest)
+
         regulation = _gamma_market_variant(updates={"description": "Regulation time only."})
         conflict = _GammaPagesFixture({"alpha": (_GAMMA_PAGE,), "beta": (regulation,)})
         monkeypatch.setattr(acquire.polymarket, "BoundedPublicOpener", lambda: conflict)

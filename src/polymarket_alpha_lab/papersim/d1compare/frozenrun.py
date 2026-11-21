@@ -1104,9 +1104,11 @@ def _original_legs(content: bytes) -> dict[str, Any]:
 
 
 @contextmanager
-def _managed_archive(repo_root: Path, operation: str) -> Iterator[Any]:
+def _managed_archive(repo_root: Path, operation: str, *,
+                     _instance_info: dict | None = None) -> Iterator[Any]:
     try:
-        with closing(store_psycopg.connect_managed(Path(repo_root))) as connection:
+        options = {} if _instance_info is None else {"info": _instance_info}
+        with closing(store_psycopg.connect_managed(Path(repo_root), **options)) as connection:
             yield connection
     except FrozenRunError:
         raise
@@ -1399,13 +1401,24 @@ def import_original_archives(trusted_manifest_sha256: str, *, repo_root: Path, m
     return {**receipt, "manifest_sha256": digest}
 
 
-def read_staged_archives(manifest_sha256: str, *, repo_root: Path
+def read_staged_archives(manifest_sha256: str, *, repo_root: Path, _connection: Any | None = None
                          ) -> tuple[dict[str, Any], dict[str, bytes]]:
     """Read managed originals and their verified logical bindings by receipt digest."""
     if not _valid_sha256(manifest_sha256):
         raise FrozenRunError("frozen_archive_manifest_digest_invalid")
-    with _managed_archive(repo_root, "read") as connection:
-        manifest, archives, _ = _read_registered_staging(connection, manifest_sha256)
+    if _connection is None:
+        with _managed_archive(repo_root, "read") as connection:
+            manifest, archives, _ = _read_registered_staging(connection, manifest_sha256)
+        return manifest, archives
+
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    try:
+        acquire._verify_read_connection(_connection, Path(repo_root))
+    except acquire.AcquisitionError as error:
+        raise FrozenRunError("frozen_archive_read_connection_unverified", error.code) from None
+    with _connection.transaction():
+        manifest, archives, _ = _read_registered_staging(_connection, manifest_sha256)
     return manifest, archives
 
 
@@ -1703,12 +1716,14 @@ class ChainPlan:
 @contextmanager
 def plan_chain(leg: str, *, mirror_root: Path, staging_root: Path,
                repo_root: Path, manifest_sha256: str,
-               base_env: Mapping[str, str] | None = None) -> Iterator[ChainPlan]:
+               base_env: Mapping[str, str] | None = None,
+               _connection: Any | None = None) -> Iterator[ChainPlan]:
     """Read the sealed selection and present one leg in an execution scope."""
     designations = designated_leg(leg)
     _library_source(leg, designations)
     with _private_work() as work:
-        manifest, archives = read_staged_archives(manifest_sha256, repo_root=repo_root)
+        options = {} if _connection is None else {"_connection": _connection}
+        manifest, archives = read_staged_archives(manifest_sha256, repo_root=repo_root, **options)
         entry = manifest["legs"].get(leg)
         if entry is None:
             raise FrozenRunError("frozen_archive_manifest_leg_missing", leg)

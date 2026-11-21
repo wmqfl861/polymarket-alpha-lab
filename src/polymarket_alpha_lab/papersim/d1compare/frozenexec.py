@@ -2,12 +2,16 @@
 
 from collections import defaultdict
 from datetime import UTC, datetime
+from decimal import Decimal
 import json
+import re
 from pathlib import Path
 
 from polymarket_alpha_lab.papersim import snapshots, store, store_psycopg
 from polymarket_alpha_lab.papersim.adapters import polymarket
 from polymarket_alpha_lab.papersim.d1compare import acquire, frozenrun, journal
+from polymarket_alpha_lab.project_postgres import binding as project_binding
+from polymarket_alpha_lab.project_postgres.files import Layout, ProjectDatabaseError
 
 
 _VERSION = 1
@@ -15,6 +19,8 @@ _COMMAND = "run-frozen-preflight"
 _HANDLER = "d1compare.frozenrun.preflight_designated_chain"
 _NAMESPACE = "d1:frozen-preflight:v1"
 _REQUIREMENTS_UNPROVED = "frozen_preflight_requirements_unproved"
+_STANDING_GAPS = ("frozen_execution_capability_unproved", "registered_comparison_scope_missing")
+_INSTANCE_FIELDS = ("instance_id", "root_sha256", "system_identifier")
 _FLAGS = {"mode": "preflight", "qualifying": False, "day_credit": 0, "child_started": False}
 _CONTRACT_FIELDS = (
     "question", "description", "category", "umaResolutionStatus", "resolutionSource",
@@ -35,7 +41,7 @@ _MISSING_SOURCES = {
 }
 _EVENT_FIELDS = (
     "run_event_key, attempt, phase, command, queue_id, scheduled_for, occurred_at, "
-    "config_digest, input_evidence, output_evidence, error_code, scan_id"
+    "config_digest, input_evidence, output_evidence, error_code, scan_id, code_commit"
 )
 _ERROR = frozenrun.FrozenRunError
 
@@ -66,7 +72,7 @@ def _capture_event(connection, document: dict, batch: str) -> dict:
     if row is None:
         raise _ERROR("frozen_preflight_capture_event_missing")
     (recorded_operation, event, attempt, phase, command, queue, scheduled, occurred,
-     config, inputs, outputs, error, scan) = row
+     config, inputs, outputs, error, scan, _) = row
     sealed = _timestamp(document["sealed_at"])
     version = document["capture_version"]
     if ((recorded_operation, event, attempt, phase, command) !=
@@ -106,6 +112,17 @@ def _observations(document: dict, entries: tuple[journal.JournalEntry, ...]) -> 
     return bodies
 
 
+def _source_scalar(value: object):
+    """Project scalar types without rounding decimals or copying invalid containers."""
+    if isinstance(value, Decimal):
+        return {"json_type": "number", "decimal": str(value)}
+    if isinstance(value, dict):
+        return {"json_type": "object"}
+    if isinstance(value, list):
+        return {"json_type": "array"}
+    return value
+
+
 def _gamma_observations(request: dict, body: journal.JournalEntry,
                         cutoff: datetime | None) -> tuple[dict, list[dict]]:
     indexed = journal.gamma_page_index(body.content)
@@ -125,7 +142,7 @@ def _gamma_observations(request: dict, body: journal.JournalEntry,
         _, event_index, _, market_index = indexed_market["path"].split("/")
         event = events[int(event_index)]
         raw = event["markets"][int(market_index)]
-        fields = {field: raw.get(field) for field in _CONTRACT_FIELDS} if isinstance(raw, dict) else {}
+        fields = {field: _source_scalar(raw.get(field)) for field in _CONTRACT_FIELDS} if isinstance(raw, dict) else {}
         raw_tags = event.get("tags")
         tags = [tag["slug"] for tag in (raw_tags if isinstance(raw_tags, list) else ())
                 if isinstance(tag, dict) and isinstance(tag.get("slug"), str)]
@@ -163,12 +180,14 @@ def _book_target(target: dict, requests: dict, bodies: dict, cutoff: datetime | 
     try:
         entry = bodies[seq]
         raw = journal.decode_public_json(entry.content)
+        if isinstance(raw, dict):
+            result.update(raw_condition_id=_source_scalar(raw.get("market")),
+                          raw_asset_id=_source_scalar(raw.get("asset_id")))
         book = journal.book_from_entry(entry)
         adapter_book = polymarket._parse_order_book(token, raw)
     except (journal.JournalError, polymarket._MarketRejected, OverflowError, ValueError):
         result["readback_status"] = "invalid_book_payload"
         return result
-    result.update(raw_condition_id=raw.get("market"), raw_asset_id=raw.get("asset_id"))
     if (request["source_kind"] != polymarket.SOURCE_KIND_CLOB or
             request["request_meta"]["query"].get("token_id") != token or
             raw.get("asset_id") != token or book.token_id != token or
@@ -271,8 +290,7 @@ def _denominator(binding: dict, stage: dict, capture_event: dict, document: dict
         "final_adoption_known": 0, "final_adoption_unknown_lower_bound": coverage_lower_bound,
     }
     leg = binding["leg"]
-    missing = ["frozen_execution_capability_unproved", "registered_comparison_scope_missing",
-               *_MISSING_SOURCES[leg]]
+    missing = [*_STANDING_GAPS, *_MISSING_SOURCES[leg]]
     if cutoff is None:
         missing.append("decision_as_of_missing")
     if not a1_complete:
@@ -340,6 +358,54 @@ def _event(connection, operation: str, binding: dict, attempt: int, phase: str,
         raise _ERROR("frozen_preflight_receipt_conflict")
 
 
+def _read_denominator(connection, digest: str, binding: dict) -> dict:
+    document = _read_snapshot(connection, digest, "denominator")
+    stage = document.get("stage")
+    missing = document.get("missing")
+    coverage = document.get("coverage")
+    required = {*_STANDING_GAPS, *_MISSING_SOURCES[binding["leg"]]}
+    if (document.get("binding") != binding or document.get("denominator_version") != _VERSION
+            or not isinstance(stage, dict) or (stage.get("leg"), stage.get("manifest_sha256")) !=
+            (binding["leg"], binding["manifest_sha256"])
+            or not isinstance(missing, list) or not all(type(item) is str for item in missing)
+            or len(set(missing)) != len(missing) or not required.issubset(missing)
+            or not isinstance(coverage, dict)):
+        raise _ERROR("frozen_preflight_receipt_conflict")
+    return document
+
+
+def _terminal_receipt(connection, operation: str, binding: dict, key: str, attempt: int,
+                      occurred: datetime, outputs: list[str], error: str, prepared: str | None,
+                      denominator: dict | None, previous_phase: str) -> dict:
+    expected_outputs = [outputs[0], prepared] if prepared is not None else outputs[:1]
+    if outputs != expected_outputs or not re.fullmatch(r"(?:frozen_|d1_capture_)[a-z0-9_]+", error or ""):
+        raise _ERROR("frozen_preflight_receipt_conflict")
+    receipt = _read_snapshot(connection, outputs[0], "receipt")
+    incomplete = error == _REQUIREMENTS_UNPROVED
+    if incomplete:
+        if previous_phase != "PREPARED" or denominator is None:
+            raise _ERROR("frozen_preflight_receipt_conflict")
+        readback = {"archive": "verified", "capture": "verified"}
+        missing, coverage = denominator["missing"], denominator["coverage"]
+    else:
+        readback = receipt.get("readback")
+        if (previous_phase != "STARTED" or not isinstance(readback, dict)
+                or readback.get("archive") not in ("verified", "unverified")):
+            raise _ERROR("frozen_preflight_receipt_conflict")
+        readback = {"archive": readback["archive"], "capture": "unverified"}
+        missing, coverage = [error], {}
+    expected = {
+        **_FLAGS, "receipt_version": _VERSION, "binding": binding, "operation_key": operation,
+        "terminal_event_key": key, "attempt": attempt, "denominator_sha256": prepared,
+        "occurred_at": occurred.isoformat(), "error_code": error,
+        "status": "incomplete" if incomplete else "failed", "denominator_revalidated": incomplete,
+        "readback": readback, "missing": missing, "coverage": coverage,
+    }
+    if frozenrun._canonical_json(receipt) != frozenrun._canonical_json(expected):
+        raise _ERROR("frozen_preflight_receipt_conflict")
+    return receipt
+
+
 def _existing(connection, operation: str, binding: dict):
     expected = _digest(binding), [binding["manifest_sha256"], binding["batch_sha256"]]
     rows = connection.execute(
@@ -349,57 +415,41 @@ def _existing(connection, operation: str, binding: dict):
     ).fetchall()
     last_attempt = 0
     prepared = None
+    denominator = None
     terminal = None
-    phase_seen = set()
+    previous_phase = None
+    # The A1 protocol has no managed capability or formal-scope evidence.
+    # Its only terminal phase is FAILED, including a completed gap finding.
     for (key, attempt, phase, command, queue, scheduled, occurred, config, inputs,
-         outputs, error, scan) in rows:
-        if ((terminal is not None and (
-                    terminal[2] == "SUCCEEDED" or terminal[-1] == _REQUIREMENTS_UNPROVED))
-                or command != _COMMAND or (config, inputs) != expected
-                or any(value is not None for value in (queue, scheduled, scan))
+         outputs, error, scan, commit) in rows:
+        if (terminal is not None or command != _COMMAND or (config, inputs) != expected
+                or any(value is not None for value in (queue, scheduled, scan, commit))
+                or type(attempt) is not int or attempt < 1
+                or phase not in {"STARTED", "PREPARED", "FAILED"}
                 or key != store.command_run_event_key(operation, attempt, phase)
-                or not isinstance(outputs, list) or not all(frozenrun._valid_sha256(sha) for sha in outputs)
-                or (attempt, phase) in phase_seen):
+                or not isinstance(outputs, list) or not all(frozenrun._valid_sha256(sha) for sha in outputs)):
             raise _ERROR("frozen_preflight_receipt_conflict")
-        phase_seen.add((attempt, phase))
         if phase == "STARTED" and attempt == last_attempt + 1 and not outputs and error is None:
             last_attempt = attempt
-            terminal = None
-        elif (phase == "PREPARED" and terminal is None and attempt == last_attempt and len(outputs) == 1
-              and error is None):
-            if prepared is not None and prepared != outputs[0]:
+        elif (phase == "PREPARED" and attempt == last_attempt and previous_phase == "STARTED"
+              and len(outputs) == 1 and error is None):
+            if prepared is None:
+                prepared = outputs[0]
+                denominator = _read_denominator(connection, prepared, binding)
+            elif prepared != outputs[0]:
                 raise _ERROR("frozen_preflight_receipt_conflict")
-            prepared = outputs[0]
-        elif phase in {"FAILED", "SUCCEEDED"} and terminal is None and attempt == last_attempt and outputs:
-            terminal = (key, attempt, phase, occurred, outputs, error)
+        elif (phase == "FAILED" and attempt == last_attempt and previous_phase in {"STARTED", "PREPARED"}
+              and outputs):
+            receipt = _terminal_receipt(
+                connection, operation, binding, key, attempt, occurred, outputs, error, prepared,
+                denominator, previous_phase,
+            )
+            if receipt["status"] == "incomplete":
+                terminal = _summary(receipt, outputs[0], reused=True)
         else:
             raise _ERROR("frozen_preflight_receipt_conflict")
-    if prepared is not None:
-        denominator = _read_snapshot(connection, prepared, "denominator")
-        if denominator.get("binding") != binding or denominator.get("denominator_version") != _VERSION:
-            raise _ERROR("frozen_preflight_receipt_conflict")
-    if terminal is not None:
-        key, attempt, phase, occurred, outputs, error = terminal
-        receipt = _read_snapshot(connection, outputs[0], "receipt")
-        required = {
-            **_FLAGS, "receipt_version": _VERSION, "binding": binding, "operation_key": operation,
-            "terminal_event_key": key, "attempt": attempt, "denominator_sha256": prepared,
-            "occurred_at": occurred.isoformat(), "error_code": error,
-        }
-        if (any(receipt.get(name) != value for name, value in required.items())
-                or (phase == "SUCCEEDED") != (receipt.get("status") == "ready")
-                or receipt.get("status") not in {"ready", "incomplete", "failed"}
-                or outputs != ([outputs[0], prepared] if prepared is not None else [outputs[0]])):
-            raise _ERROR("frozen_preflight_receipt_conflict")
-        if receipt["status"] == "failed":
-            if receipt.get("denominator_revalidated") is not False or receipt.get("missing") != [error]:
-                raise _ERROR("frozen_preflight_receipt_conflict")
-            return last_attempt, prepared, None
-        if (prepared is None or receipt.get("denominator_revalidated") is not True
-                or any(receipt.get(field) != denominator.get(field) for field in ("coverage", "missing"))):
-            raise _ERROR("frozen_preflight_receipt_conflict")
-        return last_attempt, prepared, _summary(receipt, outputs[0], reused=True)
-    return last_attempt, prepared, None
+        previous_phase = phase
+    return last_attempt, prepared, terminal
 
 
 def _summary(receipt: dict, digest: str, *, reused: bool) -> dict:
@@ -414,6 +464,28 @@ def _summary(receipt: dict, digest: str, *, reused: bool) -> dict:
     }
 
 
+def _pin_instance(declared_root: Path) -> tuple[Path, dict]:
+    try:
+        root = declared_root.resolve(strict=True)
+        layout = Layout(root)
+        info = store_psycopg.read_instance(root)
+        if (layout.root_hash != info["root_sha256"]
+                or any(type(info[field]) is not str or not info[field] for field in _INSTANCE_FIELDS)):
+            raise ValueError
+    except (OSError, RuntimeError, ValueError, TypeError, KeyError):
+        raise _ERROR("frozen_preflight_instance_binding_invalid") from None
+    return root, info
+
+
+def _require_pinned_instance(declared_root: Path, root: Path, info: dict) -> None:
+    try:
+        unchanged = declared_root.resolve(strict=True) == root and store_psycopg.read_instance(root) == info
+    except (OSError, RuntimeError, ValueError):
+        unchanged = False
+    if not unchanged:
+        raise _ERROR("frozen_preflight_instance_binding_changed")
+
+
 def preflight(leg: str, *, mirror_root: Path, staging_root: Path, repo_root: Path,
               manifest_sha256: str, batch_sha256: str) -> dict:
     """Publish engineering evidence using only the verified project instance."""
@@ -423,11 +495,16 @@ def preflight(leg: str, *, mirror_root: Path, staging_root: Path, repo_root: Pat
     code = {module.__name__: snapshots.snapshot_content_sha256(Path(module.__file__).read_bytes())
             for module in (frozenrun, acquire, journal)}
     code[__name__] = snapshots.snapshot_content_sha256(Path(__file__).read_bytes())
-    with frozenrun._managed_archive(repo_root, "preflight") as connection:
+    declared_root = Path(repo_root).absolute()
+    repo_root, info = _pin_instance(declared_root)
+    identity = tuple(info[field] for field in _INSTANCE_FIELDS)
+    with frozenrun._managed_archive(repo_root, "preflight", _instance_info=info) as connection:
         with connection.transaction():
             instance, actor = connection.execute(
                 "SELECT instance_id, current_user FROM project_private.instance WHERE singleton IS TRUE"
             ).fetchone()
+            if instance != info["instance_id"]:
+                raise _ERROR("frozen_preflight_instance_binding_changed")
             binding = {
                 "preflight_version": _VERSION, "instance_id": instance, "actor": actor,
                 "handler": _HANDLER, "leg": leg, "manifest_sha256": manifest_sha256,
@@ -438,39 +515,61 @@ def preflight(leg: str, *, mirror_root: Path, staging_root: Path, repo_root: Pat
             # Session lock spans the independent evidence read and the two
             # commits. Closing or losing this managed connection releases it.
             connection.execute("SELECT pg_advisory_lock(hashtextextended(%s, 0))", (operation,))
+        # Establish the history snapshot after the lock has been granted.
+        with connection.transaction():
             attempt, prepared, terminal = _existing(connection, operation, binding)
-            if terminal is not None:
-                return terminal
-            attempt += 1
-            _event(connection, operation, binding, attempt, "STARTED", datetime.now(UTC), outputs=[])
+            if terminal is None:
+                attempt += 1
+                _event(connection, operation, binding, attempt, "STARTED", datetime.now(UTC), outputs=[])
 
         verified = {"archive": "unverified", "capture": "unverified"}
         denominator = None
         reason = None
         try:
-            with frozenrun.plan_chain(
-                leg, mirror_root=mirror_root, staging_root=staging_root, repo_root=repo_root,
-                manifest_sha256=manifest_sha256,
-            ) as staged:
-                verified["archive"] = "verified"
-                document, entries = acquire.read_capture(repo_root=repo_root, batch_sha256=batch_sha256)
-                with connection.transaction():
+            _require_pinned_instance(declared_root, repo_root, info)
+            with connection.transaction():
+                connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+                with frozenrun.plan_chain(
+                    leg, mirror_root=mirror_root, staging_root=staging_root, repo_root=repo_root,
+                    manifest_sha256=manifest_sha256, _connection=connection,
+                ) as staged:
+                    verified["archive"] = "verified"
+                    document, entries = acquire.read_capture(
+                        repo_root=repo_root, batch_sha256=batch_sha256, _connection=connection)
                     capture_event = _capture_event(connection, document, batch_sha256)
-                denominator = _denominator(binding, staged.as_mapping(), capture_event, document, entries)
-                verified["capture"] = "verified"
+                    checked = _denominator(binding, staged.as_mapping(), capture_event, document, entries)
+                    checked_sha = _digest(checked)
+                    if prepared is not None and checked_sha != prepared:
+                        raise _ERROR("frozen_preflight_denominator_recheck_conflict")
+            # Recheck the instance outside the retained input snapshot so this
+            # identity assertion can see any intervening committed change.
+            with connection.transaction(), project_binding.bound(*identity):
+                try:
+                    project_binding.verify_connection(connection.cursor())
+                except ProjectDatabaseError:
+                    raise _ERROR("frozen_preflight_instance_binding_changed") from None
+            _require_pinned_instance(declared_root, repo_root, info)
+            denominator = checked
+            verified["capture"] = "verified"
         except (_ERROR, acquire.AcquisitionError) as error:
             reason = error.code
         except OSError:
             reason = "frozen_preflight_local_input_unreadable"
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, OverflowError, RecursionError):
             reason = "frozen_preflight_capture_structure_invalid"
+        if terminal is not None:
+            # Lookup after a committed attempt preserves its history. A
+            # failed current recheck cannot present that receipt as current.
+            if denominator is None:
+                raise _ERROR(
+                    "frozen_preflight_cached_recheck_failed",
+                    f"{reason} (historical_receipt_sha256={terminal['receipt_sha256']})",
+                )
+            return terminal
         if denominator is not None:
             with connection.transaction():
                 now = datetime.now(UTC)
-                denom_sha = _register(connection, denominator, "denominator", now)
-                if prepared is not None and denom_sha != prepared:
-                    raise _ERROR("frozen_preflight_receipt_conflict")
-                prepared = denom_sha
+                prepared = _register(connection, denominator, "denominator", now)
                 _event(connection, operation, binding, attempt, "PREPARED", now, outputs=[prepared])
 
         # A failed input check is a durable attempt. It can be tried again

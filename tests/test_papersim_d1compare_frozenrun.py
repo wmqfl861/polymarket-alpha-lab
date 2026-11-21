@@ -1,12 +1,9 @@
-"""D1 frozen-run staging/verification offline proofs.
+"""D1 frozen staging and preflight proofs.
 
-Mirror bytes are used READ-ONLY: real mirror files are copied into
-temporary fixture directories for hashing/staging/override tests and
-the frozen scripts are NEVER executed.  Everything here verifies CODE:
-no network call, no database, no timer, no managed write.  Synthetic
-fixtures are code verification only -- no synthetic or historical
-cycle counts as a real operation, and nothing here claims a positive
-D1 day.
+Mirror files serve as read-only inputs. Unit tests cover verification and
+temporary staging. Opt-in Linux tests use disposable managed PostgreSQL and
+the ordinary CLI in separate processes, with fixtures at the capture
+transport boundary. Every case has zero frozen script starts and zero D1 days.
 """
 
 from __future__ import annotations
@@ -22,6 +19,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -805,9 +803,76 @@ def test_execute_designated_chain_refuses_without_gates(
 
 
 _PREFLIGHT_COMMAND = "run-frozen-preflight"
+_NATIVE_PREFLIGHT = pytest.mark.skipif(
+    sys.platform != "linux" or os.environ.get("POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES") != "1",
+    reason="explicit Linux native PostgreSQL proof is opt-in",
+)
 _CAPTURE_PROCESS = """\
 from tests.test_papersim_d1compare_journal import _start_fixture_capture_process
 _start_fixture_capture_process(with_failed_page=WITH_FAILED_PAGE)
+"""
+_PREFLIGHT_NUMERIC_CAPTURE = """\
+from tests.test_papersim_d1compare_frozenrun import _start_numeric_capture_process
+_start_numeric_capture_process()
+"""
+_PREFLIGHT_REPEATABLE_READ = """\
+from contextlib import contextmanager
+import runpy, sys
+from polymarket_alpha_lab.papersim.d1compare import frozenexec
+original_managed = frozenexec.frozenrun._managed_archive
+original_event = frozenexec._event
+pause = sys.argv.pop(1) == "hold"
+@contextmanager
+def managed(root, operation, **options):
+    with original_managed(root, operation, **options) as connection:
+        if operation == "preflight":
+            with connection.transaction():
+                connection.execute("SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+        yield connection
+def event(connection, *args, **kwargs):
+    if pause and args[3] == "STARTED":
+        connection.execute("SELECT pg_advisory_lock(hashtextextended(%s, 0))", ("fixture:preflight:pause",))
+    return original_event(connection, *args, **kwargs)
+frozenexec.frozenrun._managed_archive = managed
+frozenexec._event = event
+cli = sys.argv.pop(1)
+runpy.run_path(cli, run_name="__main__")
+"""
+_PREFLIGHT_INSTANCE = """\
+import os
+from pathlib import Path
+import runpy, sys
+from polymarket_alpha_lab.papersim import store_psycopg
+original = store_psycopg.connect_managed
+declared, selected, replacement = (Path(sys.argv.pop(1)) for _ in range(3))
+mode = sys.argv.pop(1)
+opened = False
+descriptor = selected / ".local/postgres/instance.json"
+stored = descriptor.read_bytes() if mode == "descriptor" else None
+def write_descriptor(content):
+    update = descriptor.with_name("test-instance-change")
+    with os.fdopen(os.open(update, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as handle:
+        handle.write(content)
+    update.replace(descriptor)
+def connect(root, **kwargs):
+    global opened
+    assert not opened and root == selected
+    connection = original(root, **kwargs)
+    opened = True
+    if mode == "descriptor":
+        write_descriptor((replacement / ".local/postgres/instance.json").read_bytes())
+    else:
+        update = declared.with_name("test-project-root-change")
+        update.symlink_to(replacement, target_is_directory=True)
+        update.replace(declared)
+    return connection
+store_psycopg.connect_managed = connect
+cli = sys.argv.pop(1)
+try:
+    runpy.run_path(cli, run_name="__main__")
+finally:
+    if stored is not None and opened:
+        write_descriptor(stored)
 """
 _INSPECT_PREFLIGHT = """\
 import hashlib, json, sys
@@ -841,6 +906,23 @@ with store_psycopg.connect_managed(root) as connection:
                 assert len(raw) == size == observed["byte_length"]
                 assert hashlib.sha256(raw).hexdigest() == raw_sha
     report = {"events": events, "documents": documents}
+    all_preflight = connection.execute(
+        "SELECT content_sha256,kind FROM papersim.snapshots "
+        "WHERE kind IN ('d1_frozen_preflight_denominator','d1_frozen_preflight_receipt') "
+        "OR source LIKE 'd1:frozen-preflight:%'"
+    ).fetchall()
+    referenced = {
+        digest for row in connection.execute(
+            "SELECT output_evidence FROM papersim.command_run_events WHERE command='run-frozen-preflight'"
+        ).fetchall() for digest in row[0]
+    }
+    report["snapshot_totals"] = {
+        kind: sum(value == kind for _, value in all_preflight) for _, kind in all_preflight
+    }
+    report["snapshot_sha256_by_kind"] = {
+        kind: sorted(digest for digest, value in all_preflight if value == kind) for _, kind in all_preflight
+    }
+    report["orphan_preflight_snapshots"] = [digest for digest, _ in all_preflight if digest not in referenced]
     report["business"] = {
         name: connection.execute("SELECT count(*) FROM papersim." + name).fetchone()[0]
         for name in ("scan_runs", "candidates", "entries", "candidate_marks", "market_outcomes",
@@ -852,6 +934,28 @@ with store_psycopg.connect_managed(root) as connection:
     ).fetchone()[0]
 print(json.dumps(report, default=str))
 """
+
+
+_NUMERIC_GAMMA_INSERT = b'"line": 2.5, "handicap": -1.234567890123456789e-21, '
+_NUMERIC_CLOB_KEY = b'"market": 0.5'
+
+
+def _start_numeric_capture_process():
+    """Capture exact numeric wire fields at the existing public transport seam."""
+    import runpy
+    from polymarket_alpha_lab.papersim.adapters import polymarket
+    from tests.test_papersim_d1compare_journal import _CONDITION, _GAMMA_PAGE, _GammaPagesFixture, _book_bytes
+
+    gamma = _GAMMA_PAGE.replace(b'"endDate":', _NUMERIC_GAMMA_INSERT + b'"endDate":')
+    fixture = _GammaPagesFixture({"soccer": (gamma, gamma), "empty": ()})
+    source = datetime.datetime.now(UTC) - datetime.timedelta(seconds=1)
+    valid = _book_bytes("222", source)
+    wrong = _book_bytes("111", source).replace(f'"market": "{_CONDITION}"'.encode(), _NUMERIC_CLOB_KEY)
+    fixture.books = {"111": wrong, "222": valid}
+    polymarket.BoundedPublicOpener = lambda: fixture
+    cli = REPO_ROOT / "tools/d1_compare.py"
+    sys.argv[0] = str(cli)
+    runpy.run_path(str(cli), run_name="__main__")
 
 
 def _preflight_fault_script(phase, *, after_commit):
@@ -887,8 +991,8 @@ class Connection:
         if id(self) in pending:
             os._exit(84)
 @contextmanager
-def managed(root, operation):
-    with original_managed(root, operation) as connection:
+def managed(root, operation, **options):
+    with original_managed(root, operation, **options) as connection:
         yield Connection(connection) if operation == "preflight" else connection
 frozenexec._event = event
 frozenexec.frozenrun._managed_archive = managed
@@ -919,6 +1023,7 @@ def test_preflight_gamma_readback_keeps_late_observation_and_captured_only_scope
 
 @pytest.mark.parametrize(("mutation", "readback"), [
     ("asset_id", "book_identity_mismatch"), ("market", "book_identity_mismatch"),
+    ("numeric_asset_id", "book_identity_mismatch"),
     ("timestamp", "book_source_clock_unproved"), ("price", "invalid_book_payload"),
 ])
 def test_preflight_book_refuses_unbound_bytes_clock_or_level(mutation, readback):
@@ -928,6 +1033,8 @@ def test_preflight_book_refuses_unbound_bytes_clock_or_level(mutation, readback)
     payload = json.loads(_book_bytes("111", STAMP))
     if mutation == "price":
         payload["asks"][0]["price"] = "1.01"
+    elif mutation == "numeric_asset_id":
+        payload["asset_id"] = 0.5
     else:
         payload[mutation] = {"asset_id": "222", "market": "0x" + "b" * 64,
                              "timestamp": str(int(STAMP.timestamp() * 1000) - 1)}[mutation]
@@ -942,6 +1049,32 @@ def test_preflight_book_refuses_unbound_bytes_clock_or_level(mutation, readback)
     result = frozenexec._book_target(target, requests, {8: entry}, cutoff)
     assert result["readback_status"] == readback
     assert result["usable_for_decision"] is None
+    if mutation == "numeric_asset_id":
+        assert json.loads(frozenrun._canonical_json(result))["raw_asset_id"] == {
+            "json_type": "number", "decimal": "0.5",
+        }
+
+
+def test_preflight_scalar_projection_preserves_exact_numeric_semantics():
+    from decimal import Decimal
+    from polymarket_alpha_lab.papersim.d1compare import frozenexec, journal
+    from tests.test_papersim_d1compare_journal import _GAMMA_PAGE
+
+    raw = _GAMMA_PAGE.replace(b'"endDate":', _NUMERIC_GAMMA_INSERT + b'"endDate":')
+    raw = raw.replace(b'"description": "Overtime included."', b'"description": {"invalid":[0.5]}')
+    cutoff = datetime.datetime(2026, 11, 20, tzinfo=UTC)
+    request = {
+        "sequence": 1, "status": "received", "source_time_status": "receipt_only",
+        "source_observed_at": None, "request_meta": {"query": {"tag_slug": "soccer"}},
+    }
+    entry = journal.capture("https://gamma-api.polymarket.com/events", cutoff, {}, raw)
+    _, (market,) = frozenexec._gamma_observations(request, entry, cutoff)
+    projected = json.loads(frozenrun._canonical_json(market))["contract"]
+    assert projected["line"] == {"json_type": "number", "decimal": "2.5"}
+    assert Decimal(projected["handicap"]["decimal"]) == Decimal("-1.234567890123456789e-21")
+    assert projected["description"] == {"json_type": "object"}
+    assert market["page_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert frozenexec._source_scalar("2.5") == "2.5"
 
 
 def test_preflight_recovery_refuses_a_same_operation_binding_conflict():
@@ -959,17 +1092,14 @@ def test_preflight_recovery_refuses_a_same_operation_binding_conflict():
         def fetchall(self):
             return [(store.command_run_event_key(operation, 1, "STARTED"), 1, "STARTED",
                      _PREFLIGHT_COMMAND, None, None, datetime.datetime.now(UTC), "a" * 64,
-                     [binding["manifest_sha256"], "d" * 64], [], None, None)]
+                     [binding["manifest_sha256"], "d" * 64], [], None, None, None)]
 
     with pytest.raises(frozenrun.FrozenRunError) as error:
         frozenexec._existing(ConflictingEvent(), operation, binding)
     assert error.value.code == "frozen_preflight_receipt_conflict"
 
 
-@pytest.mark.skipif(
-    sys.platform != "linux" or os.environ.get("POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES") != "1",
-    reason="explicit Linux native PostgreSQL proof is opt-in",
-)
+@_NATIVE_PREFLIGHT
 def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp_path):
     from polymarket_alpha_lab.papersim import snapshots, store, store_psycopg
     from polymarket_alpha_lab.papersim.d1compare import acquire
@@ -992,10 +1122,11 @@ def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp
                 env=_process_env(project), capture_output=True, timeout=90,
             )
 
-        def capture(window_start, *, failed_page=False):
+        def capture(window_start, *, failed_page=False, numeric=False):
+            source = _PREFLIGHT_NUMERIC_CAPTURE if numeric else _CAPTURE_PROCESS.replace(
+                "WITH_FAILED_PAGE", repr(failed_page))
             result = process(
-                _CAPTURE_PROCESS.replace("WITH_FAILED_PAGE", repr(failed_page)),
-                "capture-inputs", "--repo-root", str(project.root),
+                source, "capture-inputs", "--repo-root", str(project.root),
                 "--window-start", window_start.isoformat(), "--window-end", end.isoformat(),
                 "--tag-slug", "soccer", "--tag-slug", "empty", "--allow-public-fetch",
             )
@@ -1024,8 +1155,36 @@ def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp
             return json.loads(invocation.stdout)
 
         batch = capture(start)
-        with ThreadPoolExecutor(max_workers=2) as workers:
-            results = list(workers.map(lambda _: check_result(preflight("soccer", batch)), range(2)))
+        def repeatable_read_preflight(mode):
+            return process(
+                _PREFLIGHT_REPEATABLE_READ, mode, cli, "run-frozen",
+                "--repo-root", str(project.root), "--staging-root", str(staging),
+                *options("soccer", batch, stage["manifest_sha256"]),
+            )
+
+        def wait_for_advisory_waiters(control, wanted):
+            deadline = time.monotonic() + 20
+            while time.monotonic() < deadline:
+                count = control.execute(
+                    "SELECT count(*) FROM pg_locks WHERE locktype='advisory' AND NOT granted"
+                ).fetchone()[0]
+                if count == wanted:
+                    return
+                time.sleep(0.05)
+            pytest.fail(f"expected {wanted} pending native advisory lock acquisitions")
+
+        # Ensure both processes reach the database wait before the winner may commit.
+        pause_key = ("fixture:preflight:pause",)
+        with ThreadPoolExecutor(max_workers=2) as workers, store_psycopg.connect_managed(project.root) as control:
+            control.execute("SELECT pg_advisory_lock(hashtextextended(%s, 0))", pause_key)
+            try:
+                winner = workers.submit(repeatable_read_preflight, "hold")
+                wait_for_advisory_waiters(control, 1)
+                follower = workers.submit(repeatable_read_preflight, "follow")
+                wait_for_advisory_waiters(control, 2)
+            finally:
+                control.execute("SELECT pg_advisory_unlock(hashtextextended(%s, 0))", pause_key)
+            results = [check_result(result.result()) for result in (winner, follower)]
         initial, retry = sorted(results, key=lambda result: result["reused"])
         assert retry == {**initial, "reused": True}
         assert initial["denominator_sha256"] and initial["denominator_revalidated"] is True
@@ -1034,6 +1193,7 @@ def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp
         assert {"frozen_execution_capability_unproved", "registered_comparison_scope_missing",
                 "frozen_gamma_pagination_limit_100", "registered_book_age_policy_missing"} <= set(initial["missing"])
         read = inspect(initial)
+        assert read["orphan_preflight_snapshots"] == []
         assert all(count == 0 for count in read["business"].values())
         assert read["scheduled_non_capture_events"] == 0
         assert [(row[0], row[1], row[2]) for row in read["events"]] == [
@@ -1069,6 +1229,15 @@ def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp
         assert raw_receipt["attempt"] == raw_receipt["binding"]["preflight_version"] == 1
         assert raw_receipt["terminal_event_key"] == initial["terminal_event_key"]
 
+        missing_mirror = _cli(
+            project, "run-frozen", staging, *options("soccer", batch, stage["manifest_sha256"]),
+            "--mirror-root", str(tmp_path / "missing-mirror"),
+        )
+        _refused(missing_mirror, "frozen_preflight_cached_recheck_failed",
+                 "frozen_preflight_local_input_unreadable", initial["receipt_sha256"])
+        assert check_result(preflight("soccer", batch)) == retry
+        assert inspect(initial) == read
+
         ordinary = _cli(project, "run-frozen", staging, "--leg", "soccer",
                         "--manifest-sha256", stage["manifest_sha256"])
         _refused(ordinary, "b2_b3_b4_merged_commit")
@@ -1091,8 +1260,18 @@ def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp
             )
 
         partial_batch = capture(start + datetime.timedelta(seconds=1), failed_page=True)
+        previous = inspect(initial)
+        before_break = previous["snapshot_totals"]
         broken = fault("crypto", partial_batch, after_commit=False)
         assert (broken.returncode, broken.stdout, broken.stderr) == (83, b"", b"")
+        after_break = inspect(initial)
+        assert after_break["orphan_preflight_snapshots"] == []
+        assert after_break["snapshot_totals"] == {
+            **before_break, "d1_frozen_preflight_denominator": before_break["d1_frozen_preflight_denominator"] + 1,
+        }
+        receipt_kind, denom_kind = "d1_frozen_preflight_receipt", "d1_frozen_preflight_denominator"
+        assert after_break["snapshot_sha256_by_kind"][receipt_kind] == previous["snapshot_sha256_by_kind"][receipt_kind]
+        assert set(previous["snapshot_sha256_by_kind"][denom_kind]) < set(after_break["snapshot_sha256_by_kind"][denom_kind])
         failed_recheck = check_result(_cli(
             project, "run-frozen", staging, *options("crypto", partial_batch, stage["manifest_sha256"]),
             "--mirror-root", str(tmp_path / "missing-mirror"),
@@ -1103,6 +1282,7 @@ def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp
         assert recovered["attempt"] == 3 and recovered["reused"] is False
         assert recovered["denominator_sha256"] == failed_recheck["denominator_sha256"]
         recovered_rows = inspect(recovered)
+        assert recovered_rows["orphan_preflight_snapshots"] == []
         assert [(row[0], row[1]) for row in recovered_rows["events"]] == [
             (1, "STARTED"), (1, "PREPARED"), (2, "STARTED"), (2, "FAILED"),
             (3, "STARTED"), (3, "PREPARED"), (3, "FAILED"),
@@ -1121,6 +1301,56 @@ def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp
         assert after_loss["attempt"] == 1 and after_loss["reused"] is True
         assert len(inspect(after_loss)["events"]) == 3
         assert after_loss["operation_key"] not in {recovered["operation_key"], initial["operation_key"]}
+
+        # A contradictory readiness entry cannot turn an A1 preflight into exit zero.
+        rejected_ready_input = fault("soccer", partial_batch, after_commit=False)
+        assert (rejected_ready_input.returncode, rejected_ready_input.stdout) == (83, b"")
+        with store_psycopg.connect_managed(project.root) as connection:
+            operation, config_digest, [denom_sha] = connection.execute(
+                "SELECT operation_key,config_digest,output_evidence FROM papersim.command_run_events "
+                "WHERE command=%s AND phase='PREPARED' AND input_evidence=%s::jsonb AND operation_key<>%s",
+                (_PREFLIGHT_COMMAND, json.dumps([stage["manifest_sha256"], partial_batch]),
+                 recovered["operation_key"]),
+            ).fetchone()
+            denom = json.loads(snapshots.read_snapshot(connection, denom_sha)["content"])
+            occurred = datetime.datetime.now(UTC)
+            forged = {
+                **raw_receipt, "binding": denom["binding"], "operation_key": operation,
+                "terminal_event_key": store.command_run_event_key(operation, 1, "SUCCEEDED"),
+                "occurred_at": occurred.isoformat(), "denominator_sha256": denom_sha,
+                "coverage": denom["coverage"], "missing": denom["missing"],
+                "status": "ready", "error_code": None,
+            }
+            forged_sha = snapshots.register_snapshot(connection, snapshots.SnapshotRegistration(
+                frozenrun._canonical_json(forged), "d1_frozen_preflight_receipt",
+                "d1:frozen-preflight:v1:receipt", occurred,
+            ))["content_sha256"]
+            store_psycopg.record_command_run_event(connection, store.CommandRunEventSubmission(
+                operation_key=operation, phase="SUCCEEDED", command=_PREFLIGHT_COMMAND,
+                occurred_at=occurred, config_digest=config_digest,
+                input_evidence=[stage["manifest_sha256"], partial_batch], output_evidence=[forged_sha, denom_sha],
+            ))
+        _refused(preflight("soccer", partial_batch), "frozen_preflight_receipt_conflict")
+
+        numeric_batch = capture(start + datetime.timedelta(seconds=2), numeric=True)
+        numeric = check_result(preflight("soccer", numeric_batch))
+        numeric_report = inspect(numeric)
+        assert numeric_report["orphan_preflight_snapshots"] == []
+        assert numeric["coverage"]["book_readback_verified_count"] == 1
+        preserved = numeric_report["documents"]["d1_frozen_preflight_denominator"]
+        market = preserved["market_observations"][0]
+        projected = market["contract"]
+        assert projected["line"] == {"json_type": "number", "decimal": "2.5"}
+        assert projected["handicap"] == {"json_type": "number", "decimal": "-1.234567890123456789E-21"}
+        wrong, valid = preserved["book_targets"]
+        assert wrong["token_id"] == "111" and wrong["readback_status"] == "book_identity_mismatch"
+        assert wrong["raw_condition_id"] == {"json_type": "number", "decimal": "0.5"}
+        assert valid["token_id"] == "222" and valid["readback_status"] == "verified"
+        with store_psycopg.connect_managed(project.root) as connection:
+            raw = snapshots.read_snapshot(connection, market["page_sha256"])["content"]
+            assert _NUMERIC_GAMMA_INSERT in raw
+            raw = snapshots.read_snapshot(connection, wrong["content_sha256"])["content"]
+            assert _NUMERIC_CLOB_KEY in raw
 
         # A correctly SHA-addressed copy with a different scope cannot use
         # the capture success event registered for the original scope.
@@ -1147,8 +1377,148 @@ def test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes(tmp
         untrusted = check_result(preflight("crypto", invalid_bytes["content_sha256"]), "failed")
         assert untrusted["error_code"] == "d1_capture_manifest_request_invalid"
         assert untrusted["denominator_sha256"] is None
+        assert inspect(initial)["orphan_preflight_snapshots"] == []
         assert not list(project.temporary.glob("polymarket-d1-frozen-*/call-*"))
         assert not staging.exists() or not list(staging.iterdir())
+
+
+@_NATIVE_PREFLIGHT
+def test_preflight_and_borrowed_archives_refuse_cross_instance_inputs(tmp_path):
+    from polymarket_alpha_lab.papersim import snapshots, store, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+    from tests.test_papersim_d1compare_archive_native import (
+        _cli, _isolated_project, _process_env, _receipt, _refused,
+    )
+
+    left_dir, right_dir = tmp_path / "left", tmp_path / "right"
+    left_dir.mkdir()
+    right_dir.mkdir()
+    with _isolated_project(left_dir) as left, _isolated_project(right_dir) as right:
+        staging = tmp_path / "caller-stage"
+        left_stage = _receipt(_cli(left, "stage", staging, "--leg", "crypto"))
+        right_stage = _receipt(_cli(right, "stage", staging, "--leg", "all"))
+        lefthash, righthash = left_stage["manifest_sha256"], right_stage["manifest_sha256"]
+        assert lefthash != righthash
+        assert left_stage["legs"]["crypto"] == right_stage["legs"]["crypto"]
+        now = datetime.datetime.now(UTC)
+        start, end = now - datetime.timedelta(seconds=60), now + datetime.timedelta(minutes=5)
+        cli = str(REPO_ROOT / "tools/d1_compare.py")
+
+        def process(project, source, *args):
+            return subprocess.run([sys.executable, "-B", "-c", source, *args], cwd=REPO_ROOT,
+                                  env=_process_env(project), capture_output=True, timeout=90)
+
+        def capture(project, source, begin):
+            result = process(project, source, "capture-inputs", "--repo-root", str(project.root),
+                             "--tag-slug", "soccer", "--tag-slug", "empty", "--allow-public-fetch",
+                             "--window-start", begin.isoformat(), "--window-end", end.isoformat())
+            assert result.returncode == 0 and not result.stderr, result.stderr
+            return json.loads(result.stdout)
+
+        left_batch = capture(left, _CAPTURE_PROCESS.replace("WITH_FAILED_PAGE", "False"), start)
+        right_batch = capture(right, _PREFLIGHT_NUMERIC_CAPTURE, start + datetime.timedelta(seconds=1))
+        left_capture, right_capture = left_batch["batch_sha256"], right_batch["batch_sha256"]
+
+        def choices(archive, batch):
+            return ("--preflight", "--leg", "crypto", "--manifest-sha256", archive, "--batch-sha256", batch)
+
+        def outcome(result):
+            assert result.returncode == 2 and not result.stderr, result.stderr.decode()
+            receipt = json.loads(result.stdout)
+            assert receipt["child_started"] is False and receipt["day_credit"] == 0
+            return receipt
+
+        first = outcome(_cli(left, "run-frozen", staging, *choices(lefthash, left_capture)))
+        assert first["status"] == "incomplete" and first["denominator_sha256"]
+        other_archive = outcome(_cli(left, "run-frozen", staging, *choices(righthash, left_capture)))
+        assert other_archive["error_code"] == "frozen_archive_snapshot_missing"
+        assert other_archive["denominator_sha256"] is None
+
+        right_document, right_entries = acquire.read_capture(repo_root=right.root, batch_sha256=right_capture)
+        with store_psycopg.connect_managed(right.root) as connection:
+            manifest = snapshots.read_snapshot(connection, right_capture)
+        with store_psycopg.connect_managed(left.root) as connection, connection.transaction():
+            # The same manifest and an A-local capture event still cannot
+            # make a response registered only in B visible to A.
+            registered = snapshots.register_snapshot(connection, snapshots.SnapshotRegistration(
+                manifest["content"], manifest["kind"], manifest["source"],
+                manifest["fetched_at"], schema_version=manifest["schema_version"],
+            ))
+            assert registered["content_sha256"] == right_capture
+            scope_sha = right_batch["scope_sha256"]
+            store_psycopg.record_command_run_event(connection, store.CommandRunEventSubmission(
+                operation_key=f"d1:public-capture:v1:{scope_sha}", command="capture-inputs",
+                phase="SUCCEEDED", config_digest=scope_sha, output_evidence=[right_capture],
+                scheduled_for=datetime.datetime.fromisoformat(right_document["scope"]["window_start"]),
+                occurred_at=datetime.datetime.fromisoformat(right_batch["occurred_at"]),
+            ))
+            assert snapshots.read_snapshot(connection, right_entries[1].content_sha256) is None
+        other_response = outcome(_cli(left, "run-frozen", staging, *choices(lefthash, right_capture)))
+        assert other_response["error_code"] == "d1_capture_snapshot_missing"
+        assert other_response["denominator_sha256"] is None
+
+        alias = tmp_path / "project-alias"
+        alias.symlink_to(left.root, target_is_directory=True)
+        stable = outcome(process(
+            left, _PREFLIGHT_REPEATABLE_READ, "follow", cli, "run-frozen",
+            "--repo-root", str(alias), "--staging-root", str(staging), *choices(lefthash, left_capture),
+        ))
+        assert stable == {**first, "reused": True}
+        for mode in ("alias", "descriptor"):
+            result = process(
+                left, _PREFLIGHT_INSTANCE, str(alias), str(left.root), str(right.root), mode,
+                cli, "run-frozen", "--repo-root", str(alias), "--staging-root", str(staging),
+                *choices(lefthash, left_capture),
+            )
+            _refused(result, "frozen_preflight_cached_recheck_failed",
+                     "frozen_preflight_instance_binding_changed", first["receipt_sha256"])
+            if mode == "alias":
+                assert alias.readlink() == right.root
+                alias.unlink()
+                alias.symlink_to(left.root, target_is_directory=True)
+        assert outcome(_cli(left, "run-frozen", staging, *choices(lefthash, left_capture))) == stable
+
+        with store_psycopg.connect_managed(right.root) as connection, connection.transaction():
+            connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+            with pytest.raises(frozenrun.FrozenRunError) as error:
+                frozenrun.read_staged_archives(righthash, repo_root=left.root, _connection=connection)
+            assert error.value.code == "frozen_archive_read_connection_unverified"
+            assert error.value.detail == "d1_capture_read_instance_mismatch"
+            assert connection.execute("SELECT current_setting('transaction_read_only')").fetchone() == ("on",)
+
+        with store_psycopg.connect_managed(left.root) as connection, connection.transaction():
+            connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+            statement = "SELECT pg_backend_pid(), pg_current_snapshot()::text"
+            original_view = connection.execute(statement).fetchone()
+            with connection.transaction():
+                selected, contents = frozenrun.read_staged_archives(lefthash, repo_root=left.root, _connection=connection)
+                assert selected["legs"] == left_stage["legs"]
+                assert hashlib.sha256(contents["crypto"]).hexdigest() == FROZEN_LIBRARIES["crypto"].digest
+                del contents
+                # An independent actual stage commits the previously B-only manifest.
+                assert _receipt(_cli(left, "stage", staging, "--leg", "all"))["manifest_sha256"] == righthash
+                with pytest.raises(frozenrun.FrozenRunError) as error:
+                    frozenrun.read_staged_archives(righthash, repo_root=left.root, _connection=connection)
+                assert error.value.code == "frozen_archive_snapshot_missing"
+                assert connection.execute(statement).fetchone() == original_view
+        restored, contents = frozenrun.read_staged_archives(righthash, repo_root=left.root)
+        assert set(restored["legs"]) == set(contents) == {"soccer", "crypto"}
+        del contents
+
+        for project, operation, expected_count in (
+            (left, first["operation_key"], 3), (right, first["operation_key"], 0),
+        ):
+            inspected = process(project, _INSPECT_PREFLIGHT, str(project.root), operation)
+            assert (inspected.returncode, inspected.stderr) == (0, b"")
+            report = json.loads(inspected.stdout)
+            assert len(report["events"]) == expected_count
+            assert report["orphan_preflight_snapshots"] == []
+            assert report["scheduled_non_capture_events"] == 0
+            assert all(count == 0 for count in report["business"].values())
+            if project is right:
+                assert report["snapshot_totals"] == {}
+        assert not list(left.temporary.glob("polymarket-d1-frozen-*/call-*"))
+        assert not list(right.temporary.glob("polymarket-d1-frozen-*/call-*"))
 
 
 # ---------------------------------------------------------------------------
