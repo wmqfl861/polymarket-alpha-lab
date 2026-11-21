@@ -764,9 +764,41 @@ def _collect(connection, scope: dict, started_at: datetime,
     }
 
 
-@contextmanager
-def _managed(repo_root: Path):
+def _verify_read_connection(connection, repo_root: Path) -> None:
+    """Verify the caller's active snapshot and its project binding without ending it."""
+    from polymarket_alpha_lab.project_postgres import binding
+    from polymarket_alpha_lab.project_postgres.files import Layout
+
     try:
+        if connection.closed or connection.info.transaction_status.name != "INTRANS":
+            raise AcquisitionError("d1_capture_read_transaction_invalid")
+        root = Path(repo_root).resolve(strict=True)
+        info = store_psycopg.read_instance(root)
+        if info["root_sha256"] != Layout(root).root_hash:
+            raise AcquisitionError("d1_capture_read_instance_mismatch")
+        # A savepoint protects the caller's transaction if its role cannot
+        # read the binding table. The caller retains the original snapshot.
+        with connection.transaction(), connection.cursor() as cursor:
+            cursor.execute("SELECT current_setting('transaction_isolation'), "
+                           "current_setting('transaction_read_only')")
+            isolation, readonly = cursor.fetchone()
+            if isolation not in ("repeatable read", "serializable") or readonly != "on":
+                raise AcquisitionError("d1_capture_read_transaction_invalid")
+            with binding.bound(info["instance_id"], info["root_sha256"], info["system_identifier"]):
+                binding.verify_connection(cursor)
+    except AcquisitionError:
+        raise
+    except Exception:
+        raise AcquisitionError("d1_capture_read_instance_mismatch") from None
+
+
+@contextmanager
+def _managed(repo_root: Path, *, _read_connection=None):
+    try:
+        if _read_connection is not None:
+            _verify_read_connection(_read_connection, repo_root)
+            yield _read_connection
+            return
         with closing(store_psycopg.connect_managed(Path(repo_root))) as connection:
             yield connection
     except AcquisitionError:
@@ -931,18 +963,20 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
     return _summary(document, digest, reused=False, occurred_at=registered_at)
 
 
-def read_capture(*, repo_root: Path, batch_sha256: str) -> tuple[dict, tuple[journal.JournalEntry, ...]]:
+def read_capture(*, repo_root: Path, batch_sha256: str,
+                 _connection=None) -> tuple[dict, tuple[journal.JournalEntry, ...]]:
     """Independently verify and read the manifest and exact responses in order.
 
     The manifest retains attempts without an admitted body. The returned
     journal contains every retained body, including late or invalid payloads.
     Version 1 preserves the original receipt for audit. Decision consumers
     need the interval's registered freshness assessment before using a book.
+    A preflight caller can supply its already active read-only snapshot.
     """
     try:
         digest = snapshots.snapshot_digest_argument(batch_sha256)
     except ValueError:
         raise AcquisitionError("d1_capture_digest_invalid") from None
-    with _managed(repo_root) as connection, connection.transaction():
+    with _managed(repo_root, _read_connection=_connection) as connection, connection.transaction():
         document = _load_batch(connection, digest)
         return document, _read_entries(connection, document)

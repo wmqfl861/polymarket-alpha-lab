@@ -132,6 +132,20 @@ def _refuse_gates(authorization: d1_frozenrun.DayRunAuthorization | None) -> Non
 
 
 def command_run_frozen(args: argparse.Namespace) -> int:
+    if args.preflight:
+        if args.authorization is not None:
+            raise d1_frozenrun.FrozenRunError("preflight does not accept run authorization")
+        if not args.manifest_sha256 or not args.batch_sha256:
+            raise d1_frozenrun.FrozenRunError("preflight requires a manifest and a captured batch")
+        receipt = d1_frozenrun.preflight_designated_chain(
+            args.leg, mirror_root=Path(args.mirror_root),
+            staging_root=Path(args.staging_root), repo_root=Path(args.repo_root),
+            manifest_sha256=args.manifest_sha256, batch_sha256=args.batch_sha256,
+        )
+        print(json.dumps(receipt, sort_keys=True))
+        return 0 if receipt["status"] == "ready" else 2
+    if args.batch_sha256 is not None:
+        raise d1_frozenrun.FrozenRunError("--batch-sha256 requires --preflight")
     authorization = _authorization(args)
     _refuse_gates(authorization)
     d1_frozenrun.execute_designated_chain(
@@ -308,6 +322,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_frozen.add_argument("--staging-root", required=True)
     run_frozen.add_argument("--repo-root", default=".")
     run_frozen.add_argument("--manifest-sha256")
+    run_frozen.add_argument("--preflight", action="store_true",
+                            help="verify and record captured inputs without starting a frozen script")
+    run_frozen.add_argument("--batch-sha256", help="managed capture batch to verify in preflight")
     run_frozen.add_argument("--authorization", default=None,
                             help="JSON document recording the plan section 5 "
                                  "gates (b2_b3_b4_merged_commit, g7_fix_evidence, "
