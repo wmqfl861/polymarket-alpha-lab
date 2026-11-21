@@ -90,17 +90,29 @@ def _capture_time(value: str) -> datetime.datetime:
 
 
 def command_capture_inputs(args: argparse.Namespace) -> int:
+    from polymarket_alpha_lab.papersim import store
     from polymarket_alpha_lab.papersim.d1compare import acquire
 
+    parameters = {
+        "repo_root": Path(args.repo_root), "window_start": args.window_start,
+        "window_end": args.window_end, "allow_public_fetch": args.allow_public_fetch,
+    }
     try:
-        receipt = acquire.capture_inputs(
-            repo_root=Path(args.repo_root),
-            window_start=args.window_start,
-            window_end=args.window_end,
-            tag_slugs=tuple(args.tag_slug),
-            allow_public_fetch=args.allow_public_fetch,
-        )
-    except acquire.AcquisitionError as error:
+        if args.resolution_slot is None:
+            if args.operation_key is not None or args.attempt is not None:
+                raise acquire.AcquisitionError("d1_resolution_flags_require_slot")
+            receipt = acquire.capture_inputs(tag_slugs=tuple(args.tag_slug), **parameters)
+        else:
+            from polymarket_alpha_lab.papersim.d1compare import operations
+
+            if args.operation_key is None or args.attempt is None:
+                raise acquire.AcquisitionError("d1_resolution_operation_and_attempt_required")
+            operations._validate_attempt(args.operation_key, args.attempt)
+            receipt = acquire.capture_resolution_inputs(
+                resolution_slot=args.resolution_slot, operation_key=args.operation_key,
+                attempt=args.attempt, **parameters,
+            )
+    except (acquire.AcquisitionError, store.PapersimStoreError) as error:
         print(f"d1_compare: capture-inputs failed: {error.code}", file=sys.stderr)
         return 2
     print(json.dumps(receipt, sort_keys=True, allow_nan=False))
@@ -307,9 +319,16 @@ def build_parser() -> argparse.ArgumentParser:
     capture.add_argument("--window-start", required=True, type=_capture_time,
                          help="inclusive start of the capture window")
     capture.add_argument("--window-end", required=True, type=_capture_time,
-                         help="exclusive end of the capture window")
-    capture.add_argument("--tag-slug", required=True, action="append",
-                         help="Gamma tag to discover (repeat for additional tags)")
+                         help="end of the capture window (exclusive for tag discovery)")
+    capture_scope = capture.add_mutually_exclusive_group(required=True)
+    capture_scope.add_argument("--tag-slug", action="append",
+                               help="Gamma tag to discover (repeat for additional tags)")
+    capture_scope.add_argument("--resolution-slot", metavar="SHA256",
+                               help="SHA-256 of a registered terminal-source capture slot")
+    capture.add_argument("--operation-key", metavar="KEY",
+                         help="exact registered operation key (required with --resolution-slot)")
+    capture.add_argument("--attempt", type=int, metavar="N",
+                         help="positive attempt number (required with --resolution-slot)")
     capture.add_argument("--allow-public-fetch", action="store_true",
                          help="enable the public market data adapters")
     capture.set_defaults(handler=command_capture_inputs)

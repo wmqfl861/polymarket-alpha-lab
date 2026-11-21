@@ -40,6 +40,7 @@ in-repo basis is docs/paper-sim/design/README.md (FX-28).
 from __future__ import annotations
 
 from collections.abc import Mapping
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from decimal import Decimal
 import json
@@ -62,6 +63,7 @@ from polymarket_alpha_lab.papersim.store import (
     SettlementRecord,
     _as_decimal,
     bankroll_identity_difference,
+    command_run_event_key,
     entry_mark_key,
     exact_sum,
     validate_evidence_time_order,
@@ -123,10 +125,94 @@ def connect_managed(repo_root: Path, *, info: dict | None = None):
         try:
             binding.verify_connection(connection.cursor())
             connection.rollback()   # end the check's read-only transaction; hand off IDLE
+            connection._papersim_managed_root = repo_root.resolve()
         except BaseException:
             connection.close()      # fail closed: release, never hand off
             raise
     return connection
+
+
+def d1_managed_identity(conn, repo_root: Path) -> dict:
+    """Require the same verified, idle managed application session for D1."""
+    root = Path(repo_root).resolve()
+    if getattr(conn, '_papersim_managed_root', None) != root:
+        raise PapersimStoreError('d1_operation_managed_required')
+    _require_d1_idle(conn)
+    info = read_instance(root)
+    with binding.bound(info['instance_id'], info['root_sha256'], info['system_identifier']):
+        with conn.transaction():
+            binding.verify_connection(conn.cursor())
+    return {'instance_id': info['instance_id'], 'application_role': sql.APPLICATION}
+
+
+def d1_resolution_identity(conn, *, instance_id: str) -> str:
+    """Recheck the marked managed session inside the caller's scope transaction."""
+    root = getattr(conn, '_papersim_managed_root', None)
+    if root is None or conn.info.transaction_status.name != 'INTRANS':
+        raise PapersimStoreError('d1_operation_managed_required')
+    info = read_instance(root)
+    if info['instance_id'] != instance_id:
+        raise PapersimStoreError('d1_operation_instance_conflict')
+    with binding.bound(info['instance_id'], info['root_sha256'], info['system_identifier']):
+        binding.verify_connection(conn.cursor())
+    mode = conn.execute("SELECT current_setting('transaction_isolation'), "
+                        "current_setting('transaction_read_only')").fetchone()
+    if mode != ('repeatable read', 'on'):
+        raise PapersimStoreError('d1_resolution_read_view_required')
+    return sql.APPLICATION
+
+
+def _require_d1_idle(conn) -> None:
+    if conn.info.transaction_status.name != 'IDLE':
+        raise PapersimStoreError('d1_operation_transaction_active')
+
+
+@contextmanager
+def d1_operation_lock(conn, operation_key: str):
+    """Hold a parent lock across committed planning and item transactions."""
+    _require_d1_idle(conn)
+    key = 'papersim/d1/operation/' + operation_key
+    locked = False
+    try:
+        try:
+            with conn.transaction():
+                conn.execute("SET LOCAL lock_timeout = '30s'")
+                conn.execute('SELECT pg_advisory_lock(hashtextextended(%s, 0))', (key,))
+                locked = True
+        except Exception as error:
+            if getattr(error, 'sqlstate', None) == '55P03':
+                raise PapersimStoreError('d1_operation_lock_timeout') from None
+            raise
+        yield
+    finally:
+        if locked and not conn.closed:
+            # A connection that cannot release its session lock must not be reused.
+            try:
+                _require_d1_idle(conn)
+                with conn.transaction():
+                    unlocked, = conn.execute(
+                        'SELECT pg_advisory_unlock(hashtextextended(%s, 0))', (key,)).fetchone()
+                    if not unlocked:
+                        raise PapersimStoreError('d1_operation_lock_lost')
+            except BaseException:
+                conn.close()
+                raise
+
+
+@contextmanager
+def d1_read_view(conn):
+    """Pin the initial planning reads to one FX-29 read-only transaction."""
+    _require_d1_idle(conn)
+    with conn.transaction():
+        conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
+        yield
+
+
+def d1_database_time(conn) -> datetime:
+    """Sample the database wall clock, including inside a transaction."""
+    with conn.transaction():
+        at, = conn.execute('SELECT clock_timestamp()').fetchone()
+    return at
 
 
 def connect_owner(repo_root: Path, *, info: dict | None = None):
@@ -441,6 +527,66 @@ def _compare_stored(stored: dict, expected: dict, code: str) -> None:
             raise PapersimStoreError(code)
 
 
+def _lock_capture_target(cursor, candidate_id: int, mark_key: str) -> None:
+    # The candidate lock serializes the unique CLOSE across distinct mark
+    # keys. Take it first even for PERIODIC marks, before the natural-key lock.
+    for key in (f'papersim/mark-candidate/{candidate_id}', f'papersim/mark/{mark_key}'):
+        cursor.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))', (key,))
+
+
+def d1_lock_capture_target(conn, candidate_id: int, mark_key: str) -> None:
+    """Protect a B2 read/write/witness transaction against competing writers."""
+    if conn.info.transaction_status.name != 'INTRANS':
+        raise PapersimStoreError('d1_operation_item_transaction_required')
+    _lock_capture_target(conn.cursor(), candidate_id, mark_key)
+
+
+def d1_capture_rows(conn, *, candidate_id: int, mark_key: str, close_key: str,
+                    planned_close: bool) -> dict:
+    """Read both natural keys and any other CLOSE that could block the write."""
+    cursor = conn.cursor()
+    query = ('SELECT candidate_mark_id, candidate_mark_key, ' + _CANDIDATE_MARK_COLUMNS
+             + ' FROM papersim.candidate_marks WHERE candidate_mark_key = %s')
+    params = (mark_key,)
+    if planned_close:
+        query += " OR (candidate_id = %s AND sampling_kind = 'CLOSE')"
+        params += (candidate_id,)
+    cursor.execute(query + ' ORDER BY candidate_mark_id', params)
+    columns = _columns_of(cursor)
+    marks = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    query = ('SELECT ' + _DECISION_COLUMNS
+             + ' FROM papersim.candidate_price_evidence WHERE evidence_key = %s')
+    params = (close_key,)
+    if planned_close:
+        query += " OR (candidate_id = %s AND evidence_role = 'CLOSE')"
+        params += (candidate_id,)
+    cursor.execute(query + ' ORDER BY evidence_id', params)
+    columns = _columns_of(cursor)
+    closes = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    return {'marks': marks, 'close_evidence': closes}
+
+
+def d1_compare_capture_rows(rows: dict, capture: CandidateMarkCapture, close_evidence) -> dict:
+    """Require the full, exact B2 row set and return the actual row IDs."""
+    marks, closes = rows['marks'], rows['close_evidence']
+    if len(marks) != 1 or marks[0]['candidate_mark_key'] != capture.mark_key():
+        raise PapersimStoreError('papersim_candidate_mark_conflict')
+    _compare_stored(marks[0], capture.comparison(), 'papersim_candidate_mark_conflict')
+    evidence_id = None
+    if close_evidence is None:
+        if closes:
+            raise PapersimStoreError('papersim_close_evidence_conflict')
+    else:
+        if len(closes) != 1:
+            raise PapersimStoreError('papersim_close_evidence_conflict')
+        columns = _DECISION_COLUMNS.replace(' ', '').split(',')[1:]
+        expected = dict(zip(columns, _evidence_params(capture.candidate_id, close_evidence),
+                            strict=True))
+        _compare_stored(closes[0], expected, 'papersim_close_evidence_conflict')
+        evidence_id = closes[0]['evidence_id']
+    return {'candidate_mark_id': marks[0]['candidate_mark_id'], 'close_evidence_id': evidence_id}
+
+
 def mark_capture_upsert(conn, capture: CandidateMarkCapture, *, entry_id: int | None = None,
                         close_evidence=None) -> dict:
     """Write one mark capture atomically (M2 plan section 3.5; FX-34).
@@ -478,6 +624,7 @@ def mark_capture_upsert(conn, capture: CandidateMarkCapture, *, entry_id: int | 
     is_close = capture.sampling_kind == 'CLOSE'
     with conn.transaction():
         cursor = conn.cursor()
+        _lock_capture_target(cursor, capture.candidate_id, mark_key)
         if is_close or close_evidence is not None:
             # FX-34 backstop: the boundary comes from the stored candidate
             # row itself (never from the caller), so a post-start or
@@ -612,6 +759,60 @@ def candidate_capture_target(conn, *, scan_id=None, scan_operation_key=None,
     return {'candidate_id': int(row[0]), 'event_start_at': row[1]}
 
 
+def d1_candidate_capture_target(conn, *, scan_id=None, scan_operation_key=None,
+                                candidate_key: str, settlement: bool = False) -> dict | None:
+    """Resolve the full B1 identity, actual decision evidence and provenance."""
+    if type(candidate_key) is not str or not candidate_key:
+        raise PapersimStoreError('papersim_candidate_key_invalid')
+    if (scan_id is None) == (scan_operation_key is None):
+        raise PapersimStoreError('papersim_capture_scan_ref_invalid')
+    if scan_id is not None and type(scan_id) is not int:
+        raise PapersimStoreError('papersim_scan_id_invalid')
+
+    columns = ('c.candidate_id, c.scan_id, c.candidate_key, c.team, c.market_id, '
+               'c.condition_id, c.market_slug, c.side, c.yes_token_id, c.no_token_id, '
+               'c.event_start_at, c.book_fetched_at, c.snapshot_refs, c.input_payload, '
+               'c.is_legacy, s.operation_key AS scan_operation_key, s.team AS scan_team, '
+               's.code_commit AS scan_code_commit, s.started_at AS scan_started_at, '
+               's.finished_at AS scan_finished_at')
+    if settlement:
+        columns += ', c.market_kind, c.market_type, c.model_name, c.event_key, c.evaluated_at'
+    ref_column, ref = ('c.scan_id', scan_id) if scan_id is not None else (
+        's.operation_key', scan_operation_key)
+    with conn.transaction():
+        cursor = conn.execute(
+            f'SELECT {columns} FROM papersim.candidates c '
+            f'JOIN papersim.scan_runs s ON s.scan_id = c.scan_id '
+            f'WHERE {ref_column} = %s AND c.candidate_key = %s', (ref, candidate_key))
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        candidate = dict(zip(_columns_of(cursor), row, strict=True))
+        cursor.execute('SELECT ' + _DECISION_COLUMNS + ' FROM papersim.candidate_price_evidence '
+                       "WHERE candidate_id = %s AND evidence_role = 'DECISION' ORDER BY evidence_id",
+                       (candidate['candidate_id'],))
+        decision_columns = _columns_of(cursor)
+        candidate['decisions'] = [dict(zip(decision_columns, decision, strict=True))
+                                  for decision in cursor.fetchall()]
+        candidate['scan_receipts'] = _d1_scan_receipts(conn, candidate)
+    return candidate
+
+
+def _d1_scan_receipts(conn, candidate: dict) -> list[dict]:
+    # Select the original successful scan's attempt. Later scan attempts do
+    # not change the provenance of a candidate already in a D1 read set.
+    key = candidate['scan_operation_key']
+    if key is None:
+        return []
+    receipts = d1_operation_receipts(conn, key)
+    for receipt in receipts:
+        if (receipt['command'] == 'run-scan' and receipt['phase'] == 'SUCCEEDED'
+                and receipt['scan_id'] == candidate['scan_id']):
+            return [row for row in receipts if row['command'] == 'run-scan'
+                    and row['attempt'] == receipt['attempt']]
+    return []
+
+
 class SettlementCashDiscrepancy(PapersimStoreError):
     """A historical settlement with a missing or inconsistent cash leg."""
 
@@ -649,11 +850,43 @@ def _settlement_values(record: SettlementRecord) -> dict:
     return values
 
 
+def d1_lock_settlement_entry(conn, entry_id: int) -> None:
+    """Hold the entry's writer lock until the active transaction ends."""
+    if conn.info.transaction_status.name != 'INTRANS':
+        raise PapersimStoreError('d1_operation_item_transaction_required')
+    _lock_settlement_entry(conn.cursor(), entry_id)
+
+
+def _lock_settlement_entry(cursor, entry_id: int) -> None:
+    cursor.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))',
+                   (f'papersim/settlement-entry/{entry_id}',))
+
+
+def _terminal_cash_values(record: SettlementRecord, at: datetime, paid_fee) -> dict:
+    return {'event_key': record.event_key(), 'occurred_at': at, 'currency': 'USD',
+            'amount': record.cash_amount(entry_fee=paid_fee), 'reason': record.cash_reason(),
+            'entry_id': record.entry_id, 'scan_id': None, 'note': record.evidence, 'is_legacy': record.is_legacy}
+
+
+_CASH_READ_COLUMNS = ('event_id, event_key, occurred_at, currency, amount, reason, '
+                     'entry_id, scan_id, note, is_legacy, reverses_event_id')
+
+
+def _terminal_cash_rows(cursor, entry_id: int, event_key: str) -> list[dict]:
+    cursor.execute('SELECT ' + _CASH_READ_COLUMNS + ' FROM papersim.bankroll_events WHERE event_key = %s '
+                   'OR (entry_id = %s AND reason = ANY(%s)) ORDER BY event_id',
+                   (event_key, entry_id, list(SETTLEMENT_CASH_REASONS.values())))
+    columns = _columns_of(cursor)
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
 def _record_settlement(conn, record: SettlementRecord, *, automatic) -> dict:
     record.validate()
     values = _settlement_values(record)
     with conn.transaction():
         cursor = conn.cursor()
+        if getattr(conn, '_papersim_managed_root', None) is not None:
+            _lock_settlement_entry(cursor, record.entry_id)
         paid_fee = None
         if automatic is not None:
             paid_fee = _validate_automatic_settlement(cursor, record, values, automatic)
@@ -685,26 +918,10 @@ def _record_settlement(conn, record: SettlementRecord, *, automatic) -> dict:
             stake, paid_fee = cursor.fetchone()
             if stake != values['proceeds']:
                 raise PapersimStoreError('papersim_voided_proceeds_mismatch')
-        cash = {
-            'event_key': record.event_key(),
-            'occurred_at': values['confirmed_at'],
-            'currency': 'USD',
-            'amount': record.cash_amount(entry_fee=paid_fee),
-            'reason': record.cash_reason(),
-            'entry_id': record.entry_id,
-            'scan_id': None,
-            'note': record.evidence,
-            'is_legacy': record.is_legacy,
-        }
+        cash = _terminal_cash_values(record, values['confirmed_at'], paid_fee)
         if inserted:
             cursor.execute(_CASH_INSERT, tuple(cash.values()))
-        cursor.execute('SELECT event_id, event_key, occurred_at, currency, amount, reason, '
-                       'entry_id, scan_id, note, is_legacy, reverses_event_id '
-                       'FROM papersim.bankroll_events WHERE event_key = %s '
-                       'OR (entry_id = %s AND reason = ANY(%s)) ORDER BY event_id',
-                       (cash['event_key'], record.entry_id, list(SETTLEMENT_CASH_REASONS.values())))
-        columns = _columns_of(cursor)
-        legs = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        legs = _terminal_cash_rows(cursor, record.entry_id, cash['event_key'])
         leg = next((row for row in legs if row['event_key'] == cash['event_key']), None)
         if leg is not None:
             leg['occurred_at'] = settle.utc_instant(leg['occurred_at'])
@@ -737,21 +954,28 @@ _CAPTURED_OUTCOME_SELECT = (
 
 
 def _opening_cash(cursor, entry: dict) -> settle.OpeningCash | settle.EntryCashDiscrepancy:
-    entry_id = entry['entry_id']
-    event_key = f'entry:{entry_id}:cash'
-    stake, fee = entry['stake'], entry['entry_fee']
-    expected = exact_sum(stake, fee).copy_negate()
+    return _check_opening_cash(entry, _opening_cash_rows(cursor, entry['entry_id']))
+
+
+def _opening_cash_rows(cursor, entry_id: int) -> list[dict]:
     cursor.execute(
         'SELECT b.event_id, b.event_key, b.occurred_at, b.currency, b.amount, b.reason, '
-        'b.entry_id, b.scan_id, b.is_legacy, b.reverses_event_id, '
+        'b.entry_id, b.scan_id, b.note, b.is_legacy, b.reverses_event_id, '
         'EXISTS (SELECT 1 FROM papersim.bankroll_events r '
         'WHERE r.reverses_event_id = b.event_id) AS reversed '
         'FROM papersim.bankroll_events b WHERE b.event_key = %s '
         "OR (b.entry_id = %s AND b.reason = 'SCAN_ENTRY') ORDER BY b.event_id",
-        (event_key, entry_id),
+        (f'entry:{entry_id}:cash', entry_id),
     )
     columns = _columns_of(cursor)
-    rows = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
+def _check_opening_cash(entry: dict, rows: list[dict]) -> settle.OpeningCash | settle.EntryCashDiscrepancy:
+    entry_id = entry['entry_id']
+    event_key = f'entry:{entry_id}:cash'
+    stake, fee = entry['stake'], entry['entry_fee']
+    expected = exact_sum(stake, fee).copy_negate()
     if len(rows) != 1:
         state = 'missing' if not rows else 'ambiguous'
         return settle.EntryCashDiscrepancy(entry_id, state,
@@ -847,6 +1071,116 @@ def open_entries_for_settlement(conn):
                 **{key: value for key, value in row.items() if key != 'scan_id'},
                 outcome=captured, opening_cash=opening, cash_discrepancy=discrepancy))
     return tuple(entries)
+
+
+def d1_read_settlement_snapshot(conn, sha256: str) -> dict | None:
+    """Read and rehash a registered source body in the active evidence view."""
+    from polymarket_alpha_lab.papersim import snapshots
+
+    row = snapshots.read_snapshot(conn, sha256)
+    if row is not None and (len(row['content']) != row['byte_length']
+                            or snapshots.snapshot_content_sha256(row['content']) != sha256):
+        raise PapersimStoreError('d1_settlement_source_snapshot_conflict')
+    return row
+
+
+def d1_resolution_entries(conn, *, team: str, entry_ids: list[int]) -> dict[int, dict]:
+    """Read the actual typed identities of entries nominated for acquisition."""
+    if not entry_ids:
+        return {}
+    cursor = conn.execute(
+        'SELECT e.entry_id, e.candidate_id, c.condition_id, c.market_id, c.market_slug, '
+        'c.yes_token_id, c.no_token_id ' + _ENTRY_JOIN
+        + 'WHERE c.team = %s AND e.entry_id = ANY(%s)', (team, entry_ids))
+    columns = _columns_of(cursor)
+    return {row[0]: dict(zip(columns, row, strict=True)) for row in cursor.fetchall()}
+
+
+_D1_SETTLE_ENTRIES = (
+    'SELECT ' + _ENTRY_COLUMNS + ', c.candidate_key, '
+    'EXISTS (SELECT 1 FROM papersim.marks m WHERE m.entry_id = e.entry_id AND m.is_close) AS exit_marked, '
+    'EXISTS (SELECT 1 FROM papersim.settlements s WHERE s.entry_id = e.entry_id) AS already_settled '
+    + _ENTRY_JOIN + 'WHERE c.team = %s AND e.entry_id = ANY(%s)'
+)
+_D1_OUTCOME_SELECT = 'SELECT outcome_id, ' + _OUTCOME_COLUMNS + ' FROM papersim.market_outcomes '
+
+
+def _cash_reversals(cursor, events: list[dict]) -> list[dict]:
+    if not events:
+        return []
+    cursor.execute('SELECT ' + _CASH_READ_COLUMNS + ' FROM papersim.bankroll_events '
+                   'WHERE reverses_event_id = ANY(%s) ORDER BY event_id',
+                   ([event['event_id'] for event in events],))
+    columns = _columns_of(cursor)
+    return [dict(zip(columns, values, strict=True)) for values in cursor.fetchall()]
+
+
+def d1_settlement_targets(conn, *, team: str, entry_ids: list[int],
+                          source_outcome_id: int | None = None) -> list[dict]:
+    """Read each nominated entry's facts in their original order and active view.
+
+    Give the scoped attempt every candidate outcome during planning. The
+    lock-time read supplies the originally selected ID and retrieves that
+    exact row, even if newer outcomes have appeared in the meantime.
+    """
+    if not entry_ids:
+        return []
+    cursor = conn.execute(_D1_SETTLE_ENTRIES, (team, entry_ids))
+    columns = _columns_of(cursor)
+    indexed = {row[0]: dict(zip(columns, row, strict=True)) for row in cursor.fetchall()}
+    results = []
+    for entry_id in entry_ids:
+        raw = indexed.get(entry_id)
+        if raw is None:
+            results.append({'entry_id': entry_id, 'state': 'MISSING', 'entry': None,
+                            'candidate': None, 'outcomes': [], 'cash_rows': [], 'opening_cash': None})
+            continue
+        state = 'ALREADY_SETTLED' if raw.pop('already_settled') else 'OPEN'
+        candidate = d1_candidate_capture_target(conn, scan_id=raw['scan_id'],
+                                                candidate_key=raw.pop('candidate_key'), settlement=True)
+        if source_outcome_id is None:
+            cursor.execute(_D1_OUTCOME_SELECT + 'WHERE condition_id = %s OR market_id = %s OR market_slug = %s '
+                           'ORDER BY outcome_id', tuple(raw[name] for name in settle.MARKET_IDENTITY_COLUMNS))
+        else:
+            cursor.execute(_D1_OUTCOME_SELECT + 'WHERE outcome_id = %s', (source_outcome_id,))
+        outcome_columns = _columns_of(cursor)
+        outcomes = [dict(zip(outcome_columns, row, strict=True)) for row in cursor.fetchall()]
+        cash = _opening_cash_rows(cursor, entry_id)
+        all_cash = sorted([*cash, *_cash_reversals(cursor, cash)], key=lambda row: row['event_id'])
+        results.append({'entry_id': entry_id, 'state': state, 'entry': raw, 'candidate': candidate,
+                        'outcomes': outcomes, 'cash_rows': all_cash, 'opening_cash': _check_opening_cash(raw, cash)})
+    return results
+
+
+def d1_settlement_rows(conn, record: SettlementRecord) -> dict:
+    """Read a settlement and every terminal cash row that could conflict."""
+    cursor = conn.execute('SELECT settlement_id, entry_id, ' + _SETTLEMENT_COLUMNS
+                          + ' FROM papersim.settlements WHERE entry_id = %s', (record.entry_id,))
+    columns = _columns_of(cursor)
+    settled = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    cash = _terminal_cash_rows(cursor, record.entry_id, record.event_key())
+    return {'settlements': settled, 'cash': cash, 'reversals': _cash_reversals(cursor, cash)}
+
+
+def d1_settlement_opening_rows(conn, entry_id: int) -> list[dict]:
+    """Read the entry's original opening debit and all immediate reversals."""
+    cursor = conn.cursor()
+    cash = _opening_cash_rows(cursor, entry_id)
+    return sorted([*cash, *_cash_reversals(cursor, cash)], key=lambda row: row['event_id'])
+
+
+def d1_compare_settlement_rows(rows: dict, record: SettlementRecord, opening: settle.OpeningCash) -> dict:
+    """Check the exact ledger decision and its single reasoned USD cash leg."""
+    values = _settlement_values(record)
+    settled, cash = rows['settlements'], rows['cash']
+    if len(settled) != 1 or settled[0]['entry_id'] != record.entry_id:
+        raise PapersimStoreError('papersim_settlement_conflict')
+    _compare_stored(settled[0], values, 'papersim_settlement_conflict')
+    expected = _terminal_cash_values(record, values['confirmed_at'], opening.paid_fee)
+    if (len(cash) != 1 or cash[0]['reverses_event_id'] is not None or rows['reversals']
+            or any(cash[0][name] != value for name, value in expected.items())):
+        raise PapersimStoreError('papersim_settlement_cash_mismatch')
+    return {'settlement_id': settled[0]['settlement_id'], 'cash_event_id': cash[0]['event_id']}
 
 
 def bankroll_daily_check(conn, request: BankrollCheckRequest) -> BankrollCheckResult:
@@ -948,6 +1282,11 @@ _COMMAND_RUN_INSERT = ('INSERT INTO papersim.command_run_events (run_event_key, 
                        'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s::jsonb,%s,%s) '
                        'RETURNING run_event_id')
 
+_COMMAND_RUN_READ = ('SELECT run_event_id, run_event_key, operation_key, attempt, phase, command, '
+                     'queue_id, scheduled_for, occurred_at, code_commit, config_digest, '
+                     'input_evidence, output_evidence, error_code, scan_id, '
+                     'paper_only, report_only, readonly FROM papersim.command_run_events ')
+
 _QUEUE_CONTROL_INSERT = ('INSERT INTO papersim.queue_control_events (control_key, queue_id, '
                          'control_kind, rule, rule_version, metrics, evidence_watermark, '
                          'reason, reviewed_by, observed_at, scan_id) '
@@ -975,6 +1314,40 @@ def _compare_rows(stored: dict, expected: dict, code: str) -> None:
                 raise PapersimStoreError(code)
             if _normalize(stored.get(column)) != _normalize(expected[column]):
                 raise PapersimStoreError(code)
+
+
+def read_command_run_event(conn, operation_key: str, attempt: int, phase: str) -> dict | None:
+    """Read the immutable first row's actual database ID and receipt clock."""
+    key = command_run_event_key(operation_key, attempt, phase)
+    with conn.transaction():
+        cursor = conn.execute(_COMMAND_RUN_READ + 'WHERE run_event_key = %s', (key,))
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        receipt = dict(zip(_columns_of(cursor), row, strict=True))
+        if (receipt['operation_key'], receipt['attempt'], receipt['phase']) != (operation_key, attempt, phase):
+            raise PapersimStoreError('papersim_command_run_conflict')
+        return receipt
+
+
+def d1_operation_receipts(conn, operation_key: str) -> list[dict]:
+    """Read the ordered append-only history for one operation identity."""
+    with conn.transaction():
+        cursor = conn.execute(_COMMAND_RUN_READ + 'WHERE operation_key = %s ORDER BY run_event_id',
+                              (operation_key,))
+        columns = _columns_of(cursor)
+        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+
+
+def d1_first_failed_item(conn, item_keys, *, command: str, before_attempt: int) -> dict | None:
+    """Find a committed item error even if its parent never recorded failure."""
+    with conn.transaction():
+        cursor = conn.execute(
+            _COMMAND_RUN_READ + "WHERE operation_key = ANY(%s) AND command = %s "
+            "AND attempt < %s AND phase = 'FAILED' ORDER BY run_event_id LIMIT 1",
+            (list(item_keys), command, before_attempt))
+        row = cursor.fetchone()
+        return None if row is None else dict(zip(_columns_of(cursor), row, strict=True))
 
 
 def record_command_run_event(conn, submission: CommandRunEventSubmission) -> dict:

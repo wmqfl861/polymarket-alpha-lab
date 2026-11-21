@@ -53,6 +53,7 @@ from __future__ import annotations
 import datetime
 from dataclasses import asdict, replace
 from decimal import Decimal, localcontext
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -65,6 +66,12 @@ import pytest
 
 from polymarket_alpha_lab.papersim import migrations as pm
 from polymarket_alpha_lab.papersim import settle, store
+from tests.test_papersim_capture_marks_native import (
+    _D1_NATIVE,
+    _d1_child,
+    _d1_register_binding,
+    d1_capture_project,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 ENABLED = os.environ.get('POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES') == '1'
@@ -1387,3 +1394,486 @@ def test_active_cash_enforcement_matches_the_released_migrations(cash_faces):
         "has_table_privilege(current_user, 'papersim.settlements', 'INSERT'), "
         "has_table_privilege(current_user, 'papersim.settlements', 'UPDATE'), "
         "current_user").fetchone() == (True, True, False, 'pal_app')
+
+
+def _d1_seed_settlement_entry(project, slug, *, side="YES", entered_at=None, team="crypto_eth",
+                               mismatch_token=False, market=None, extra_sources=()):
+    from polymarket_alpha_lab import replay
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.adapters import polymarket
+    from tests.test_papersim_scan_store_native import _eth_request
+
+    # These are completed, historical B1 fixtures with their original book.
+    entered = entered_at or datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=30)
+    decided = entered - datetime.timedelta(seconds=1)
+    received = entered - datetime.timedelta(seconds=2)
+    source_at = entered - datetime.timedelta(seconds=3)
+    if market is None:
+        condition = "0x" + hashlib.sha256(slug.encode()).hexdigest()
+        book_id = int(condition[2:16], 16)
+        yes, no = str(2 * book_id + 1), str(2 * book_id + 2)
+        market_id = slug
+        question = "Will Ethereum be below 2,000 at the end of this period?"
+        event = {}
+    else:
+        condition, market_id, question = (market[key] for key in ("conditionId", "id", "question"))
+        no, yes = json.loads(market["clobTokenIds"])
+        event = {"event_key": f"gamma:{market['events'][0]['id']}",
+                 "event_start_at": datetime.datetime.fromisoformat(market["gameStartTime"])}
+    token = yes if side == "YES" else no
+    epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+    book = {"asset_id": token, "market": condition,
+            "timestamp": str((source_at - epoch) // datetime.timedelta(milliseconds=1)),
+            "bids": [{"price": "0.54", "size": "5000"}],
+            "asks": [{"price": "0.56", "size": "5000"}]}
+    url = f"{polymarket.CLOB_BOOK_URL}?token_id={token}"
+    scan_key = f"run-scan|{team}|s1-fixture-{uuid.uuid4().hex}"
+    with store_psycopg.connect_managed(project.root) as app:
+        app.autocommit = True
+        digest = snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
+            json.dumps(book, sort_keys=True).encode(), polymarket.SOURCE_KIND_CLOB, url,
+            received))["content_sha256"]
+        request = replace(_eth_request(), market_id=market_id, question=question, book=[(0.56, 5000.0)],
+                          side=side.lower(), buy_side=side.lower(), book_time=received, now=decided,
+                          yes_token=yes, no_token=no, buy_token=token)
+        scan = replace(_scan_run(), team=team, code_commit=project.head, operation_key=scan_key,
+                       started_at=received, finished_at=entered)
+        decision = replace(_evidence(slug), observed_at=decided, market_ref_kind="condition_id",
+                           market_ref=condition, side=side,
+                           token_ref=(no if side == "YES" else yes) if mismatch_token else token,
+                           bid=Decimal("0.54"), ask=Decimal("0.56"), source_kind="clob_book",
+                           source_ref=f"{url}#{digest}", snapshot_sha256=digest)
+        candidate = replace(_candidate(slug), team=team, side=side, condition_id=condition,
+                            market_id=market_id, yes_token_id=yes, no_token_id=no, evaluated_at=decided,
+                            input_payload=replay.replay_bundle_payload(request),
+                            snapshot_refs=json.dumps([digest, *extra_sources]),
+                            entry=replace(_entry_submission(), entered_at=entered), price_evidence=(decision,), **event)
+        store_psycopg.record_command_run_event(app, store.CommandRunEventSubmission(
+            operation_key=scan_key, phase="STARTED", command="run-scan", occurred_at=received,
+            code_commit=project.head))
+        result = store_psycopg.record_scan(app, store.ScanSubmission(scan=scan, candidates=(candidate,)))
+        candidate_id = result["candidate_ids"][candidate.candidate_key]
+        store_psycopg.record_command_run_event(app, store.CommandRunEventSubmission(
+            operation_key=scan_key, phase="SUCCEEDED", command="run-scan", occurred_at=entered,
+            code_commit=project.head, scan_id=result["scan_id"]))
+        entry_id, = app.execute("SELECT entry_id FROM papersim.entries WHERE candidate_id = %s",
+                                (candidate_id,)).fetchone()
+    return {"entry_id": entry_id, "candidate_id": candidate_id, "scan_id": result["scan_id"],
+            "condition_id": condition, "market_id": market_id, "market_slug": slug, "yes_token_id": yes,
+            "no_token_id": no, "question": question, "entered_at": entered}
+
+
+def _d1_seed_settlement_outcome(project, entry, outcome, *, observed_at=None, confirmed_at=True,
+                                proven=True, source_prefix=""):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.adapters import polymarket
+
+    observed = observed_at or entry["entered_at"] + datetime.timedelta(minutes=2)
+    confirmed = observed + datetime.timedelta(seconds=5) if confirmed_at is True else confirmed_at
+    # Like the original integration, public Gamma lists No first. Independent
+    # outcomes must reconstruct the side map using labels, not array position.
+    prices = {"YES": ["0", "1"], "NO": ["1", "0"]}[outcome]
+    closed = entry["entered_at"] + datetime.timedelta(seconds=30)
+    body = {"id": entry["market_id"], "conditionId": entry["condition_id"], "slug": entry["market_slug"],
+            "question": entry["question"], "outcomes": '["No","Yes"]', "outcomePrices": json.dumps(prices),
+            "clobTokenIds": json.dumps([entry["no_token_id"], entry["yes_token_id"]]), "closed": True,
+            "endDate": closed.isoformat(), "closedTime": closed.isoformat()}
+    url = f"{polymarket.GAMMA_MARKET_PREFIX}{entry['market_slug']}"
+    with store_psycopg.connect_managed(project.root) as app:
+        digest = None
+        if proven:
+            digest = snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
+                json.dumps(body, sort_keys=True).encode(), polymarket.SOURCE_KIND_GAMMA, url,
+                observed))["content_sha256"]
+        observation = store.MarketOutcomeObservation(
+            **{field: entry[field] for field in (
+                "condition_id", "market_id", "market_slug", "yes_token_id", "no_token_id")},
+            outcome=outcome, observed_at=observed, confirmed_at=confirmed, source_kind="gamma_close",
+            source_ref=source_prefix + url, source_snapshot_sha256=digest)
+        return store_psycopg.record_market_outcome(app, observation)["outcome_id"]
+
+
+def _d1_register_settle_slot(project, entry_ids, *, team="crypto_eth", operator="unattended"):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import operations
+
+    config = hashlib.sha256(operations.document_bytes({"team": team, "operator": operator})).hexdigest()
+    with store_psycopg.connect_managed(project.root) as app:
+        interval = json.loads(snapshots.read_snapshot(app, project.interval_sha256)["content"])
+        scheduled = max(datetime.datetime.fromisoformat(interval["starts_at"]),
+                        store_psycopg.d1_database_time(app) + datetime.timedelta(milliseconds=250))
+        document = {"version": 1, "instance_id": project.instance_id, "interval_sha256": project.interval_sha256,
+                    "scheduled_for": scheduled, "deadline": scheduled + datetime.timedelta(seconds=75),
+                    "write_deadline": scheduled + datetime.timedelta(seconds=110), "leg": "new",
+                    "command": "settle", "team": team, "code_commit": project.head, "config_digest": config,
+                    "input_evidence": [], "scope": {"entry_ids": list(entry_ids)}}
+        key = operations.slot_operation_key(document)
+        _d1_register_binding(
+            app, document=document, kind="d1_operation_slot", source="d1:operation:slot:v1",
+            command="d1-register-slot", key_for=lambda _digest: f"d1:slot-binding:v1:{key.rsplit(':', 1)[1]}",
+            scheduled_for=scheduled, code_commit=project.head, config_digest=config)
+    return key, scheduled
+
+
+def _d1_settle_cli(project, slot, *, attempt=1, team="crypto_eth", operator="unattended"):
+    key, scheduled = slot
+    wait = (scheduled - datetime.datetime.now(datetime.UTC)).total_seconds()
+    if wait > 0:
+        time.sleep(wait)
+    return _d1_child(project, ["settle", "--managed", "--repo-root", str(project.root), "--team", team,
+                               "--operator", operator, "--operation-key", key, "--attempt", str(attempt)])
+
+
+def _d1_witness(conn, refs):
+    from polymarket_alpha_lab.papersim import snapshots
+
+    digest, length = (ref.split(":", 1)[1] for ref in refs)
+    row = snapshots.read_snapshot(conn, digest)
+    body = row["content"]
+    assert hashlib.sha256(body).hexdigest() == digest
+    assert len(body) == row["byte_length"] == int(length)
+    return json.loads(body)
+
+
+def _d1_receipts(conn, key):
+    return conn.execute(
+        "SELECT run_event_id, attempt, phase, occurred_at, error_code, output_evidence "
+        "FROM papersim.command_run_events WHERE operation_key = %s ORDER BY run_event_id", (key,)).fetchall()
+
+
+def _d1_entry_sql(conn, entry_ids):
+    selected = (list(entry_ids),)
+    rows = conn.execute(
+        "SELECT entry_id, settlement_id, source_outcome_id, classification, outcome_label, win_loss, "
+        "proceeds, pnl_gross, fee_total, fee_source, pnl_net, confirmed_by, confirmed_at, is_legacy, "
+        "paper_only, report_only, readonly FROM papersim.settlements WHERE entry_id = ANY(%s) ORDER BY entry_id",
+        selected).fetchall()
+    cash = conn.execute(
+        "SELECT event_id, event_key, entry_id, scan_id, reason, currency, amount, occurred_at, reverses_event_id, "
+        "is_legacy, paper_only, report_only, readonly FROM papersim.bankroll_events "
+        "WHERE entry_id = ANY(%s) OR reverses_event_id IN "
+        "(SELECT event_id FROM papersim.bankroll_events WHERE entry_id = ANY(%s)) ORDER BY event_id",
+        (*selected, *selected)).fetchall()
+    return rows, cash
+
+
+def _d1_cash_failure(project, entry_id, *, install):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    with store_psycopg.connect_owner(project.root) as owner, owner.transaction():
+        if install:
+            owner.execute("""
+                CREATE FUNCTION papersim.fixture_s1_abort_cash() RETURNS trigger LANGUAGE plpgsql AS $$
+                BEGIN
+                    IF NEW.entry_id::text = TG_ARGV[0] AND NEW.reason = 'SETTLE_NATURAL' THEN
+                        RAISE EXCEPTION 'fixture_s1_abort_cash';
+                    END IF;
+                    RETURN NEW;
+                END;
+                $$
+            """)
+            assert type(entry_id) is int and entry_id > 0
+            owner.execute("CREATE TRIGGER fixture_s1_abort_cash BEFORE INSERT ON papersim.bankroll_events "
+                          f"FOR EACH ROW EXECUTE FUNCTION papersim.fixture_s1_abort_cash('{entry_id}')")
+        else:
+            owner.execute("DROP TRIGGER fixture_s1_abort_cash ON papersim.bankroll_events")
+            owner.execute("DROP FUNCTION papersim.fixture_s1_abort_cash()")
+
+
+@_D1_NATIVE
+def test_d1_settle_recovers_committed_pending_and_failed_items_in_a_new_cli(d1_capture_project):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import operations
+
+    project = d1_capture_project
+    entries = [_d1_seed_settlement_entry(project, f"s1-recovery-{label}") for label in "abc"]
+    a, b, c = (entry["entry_id"] for entry in entries)
+    first_outcomes = [_d1_seed_settlement_outcome(project, entry, token)
+                      for entry, token in zip(entries, ("NO", "YES", "YES"), strict=True)]
+    with store_psycopg.connect_managed(project.root) as app:
+        b_open, b_debit = app.execute(
+            "SELECT event_id, amount FROM papersim.bankroll_events WHERE event_key = %s", (f"entry:{b}:cash",)
+        ).fetchone()
+        b_reversal = _insert_event(app, f"s1-reverse:{b}", minute=7, amount=b_debit.copy_negate(),
+                                   reason="REVERSAL", reverses=b_open)
+    slot = _d1_register_settle_slot(project, [a, b, c])
+    key, _scheduled = slot
+    _d1_cash_failure(project, c, install=True)
+    try:
+        first = _d1_settle_cli(project, slot)
+        assert (first.returncode, first.stdout, first.stderr.strip()) == (
+            1, "", "settle: FAIL: d1_operation_postgres_P0001")
+        with store_psycopg.connect_managed(project.root) as reader, reader.transaction():
+            reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+            assert reader.execute("SELECT current_user").fetchone() == ("pal_app",)
+            settlements, initial_cash = _d1_entry_sql(reader, (a, b, c))
+            settlement_a, = settlements
+            assert settlement_a[2:12] == (first_outcomes[0], "NATURAL", "NO", "loss", Decimal("0"),
+                                           Decimal("-250"), Decimal("7.70"), "schedule", Decimal("-257.70"),
+                                           "unattended")
+            first_terminal, = [row for row in initial_cash if row[1].startswith("settle:")]
+            assert first_terminal[1:9] == (f"settle:{a}", a, None, "SETTLE_NATURAL", "USD", Decimal(0),
+                                           settlement_a[12], None)
+            assert first_terminal[9:] == (False, True, True, True)
+            first_receipts = _d1_receipts(reader, key)
+            assert [(row[1], row[2], row[4]) for row in first_receipts] == [
+                (1, "STARTED", None), (1, "PREPARED", None), (1, "FAILED", "d1_operation_postgres_P0001")]
+            prepared = _d1_witness(reader, first_receipts[1][5])
+            assert datetime.datetime.fromisoformat(prepared["read_finished_at"]) <= first_receipts[1][3]
+            frozen = prepared["plan"]["targets"]
+            assert [row["identity"]["entry_id"] for row in frozen] == [a, b, c]
+            assert [row["source_outcome_id"] for row in frozen] == first_outcomes
+            assert frozen[1]["cash_discrepancy"] == {"state": "metadata", "event_ids": [b_open],
+                                                      "actual_amount": str(b_debit), "expected_amount": str(b_debit)}
+            assert [row["event_id"] for row in frozen[1]["cash_rows"]] == [b_open, b_reversal]
+            item_keys = [operations._target_key(key, target) for target in frozen]
+            item_rows = [_d1_receipts(reader, item_key) for item_key in item_keys]
+            assert [[(row[1], row[2]) for row in rows] for rows in item_rows] == [
+                [(1, "SUCCEEDED")], [(1, "SUCCEEDED")], [(1, "FAILED")]]
+            original_a, original_b, first_error = [_d1_witness(reader, rows[0][-1]) for rows in item_rows]
+            assert original_a["status"] == "SETTLED" and original_a["business_ids"] == {
+                "settlement_id": settlement_a[1], "cash_event_id": first_terminal[0]}
+            assert original_b["status"] == "PENDING" and original_b["cash_discrepancy"] == frozen[1]["cash_discrepancy"]
+            assert first_error["reason"] == "d1_operation_postgres_P0001"
+    finally:
+        _d1_cash_failure(project, c, install=False)
+
+    late = _d1_seed_settlement_outcome(project, entries[2], "NO",
+                                       observed_at=entries[2]["entered_at"] + datetime.timedelta(minutes=3))
+    outsider = _d1_seed_settlement_entry(project, "s1-recovery-new")["entry_id"]
+    second = _d1_settle_cli(project, slot, attempt=2)
+    assert second.returncode == 0, second.stderr
+    summary = json.loads(second.stdout)
+    assert summary["snapshot_entries"] == 3
+    assert [(row["entry_id"], row["inserted"]) for row in summary["settled"]] == [(a, False), (c, True)]
+    assert summary["pending"] == [{"entry_id": b, "reason": "entry_cash_mismatch",
+                                   "cash_discrepancy": frozen[1]["cash_discrepancy"]}]
+    assert summary["items"][0]["first_write"]["run_event_id"] == item_rows[0][0][0]
+    assert summary["items"][0]["first_write_at"] == original_a["write_finished_at"]
+    with store_psycopg.connect_managed(project.root) as reader, reader.transaction():
+        reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        settlements, cash = _d1_entry_sql(reader, (a, b, c, outsider))
+        assert [row[0] for row in settlements] == [a, c]
+        assert settlements[0] == settlement_a and first_terminal in cash
+        c_result = settlements[1]
+        assert c_result[2:10] == (first_outcomes[2], "NATURAL", "YES", "win", Decimal("446.4285714285714"),
+                                  Decimal("196.4285714285714"), Decimal("7.70"), "schedule")
+        assert c_result[2] != late and c_result[10] == Decimal("188.7285714285714")
+        c_terminal, = [row for row in cash if row[1] == f"settle:{c}"]
+        assert c_terminal[2:9] == (c, None, "SETTLE_NATURAL", "USD", c_result[6], c_result[12], None)
+        assert [row for row in cash if row[1] != f"entry:{outsider}:cash" and row != c_terminal] == initial_cash
+        retry_receipts = _d1_receipts(reader, key)
+        assert retry_receipts[:3] == first_receipts
+        assert [(row[1], row[2]) for row in retry_receipts[3:]] == [
+            (2, "STARTED"), (2, "RECOVERY_READ"), (2, "SUCCEEDED")]
+        recovery = _d1_witness(reader, retry_receipts[4][5])
+        assert recovery["prepared"]["run_event_id"] == first_receipts[1][0]
+        assert recovery["first_failure"]["run_event_id"] == first_receipts[2][0]
+        assert recovery["first_item_failure"]["run_event_id"] == item_rows[2][0][0]
+    repeat = _d1_settle_cli(project, slot, attempt=2)
+    assert repeat.returncode == 0, repeat.stderr
+    assert json.loads(repeat.stdout) == summary
+
+
+@_D1_NATIVE
+def test_d1_settle_rechecks_each_token_and_opening_cash_after_prepared(d1_capture_project):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import operations
+
+    project = d1_capture_project
+    entries = [_d1_seed_settlement_entry(project, f"s1-lock-{label}", side=side)
+               for label, side in (("token", "NO"), ("cash", "YES"), ("healthy", "YES"))]
+    b, c, a = (entry["entry_id"] for entry in entries)
+    outcomes = [_d1_seed_settlement_outcome(project, entry, "YES") for entry in entries]
+    slot = _d1_register_settle_slot(project, [b, c, a])
+    key, _scheduled = slot
+
+    with store_psycopg.connect_managed(project.root) as writer, store_psycopg.connect_managed(project.root) as observer:
+        writer.autocommit = observer.autocommit = True
+        with writer.transaction():
+            store_psycopg.d1_lock_settlement_entry(writer, b)
+            box, thread = _midflight_reader(lambda: _d1_settle_cli(project, slot))
+            deadline = time.monotonic() + 25
+            while time.monotonic() < deadline:
+                receipts = _d1_receipts(observer, key)
+                blocked = observer.execute(
+                    "SELECT pid FROM pg_locks WHERE locktype = 'advisory' AND NOT granted "
+                    "AND %s = ANY(pg_blocking_pids(pid))", (writer.info.backend_pid,)).fetchall()
+                if any(row[2] == "PREPARED" for row in receipts) and blocked:
+                    break
+                assert thread.is_alive(), box
+                time.sleep(0.02)
+            else:
+                pytest.fail("managed settle never waited for the entry lock after PREPARED")
+
+            original = store_psycopg.decision_time_evidence(writer, entries[0]["candidate_id"])
+            poison, = writer.execute(
+                "INSERT INTO papersim.candidate_price_evidence (evidence_key, candidate_id, evidence_role, "
+                "observed_at, market_ref_kind, market_ref, token_ref, side, bid, ask, snapshot_sha256, "
+                "source_kind, source_ref) VALUES (%s, %s, 'DECISION', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                "RETURNING evidence_id",
+                ("fixture-s1-contradictory-decision", original["candidate_id"], original["observed_at"],
+                 original["market_ref_kind"], original["market_ref"], entries[0]["yes_token_id"], original["side"],
+                 original["bid"], original["ask"], original["snapshot_sha256"], original["source_kind"],
+                 original["source_ref"])).fetchone()
+            opening, delta = writer.execute(
+                "SELECT event_id, amount FROM papersim.bankroll_events WHERE event_key = %s", (f"entry:{c}:cash",)
+            ).fetchone()
+            reversal = _insert_event(writer, f"s1-lock-reversal:{c}", minute=7, amount=delta.copy_negate(),
+                                     reason="REVERSAL", reverses=opening)
+        thread.join(75)
+        assert not thread.is_alive()
+        assert "error" not in box, box
+        completed = box["result"]
+        assert completed.returncode == 0, completed.stderr
+        summary = json.loads(completed.stdout)
+        assert [row["entry_id"] for row in summary["settled"]] == [a]
+        assert [(row["entry_id"], row["reason"]) for row in summary["pending"]] == [
+            (b, "d1_settlement_decision_binding_conflict"), (c, "entry_cash_mismatch")]
+        prepared_row = next(row for row in _d1_receipts(observer, key) if row[2] == "PREPARED")
+        plan = _d1_witness(observer, prepared_row[5])["plan"]["targets"]
+        assert [row["source_outcome_id"] for row in plan] == outcomes
+        assert [row["status"] for row in plan] == ["READY", "READY", "READY"]
+        original_token, actual_cash, _healthy = summary["items"]
+        assert plan[0]["binding"]["buy"]["buy_token_id"] == entries[0]["no_token_id"]
+        assert [row["evidence_id"] for row in plan[0]["candidate"]["decisions"]] == [original["evidence_id"]]
+        token_read = original_token["locked_read"]
+        assert [row["evidence_id"] for row in token_read["binding"]["candidate"]["decisions"]] == [
+            original["evidence_id"], poison]
+        assert prepared_row[3] <= datetime.datetime.fromisoformat(token_read["read_started_at"])
+        assert token_read["read_started_at"] <= token_read["read_finished_at"]
+        assert [row["event_id"] for row in plan[1]["cash_rows"]] == [opening]
+        assert [row["event_id"] for row in actual_cash["locked_read"]["cash_rows"]] == [opening, reversal]
+        assert actual_cash["cash_discrepancy"] == {"state": "metadata", "event_ids": [opening],
+                                                   "expected_amount": str(delta), "actual_amount": str(delta)}
+        assert actual_cash["locked_read"]["read_finished_at"] <= actual_cash["locked_read"]["cash_guard_at"]
+        for target in plan[:2]:
+            item, = _d1_receipts(observer, operations._target_key(key, target))
+            proof = _d1_witness(observer, item[5])
+            assert proof["status"] == "PENDING"
+            assert proof["business_ids"] == {"cash_event_id": None, "settlement_id": None}
+        settlements, cash = _d1_entry_sql(observer, (a, b, c))
+        assert len(settlements) == 1 and settlements[0][:6] == (
+            a, summary["settled"][0]["settlement_id"], outcomes[2], "NATURAL", "YES", "win")
+        assert [row[2] for row in cash if row[4] in store.SETTLEMENT_CASH_REASONS.values()] == [a]
+
+
+@_D1_NATIVE
+def test_d1_settle_validates_opposite_purchases_and_preexisting_source_per_entry(d1_capture_project):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    project = d1_capture_project
+    entered = datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=30)
+    yes = _d1_seed_settlement_entry(project, "s1-same-market", entered_at=entered)
+    no = _d1_seed_settlement_entry(project, "s1-same-market", entered_at=entered, side="NO")
+    contradictory = _d1_seed_settlement_entry(project, "s1-same-market", side="NO", mismatch_token=True,
+                                               entered_at=entered)
+    no_original = _d1_seed_settlement_entry(project, "s1-no-original", entered_at=entered)
+    new_without_origin = _d1_seed_settlement_entry(project, "s1-no-first-witness", entered_at=entered)
+    reentry = _d1_seed_settlement_entry(project, "s1-same-market", entered_at=entered + datetime.timedelta(minutes=5))
+    foreign = _d1_seed_settlement_entry(project, "s1-foreign", entered_at=entered, team="other_team")
+    outcome = _d1_seed_settlement_outcome(project, yes, "YES")
+    unproven = _d1_seed_settlement_outcome(project, no_original, "YES", proven=False)
+    no_witness = _d1_seed_settlement_outcome(project, new_without_origin, "YES",
+                                            source_prefix="d1:public-resolution:v1:")
+    _d1_seed_settlement_outcome(project, foreign, "YES")
+    ids = [row["entry_id"] for row in (yes, no, contradictory, no_original, new_without_origin, reentry, foreign)]
+    slot = _d1_register_settle_slot(project, ids)
+    result = _d1_settle_cli(project, slot)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads(result.stdout)
+    assert [row["entry_id"] for row in summary["settled"]] == ids[:2]
+    assert [(row["entry_id"], row["reason"]) for row in summary["pending"]] == list(zip(ids[2:], (
+        "d1_settlement_decision_binding_conflict", "d1_settlement_snapshot_missing",
+        "d1_settlement_first_write_unproven", "no_captured_outcome", "d1_settlement_entry_missing"), strict=True))
+    with store_psycopg.connect_managed(project.root) as reader, reader.transaction():
+        reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        settlements, cash = _d1_entry_sql(reader, ids)
+        assert [(row[0], row[2], row[5], row[6]) for row in settlements] == [
+            (ids[0], outcome, "win", Decimal("446.4285714285714")), (ids[1], outcome, "loss", Decimal(0))]
+        terminal = [row for row in cash if row[4] in store.SETTLEMENT_CASH_REASONS.values()]
+        assert [(row[1], row[2], row[4], row[5], row[6], row[8]) for row in terminal] == [
+            (f"settle:{ids[0]}", ids[0], "SETTLE_NATURAL", "USD", settlements[0][6], None),
+            (f"settle:{ids[1]}", ids[1], "SETTLE_NATURAL", "USD", Decimal(0), None)]
+        prepared = next(row for row in _d1_receipts(reader, slot[0]) if row[2] == "PREPARED")
+        targets = _d1_witness(reader, prepared[5])["plan"]["targets"]
+        assert [target["source_outcome_id"] for target in targets] == [outcome, outcome, outcome, unproven,
+                                                                      no_witness, None, None]
+        assert targets[0]["binding"]["buy"]["buy_token_id"] == yes["yes_token_id"]
+        assert targets[1]["binding"]["buy"]["buy_token_id"] == no["no_token_id"]
+        assert all(target["binding"]["winning_token_id"] == yes["yes_token_id"] for target in targets[:2])
+        assert all(target["binding"]["outcome_first_write"] is None for target in targets[:2])
+        assert targets[5]["outcomes"][0]["outcome_id"] == outcome
+        assert targets[5]["cash_rows"][0]["event_key"] == f"entry:{ids[5]}:cash"
+
+
+@_D1_NATIVE
+def test_d1_settle_books_completed_basketball_including_overtime_and_explicit_push(d1_capture_project):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from tests.test_papersim_report import _FIXTURE_FULL_GAME_RULE, _nba_fixture, _nba_gamma_snapshot, _nba_score_snapshot
+
+    project = d1_capture_project
+    moneyline, score = _nba_fixture()
+    tip = datetime.datetime.now(datetime.UTC).replace(microsecond=0) - datetime.timedelta(hours=5)
+    closed = tip + datetime.timedelta(hours=3)
+    fetched = closed + datetime.timedelta(minutes=2)
+    day = tip.date().isoformat()
+    event, = moneyline["events"]
+    event.update(slug=f"nba-orl-gsw-{day}", eventDate=day, startTime=tip.isoformat())
+    moneyline.update(slug=event["slug"], gameStartTime=tip.isoformat(), closedTime=closed.isoformat())
+    score["header"]["competitions"][0]["date"] = tip.isoformat()
+    total = {**moneyline, "id": "914", "conditionId": "0x" + "b" * 64,
+             "slug": event["slug"] + "-total-230", "sportsMarketType": "totals",
+             "question": "Magic vs. Warriors: O/U 230", "outcomes": '["Over","Under"]',
+             "clobTokenIds": '["1000000101","1000000102"]', "outcomePrices": '["0.5","0.5"]', "line": 230,
+             "description": "\n".join((
+                 'If the combined final score is more than 230 points, the market will resolve to "Over".',
+                 'If the combined final score is less than 230 points, the market will resolve to "Under".',
+                 'If the combined final score is exactly 230 points, the market will resolve 50-50.',
+                 _FIXTURE_FULL_GAME_RULE))}
+    score_row = _nba_score_snapshot(score)
+    with store_psycopg.connect_managed(project.root) as app:
+        score_digest = snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
+            score_row["content"], score_row["kind"], score_row["source"], fetched))["content_sha256"]
+    rows, outcomes = [], []
+    for market, outcome in ((moneyline, "YES"), (total, "VOIDED")):
+        gamma = _nba_gamma_snapshot(market)
+        with store_psycopg.connect_managed(project.root) as app:
+            market_digest = snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
+                gamma["content"], gamma["kind"], gamma["source"], fetched))["content_sha256"]
+        entry = _d1_seed_settlement_entry(project, market["slug"], market=market, team="basketball",
+                                          entered_at=tip - datetime.timedelta(minutes=5),
+                                          extra_sources=(score_digest, market_digest))
+        rows.append(entry)
+        with store_psycopg.connect_managed(project.root) as app:
+            observation = store.MarketOutcomeObservation(
+                **{key: entry[key] for key in ("condition_id", "market_id", "market_slug", "yes_token_id", "no_token_id")},
+                observed_at=fetched, confirmed_at=fetched, outcome=outcome, source_kind="gamma_close",
+                source_ref=gamma["source"], source_snapshot_sha256=market_digest)
+            outcomes.append(store_psycopg.record_market_outcome(app, observation)["outcome_id"])
+
+    ids = [row["entry_id"] for row in rows]
+    slot = _d1_register_settle_slot(project, ids, team="basketball")
+    cli = _d1_settle_cli(project, slot, team="basketball")
+    assert cli.returncode == 0, cli.stderr
+    result = json.loads(cli.stdout)
+    assert [(row["entry_id"], row["classification"]) for row in result["settled"]] == [
+        (ids[0], "NATURAL"), (ids[1], "VOIDED_REFUND")]
+    assert result["pending"] == []
+    with store_psycopg.connect_managed(project.root) as reader, reader.transaction():
+        reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        settlements, cash = _d1_entry_sql(reader, ids)
+        money, refund = settlements
+        assert money[2:6] == (outcomes[0], "NATURAL", "YES", "win")
+        assert refund[2:9] == (outcomes[1], "VOIDED_REFUND", "VOIDED", None, Decimal(250), Decimal(0), Decimal(0))
+        refund_cash, = [row for row in cash if row[4] == "VOIDED_REFUND"]
+        assert refund_cash[1:9] == (f"settle:{ids[1]}", ids[1], None, "VOIDED_REFUND", "USD", Decimal("257.70"),
+                                    fetched, None)
+        prepared = next(row for row in _d1_receipts(reader, slot[0]) if row[2] == "PREPARED")
+        plan = _d1_witness(reader, prepared[5])["plan"]["targets"]
+        for target in plan:
+            proof = target["binding"]["outcome_proof"]
+            assert proof["regulation_score"] == {"home": 110, "away": 110}
+            assert proof["final_score"] == {"home": 118, "away": 112}
+            assert proof["overtime_periods"] == 1 and proof["resolution_period"] == "full_game_including_overtime"
+        assert plan[1]["binding"]["winning_token_id"] is None

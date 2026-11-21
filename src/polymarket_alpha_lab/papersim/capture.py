@@ -47,6 +47,11 @@ original mark cadence is unknowable from the repo; B2 is deliberately
 cadence-agnostic -- marks arrive as prepared packs exactly like run-scan
 and scheduling belongs to the server cron recorded in the receipts.
 
+A registered D1 operation freezes the pack, B1 candidate and sealed CLOB
+observation before writing. Each target is then attributed to its own
+managed result so interrupted attempts can verify and resume the original
+denominator.
+
 Purity profile: the config/pack parsers, the FX-34 classifier and the
 record builders are pure over their explicit inputs; ``run_capture`` is
 the only stateful driver and takes every external dependency as an
@@ -64,8 +69,10 @@ from __future__ import annotations
 
 import datetime
 import json
+import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -433,6 +440,449 @@ def has_any_price(observation: MarkObservation) -> bool:
                              observation.mid, observation.last))
 
 
+# PostgreSQL numeric has no typmod on the quote columns. It can store at
+# most 16,383 fractional places, including any leading fractional zeros.
+_NUMERIC_FRACTIONAL_PLACES = 16_383
+_DECIMAL_TEXT = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
+_PRICE_FIELDS = ("bid", "ask", "mid", "last")
+_CLOB_MARK_SOURCE = "clob_book"
+_DOWNGRADE_LATE_RECEIPT = "received_at_after_event_start"
+_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+_MICROSECOND = datetime.timedelta(microseconds=1)
+
+
+def _book_number(value: Any, name: str, *, allow_text: bool) -> Decimal:
+    if type(value) in (int, Decimal):
+        number = Decimal(value)
+    elif allow_text and type(value) is str and _DECIMAL_TEXT.fullmatch(value):
+        try:
+            number = Decimal(value)
+        except InvalidOperation:
+            raise CaptureError("d1_capture_price_invalid", name) from None
+    else:
+        raise CaptureError("d1_capture_price_invalid", name)
+    if not number.is_finite():
+        raise CaptureError("d1_capture_price_invalid", name)
+    return number
+
+
+def _exact_price(number: Decimal, name: str) -> Decimal:
+    if not 0 <= number <= 1:
+        raise CaptureError("d1_capture_price_invalid", name)
+    if not number:
+        return Decimal(0)
+    sign, digits, exponent = number.as_tuple()
+    excess = -exponent - _NUMERIC_FRACTIONAL_PLACES
+    if excess <= 0:
+        return number
+    if excess >= len(digits) or any(digits[-excess:]):
+        raise CaptureError("d1_capture_price_not_exact", name)
+    return Decimal((sign, digits[:-excess], exponent + excess))
+
+
+def _best_book_price(levels: Any, name: str, *, best: Callable) -> Decimal | None:
+    # The public adapter accepts empty sides and nonnegative sizes. Executable
+    # levels require prices in (0, 1), including when the size is zero.
+    if type(levels) is not list:
+        raise CaptureError("d1_capture_book_levels_invalid", name)
+    prices = []
+    for level in levels:
+        if type(level) is not dict:
+            raise CaptureError("d1_capture_book_levels_invalid", name)
+        price = _book_number(level.get("price"), f"{name}.price", allow_text=True)
+        size = _book_number(level.get("size"), f"{name}.size", allow_text=True)
+        if not 0 < price < 1 or size < 0:
+            raise CaptureError("d1_capture_book_levels_invalid", name)
+        prices.append(price)
+    price = best(prices, default=None)
+    return None if price is None else _exact_price(price, name)
+
+
+def _d1_book_prices(body: dict) -> dict[str, Decimal | None]:
+    bid = _best_book_price(body.get("bids"), "bid", best=max)
+    ask = _best_book_price(body.get("asks"), "ask", best=min)
+    if bid is not None and ask is not None and bid > ask:
+        raise CaptureError("papersim_bid_ask_crossed")
+    # The /book contract supplies a ladder and may include last_trade_price.
+    # There is no midpoint observation in this source contract.
+    last = body.get("last_trade_price")
+    if last is not None:
+        last = _exact_price(_book_number(last, "last", allow_text=True), "last")
+    return {"bid": bid, "ask": ask, "mid": None, "last": last}
+
+
+@dataclass(frozen=True)
+class _D1BookSources:
+    manifest_sha256: str
+    manifest: dict
+    receipt: dict
+    cutoff: datetime.datetime
+    freshness_as_of: datetime.datetime
+    max_source_age_seconds: int
+    max_receipt_age_seconds: int
+
+
+def _d1_book_sources(conn, slot) -> _D1BookSources:
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    digest = slot.scope.get("capture_manifest_sha256")
+    policy = slot.scope.get("book_age_policy")
+    if (not isinstance(policy, dict)
+            or any(type(policy.get(name)) is not int or policy[name] < 0
+                   for name in ("max_source_age_seconds", "max_receipt_age_seconds"))):
+        raise CaptureError("d1_capture_book_age_policy_unregistered")
+    try:
+        if type(digest) is not str or snapshots.snapshot_digest_argument(digest) != digest:
+            raise CaptureError("d1_capture_manifest_invalid")
+        manifest = acquire._load_batch(conn, digest)
+        scope = manifest["scope"]
+        scope_sha = acquire._digest(acquire._canonical(scope))
+        start = _pack_datetime(scope["window_start"], "window_start")
+        end = _pack_datetime(scope["window_end"], "window_end")
+        started = _pack_datetime(manifest["started_at"], "started_at")
+        sealed = _pack_datetime(manifest["sealed_at"], "sealed_at")
+        cutoff = _pack_datetime(manifest["decision_as_of"], "decision_as_of")
+        window_status = manifest["coverage"]["window_status"]
+    except (KeyError, TypeError, ValueError) as error:
+        raise CaptureError("d1_capture_manifest_invalid") from error
+    receipt = store_psycopg.read_command_run_event(
+        conn, f"{acquire._OPERATION_PREFIX}:{scope_sha}", 1, "SUCCEEDED")
+    if (manifest["capture_version"] != 2 or window_status != "sealed_inside"
+            or not (start <= started <= cutoff == sealed < end)
+            or receipt is None or receipt["command"] != "capture-inputs"
+            or receipt["config_digest"] != scope_sha or receipt["output_evidence"] != [digest]
+            or receipt["scheduled_for"] != start
+            or not sealed <= receipt["occurred_at"] <= slot.registered_at < slot.deadline
+            or any(receipt[flag] is not True for flag in ("paper_only", "report_only", "readonly"))):
+        raise CaptureError("d1_capture_manifest_receipt_invalid")
+    # An earlier capture can supply a later slot only while its source and
+    # receipt remain fresh at that slot's fixed decision point.
+    return _D1BookSources(digest, manifest, receipt, cutoff, max(cutoff, slot.scheduled_for),
+                          policy["max_source_age_seconds"], policy["max_receipt_age_seconds"])
+
+
+def _d1_candidate_token(candidate: dict, observation: MarkObservation, team: str,
+                        allowed_ids: set[int]) -> str:
+    from polymarket_alpha_lab import replay
+
+    if candidate["candidate_id"] not in allowed_ids:
+        raise CaptureError("d1_capture_candidate_outside_slot")
+    if candidate["is_legacy"] or candidate["team"] != team:
+        raise CaptureError("d1_capture_candidate_team_invalid")
+    receipts = {receipt["phase"]: receipt for receipt in candidate["scan_receipts"]}
+    started = receipts.get("STARTED")
+    succeeded = receipts.get("SUCCEEDED")
+    if (started is None or succeeded is None
+            or started["attempt"] != succeeded["attempt"]
+            or started["code_commit"] != candidate["scan_code_commit"]
+            or succeeded["code_commit"] != candidate["scan_code_commit"]
+            or succeeded["scan_id"] != candidate["scan_id"]
+            or not (candidate["scan_started_at"] <= started["occurred_at"]
+                    <= candidate["scan_finished_at"] <= succeeded["occurred_at"])):
+        raise CaptureError("d1_capture_b1_receipt_missing")
+    side = candidate["side"]
+    yes_token, no_token = candidate["yes_token_id"], candidate["no_token_id"]
+    if (side not in ("YES", "NO") or side != observation.side or not yes_token or not no_token
+            or yes_token == no_token):
+        raise CaptureError("d1_capture_candidate_side_invalid")
+    token = yes_token if side == "YES" else no_token
+    if observation.token_ref != token:
+        raise CaptureError("d1_capture_buy_token_mismatch")
+    refs = {"condition_id": candidate["condition_id"], "market_id": candidate["market_id"],
+            "market_slug": candidate["market_slug"], "token_id": token}
+    if refs[observation.market_ref_kind] != observation.market_ref:
+        raise CaptureError("d1_capture_candidate_market_mismatch")
+    decisions = candidate["decisions"]
+    if not decisions or any(
+            row["token_ref"] != token or row["side"] != side
+            or refs[row["market_ref_kind"]] != row["market_ref"]
+            for row in decisions):
+        raise CaptureError("d1_capture_decision_binding_mismatch")
+    try:
+        request = replay.request_from_replay_bundle(candidate["input_payload"])
+    except replay.PapersimReplayError as error:
+        raise CaptureError("d1_capture_b1_request_invalid") from error
+    request_side = request.buy_side or request.side
+    if type(request_side) is not str:
+        raise CaptureError("d1_capture_b1_buy_binding_mismatch")
+    request_side = request_side.upper()
+    if (request.market_id != candidate["market_id"] or request.buy_token not in (None, token)
+            or request.yes_token not in (None, yes_token) or request.no_token not in (None, no_token)
+            or (request_side != side and (request_side in ("YES", "NO") or request.buy_token is None))):
+        raise CaptureError("d1_capture_b1_buy_binding_mismatch")
+    return token
+
+
+def _d1_book_clock(value: Any) -> datetime.datetime:
+    if type(value) is str and re.fullmatch(r"[0-9]{1,14}", value):
+        value = int(value)
+    if type(value) is not int:
+        raise CaptureError("d1_capture_book_source_time_missing")
+    try:
+        return _EPOCH + datetime.timedelta(milliseconds=value)
+    except OverflowError as error:
+        raise CaptureError("d1_capture_book_source_time_invalid") from error
+
+
+def _d1_quote(conn, sources: _D1BookSources, candidate: dict,
+              observation: MarkObservation, token: str, evidence: dict) -> tuple[dict, datetime.datetime]:
+    from polymarket_alpha_lab.papersim.adapters import polymarket
+    from polymarket_alpha_lab.papersim.d1compare import acquire, journal
+
+    markets = [market for market in sources.manifest["markets"]
+               if all(candidate[key] in (None, market[field]) for key, field in (
+                   ("condition_id", "condition_id"), ("market_id", "market_id"), ("market_slug", "slug")))
+               and market["side_tokens"] == {"YES": candidate["yes_token_id"], "NO": candidate["no_token_id"]}]
+    if len(markets) != 1:
+        raise CaptureError("d1_capture_source_market_mismatch")
+    condition = markets[0]["condition_id"]
+    books = [book for book in sources.manifest["books"]
+             if book["token_id"] == token and book["condition_id"] == condition]
+    if len(books) != 1 or books[0]["request_sequence"] is None:
+        raise CaptureError("d1_capture_source_book_missing")
+    book = books[0]
+    sequence = book["request_sequence"]
+    requests = sources.manifest["requests"]
+    if type(sequence) is not int or not 1 <= sequence <= len(requests):
+        raise CaptureError("d1_capture_manifest_request_invalid")
+    row = requests[sequence - 1]
+    digest = row["content_sha256"]
+    evidence.update({"condition_id": condition, "token_id": token, "request_sequence": sequence,
+                     "url": row["url"], "snapshot_sha256": digest, "byte_length": row["byte_length"],
+                     "source_observed_at": row["source_observed_at"], "received_at": row["utc_fetched_at"],
+                     "request_status": row["status"], "request_reason": row["reason_code"]})
+    try:
+        source, meta = acquire._request_fields(row["url"])
+    except acquire.AcquisitionError as error:
+        raise CaptureError("d1_capture_manifest_request_invalid") from error
+    if (source != polymarket.SOURCE_KIND_CLOB or row["source_kind"] != source
+            or row["sequence"] != sequence or row["request_meta"] != meta
+            or meta["query"].get("token_id") != token):
+        raise CaptureError("d1_capture_manifest_request_invalid")
+    if digest is None:
+        raise CaptureError("d1_capture_source_book_missing")
+    try:
+        raw = acquire._snapshot(conn, digest)["content"]
+        body = journal.decode_public_json(raw)
+    except (acquire.AcquisitionError, journal.JournalError) as error:
+        raise CaptureError(error.code) from error
+    if len(raw) != row["byte_length"] or not isinstance(body, dict):
+        raise CaptureError("d1_capture_source_book_invalid")
+    if body.get("asset_id") != token or body.get("market") not in (None, condition):
+        raise CaptureError("d1_capture_source_book_identity_mismatch")
+    if (observation.source_kind != _CLOB_MARK_SOURCE or observation.snapshot_sha256 != digest
+            or observation.source_ref != f"{row['url']}#{digest}"):
+        raise CaptureError("d1_capture_source_citation_mismatch")
+    if (book["reason_code"] is not None or row["status"] != "received"
+            or row["window_status"] != "in_window" or row["source_time_status"] != "upstream"):
+        raise CaptureError("d1_capture_source_book_unusable")
+    observed_at = _d1_book_clock(body.get("timestamp"))
+    received_at = _pack_datetime(row["utc_fetched_at"], "received_at")
+    if (observed_at != _pack_datetime(row["source_observed_at"], "source_observed_at")
+            or observed_at != observation.observed_at or not observed_at <= received_at <= sources.cutoff):
+        raise CaptureError("d1_capture_book_time_mismatch")
+    for stamp, limit in ((observed_at, sources.max_source_age_seconds),
+                         (received_at, sources.max_receipt_age_seconds)):
+        if (sources.freshness_as_of - stamp) // _MICROSECOND > limit * 1_000_000:
+            raise CaptureError("d1_capture_book_stale")
+    return _d1_book_prices(body), received_at
+
+
+def _d1_capture_materials(conn, sources: _D1BookSources, target: dict, raw: dict,
+                          observation: MarkObservation, team: str, allowed_ids: set[int]):
+    candidate = target["candidate"]
+    if candidate is None:
+        raise CaptureError("papersim_capture_candidate_missing")
+    token = _d1_candidate_token(candidate, observation, team, allowed_ids)
+    prices, received_at = _d1_quote(conn, sources, candidate, observation, token, target["source"])
+    target["observed_prices"] = {name: None if value is None else str(value) for name, value in prices.items()}
+    claims = {}
+    differences = {}
+    for name, value in prices.items():
+        claim = raw.get(name)
+        try:
+            claims[name] = None if claim is None else _exact_price(_book_number(claim, name, allow_text=False), name)
+        except CaptureError as error:
+            differences[name] = {"observed": target["observed_prices"][name], "claimed": target["claimed_prices"][name]}
+            target["quote_differences"] = differences
+            raise error
+        if claims[name] != value:
+            differences[name] = {"observed": target["observed_prices"][name], "claimed": target["claimed_prices"][name]}
+    if differences:
+        target["quote_differences"] = differences
+        raise CaptureError("d1_capture_quote_mismatch")
+    priced = replace(observation, **claims)
+    event_start = candidate["event_start_at"]
+    boundary = None if event_start is None else _pack_datetime(event_start, "event_start_at")
+    kind, downgrade = classify_observation(priced.sampling_kind, priced.observed_at, boundary)
+    if kind == "CLOSE" and received_at >= boundary:
+        kind, downgrade = "PERIODIC", _DOWNGRADE_LATE_RECEIPT
+    target.update(sampling_kind=kind, downgrade=downgrade)
+    if not has_any_price(priced):
+        target.update(status="MISSING_QUOTE", reason="d1_capture_no_quote")
+        return None, None
+    capture = capture_from_observation(priced, candidate_id=candidate["candidate_id"],
+                                       sampling_kind=kind, pack_snapshot_sha256=target["identity"]["pack_sha256"])
+    close = None
+    if kind == "CLOSE":
+        close = close_evidence_from_observation(priced, pack_snapshot_sha256=target["identity"]["pack_sha256"])
+        store.validate_evidence_time_order(
+            _pack_datetime(candidate["decisions"][0]["observed_at"], "decision_observed_at"),
+            close.observed_at, event_start_at=boundary)
+        close.validate()
+    capture.validate()
+    for material in (capture, close) if close is not None else (capture,):
+        if any(getattr(material, name) != value for name, value in prices.items()):
+            raise CaptureError("d1_capture_write_quote_mismatch")
+    return capture, close
+
+
+def _d1_capture_plan(conn, slot, packs, input_evidence, *, team: str, frozen=None):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import journal, operations
+
+    sources = _d1_book_sources(conn, slot)
+    allowed_ids = slot.scope.get("candidate_ids")
+    if (type(allowed_ids) is not list or any(type(cid) is not int or cid < 1 for cid in allowed_ids)
+            or len(allowed_ids) != len(set(allowed_ids))):
+        raise CaptureError("d1_capture_candidate_scope_invalid")
+    allowed = set(allowed_ids)
+    targets, materials = [], []
+    reads = {}
+    for pack_index, (pack, record) in enumerate(zip(packs, input_evidence, strict=True)):
+        try:
+            document = journal.decode_public_json(pack.content)
+        except journal.JournalError as error:
+            raise CaptureError("papersim_capture_pack_invalid", "not valid JSON") from error
+        if type(document) is not list:
+            raise CaptureError("papersim_capture_pack_invalid", "pack must be a JSON array")
+        for observation_index, raw in enumerate(document):
+            target = {
+                "identity": {"candidate_id": None, "pack_sha256": record["snapshot_sha256"],
+                             "pack_index": pack_index, "observation_index": observation_index},
+                "candidate": None, "status": "REJECTED", "reason": None,
+                "source": {"manifest_sha256": sources.manifest_sha256},
+                "mark": None, "close": None,
+            }
+            pair = (None, None)
+            try:
+                if type(raw) is not dict:
+                    raise CaptureError("papersim_capture_pack_invalid", "observations must be objects")
+                target["claimed_prices"] = {}
+                for name in _PRICE_FIELDS:
+                    value = raw.get(name)
+                    if type(value) is Decimal:
+                        value = str(value)
+                    elif type(value) not in (str, bool, int, type(None)):
+                        value = {"invalid_type": type(value).__name__}
+                    target["claimed_prices"][name] = value
+                observation = _observation_from_mapping({key: value for key, value in raw.items()
+                                                         if key not in _PRICE_FIELDS})
+                target.update(observation=operations.canonical_document(asdict(observation)),
+                              requested_sampling_kind=observation.sampling_kind)
+                reference = (observation.scan_id, observation.scan_operation_key, observation.candidate_key)
+                if frozen is not None:
+                    if len(targets) >= len(frozen):
+                        raise CaptureError("d1_capture_prepared_plan_mismatch")
+                    candidate = frozen[len(targets)]["candidate"]
+                else:
+                    if reference not in reads:
+                        reads[reference] = operations.canonical_document(
+                            store_psycopg.d1_candidate_capture_target(
+                                conn, scan_id=observation.scan_id, scan_operation_key=observation.scan_operation_key,
+                                candidate_key=observation.candidate_key))
+                    candidate = reads[reference]
+                target["candidate"] = candidate
+                if candidate is not None:
+                    target["identity"]["candidate_id"] = candidate["candidate_id"]
+                pair = _d1_capture_materials(conn, sources, target, raw, observation, team, allowed)
+                mark, close = pair
+                if mark is not None:
+                    target.update(status="READY", reason=None, mark=operations.canonical_document(mark.comparison()),
+                                  close=None if close is None else operations.canonical_document(asdict(close)))
+            except (CaptureError, store.PapersimStoreError) as error:
+                target.update(status="REJECTED", reason=error.code)
+                if isinstance(error, CaptureError) and error.detail:
+                    target["reason_detail"] = error.detail
+            targets.append(target)
+            materials.append(pair)
+    plan = operations.canonical_document({
+        "capture_manifest_sha256": sources.manifest_sha256,
+        "capture_receipt": sources.receipt, "decision_as_of": sources.cutoff,
+        "freshness_as_of": sources.freshness_as_of, "targets": targets,
+    })
+    return plan, materials
+
+
+def _d1_capture_summary(config: CaptureConfig, code_commit: str, input_evidence, targets, items) -> dict:
+    source_kinds: dict[str, int] = {}
+    downgrades = {DOWNGRADE_MISSING_EVENT_START: 0, DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START: 0,
+                  _DOWNGRADE_LATE_RECEIPT: 0}
+    for target in targets:
+        observation = target.get("observation")
+        if observation is not None:
+            source = observation["source_kind"]
+            source_kinds[source] = source_kinds.get(source, 0) + 1
+        if target["status"] == "READY" and target.get("downgrade") is not None:
+            downgrades[target["downgrade"]] += 1
+    return {
+        "command": CAPTURE_COMMAND, "team": config.team, "operator": config.operator, "code_commit": code_commit,
+        "packs": [{"pack": item["pack"], "snapshot_sha256": item["snapshot_sha256"]} for item in input_evidence],
+        "candidates_seen": len({target["identity"]["candidate_id"] for target in targets
+                                if target["candidate"] is not None}),
+        "observations": len(targets),
+        "marks_written": sum(item["candidate_mark_id"] is not None for item in items),
+        "close_eligible": sum(target["close"] is not None for target in targets),
+        "close_evidence_written": sum(item["close_evidence_id"] is not None for item in items),
+        "downgraded_to_periodic": sum(downgrades.values()), "downgrade_reasons": downgrades,
+        "missing_event_start": len({target["identity"]["candidate_id"] for target in targets
+                                    if target["candidate"] is not None
+                                    and target["candidate"]["event_start_at"] is None}),
+        "missing_quote": sum(item["status"] == "MISSING_QUOTE" for item in items),
+        "source_kind_counts": source_kinds, "coverage_terms": COVERAGE_TERMS,
+        "items": [{"identity": target["identity"], **item} for target, item in zip(targets, items, strict=True)],
+    }
+
+
+def _run_d1_capture(config: CaptureConfig, packs: Sequence[MarkPack], *, conn, repo_root,
+                    now_utc: Callable, operation_key: str, attempt: int, code_commit: str) -> dict:
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import operations
+
+    configuration = {"team": config.team, "operator": config.operator, "packs": list(config.packs)}
+    config_digest = snapshots.snapshot_content_sha256(operations.document_bytes(configuration))
+    input_evidence = [{"pack": pack.name, "snapshot_sha256": snapshots.snapshot_content_sha256(pack.content),
+                       "byte_length": len(pack.content)} for pack in packs]
+    with operations.open_operation(
+            conn, repo_root=repo_root, operation_key=operation_key, attempt=attempt, command=CAPTURE_COMMAND,
+            team=config.team, code_commit=code_commit, config_digest=config_digest,
+            input_evidence=input_evidence) as operation:
+        if operation.completed_summary is not None:
+            return operation.completed_summary
+        materials = None
+
+        def build() -> dict:
+            nonlocal materials
+            plan, materials = _d1_capture_plan(conn, operation.slot, packs, input_evidence, team=config.team)
+            return plan
+
+        registrations = [snapshots.SnapshotRegistration(
+            content=pack.content, kind=CAPTURE_PACK_SNAPSHOT_KIND, source=pack.name, fetched_at=now_utc())
+            for pack in packs]
+        plan = operation.prepare(build, snapshots=registrations)
+        targets = plan["targets"]
+        if materials is None:
+            with store_psycopg.d1_read_view(conn):
+                rebuilt, materials = _d1_capture_plan(
+                    conn, operation.slot, packs, input_evidence, team=config.team, frozen=targets)
+            if rebuilt != plan:
+                raise CaptureError("d1_capture_prepared_plan_mismatch")
+        items = [operation.capture_item(target, capture=mark, close_evidence=close)
+                 for target, (mark, close) in zip(targets, materials, strict=True)]
+        return operation.finish(_d1_capture_summary(config, code_commit, input_evidence, targets, items))
+
+
 # ---------------------------------------------------------------------------
 # The stateful driver
 # ---------------------------------------------------------------------------
@@ -456,9 +906,13 @@ def run_capture(config: CaptureConfig, packs: Sequence[MarkPack], *,
     returns an identical summary while inserting zero rows.
     """
     from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import operations
 
     config.validate()
     code_commit = require_clean_worktree(repo_root, git_bin=git_bin)
+    if operations.is_d1_operation_key(operation_key):
+        return _run_d1_capture(config, packs, conn=conn, repo_root=repo_root, now_utc=now_utc,
+                               operation_key=operation_key, attempt=attempt, code_commit=code_commit)
     started_at = now_utc()
     receipt_key = operation_key or (
         f"{CAPTURE_COMMAND}|{config.team}|{started_at.astimezone(datetime.UTC):%Y%m%dT%H%M%SZ}|b2"
