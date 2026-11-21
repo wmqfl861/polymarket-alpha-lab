@@ -1,0 +1,18 @@
+{
+  "artifact": 14713182636,
+  "attempt": 1,
+  "junit_bytes": 214535,
+  "junit_sha256": "ab13e8df750d45015ac820a8e6ebb0e229571ca7741684e73733e2ac13460810",
+  "merge": "620048a7597d4155f1658fe4750f707df3c94158",
+  "module_counts": {
+    "test_papersim_d1_operations_native": {},
+    "test_papersim_optimize_registered_runner_native": {
+      "passed": 75
+    }
+  },
+  "papersim_counts": {
+    "passed": 792
+  },
+  "run": 44918091078,
+  "verified_utc": "2026-11-21T16:08:45.820882+00:00"
+}

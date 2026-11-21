@@ -39,7 +39,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
+from types import MappingProxyType
 
 __all__ = [
     "RegistryInvariantError",
@@ -60,6 +61,104 @@ ROLE_TOKENS = ("ACTIVE", "BASELINE", "CANDIDATE", "GUARD", "RETIRED")
 
 #: How many candidates a lineage may hold at once (04 section 3).
 MAX_CANDIDATES = 2
+
+
+# Registered sample, window and decision facts shared by the optimizer
+# and promotion policy (DELIVERY_PLAN.md section 80.7).
+_ENVELOPE_MIN_RATIO = 0.8
+_RESUBMISSION_BAN_DAYS = 28
+_STAGE1_CI_UPPER_BOUND = 0.0
+_PROMOTE_CI_UPPER_MAX = 0.005
+_FIRST_EVIDENCE_CI_PERCENTILES = (0.5, 99.5)
+_SECOND_LOOK_SAMPLE_MULTIPLIER = 2
+
+# Independent synthetic acceptance rates (05-development-plan.md, MO-6).
+_FALSE_POSITIVE_RATE_MAX = 0.05
+_DETECTION_RATE_MIN = 0.80
+
+# Events and blocks in each stage-1 family class. A zero block floor
+# represents the absence of a registered block minimum for international.
+_STAGE1_HOLDOUT_FLOORS = MappingProxyType({
+    "club-soccer": (300, 20),
+    "crypto": (150, 20),
+    "intl": (300, 0),
+    "nba": (300, 30),
+})
+
+_STAGE1_FAMILY_CLASSES = MappingProxyType({
+    "club-soccer-recalib": "club-soccer",
+    "club-soccer-frozen": "club-soccer",
+    "intl-elo-poisson": "intl",
+    "intl-elo-goal-residuals": "intl",
+    "nba-pace-efficiency": "nba",
+    "crypto-gbm": "crypto",
+})
+
+
+@dataclass(frozen=True)
+class _ForwardRow:
+    min_events: int
+    shadow_window: str
+    min_complete_blocks: int | None = None
+    min_span_days: int | None = None
+
+
+_CLUB_FORWARD_MATCHWEEKS = 2
+_FORWARD_ROWS = MappingProxyType({
+    "club-soccer-ou": _ForwardRow(
+        150, "club", min_complete_blocks=_CLUB_FORWARD_MATCHWEEKS,
+    ),
+    "club-soccer-wdl": _ForwardRow(
+        300, "club", min_complete_blocks=_CLUB_FORWARD_MATCHWEEKS,
+    ),
+    "nba": _ForwardRow(120, "nba", min_span_days=14),
+    "intl": _ForwardRow(60, "intl", min_complete_blocks=2),
+    "crypto": _ForwardRow(60, "crypto", min_span_days=28),
+})
+
+_FORWARD_TARGET_ROWS = MappingProxyType({
+    ("club-soccer-frozen", "over_under"): "club-soccer-ou",
+    ("club-soccer-frozen", "btts"): "club-soccer-ou",
+    ("club-soccer-frozen", "team_total"): "club-soccer-ou",
+    ("club-soccer-recalib", "over_under"): "club-soccer-ou",
+    ("club-soccer-recalib", "match_winner"): "club-soccer-wdl",
+    ("nba-pace-efficiency", "moneyline"): "nba",
+    ("nba-pace-efficiency", "totals"): "nba",
+    ("intl-elo-poisson", "match_winner"): "intl",
+    ("intl-elo-poisson", "over_under"): "intl",
+    ("intl-elo-goal-residuals", "match_winner"): "intl",
+    ("intl-elo-goal-residuals", "over_under"): "intl",
+    ("crypto-gbm", "touch"): "crypto",
+    ("crypto-gbm", "terminal"): "crypto",
+})
+
+_LEGACY_FORWARD_ROWS = MappingProxyType({
+    "club-soccer(ou/btts/tt)": _FORWARD_ROWS["club-soccer-ou"],
+    "club-soccer(match_winner)": _FORWARD_ROWS["club-soccer-wdl"],
+    "nba": _FORWARD_ROWS["nba"],
+    "intl": _FORWARD_ROWS["intl"],
+    "crypto": _FORWARD_ROWS["crypto"],
+})
+
+_SHADOW_WINDOWS = MappingProxyType({
+    "club": (12, "w"),
+    "nba": (10, "w"),
+    "intl": (12, "mo"),
+    "crypto": (6, "mo"),
+})
+
+
+def _shadow_window_days(window_id: str) -> int:
+    count, unit = _SHADOW_WINDOWS[window_id]
+    if unit == "w":
+        return timedelta(weeks=count).days
+    # The two registered month windows use a fixed 365-day year.
+    return 365 * count // 12
+
+
+def _shadow_window_label(window_id: str) -> str:
+    count, unit = _SHADOW_WINDOWS[window_id]
+    return f"{count}{unit}"
 
 
 class RegistryInvariantError(ValueError):
