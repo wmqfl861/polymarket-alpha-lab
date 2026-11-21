@@ -616,6 +616,15 @@ def _d1_seal_fixture(project, path, previous_window_start=None):
                      if "token_id" in entry.request_meta["query"]}
 
 
+def _d1_scan_candidate_ids(scan, candidate_keys):
+    by_key = scan["candidate_ids"]
+    assert type(by_key) is dict and set(by_key) == set(candidate_keys)
+    candidate_ids = tuple(by_key[key] for key in candidate_keys)
+    assert all(type(candidate_id) is int and candidate_id > 0 for candidate_id in candidate_ids)
+    assert len(set(candidate_ids)) == len(candidate_ids)
+    return candidate_ids
+
+
 def _d1_seed_capture_case(project, label, variants=("quote", "bid-only", "empty"), *, boundary_cases=False):
     from polymarket_alpha_lab import replay
     from polymarket_alpha_lab.papersim import snapshots, store_psycopg
@@ -697,7 +706,7 @@ def _d1_seed_capture_case(project, label, variants=("quote", "bid-only", "empty"
                                 "--config", str(scan_config), "--operation-key", scan_key, "--attempt", "1"])
     assert result.returncode == 0, result.stderr
     scan = json.loads(result.stdout)
-    candidate_ids = tuple(scan["candidate_ids"])
+    candidate_ids = _d1_scan_candidate_ids(scan, tuple(record["candidate_key"] for record in records))
     assert len(candidate_ids) == len(variants) and scan["code_commit"] == project.head
     with store_psycopg.connect_managed(project.root) as conn:
         for index, candidate_id in enumerate(candidate_ids):
@@ -1026,6 +1035,7 @@ def test_d1_rejects_wrong_identity_stale_books_and_unattributed_existing_rows(d1
                                     "--config", str(case.scan_config), "--operation-key", case.scan_key + "-other"])
     assert other_scan.returncode == 0, other_scan.stderr
     other = json.loads(other_scan.stdout)
+    other_candidate_ids = _d1_scan_candidate_ids(other, tuple(mark["candidate_key"] for mark in case.marks))
     wrong_scan = {key: value for key, value in first.items() if key != "scan_operation_key"}
     wrong_scan["scan_id"] = other["scan_id"]
     failures = (
@@ -1041,7 +1051,7 @@ def test_d1_rejects_wrong_identity_stale_books_and_unattributed_existing_rows(d1
         assert result.returncode == 1 and reason in result.stderr
         assert _d1_capture_receipt(project, slot, "FAILED")["error"] == reason
         assert _d1_capture_rows(project, case.candidate_ids) == original
-        assert not _d1_capture_rows(project, other["candidate_ids"])["mark"]
+        assert not _d1_capture_rows(project, other_candidate_ids)["mark"]
 
     # A committed D1 target requires its own attributed witness. This
     # ordinary write has the same natural key and values in both tables.
