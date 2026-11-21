@@ -1,0 +1,283 @@
+{
+  "batch": "B1",
+  "deleted_path_count": 0,
+  "deletion_gate": "PAUSE",
+  "executed": false,
+  "execution_parent": "11fb457c6e714844ec2ee1c0eb3c90dbd145eaa7",
+  "inventory_generation_parent": "86feaf1ad88be3f9c262a26cdac650cb26c1a573",
+  "member_module_names_sha256": "6f84c6e067580403d30371ee1a866d99ae8810a795a4d9b65ad07b7a837e2ff7",
+  "membership_inputs": [
+    {
+      "path": "docs/handoffs/m3-cleanup/refreshed-20261120-86feaf1a/B1-manifest.json",
+      "sha256": "990d01abdf2ffa5f69be360b18436ac767ed7e44caa2a7c7e2c2a9ea5a060ad4"
+    },
+    {
+      "path": "docs/handoffs/m3-cleanup/refreshed-20261120-86feaf1a/source-inventory.tsv",
+      "sha256": "e7b29a9bf664d74686227b3f793f24fad3fb29da985e1c2e8ef2dd0bd76006be"
+    }
+  ],
+  "membership_selector": "Join inventory rows to B1 files[] on module, path and sha256. Verify line counts and the parent blobs.",
+  "new_held_subtracted_b1_members": [],
+  "protected_source_membership_intersection": [],
+  "protection_tag": {
+    "local_ref_at_cut": "absent",
+    "planned_ref": "refs/tags/pre-prune-2026-11",
+    "publication_state": "planned_unpublished_by_this_node",
+    "published_by_this_node": false,
+    "remote_ref": {
+      "current_status": "unverified",
+      "last_observed_at_utc": "2026-11-20T17:54:13.861093+00:00",
+      "last_observed_parent": "77acea8ca8f525b74ba7e5a37feb371a1047c2d8",
+      "last_observed_status": "absent",
+      "observation_receipt": "fx18-b1-source-and-consumer-preflight-pr109.json",
+      "observation_receipt_sha256": "d1d952ed523b7d3b8f177f8576974f9897735aff455a7b220d25ce519fc70559"
+    },
+    "verified_deletion_parent": null
+  },
+  "retained_dynamic_surfaces_pending_review": [
+    {
+      "expr": "module_name",
+      "kind": "attr:import_module",
+      "line": 1987,
+      "path": "src/polymarket_alpha_lab/__init__.py",
+      "review_status": "pending_review",
+      "surface": "src_pkg"
+    },
+    {
+      "expr": "f'{__name__}.{name}'",
+      "kind": "attr:import_module",
+      "line": 1989,
+      "path": "src/polymarket_alpha_lab/__init__.py",
+      "review_status": "pending_review",
+      "surface": "src_pkg"
+    },
+    {
+      "expr": "f'.{module_name}'",
+      "kind": "name:import_module",
+      "line": 287,
+      "observed_value_domain": {
+        "modules": [
+          "polymarket_alpha_lab.papersim.intl_data",
+          "polymarket_alpha_lab.papersim.intl_model"
+        ],
+        "namespace": "polymarket_alpha_lab.papersim",
+        "source": "_INTL_EXPORTS and the guarded intl_data/intl_model attribute names"
+      },
+      "path": "src/polymarket_alpha_lab/papersim/__init__.py",
+      "review_status": "pending_review",
+      "surface": "src_reachable"
+    },
+    {
+      "expr": "f'.{module_name}'",
+      "kind": "name:import_module",
+      "line": 48,
+      "observed_value_domain": {
+        "modules": [
+          "polymarket_alpha_lab.papersim.optimize.families.crypto",
+          "polymarket_alpha_lab.papersim.optimize.families.intl",
+          "polymarket_alpha_lab.papersim.optimize.families.league_bridge",
+          "polymarket_alpha_lab.papersim.optimize.families.nba",
+          "polymarket_alpha_lab.papersim.optimize.families.soccer_frozen",
+          "polymarket_alpha_lab.papersim.optimize.families.soccer_recalib"
+        ],
+        "namespace": "polymarket_alpha_lab.papersim.optimize.families",
+        "source": "_FAMILY_MODULES"
+      },
+      "path": "src/polymarket_alpha_lab/papersim/optimize/families/__init__.py",
+      "review_status": "pending_review",
+      "surface": "src_reachable"
+    },
+    {
+      "expr": "f'polymarket_alpha_lab.papersim.optimize.families.{module_name}'",
+      "kind": "name:import_module",
+      "line": 166,
+      "observed_value_domain": {
+        "modules": [
+          "polymarket_alpha_lab.papersim.optimize.families.crypto",
+          "polymarket_alpha_lab.papersim.optimize.families.soccer_frozen"
+        ],
+        "namespace": "polymarket_alpha_lab.papersim.optimize.families",
+        "source": "_FAMILY_SINGLETONS"
+      },
+      "path": "src/polymarket_alpha_lab/papersim/optimize/provider.py",
+      "review_status": "pending_review",
+      "surface": "src_reachable"
+    },
+    {
+      "expr": "f'polymarket_alpha_lab.papersim.optimize.families.{module_name}'",
+      "kind": "name:import_module",
+      "line": 2338,
+      "observed_value_domain": {
+        "modules": [
+          "polymarket_alpha_lab.papersim.optimize.families.crypto",
+          "polymarket_alpha_lab.papersim.optimize.families.intl",
+          "polymarket_alpha_lab.papersim.optimize.families.league_bridge",
+          "polymarket_alpha_lab.papersim.optimize.families.nba",
+          "polymarket_alpha_lab.papersim.optimize.families.soccer_frozen",
+          "polymarket_alpha_lab.papersim.optimize.families.soccer_recalib"
+        ],
+        "namespace": "polymarket_alpha_lab.papersim.optimize.families",
+        "source": "_FAMILY_SINGLETONS"
+      },
+      "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py",
+      "review_status": "pending_review",
+      "surface": "src_reachable"
+    }
+  ],
+  "root_exports_affected": 0,
+  "runtime_entry": {
+    "b1_internal_source_edges": [
+      {
+        "consumer": "polymarket_alpha_lab.research_team_routing_audit_report",
+        "target": "polymarket_alpha_lab.research_market_event_type_router"
+      },
+      {
+        "consumer": "polymarket_alpha_lab.research_team_routing_audit_report",
+        "target": "polymarket_alpha_lab.research_team_capacity_planner"
+      },
+      {
+        "consumer": "polymarket_alpha_lab.research_team_routing_audit_report",
+        "target": "polymarket_alpha_lab.research_team_domain_memory_summary"
+      },
+      {
+        "consumer": "polymarket_alpha_lab.research_team_routing_audit_report",
+        "target": "polymarket_alpha_lab.research_team_domain_playbook"
+      }
+    ],
+    "checked_counts": {
+      "console_modules": 2,
+      "console_scripts": 1,
+      "main_guard_modules": 8,
+      "script_files": 23,
+      "tool_files": 13,
+      "workflow_module_references": 64
+    },
+    "checked_parent": "11fb457c6e714844ec2ee1c0eb3c90dbd145eaa7",
+    "checked_scope": "console scripts (pyproject.toml) + __main__ + __name__=='__main__' guard modules + import targets of scripts/*.py and tools/**/*.py (audit_static semantics); workflow module refs and resolved dynamic imports are additional entry evidence for the enriched pass only",
+    "definition": {
+      "inventory_generation_parent": "86feaf1ad88be3f9c262a26cdac650cb26c1a573",
+      "path": "docs/handoffs/m3-cleanup/refreshed-20261120-86feaf1a/prune-manifest.json",
+      "section": "entry_points",
+      "sha256": "78c1ec9bdd1879e99e15462ae387f7e59fedfbd3d6e4ccb5a138071fcc9f5f0c"
+    },
+    "disposition": "无运行入口（限本父已解析的登记入口，未发现对 B1 的消费）",
+    "entry_script_tool_workflow_consumers": {},
+    "k0_dependency_leaks": [],
+    "replacement_entrypoint": null,
+    "retained_src_dependents": [],
+    "root_lazy_exports": {
+      "b1_intersection": [],
+      "eager_submodule_attributes": 134,
+      "export_names": 369,
+      "provider_modules": 76
+    },
+    "server_mirror_table": {
+      "entries": []
+    }
+  },
+  "status": "deprecated-pending-prune",
+  "tests": {
+    "actual_parent_collection": {
+      "b1_recorded_test_files": 1116,
+      "nodeids_in_b1_recorded_test_files": 10737,
+      "nodeids_sha256": "aaa7352d938ab8212b2d2b1ab8ed2320689cea3b275c38dfe2c0073050910f78",
+      "proposal_counts": {
+        "KEEP_MANDATED_SHARED_CONFLICT": 39,
+        "KEEP_PROPOSAL": 2526,
+        "RETIRE_PROPOSAL": 8172
+      },
+      "total_unique_nodeids": 43820
+    },
+    "approved_retirement_nodeids": [],
+    "manifest_groups": {
+      "delete_full": 796,
+      "nodeid_candidate_files": 317,
+      "shared_conflicts_or_blocked": 3
+    },
+    "manual_decision_a_calls_revalidated_by_blob_and_position": 39,
+    "other_test_tree_python_files_scanned": 2232,
+    "recorded_test_blob_set_sha256": "d361da4f93bbc63e0d6aab3e51987d08bda0acdba43f2ea150196153026ccc56",
+    "retained_dynamic_keep_counterexamples": [
+      {
+        "call_lines": [
+          26,
+          27
+        ],
+        "disposition": "KEEP_PROPOSAL",
+        "nodeid": "tests/test_research_cost_threshold_policy.py::test_cost_ratio_above_block_threshold_blocks_research_filter",
+        "observed_via": [
+          "api(): find_spec",
+          "api(): import_module"
+        ],
+        "target": "polymarket_alpha_lab.research_cost_threshold_policy"
+      },
+      {
+        "call_lines": [
+          34,
+          35
+        ],
+        "disposition": "KEEP_PROPOSAL",
+        "nodeid": "tests/test_research_signal_conflict_report.py::test_scores_pass_watch_and_block_signal_conflicts",
+        "observed_via": [
+          "api(): find_spec",
+          "api(): import_module"
+        ],
+        "target": "polymarket_alpha_lab.research_signal_conflict_report"
+      }
+    ],
+    "retained_source_dynamic_evidence": "retained_dynamic_surfaces_pending_review",
+    "retained_source_dynamic_sites_pending_review": 6,
+    "retained_test_counterexamples": [
+      {
+        "collected_nodeids": 1,
+        "import_lines": [
+          36
+        ],
+        "observed_via": "__import__ during pytest collection",
+        "target": "polymarket_alpha_lab.research_source_discovery_coverage_sla_report",
+        "test_file": "tests/test_phase1_strategy_stack_smoke.py"
+      },
+      {
+        "collected_nodeids": 31,
+        "import_lines": [
+          34
+        ],
+        "observed_via": "__import__ during pytest collection",
+        "target": "polymarket_alpha_lab.research_public_payload_safety_audit",
+        "test_file": "tests/test_proposal_review.py"
+      },
+      {
+        "collected_nodeids": 7,
+        "import_lines": [
+          8,
+          9
+        ],
+        "observed_via": "__import__ during pytest collection",
+        "target": "polymarket_alpha_lab.research_team_roster",
+        "test_file": "tests/test_research_team_roster.py"
+      }
+    ],
+    "retained_test_zero_dependency": "FAIL",
+    "test_dynamic_review": {
+      "decision_a_counts": {
+        "RESOLVED_MIXED_PER_INSTANCE": 7,
+        "RESOLVED_RETAINED_ONLY": 11,
+        "RESOLVED_SINGLE_BATCH": 21
+      },
+      "decision_a_table": "docs/handoffs/m3-cleanup/dynamic-reference-resolutions.tsv",
+      "decision_a_table_sha256": "26a069c94e5dc2ca3873e2cccf43f851073e6093a81eeebb99012b1480467e7b",
+      "statically_unknown_call_sites": 39,
+      "test_files": 25,
+      "verified_keys": [
+        "test_file",
+        "line",
+        "kind",
+        "expr",
+        "parent_git_blob"
+      ]
+    },
+    "tracked_python_files_scanned": 3348
+  },
+  "verified_member_count": 1114,
+  "verified_source_lines": 1271697
+}

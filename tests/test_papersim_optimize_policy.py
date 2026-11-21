@@ -494,3 +494,54 @@ def test_threshold_table_covers_exactly_the_registered_inventory():
         assert row.min_markets > 0 and row.max_shadow_days > 0
         assert row.family_class in ("club-soccer-ou", "club-soccer-wdl",
                                     "nba", "intl", "crypto")
+
+
+@pytest.mark.parametrize(("row", "first", "days", "blocks", "span"), [
+    (OU, 150, 84, 2, None), (WDL, 300, 84, 2, None),
+    (NBA, 120, 70, None, 14), (INTL, 60, 365, 2, None), (CRYPTO, 60, 182, None, 28),
+], ids=["club-other", "club-wdl", "nba", "intl", "crypto"])
+def test_registered_forward_rows_schedule_both_looks_and_exact_expiry(row, first, days, blocks, span):
+    conditions = {"n_complete_blocks": blocks or 0, "span_days": span or 0}
+    for ordinal, events in ((0, first), (1, first * 2)):
+        at_floor = stats(n_markets=events, **conditions)
+        assert forward_look_due(at_floor, row, ordinal)
+        assert not forward_look_due(stats(n_markets=events - 1, **conditions), row, ordinal)
+        key = "n_complete_blocks" if blocks is not None else "span_days"
+        short_span = {**conditions, key: conditions[key] - 1}
+        assert not forward_look_due(stats(n_markets=events, **short_span), row, ordinal)
+    assert not forward_look_due(stats(n_markets=first * 3, **conditions), row, 2)
+
+    end = REGISTERED + timedelta(days=days)
+    frozen = facts(frozen=True)
+    at_end = decide_forward(frozen, stats(watermark=end), look_number=2,
+                            evidence_ordinal=1, threshold=row, as_of=end)
+    assert at_end.conclusion == "BLOCKED" and at_end.block_reason == BLOCKED_FROZEN
+    after_end = decide_forward(frozen, stats(watermark=end + timedelta(microseconds=1)), look_number=3,
+                               evidence_ordinal=1, threshold=row, as_of=end)
+    assert after_end.conclusion == "RETIRE"
+    assert after_end.metrics == {"reason": "shadow_window_expired", "max_shadow_days": days}
+
+
+@pytest.mark.parametrize(("offset_us", "blocked"), [(-1, True), (0, False), (1, False)])
+def test_handover_window_is_open_at_its_own_28_day_endpoint(offset_us, blocked):
+    since = timedelta(days=28, microseconds=offset_us)
+    verdict = decide_forward(facts(last_handover_at=AT - since), stats(),
+                             look_number=1, evidence_ordinal=0, threshold=OU, as_of=AT)
+    if blocked:
+        assert verdict.conclusion == "BLOCKED"
+        assert verdict.block_reason == BLOCKED_HANDOVER_WINDOW
+    else:
+        assert verdict.conclusion == "PROMOTE"
+        assert verdict.block_reason is None
+
+
+def test_frozen_percentile_default_and_explicit_95_are_bitwise_equal():
+    from struct import pack
+
+    from polymarket_alpha_lab.papersim.evaluation import cluster_bootstrap_mean_ci
+    from polymarket_alpha_lab.papersim.optimize.policy import SECOND_EVIDENCE_CI_PERCENTILES
+
+    clusters = ((-0.03, 0.01), (0.02,), (-0.05, 0.0, 0.03), (0.04,), (-0.02,))
+    interval = cluster_bootstrap_mean_ci(clusters)
+    explicit = cluster_bootstrap_mean_ci(clusters, percentiles=SECOND_EVIDENCE_CI_PERCENTILES)
+    assert pack(">2d", *interval) == pack(">2d", *explicit)

@@ -18,7 +18,8 @@ import math
 import pytest
 
 from polymarket_alpha_lab.papersim.optimize import scorecard as sc
-from polymarket_alpha_lab.papersim.optimize.metrics import ScoredEvent
+from polymarket_alpha_lab.papersim.optimize.families.nba import NBA_PACE_EFFICIENCY
+from polymarket_alpha_lab.papersim.optimize.metrics import ScoredEvent, calibration_slope_intercept
 from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
 
 SPEC = ModelSpec(
@@ -158,6 +159,89 @@ def test_insufficient_sample_status():
     card = sc.build_scorecard(SPEC, _binary_batch(10))
     assert card.sample_status == sc.STATUS_INSUFFICIENT
     assert card.n_events == 10
+
+
+@pytest.mark.parametrize(
+    ("line", "observations", "references"),
+    [
+        (
+            "ml",
+            [(0.706875475975866, True), (0.7803192735537781, False),
+             (0.004968243344056627, False), (0.9921282383885102, False)],
+            [None, None, (0.52528409601416316, -0.62813165001152074, 1.5240591962190721),
+             (0.047353478758184651, -1.1260397310340013, 2.2385805896049668)],
+        ),
+        (
+            "ou225.5",
+            [(0.2805635533522066, False), (0.8831469912300758, False),
+             (0.6820996141163812, False), (0.9734612553246256, True)],
+            [None, None, None, None],
+        ),
+    ],
+)
+def test_nba_calibration_on_four_game_history_and_prefixes(line, observations, references):
+    # 2026-10-23 sorted by home team, with strictly pre-game NBA forecasts.
+    spec = NBA_PACE_EFFICIENCY.baseline_spec()
+    keys = ("BOS-NY", "CHA-ATL", "GS-MEM", "IND-DAL")
+    events = [_binary_event(key, p, y, line) for key, (p, y) in zip(keys, observations, strict=True)]
+    for size, reference in enumerate(references, start=1):
+        rows = events[:size]
+        card = sc.build_scorecard(spec, rows)
+        result = card.canonical_dict()
+        encoded = json.dumps(result, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        assert encoded == json.dumps(sc.build_scorecard(spec, list(reversed(rows))).canonical_dict(),
+                                     sort_keys=True, separators=(",", ":"), allow_nan=False)
+        assert sc.build_scorecard(spec, rows).canonical_dict() == result
+        assert card.n_events == size
+        assert card.sample_status == sc.STATUS_INSUFFICIENT
+        direct = calibration_slope_intercept(observations[:size])
+        coefficients = card.calibration_slope, card.calibration_intercept
+        assert coefficients == direct
+        if reference is None:
+            assert coefficients == (None, None)
+            assert result["calibration_slope"] is result["calibration_intercept"] is None
+            continue
+
+        expected_slope, expected_intercept, expected_loss = reference
+        tolerance = 1e-10
+        assert coefficients == pytest.approx((expected_slope, expected_intercept), rel=0, abs=tolerance)
+        slope, intercept = coefficients
+        xs = [math.log(p / (1 - p)) for p, _ in observations[:size]]
+        outcomes = [y for _, y in observations[:size]]
+        etas = [intercept + slope * x for x in xs]
+        losses = [math.log1p(math.exp(-eta if y else eta)) for eta, y in zip(etas, outcomes, strict=True)]
+        assert math.fsum(losses) == pytest.approx(expected_loss, rel=0, abs=tolerance)
+        residuals = [y - 1.0 / (1.0 + math.exp(-eta)) for eta, y in zip(etas, outcomes, strict=True)]
+        for weights in ([1.0] * size, xs):
+            # The logistic derivative is at most 1/4. Propagate the two
+            # coefficient errors and a binary64 rounding allowance to each score.
+            score = math.fsum(w * r for w, r in zip(weights, residuals, strict=True))
+            score_bound = math.fsum(abs(w) * (0.25 * tolerance * (1 + abs(x)) + math.ulp(1.0))
+                                    for w, x in zip(weights, xs, strict=True))
+            assert abs(score) <= score_bound
+
+
+def test_calibration_scorecard_resolves_a_rounded_loss_tie(monkeypatch):
+    p = 0.500025
+    q = 1.0 - p
+    observations = ((p, False), (p, True), (q, True), (q, False))
+    events = [_binary_event(f"repeat-{i}", forecast, realized)
+              for i, (forecast, realized) in enumerate(observations)]
+    first = sc.build_scorecard(SPEC, events)
+    assert (first.calibration_slope, first.calibration_intercept) == pytest.approx(
+        (0.0, 0.0), rel=0, abs=1e-10,
+    )
+    encoded = json.dumps(first.canonical_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False)
+    for ordered in (events, [events[2], events[0], events[3], events[1]]):
+        assert json.dumps(sc.build_scorecard(SPEC, ordered).canonical_dict(),
+                          sort_keys=True, separators=(",", ":"), allow_nan=False) == encoded
+
+    def one_update(observations):
+        return calibration_slope_intercept(observations, iterations=1)
+
+    monkeypatch.setattr(sc, "calibration_slope_intercept", one_update)
+    with pytest.raises(ValueError, match="calibration fit did not converge"):
+        sc.build_scorecard(SPEC, events)
 
 
 # ---------------------------------------------------------------------------

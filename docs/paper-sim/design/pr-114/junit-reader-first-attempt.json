@@ -1,0 +1,7 @@
+{
+  "operation": "optional JUnit artifact readback for PR #114 papersim partition",
+  "zcode_session": "sess_c074161c-229f-4ca6-8280-afc4e3224517",
+  "systemd_unit": "pal-nov21-pr114-papersim-junit.service",
+  "unit_exit": 1,
+  "source_note": "The current Native job already reported 792 passed and the required step succeeded. The optional JUnit parser did not produce a receipt. Keep that failure separate and do not infer a module count."
+}

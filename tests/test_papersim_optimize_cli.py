@@ -19,9 +19,43 @@ from polymarket_alpha_lab.papersim.optimize.shadow import SnapshotShadowSource
 class _StubConnection:
     def __init__(self):
         self.closed = False
+        self.locked = False
+        self.isolation_checked = False
+        self.result = None
 
     def close(self):
         self.closed = True
+
+    def transaction(self):
+        from contextlib import contextmanager
+
+        @contextmanager
+        def transaction():
+            try:
+                yield
+            finally:
+                self.locked = False
+                self.isolation_checked = False
+        return transaction()
+
+    def cursor(self):
+        from contextlib import nullcontext
+        return nullcontext(self)
+
+    def execute(self, query, parameters=None):
+        if query == "SHOW transaction_isolation":
+            assert parameters is None
+            self.isolation_checked = True
+            self.result = ("read committed",)
+            return
+        assert "pg_try_advisory_xact_lock" in query
+        assert self.isolation_checked
+        self.locked = True
+        self.result = (True,)
+
+    def fetchone(self):
+        assert self.result is not None
+        return self.result
 
 
 def test_optimize_registers_all_six_subcommands(capsys):
@@ -126,9 +160,8 @@ def test_unfreeze_rejects_an_automatic_actor_before_any_write(monkeypatch,
 # Review P2 fix: the apply path's every refusal branch, offline.
 # ---------------------------------------------------------------------------
 
-class _Conn:
-    def close(self):
-        pass
+class _Conn(_StubConnection):
+    pass
 
 
 def _decision_row(**overrides):
@@ -141,6 +174,8 @@ def _decision_row(**overrides):
         "conclusion": "PROMOTE", "look_number": 1,
         "rule_version": "promo-rule-v1",
         "decided_at": datetime(2026, 11, 24, tzinfo=UTC),
+        "evidence_watermark": {"spec": "c" * 64, "comparator": "a" * 64},
+        "metrics": {},
     }
     base.update(overrides)
     return base
@@ -187,7 +222,14 @@ def _wire_apply(monkeypatch, decision, state):
 
     from polymarket_alpha_lab.papersim import store_psycopg
 
+    def _historical_application(conn, lineage, decision_id):
+        assert conn.locked
+        return ()
+
+    monkeypatch.setattr(store_psycopg, "load_decision_role_events", _historical_application)
+
     def _capture(conn, batch):
+        assert conn.locked
         captured["batch"] = batch
         return {"lineage": "club-soccer-frozen/over_under",
                 "role_event_ids": {}, "inserted": True}
