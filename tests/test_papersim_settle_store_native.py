@@ -1437,7 +1437,7 @@ def _d1_seed_settlement_entry(project, slug, *, side="YES", entered_at=None, tea
                            source_ref=f"{url}#{digest}", snapshot_sha256=digest)
         candidate = replace(_candidate(slug), team=team, side=side, condition_id=condition,
                             market_id=slug, yes_token_id=yes, no_token_id=no, evaluated_at=decided,
-                            input_payload=replay.replay_bundle_payload(request), snapshot_refs=[digest],
+                            input_payload=replay.replay_bundle_payload(request), snapshot_refs=json.dumps([digest]),
                             entry=replace(_entry_submission(), entered_at=entered), price_evidence=(decision,))
         store_psycopg.record_command_run_event(app, store.CommandRunEventSubmission(
             operation_key=scan_key, phase="STARTED", command="run-scan", occurred_at=received,
