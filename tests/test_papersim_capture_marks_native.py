@@ -22,6 +22,7 @@ quote-less pack.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, replace
 import datetime
 from decimal import Decimal
 import hashlib
@@ -29,6 +30,9 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
+import tempfile
+import time
 import uuid
 
 import pytest
@@ -410,3 +414,654 @@ def test_unknown_candidate_fails_loudly_with_a_failed_receipt(app, repo):
     assert failed == [('papersim_capture_candidate_missing',)]
     assert app.execute('SELECT count(*) FROM papersim.candidate_marks'
                        ).fetchone()[0] == 0
+
+
+# These tests run the public transport, B1, and B2 entry points as separate
+# processes in an isolated project. The existing tests above retain their
+# lower-level explicit-DSN fixtures and pack contracts.
+_D1_NATIVE = pytest.mark.skipif(sys.platform != "linux" or not ENABLED,
+                                reason="explicit Linux native PostgreSQL proof is opt-in")
+_D1_TEAM = "d1-b2-fixture"
+_D1_QUEUE = "crypto/eth-terminal"
+_D1_LINEAGE = "crypto/terminal"
+_UTC = datetime.UTC
+_SECOND = datetime.timedelta(seconds=1)
+_MILLISECOND = datetime.timedelta(milliseconds=1)
+_QUOTE = {"bid": 0.55, "ask": 0.58, "mid": None, "last": None}
+_QUOTES = {
+    "quote": _QUOTE,
+    "bid-only": _QUOTE | {"ask": None},
+    "last-zero": {"bid": None, "ask": None, "mid": None, "last": 0},
+    "last-one": {"bid": None, "ask": None, "mid": None, "last": 1},
+    "empty": {"bid": None, "ask": None, "mid": None, "last": None},
+    "unavailable": {"bid": None, "ask": None, "mid": None, "last": None},
+}
+
+
+@dataclass(frozen=True)
+class _D1CaptureProject:
+    root: Path
+    postgres: object
+    temporary: Path
+    head: str
+    instance_id: str
+    interval_sha256: str
+
+
+@dataclass(frozen=True)
+class _D1CaptureCase:
+    project: _D1CaptureProject
+    directory: Path
+    candidate_ids: tuple[int, ...]
+    scan_id: int
+    scan_key: str
+    scan_config: Path
+    capture_manifest_sha256: str
+    marks: tuple[dict, ...]
+    boundary: datetime.datetime | None
+
+
+@dataclass(frozen=True)
+class _D1CaptureSlot:
+    key: str
+    config: Path
+    pack: Path
+    scheduled_for: datetime.datetime
+    document: dict
+
+
+def _d1_json_path(directory, name, value):
+    path = directory / name
+    path.write_text(json.dumps(value, sort_keys=True, allow_nan=False), encoding="utf-8")
+    return path
+
+
+def _d1_register_binding(conn, *, document, kind, source, command, key_for,
+                         scheduled_for=None, code_commit=None, config_digest=None):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import operations
+
+    at = store_psycopg.d1_database_time(conn)
+    content = operations.document_bytes(document)
+    digest = snapshots.register_snapshot(conn, snapshots.SnapshotRegistration(
+        content, kind, source, at))["content_sha256"]
+    store_psycopg.record_command_run_event(conn, store.CommandRunEventSubmission(
+        operation_key=key_for(digest), attempt=1, phase="SUCCEEDED", command=command,
+        scheduled_for=scheduled_for, occurred_at=at, code_commit=code_commit,
+        config_digest=config_digest, output_evidence=[
+            f"snapshot_sha256:{digest}", f"snapshot_byte_length:{len(content)}"]))
+    return digest
+
+
+@pytest.fixture(scope="module")
+def d1_capture_project(tmp_path_factory):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.project_postgres.runtime import import_runtime_directory
+    from polymarket_alpha_lab.project_postgres.server import ProjectPostgres
+    from tests.native_port_selection import pick_port
+
+    base = tmp_path_factory.mktemp("b2-managed-pg18")
+    with tempfile.TemporaryDirectory(dir=base, prefix="b2-fixture-") as private:
+        root, temporary = Path(private) / "checkout", Path(private) / "inputs"
+        temporary.mkdir(mode=0o700)
+        head = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
+        subprocess.run(["git", "clone", "--quiet", "--shared", "--no-checkout", "--", str(ROOT), str(root)],
+                       check=True, capture_output=True, timeout=90)
+        subprocess.run(["git", "-C", str(root), "checkout", "--quiet", "--detach", head],
+                       check=True, capture_output=True, timeout=90)
+        assert not subprocess.check_output(["git", "-C", str(root), "status", "--porcelain"])
+        prefix = Path(os.environ["POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX"])
+        assert prefix.is_absolute() and (prefix / "bin/postgres").is_file()
+        assert import_runtime_directory(root, prefix).split(".")[0] == "18"
+        postgres = ProjectPostgres(root)
+        assert postgres.initialize(port=pick_port())["status"] == "initialized"
+        try:
+            assert postgres.up()["started_here"] is True
+            with store_psycopg.connect_owner(root) as owner:
+                migration_count = len(pm.papersim_migration_catalog(root))
+                assert pm.apply_pending_migrations(owner, root)["applied"] == migration_count
+            info = store_psycopg.read_instance(root)
+            with store_psycopg.connect_managed(root) as conn:
+                assert conn.execute("SELECT current_user").fetchone() == ("pal_app",)
+                starts_at = store_psycopg.d1_database_time(conn) + _SECOND
+                interval = _d1_register_binding(
+                    conn,
+                    document={"version": 1, "instance_id": info["instance_id"],
+                              "starts_at": starts_at, "ends_at": starts_at + datetime.timedelta(hours=1)},
+                    kind="d1_operation_interval", source="d1:operation:interval:v1",
+                    command="d1-register-interval", key_for=lambda digest: f"d1:interval-binding:v1:{digest}",
+                )
+            yield _D1CaptureProject(root, postgres, temporary, head, info["instance_id"], interval)
+        finally:
+            assert postgres.down()["status"] == "stopped"
+
+
+def _d1_child(project, args, *, code=None):
+    # Use only the verified detached source tree and the managed instance at
+    # its normal root. The child inherits no source, provider or PG settings.
+    env = {key: os.environ[key] for key in ("PATH", "LANG", "LC_ALL", "TZ", "USER", "LOGNAME")
+           if key in os.environ}
+    env.update(PYTHONPATH=f"{project.root / 'src'}:{project.root}",
+               PYTHONNOUSERSITE="1", PYTHONDONTWRITEBYTECODE="1")
+    invocation = [sys.executable, "-B"]
+    invocation.extend(["-m", "polymarket_alpha_lab.papersim.cli"] if code is None else ["-c", code])
+    return subprocess.run([*invocation, *args], cwd=project.root, env=env,
+                          capture_output=True, text=True, timeout=75)
+
+
+def _d1_public_transport():
+    """Child-process entry. Replace the public transport, then use the real CLI."""
+    import runpy
+    from urllib.error import URLError
+    from urllib.parse import parse_qs, urlsplit
+
+    from polymarket_alpha_lab.papersim.adapters import polymarket
+    from tests.test_papersim_adapter_polymarket import _response
+
+    root, inputs = Path(sys.argv[1]), Path(sys.argv[2])
+    assert Path(polymarket.__file__).is_relative_to(root)
+    document = json.loads(inputs.read_text(encoding="utf-8"))
+    epoch = datetime.datetime(1970, 1, 1, tzinfo=_UTC)
+
+    class PublicFixture:
+        def open(self, url, *, timeout_seconds):
+            split = urlsplit(url)
+            query = parse_qs(split.query)
+            if split.path == "/events" and query["tag_slug"] == ["crypto"]:
+                markets = document["markets"]
+                payload = ([{"id": "fixture-event", "slug": "fixture-event", "markets": markets}]
+                           if query["offset"] == ["0"] else [])
+            elif split.path == "/book":
+                token, = query["token_id"]
+                payload = document["books"][token]
+                if payload is None:
+                    raise URLError("fixture public response unavailable")
+                payload = dict(payload)
+                fixed = payload.pop("fixture_source_at", None)
+                stamp = (datetime.datetime.now(_UTC) - 100 * _MILLISECOND
+                         if fixed is None else datetime.datetime.fromisoformat(fixed))
+                if fixed is not None and stamp >= datetime.datetime.now(_UTC):
+                    time.sleep((stamp - datetime.datetime.now(_UTC)) / _SECOND + 0.01)
+                payload["timestamp"] = str((stamp - epoch) // _MILLISECOND)
+            else:
+                raise AssertionError("unexpected public request in local transport fixture")
+            return _response((" \n" + json.dumps(payload, indent=2) + "\n").encode(), url=url)
+
+    polymarket.BoundedPublicOpener = PublicFixture
+    script = root / "tools" / "d1_compare.py"
+    sys.argv = [str(script), *sys.argv[3:]]
+    runpy.run_path(str(script), run_name="__main__")
+
+
+def _d1_seal_fixture(project, path, previous_window_start=None):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    now = datetime.datetime.now(_UTC)
+    start = now - datetime.timedelta(seconds=20)
+    if previous_window_start is not None:
+        assert start > previous_window_start
+    result = _d1_child(project, [str(project.root), str(path), "capture-inputs", "--repo-root",
+                                str(project.root), "--allow-public-fetch", "--tag-slug", "crypto",
+                                "--window-start", start.isoformat(),
+                                "--window-end", (now + datetime.timedelta(seconds=25)).isoformat()],
+                       code=("from tests.test_papersim_capture_marks_native import _d1_public_transport; "
+                             "_d1_public_transport()"))
+    assert result.returncode == 0, result.stderr
+    receipt = json.loads(result.stdout)
+    assert receipt["capture_version"] == 2
+    assert receipt["coverage"]["window_status"] == "sealed_inside"
+    manifest, entries = acquire.read_capture(repo_root=project.root, batch_sha256=receipt["batch_sha256"])
+    assert all(market["binding_status"] == "explicit_yes_no" for market in manifest["markets"])
+    return receipt, {entry.request_meta["query"]["token_id"]: entry for entry in entries
+                     if "token_id" in entry.request_meta["query"]}
+
+
+def _d1_scan_candidate_ids(scan, candidate_keys):
+    by_key = scan["candidate_ids"]
+    assert type(by_key) is dict and set(by_key) == set(candidate_keys)
+    candidate_ids = tuple(by_key[key] for key in candidate_keys)
+    assert all(type(candidate_id) is int and candidate_id > 0 for candidate_id in candidate_ids)
+    assert len(set(candidate_ids)) == len(candidate_ids)
+    return candidate_ids
+
+
+def _d1_seed_capture_case(project, label, variants=("quote", "bid-only", "empty"), *, boundary_cases=False):
+    from polymarket_alpha_lab import replay
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import journal
+    from tests.test_papersim_scan_store_native import _eth_request
+
+    case_dir = project.temporary / label
+    case_dir.mkdir()
+    expiry = datetime.datetime.now(_UTC) + datetime.timedelta(days=2)
+    b1_books, b2_books, markets = {}, {}, []
+
+    def book(token, condition, bids, asks, *, last=None):
+        def levels(prices):
+            return [{"price": price, "size": "5000.00"} for price in prices]
+
+        payload = {"asset_id": token, "market": condition, "bids": levels(bids), "asks": levels(asks)}
+        if last is not None:
+            payload["last_trade_price"] = last
+        return payload
+
+    token_base = int(hashlib.sha256(label.encode()).hexdigest()[:12], 16)
+    for index, variant in enumerate(variants):
+        market_id = f"{label}-market-{index}"
+        condition = "0x" + hashlib.sha256(market_id.encode()).hexdigest()
+        yes, no = str(token_base + 2 * index + 1), str(token_base + 2 * index)
+        markets.append({
+            "id": market_id, "conditionId": condition, "slug": market_id,
+            "question": "Will Ethereum be below 2,000 on the settlement date?",
+            "description": "Ethereum terminal below 2,000.", "endDate": expiry.isoformat(),
+            "outcomes": '["No","Yes"]', "clobTokenIds": json.dumps([no, yes]), "outcomePrices": '["0.85","0.15"]',
+        })
+        b1_books[yes] = book(yes, condition, ["0.12"], ["0.15"])
+        b2_books[no] = b1_books[no] = book(no, condition, ["0.71"], ["0.80"])
+        quotes = _QUOTES[variant]
+        b2_books[yes] = None if variant == "unavailable" else book(
+            yes, condition, ["0.51", "0.55"] if quotes["bid"] is not None else [],
+            ["0.63", "0.58"] if quotes["ask"] is not None else [],
+            last=None if quotes["last"] is None else str(quotes["last"]))
+    b1, b1_entries = _d1_seal_fixture(project, _d1_json_path(
+        case_dir, "b1-public.json", {"markets": markets, "books": b1_books}))
+    b1_at = datetime.datetime.fromisoformat(b1["decision_as_of"])
+    boundary = b1_at.replace(microsecond=0) + datetime.timedelta(seconds=10) if boundary_cases else None
+    records = []
+    with store_psycopg.connect_managed(project.root) as conn:
+        for index, market in enumerate(markets):
+            no, yes = json.loads(market["clobTokenIds"])
+            entry = b1_entries[yes]
+            request = replace(_eth_request(), market_id=market["id"], question=market["question"],
+                              fixture=market["slug"], book_time=entry.utc_fetched_at, now=b1_at,
+                              yes_token=yes, no_token=no, buy_token=yes)
+            ladder = snapshots.register_snapshot(conn, snapshots.SnapshotRegistration(
+                replay.bound_book_bytes(request), "d1_fixture_b1_normalized_asks",
+                journal.entry_source_ref(entry), entry.utc_fetched_at))["content_sha256"]
+            record = {
+                "queue": _D1_QUEUE, "candidate_key": f"buy-yes-{index}", "team": _D1_TEAM,
+                "side": "YES", "market_kind": "terminal", "lineage": _D1_LINEAGE, "model_name": "crypto",
+                "evaluated_at": b1_at.isoformat(), "condition_id": market["conditionId"], "market_id": market["id"],
+                "market_slug": market["slug"], "yes_token_id": yes, "no_token_id": no, "market_type": "terminal",
+                "median_probability": 0.2224, "snapshot_refs": [b1["batch_sha256"], entry.content_sha256, ladder],
+                "book_snapshot_sha256": ladder, "decision_snapshot_sha256": entry.content_sha256,
+                "source_kind": "clob_book", "source_ref": journal.entry_source_ref(entry),
+                "request_bundle": replay.replay_bundle_payload(request),
+            }
+            if not boundary_cases or index < 3:
+                start = (boundary or expiry).isoformat()
+                record["events"] = {"market_class": "crypto", "asset": "ETH", "expiry_at": start, "event_start_at": start}
+            if boundary_cases and index < 3:
+                offsets = (0, 1, -1)
+                b2_books[yes]["fixture_source_at"] = (boundary + offsets[index] * _MILLISECOND).isoformat()
+            records.append(record)
+    scan_pack = _d1_json_path(case_dir, "scan-pack.json", records)
+    scan_config = _d1_json_path(case_dir, "scan-config.json", {"team": _D1_TEAM, "operator": "native-test", "queues": [
+        {"queue": _D1_QUEUE, "lineage": _D1_LINEAGE, "league_scope": "DOMESTIC",
+         "data_source_version": "fixture-public-seal-v2", "model_key": "crypto",
+         "market_type": "terminal", "pack": scan_pack.name},
+    ]})
+    scan_key = f"run-scan|{_D1_TEAM}|{label}"
+    result = _d1_child(project, ["run-scan", "--managed", "--repo-root", str(project.root),
+                                "--config", str(scan_config), "--operation-key", scan_key, "--attempt", "1"])
+    assert result.returncode == 0, result.stderr
+    scan = json.loads(result.stdout)
+    candidate_ids = _d1_scan_candidate_ids(scan, tuple(record["candidate_key"] for record in records))
+    assert len(candidate_ids) == len(variants) and scan["code_commit"] == project.head
+    with store_psycopg.connect_managed(project.root) as conn:
+        for index, candidate_id in enumerate(candidate_ids):
+            candidate = store_psycopg.d1_candidate_capture_target(
+                conn, scan_id=scan["scan_id"], candidate_key=f"buy-yes-{index}")
+            decision, = candidate["decisions"]
+            assert candidate["candidate_id"] == candidate_id
+            assert decision["side"] == "YES" and decision["token_ref"] == records[index]["yes_token_id"]
+            assert decision["snapshot_sha256"] == b1_entries[decision["token_ref"]].content_sha256
+    b2, b2_entries = _d1_seal_fixture(project, _d1_json_path(
+        case_dir, "b2-public.json", {"markets": markets, "books": b2_books}),
+        previous_window_start=datetime.datetime.fromisoformat(b1["window_start"]))
+    marks = []
+    for index, (record, variant) in enumerate(zip(records, variants, strict=True)):
+        token = record["yes_token_id"]
+        entry = b2_entries.get(token)
+        if entry is None:
+            assert variant == "unavailable"
+        else:
+            assert entry.request_meta["status"] == "received"
+        marks.append({
+            ("scan_operation_key" if index % 2 == 0 else "scan_id"): (scan_key if index % 2 == 0 else scan["scan_id"]),
+            "candidate_key": record["candidate_key"], "sampling_kind": "CLOSE",
+            "observed_at": b2["decision_as_of"] if entry is None else entry.request_meta["source_observed_at"],
+            "market_ref_kind": "condition_id", "market_ref": record["condition_id"],
+            "token_ref": token, "side": "YES", "source_kind": "clob_book",
+            "source_ref": None if entry is None else journal.entry_source_ref(entry),
+            "snapshot_sha256": None if entry is None else entry.content_sha256,
+            **_QUOTES[variant],
+        })
+    return _D1CaptureCase(project, case_dir, candidate_ids, scan["scan_id"], scan_key, scan_config,
+                          b2["batch_sha256"], tuple(marks), boundary)
+
+
+def _d1_register_capture_slot(case, label, marks=None, *, candidate_ids=None,
+                              max_source_age_seconds=120, max_receipt_age_seconds=120,
+                              deadline_seconds=90, write_deadline_seconds=120):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import operations
+
+    directory = case.directory / label
+    directory.mkdir()
+    pack = directory / "marks.json"
+    if marks is None:
+        marks = case.marks
+    content = marks if type(marks) is bytes else json.dumps(marks, sort_keys=True).encode()
+    pack.write_bytes(content)
+    configuration = {"team": _D1_TEAM, "operator": "native-test", "packs": [pack.name]}
+    config = _d1_json_path(directory, "capture-config.json", configuration)
+    config_digest = hashlib.sha256(operations.document_bytes(configuration)).hexdigest()
+    with store_psycopg.connect_managed(case.project.root) as conn:
+        scheduled = store_psycopg.d1_database_time(conn) + 250 * _MILLISECOND
+        document = {
+            "version": 1, "instance_id": case.project.instance_id, "interval_sha256": case.project.interval_sha256,
+            "scheduled_for": scheduled, "deadline": scheduled + deadline_seconds * _SECOND,
+            "write_deadline": scheduled + write_deadline_seconds * _SECOND,
+            "leg": "new", "command": "capture-marks", "team": _D1_TEAM,
+            "code_commit": case.project.head, "config_digest": config_digest,
+            "input_evidence": [{"pack": pack.name, "snapshot_sha256": hashlib.sha256(content).hexdigest(),
+                                "byte_length": len(content)}],
+            "scope": {"capture_manifest_sha256": case.capture_manifest_sha256,
+                      "candidate_ids": list(case.candidate_ids if candidate_ids is None else candidate_ids),
+                      "book_age_policy": {"max_source_age_seconds": max_source_age_seconds,
+                                          "max_receipt_age_seconds": max_receipt_age_seconds}},
+        }
+        key = operations.slot_operation_key(document)
+        _d1_register_binding(
+            conn, document=document, kind="d1_operation_slot", source="d1:operation:slot:v1",
+            command="d1-register-slot", key_for=lambda _digest: f"d1:slot-binding:v1:{key.rsplit(':', 1)[1]}",
+            scheduled_for=scheduled, code_commit=case.project.head, config_digest=config_digest,
+        )
+    return _D1CaptureSlot(key, config, pack, scheduled, document)
+
+
+def _d1_capture_cli(project, slot, *, attempt=1, code=None, key=None, extra=()):
+    wait = (slot.scheduled_for - datetime.datetime.now(_UTC)) / _SECOND
+    if wait > 0:
+        time.sleep(wait)
+    return _d1_child(project, [*extra, "capture-marks", "--managed", "--repo-root", str(project.root),
+                               "--config", str(slot.config), "--operation-key", key or slot.key,
+                               "--attempt", str(attempt)], code=code)
+
+
+def _d1_capture_rows(project, candidate_ids):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    keys = (list(candidate_ids),)
+    with store_psycopg.connect_managed(project.root) as reader, reader.transaction():
+        reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        assert reader.execute("SELECT current_user").fetchone() == ("pal_app",)
+        mark = reader.execute(
+            "SELECT candidate_mark_id, candidate_mark_key, candidate_id, sampling_kind, observed_at, "
+            "market_ref_kind, market_ref, token_ref, side, bid, ask, mid, last, source_kind, source_ref, "
+            "snapshot_sha256, paper_only, report_only, readonly FROM papersim.candidate_marks "
+            "WHERE candidate_id = ANY(%s) ORDER BY candidate_mark_id", keys).fetchall()
+        prices = reader.execute(
+            "SELECT evidence_id, evidence_key, candidate_id, evidence_role, observed_at, "
+            "market_ref_kind, market_ref, token_ref, side, bid, ask, mid, last, source_kind, source_ref, "
+            "snapshot_sha256, paper_only, report_only, readonly FROM papersim.candidate_price_evidence "
+            "WHERE candidate_id = ANY(%s) ORDER BY evidence_id", keys).fetchall()
+        return {"mark": mark, "close": [row for row in prices if row[3] == "CLOSE"],
+                "decision": [row for row in prices if row[3] == "DECISION"]}
+
+
+def _d1_capture_receipt(project, slot, phase, *, attempt=1):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    with store_psycopg.connect_managed(project.root) as reader, reader.transaction():
+        reader.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        row = reader.execute(
+            "SELECT run_event_id, occurred_at, error_code, output_evidence, code_commit "
+            "FROM papersim.command_run_events WHERE operation_key = %s AND attempt = %s AND phase = %s",
+            (slot.key, attempt, phase)).fetchone()
+        if row is None:
+            return None
+        [digest_ref, size_ref] = row[3]
+        digest = digest_ref.removeprefix("snapshot_sha256:")
+        size = int(size_ref.removeprefix("snapshot_byte_length:"))
+        raw, stored_size = reader.execute(
+            "SELECT content, byte_length FROM papersim.snapshots WHERE content_sha256 = %s", (digest,)).fetchone()
+        assert hashlib.sha256(raw).hexdigest() == digest and len(raw) == size == stored_size
+        assert row[4] == project.head
+        return {"id": row[0], "occurred_at": row[1], "error": row[2], "sha256": digest, "body": json.loads(raw)}
+
+
+def _d1_assert_written(row, pack, *, expected_kind):
+    assert row[3:16] == (
+        expected_kind, datetime.datetime.fromisoformat(pack["observed_at"]),
+        pack["market_ref_kind"], pack["market_ref"], pack["token_ref"], pack["side"],
+        *(None if pack[name] is None else Decimal(str(pack[name])) for name in ("bid", "ask", "mid", "last")),
+        pack["source_kind"], pack["source_ref"], pack["snapshot_sha256"],
+    )
+    assert row[16:] == (True, True, True)
+
+
+@_D1_NATIVE
+def test_d1_first_attempt_rebuilds_prices_from_the_sealed_buy_book(d1_capture_project, record_property):
+    project = d1_capture_project
+    case = _d1_seed_capture_case(project, "first-quote",
+                                 ("quote", "bid-only", "last-zero", "last-one", "empty"))
+    before = _d1_capture_rows(project, case.candidate_ids)
+    assert not before["mark"] and not before["close"] and len(before["decision"]) == 5
+    book = case.marks[0]
+    failures = (
+        ("ask-first-level", "ask", 0.63, "0.58", "0.63", "d1_capture_quote_mismatch"),
+        ("wrong-bid", "bid", 0.51, "0.55", "0.51", "d1_capture_quote_mismatch"),
+        ("inferred-mid", "mid", 0.565, None, "0.565", "d1_capture_quote_mismatch"),
+        ("invented-last", "last", 0, None, 0, "d1_capture_quote_mismatch"),
+        ("missing-ask", "ask", None, "0.58", None, "d1_capture_quote_mismatch"),
+        ("bool-price", "ask", True, "0.58", True, "d1_capture_price_invalid"),
+        ("rounded-ask", "ask", None, "0.58", "0.58000000000000000001", "d1_capture_quote_mismatch"),
+    )
+    first = None
+    for label, field, claimed, observed, recorded_claim, reason in failures:
+        marks = [book | {field: claimed}]
+        if label == "rounded-ask":
+            marks = json.dumps([book]).replace('"ask": 0.58', '"ask": 0.58000000000000000001').encode()
+        slot = _d1_register_capture_slot(case, label, marks)
+        result = _d1_capture_cli(project, slot)
+        assert result.returncode == 1 and reason in result.stderr and not result.stdout
+        assert _d1_capture_rows(project, case.candidate_ids) == before
+        prepared = _d1_capture_receipt(project, slot, "PREPARED")
+        item, = prepared["body"]["plan"]["targets"]
+        assert item["status"] == "REJECTED" and item["reason"] == reason
+        assert item["quote_differences"][field] == {"observed": observed, "claimed": recorded_claim}
+        assert item["mark"] is None and item["close"] is None
+        assert item["source"]["snapshot_sha256"] == book["snapshot_sha256"]
+        failed = _d1_capture_receipt(project, slot, "FAILED")
+        assert failed["error"] == reason and _d1_capture_receipt(project, slot, "SUCCEEDED") is None
+        if first is None:
+            first = {"slot": slot.key, "attempt": 1, "exit": result.returncode, "prepared": prepared["sha256"],
+                     "failed": failed["sha256"], "mark_delta": 0, "close_delta": 0,
+                     "source": item["source"], "quote_differences": item["quote_differences"]}
+
+    # An equivalent decimal spelling succeeds on a fresh operation. Empty
+    # sides and true last=0/1 come from the same book bodies as their marks.
+    raw = json.dumps(case.marks).replace('"ask": 0.58', '"ask": 0.58000000000000000000').encode()
+    good_slot = _d1_register_capture_slot(case, "correct", raw)
+    result = _d1_capture_cli(project, good_slot)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads(result.stdout)
+    assert [item["status"] for item in summary["items"]] == ["WRITTEN"] * 4 + ["MISSING_QUOTE"]
+    assert summary["marks_written"] == summary["close_evidence_written"] == 4
+    assert summary["missing_quote"] == 1 and summary["candidates_seen"] == summary["observations"] == 5
+    after = _d1_capture_rows(project, case.candidate_ids)
+    assert after["decision"] == before["decision"] and len(after["mark"]) == len(after["close"]) == 4
+    for mark, close, pack in zip(after["mark"], after["close"], case.marks[:4], strict=True):
+        assert mark[2] == close[2]
+        _d1_assert_written(mark, pack, expected_kind="CLOSE")
+        _d1_assert_written(close, pack, expected_kind="CLOSE")
+    record_property("first_ask_rejection", json.dumps(first, sort_keys=True))
+    record_property("correct_ask", json.dumps({
+        "slot": good_slot.key, "exit": result.returncode, "code_commit": project.head,
+        "items": summary["items"], "mark_rows": after["mark"], "close_rows": after["close"],
+    }, sort_keys=True, default=str))
+
+
+def _d1_stop_capture_process():
+    """Quit the real CLI at a test-local process boundary."""
+    from polymarket_alpha_lab.papersim import cli
+    from polymarket_alpha_lab.papersim.d1compare import operations
+
+    when, index = sys.argv[1], int(sys.argv[2])
+    capture_item = operations._Operation.capture_item
+    finish = operations._Operation.finish
+    position = 0
+
+    def checked_item(self, *args, **kwargs):
+        nonlocal position
+        position += 1
+        if when == "before" and index == position:
+            os._exit(86)
+        result = capture_item(self, *args, **kwargs)
+        if when == "after" and index == position:
+            os._exit(86)
+        return result
+
+    def checked_finish(self, *args, **kwargs):
+        if when == "finish":
+            os._exit(86)
+        return finish(self, *args, **kwargs)
+
+    operations._Operation.capture_item = checked_item
+    operations._Operation.finish = checked_finish
+    raise SystemExit(cli.main(sys.argv[3:]))
+
+
+@_D1_NATIVE
+@pytest.mark.parametrize(("when", "index", "persisted"), (("before", 1, 0), ("after", 1, 1), ("finish", 3, 2)))
+def test_d1_three_original_observations_recover_in_another_cli_process(
+        d1_capture_project, record_property, when, index, persisted):
+    project = d1_capture_project
+    case = _d1_seed_capture_case(project, f"resume-{when}")
+    marks = [case.marks[0], case.marks[1] | {"sampling_kind": "PERIODIC"}, case.marks[2]]
+    slot = _d1_register_capture_slot(case, "original", marks)
+    stopped = _d1_capture_cli(project, slot, extra=(when, str(index)), code=(
+        "from tests.test_papersim_capture_marks_native import _d1_stop_capture_process; _d1_stop_capture_process()"))
+    assert stopped.returncode == 86 and not stopped.stdout
+    original = _d1_capture_receipt(project, slot, "PREPARED")
+    assert original is not None
+    assert _d1_capture_receipt(project, slot, "SUCCEEDED") is None
+    assert _d1_capture_receipt(project, slot, "FAILED") is None
+    committed = _d1_capture_rows(project, case.candidate_ids)
+    assert len(committed["mark"]) == persisted and len(committed["close"]) == (persisted > 0)
+    if when == "after":
+        original_pack = slot.pack.read_bytes()
+        slot.pack.write_bytes(json.dumps([marks[0] | {"ask": 0.63}, *marks[1:]]).encode())
+        changed = _d1_capture_cli(project, slot)
+        assert changed.returncode == 1 and "d1_operation_binding_conflict" in changed.stderr
+        slot.pack.write_bytes(original_pack)
+        assert _d1_capture_rows(project, case.candidate_ids) == committed
+        assert _d1_capture_receipt(project, slot, "PREPARED") == original
+        assert project.postgres.down()["status"] == "stopped"
+        assert project.postgres.up()["started_here"] is True
+        assert _d1_capture_rows(project, case.candidate_ids) == committed
+    recovered = _d1_capture_cli(project, slot, attempt=2)
+    assert recovered.returncode == 0, recovered.stderr
+    summary = json.loads(recovered.stdout)
+    assert summary["observations"] == summary["candidates_seen"] == 3
+    assert (summary["marks_written"], summary["close_evidence_written"], summary["missing_quote"]) == (2, 1, 1)
+    assert [item["status"] for item in summary["items"]] == (
+        ["REUSED"] * persisted + ["WRITTEN"] * (2 - persisted) + ["MISSING_QUOTE"])
+    after = _d1_capture_rows(project, case.candidate_ids)
+    assert after["mark"][:persisted] == committed["mark"] and after["decision"] == committed["decision"]
+    if persisted:
+        assert after["close"] == committed["close"]
+    assert [row[2] for row in after["mark"]] == list(case.candidate_ids[:2])
+    assert [row[2] for row in after["close"]] == [case.candidate_ids[0]]
+    _d1_assert_written(after["mark"][0], marks[0], expected_kind="CLOSE")
+    _d1_assert_written(after["close"][0], marks[0], expected_kind="CLOSE")
+    _d1_assert_written(after["mark"][1], marks[1], expected_kind="PERIODIC")
+    assert _d1_capture_receipt(project, slot, "PREPARED") == original
+    recovery = _d1_capture_receipt(project, slot, "RECOVERY_READ", attempt=2)
+    assert recovery["occurred_at"] > original["occurred_at"]
+    succeeded = _d1_capture_receipt(project, slot, "SUCCEEDED", attempt=2)
+    assert succeeded["occurred_at"] >= recovery["occurred_at"]
+    assert json.loads(_d1_capture_cli(project, slot, attempt=2).stdout) == summary
+    assert _d1_capture_rows(project, case.candidate_ids) == after
+    record_property("capture_recovery", json.dumps({
+        "slot": slot.key, "stop_exit": stopped.returncode, "recovery_exit": recovered.returncode,
+        "original": {key: value for key, value in original.items() if key != "body"},
+        "recovery": {key: value for key, value in recovery.items() if key != "body"},
+        "succeeded": {key: value for key, value in succeeded.items() if key != "body"},
+        "items": summary["items"], "before_restart": committed, "after_restart": after,
+    }, sort_keys=True, default=str))
+
+
+@_D1_NATIVE
+def test_d1_uses_strict_event_and_receipt_boundaries(d1_capture_project):
+    project = d1_capture_project
+    case = _d1_seed_capture_case(project, "event-boundaries",
+                                 ("quote", "quote", "quote", "quote", "unavailable"), boundary_cases=True)
+    slot = _d1_register_capture_slot(case, "boundaries", case.marks[:4])
+    result = _d1_capture_cli(project, slot)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads(result.stdout)
+    assert summary["marks_written"] == 4 and summary["close_evidence_written"] == 0
+    assert summary["downgrade_reasons"] == {
+        "observed_at_after_event_start": 2, "received_at_after_event_start": 1, "missing_event_start": 1}
+    prepared = _d1_capture_receipt(project, slot, "PREPARED")
+    targets = prepared["body"]["plan"]["targets"]
+    assert datetime.datetime.fromisoformat(targets[0]["source"]["source_observed_at"]) == case.boundary
+    assert datetime.datetime.fromisoformat(targets[1]["source"]["source_observed_at"]) > case.boundary
+    assert (datetime.datetime.fromisoformat(targets[2]["source"]["source_observed_at"]) < case.boundary
+            <= datetime.datetime.fromisoformat(targets[2]["source"]["received_at"]))
+    assert targets[3]["candidate"]["event_start_at"] is None
+    rows = _d1_capture_rows(project, case.candidate_ids)
+    assert not rows["close"] and len(rows["decision"]) == 5
+    for row, pack in zip(rows["mark"], case.marks[:4], strict=True):
+        _d1_assert_written(row, pack, expected_kind="PERIODIC")
+
+    unavailable = _d1_register_capture_slot(case, "unavailable", case.marks[4:])
+    refused = _d1_capture_cli(project, unavailable)
+    assert refused.returncode == 1 and "d1_capture_source_book_missing" in refused.stderr
+    assert _d1_capture_rows(project, case.candidate_ids) == rows
+
+
+@_D1_NATIVE
+def test_d1_rejects_wrong_identity_stale_books_and_unattributed_existing_rows(d1_capture_project):
+    project = d1_capture_project
+    case = _d1_seed_capture_case(project, "conflicts", ("quote", "bid-only"))
+    original = _d1_capture_rows(project, case.candidate_ids)
+    assert not original["mark"] and not original["close"]
+    first, second = case.marks
+    other_scan = _d1_child(project, ["run-scan", "--managed", "--repo-root", str(project.root),
+                                    "--config", str(case.scan_config), "--operation-key", case.scan_key + "-other"])
+    assert other_scan.returncode == 0, other_scan.stderr
+    other = json.loads(other_scan.stdout)
+    other_candidate_ids = _d1_scan_candidate_ids(other, tuple(mark["candidate_key"] for mark in case.marks))
+    wrong_scan = {key: value for key, value in first.items() if key != "scan_operation_key"}
+    wrong_scan["scan_id"] = other["scan_id"]
+    failures = (
+        ("token", first | {"token_ref": second["token_ref"]}, {}, "d1_capture_buy_token_mismatch"),
+        ("market", first | {"market_ref": second["market_ref"]}, {}, "d1_capture_candidate_market_mismatch"),
+        ("scan", wrong_scan, {}, "d1_capture_candidate_outside_slot"),
+        ("source-age", first, {"max_source_age_seconds": 0}, "d1_capture_book_stale"),
+        ("receipt-age", first, {"max_receipt_age_seconds": 0}, "d1_capture_book_stale"),
+    )
+    for label, pack, policy, reason in failures:
+        slot = _d1_register_capture_slot(case, label, (pack,), **policy)
+        result = _d1_capture_cli(project, slot)
+        assert result.returncode == 1 and reason in result.stderr
+        assert _d1_capture_receipt(project, slot, "FAILED")["error"] == reason
+        assert _d1_capture_rows(project, case.candidate_ids) == original
+        assert not _d1_capture_rows(project, other_candidate_ids)["mark"]
+
+    # A committed D1 target requires its own attributed witness. This
+    # ordinary write has the same natural key and values in both tables.
+    slot = _d1_register_capture_slot(case, "orphan", (first,))
+    ordinary = _d1_capture_cli(project, slot, key="capture-marks|native-ordinary|orphan")
+    assert ordinary.returncode == 0, ordinary.stderr
+    orphan = _d1_capture_rows(project, case.candidate_ids)
+    assert len(orphan["mark"]) == len(orphan["close"]) == 1
+    result = _d1_capture_cli(project, slot)
+    assert result.returncode == 1, (result.stderr, result.stdout)
+    assert _d1_capture_receipt(project, slot, "FAILED") is not None
+    assert _d1_capture_receipt(project, slot, "SUCCEEDED") is None
+    assert _d1_capture_rows(project, case.candidate_ids) == orphan

@@ -1,0 +1,24 @@
+{
+  "started": "2026-11-21T19:20:31.361931+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "c46187d9facdb58e302418cc1301ae20268852d40c0924c742d1f7fa0ffbec4d",
+  "purpose": "pr118-refresh-after-joint-fx-plan-review",
+  "resume": "sess_5494f412-df8f-4590-a658-1bd586454a5e",
+  "attachments": {
+    "refresh-addendum.md": "8ef70c722a90c2cf5d4b2bcb661a8cae5cc76101cb8dcaec524223030309f6e0",
+    "approved-merge-plan.md": "38a0dc8e2a36208fb15ed7bdca71870f65a6a4fc4fc1fbcfe983d5d26cd22aad",
+    "prior-review.txt": "cb6c57ad8a1bbe4f1a887fe2aa3baec2476ba42d6b6be27541175c4aae9f0970",
+    "pr114-landed.json": "288c58fa8ccace4db50bf75d930f75081b6dc7c15e52560f8abc4483fdc52db2"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T19:22:12.564502+00:00",
+  "exit": 0,
+  "stdout_sha256": "970763f645f59dd9f03e13a555a8d40173790f1ebf3f1021d96c702c7ad8e943",
+  "stderr_sha256": "a569c63fef5e141573ae9be5020a02b7dd0916778ae05748ebda383092dcdccf",
+  "stdout_bytes": 6377,
+  "stderr_bytes": 66,
+  "safe_diagnostics": []
+}

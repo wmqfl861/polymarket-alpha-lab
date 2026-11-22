@@ -1,0 +1,14 @@
+{
+  "baseRefName": "main",
+  "headRefOid": "9647a3ef68c18e5fd5356aeb81bf8df06976a433",
+  "mergeCommit": {
+    "oid": "d216059339dba9c3ca34d65813e9cf2ba98a0dd5"
+  },
+  "mergedAt": "2026-11-21T18:36:29Z",
+  "state": "MERGED",
+  "verified": true,
+  "tested_merge": "1feabe950a1f93c9fc694564a11e79b4244e8ec9",
+  "base": "cd53ce25f65716e6151238beba253618caca7e98",
+  "observed_main": "d216059339dba9c3ca34d65813e9cf2ba98a0dd5",
+  "evidence_commit": "b8c1571d5135a833939f31869d36c6e19eacd445"
+}

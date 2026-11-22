@@ -1050,6 +1050,7 @@ def _cmd_settle(args) -> int:
                 operator=args.operator,
                 operation_key=args.operation_key,
                 attempt=args.attempt,
+                managed=args.managed,
             )
         finally:
             connection.close()

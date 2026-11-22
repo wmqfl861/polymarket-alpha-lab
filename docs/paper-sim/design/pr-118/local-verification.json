@@ -1,0 +1,450 @@
+{
+  "head": "a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c",
+  "base": "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+  "original": "f09850ba8ef010895d6a959cbeff401fbc706363",
+  "tree": "09643735652b406977d4ac3bfc7edd0209b7dad9",
+  "completed": [
+    "preflight",
+    "workflow-inventory",
+    "offline-focused",
+    "native-focused",
+    "papersim-full",
+    "offline-full",
+    "selfcheck"
+  ],
+  "executors": {
+    "native_full": {
+      "unit": "pal-nov21-pr118-native-final-fhqf75tp.service",
+      "started_utc": "2026-11-21T22:26:35.222449+00:00",
+      "finished_utc": "2026-11-21T22:26:55.364478+00:00",
+      "client": "zcode",
+      "effort": "max",
+      "session": "sess_ec9e103e-0b6c-49d8-b8a5-8b058521fef4",
+      "exit": 0,
+      "invocation": "4df35c6db0fa42f4a21cab5a203514ce",
+      "stdout_sha256": "1912b28a4f6772c6409e2f2a175c4517612edc2ab0800536e67ce2fae4602814",
+      "stderr_sha256": "ada62d68a0d249fcc9347445dc4b3f2fe8f95afdba2bece489d91e4371e8803d"
+    },
+    "offline_full": {
+      "unit": "pal-nov21-pr118-parallel-offline.service",
+      "started_utc": "2026-11-21T22:22:25.824474+00:00",
+      "finished_utc": "2026-11-21T22:22:55.729786+00:00",
+      "client": "zcode",
+      "effort": "max",
+      "session": "sess_529fb515-f8fa-4dd2-9a9e-c54c56590318",
+      "exit": 0,
+      "invocation": "c3c6610121624ee08853c13036df6be6",
+      "stdout_sha256": "9fe4b6369bab897282b44fea5478292f36f8570ca0729fa64835f6c403fe9afd",
+      "stderr_sha256": "ada62d68a0d249fcc9347445dc4b3f2fe8f95afdba2bece489d91e4371e8803d"
+    },
+    "codegraph": {
+      "unit": "pal-nov21-pr118-parallel-codegraph.service",
+      "started_utc": "2026-11-21T23:32:40.260891+00:00",
+      "finished_utc": "2026-11-21T23:33:07.305290+00:00",
+      "client": "zcode",
+      "effort": "max",
+      "session": "sess_902383be-21ab-4924-a186-b4fc91a50739",
+      "exit": 0,
+      "invocation": "1dbb758d731348d1815d44bda23eadf7",
+      "stdout_sha256": "b2820ad17dfd21b25e5bea8c3836a31f717ac6ace9e4b106f138057ccd7b345c",
+      "stderr_sha256": "0b5e303c4e7bd084c192b147c4dfeed0d49050a39cf655c806c0262f4cf86636"
+    },
+    "first_native": {
+      "unit": "pal-nov21-pr118-linux-a3cfc09ed0cf-27ra2cey.service",
+      "started_utc": "2026-11-21T21:18:31.071893+00:00",
+      "finished_utc": "2026-11-21T21:19:02.569445+00:00",
+      "client": "zcode",
+      "effort": "max",
+      "session": "sess_0555f7c9-5e1b-4ab5-961c-2c154f4da62c",
+      "exit": 0,
+      "invocation": "3738c9742dfe4194bda4b3c34ed51fda",
+      "stdout_sha256": "a6fcd83cc0214d715acc8091a2a8a456018a3dbf3adf3846324cf9cbe3fb227e",
+      "stderr_sha256": "ada62d68a0d249fcc9347445dc4b3f2fe8f95afdba2bece489d91e4371e8803d"
+    },
+    "earlier_native": {
+      "unit": "pal-nov21-pr118-linux-retry-d8wr9ix0.service",
+      "started_utc": "2026-11-21T21:30:55.490999+00:00",
+      "finished_utc": "2026-11-21T21:31:37.626764+00:00",
+      "client": "zcode",
+      "effort": "max",
+      "session": "sess_e3fbe321-90f4-4a03-9a4b-034e982eb5e2",
+      "exit": 0,
+      "invocation": "43e65a35146646ceb848ae39eaf031d3",
+      "stdout_sha256": "8068ee2eb9ca62cf35cc226512f9eb4d5ed1ad7cc2a4a2cf2397c538a07adf23",
+      "stderr_sha256": "ada62d68a0d249fcc9347445dc4b3f2fe8f95afdba2bece489d91e4371e8803d"
+    },
+    "launcher_preflight": {
+      "unit": "pal-nov21-pr118-complete-native-ex77e2zz.service",
+      "started_utc": "2026-11-21T22:22:25.864297+00:00",
+      "finished_utc": "2026-11-21T22:22:57.577057+00:00",
+      "client": "zcode",
+      "effort": "max",
+      "session": "sess_45451786-9c55-4bc8-99e9-c920fb177e0d",
+      "exit": 0,
+      "invocation": "384ce2f12ad44930acf91ab8cf6c1eea",
+      "stdout_sha256": "2b76fccf83a89d9fde4c6cd2317adcd9060212680f4798f8bd68df1334de145d",
+      "stderr_sha256": "ada62d68a0d249fcc9347445dc4b3f2fe8f95afdba2bece489d91e4371e8803d"
+    }
+  },
+  "original_local_receipts": {
+    "combined": {
+      "bytes": 5247,
+      "sha256": "7452fb72df9d0abd361e29944b83ad7a630f3df0efd0bd33be65472be6193443"
+    },
+    "native": {
+      "bytes": 4941,
+      "sha256": "98ccf0c38bba3728b1e93c9a5a7ec7678a041fce1053a37cb89cc42711dce265"
+    },
+    "offline": {
+      "bytes": 2506,
+      "sha256": "c6d32e9501fafa5c0a8bb11d03ada15cc8c9b043a7690ac3ef5a0a060a061ab5"
+    }
+  },
+  "offline_full": {
+    "head_before": "a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c",
+    "head_after": "a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c",
+    "files_match": true,
+    "exit": 0,
+    "start": "2026-11-21T22:22:49.269613+00:00",
+    "end": "2026-11-21T23:08:12.399800+00:00",
+    "stages": [
+      "PASS: editable installation",
+      "PASS: module help",
+      "PASS: module report discovery",
+      "PASS: console help",
+      "PASS: console report discovery",
+      "PASS: compile source, tests and scripts",
+      "PASS: full pytest",
+      "PASS: full local verification"
+    ],
+    "pytest_summary": "43951 passed, 437 skipped, 20 warnings in 2699.92s"
+  },
+  "selfcheck": "selfcheck: PASS (10/10 checks)",
+  "phases": {
+    "workflow": {
+      "head": "a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c",
+      "counts": {
+        "error": 0,
+        "failure": 0,
+        "passed": 42,
+        "skipped": 0
+      },
+      "selectors": [
+        "tests/test_native_postgres_workflow.py"
+      ],
+      "required_selectors": [
+        "tests/test_native_postgres_workflow.py::test_native_partitions_preserve_exact_original_inventory",
+        "tests/test_native_postgres_workflow.py::test_linux_papersim_partition_boots_throwaway_pg18_cluster"
+      ],
+      "required_exact_nodes": [],
+      "started_at": "2026-11-21T21:31:30.671786+00:00",
+      "finished_at": "2026-11-21T21:31:34.648316+00:00",
+      "native_opt_in": false,
+      "exit_code": 0,
+      "skips": [],
+      "original_receipt": {
+        "bytes": 8075,
+        "sha256": "5fd8e83e56665ffcd733f7ae248a12cd17a81ba1c79a7744c082546a96e3317c"
+      },
+      "original_junit": {
+        "bytes": 9188,
+        "sha256": "91f65a9bc9fa8cb6f9da35a31ca7b15edd5ddc72a530ebb76945b467c3d3659f"
+      }
+    },
+    "offline_focus": {
+      "head": "a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c",
+      "counts": {
+        "error": 0,
+        "failure": 0,
+        "passed": 479,
+        "skipped": 1
+      },
+      "selectors": [
+        "tests/test_papersim_store_native.py::test_connect_managed_hands_off_a_verified_idle_connection",
+        "tests/test_papersim_store_native.py::test_connect_managed_identity_mismatch_fails_closed",
+        "tests/test_papersim_store_native.py::test_connect_managed_rollback_failure_fails_closed",
+        "tests/test_papersim_cli.py",
+        "tests/test_papersim_capture_marks.py",
+        "tests/test_papersim_settle.py",
+        "tests/test_papersim_optimize_cli.py",
+        "tests/test_papersim_optimize_policy.py",
+        "tests/test_papersim_optimize_runner.py",
+        "tests/test_papersim_optimize_rule_sources.py"
+      ],
+      "required_selectors": [],
+      "required_exact_nodes": [],
+      "started_at": "2026-11-21T21:31:34.695212+00:00",
+      "finished_at": "2026-11-21T21:36:55.889628+00:00",
+      "native_opt_in": false,
+      "exit_code": 0,
+      "skips": [
+        {
+          "nodeid": "tests/test_papersim_cli.py::test_native_evaluate_and_replay_over_the_managed_store",
+          "reason": "explicit native papersim CLI proof is opt-in"
+        }
+      ],
+      "original_receipt": {
+        "bytes": 83623,
+        "sha256": "1406174c6d80f76ce9dc1b6ced2c3f74083e30a862fb7d85ad6de7d9bd5cb299"
+      },
+      "original_junit": {
+        "bytes": 101196,
+        "sha256": "a70a42a59da250686bc553f81439c06de3034a9facb8b69260ed604a7581b822"
+      }
+    },
+    "native_focus": {
+      "head": "a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c",
+      "counts": {
+        "error": 0,
+        "failure": 0,
+        "passed": 35,
+        "skipped": 0
+      },
+      "selectors": [
+        "tests/test_papersim_store_native.py::test_native_connect_managed_hands_off_idle_and_writes_persist",
+        "tests/test_papersim_capture_marks_native.py::test_d1_three_original_observations_recover_in_another_cli_process",
+        "tests/test_papersim_d1_operations_native.py",
+        "tests/test_papersim_optimize_policy_native.py",
+        "tests/test_papersim_optimize_runner_native.py::test_native_managed_cli_seals_and_replays_calibration_nonconvergence",
+        "tests/test_papersim_settle_store_native.py::test_d1_settle_recovers_committed_pending_and_failed_items_in_a_new_cli",
+        "tests/test_papersim_settle_store_native.py::test_d1_settle_books_completed_basketball_including_overtime_and_explicit_push",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_handshake_uses_earlier_deadline",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_exact_rollback_replay_after_later_handover",
+        "tests/test_papersim_d1compare_journal.py::test_resolution_capture_cli_seals_atomically_and_recovers_across_processes"
+      ],
+      "required_selectors": [],
+      "required_exact_nodes": [],
+      "started_at": "2026-11-21T21:36:59.900724+00:00",
+      "finished_at": "2026-11-21T21:43:38.643997+00:00",
+      "native_opt_in": true,
+      "exit_code": 0,
+      "skips": [],
+      "original_receipt": {
+        "bytes": 8354,
+        "sha256": "2a47fca5c72725afa1cc9ead4cda867d48502563d6545d54aa255005757f1b33"
+      },
+      "original_junit": {
+        "bytes": 109752,
+        "sha256": "eceecc58723f3e54d5b82ef6c5a7cb45dff958d3cc0ede635aa5813e497b88c5"
+      },
+      "fixture": {
+        "fixture_cleanup": "removed",
+        "tracked_worktree_unchanged": true,
+        "complete_git_history_and_d1_pins_verified": true,
+        "isolated_server": {
+          "legacy_fixture_and_managed_bootstrap_applied": true,
+          "loopback_only_ready": true,
+          "native_version": "18.6",
+          "owned_data_directory_verified": true,
+          "unix_socket_ready": true
+        }
+      },
+      "original_fixture_receipt": {
+        "bytes": 2250,
+        "sha256": "7d7f93c69b23288d2871fb445664df180c40be672a758bc63f4b55bcb6b78b37"
+      }
+    },
+    "native_full": {
+      "head": "a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c",
+      "counts": {
+        "error": 0,
+        "failure": 0,
+        "passed": 845,
+        "skipped": 0
+      },
+      "selectors": [
+        "tests/test_papersim_ledger.py",
+        "tests/test_papersim_perf_view_fix.py",
+        "tests/test_papersim_store.py",
+        "tests/test_papersim_store_native.py",
+        "tests/test_papersim_migrations.py",
+        "tests/test_papersim_import_legacy.py",
+        "tests/test_papersim_cli.py",
+        "tests/test_papersim_snapshots.py",
+        "tests/test_papersim_replay.py",
+        "tests/test_papersim_m2_migrations.py",
+        "tests/test_papersim_m2_store_native.py",
+        "tests/test_papersim_queue_policy_native.py",
+        "tests/test_papersim_fx26_migrations.py",
+        "tests/test_papersim_fx26_event_keys_native.py",
+        "tests/test_papersim_scan_store_native.py",
+        "tests/test_papersim_capture_marks_native.py",
+        "tests/test_papersim_d1_operations_native.py",
+        "tests/test_papersim_mo7_shadow_native.py",
+        "tests/test_papersim_mo2_migrations.py",
+        "tests/test_papersim_optimize_registry_native.py",
+        "tests/test_papersim_optimize_policy_native.py",
+        "tests/test_papersim_optimize_runner_native.py",
+        "tests/test_papersim_settle_store_native.py",
+        "tests/test_papersim_optimize_registered_runner_native.py",
+        "tests/test_papersim_report_store_native.py",
+        "tests/test_papersim_d1compare_archive_native.py",
+        "tests/test_papersim_d1compare_journal.py",
+        "tests/test_papersim_d1compare_frozenrun.py"
+      ],
+      "required_selectors": [
+        "tests/test_papersim_store_native.py::test_native_connect_managed_hands_off_idle_and_writes_persist",
+        "tests/test_papersim_capture_marks_native.py::test_d1_three_original_observations_recover_in_another_cli_process",
+        "tests/test_papersim_d1_operations_native.py",
+        "tests/test_papersim_optimize_policy_native.py",
+        "tests/test_papersim_optimize_runner_native.py::test_native_managed_cli_seals_and_replays_calibration_nonconvergence",
+        "tests/test_papersim_settle_store_native.py::test_d1_settle_recovers_committed_pending_and_failed_items_in_a_new_cli",
+        "tests/test_papersim_settle_store_native.py::test_d1_settle_books_completed_basketball_including_overtime_and_explicit_push",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_handshake_uses_earlier_deadline",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_exact_rollback_replay_after_later_handover",
+        "tests/test_papersim_d1compare_journal.py::test_resolution_capture_cli_seals_atomically_and_recovers_across_processes",
+        "tests/test_papersim_cli.py::test_native_evaluate_and_replay_over_the_managed_store",
+        "tests/test_papersim_optimize_policy_native.py::test_native_clv_one_cent_boundary_on_numeric_fills",
+        "tests/test_papersim_optimize_policy_native.py::test_native_clv_uses_own_side_and_complete_prices_per_population",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_publication_write_failure_rolls_back_every_statement",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_publication_wait_uses_hard_deadline",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_publication_rechecks_registry_after_search"
+      ],
+      "required_exact_nodes": [
+        "tests/test_papersim_capture_marks_native.py::test_d1_three_original_observations_recover_in_another_cli_process[after-1-1]",
+        "tests/test_papersim_capture_marks_native.py::test_d1_three_original_observations_recover_in_another_cli_process[before-1-0]",
+        "tests/test_papersim_capture_marks_native.py::test_d1_three_original_observations_recover_in_another_cli_process[finish-3-2]",
+        "tests/test_papersim_d1_operations_native.py::test_d1_native_competing_settlement_parents_preserve_one_cash_leg",
+        "tests/test_papersim_d1_operations_native.py::test_d1_native_concurrent_attempts_keep_the_first_close[competing-close]",
+        "tests/test_papersim_d1_operations_native.py::test_d1_native_concurrent_attempts_keep_the_first_close[same-attempt]",
+        "tests/test_papersim_d1_operations_native.py::test_d1_native_late_recovery_proves_committed_rows_and_expires_unwritten_rows",
+        "tests/test_papersim_d1_operations_native.py::test_d1_native_resolution_scope_keeps_empty_markets_and_checks_nominated_entries",
+        "tests/test_papersim_d1_operations_native.py::test_d1_native_retries_preserve_atomic_business_and_attempt_evidence[before-item-commit]",
+        "tests/test_papersim_d1_operations_native.py::test_d1_native_retries_preserve_atomic_business_and_attempt_evidence[preparing]",
+        "tests/test_papersim_d1_operations_native.py::test_d1_native_retries_preserve_atomic_business_and_attempt_evidence[writer-error]",
+        "tests/test_papersim_d1compare_journal.py::test_resolution_capture_cli_seals_atomically_and_recovers_across_processes",
+        "tests/test_papersim_optimize_policy_native.py::test_native_club_candidate_without_pairs[all-unpaired]",
+        "tests/test_papersim_optimize_policy_native.py::test_native_club_candidate_without_pairs[no-shadow-rows]",
+        "tests/test_papersim_optimize_policy_native.py::test_native_clv_one_cent_boundary_on_numeric_fills",
+        "tests/test_papersim_optimize_policy_native.py::test_native_clv_uses_own_side_and_complete_prices_per_population",
+        "tests/test_papersim_optimize_policy_native.py::test_native_full_round_register_shadow_decide_handover_rollback",
+        "tests/test_papersim_optimize_policy_native.py::test_native_status_and_score_report_scan_identity",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair[PROMOTE]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair[RETIRE]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair[ROLLBACK]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_exact_rollback_replay_after_later_handover[False]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_cli_exact_rollback_replay_after_later_handover[True]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[commit-not-delivered-command-hard]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[confirmed-in-database-connect-timeout]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_handshake_uses_earlier_deadline[command-hard]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_handshake_uses_earlier_deadline[managed-command-hard]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_handshake_uses_earlier_deadline[managed-connect-timeout]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_handshake_uses_earlier_deadline[nearby-deadlines]",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_handshake_uses_earlier_deadline[normalized-connect-timeout]",
+        "tests/test_papersim_optimize_runner_native.py::test_native_managed_cli_seals_and_replays_calibration_nonconvergence",
+        "tests/test_papersim_settle_store_native.py::test_d1_settle_books_completed_basketball_including_overtime_and_explicit_push",
+        "tests/test_papersim_settle_store_native.py::test_d1_settle_recovers_committed_pending_and_failed_items_in_a_new_cli",
+        "tests/test_papersim_store_native.py::test_native_connect_managed_hands_off_idle_and_writes_persist"
+      ],
+      "started_at": "2026-11-21T22:26:54.626297+00:00",
+      "finished_at": "2026-11-21T23:32:17.952842+00:00",
+      "native_opt_in": true,
+      "exit_code": 0,
+      "skips": [],
+      "original_receipt": {
+        "bytes": 150633,
+        "sha256": "a73abf247890d10d2de15147f983b808fe2e3a74994491a876570ad11a3b1d97"
+      },
+      "original_junit": {
+        "bytes": 334249,
+        "sha256": "de936cae4f601d024f93df1136ef848b81197eeeb132fda2c8ee2015b8f25a64"
+      },
+      "fixture": {
+        "fixture_cleanup": "removed",
+        "tracked_worktree_unchanged": true,
+        "complete_git_history_and_d1_pins_verified": true,
+        "isolated_server": {
+          "legacy_fixture_and_managed_bootstrap_applied": true,
+          "loopback_only_ready": true,
+          "native_version": "18.6",
+          "owned_data_directory_verified": true,
+          "unix_socket_ready": true
+        }
+      },
+      "original_fixture_receipt": {
+        "bytes": 2211,
+        "sha256": "5bc59e4ce1a7b6c9b350322a2baf590602af405d59c367d572bd96071733f271"
+      }
+    }
+  },
+  "earlier_attempts": {
+    "first_native": {
+      "stage": "native-focused",
+      "observed": "No space left on device",
+      "counts": {
+        "error": 2,
+        "failure": 6,
+        "passed": 27,
+        "skipped": 0
+      },
+      "finished_at": "2026-11-21T21:29:58.915766+00:00",
+      "original_receipt": {
+        "bytes": 30158,
+        "sha256": "19057a6290ede4b2820c3b448d3e0df943f26e0978f157c94892e74f90566010"
+      },
+      "original_junit": {
+        "bytes": 92732,
+        "sha256": "e278696d9fe78e071ed999779919e2d1098387de0b39d4ec0bda60c4ea972307"
+      }
+    },
+    "earlier_native": {
+      "stage": "papersim-full",
+      "observed": "No space left on device",
+      "counts": {
+        "error": 90,
+        "failure": 2,
+        "passed": 753,
+        "skipped": 0
+      },
+      "finished_at": "2026-11-21T22:15:24.142724+00:00",
+      "original_receipt": {
+        "bytes": 1207410,
+        "sha256": "ad054393fbd093c0136269ae1da2d556a6aebb1bc7a17efab3dbf763cf95e6e4"
+      },
+      "original_junit": {
+        "bytes": 1361777,
+        "sha256": "540a2e2a293f3be3554105b054851a6f1e009bdb3a201ba604bdb18eb7109956"
+      }
+    },
+    "launcher_preflight": {
+      "stage": "verify-prior-receipts",
+      "observed": "Prior offline focus testcase coverage, verdicts, or skips do not reconcile",
+      "finished_at": "2026-11-21T22:22:49.801246+00:00",
+      "original_receipt": {
+        "bytes": 2340,
+        "sha256": "d1611f46340b5df307e08f5e9ddfd256eddc2b52b67298ce7526748b5a03a13a"
+      }
+    },
+    "initial_codegraph": {
+      "state": "indexing",
+      "complete": false,
+      "pending_refs": 1798620
+    }
+  },
+  "reused_phase_receipts": {
+    "native-focused": [
+      "linux/native-focused/papersim.json",
+      "linux/native-focused/summary.json"
+    ],
+    "offline-focused": [
+      "linux/118-offline-focused.json"
+    ],
+    "workflow-inventory": [
+      "linux/118-workflow.json"
+    ]
+  },
+  "python_and_blobs": {
+    "python": "3.12.3",
+    "helper_sha256": "ae3f0c40501acf9dad9f29b56abb335947dcb4c7a9cf9ea2a93372e34a5a1f38",
+    "workflow_blob": "3856b1f167d4e5b14bec7b9adfe42b1c36e5fbcb",
+    "manifest_test_blob": "1b78beccc5c27c45e951a4a0ae049a1f145e9d3a",
+    "uv_lock_blob": "45e4105ddc941e0b0f10cbc2dbc2eb0943278cdf"
+  }
+}

@@ -1,0 +1,68 @@
+f09850ba8ef010895d6a959cbeff401fbc706363:src/polymarket_alpha_lab/papersim/store_psycopg.py
+  40 from __future__ import annotations
+  42 from collections.abc import Mapping
+  43 from contextlib import contextmanager
+  44 from datetime import UTC, datetime
+  45 from decimal import Decimal
+  46 import json
+  47 from pathlib import Path
+  49 from polymarket_alpha_lab.local_postgres_dsn import validate_local_postgres_dsn
+  50 from polymarket_alpha_lab.papersim import settle
+  51 from polymarket_alpha_lab.papersim.store import (
+  52     BANKROLL_BASE_REASONS,
+  53     BankrollCheckRequest,
+  54     BankrollCheckResult,
+  55     CandidateMarkCapture,
+  56     CommandRunEventSubmission,
+  57     EffectiveMarketOutcome,
+  58     MarketOutcomeObservation,
+  59     PapersimStoreError,
+  60     QueueControlSubmission,
+  61     SETTLEMENT_CASH_REASONS,
+  62     ScanSubmission,
+  63     SettlementRecord,
+  64     _as_decimal,
+  65     bankroll_identity_difference,
+  66     command_run_event_key,
+  67     entry_mark_key,
+  68     exact_sum,
+  69     validate_evidence_time_order,
+  70 )
+  71 from polymarket_alpha_lab.project_postgres import binding, sql
+  72 from polymarket_alpha_lab.project_postgres.files import no_links, read_private
+1580 from polymarket_alpha_lab.papersim.store import (  # noqa: E402  (MO-2 append block)
+1581     ModelSpecSubmission,
+1582     OptimizationRunSubmission,
+1583     OptimizerControlEventSubmission,
+1584     PromotionDecisionSubmission,
+1585     RoleEventBatch,
+1586     RoleEventSubmission,
+1587     model_role_event_key,
+1588     normalize_json_number,
+1589     _require_json_payload,
+1590 )
+2166 from polymarket_alpha_lab.papersim import snapshots  # noqa: E402  (B4 append block)
+ 109 def connect_managed(repo_root: Path, *, info: dict | None = None):
+ 110     """Application connection (pal_app) with per-connection identity assertion.
+ 111
+ 112     Returns a verified IDLE connection, or raises with the connection
+ 113     closed: the identity check's read-only transaction is rolled back
+ 114     before hand-off (nothing from the check persists, and a caller's
+ 115     first ``conn.transaction()`` block is the OUTERMOST transaction and
+ 116     therefore commits); any check failure closes the connection first.
+ 117     """
+ 118     repo_root = Path(repo_root)
+ 119     if info is None:
+ 120         info = read_instance(repo_root)
+ 121     [redacted], owner=False, repo_root=repo_root)
+ 122     import psycopg  # lazy: the audited validation already ran in managed_dsn
+ 123     with binding.bound(info['instance_id'], info['root_sha256'], info['system_identifier']):
+ 124         connection = psycopg.connect(dsn)
+ 125         try:
+ 126             binding.verify_connection(connection.cursor())
+ 127             connection.rollback()   # end the check's read-only transaction; hand off IDLE
+ 128             connection._papersim_managed_root = repo_root.resolve()
+ 129         except BaseException:
+ 130             connection.close()      # fail closed: release, never hand off
+ 131             raise
+ 132     return connection

@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from io import BytesIO
@@ -772,6 +773,406 @@ def test_capture_scope_validation_precedes_managed_connection(monkeypatch):
         with pytest.raises(acquire.AcquisitionError) as error:
             acquire.capture_inputs(**(base | changes))
         assert error.value.code == reason
+
+
+_RESOLUTION_CLI_SLOT = ("--resolution-slot", "0" * 64)
+_RESOLUTION_CLI_KEY = "d1:operation:v1:" + "1" * 64
+
+
+@pytest.fixture
+def resolution_cli_without_connection(monkeypatch):
+    import runpy
+
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Invalid capture-inputs invocation reached the managed connection")
+
+    monkeypatch.setattr(store_psycopg, "connect_managed", forbidden)
+    cli = Path(__file__).resolve().parents[1] / "tools" / "d1_compare.py"
+    main = runpy.run_path(str(cli))["main"]
+    argv = ["capture-inputs", "--window-start", STAMP.isoformat(),
+            "--window-end", (STAMP + datetime.timedelta(minutes=1)).isoformat(), "--allow-public-fetch"]
+
+    def invoke(*options):
+        return main([*argv, *options])
+
+    return invoke
+
+
+def test_resolution_cli_rejects_mixed_discovery_and_slot_flags(resolution_cli_without_connection, capsys):
+    with pytest.raises(SystemExit) as error:
+        resolution_cli_without_connection("--tag-slug", "soccer", *_RESOLUTION_CLI_SLOT,
+                                          "--operation-key", _RESOLUTION_CLI_KEY, "--attempt", "1")
+    assert error.value.code == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert all(text in output.err for text in ("not allowed with argument", "--tag-slug", "--resolution-slot"))
+
+
+@pytest.mark.parametrize(("arguments", "reason"), [
+    ((*_RESOLUTION_CLI_SLOT, "--operation-key", _RESOLUTION_CLI_KEY),
+     "d1_resolution_operation_and_attempt_required"),
+    ((*_RESOLUTION_CLI_SLOT, "--attempt", "1"), "d1_resolution_operation_and_attempt_required"),
+    (("--tag-slug", "soccer", "--operation-key", _RESOLUTION_CLI_KEY), "d1_resolution_flags_require_slot"),
+    (("--tag-slug", "soccer", "--attempt", "1"), "d1_resolution_flags_require_slot"),
+])
+def test_resolution_cli_requires_slot_key_and_attempt_together(resolution_cli_without_connection, capsys,
+                                                               arguments, reason):
+    assert resolution_cli_without_connection(*arguments) == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == f"d1_compare: capture-inputs failed: {reason}\n"
+
+
+@pytest.mark.parametrize(("key", "attempt", "reason"), [
+    ("ordinary-capture", "1", "d1_operation_key_invalid"),
+    ("d1:operation:v1:" + "A" * 64, "1", "d1_operation_key_invalid"),
+    (_RESOLUTION_CLI_KEY, "0", "d1_operation_attempt_invalid"),
+    (_RESOLUTION_CLI_KEY, "-1", "d1_operation_attempt_invalid"),
+])
+def test_resolution_cli_refuses_invalid_operation_key_or_attempt(resolution_cli_without_connection, capsys,
+                                                                 key, attempt, reason):
+    assert resolution_cli_without_connection(*_RESOLUTION_CLI_SLOT, "--operation-key", key,
+                                             "--attempt", attempt) == 2
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert output.err == f"d1_compare: capture-inputs failed: {reason}\n"
+
+
+def _resolution_target(**changes):
+    return {
+        "market_id": "market-34", "condition_id": _CONDITION, "slug": "fixture-market",
+        "side_tokens": {"YES": "222", "NO": "111"}, "side_labels": {"YES": "Yes", "NO": "No"},
+        "entry_ids": [], "terminal_rule": "gamma_clob_binary", **changes,
+    }
+
+
+def _terminal_fixture_routes(target, sample, *, gamma=None, yes=None, no=None):
+    from tests.test_papersim_adapter_polymarket import _book_key, _condition_key
+
+    condition = target["condition_id"]
+    tokens = target["side_tokens"]
+    market = {
+        "id": target["market_id"], "slug": target["slug"], "conditionId": condition,
+        "question": "Will the fixture reach its terminal threshold?",
+        "endDate": (sample - datetime.timedelta(hours=1)).isoformat(),
+        "outcomes": '["No", "Yes"]', "clobTokenIds": json.dumps([tokens["NO"], tokens["YES"]]),
+        "outcomePrices": '["0", "1"]', "closed": True, "active": False,
+        "acceptingOrders": False, "umaResolutionStatus": "resolved",
+    }
+
+    def book(token, price, overrides):
+        if isinstance(overrides, Exception):
+            return overrides
+        payload = json.loads(_book_bytes(token, sample))
+        payload.update(market=condition, bids=[{"price": price, "size": "10"}], asks=[])
+        payload.update(overrides or {})
+        return b'\n' + json.dumps(payload, indent=2).encode() + b' \n'
+
+    return {
+        _condition_key(condition): b' \n' + json.dumps([market | (gamma or {})], indent=2).encode() + b'\n',
+        _book_key(tokens["YES"]): book(tokens["YES"], "0.995", yes),
+        _book_key(tokens["NO"]): book(tokens["NO"], "0.004", no),
+    }
+
+
+def _collect_resolution_fixture(monkeypatch, routes, *, targets=None, clock=lambda: STAMP, leg="crypto",
+                                started=STAMP, deadline=STAMP + datetime.timedelta(minutes=1)):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+    from tests.test_papersim_adapter_polymarket import FakeOpener
+
+    opener = FakeOpener(routes)
+    monkeypatch.setattr(acquire.polymarket, "BoundedPublicOpener", lambda: opener)
+    monkeypatch.setattr(acquire, "_now_utc", clock)
+    scope = {"scheduled_for": STAMP.isoformat(), "deadline": deadline.isoformat(), "leg": leg,
+             "targets": acquire._resolution_targets(targets if targets is not None else [_resolution_target()])}
+    document, attempts = acquire._collect_resolution(scope, started)
+    document["started_at"] = started.isoformat()
+    raw = {attempt.content_sha256: attempt.body for attempt in attempts if attempt.body is not None}
+    monkeypatch.setattr(acquire, "_snapshot", lambda connection, digest: {"content": raw[digest]})
+    entries = acquire._read_entries(None, document, resolution=True)
+    acquire._verify_resolution_requests(document, entries)
+    return document, entries, opener
+
+
+def test_resolution_replays_the_exact_bytes_for_a_closed_registered_market(monkeypatch):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    target = _resolution_target()
+    sample = STAMP - datetime.timedelta(seconds=2)
+    confirmed = STAMP - datetime.timedelta(seconds=3)
+    routes = _terminal_fixture_routes(target, sample, gamma={
+        "updatedAt": sample.isoformat(), "resolvedAt": confirmed.isoformat(),
+    })
+    document, entries, opener = _collect_resolution_fixture(monkeypatch, routes, targets=[target, target])
+
+    def forbidden():
+        pytest.fail("Offline replay opened public transport")
+
+    monkeypatch.setattr(acquire.polymarket, "BoundedPublicOpener", forbidden)
+    result = acquire.replay_resolution(document, entries, target)
+    assert document["scope"]["targets"] == [target]  # zero-entry markets remain in the original denominator
+    assert document["observations"][0]["transport_complete"] is True
+    assert result.ready and result.side_tokens == target["side_tokens"]
+    assert result.winning_token_id == "222"
+    assert (result.observed_at, result.confirmed_at) == (sample, confirmed)
+    assert [entry.content for entry in entries] == list(routes.values())
+    assert len(opener.calls) == 3
+    assert [entry.content_sha256 for entry in entries] == [hashlib.sha256(raw).hexdigest() for raw in routes.values()]
+    assert all(entry.utc_fetched_at == STAMP for entry in entries)
+    with pytest.raises(acquire.AcquisitionError) as error:
+        acquire._request_fields(result.gamma_entry.url)
+    assert error.value.code == "d1_capture_public_request_invalid"
+
+
+@pytest.mark.parametrize(("gamma", "yes", "no", "reason", "complete"), [
+    ({}, {"asset_id": "111"}, {}, "d1_capture_book_token_mismatch", True),
+    ({}, {}, {"market": "0x" + "b" * 64}, "d1_capture_book_condition_mismatch", True),
+    ({}, {}, TimeoutError(), "public_timeout", False),
+    ({}, {}, {"bids": []}, "d1_resolution_clob_price_unproved", True),
+    ({}, {"timestamp": None}, {}, "d1_capture_book_source_time_missing", True),
+    ({"id": "wrong"}, {}, {}, "d1_resolution_gamma_identity_mismatch", True),
+    ({"slug": "wrong-slug"}, {}, {}, "d1_resolution_gamma_identity_mismatch", True),
+    ({"closed": False}, {}, {}, "d1_resolution_gamma_not_terminal", True),
+    ({"outcomePrices": ["0.0000000000000000001", "0.9999999999999999999"]},
+     {}, {}, "d1_resolution_gamma_not_terminal", True),
+    ({"updatedAt": (STAMP + datetime.timedelta(seconds=1)).isoformat()},
+     {}, {}, "d1_resolution_source_time_in_future", True),
+    ({"outcomePrices": ["0.5", "0.5"]}, {}, {}, "d1_resolution_gamma_not_terminal", True),
+    ({"clobTokenIds": '["111", "999"]'}, {}, {}, "d1_resolution_request_outside_scope", False),
+])
+def test_resolution_preserves_source_and_terminal_gaps(monkeypatch, gamma, yes, no, reason, complete):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    target = _resolution_target()
+    routes = _terminal_fixture_routes(target, STAMP - datetime.timedelta(seconds=1), gamma=gamma, yes=yes, no=no)
+    document, entries, opener = _collect_resolution_fixture(monkeypatch, routes)
+    observation, = document["observations"]
+    replayed = acquire.replay_resolution(document, entries, target)
+    assert reason in observation["reason_codes"] and reason in replayed.reason_codes
+    assert not observation["terminal_evidence_ready"] and not replayed.ready
+    assert observation["transport_complete"] is complete
+    assert all("token_id=999" not in url for url, _ in opener.calls)
+    assert replayed.confirmed_at is None
+
+
+def test_resolution_keeps_repeated_body_receipts_and_explicit_additional_source_gap(monkeypatch):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+    from tests.test_papersim_adapter_polymarket import _condition_key
+
+    sample = STAMP - datetime.timedelta(seconds=1)
+    clock = (STAMP + datetime.timedelta(microseconds=ordinal) for ordinal in range(20))
+    target = _resolution_target(terminal_rule="additional_evidence_required")
+    other = _resolution_target(market_id="market-35", condition_id="0x" + "b" * 64, slug="second-market",
+                               side_tokens={"YES": "333", "NO": "444"})
+    routes = _terminal_fixture_routes(target, sample)
+    document, entries, _ = _collect_resolution_fixture(monkeypatch, routes, targets=[target])
+    replayed = acquire.replay_resolution(document, entries, target)
+    assert replayed.observed_at == STAMP and replayed.confirmed_at is None
+    assert replayed.reason_codes == ("d1_resolution_additional_source_required",)
+
+    routes = {_condition_key(item["condition_id"]): b' [] \n' for item in (target, other)}
+    document, entries, _ = _collect_resolution_fixture(
+        monkeypatch, routes, targets=[target, other], clock=lambda: next(clock))
+    first, second = entries
+    assert first.content_sha256 == second.content_sha256
+    assert first.utc_fetched_at < second.utc_fetched_at
+    assert [row["request_sequences"] for row in document["observations"]] == [[1], [2]]
+    assert not acquire.replay_resolution(document, entries, other).ready
+
+
+@pytest.mark.parametrize("past_cutoff", (False, True))
+def test_resolution_checks_the_complete_receipt_time_against_the_cutoff(monkeypatch, past_cutoff):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    deadline = STAMP + datetime.timedelta(seconds=1)
+    finished_at = deadline + datetime.timedelta(microseconds=int(past_cutoff))
+    clock = iter((STAMP, STAMP, STAMP, STAMP, STAMP, finished_at))
+    target = _resolution_target()
+    routes = _terminal_fixture_routes(target, STAMP - datetime.timedelta(seconds=1))
+    document, entries, _ = _collect_resolution_fixture(
+        monkeypatch, routes, clock=lambda: next(clock), deadline=deadline)
+    assert entries[-1].utc_fetched_at == finished_at
+    replayed = acquire.replay_resolution(document, entries, target)
+    assert replayed.ready is not past_cutoff
+    assert ("d1_resolution_after_deadline" in replayed.reason_codes) is past_cutoff
+
+
+def test_resolution_missed_window_records_original_target_without_transport(monkeypatch):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    cutoff = STAMP + datetime.timedelta(seconds=1)
+    document, entries, opener = _collect_resolution_fixture(monkeypatch, {}, started=cutoff, deadline=cutoff)
+    assert not entries and not opener.calls
+    result = acquire.replay_resolution(document, entries, _resolution_target())
+    assert result.reason_codes == ("d1_resolution_window_missed",)
+
+
+def _native_resolution_targets():
+    return [
+        _resolution_target(),
+        _resolution_target(market_id="market-35", condition_id="0x" + "b" * 64, slug="second-market",
+                           side_tokens={"YES": "333", "NO": "444"}),
+    ]
+
+
+def _native_resolution_capture():
+    """Run the checked-in CLI with fixture transport and isolated process cuts."""
+    import runpy
+
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+    from tests.test_papersim_adapter_polymarket import FakeOpener
+
+    mode = sys.argv.pop(1)
+    sample = datetime.datetime.now(UTC) - datetime.timedelta(seconds=1)
+    first, second = _native_resolution_targets()
+    routes = _terminal_fixture_routes(first, sample) | _terminal_fixture_routes(
+        second, sample, yes={"asset_id": second["side_tokens"]["NO"]})
+
+    def forbidden():
+        raise AssertionError("Expected a verified offline read, got public transport")
+
+    acquire.polymarket.BoundedPublicOpener = forbidden if mode == "offline" else lambda: FakeOpener(routes)
+    if mode == "before-publish":
+        register = acquire._register
+
+        def stop_before_receipt(*args, **kwargs):
+            record = register(*args, **kwargs)
+            if record["kind"] == "d1_public_resolution_manifest":
+                os._exit(86)
+            return record
+
+        acquire._register = stop_before_receipt
+    elif mode == "after-publish":
+        publish = acquire._publish_resolution
+
+        def stop_after_commit(*args, **kwargs):
+            publish(*args, **kwargs)
+            os._exit(87)
+
+        acquire._publish_resolution = stop_after_commit
+    cli = Path(__file__).resolve().parents[1] / "tools" / "d1_compare.py"
+    sys.argv[0] = str(cli)
+    runpy.run_path(str(cli), run_name="__main__")
+
+
+def _native_resolution_read():
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    def forbidden():
+        raise AssertionError("A verified seal read opened public transport")
+
+    acquire.polymarket.BoundedPublicOpener = forbidden
+    root, digest = Path(sys.argv[1]), sys.argv[2]
+    with store_psycopg.connect_managed(root) as connection, store_psycopg.d1_read_view(connection):
+        document, entries = acquire.read_resolution_capture(repo_root=root, batch_sha256=digest, _connection=connection)
+        scope = document["scope"]
+        receipt = store_psycopg.read_command_run_event(connection, scope["operation_key"],
+                                                       document["attempt"], "SUCCEEDED")
+        replays = [acquire.replay_resolution(document, entries, target) for target in scope["targets"]]
+    print(json.dumps({
+        "run_event_id": receipt["run_event_id"], "paper_flags": [receipt[name] for name in
+            ("paper_only", "report_only", "readonly")], "scope": scope, "attempt": document["attempt"],
+        "reasons": [item.reason_codes for item in replays],
+        "ready": [item.ready for item in replays], "digests": [entry.content_sha256 for entry in entries],
+        "lengths": [len(entry.content) for entry in entries],
+        "receipts": [entry.utc_fetched_at.isoformat() for entry in entries],
+    }, sort_keys=True))
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux" or os.environ.get("POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES") != "1",
+    reason="explicit Linux native PostgreSQL proof is opt-in",
+)
+def test_resolution_capture_cli_seals_atomically_and_recovers_across_processes(tmp_path, record_property):
+    from polymarket_alpha_lab.papersim import store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import acquire, operations
+    from tests.test_papersim_capture_marks_native import _d1_register_binding
+    from tests.test_papersim_d1compare_archive_native import _inventory, _isolated_project, _paper_counts, _process_env
+    from tests.test_papersim_d1compare_frozenrun import REPO_ROOT, git_bytes
+
+    with _isolated_project(tmp_path) as project:
+        head = git_bytes(REPO_ROOT, "rev-parse", "HEAD").decode().strip()
+        git_bytes(project.root, "checkout", "--quiet", "--detach", "--force", head)
+        assert not git_bytes(project.root, "status", "--porcelain")
+        env = _process_env(project) | {"PYTHONPATH": f"{project.root / 'src'}:{project.root}"}
+        instance_id = store_psycopg.read_instance(project.root)["instance_id"]
+        team = "crypto_btc"
+        with store_psycopg.connect_managed(project.root) as conn:
+            now = store_psycopg.d1_database_time(conn)
+            start = now + datetime.timedelta(seconds=1)
+            scheduled = start + datetime.timedelta(seconds=1)
+            deadline = scheduled + datetime.timedelta(minutes=2)
+            end = deadline + datetime.timedelta(minutes=1)
+            interval_sha = _d1_register_binding(
+                conn, document={"version": 1, "instance_id": instance_id, "starts_at": start, "ends_at": end},
+                kind="d1_operation_interval", source="d1:operation:interval:v1",
+                command="d1-register-interval", key_for=lambda sha: f"d1:interval-binding:v1:{sha}",
+            )
+            scope = {"window_start": start, "window_end": end, "targets": _native_resolution_targets()}
+            config_digest = hashlib.sha256(operations.document_bytes({"team": team, "scope": scope})).hexdigest()
+            slot = {"version": 1, "instance_id": instance_id, "interval_sha256": interval_sha,
+                    "scheduled_for": scheduled, "deadline": deadline, "write_deadline": end,
+                    "leg": "crypto", "command": acquire.RESOLUTION_CAPTURE_COMMAND, "team": team,
+                    "code_commit": head, "config_digest": config_digest, "input_evidence": [], "scope": scope}
+            key = operations.slot_operation_key(slot)
+            slot_sha = _d1_register_binding(
+                conn, document=slot, kind="d1_operation_slot", source="d1:operation:slot:v1",
+                command="d1-register-slot", key_for=lambda _sha: f"d1:slot-binding:v1:{key.rsplit(':', 1)[1]}",
+                scheduled_for=scheduled, code_commit=head, config_digest=config_digest,
+            )
+
+        def process(function, *args):
+            code = f"from tests.test_papersim_d1compare_journal import {function}; {function}()"
+            return subprocess.run([sys.executable, "-B", "-c", code, *args], cwd=project.root, env=env,
+                                  capture_output=True, text=True, timeout=45)
+
+        def capture(mode, attempt, *, allow=True):
+            return process(
+                "_native_resolution_capture", mode, "capture-inputs", "--repo-root", str(project.root),
+                "--window-start", start.isoformat(), "--window-end", end.isoformat(),
+                "--resolution-slot", slot_sha, "--operation-key", key, "--attempt", str(attempt),
+                *(("--allow-public-fetch",) if allow else ()),
+            )
+
+        old_inventory, old_business = _inventory(project), _paper_counts(project)
+        time.sleep(max(0, (scheduled - datetime.datetime.now(UTC)).total_seconds()))
+        cut = capture("before-publish", 1)
+        assert cut.returncode == 86 and not cut.stdout and not cut.stderr
+        assert _inventory(project) == old_inventory
+        with store_psycopg.connect_managed(project.root) as conn, store_psycopg.d1_read_view(conn):
+            early = store_psycopg.d1_operation_receipts(conn, key)
+        assert [(row["attempt"], row["phase"]) for row in early] == [(1, "STARTED")]
+        replay_old = capture("offline", 1, allow=False)
+        assert replay_old.returncode == 2 and "d1_resolution_new_attempt_required" in replay_old.stderr
+        lost_response = capture("after-publish", 2)
+        assert lost_response.returncode == 87 and not lost_response.stdout and not lost_response.stderr
+        recovered = capture("offline", 3, allow=False)
+        assert recovered.returncode == 0 and not recovered.stderr
+        receipt = json.loads(recovered.stdout)
+        assert receipt["reused"] and receipt["attempt"] == 2 and receipt["resolution_slot_sha256"] == slot_sha
+        assert receipt["coverage"] == {"market_targets": 2, "markets_with_terminal_evidence": 1,
+                                       "markets_missing_terminal_evidence": 1}
+        reread = process("_native_resolution_read", str(project.root), receipt["batch_sha256"])
+        assert reread.returncode == 0 and not reread.stderr
+        evidence = json.loads(reread.stdout)
+        assert evidence["ready"] == [True, False] and evidence["attempt"] == 2
+        assert evidence["reasons"] == [[], ["d1_capture_book_token_mismatch"]]
+        assert evidence["run_event_id"] == receipt["run_event_id"] and evidence["paper_flags"] == [True] * 3
+        assert evidence["scope"]["code_commit"] == head and evidence["scope"]["application_role"] == "pal_app"
+        assert evidence["scope"]["instance_id"] == instance_id
+        assert all(not target["entry_ids"] for target in evidence["scope"]["targets"])
+        published = _inventory(project)
+        assert len(evidence["digests"]) == 6
+        assert evidence["lengths"] == [published[sha][0] for sha in evidence["digests"]]
+        assert len(published) == len(old_inventory) + 7
+        assert _paper_counts(project) == old_business
+        record_property("d1_terminal_capture", json.dumps({
+            "receipt": receipt, "source_digests": evidence["digests"], "business_rows": old_business,
+            "before_publication_exit": cut.returncode, "lost_response_exit": lost_response.returncode,
+        }, sort_keys=True))
 
 
 def _start_fixture_capture_process(*, with_failed_page=False):

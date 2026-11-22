@@ -1,0 +1,44 @@
+# PR #118 实质头独立只读复审 — 冲突解决与测试安排（MC-4 / MC-5）
+
+**评审者**：独立只读 ZCode，未参与 #118 的计划、实现与测试。
+**被审对象**：实质头 S＝`a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c`（树 `0964373…`），父序 O₀＝`f09850ba…`（#118 原头，第一父）、B＝`01a3d6d2…`（规范 main / 联合节点落地，第二父），与提交方声明一致（candidate-paths-and-tree.txt:1-3、semantic-disposition.md:3-5）。
+**本轮 UTC 日期**：2026-11-21。**限审范围**：本轮刷新的冲突解决与测试安排；不重做 #118 完整实现审计。
+**约束遵守**：全程仅用只读 Read 浏览附件目录内文件；未运行命令、未写入、未联网、未使用地址或凭证、未访问附件目录外。附件不含地址/凭据/连接串值（`POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX` 等仅以变量名出现），无可披露项。
+
+## 实际读取页面
+
+清点 `packet-manifest.json` 全部 24 项，全部逐文件完整读取：清单本身、已审增补（merge-plan.md）、原计划复审（merge-plan-review.txt）、冲突处置（semantic-disposition.md）、两侧 blob 与清单（original/main/combined-connection.txt、blob-and-inventory-verification.json、candidate-paths-and-tree.txt）、实际运行摘要（actual-tests.json、linux-verification.json、test-executor.json、offline-test-executor.json、offline-linux-verification.json、hygiene.json、codegraph.json），以及四份差异附件（store 三段 0001-0207 / 0208-0414 / 0415-0524，CLI 与矩阵 0001-0173）。掩码核对：24 项 `address_masked` 均为 `false`，`source_sha256 == packet_sha256`，无掩码差异需换算。差异附件按原统一差异连续行排列，三段首尾相接无缺行（第二段以 `'s.operation_key', scan_operation_key)` 起始，恰接第一段末行）。
+
+## 冲突解决核对（store_psycopg.py）
+
+- **两侧合并基础**：Git 报告唯一未合并路径为 `store_psycopg.py`（semantic-disposition.md:9），共享路径四项与 merge-plan.md:16 一致。
+- **两个受管入口保留**：combined-connection.txt:50-82 的 `connect_managed` 完整保留 main 侧双路——无 clock 走 `psycopg.connect(dsn)`（148-153），有 clock 走 `_connect_with_deadline(dsn, clock)`（154-155）；验证/回滚也分两路，clock 路径在 `optimization_database_phase(..., stage='connection_identity', closeout=True)` 内（161-163）；`binding.bound(...)` 内开应用连接、`managed_dsn(..., owner=False)` 先验证（147-148）均与 main-connection.txt 逐行一致。`connect_owner` 在第一段差异中以未改上下文行保留（0001-0207.diff:107），`connect_explicit` 列入 main 侧符号保留清单。
+- **交接后 root 标记**：唯一赋值 `connection._papersim_managed_root = repo_root.resolve()` 位于两路共同成功出口——clock 上下文退出之后（163 行 `with` 结束后）、外层 `try` 之内、`except BaseException` 之前（combined-connection.txt:78，即候选 164 行），与第一段差异 0001-0207.diff:17 的插入行一致。失败路径仍 `connection.close()` 后重抛（79-81），不留标记。三份连接文件交叉对照：合并版本 = main 双路结构 + original-connection.txt:64 的标记行，位置正确。
+- **D1 语义与 main 优化器路径**：三段差异只新增 D1 符号（`d1_managed_identity` 比对解析根+IDLE+重核身份、`d1_resolution_identity` 要求 INTRANS/repeatable-read/read-only、`d1_operation_lock` 跨 PREPARED 与逐笔事务、`_record_settlement` 凭标记取逐笔锁 0208-0414.diff:78-79），`-` 行仅为 #118 自身的结算现金代码重构（内联 dict/SELECT 抽取为 `_terminal_cash_values`/`_terminal_cash_rows`/`_opening_cash_rows`/`_check_opening_cash`，全部在保留符号清单内）。import hunk 用 main 的 `closing, contextmanager`，D1 复用同一 `contextmanager`（0001-0207.diff:5-12、59）。main 侧 74 个优化器符号（含 `_optimizer_publish`、`_confirm_optimizer_commit`、`_connect_with_deadline`、`optimization_database_phase`）全数保留。
+
+## CLI、矩阵与测试安排核对
+
+- **CLI 只加 D1 参数**：cli.py 在本差异中仅一个 hunk、一行——`_cmd_settle` 调用新增 `managed=args.managed`（cli-matrix diff:21），其余上下文未动；原 operator/operation_key/attempt 入口不变，B2/B3 入口继续可用，与计划第 25 行的 `--unified=0` 预期一致。
+- **原生 28 文件顺序**：YAML（cli-matrix diff:9）与 `PAPERSIM_FILES`（diff:33）在同一位置（capture_marks 与 mo7_shadow 之间）各插 `test_papersim_d1_operations_native.py` 一次；linux-verification.json:20-49 实际清单恰 28 项、位置 17，五段顺序 optimize_policy → optimize_runner → settle_store → optimize_registered_runner → report_store（21-25 位）保留。`manifest_test_blob 1b78becc…` 与差异头新 blob、`workflow_blob 3856b1f1…` 与 YAML 新 blob 相互印证。workflow 自检 42/42 通过，两个固定断言均在且 `missing_required` 为空。
+- **回滚测试**：交接 fake 组按原计划复审发现 1 扩展——成功/身份不符两用例均参数化为 direct/clocked 双路，成功用例走非规范路径 `root / '..' / root.name` 并断言 `_papersim_managed_root == root.resolve()`、回滚前与时钟相位退出时无标记（cli-matrix diff:86-116）；新增 rollback 失败用例断言两路均关闭且无标记（diff:151-170）。离线专项 479 通过/1 预期跳过、exit 0。
+- **FX-38/39 与 O-5**：native_full 的 19 项必核对 nodeid 全部在实际执行且 `missing_required` 为空——含 O-5 非收敛 `test_native_managed_cli_seals_and_replays_calibration_nonconvergence`，FX-38/39 的握手较早时限、超时关闭、提交确认复用握手时限、发布写失败整体回滚、发布硬时限、发布后重查注册表；受管事务及逐笔回滚（`test_native_publication_write_failure_rolls_back_every_statement`、`test_native_cli_exact_rollback_replay_after_later_handover`、D1 跨进程恢复/原子封存）均在。原生专项 35/35、全分区 845/845、exit 0，全部锚定 head `a3cfc09`。
+- **两次隔离库清理**：native-focused 与 papersim-full 两个一次性 PG18 环境均 `fixture_cleanup: "removed"`、exit 0，回环监听、独立数据目录、Unix socket 就绪均有记录（actual-tests.json:77-100）；此前因磁盘满失败的全分区尝试同样记录了 fixture 清理。
+
+## 运行证据一致性
+
+离线全量 43951 通过 / 437 跳过（2699.92s），八阶段全 PASS，`head_before == head_after == a3cfc09` 且 15 个变更文件 SHA 前后一致；selfcheck 10/10；hygiene 三类敏感路径零新增；CodeGraph 索引 complete、零 pending。前两次原生失败（ENOSPC、生成中索引 1.2GB / 179 万 pending refs）有回执 SHA 留存，重试仅删除该不完整索引、Git 与测试输入不变，复跑全绿——披露完整，属环境故障而非代码缺陷。
+
+## 发现（不阻塞）
+
+1. offline_focus 的 1 项跳过未按 nodeid 列名（`unexpected_skips` 为空，与离线组内 @NATIVE 用例预期跳过相符），证据粒度上的小缺口。
+2. 前两次原生失败靠重试转绿，判定依赖提交方对"仅删除不完整索引"的自述与回执哈希（无工具约束下未重算），与其历次做法一致。
+
+## 待办（不得声称已通过）
+
+三条远端 CI（Offline / Native / Research，对 B＋S 与 B＋H 的实际合并对象）与最终文档头 H 及其独立审核尚待完成；本结论仅覆盖本轮冲突解决与测试安排，整体合并门未闭合。
+
+## 结论
+
+在限审范围内：两个受管连接入口、交接后 root 标记位置、CLI 单行 D1 参数、受管事务与回滚测试、原生 28 文件同位插入与五段顺序、FX-38/39 与 O-5 必运行项、两次隔离库清理，全部与已签计划、冲突处置声明及实际运行摘要相互印证，未发现冲突解决丢失或测试安排偏离。
+
+VERDICT: PASS

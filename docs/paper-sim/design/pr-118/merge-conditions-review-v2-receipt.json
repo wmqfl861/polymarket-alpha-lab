@@ -1,0 +1,22 @@
+{
+  "started": "2026-11-21T13:15:28.714596+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "ee506058d96b97b877c6acd4707b5e9a8002740c9c15d9145854b66f3c8ba3cf",
+  "purpose": "merge-condition-plan-second-review",
+  "resume": "sess_5494f412-df8f-4590-a658-1bd586454a5e",
+  "attachments": {
+    "plan-v2.md": "38a0dc8e2a36208fb15ed7bdca71870f65a6a4fc4fc1fbcfe983d5d26cd22aad",
+    "response-v2.md": "a2da3ecd000e8c9d6539286485c106cfe1e288748df09b4c831e649329f22e8c"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T13:16:55.332514+00:00",
+  "exit": 0,
+  "stdout_sha256": "cb6c57ad8a1bbe4f1a887fe2aa3baec2476ba42d6b6be27541175c4aae9f0970",
+  "stderr_sha256": "a569c63fef5e141573ae9be5020a02b7dd0916778ae05748ebda383092dcdccf",
+  "stdout_bytes": 3572,
+  "stderr_bytes": 66,
+  "safe_diagnostics": []
+}
