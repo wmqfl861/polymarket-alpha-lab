@@ -1,0 +1,38 @@
+# #118 合入后同步最终回执并登记 FX-41/43 俱乐部 W45 缺口
+
+写域限 `docs/paper-sim/design/` 和协调者独写的 `DELIVERY_PLAN.md`。本节点向主线交付回执和未完成项登记。源码、测试、数据库和冻结交接包在范围外。
+
+## 开始实施的凭据
+
+#121 已于 2026-11-21 21:09:44 UTC 合入。以下为现有证据固定的对象。
+
+| 对象 | 完整提交 |
+| --- | --- |
+| #121 实际合并 B | `01a3d6d208fb7a22886f3cc0b54f4b6499d83400` |
+| #118 最终头 H | `b89120f2fa79c6ecf5f371376fc00f1ccd10809c` |
+| #118 CI 检出 M，父序 B/H | `6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e` |
+| 本机证据候选 E，单父 H | `e2d7c64f63283e981da23be0574dcbcbfd812ed5` |
+
+Offline `44968419459`、Native `44968419447`、Research `44968419472` 均为 attempt 1 成功。H/M 的 CI 后签署为 `sess_397092a6-c2ce-43e9-ac1c-bf27264c54e8`，2026-11-22 01:15:46 UTC，`VERDICT: PASS`。E 远端读回和实际合并目前待证。依据已入库 `pr-118/pr118-final-head-ci-plan-astra.5k4cc36p.md` 第 4–5 步，在以下两份实件齐备后，从含实际 #118 合并的规范 main 新开干净工作树。
+
+- `pr118-retained-publication-path.txt` 所指 `status.json` 有 `retained_e_and_body_verified`。同仓 `evidence/pr-118-final-b89120f2fa79c6ecf5f371376fc00f1ccd10809c` 精确指 E，全部文件与 PR 正文已远端读回，E 自身的独立推送签署可核。
+- `pr118-landed-path.txt` 所指 `landed.json` 有 `verified=true`。从中取实际合并 SHA、`merged_utc`、父序 B/H，核树等于 M/H 的 `e7b2335c0f9baea51a774eacc709f878b0875ab9`，实际提交可从实施起点 main 到达。缺件或对象不符则保留待办。
+
+## 同步原件
+
+1. 从已读回的 E 逐件取固定相对路径的普通 Git blob。以下路径均相对 `docs/paper-sim/design/`。`pr-118-final-verification.md` 为 4,119 字节，SHA-256 `5dcf43879e20bc95c2753c550db23fad4946ad0d524922cc8913958d74e2ee0a`。`pr-118-final/manifest.json` 为 1,454 字节，SHA-256 `a0ba4e2f96848e60a4641c589ffe718258ea60db39b7ec49efbd12afacd0ab8b`。清单内十件同目录原件为 `ci-progress.json`、`current.txt`、`exact-ci.json`、`h-pre-push-receipt.json`、`h-pre-push-review.txt`、`native-papersim-junit.json`、`post-ci-review-receipt.json`、`post-ci-review.txt`、`pre-push-review.json`、`source-to-head.raw`。按原路径保全全部十二件，核字节数、SHA-256 和 blob，同路径相同内容可复用。
+2. 在 `pr-118-final/` 单独收入发布目录实有的 `e-push-review.txt`、`e-push-review-receipt.json`、`landed.json`。两份签署须分别等于 `pr118-retained-evidence-push-review-path.txt` 所指 `result.txt`、`receipt.json`，实算字节数和 SHA-256 对照 `proof.e_push_gate`。`pre-push-review.json` 已签的对象是 H。协调者将 E 相对 H 的六行 §87.1 归入当时账本，另记实际合并 SHA/UTC、E SHA、E 审者与签署时间、原件相对链接。E 报告和清单维持原件字节。
+3. 沿用原件记异常。S 两次磁盘不足见已入库 `pr-118/local-verification.json` 的 `earlier_attempts`。时长表示和带行号空行的归档修订分别对应 `pr118-first-archive-assembly-error.txt`、`pr118-first-staging-whitespace-error.txt`。H 本机 `verify_remote` 于 00:35:33 UTC 以 2 退出，发生于任何远端写入前。当时 main 仍为 B、原 PR 头仍为 `f09850ba8ef010895d6a959cbeff401fbc706363`。离线修复验收后同一 H 于 00:48:29 UTC 推送成功。三项原件依次见 `pr118-final-ci.gbigmupw/status.json`、`pr118-url-preflight-zcode.S3mD9j2m/test.stdout`、`pr118-final-ci.6hh5hn0g/status.json`。公开登记仅引用脱敏事实。
+
+## 登记“固定 W45 数据不足，正式重跑未执行”
+
+按获签处置第 3–4 节，协调者在 #118 **实际合并提交**只读核对俱乐部协议、CLI、存储和适配器边界，记录该提交。在设计目录 `fx-41/` 原样收入 `club-w45-plan.txt`、`club-w45-review.txt`、`club-w45-review-receipt.json`。分别取 `fx41-club-fixed-w45-disposition-astra.iippjaq0.md` 与 `fx41-club-w45-disposition-plan-review-path.txt` 所指的 `result.txt`、`receipt.json`。计划 SHA-256 `774844b54a09ffc933e93fc36d00d7f00e8d17d2967674c68f168d6ba0374224`。ZCode 于 2026-11-21 20:39:17 UTC 签 PASS，原文 SHA-256 `3e5b2d9fca45570fb0a78f6869ec87ecc013b6f3447a68ed16b31eca3f5ef09a`。账本记以下事实并留给第一阶段未完成项引用。
+
+- 观察 2026-11-21 16:25:40.735001 UTC，截止同日 17:00 UTC，末端 2026-W45。覆盖回执 521,485 字节，SHA-256 `484b1a7174be2f0de77c78e5bdd5c69c3a41502533435a1226ce4c0888c7eb9d`，输入包摘要 `24d8b64913b00445daf46f875aa94cb80c701ddbaa7bc6d0efed804736a269d5`。身份 64/81，标签结构完整 5/8 轮。英冠 R14/R15 的 3＋12 个身份获验，刷新件 17:23:33 UTC 首见，只适用 18:00 批次。法甲两项增量身份获验，主件仍缺独立比分见证。W47 的 0/0 与回看 11 月 10 日的日历上界 4/310 各列原口径。
+- W41 有西甲 R8 未闭轮或同轮搜索标签晚于首预测。W42 的两条搜索标签晚于 10 月 13 日 18:45 UTC 首预测。即使补齐来源，每目标至多 W43–45 三个完整有赛周、229 场，对 20 周/300 场至少缺 17 周/71 场，满足时点未知。新启动、搜索试验、预测、留出回调、比较各 0。配对场数未测，正式 ID、终态、记分卡均未产生。现行 v1 俱乐部协议不接受固定 W45，故无本次正式 `INSUFFICIENT_DATA`。
+- §84.2.5 的三张历史卡继续按原运行引用。ID 1 俱乐部与 ID 3 NBA 为 `INSUFFICIENT_DATA`，ID 2 国家队为 `NO_IMPROVEMENT`，三者实测留出回调均为 0。NBA v2 的 `fx41-nba-single-run-owner-approval.json` 载明“批准单次方案，先登记再执行”，涉及两季、17 规格、4,811 次。`fx41-nba-v2-post118-managed-release-review-path.txt` 载受管放行计划 PASS，新登记、受管实跑和新卡仍待。
+- MC-3/O-5 采用 `phase1-nov22-mc3-o5-source-readback.json`。#114 实际合并至 B、B 至 H 的祖先检查均以 0 退出。B 的 `fx-38-fx-39-step1/focused-native.json` 记录 15 项通过，含封存并重放校准不收敛测试。阶段交接书 `docs/handoffs/2026-11-19-optimizer-phase1.md` 及出口提交仍待。
+
+## 发布
+
+全程 Linux 常规模式。新开独立 guarded 只读 ZCode 审本计划，签 PASS 后按上述起点实施。文档工作树可与 NBA、FX-40 开发并行，协调者串行归并账本、发布 main。用现有节点门禁验精确的干净文档提交，含上述原件和链接、允许路径、已有专项及全量、编译、diff、CodeGraph（有索引时）、敏感信息扫描。实际本机 ZCode 执行验收，独立只读 ZCode 签推送门，首签 FAIL 留存并交原审者复核。普通 PR 经适用 CI 合并后，按实际主线提交读回账本及原件，逐件对字节和摘要。本节点完成条件是这次回读。

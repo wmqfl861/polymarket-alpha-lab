@@ -1,0 +1,72 @@
+# PR #118 精确 H/M CI 后独立只读复审（本机 Linux ZCode，guarded）
+
+**评审者**：新开独立只读本机 Linux ZCode，未参与 #118 的计划、实现、本机验证或 CI 执行，对应单轮最终头补页第 3 步指定的 CI 后签署者角色。
+**受审对象**：最终头 H＝`b89120f2fa79c6ecf5f371376fc00f1ccd10809c`（树 `e7b2335c0f9baea51a774eacc709f878b0875ab9`）；真实合并对象 M＝`6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e`（`refs/pull/118/merge`）；实质头 S＝`a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c`；基线 B＝`01a3d6d208fb7a22886f3cc0b54f4b6499d83400`；原 #118 头 O₀＝`f09850ba8ef010895d6a959cbeff401fbc706363`。
+**本轮 UTC 日期**：2026-11-22（证据时戳跨 2026-11-21T21:18 至 2026-11-22T01:12）。
+**限审范围**：补页第 3 步——B/H/M 对象与父序、CURRENT、三条远端工作流的 run/attempt/event 与六作业实际检出、Native 四分区与汇总、papersim JUnit 的 D1 与 registered runner 实跑、S 冲突签署链与 s-to-h 语义/blob 证据在实际测试树中的保留、完整 S→H 差异与 H 本机证据及推送前签署。不重做 S 实质审计，不覆盖 E 回执与合并落地步骤。
+**约束遵守**：全程仅以只读 Read 浏览送审目录及 input-manifest.json 列明材料；未运行命令、未写入、未联网、未访问目录外。材料中仅以变量名出现连接串占位（已脱敏为 `[redacted]`），无可披露的地址或凭据。
+
+## 实际读取证据
+
+顶层 17 件全部完整读取：objects.json、exact-ci.json、ci-progress.json、current.txt、native-papersim-junit.json、pre-push-review.json、h-pre-push-review.txt、h-pre-push-receipt.json、h-linux.json、s-conflict-review.txt、s-conflict-receipt.json、input-manifest.json、source-to-head.raw、ledger-addition.md、h-codegraph.json、h-exit.txt、h-focused.txt、h-hygiene.json、h-selfcheck.txt、h-zcode-test-launch.json。s-to-h/ 下逐件读取：pr-118-review.md、semantic-disposition.md、blob-and-inventory-verification.json、candidate-paths-and-tree.txt、original/main/combined-connection.txt、unmerged-index.txt、manifest.json、packet-manifest.json、local-verification.json、focused-test-selection.json、fixed-mc.txt、verified-pr114-landing-context.json、pr118-final-head-ci-plan-astra.5k4cc36p.md、pr118-final-head-plan-original-rereview.txt、workflow.xml、native_focus.xml。native_full.xml 与 offline_focus.xml 为单行 XML，超出单次读取上限，未能整读（见发现 2）。
+
+## 精确 M 与对象核对
+
+- **父序**：S 两父依次 O₀/B（objects.json 与 candidate-paths-and-tree.txt、pr-118-review.md 一致）；H 单父 S；M 两父依次 B/H（objects.json 与 exact-ci.json parents 一致，符合合并基线在前、头在后的规范次序）。
+- **树等式**：`tree(M) = tree(H) = e7b2335c0f9baea51a774eacc709f878b0875ab9`（exact-ci.json tree 与 head_tree、objects.json H_M_tree 三处一致）；B 为 H 祖先（`B_ancestor_of_H: true`），与 S 阶段已并入 B 的历史自洽。
+- **CURRENT**：main 现仍为 B，#118 头 `b89120f2` 的 run 44968419459 标记 CURRENT，无后续推送顶替；故 M 即本 PR 的实际合并对象，CI 所测树即最终树。
+- **时序**：ci_completed_utc 01:12:01.71 晚于三条工作流最晚 updated_at 01:11:18，完成判定成立。
+
+## 三条工作流与六作业实际检出
+
+三条均为 `pull_request` 事件、head_branch `m2/d1-public-market-settlement-recovery-20261121`、head_sha 精确 H、attempt 1、completed/success、matches true：
+
+| 工作流 | run / 编号 / attempt | 完成时间 |
+|---|---|---|
+| Offline verification | 44968419459 / 351 / 1 | 01:04:01Z |
+| Native project PostgreSQL | 44968419447 / 216 / 1 | 01:11:18Z |
+| Research paper bridge | 44968419472 / 128 / 1 | 00:54:28Z |
+
+六个实测作业逐个核对，检出全部为 M＝`6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e`（`HEAD is now at 6c7f9e77` 与 `git log -1 --format=%H` 双行锚定，run_attempt 1）：
+
+- offline（137042576191）：必需步骤 "Run sanitized full offline verification" success，43950 passed / 438 skipped / 20 warnings。
+- linux-native-storage（137042576229）："Prove isolated native partition"＋"Prove native version switch" success，320/2 与 89。
+- linux-native-research（137042576378）："Prove isolated native partition" success，1227/18。
+- linux-native-dispatch（137042576516）：同上必需步骤 success，1933/15。
+- linux-native-papersim（137042576448）："Prove isolated native partition"＋"Assemble throwaway papersim cluster" success，845 通过零跳过；native_environment 为三个 DSN 变量名；native_test_modules 恰为 D1 与 registered runner 两个原生模块。
+- windows-paper（137042576204）："Prove research-to-paper assembly on an isolated native instance" success，357 通过。
+
+**Native 四分区与汇总**：四个 Linux 分区全 success，aggregate_inputs 逐一 success，汇总作业 linux-native（137048234329）success；windows-native 两作业 skipped，属 Linux 路径筛选下的预期跳过，非失败。
+**papersim JUnit 核准**（native-papersim-junit.json）：run 44968419447、attempt 1、merge M、artifact 14733306892、JUnit 334188 字节；`test_papersim_d1_operations_native` 8 通过、`test_papersim_optimize_registered_runner_native` 75 通过，papersim 总 845。D1 模块 8 项与 S 侧 native_focus.xml 中该模块实际列出的 8 个用例（3 retries＋2 concurrent＋late recovery＋competing parents＋resolution scope）逐一对应，总数互证；845 与 CI 作业计数、S 侧 native_full 计数三处一致。
+
+## S 冲突签署与语义保留复核
+
+- **签署链**：sess_077a1f26-359e-4f3e-a678-332077d02d51 于 2026-11-21T23:36:32.392367Z 对精确 S 签 PASS；回执 stdout_sha256 `1cd7e996…` 与送审 s-conflict-review.txt、入库 s-to-h/pr-118/source-conflict-review.txt 三处一致。计划原件（含单轮最终头补页，sha256 `86e74815…`）经原计划复审会话 sess_5494f412 窄变更复核签署 PASS（pr118-final-head-plan-original-rereview.txt），补页第 3 步即本轮权限来源。
+- **双方语义在实际测试树中的保留**：unmerged-index.txt 记录唯一未合并路径 store_psycopg.py 三阶段 blob（公共基 `2bdc4ccc`、O₀ `d144eb51`、B `a31d8c4f`）。逐行比对三份连接 blob：B 侧为双路结构（无 clock 走 `psycopg.connect`，有 clock 走 `_connect_with_deadline` 并在 `optimization_database_phase(stage='connection_identity', closeout=True)` 内验证回滚）且无根标记；O₀ 侧为单路含根标记；S 合并 blob 完整保留 B 双路与失败关闭，并在两路共同成功出口（验证＋回滚之后、`except BaseException` 之前）单点写入 `connection._papersim_managed_root = repo_root.resolve()`——即 O₀ 的 D1 根标记按声明落位。import 采用 B 的 `closing, contextmanager`。blob-and-inventory-verification.json 列 D1 31 个符号与 main 侧 72 个优化器/结算符号全数保留、受管入口为唯一组合符号、原生分区 28 文件。
+- **该语义即 CI 所测内容**：CI 在 tree(M)=tree(H) 上运行，而 S→H 差异（下节）证明全部源码、测试、夹具、工作流及配置 blob 在 S/H 相同，故 S 签署所核的冲突语义与 28 文件清单（focused-test-selection.json 顺序与 local-verification.json native_full 选择器逐项一致，D1 位于 capture_marks 与 mo7_shadow 之间，五文件优化器/结算顺序保留）未经改动地进入实际测试树；workflow.xml 42 项含两个固定断言（清单保真与 PG18 一次性集群）全通过。
+
+## 完整 S→H 与登记段
+
+- source-to-head.raw 恰 38 项：1 个 M（仅 `DELIVERY_PLAN.md`，`aa1b6b97→0e40a42c`，即协调者登记段）＋37 个 A（`docs/paper-sim/design/pr-118-review.md` 与 `pr-118/` 下 36 件）；模式全部 100644→100644，无删除、无重命名、无可执行位变化，不含任何 src/tests/tools/`.github`/配置路径——产品、测试、夹具、工作流和配置 blob 在 S/H 相同，附加文档对产品行为、测试选择与 CI 控制无影响。37 个新增路径与 manifest.json（36 键，不含自身）＋pr-118-review.md 完全一致。
+- ledger-addition.md 为 DELIVERY_PLAN.md 第 87 号登记段：B 落地、O₀ 前头、S 父序、单冲突解决摘要、28 文件保留、S 侧本机数字（479/1、35、845、43951/437/2699.92s、自检 10/10）与 S 签署会话时戳均与回执一致；三条远端工作流在登记时明确列为由精确验收回执处理，无越权声称。
+- 路径闭环：h-linux.json files_before 53 项＝B→S 15（candidate-paths-and-tree.txt）＋S→H 38，互证无遗漏。
+
+## H 本机证据与推送前签署
+
+- h-linux.json：八阶段全 PASS、`43951 passed, 437 skipped, 20 warnings in 2778.10s`、exit 0、`head_before == head_after`＝H、files_match true；计数与 S 侧全量一致，符合同一可执行内容重跑。h-focused.txt 53 passed in 34.65s；h-selfcheck.txt PASS (10/10)；h-hygiene.json B→H 三类敏感路径/行零新增、passed、diff_check true；h-codegraph.json complete、pending 0/0/0、worktreeMismatch null；h-exit.txt 为 0；h-zcode-test-launch.json 记录分离执行服务（sess_37405d1b，exit 0）。
+- 推送前签署：pre-push-review.json 锚定 H、会话 sess_8bbe96ea-b2e7-44c5-93a9-cc7c5763e3af、sha256 `d9a894dd…`（与 h-pre-push-review.txt、回执 stdout_sha256 三处一致）、2026-11-22T00:35:25.540544Z 完成并 VERDICT: PASS。其范围限于 H 推送门，当时列三条远端 CI 为待办——与随后 00:48:33 创建的 CI 运行时序吻合，无倒填。
+- 总时序：S 签署 23:36:32 → H 全量 23:43:34–00:30:15 → H 推送门 00:35:25 → CI 创建 00:48:33 → 全部完成 ≤01:11:18 → exact-ci 核验 01:11:49 → JUnit 核验 01:11:57 → 完成判定 01:12:01，链条无交叉错位。
+
+## 发现（不阻塞）
+
+1. CI offline 计数 43950/438 与 H 本机全量 43951/437 存在一项 passed→skipped 漂移（总数同为 44388），方向与环境门控跳过相符，但 exact-ci.json 未按 nodeid 列名该跳过项。
+2. 入库的 native_full.xml（175669 字节）与 offline_focus.xml（101197 字节）为单行 XML，超出本评审工具单次读取上限，未整读；其完整性依赖 manifest.json 双哈希（均标记 projected/redacted）、既有 S 复审及 CI 侧 native-papersim-junit.json 的模块级记录，且 D1 模块 8 项已由可整读的 native_focus.xml 独立互证。
+3. 前轮复审 prose 称 main 侧 74 个优化器符号，blob-and-inventory-verification.json 实列 72 个；以 JSON 清单为准，属文字计数小差。
+4. 全部链证哈希（附件 sha256、执行器 stdout/stderr、JUnit artifact sha256）按只读实践采信提交方记录，未重算。
+5. s-to-h/ 内 7 件为脱敏/投影版（三份连接 blob、workflow.xml、三个 JUnit XML），双哈希留痕、方向一致，原版未随包附送。
+
+## 结论
+
+在限审范围内：M 父序 B/H 与 `tree(M)=tree(H)` 成立，CURRENT 锚定精确 H 且 main 未漂移；三条工作流（44968419459/351、44968419447/216、44968419472/128，均 attempt 1、pull_request）全绿，六个实测作业全部实际检出 M 并含必需步骤与计数；Native 四分区＋汇总 success，papersim JUnit 证 D1 8 项与 registered runner 75 项实跑；S 冲突签署链完整，双方连接语义经三份 blob 逐行复核并在实际测试树中保留；S→H 为 1 登记段修改＋37 件纯文档，可执行与配置 blob 不变；H 本机门与推送前签署均锚定 `b89120f2fa79c6ecf5f371376fc00f1ccd10809c` 且时序自洽。未发现缺证或实质性不一致；上述发现均属证据粒度披露，不构成阻塞。E 回执、PR 正文更新与合并落地属后续步骤，不在本签范围。
+
+VERDICT: PASS
