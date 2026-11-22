@@ -1,0 +1,28 @@
+{
+  "observed_utc": "2026-11-20T20:50:15.192299+00:00",
+  "release_base": "5d49666757d520ff55832338f856a91dd761affe",
+  "original_reviewer": "d1_operating_plan_review_sol_retry",
+  "original": "d1-operating-plan-original-verdict-v1.json",
+  "revisions": [
+    {
+      "plan": "d1-operational-run-plan-astra-v2.md",
+      "sha256": "115c07e35a1feee5563dbaa4346b6d0cbbc83668f537bde1a2579ca8a031b5a8",
+      "verdict": "FAIL",
+      "partial_pass": [
+        "public input acquisition",
+        "frozen executor and comparable outputs",
+        "B2 recovery",
+        "B3 recovery on existing outcomes"
+      ],
+      "remaining": "normal, attributable managed outcome producer before settlement plus missed-slot boundary"
+    },
+    {
+      "plan": "d1-operational-run-plan-astra-v3.md",
+      "sha256": "a23ccaaeb40d4e813090244bd7416db9f4e53ddd7590fdb231acf5e9764af6f2",
+      "verdict": "PASS",
+      "clarification": "Actual producer, first-write transaction, ordinary settle receipt reusing its outcome ID, replay, negative cases, and previously opened F window preserved."
+    }
+  ],
+  "d1_days_at_plan_pass": 0,
+  "approval_outstanding": "published D1 pack binding repair per owner section 8"
+}
