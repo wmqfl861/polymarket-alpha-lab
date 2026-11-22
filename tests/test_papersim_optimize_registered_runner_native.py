@@ -22,10 +22,11 @@ from urllib.parse import urlencode
 
 import pytest
 
+from polymarket_alpha_lab.papersim.optimize.nba_odr import load_nba_odr_metadata
 from tests.test_papersim_optimize_registry_native import (
     NATIVE, OWNER_DSN, ROOT, _connect, _migrated_app, _rebind_database,
 )
-from tests.test_papersim_optimize_runner import Harness, SyntheticFamily
+from tests.test_papersim_optimize_runner import Harness, SyntheticFamily, odr_metadata
 from tests.test_papersim_report_store_native import (
     _managed_test_postgres, pytestmark as MANAGED_NATIVE, repo as managed_repo,
 )
@@ -131,8 +132,8 @@ def _process(action, archive, **options):
                 process.communicate(timeout=10)
 
 
-def _reply(process, code=0):
-    output, stderr = process.communicate(timeout=25)
+def _reply(process, code=0, *, timeout=25):
+    output, stderr = process.communicate(timeout=timeout)
     assert output, stderr
     reply = json.loads(output)
     assert process.returncode == code, {name: reply.get(name) for name in ('error_code', 'stage', 'outcome', 'counts')}
@@ -144,8 +145,8 @@ def _invocation(action, archive, *, code=0, **options):
         return _reply(process, code)
 
 
-def _wait_path(path: Path, process=None):
-    end = time.monotonic() + 15
+def _wait_path(path: Path, process=None, *, timeout=15):
+    end = time.monotonic() + timeout
     while not path.exists():
         if process is not None and process.poll() is not None:
             raise AssertionError(process.communicate(timeout=5))
@@ -153,9 +154,9 @@ def _wait_path(path: Path, process=None):
         time.sleep(0.01)
 
 
-def _barrier(path):
+def _barrier(path, *, timeout=15):
     path.touch()
-    _wait_path(path.with_suffix('.release'))
+    _wait_path(path.with_suffix('.release'), timeout=timeout)
 
 
 def _counts(conn):
@@ -469,6 +470,8 @@ def _main():
     action, name, request, args = sys.argv[1:]
     if action in {'nba-cli', 'nba-read', 'nba-facts'}:
         return _nba_cli_worker(action, Path(name), Path(request), json.loads(args))
+    if action == 'nba-v2-cli':
+        return _native_nba_v2_cli_worker(Path(name), Path(request), json.loads(args))
     if action == 'policy-cli':
         return _policy_cli_worker(name, Path(request), json.loads(args))
     if action == 'preview-cli':
@@ -2782,6 +2785,579 @@ def test_native_rule_source_cli_and_readback(managed_runtime, managed_repo, monk
             ('command-events.json', json.dumps(events, sort_keys=True, default=str).encode()),
         ):
             (directory / name).write_bytes(data)
+
+
+def _install_native_nba_v2_identity(root, settings, patch):
+    import gzip
+    from polymarket_alpha_lab.papersim import nba_odr_registration as registration, store
+    from polymarket_alpha_lab.papersim.optimize import nba_odr, runner
+
+    patch.setattr(nba_odr, 'NBA_ODR_ARCHIVE_ROOT', settings['archive_dir'])
+    pins = {}
+    for season, pin in nba_odr.NBA_ODR_ARCHIVE_PINS.items():
+        content = (root / pin.relpath).read_bytes()
+        decoded = gzip.decompress(content)
+        pins[season] = replace(pin, gzip_sha256=sha256(content).hexdigest(), gzip_byte_length=len(content),
+                               decoded_sha256=sha256(decoded).hexdigest(), decoded_byte_length=len(decoded),
+                               retrieved_at=datetime.fromisoformat(json.loads(decoded)['retrieved_at']))
+    approval = Path(settings['approval']).read_bytes()
+    inventory = Path(settings['inventory']).read_bytes()
+    patch.setattr(nba_odr, 'NBA_ODR_ARCHIVE_PINS', pins)
+    patch.setattr(nba_odr, 'NBA_ODR_INDEPENDENT_ESPN', replace(
+        nba_odr.NBA_ODR_INDEPENDENT_ESPN, inventory_sha256=sha256(inventory).hexdigest(),
+        inventory_byte_length=len(inventory)))
+    patch.setattr(registration, '_APPROVAL_REF', runner.SourceArtifactRef(sha256(approval).hexdigest(), len(approval)))
+    patch.setattr(runner, '_NBA_ODR_MEMBERSHIP', {key: tuple(value) for key, value in settings['membership'].items()})
+    patch.setattr(runner, 'NBA_ODR_SCHEDULE_ID', 'fx41-nba-v2-native-fixture')
+    key = f'optimize.register-experiment/{runner.NBA_ODR_SCHEDULE_ID}'
+    patch.setattr(registration, 'NBA_ODR_REGISTRATION_OPERATION_KEY', key)
+    patch.setattr(registration, 'NBA_ODR_REGISTRATION_EVENT_KEY', store.command_run_event_key(key, 1, 'SUCCEEDED'))
+    patch.setattr(nba_odr, 'load_nba_odr_metadata', load_nba_odr_metadata)
+
+
+@pytest.fixture
+def native_nba_v2(managed_repo, managed_runtime, odr_metadata, tmp_path, monkeypatch, capsys):
+    from polymarket_alpha_lab.papersim import cli, nba_odr_registration as registration
+    from polymarket_alpha_lab.papersim.optimize import nba_odr, runner
+    from tests.test_papersim_optimize_nba_odr import _game, _season_bytes
+
+    root, head = managed_repo
+    archive_dir = 'nba-v2-native-test-inputs'
+    (root / archive_dir).mkdir()
+    with (root / '.git/info/exclude').open('a', encoding='utf-8') as local_exclude:
+        local_exclude.write(f'\n/{archive_dir}/\n')
+    for season, metadata in odr_metadata.items():
+        rows = [_game(game.event_id, game.source_day, started=game.started.isoformat(),
+                      home=game.home_team, away=game.away_team) for game in metadata.games]
+        content, _ = _season_bytes(season, rows)
+        (root / archive_dir / f'games-{season}.json.gz').write_bytes(content)
+    approval, inventory, settings_path = (tmp_path / name for name in (
+        'nba-v2-approval.json', 'nba-v2-inventory.json', 'nba-v2-settings.json'))
+    approval.write_bytes(_json({'synthetic': True, 'decision_observed_utc': registration._APPROVAL_AT.isoformat()}))
+    inventory.write_bytes(_json({'synthetic': True, 'utc': nba_odr.NBA_ODR_INDEPENDENT_ESPN.inventory_observed_at.isoformat()}))
+    settings = {'archive_dir': archive_dir, 'approval': str(approval), 'inventory': str(inventory),
+                'membership': runner._NBA_ODR_MEMBERSHIP}
+    settings_path.write_bytes(_json(settings))
+    _install_native_nba_v2_identity(root, settings, monkeypatch)
+    assert cli.require_clean_worktree_path(root) == head
+    assert cli.main(['optimize', 'init', '--families', 'nba-pace-efficiency', '--managed', '--repo-root', str(root),
+                     '--effective-at', AT.isoformat()]) == 0
+    assert not capsys.readouterr().err
+    return (str(root), settings_path), managed_runtime[1], head
+
+
+def _native_nba_v2_argv(root, pointer, *, preview=False, attempt=1):
+    argv = ['optimize', 'run', '--managed', '--repo-root', str(root), '--family', 'nba-pace-efficiency',
+            '--as-of', '2026-11-19T02:00:00Z', '--seed', str(SEED), '--input-manifest', str(pointer),
+            '--attempt', str(attempt)]
+    if preview:
+        argv.append('--dry-run')
+    return argv
+
+
+def _native_nba_v2_registration_argv(root, approval, inventory, pointer):
+    return ['optimize', 'register-experiment', '--managed', '--repo-root', str(root),
+            '--approval-file', str(approval), '--source-inventory-file', str(inventory),
+            '--write-pointer', str(pointer)]
+
+
+def _observe_nba_v2_preview(patch, allowed_snapshots):
+    from psycopg import Cursor
+    from polymarket_alpha_lab.papersim import cli, nba_odr_registration as registration
+    from polymarket_alpha_lab.papersim.optimize import nba_odr, runner
+
+    adapter = _adapter()
+    observed = []
+    open_connection = cli._open_readonly_connection
+    bind, preview = adapter._bind_nba_odr_request, adapter._preview_nba_odr_state
+    binding_view = None
+
+    class ObservedCursor(Cursor):
+        def execute(self, query, params=None, **kwargs):
+            sql = ' '.join(str(query).lower().split())
+            observed.append(sql)
+            assert sql.split()[0] in {'select', 'show', 'set', 'begin', 'rollback', 'commit'}
+            if 'papersim.snapshots' in sql and re.search(r'\bcontent\b', sql):
+                assert params and (params[0] in allowed_snapshots or (
+                    'kind = %s' in sql and params[1] == 'optimizer_experiment_manifest'))
+            if 'papersim.optimization_runs' in sql:
+                assert 'scorecard' not in sql and 'select *' not in sql
+            if 'papersim.command_run_events' in sql and params != (registration.NBA_ODR_REGISTRATION_EVENT_KEY,):
+                assert 'select *' not in sql
+                assert not re.search(r'\b(?:input|output)_evidence\b(?!\s*->)', sql)
+            return super().execute(query, params, **kwargs)
+
+    def connect(*args, **kwargs):
+        conn = open_connection(*args, **kwargs)
+        conn.cursor_factory = ObservedCursor
+        return conn
+
+    def view(conn):
+        assert conn.execute("SELECT current_setting('transaction_isolation'), "
+                            "current_setting('transaction_read_only')").fetchone() == ('repeatable read', 'on')
+        return observed.count('set transaction isolation level repeatable read, read only')
+
+    def verify_binding(conn, *args, **kwargs):
+        nonlocal binding_view
+        binding_view = view(conn)
+        return bind(conn, *args, **kwargs)
+
+    def read_state(conn, *args, **kwargs):
+        assert view(conn) == binding_view
+        return preview(conn, *args, **kwargs)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('NBA v2 scalar preview reached a result, writer or model path')
+
+    patch.setattr(cli, '_open_readonly_connection', connect)
+    patch.setattr(adapter, '_bind_nba_odr_request', verify_binding)
+    patch.setattr(adapter, '_preview_nba_odr_state', read_state)
+    for name in ('_optimization_terminal', '_optimization_run_row', '_optimization_rejections',
+                 'load_optimization_runs', '_optimizer_claim', '_optimizer_publish', 'record_command_run_event',
+                 'record_optimization_run'):
+        patch.setattr(adapter, name, forbidden)
+    patch.setattr(nba_odr, 'load_nba_odr_archives', forbidden)
+    patch.setattr(runner, '_execute_claimed_nba_odr', forbidden)
+    return observed
+
+
+def _native_nba_v2_cli_worker(root, settings_path, options):
+    from polymarket_alpha_lab.papersim import cli
+    from polymarket_alpha_lab.papersim.optimize import runner, search
+
+    adapter = _adapter()
+    settings = json.loads(settings_path.read_bytes())
+    pointer = Path(options['pointer'])
+    calls, connections, observed = [], [], []
+    executed = runner._execute_claimed_nba_odr
+    scoring_inputs = runner._nba_odr_scoring_inputs
+    phase = adapter.optimization_database_phase
+    deadline = adapter.OptimizationCommandClock.compute_expired
+    validate_artifact = adapter._validate_nba_odr_artifact
+    invalid_plans, publication_bytes = [], []
+
+    def compute(claim):
+        assert not options.get('forbid_compute')
+        return executed(claim)
+
+    def refusing_inputs(plan, *args, **kwargs):
+        replay = scoring_inputs(plan, *args, **kwargs)
+        lines = {(line.event_key, line.target): line for line in replay.fixture_lines}
+        context_by_trial = {(trial.fold.block_id, trial.spec_sha256): trial.model_context for trial in plan.trials}
+        fold_digests = {fold.block_id: search._fold_digest(fold, fold.cutoff) for fold in plan.search_folds}
+
+        def evaluate(spec, fold, targets):
+            index = len(calls)
+            digest = spec.spec_sha256()
+            context = context_by_trial[fold.block_id, digest]
+            calls.append((fold_digests[fold.block_id], digest, context, targets))
+            if index + 1 == options.get('barrier_after_trial'):
+                Path(options['trace']).write_bytes(_json(calls))
+                _barrier(Path(options['barrier']), timeout=90)
+            return {target: runner.HoldoutEvaluation((), refusals=tuple(
+                runner.Refusal(key, lines[key, target].line_key, 'synthetic_refusal') for key in fold.test_keys))
+                for target in targets}
+
+        def holdout(*args):
+            pytest.fail('refusals opened a holdout comparison')
+
+        return replace(replay, evaluate=evaluate, evaluate_holdout=holdout)
+
+    def check_managed_shape(pure, identity, original, registration):
+        validate_artifact(pure, identity, original, registration)
+        if invalid_plans:
+            return
+        rows = pure['planned_evaluations']
+        first, second, *rest = rows
+        altered = {
+            'short': rows[:-1], 'long': [*rows, rows[-1]], 'reordered': [second, first, *rest],
+            'duplicated': [first, first, *rest],
+            'restricted_targets': [{**first, 'targets': ['moneyline']}, second, *rest],
+            'reversed_targets': [{**first, 'targets': list(reversed(first['targets']))}, second, *rest],
+        }
+        for name, trials in altered.items():
+            forged = {**pure, 'planned_evaluations': trials}
+            with pytest.raises(ValueError, match='^papersim_optimize_pure_result_invalid$'):
+                validate_artifact(forged, identity, original, registration)
+            invalid_plans.append(name)
+
+    def expire_after_witnessed_prefix(clock):
+        return len(calls) == options.get('stop_after') or deadline(clock)
+
+    reply_lost = False
+
+    @contextmanager
+    def observe_transaction(conn, clock, *, stage, **kwargs):
+        nonlocal reply_lost
+        with phase(conn, clock, stage=stage, **kwargs):
+            if stage == options.get('pause_stage'):
+                _barrier(Path(options['barrier']), timeout=90)
+            if stage != options.get('lose_reply_stage') or reply_lost:
+                yield
+                return
+            execute = conn.execute
+
+            def disconnect_at_commit(query, *args, **exec_kwargs):
+                nonlocal reply_lost
+                if query != 'COMMIT':
+                    return execute(query, *args, **exec_kwargs)
+                reply_lost = True
+                if options.get('committed'):
+                    execute(query, *args, **exec_kwargs)
+                elif options.get('rolled_back'):
+                    # Exercise uncertain acknowledgment with an independently
+                    # established rollback on this disposable connection.
+                    execute('ROLLBACK')
+                conn.close()
+                raise OSError('test disconnect at COMMIT')
+
+            conn.execute = disconnect_at_commit
+            try:
+                yield
+            finally:
+                conn.execute = execute
+
+    stdout, stderr = StringIO(), StringIO()
+    with pytest.MonkeyPatch.context() as patch:
+        _install_native_nba_v2_identity(root, settings, patch)
+        patch.setattr(runner, '_execute_claimed_nba_odr', compute)
+        patch.setattr(runner, '_nba_odr_scoring_inputs', refusing_inputs)
+        patch.setattr(adapter.OptimizationCommandClock, 'compute_expired', expire_after_witnessed_prefix)
+        patch.setattr(adapter, 'optimization_database_phase', observe_transaction)
+        if options.get('check_managed_shape'):
+            patch.setattr(adapter, '_validate_nba_odr_artifact', check_managed_shape)
+        if options.get('fail_validation'):
+            def fail_validation(*args, **kwargs):
+                raise OSError('test interrupted prior to publication')
+
+            patch.setattr(adapter, '_validate_optimization_result', fail_validation)
+        if options.get('rolled_back'):
+            from polymarket_alpha_lab.papersim import snapshots
+
+            register_snapshot = snapshots.register_snapshot
+
+            def publication_snapshot(conn, registration):
+                if registration.kind == 'optimizer_run_artifact':
+                    publication_bytes.append((sha256(registration.content).hexdigest(), len(registration.content)))
+                return register_snapshot(conn, registration)
+
+            patch.setattr(snapshots, 'register_snapshot', publication_snapshot)
+        if options.get('preview'):
+            observed = _observe_nba_v2_preview(patch, set(options.get('allowed_snapshots', ())))
+        open_connection = cli._open_readonly_connection
+
+        def connect(*args, **kwargs):
+            connections.append(kwargs.get('clock'))
+            return open_connection(*args, **kwargs)
+
+        patch.setattr(cli, '_open_readonly_connection', connect)
+        if options.get('register'):
+            argv = _native_nba_v2_registration_argv(root, options.get('approval', settings['approval']),
+                                                   settings['inventory'], pointer)
+        else:
+            argv = _native_nba_v2_argv(root, pointer, preview=options.get('preview', False),
+                                      attempt=options.get('attempt', 1))
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            code = cli.main(argv)
+    reason = re.search(r'FAIL: (papersim_[a-z0-9_]+) ({.*})', stderr.getvalue())
+    print(json.dumps({'output': json.loads(stdout.getvalue() or 'null'),
+                      'error_code': None if reason is None else reason[1],
+                      'details': {} if reason is None else json.loads(reason[2]),
+                      'calls': calls, 'connections': len(connections), 'invalid_plans': invalid_plans,
+                      'publication_bytes': publication_bytes,
+                      'same_clock': bool(connections) and all(clock is connections[0] for clock in connections),
+                      'preview_readonly_views': sum(sql == 'set transaction isolation level repeatable read, read only'
+                                                    for sql in observed)}))
+    return code
+
+
+def _native_nba_v2_command(target, pointer, *, code=0, **options):
+    with _process('nba-v2-cli', target, pointer=str(pointer), **options) as process:
+        return _reply(process, code, timeout=120)
+
+
+def _native_nba_v2_registration_readback(root, head, pointer):
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    adapter = _adapter()
+    document = json.loads(pointer.read_bytes())
+    assert set(document) == {'schema_version', 'manifest_sha256', 'manifest_byte_length'}
+    assert document['schema_version'] == 1
+    ref = runner.SourceArtifactRef(document['manifest_sha256'], document['manifest_byte_length'])
+    with adapter.connect_managed(root) as fresh:
+        facts = adapter.read_managed_nba_odr_registration(
+            fresh, clock=adapter.optimization_command_clock(time.monotonic_ns()), repo_root=root,
+            code_commit=head, expected_manifest=ref)
+    assert facts is not None and facts.pointer == document
+    assert len(facts.manifest_bytes) == ref.byte_length and sha256(facts.manifest_bytes).hexdigest() == ref.sha256
+    return facts
+
+
+def _native_nba_v2_run_events(conn, run_key):
+    return conn.execute(
+        "SELECT run_event_id, phase, attempt, code_commit, config_digest, error_code, input_evidence, output_evidence "
+        "FROM papersim.command_run_events WHERE command = 'optimize-run' AND operation_key = %s ORDER BY run_event_id",
+        ('optimize-run|' + sha256(run_key.encode()).hexdigest(),),
+    ).fetchall()
+
+
+def _native_nba_v2_preview(target, app, pointer, facts, status, **expected):
+    from polymarket_alpha_lab.papersim import nba_odr_registration as registration
+
+    allowed = [pin.ref.sha256 for pin in registration._pinned_originals().values()]
+    allowed.extend((facts.manifest_ref.sha256, facts.materials_ref.sha256, facts.plan.metadata_ref.sha256,
+                    facts.plan.plan_ref.sha256, facts.policy_context.watermark))
+    counts = _counts(app)
+    observed = _native_nba_v2_command(target, pointer, preview=True, attempt=2, allowed_snapshots=allowed)
+    assert observed['preview_readonly_views'] == 2 and observed['calls'] == []
+    receipt = observed['output']
+    assert receipt['status'] == status and receipt['exit_code'] == 0
+    assert receipt['run_key'] == facts.plan.run_key
+    assert receipt['registration_event_id'] == facts.run_event_id
+    assert receipt['registration_event_key'] == facts.run_event_key
+    assert receipt['registration_config_digest'] == facts.config_digest
+    assert (receipt['planned_trials'], receipt['target_uses_planned'], receipt['planned_holdout_days'],
+            receipt['planned_holdout_matches']) == (4_811, 9_622, 38, 304)
+    assert all(receipt.get(field) is None for field in ('scorecard', 'run_scorecard', 'artifact_bytes'))
+    assert all(receipt[field] == value for field, value in expected.items())
+    assert _counts(app) == counts
+    return receipt
+
+
+@MANAGED_NATIVE
+def test_native_nba_v2_registration_is_atomic_and_reentrant(native_nba_v2, tmp_path):
+    from polymarket_alpha_lab.papersim import nba_odr_registration as registration, snapshots
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    target, app, head = native_nba_v2
+    root = Path(target[0])
+    one, two, barrier, fake_pointer = (tmp_path / name for name in ('one.json', 'two.json', 'staged', 'fake.json'))
+    protocol = runner.nba_odr_historical_protocol(runner.SourceArtifactRef('a' * 64, 1))
+    manifest = _json({'schema_version': 1, 'protocol': protocol,
+                      'sources': registration._scoring_sources(registration._pinned_originals())})
+    digest = sha256(manifest).hexdigest()
+    fake_pointer.write_bytes(_json({'schema_version': 1, 'manifest_sha256': digest, 'manifest_byte_length': len(manifest)}))
+    absent = _native_nba_v2_command(target, fake_pointer, preview=True, code=1)
+    assert absent['error_code'] == 'papersim_optimize_snapshot_identity_invalid' and absent['calls'] == []
+    snapshots.register_snapshot(app, snapshots.SnapshotRegistration(
+        content=manifest, kind='optimizer_experiment_manifest', source='synthetic-manifest-only', fetched_at=AT))
+    baseline = _counts(app)
+    unbound = _native_nba_v2_command(target, fake_pointer, preview=True, code=1)
+    assert unbound['error_code'] == 'papersim_optimize_nba_odr_registration_required' and unbound['calls'] == []
+    assert _counts(app) == baseline
+
+    missing = _native_nba_v2_command(target, one, register=True, code=1, lose_reply_stage='registration_precommit')
+    assert missing['output'] is None and not one.exists() and _counts(app) == baseline
+
+    with _process('nba-v2-cli', target, pointer=str(one), register=True, pause_stage='registration_precommit',
+                  barrier=str(barrier), lose_reply_stage='registration_precommit', committed=True) as first:
+        _wait_path(barrier, first, timeout=60)
+        assert not one.exists() and _counts(app) == baseline
+        with _process('nba-v2-cli', target, pointer=str(two), register=True) as second:
+            barrier.with_suffix('.release').touch()
+            confirmed = _reply(first, timeout=120)
+            assert confirmed['connections'] == 2 and confirmed['same_clock']
+            assert _reply(second, timeout=120)['output'] == confirmed['output']
+
+    assert one.read_bytes() == two.read_bytes()
+    facts = _native_nba_v2_registration_readback(root, head, one)
+    assert _counts(app) == {**baseline, 'snapshots': baseline['snapshots'] + 9,
+                            'command_run_events': baseline['command_run_events'] + 1}
+    assert len(facts.plan.trials) == 4_811 and len(facts.plan.holdout_folds) == 38
+    assert _native_nba_v2_run_events(app, facts.plan.run_key) == []
+    _native_nba_v2_preview(target, app, one, facts, 'not_run', started_event_id=None, terminal_event_id=None)
+
+    baseline = _counts(app)
+    altered = tmp_path / 'wrong-approval.json'
+    altered.write_bytes(b'{}')
+    conflict = _native_nba_v2_command(target, tmp_path / 'unwritten.json', register=True, code=1, approval=str(altered))
+    assert conflict['error_code'] == 'papersim_nba_odr_registration_conflict' and conflict['output'] is None
+    assert _counts(app) == baseline
+    assert _native_nba_v2_registration_readback(root, head, one).run_event_id == facts.run_event_id
+
+
+@MANAGED_NATIVE
+def test_native_nba_v2_store_rejects_forged_sources_callback_and_comparator(native_nba_v2, tmp_path, monkeypatch):
+    from polymarket_alpha_lab.papersim.optimize import nba_odr, runner
+    from polymarket_alpha_lab.papersim.optimize.families.nba import NBA_PACE_EFFICIENCY
+
+    target, app, head = native_nba_v2
+    root = Path(target[0])
+    pointer = tmp_path / 'pointer.json'
+    _native_nba_v2_command(target, pointer, register=True)
+    facts = _native_nba_v2_registration_readback(root, head, pointer)
+    manifest = json.loads(facts.manifest_bytes)
+    before = _counts(app)
+    adapter = _adapter()
+
+    def request(document):
+        raw = _json(document)
+        refs = {row['sha256']: row['byte_length'] for row in document['sources'] if row['sha256'] is not None}
+        return {'clock': adapter.optimization_command_clock(time.monotonic_ns()), 'family': NBA_PACE_EFFICIENCY,
+                'data_cutoff': nba_odr.NBA_ODR_AS_OF, 'random_seed': SEED, 'code_commit': head, 'attempt': 1,
+                'targets': NBA_PACE_EFFICIENCY.targets(), 'schedule_id': runner.NBA_ODR_SCHEDULE_ID,
+                'manifest_sha256': sha256(raw).hexdigest(), 'manifest_byte_length': len(raw), 'manifest': document,
+                'source_refs': refs}
+
+    def unused_compute(*args, **kwargs):
+        pytest.fail('unverified v2 input reached computation')
+
+    monkeypatch.setattr(runner, '_execute_claimed_nba_odr', unused_compute)
+    with pytest.raises(ValueError, match='^papersim_optimize_nba_odr_callback_forbidden$'):
+        adapter.run_managed_optimization(app, **request(manifest), compute=unused_compute)
+
+    original, *remaining = manifest['sources']
+    for changes in ({'sha256': 'f' * 64}, {'byte_length': original['byte_length'] + 1},
+                    {'role': 'synthetic_spoof'}, {'provenance': {**original['provenance'],
+                                                              'captured_at': '2026-11-15T00:00:00Z'}}):
+        forged = {**manifest, 'sources': [{**original, **changes}, *remaining]}
+        with pytest.raises(ValueError, match='^papersim_nba_odr_registration_conflict$'):
+            adapter.run_managed_optimization(app, **request(forged))
+        assert _counts(app) == before
+
+    comparison = adapter._registry_comparison_snapshot
+
+    def conflicting_comparator(conn, family, lineages):
+        rows = comparison(conn, family, lineages)
+        changed = rows['nba-pace-efficiency/moneyline']
+        changed['issue'] = 'registry_spec_contract_mismatch'
+        return rows
+
+    monkeypatch.setattr(adapter, '_registry_comparison_snapshot', conflicting_comparator)
+    with pytest.raises(ValueError, match='^papersim_optimize_nba_odr_comparison_conflict$'):
+        adapter.run_managed_optimization(app, **request(manifest))
+    assert _counts(app) == before and _native_nba_v2_run_events(app, facts.plan.run_key) == []
+
+
+@MANAGED_NATIVE
+@pytest.mark.parametrize(('stop_after', 'rolled_back'), [(None, False), (4_810, False), (1, True)],
+                         ids=['claim-acknowledgment', 'failed-seal-acknowledgment', 'resend-rolled-back-seal'])
+def test_native_nba_v2_once_with_preview_and_acknowledgment_recovery(native_nba_v2, tmp_path, stop_after, rolled_back):
+    target, app, head = native_nba_v2
+    root = Path(target[0])
+    pointer, barrier, trace = (tmp_path / name for name in ('pointer.json', 'first-trial', 'observed.json'))
+    _native_nba_v2_command(target, pointer, register=True)
+    facts = _native_nba_v2_registration_readback(root, head, pointer)
+    failed = stop_after is not None
+    publication = 'failure_publication' if failed else 'publication'
+    fault_stage = f'{publication}_precommit' if failed else 'claim_precommit'
+    with _process('nba-v2-cli', target, pointer=str(pointer), stop_after=stop_after, barrier_after_trial=1,
+                  barrier=str(barrier), trace=str(trace), lose_reply_stage=fault_stage, committed=not rolled_back,
+                  rolled_back=rolled_back, check_managed_shape=stop_after == 4_810) as first:
+        _wait_path(barrier, first, timeout=60)
+        started, = _native_nba_v2_run_events(app, facts.plan.run_key)
+        assert started[1:4] == ('STARTED', 1, head)
+        _native_nba_v2_preview(target, app, pointer, facts, 'in_progress', started_event_id=started[0],
+                               terminal_event_id=None)
+        if rolled_back:
+            barrier.with_suffix('.release').touch()
+            terminal = _reply(first, 1, timeout=120)
+            replay = _native_nba_v2_command(target, pointer, attempt=2, forbid_compute=True, code=1)
+        else:
+            with _process('nba-v2-cli', target, pointer=str(pointer), attempt=2, forbid_compute=True) as second:
+                barrier.with_suffix('.release').touch()
+                terminal = _reply(first, int(failed), timeout=120)
+                replay = _reply(second, int(failed), timeout=120)
+
+    assert terminal['same_clock'] and terminal['connections'] == 2
+    assert replay['calls'] == []
+    receipt, repeated = terminal['output'], replay['output']
+    assert receipt['replayed'] is (failed and not rolled_back)
+    assert repeated['replayed'] and repeated['scorecard'] == receipt['scorecard']
+    assert repeated['budget'] == receipt['budget']
+    fields = ('optimization_id', 'started_event_id', 'terminal_event_id', 'artifacts_sha256', 'artifact_byte_length')
+    assert all(receipt[field] == repeated[field] for field in fields)
+    starts = terminal['calls']
+    expected = [[trial.fold_sha256, trial.spec_sha256, trial.model_context, list(trial.targets)]
+                for trial in facts.plan.trials]
+    assert starts == expected[:stop_after] and len(starts) == (stop_after or 4_811)
+    assert json.loads(trace.read_bytes()) == starts[:1]
+    assert len({tuple(trial[:3]) for trial in starts}) == len(starts)
+    counts = receipt['counts']
+    assert counts['planned_trials'] == 4_811 and counts['target_uses_planned'] == 9_622
+    assert counts['started_trials'] == counts['empty_trials'] == len(starts)
+    assert counts['target_uses_started'] == 2 * len(starts) and counts['unexecuted_trials'] == 4_811 - len(starts)
+    assert counts['holdout_callbacks'] == counts['completed_trials'] == counts['aborted_trials'] == 0
+    if failed:
+        assert receipt['error_code'] == 'papersim_optimize_budget_exhausted'
+        assert receipt['budget']['stopping_causes'] == ['compute_time']
+    if stop_after == 4_810:
+        assert set(terminal['invalid_plans']) == {
+            'short', 'long', 'reordered', 'duplicated', 'restricted_targets', 'reversed_targets',
+        }
+    with app.cursor(binary=True) as cursor:
+        cursor.execute("SELECT content FROM papersim.snapshots WHERE kind = 'optimizer_run_artifact' "
+                       'AND content_sha256 = %s', (receipt['artifacts_sha256'],))
+        content, = cursor.fetchone()
+    assert (sha256(content).hexdigest(), len(content)) == (receipt['artifacts_sha256'], receipt['artifact_byte_length'])
+    if rolled_back:
+        assert terminal['publication_bytes'] == [[sha256(content).hexdigest(), len(content)]] * 2
+    events = _native_nba_v2_run_events(app, facts.plan.run_key)
+    assert [event[1] for event in events] == ['STARTED', 'FAILED' if failed else 'SUCCEEDED']
+    assert events[0][0] == receipt['started_event_id'] and events[1][0] == receipt['terminal_event_id']
+    assert events[1][6][0]['original_started_event_id'] == events[0][0]
+    assert events[1][7][0]['optimization_id'] == receipt['optimization_id']
+    _native_nba_v2_preview(target, app, pointer, facts, 'sealed_failure' if failed else 'sealed_success',
+                           started_event_id=receipt['started_event_id'], terminal_event_id=receipt['terminal_event_id'],
+                           optimization_id=receipt['optimization_id'])
+    artifact_pointer = tmp_path / 'artifact-pointer.json'
+    artifact_pointer.write_bytes(_json({'schema_version': 1, 'manifest_sha256': receipt['artifacts_sha256'],
+                                        'manifest_byte_length': receipt['artifact_byte_length']}))
+    forbidden = _native_nba_v2_command(target, artifact_pointer, preview=True, code=1)
+    assert forbidden['error_code'] == 'papersim_optimize_snapshot_identity_invalid' and forbidden['calls'] == []
+
+
+@MANAGED_NATIVE
+@pytest.mark.parametrize('attempt_failure', [False, True], ids=['lost-worker', 'attempt-failure'])
+def test_native_nba_v2_interrupted_root_never_allows_a_new_search(native_nba_v2, tmp_path, attempt_failure):
+    target, app, head = native_nba_v2
+    root = Path(target[0])
+    pointer, barrier, trace = (tmp_path / name for name in ('pointer.json', 'first-trial', 'observed.json'))
+    _native_nba_v2_command(target, pointer, register=True)
+    facts = _native_nba_v2_registration_readback(root, head, pointer)
+    with _process('nba-v2-cli', target, pointer=str(pointer), barrier_after_trial=1,
+                  barrier=str(barrier), trace=str(trace), fail_validation=attempt_failure,
+                  stop_after=1) as first:
+        _wait_path(barrier, first, timeout=60)
+        started, = _native_nba_v2_run_events(app, facts.plan.run_key)
+        assert started[1:3] == ('STARTED', 1)
+        failed_attempt_id = None
+        if attempt_failure:
+            barrier.with_suffix('.release').touch()
+            failed = _reply(first, 1, timeout=120)
+            assert failed['error_code'] == 'papersim_optimize_transport_failure'
+            assert failed['details']['stage'] == 'validate_result'
+            failed_attempt_id = failed['details']['attempt_event_id']
+            assert failed_attempt_id is not None
+        else:
+            first.kill()
+            first.communicate(timeout=10)
+    adapter = _adapter()
+    lock = adapter._OPERATION_NAMESPACE, adapter._advisory_lock_number(facts.plan.run_key)
+    end = time.monotonic() + 15
+    while not app.execute('SELECT pg_try_advisory_lock(%s, %s)', lock).fetchone()[0]:
+        assert time.monotonic() < end
+        time.sleep(0.02)
+    assert app.execute('SELECT pg_advisory_unlock(%s, %s)', lock).fetchone() == (True,)
+    trial = facts.plan.trials[0]
+    assert json.loads(trace.read_bytes()) == [[trial.fold_sha256, trial.spec_sha256, trial.model_context,
+                                             list(trial.targets)]]
+    before = _counts(app)
+    events = _native_nba_v2_run_events(app, facts.plan.run_key)
+    if attempt_failure:
+        assert [event[:3] for event in events] == [started[:3], (failed_attempt_id, 'FAILED', 1)]
+        assert events[1][6][0]['original_started_event_id'] == started[0]
+        assert events[1][7][0]['witnessed'] is None
+    else:
+        assert events == [started]
+    for attempt in (1, 2):
+        refusal = _native_nba_v2_command(target, pointer, code=1, forbid_compute=True, attempt=attempt)
+        assert refusal['error_code'] == 'papersim_optimize_nba_odr_interrupted' and refusal['calls'] == []
+        assert refusal['details']['started_event_id'] == started[0]
+        assert refusal['details']['attempt_event_id'] == failed_attempt_id
+    _native_nba_v2_preview(target, app, pointer, facts, 'interrupted', started_event_id=started[0],
+                           terminal_event_id=None, attempt_event_id=failed_attempt_id)
+    assert _counts(app) == before and _native_nba_v2_run_events(app, facts.plan.run_key) == events
 
 
 if __name__ == '__main__':

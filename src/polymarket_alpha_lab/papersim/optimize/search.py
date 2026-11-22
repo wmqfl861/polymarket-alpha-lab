@@ -591,6 +591,7 @@ class SourceDay:
     prediction_date: dt.date
     label_date: dt.date
     observed_label_at: dt.datetime | None = None
+    history_partition: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -599,6 +600,7 @@ class _CohortGroup:
     prediction: dt.datetime | dt.date
     last_label: dt.datetime | dt.date
     keys: tuple[str, ...]
+    history_partition: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -683,6 +685,7 @@ def validate_cohort(
     calendars = set()
     day_groups = {}
     group_days = {}
+    group_partitions = {}
     for record in records:
         key = record.event_key
         group = record.group_id
@@ -723,6 +726,11 @@ def validate_cohort(
                 raise ValueError("records must be available by the last complete source date")
             if day_groups.setdefault(prediction, group) != group or group_days.setdefault(group, prediction) != prediction:
                 raise ValueError("source-day groups must each describe one complete source date")
+            partition = day.history_partition
+            if partition is not None and (not isinstance(partition, str) or not partition.strip()):
+                raise ValueError("source-day history partitions require nonempty identifiers")
+            if group_partitions.setdefault(group, partition) != partition:
+                raise ValueError("a source day must belong to one history partition")
             calendars.add(day.calendar)
         by_key[key] = record
         clocks[key] = prediction, label
@@ -743,6 +751,13 @@ def validate_cohort(
     groups: dict[str, list[str]] = {}
     for key in ordered:
         groups.setdefault(by_key[key].group_id, []).append(key)
+    partitions = tuple(group_partitions.get(group) for group in groups)
+    if any(partition is not None for partition in partitions):
+        if None in partitions:
+            raise ValueError("history partitions must cover every source day")
+        runs = tuple(partition for partition, _ in itertools.groupby(partitions))
+        if len(runs) != len(set(runs)):
+            raise ValueError("source-day history partitions must be chronological and contiguous")
     complete = frozenset(groups if complete_groups is None else _group_ids(complete_groups, "complete_groups"))
     if complete.difference(groups):
         raise ValueError("complete_groups contains unknown groups")
@@ -758,7 +773,8 @@ def validate_cohort(
         raise ValueError("search labels must be available strictly before the first holdout prediction")
 
     group_plan = tuple(
-        _CohortGroup(group, clocks[keys[0]][0], max(clocks[key][1] for key in keys), tuple(keys))
+        _CohortGroup(group, clocks[keys[0]][0], max(clocks[key][1] for key in keys), tuple(keys),
+                     group_partitions.get(group))
         for group, keys in groups.items()
     )
     return CausalCohort(
@@ -831,28 +847,41 @@ def _sequence_digest(keys: Sequence[str]) -> str:
 class _SourceDayFold(WalkFold):
     source_day: dt.date
     source_calendar: str
+    history_partition: str | None = None
 
 
 def selected_prefix_folds(
     cohort: CausalCohort,
     *,
     selected_group_ids: Iterable[str] | None = None,
+    training_only_group_ids: Iterable[str] | None = None,
     min_train_blocks: int = 2,
 ) -> tuple[tuple[WalkFold, ...], tuple[SkippedBlock, ...]]:
     """Construct only the preregistered search folds and share their prefixes.
 
     Official club rounds use the MO-4 builder. This generic expansion uses
     the established MO-3 rule for prior complete, strictly available groups.
+    Declared training-only days contribute to the prefix and minimum without
+    becoming test folds or skips.
     """
     selected_ids = cohort.search_group_ids
     if selected_group_ids is not None:
         selected_ids = _group_ids(selected_group_ids, "selected search groups")
     selected = set(selected_ids)
-    if selected.difference(cohort.search_group_ids):
+    search_groups = set(cohort.search_group_ids)
+    if selected - search_groups:
         raise ValueError("selected search groups must be unique and inside the search cohort")
+    if training_only_group_ids is not None:
+        training_only = set(_group_ids(training_only_group_ids, "training-only groups"))
+        if training_only - search_groups or training_only - cohort._complete_groups:
+            raise ValueError("training-only groups must be complete and inside the search cohort")
+        if selected_group_ids is not None and selected & training_only:
+            raise ValueError("explicit search groups cannot include training-only groups")
+        selected -= training_only
     holdout = set(cohort.holdout_group_ids)
     groups = tuple(group for group in cohort._groups if group.group_id not in holdout)
-    return _prefix_folds(cohort, groups, selected, min_train_blocks, selected_group_ids is not None)
+    record_warmup = selected_group_ids is not None or training_only_group_ids is not None
+    return _prefix_folds(cohort, groups, selected, min_train_blocks, record_warmup)
 
 
 def holdout_prefix_folds(
@@ -872,6 +901,23 @@ def _prefix_folds(
     if type(min_train_blocks) is not int or min_train_blocks < 1:
         raise ValueError("at least one training block is required")
 
+    folds, skipped = [], []
+    for _, partition in itertools.groupby(group_plan, key=lambda group: group.history_partition):
+        partition_folds, partition_skips = _partition_prefix_folds(
+            cohort, tuple(partition), selected, min_train_blocks, record_warmup,
+        )
+        folds.extend(partition_folds)
+        skipped.extend(partition_skips)
+    return tuple(folds), tuple(skipped)
+
+
+def _partition_prefix_folds(
+    cohort: CausalCohort,
+    group_plan: Sequence[_CohortGroup],
+    selected: set[str],
+    min_train_blocks: int,
+    record_warmup: bool,
+) -> tuple[tuple[WalkFold, ...], tuple[SkippedBlock, ...]]:
     complete = cohort._complete_groups
     keys = tuple(key for group in group_plan if group.group_id in complete for key in group.keys)
     groups = tuple(group.group_id for group in group_plan if group.group_id in complete)
@@ -906,6 +952,7 @@ def _prefix_folds(
                 if type(group.prediction) is dt.date:
                     folds.append(_SourceDayFold(
                         **common, source_day=group.prediction, source_calendar=cohort.source_calendar,
+                        history_partition=group.history_partition,
                     ))
                 else:
                     folds.append(WalkFold(**common))
@@ -925,7 +972,10 @@ def nested_fold_ids(outer: WalkFold, inner: Sequence[WalkFold]) -> tuple[str, ..
     outer_cutoff = as_utc_instant(outer.cutoff, "outer fold cutoff")
     key_set = None
     qualifying = []
+    partition = getattr(outer, "history_partition", None)
     for fold in inner:
+        if getattr(fold, "history_partition", None) != partition:
+            continue
         if as_utc_instant(fold.cutoff, "inner fold cutoff") >= outer_cutoff or not fold.test_keys:
             continue
         inner_keys = fold.train_keys
@@ -1022,6 +1072,18 @@ def _digest(value: object) -> str:
     return sha256(canonical_value(value).encode("utf-8")).hexdigest()
 
 
+def _fold_digest(fold: WalkFold, utc_cutoff: dt.datetime) -> str:
+    source_day = getattr(fold, "source_day", None)
+    identity = (
+        fold.block_id, utc_cutoff.isoformat(),
+        None if source_day is None else source_day.isoformat(),
+        getattr(fold, "source_calendar", None),
+        _sequence_digest(fold.train_keys), _sequence_digest(fold.test_keys), _sequence_digest(fold.train_block_ids),
+    )
+    partition = getattr(fold, "history_partition", None)
+    return _digest(identity if partition is None else (*identity, partition))
+
+
 def plan_evaluations(
     folds: Sequence[WalkFold],
     catalogs: Mapping[str, SearchCatalog],
@@ -1064,16 +1126,7 @@ def plan_evaluations(
                     targets.add(target)
     plan = []
     for fold in ordered_folds:
-        source_day = getattr(fold, "source_day", None)
-        fold_digest = _digest((
-            fold.block_id,
-            cutoffs[fold.block_id].isoformat(),
-            None if source_day is None else source_day.isoformat(),
-            getattr(fold, "source_calendar", None),
-            _sequence_digest(fold.train_keys),
-            _sequence_digest(fold.test_keys),
-            _sequence_digest(fold.train_block_ids),
-        ))
+        fold_digest = _fold_digest(fold, cutoffs[fold.block_id])
         for candidate_index, ((spec_sha256, context), (spec, targets)) in enumerate(schedule.items()):
             plan.append(PlannedTrial(
                 trial_index=len(plan),

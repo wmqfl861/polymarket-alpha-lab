@@ -2262,21 +2262,38 @@ def _registered_optimization_manifest(conn, digest, size, protocol):
     from pathlib import PurePosixPath
     from polymarket_alpha_lab.papersim import snapshots
 
-    row = snapshots.read_snapshot(conn, digest)
-    if (row is None or row["kind"] != "optimizer_experiment_manifest"
-            or row["schema_version"] != 1 or row["byte_length"] != size
-            or len(row["content"]) != size or sha256(row["content"]).hexdigest() != digest):
-        raise ValueError("papersim_optimize_manifest_snapshot_invalid")
+    if protocol is None:
+        from polymarket_alpha_lab.papersim import store_psycopg
+        from polymarket_alpha_lab.papersim.optimize import runner
+
+        content = store_psycopg._nba_odr_registration_snapshot_content(
+            conn, runner.SourceArtifactRef(digest, size), kind="optimizer_experiment_manifest")
+    else:
+        row = snapshots.read_snapshot(conn, digest)
+        if (row is None or row["kind"] != "optimizer_experiment_manifest"
+                or row["schema_version"] != 1 or row["byte_length"] != size
+                or len(row["content"]) != size or sha256(row["content"]).hexdigest() != digest):
+            raise ValueError("papersim_optimize_manifest_snapshot_invalid")
+        content = row["content"]
     code = "papersim_optimize_manifest_invalid"
-    manifest = _optimization_document(row["content"], code)
+    manifest = _optimization_document(content, code)
     def canonical(document):
         return json.dumps(document, sort_keys=True, separators=(",", ":"),
                           allow_nan=False).encode("utf-8")
     if (set(manifest) != {"schema_version", "protocol", "sources"}
             or type(manifest["schema_version"]) is not int or manifest["schema_version"] != 1
-            or canonical(manifest) != row["content"]
-            or canonical(manifest["protocol"]) != canonical(protocol)
+            or canonical(manifest) != content
             or not isinstance(manifest["sources"], list) or not manifest["sources"]):
+        raise ValueError(code)
+    if protocol is None:
+        # The admitted NBA v2 cutoff binds the exact protocol to its registered materials.
+        try:
+            materials = manifest["protocol"]["registration_materials"]
+            materials_ref = runner.SourceArtifactRef(materials["sha256"], materials["byte_length"])
+        except (KeyError, TypeError, ValueError):
+            raise ValueError(code) from None
+        protocol = runner.nba_odr_historical_protocol(materials_ref)
+    if canonical(manifest["protocol"]) != canonical(protocol):
         raise ValueError(code)
     identities, types = set(), {}
     for source in manifest["sources"]:
@@ -2325,6 +2342,25 @@ def _registered_optimization_manifest(conn, digest, size, protocol):
     return manifest, {ref: fields[0] for ref, fields in types.items()}
 
 
+def _export_optimization_pointer(path, output):
+    from os import fsync
+    from tempfile import NamedTemporaryFile
+
+    temporary = None
+    try:
+        with NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                prefix=".optimizer-pointer-", delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(output + "\n")
+            stream.flush()
+            fsync(stream.fileno())
+        temporary.replace(path)
+        temporary = None
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
 def _cmd_optimize_experiment(args):
     import time
 
@@ -2334,6 +2370,8 @@ def _cmd_optimize_experiment(args):
     command = args.optimize_command
     clock = None
     connection = None
+    pointer_path = None
+    exit_code = 0
     try:
         if command == "families":
             result = _optimization_catalog()
@@ -2342,18 +2380,38 @@ def _cmd_optimize_experiment(args):
                 if args.input is not None:
                     _reject_legacy_optimization_input(args.input)
                 from polymarket_alpha_lab.papersim.optimize import runner
+                from polymarket_alpha_lab.papersim.optimize.nba_odr import NBA_ODR_AS_OF
 
                 clock = store_psycopg.optimization_command_clock(start_ns)
                 family = _optimization_family(args.family)
                 protocol = runner.historical_protocol(family)
                 cutoff = _optimize_parse_time(args.as_of, "papersim_optimize_time_invalid")
-                seed = protocol["seed"] if args.seed is None else args.seed
-                if (seed != protocol["seed"] or args.attempt < 1 or
-                        cutoff != _optimize_parse_time(protocol["data_cutoff"],
-                                                       "papersim_optimize_time_invalid")):
+                nba_odr_v2 = family.family_id == "nba-pace-efficiency" and cutoff == NBA_ODR_AS_OF
+                expected_seed = runner._NBA_ODR_SEED if nba_odr_v2 else protocol["seed"]
+                expected_cutoff = NBA_ODR_AS_OF if nba_odr_v2 else _optimize_parse_time(
+                    protocol["data_cutoff"], "papersim_optimize_time_invalid")
+                seed = expected_seed if args.seed is None else args.seed
+                if seed != expected_seed or args.attempt < 1 or cutoff != expected_cutoff:
                     raise ValueError("papersim_optimize_protocol_mismatch")
+                if nba_odr_v2 and not args.managed:
+                    raise ValueError("papersim_optimize_nba_odr_managed_required")
                 digest, size = _optimization_pointer(args.input_manifest)
-            if command in {"run", "init"}:
+            if command == "register-experiment":
+                from polymarket_alpha_lab.papersim.nba_odr_registration import _pinned_originals
+
+                clock = store_psycopg.optimization_command_clock(start_ns)
+                repo_root = Path(args.repo_root).resolve()
+                if args.write_pointer is not None:
+                    pointer_path = Path(args.write_pointer)
+                    pointer_path = pointer_path.parent.resolve() / pointer_path.name
+                    if pointer_path.is_relative_to(repo_root):
+                        raise ValueError("papersim_optimize_manifest_pointer_inside_worktree")
+                originals = _pinned_originals()
+                with Path(args.approval_file).open("rb") as stream:
+                    approval_bytes = stream.read(originals["approval"].ref.byte_length + 1)
+                with Path(args.source_inventory_file).open("rb") as stream:
+                    source_inventory_bytes = stream.read(originals["source_inventory"].ref.byte_length + 1)
+            if command in {"run", "init", "register-experiment"}:
                 code_commit = require_clean_worktree_path(args.repo_root)
             def connect():
                 kwargs = {} if clock is None else {"clock": clock}
@@ -2372,10 +2430,19 @@ def _cmd_optimize_experiment(args):
                 status = _optimization_status(connection, args.lineage, args.config)
                 result = {**status, "lineages": list(status["lineages"].values()),
                           "shadow_predictions": "paired_by_lineage"}
+            elif command == "register-experiment":
+                registration = store_psycopg.register_managed_nba_odr_experiment(
+                    connection, clock=clock, repo_root=repo_root, code_commit=code_commit,
+                    approval_bytes=approval_bytes, source_inventory_bytes=source_inventory_bytes,
+                    reconnect=connect)
+                result = registration.pointer
             else:
                 with store_psycopg.optimization_read_transaction(
                         connection, clock, stage="manifest_read", closeout=True):
-                    manifest, refs = _registered_optimization_manifest(connection, digest, size, protocol)
+                    manifest, refs = _registered_optimization_manifest(
+                        connection, digest, size, None if nba_odr_v2 else protocol)
+                if nba_odr_v2:
+                    protocol = manifest["protocol"]
 
                 request = dict(clock=clock, family=family, data_cutoff=cutoff,
                                random_seed=seed, code_commit=code_commit, attempt=args.attempt,
@@ -2384,6 +2451,8 @@ def _cmd_optimize_experiment(args):
                                source_refs=refs, operation_key=args.operation_key)
                 if args.dry_run:
                     receipt = store_psycopg.preview_managed_optimization(connection, **request)
+                elif nba_odr_v2:
+                    receipt = store_psycopg.run_managed_optimization(connection, **request, reconnect=connect)
                 else:
                     def compute(*, policy_context, deadline, source_artifacts):
                         arguments = runner.historical_run_arguments(
@@ -2397,7 +2466,16 @@ def _cmd_optimize_experiment(args):
                     receipt = store_psycopg.run_managed_optimization(
                         connection, **request, compute=compute, reconnect=connect)
                 result = {k: v for k, v in receipt.items() if k != "artifact_bytes"}
+                if nba_odr_v2:
+                    exit_code = 0 if args.dry_run else receipt["exit_code"]
+                else:
+                    exit_code = int(result["outcome"] == "RUN_FAILED")
         output = json.dumps(_jsonify(result), sort_keys=True, allow_nan=False)
+        if pointer_path is not None:
+            try:
+                _export_optimization_pointer(pointer_path, output)
+            except OSError:
+                raise ValueError("papersim_optimize_manifest_pointer_write_failed") from None
     except Exception as error:
         # Surface only project reason codes and proven identifiers, never raw input or DSNs.
         import re
@@ -2415,12 +2493,12 @@ def _cmd_optimize_experiment(args):
         if connection is not None:
             connection.close()
     print(output)
-    return int(command == "run" and result["outcome"] == "RUN_FAILED")
+    return exit_code
 
 
 def _cmd_optimize(args) -> int:
     command = args.optimize_command
-    if command in {"families", "init", "run", "status"}:
+    if command in {"families", "init", "register-experiment", "run", "status"}:
         return _cmd_optimize_experiment(args)
     if command == "score":
         return _cmd_optimize_score(args)
@@ -2812,6 +2890,14 @@ def _build_parser() -> argparse.ArgumentParser:
     init_parser.add_argument("--families", nargs="*", help="initialize only these family IDs")
     init_parser.add_argument("--actor", default="optimize-init")
     init_parser.add_argument("--effective-at", help="explicit timezone-aware initialization time")
+    register_parser = optimize_sub.add_parser(
+        "register-experiment", help="register the approved NBA historical experiment")
+    register_parser.add_argument("--managed", action="store_true", required=True,
+                                 help="use the project-private managed application instance")
+    register_parser.add_argument("--repo-root", default=".", help="repository root (default: .)")
+    register_parser.add_argument("--approval-file", required=True, help="original owner approval document")
+    register_parser.add_argument("--source-inventory-file", required=True, help="original source inventory")
+    register_parser.add_argument("--write-pointer", help="atomically export the manifest pointer outside the worktree")
     run_parser = _optimize_source(optimize_sub.add_parser(
         "run", help="evaluate a registered historical experiment"), write=True)
     run_parser.add_argument("--family", required=True)
