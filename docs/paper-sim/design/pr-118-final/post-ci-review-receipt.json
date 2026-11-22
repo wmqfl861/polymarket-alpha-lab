@@ -1,0 +1,33 @@
+{
+  "started": "2026-11-22T01:12:04.975270+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "03e7f9eb727db12bd9d26c8b98ecc49d27fab3d08c31c5d7dc002ac2586fdae0",
+  "purpose": "pr118-final-post-ci-review",
+  "resume": null,
+  "attachments": {
+    "objects.json": "67b468d054456641f2ce7cae48ce642bbadde31fa19b40ae2c3ca37f9d1a7163",
+    "exact-ci.json": "98f6da43ff3cc680a2eecf894f8273817bd96aa2288a37475b07456312b8c044",
+    "ci-progress.json": "3eaf074b759596e07e9359ebf03488530048cf92183234bb4d3b089198535b38",
+    "current.txt": "ff1f45b5860cae298679db9e3ef57ed0fbbef2e78b304275fae9ea08558b8385",
+    "native-papersim-junit.json": "135c09d3f7816e608c233a8e38cbc116f72aff8e0dbbae83757ee8fb1aaa7107",
+    "pre-push-review.json": "8cb7b4befe5428cc8bc765a0460e258475b30a3d99227072cb4f42d273506976",
+    "h-pre-push-review.txt": "d9a894dd1e19b80c2122a9ab76a154accfc9e13a93342f87430e7d9530419ffe",
+    "h-pre-push-receipt.json": "97a5afcb6514587810bafa563c36c117ba1e649a9efde3ffa190caef25700de3",
+    "source-to-head.raw": "872c6e8472e89f8a995376ac0d38ae532ef88a5cc05ccf324802b99d5cafa416",
+    "h-linux.json": "09a42dca61299c9a386737c584c9b046c7058df919ed06fc2854e70a6345b594",
+    "s-conflict-review.txt": "1cd7e9961c4167b5f815067508c48ca9df0a716a530d67987a0c5b27eb379079",
+    "s-conflict-receipt.json": "df51ba4946a28a62bc6eeb529ded6a4d9a3029ddfef6a990edf4dc7f82366d66",
+    "input-manifest.json": "7296fe705e4483ec9d714e4980390c4d7438a533842a5a664623f04a7b7c77c9"
+  },
+  "session_ids": [],
+  "finished": "2026-11-22T01:15:46.160357+00:00",
+  "exit": 0,
+  "stdout_sha256": "860d324504549892209abc4006a28f9407f6b0e30de6cfb204ef4daf5b12fac0",
+  "stderr_sha256": "7d35304949dd227654d5ac0306f203a4fe7132e464e427deaf6f4c3f984855f9",
+  "stdout_bytes": 11934,
+  "stderr_bytes": 132,
+  "safe_diagnostics": []
+}

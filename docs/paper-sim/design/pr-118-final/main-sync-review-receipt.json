@@ -1,0 +1,25 @@
+{
+  "started": "2026-11-22T01:48:43.910152+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "278299dc0a385ac7ef9c5b93b76365eab271e0d3529eaebe713dfcf6498266bf",
+  "purpose": "phase1-post118-e-w45-docs-review",
+  "resume": null,
+  "attachments": {
+    "plan.md": "8a6299bd1507df479185388b29423a5f2a7a540c36a867754f04f4327fb405bc",
+    "approved-118-phase.md": "86e7481558bedf78a922bce00c2d94b1c2a8d6f1d3524899d5261cd069bc001e",
+    "signed-118-post-ci.txt": "860d324504549892209abc4006a28f9407f6b0e30de6cfb204ef4daf5b12fac0",
+    "club-w45-signed.txt": "3e5b2d9fca45570fb0a78f6869ec87ecc013b6f3447a68ed16b31eca3f5ef09a",
+    "mc3-o5-source-readback.json": "0efae1a047ba94593812ff043abf2c0b7b00e556027c24605a48997c7af9a710"
+  },
+  "session_ids": [],
+  "finished": "2026-11-22T01:52:45.390824+00:00",
+  "exit": 0,
+  "stdout_sha256": "0e3c13f049876bf06150f8bf317e6360ec2c0f8fde6b6ee428dbdd2ac394b6b6",
+  "stderr_sha256": "7d35304949dd227654d5ac0306f203a4fe7132e464e427deaf6f4c3f984855f9",
+  "stdout_bytes": 7259,
+  "stderr_bytes": 132,
+  "safe_diagnostics": []
+}

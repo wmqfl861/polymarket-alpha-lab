@@ -4662,3 +4662,21 @@ PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并�
 本机 Linux ZCode 完整验证实质头。离线专项 479 通过，按原生条件跳过 1 项并在完整原生分区实跑。隔离 PostgreSQL 专项 35 通过，完整原生分区 845 通过，原生均为零跳过。Linux 离线全量为 `43951 passed, 437 skipped, 20 warnings in 2699.92s (0:44:59)`，自检 10/10，CodeGraph、编译及敏感信息检查通过。首轮资源故障、后续复验和原有跳过条目见[本机与冲突回执](docs/paper-sim/design/pr-118-review.md)。
 
 独立本机 ZCode `sess_077a1f26-359e-4f3e-a678-332077d02d51` 于 `2026-11-21T23:36:32.392367+00:00` 对精确实质头签署 `VERDICT: PASS`。已审计划、历次复审和本机证据有[逐件校验清单](docs/paper-sim/design/pr-118/manifest.json)。三条远端工作流、实际合并提交和最终头的独立复核由本 PR 的精确验收回执登记。
+
+### 87.1 PR #118 最终头与当前合并结果的三条 CI
+
+最终 PR 头 `b89120f2fa79c6ecf5f371376fc00f1ccd10809c`，基线 `01a3d6d208fb7a22886f3cc0b54f4b6499d83400`，GitHub 实际检出的合并对象 `6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e`。固定检查返回 `CURRENT`，三条工作流均成功。Offline verification `44968419459`、Native project PostgreSQL `44968419447`、Research paper bridge `44968419472`。
+
+同一仓库的保留分支 `evidence/pr-118-final-b89120f2fa79c6ecf5f371376fc00f1ccd10809c` 收入[最终核验](docs/paper-sim/design/pr-118-final-verification.md)及[原件校验清单](docs/paper-sim/design/pr-118-final/manifest.json)。独立实际 ZCode 会话 `sess_397092a6-c2ce-43e9-ac1c-bf27264c54e8` 于 `2026-11-22T01:15:46.160357+00:00` 对完整 H 和 M 签署 `VERDICT: PASS`。上述回执对应合并前的实际检出，正式合并提交与后续主线状态以 GitHub 合并事实为准。
+
+#118 于 2026-11-22 02:07:39 UTC 以合并提交 `00199b24d38d5d9334ec7eb07ca8141db33852da` 进入 `main`。实际父序为 `01a3d6d208fb7a22886f3cc0b54f4b6499d83400`、`b89120f2fa79c6ecf5f371376fc00f1ccd10809c`，树 `e7b2335c0f9baea51a774eacc709f878b0875ab9` 与 CI 检出的合并对象完全相同。GitHub 同仓保留提交 `e2d7c64f63283e981da23be0574dcbcbfd812ed5` 的 12 份回执和说明已逐件按原字节读回。E 的独立 ZCode 推送复审 `sess_f54b9c6c-fa6f-4bd1-afc4-dd16befa6bdb` 于 `2026-11-22T02:06:36.669400+00:00` 签 `VERDICT: PASS`。[E 推送复审](docs/paper-sim/design/pr-118-final/e-push-review.txt) · [合并读回](docs/paper-sim/design/pr-118-final/landed.json)
+
+初次本机推送预检于 00:35:33 UTC 退出 2，当时远端分支头和主线均未移动。Git 2.43 在临时远端名上无法查询推送 URL。修复在仓库外完成，本机 ZCode 核对 GitHub 规范 URL 及推送前保护后，原头于 00:48:29 UTC 成功推送。实质候选两次本机数据库验证的存储空间不足、首轮回执预检及原索引状态已留存。归档中的时长和有行号的空行格式经独立复审核对。[本机与冲突回执](docs/paper-sim/design/pr-118-review.md) · [主线回执同步计划](docs/paper-sim/design/pr-118-final/main-sync-plan.txt) · [主线回执同步计划复审](docs/paper-sim/design/pr-118-final/main-sync-review.txt)
+
+### 87.2 FX-41 与 FX-43 俱乐部足球固定 W45 预检
+
+**固定 W45 数据不足，正式重跑未执行。** 观察时刻为 2026-11-21 16:25:40.735001 UTC，来源截止为 17:00 UTC，末周为 2026-W45。覆盖回执 521,485 字节，SHA-256 `484b1a7174be2f0de77c78e5bdd5c69c3a41502533435a1226ce4c0888c7eb9d`。输入包摘要 `24d8b64913b00445daf46f875aa94cb80c701ddbaa7bc6d0efed804736a269d5`。该周匹配 64/81 个身份，8 轮中 5 轮标签结构完整。英冠 R14、R15 的 15 个身份后来经核对，刷新件于 17:23:33 首见，适用于 18:00 UTC 截止的新批次。法甲 R10 的两场增量身份匹配，原主件仍缺独立比分见证。此前以在赛 W47 为末周的 0 周/0 场，以及对 11 月 10 日用更新材料回看的 4 周/310 场日历上界，分别属于各自的窗口和输入。
+
+按 #118 实际合并对象复核：`historical_protocol` 的现行俱乐部日程为 `mo6-club-official-round-suffix-v1`，固定截止 2026-11-10 10:33:51 UTC。CLI 在连接前校验该日程时钟，清单和受管存储重新校验，历史适配器要求完整因果后缀和精确登记首界。W41 的西甲 R8 未闭，若把首界移至轮内，搜索侧标签仍晚于首预测。W42 的英冠和西甲两条搜索标签均晚于 10 月 13 日 18:45 UTC 的首预测。按当前证据，各目标的留出上界为 3 个完整比赛周、229 场，离 20 周且 300 场仍至少差 17 周、71 场，满足时点未知。新启动、搜索试验、预测、留出回调与比较均为 0，实际配对场数未测，无新运行 ID、终态或记分卡。独立本机 ZCode `sess_7bc3eeec-b3ad-43ff-96de-efc26b82819b` 于 `2026-11-21T20:39:17.867333+00:00` 通过该处置计划。[预检计划](docs/paper-sim/design/fx-41/club-w45-plan.txt) · [独立复审](docs/paper-sim/design/fx-41/club-w45-review.txt) · [复审回执](docs/paper-sim/design/fx-41/club-w45-review-receipt.json)
+
+§84.2.5 保留三张正式原卡。俱乐部 ID 1 与 NBA ID 3 为 `INSUFFICIENT_DATA`，国家队 ID 2 为 `NO_IMPROVEMENT`，三次原运行的实际留出回调均为 0。owner 于 2026-11-21 批准 NBA 双季日程先登记再执行一次。该日程使用 17 个完整规格和 4,811 次物理试验。受管执行和新卡待交付。O-5 的原生失败路径测试已随 #121 合入，专项 15 项通过。优化线第一阶段交接书待 NBA 执行和终点验收。[O-5 受管测试结果](docs/paper-sim/design/fx-38-fx-39-step1/focused-native.json)

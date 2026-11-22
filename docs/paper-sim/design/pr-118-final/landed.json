@@ -1,0 +1,100 @@
+{
+  "verified": true,
+  "actual": "00199b24d38d5d9334ec7eb07ca8141db33852da",
+  "merged_utc": "2026-11-22T02:07:39Z",
+  "parents": [
+    "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+    "b89120f2fa79c6ecf5f371376fc00f1ccd10809c"
+  ],
+  "tree": "e7b2335c0f9baea51a774eacc709f878b0875ab9",
+  "tested_merge": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+  "observed_main": "00199b24d38d5d9334ec7eb07ca8141db33852da",
+  "proof": {
+    "pr": 118,
+    "base": "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+    "head": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+    "merge": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+    "evidence_commit": "e2d7c64f63283e981da23be0574dcbcbfd812ed5",
+    "evidence_ref": "refs/heads/evidence/pr-118-final-b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+    "files": {
+      "docs/paper-sim/design/pr-118-final/exact-ci.json": {
+        "bytes": 8454,
+        "sha256": "98f6da43ff3cc680a2eecf894f8273817bd96aa2288a37475b07456312b8c044"
+      },
+      "docs/paper-sim/design/pr-118-final/ci-progress.json": {
+        "bytes": 1315,
+        "sha256": "3eaf074b759596e07e9359ebf03488530048cf92183234bb4d3b089198535b38"
+      },
+      "docs/paper-sim/design/pr-118-final/current.txt": {
+        "bytes": 118,
+        "sha256": "ff1f45b5860cae298679db9e3ef57ed0fbbef2e78b304275fae9ea08558b8385"
+      },
+      "docs/paper-sim/design/pr-118-final/native-papersim-junit.json": {
+        "bytes": 511,
+        "sha256": "135c09d3f7816e608c233a8e38cbc116f72aff8e0dbbae83757ee8fb1aaa7107"
+      },
+      "docs/paper-sim/design/pr-118-final/pre-push-review.json": {
+        "bytes": 249,
+        "sha256": "8cb7b4befe5428cc8bc765a0460e258475b30a3d99227072cb4f42d273506976"
+      },
+      "docs/paper-sim/design/pr-118-final/h-pre-push-review.txt": {
+        "bytes": 8119,
+        "sha256": "d9a894dd1e19b80c2122a9ab76a154accfc9e13a93342f87430e7d9530419ffe"
+      },
+      "docs/paper-sim/design/pr-118-final/h-pre-push-receipt.json": {
+        "bytes": 1988,
+        "sha256": "97a5afcb6514587810bafa563c36c117ba1e649a9efde3ffa190caef25700de3"
+      },
+      "docs/paper-sim/design/pr-118-final/source-to-head.raw": {
+        "bytes": 5905,
+        "sha256": "872c6e8472e89f8a995376ac0d38ae532ef88a5cc05ccf324802b99d5cafa416"
+      },
+      "docs/paper-sim/design/pr-118-final/post-ci-review.txt": {
+        "bytes": 11934,
+        "sha256": "860d324504549892209abc4006a28f9407f6b0e30de6cfb204ef4daf5b12fac0"
+      },
+      "docs/paper-sim/design/pr-118-final/post-ci-review-receipt.json": {
+        "bytes": 1870,
+        "sha256": "97b525338d1e27354e6264f1b05ce38e4827dd9d3d631347955b14d7b69efd6f"
+      },
+      "docs/paper-sim/design/pr-118-final-verification.md": {
+        "bytes": 4119,
+        "sha256": "5dcf43879e20bc95c2753c550db23fad4946ad0d524922cc8913958d74e2ee0a"
+      },
+      "docs/paper-sim/design/pr-118-final/manifest.json": {
+        "bytes": 1454,
+        "sha256": "a0ba4e2f96848e60a4641c589ffe718258ea60db39b7ec49efbd12afacd0ab8b"
+      },
+      "DELIVERY_PLAN.md": {
+        "bytes": 465047,
+        "sha256": "78c3ecff096ed86347891b86944747b5bec14224564a5cc1ffacc0803aebafd2"
+      }
+    },
+    "h_post_ci": {
+      "session": "sess_397092a6-c2ce-43e9-ac1c-bf27264c54e8",
+      "reviewed_utc": "2026-11-22T01:15:46.160357+00:00",
+      "verdict": "PASS",
+      "opinion": {
+        "bytes": 11934,
+        "sha256": "860d324504549892209abc4006a28f9407f6b0e30de6cfb204ef4daf5b12fac0"
+      },
+      "receipt": {
+        "bytes": 1870,
+        "sha256": "97b525338d1e27354e6264f1b05ce38e4827dd9d3d631347955b14d7b69efd6f"
+      }
+    },
+    "e_push_gate": {
+      "session": "sess_f54b9c6c-fa6f-4bd1-afc4-dd16befa6bdb",
+      "reviewed_utc": "2026-11-22T02:06:36.669400+00:00",
+      "verdict": "PASS",
+      "opinion": {
+        "bytes": 6814,
+        "sha256": "60ea3a2d53ea652ef7b035df19da4bc190e7dad12bc0c173957b7e9e3c844e1d"
+      },
+      "receipt": {
+        "bytes": 1861,
+        "sha256": "40d4abcafe523a2ad1debe738b4b18715a0dd11e3acd5c7608d0bca432b55244"
+      }
+    }
+  }
+}

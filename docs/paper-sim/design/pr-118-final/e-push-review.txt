@@ -1,0 +1,55 @@
+# PR #118 保留证据分支候选 E 独立只读验收（本机 Linux ZCode，guarded）
+
+**验收者**：独立只读本机 Linux ZCode 会话，未参与 #118 的实现、本机验证、CI 执行或任何既有复审；本轮为 E 发布前的验收门。
+**约束遵守**：仅只读送审附件 13 件；未运行 shell、未写入、未联网、未访问送审目录之外；材料中连接串仅以变量名出现，本报告不披露任何地址或凭据。
+
+## 被审对象（完整 E）
+
+- 候选 E＝`e2d7c64f63283e981da23be0574dcbcbfd812ed5`，唯一父 H＝`b89120f2fa79c6ecf5f371376fc00f1ccd10809c`，树 `60375205251eca2196fff30c77892c5b5f34ed4a`，保留分支 `evidence/pr-118-final-b89120f2fa79c6ecf5f371376fc00f1ccd10809c`（object.json:5-7）。
+- H→E 实际差异恰 13 路径（head-to-evidence-diff-objects.txt:1-13）：1 个 M（`DELIVERY_PLAN.md` `0e40a42c→e1c346f3`，即第 87.1 号登记段）＋12 个 A（`pr-118-final-verification.md` 与 `pr-118-final/` 下 11 件：ci-progress.json、current.txt、exact-ci.json、h-pre-push-receipt.json、h-pre-push-review.txt、manifest.json、native-papersim-junit.json、post-ci-review-receipt.json、post-ci-review.txt、pre-push-review.json、source-to-head.raw）。全部 100644，无删除、无重命名、无模式变化，不含任何 src/tests/tools/`.github`/配置路径。
+
+## 验收范围
+
+范围内：E 父子与路径完整性；E 仅加入独立签署回执与登记；H/M 三条成功运行；附件原件字节/SHA-256 摘要交叉；E 精确本机聚焦＋全量、自检、CodeGraph、敏感扫描；H 未合入与 E 待发布的状态保持。
+范围外（不重做）：S 实质审计与 H/M 复审内部（由已入库独立回执覆盖）、哈希重算、远端运行重取、合并/推送执行。
+
+## 核对结果
+
+**1. E 仅加入回执与登记 — 成立。** 差异即上列 13 路径；登记段（ledger-addition.md）所述 H/B/M、三条 run ID、CURRENT、独立会话 `sess_397092a6-c2ce-43e9-ac1c-bf27264c54e8` 及时戳 `2026-11-22T01:15:46.160357+00:00` 与 object.json:26-30、ci-verification.json 逐项一致，且明确“回执对应合并前的实际检出”，无越权声称。
+
+**2. H/M 三条成功运行 — 成立。** ci-verification.json：Offline verification 44968419459/351、Native project PostgreSQL 44968419447/216、Research paper bridge 44968419472/128，均 attempt 1、`pull_request`、head_sha 精确 H、completed/success/matches true；六个实测作业检出全部 M＝`6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e`（双行锚定）；计数 43950/438/20、320/2＋89、1227/18、1933/15、845、357；Native 四分区＋汇总 `linux-native`（137048234329）success，windows-native 两作业为预期 skipped；`tree(M)=tree(H)=e7b2335c…`，M 父序 B/H。final-verification.md 各表与之逐项一致，完成判定时序（01:12:01 晚于最晚 01:11:18）自洽。
+
+**3. 附件原件摘要 — 成立。** archive-manifest.json 10 件字节/SHA-256 与 linux.json:4-18 `files_before` 及 object.json 三方交叉全部一致（含 post-ci-review.txt `860d3245…`、h-pre-push-review.txt `d9a894dd…`）；manifest.json 自排除属惯例。
+
+**4. E 精确本机聚焦＋全量 — 成立。** linux.json：head_before＝head_after＝精确 E，13 路径哈希前后一致（files_match true），八阶段全 PASS，`43951 passed, 437 skipped, 20 warnings in 2738.15s`，exit 0；local-focused.txt 53 passed in 40.63s。计数与 H 侧本机（43951/437/20、53）完全一致，符合同一可执行内容（E 仅加文档）重跑。
+
+**5. 自检 — 成立。** selfcheck.txt：PASS (10/10)。
+
+**6. CodeGraph — 成立。** codegraph.json：initialized、complete、pendingChanges 0/0/0、worktreeMismatch null。
+
+**7. 敏感扫描 — 成立。** hygiene.json（base H → head E）：diff_check true；service_token 3→3、private_key 0→0、database_credentials 243→243，三类 new_paths/new_lines 均 0，passed true——E 新增内容零敏感路径与行。
+
+**8. 状态保持 — 成立。** current.txt 固定检查锚定 H 的 run 为 CURRENT、main 仍为 B（post-ci-review.txt:17）；本页明确为合并前核验（final-verification.md:40）。本验收不执行合并或推送：H 保持未合入，E 保持待发布，本回执即发布门。
+
+## 回执原文归属
+
+| 回执原件 | 归属会话 | 签署时戳 (UTC) | SHA-256 | 入库位置 |
+|---|---|---|---|---|
+| 当前头验收回执 post-ci-review.txt（VERDICT: PASS，覆盖完整 H/M） | 独立 CI 后复审 sess_397092a6-c2ce-43e9-ac1c-bf27264c54e8 | 2026-11-22T01:15:46.160357+00:00 | `860d3245…` | pr-118-final/post-ci-review.txt（执行回执 post-ci-review-receipt.json `97b52533…`） |
+| H 推送前复审 h-pre-push-review.txt | sess_8bbe96ea-b2e7-44c5-93a9-cc7c5763e3af | 2026-11-22T00:35:25.540544+00:00 | `d9a894dd…` | pr-118-final/h-pre-push-review.txt（回执 `97a5afcb…`、锚定件 pre-push-review.json `8cb7b4be…`） |
+| E 本机五门（全量/聚焦/自检/CodeGraph/敏感） | 分离执行服务 sess_1307600c-0309-4553-a1cd-eee13f7bb094（exit 0） | 01:15:56–02:03:13 | 见 linux-executor.json | 本包 linux.json、local-focused.txt、selfcheck.txt、codegraph.json、hygiene.json |
+| 本验收（E 发布门） | 本独立只读会话 | 2026-11-22 | — | 本报告原文 |
+
+## 实际发现（均不阻塞）
+
+1. 全部 SHA-256/字节数按只读实践采信记录值，经三方清单交叉一致，未重算（无 shell）。
+2. linux-executor.json 区间（01:15:56–01:16:20，24 秒）早于全量运行窗口（01:17:10–02:03:13），与 H 侧“分离执行服务”启动器模式相符；全量完整性由 linux.json 自身的 head/files 前后锚定承载，不依赖该区间包裹。
+3. CI offline 43950/438 与本机 43951/437 的一项 passed→skipped 漂移为既有披露（前轮复审发现 1），E 侧无新变化。
+4. papersim JUnit XML 原件（334188 字节，`e2960d1e…`）以核验回执形式入库而非随附原文；post-ci-review-receipt.json、pre-push-review.json 内文未随包直供，经三清单哈希一致采信。
+5. selfcheck/codegraph/hygiene 无独立时戳，顺序由同批执行服务记录推断。
+
+## 结论
+
+在验收范围内：E 以 H 为唯一父，差异恰为 1 登记段修改＋12 件纯文档（含独立签署的当前头验收回执原件与执行回执）；H/M 三条工作流全绿且六作业实际检出 M；附件原件摘要三方交叉一致；E 精确锚定的聚焦（53）、全量（43951/437/20、八阶段、exit 0、文件不漂移）、自检 10/10、CodeGraph 无待变更、敏感扫描零新增全部成立；H 保持未合入、E 保持待发布。未发现缺证或实质性不一致，上述发现均属证据粒度披露。
+
+VERDICT: PASS
