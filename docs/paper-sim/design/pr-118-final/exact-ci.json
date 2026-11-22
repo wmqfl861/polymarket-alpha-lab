@@ -1,0 +1,283 @@
+{
+  "pr": 118,
+  "observed_utc": "2026-11-22T01:11:33.118416+00:00",
+  "workflows": {
+    "Offline verification": {
+      "id": 44968419459,
+      "run_number": 351,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_branch": "m2/d1-public-market-settlement-recovery-20261121",
+      "head_sha": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+      "matches": true,
+      "jobs": [
+        {
+          "id": 137042576191,
+          "name": "offline",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        }
+      ],
+      "checkouts": [
+        {
+          "id": 137042576191,
+          "name": "offline",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "job": 137042576191,
+          "matches": true,
+          "required_steps": {
+            "Run sanitized full offline verification": "success"
+          },
+          "checkout": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+          "checkout_lines": [
+            "HEAD is now at 6c7f9e77",
+            "git log -1 --format=%H -> 6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e"
+          ],
+          "test_counts": [
+            {
+              "passed": 43950,
+              "skipped": 438,
+              "warnings": 20
+            }
+          ]
+        }
+      ]
+    },
+    "Native project PostgreSQL": {
+      "id": 44968419447,
+      "run_number": 216,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_branch": "m2/d1-public-market-settlement-recovery-20261121",
+      "head_sha": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+      "matches": true,
+      "jobs": [
+        {
+          "id": 137042576229,
+          "name": "linux-native-storage",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        },
+        {
+          "id": 137042576378,
+          "name": "linux-native-research",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        },
+        {
+          "id": 137042576448,
+          "name": "linux-native-papersim",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        },
+        {
+          "id": 137042576516,
+          "name": "linux-native-dispatch",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        },
+        {
+          "id": 137042577336,
+          "name": "windows-native-${{ matrix.partition }}",
+          "status": "completed",
+          "conclusion": "skipped",
+          "run_attempt": 1
+        },
+        {
+          "id": 137042577630,
+          "name": "windows-native",
+          "status": "completed",
+          "conclusion": "skipped",
+          "run_attempt": 1
+        },
+        {
+          "id": 137048234329,
+          "name": "linux-native",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        }
+      ],
+      "checkouts": [
+        {
+          "id": 137042576229,
+          "name": "linux-native-storage",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "job": 137042576229,
+          "matches": true,
+          "required_steps": {
+            "Prove isolated native partition": "success",
+            "Prove native version switch": "success"
+          },
+          "checkout": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+          "checkout_lines": [
+            "HEAD is now at 6c7f9e77",
+            "git log -1 --format=%H -> 6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e"
+          ],
+          "test_counts": [
+            {
+              "passed": 320,
+              "skipped": 2
+            },
+            {
+              "passed": 89
+            }
+          ]
+        },
+        {
+          "id": 137042576378,
+          "name": "linux-native-research",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "job": 137042576378,
+          "matches": true,
+          "required_steps": {
+            "Prove isolated native partition": "success"
+          },
+          "checkout": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+          "checkout_lines": [
+            "HEAD is now at 6c7f9e77",
+            "git log -1 --format=%H -> 6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e"
+          ],
+          "test_counts": [
+            {
+              "passed": 1227,
+              "skipped": 18
+            }
+          ]
+        },
+        {
+          "id": 137042576516,
+          "name": "linux-native-dispatch",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "job": 137042576516,
+          "matches": true,
+          "required_steps": {
+            "Prove isolated native partition": "success"
+          },
+          "checkout": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+          "checkout_lines": [
+            "HEAD is now at 6c7f9e77",
+            "git log -1 --format=%H -> 6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e"
+          ],
+          "test_counts": [
+            {
+              "passed": 1933,
+              "skipped": 15
+            }
+          ]
+        },
+        {
+          "id": 137042576448,
+          "name": "linux-native-papersim",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "job": 137042576448,
+          "matches": true,
+          "required_steps": {
+            "Prove isolated native partition": "success",
+            "Assemble throwaway papersim cluster": "success"
+          },
+          "checkout": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+          "checkout_lines": [
+            "HEAD is now at 6c7f9e77",
+            "git log -1 --format=%H -> 6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e"
+          ],
+          "test_counts": [
+            {
+              "passed": 845
+            }
+          ],
+          "native_environment": [
+            "PAPERSIM_PG_DSN",
+            "PAPERSIM_NATIVE_MANAGED_OWNER_DSN",
+            "PAPERSIM_NATIVE_MANAGED_APP_DSN"
+          ],
+          "native_test_modules": [
+            "tests/test_papersim_optimize_registered_runner_native.py",
+            "tests/test_papersim_d1_operations_native.py"
+          ]
+        }
+      ],
+      "aggregate_inputs": {
+        "linux-native-storage": "success",
+        "linux-native-research": "success",
+        "linux-native-dispatch": "success",
+        "linux-native-papersim": "success"
+      }
+    },
+    "Research paper bridge": {
+      "id": 44968419472,
+      "run_number": 128,
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_branch": "m2/d1-public-market-settlement-recovery-20261121",
+      "head_sha": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+      "matches": true,
+      "jobs": [
+        {
+          "id": 137042576204,
+          "name": "windows-paper",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        }
+      ],
+      "checkouts": [
+        {
+          "id": 137042576204,
+          "name": "windows-paper",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1,
+          "job": 137042576204,
+          "matches": true,
+          "required_steps": {
+            "Prove research-to-paper assembly on an isolated native instance": "success"
+          },
+          "checkout": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+          "checkout_lines": [
+            "HEAD is now at 6c7f9e7",
+            "git log -1 --format=%H -> 6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e"
+          ],
+          "test_counts": [
+            {
+              "passed": 357
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "passed": true,
+  "head": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+  "base": "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+  "merge_ref": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+  "merge_ref_name": "refs/pull/118/merge",
+  "tree": "e7b2335c0f9baea51a774eacc709f878b0875ab9",
+  "parents": [
+    "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+    "b89120f2fa79c6ecf5f371376fc00f1ccd10809c"
+  ],
+  "head_tree": "e7b2335c0f9baea51a774eacc709f878b0875ab9",
+  "verified_utc": "2026-11-22T01:11:49.898108+00:00"
+}

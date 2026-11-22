@@ -4662,3 +4662,9 @@ PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并�
 本机 Linux ZCode 完整验证实质头。离线专项 479 通过，按原生条件跳过 1 项并在完整原生分区实跑。隔离 PostgreSQL 专项 35 通过，完整原生分区 845 通过，原生均为零跳过。Linux 离线全量为 `43951 passed, 437 skipped, 20 warnings in 2699.92s (0:44:59)`，自检 10/10，CodeGraph、编译及敏感信息检查通过。首轮资源故障、后续复验和原有跳过条目见[本机与冲突回执](docs/paper-sim/design/pr-118-review.md)。
 
 独立本机 ZCode `sess_077a1f26-359e-4f3e-a678-332077d02d51` 于 `2026-11-21T23:36:32.392367+00:00` 对精确实质头签署 `VERDICT: PASS`。已审计划、历次复审和本机证据有[逐件校验清单](docs/paper-sim/design/pr-118/manifest.json)。三条远端工作流、实际合并提交和最终头的独立复核由本 PR 的精确验收回执登记。
+
+### 87.1 PR #118 最终头与当前合并结果的三条 CI
+
+最终 PR 头 `b89120f2fa79c6ecf5f371376fc00f1ccd10809c`，基线 `01a3d6d208fb7a22886f3cc0b54f4b6499d83400`，GitHub 实际检出的合并对象 `6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e`。固定检查返回 `CURRENT`，三条工作流均成功。Offline verification `44968419459`、Native project PostgreSQL `44968419447`、Research paper bridge `44968419472`。
+
+同一仓库的保留分支 `evidence/pr-118-final-b89120f2fa79c6ecf5f371376fc00f1ccd10809c` 收入[最终核验](docs/paper-sim/design/pr-118-final-verification.md)及[原件校验清单](docs/paper-sim/design/pr-118-final/manifest.json)。独立实际 ZCode 会话 `sess_397092a6-c2ce-43e9-ac1c-bf27264c54e8` 于 `2026-11-22T01:15:46.160357+00:00` 对完整 H 和 M 签署 `VERDICT: PASS`。上述回执对应合并前的实际检出，正式合并提交与后续主线状态以 GitHub 合并事实为准。

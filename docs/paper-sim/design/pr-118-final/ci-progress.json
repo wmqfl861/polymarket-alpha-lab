@@ -1,0 +1,40 @@
+{
+  "head": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+  "merge": "6c7f9e7726ffcc6d2b026ad4433df4a1c52d949e",
+  "observed_utc": "2026-11-22T01:11:33.015254+00:00",
+  "workflows": {
+    "Offline verification": {
+      "id": 44968419459,
+      "run_attempt": 1,
+      "event": "pull_request",
+      "head_sha": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-22T00:48:33Z",
+      "run_started_at": "2026-11-22T00:48:33Z",
+      "updated_at": "2026-11-22T01:04:01Z"
+    },
+    "Native project PostgreSQL": {
+      "id": 44968419447,
+      "run_attempt": 1,
+      "event": "pull_request",
+      "head_sha": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-22T00:48:33Z",
+      "run_started_at": "2026-11-22T00:48:33Z",
+      "updated_at": "2026-11-22T01:11:18Z"
+    },
+    "Research paper bridge": {
+      "id": 44968419472,
+      "run_attempt": 1,
+      "event": "pull_request",
+      "head_sha": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-22T00:48:33Z",
+      "run_started_at": "2026-11-22T00:48:33Z",
+      "updated_at": "2026-11-22T00:54:28Z"
+    }
+  }
+}

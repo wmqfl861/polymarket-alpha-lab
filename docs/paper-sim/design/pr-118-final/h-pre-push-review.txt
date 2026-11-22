@@ -1,0 +1,64 @@
+# PR #118 最终头 H 推送门独立只读复审（Linux ZCode）
+
+**评审者**：独立只读本机 Linux ZCode，未参与 #118 本节点的计划、实现与测试。
+**受审对象**：精确最终头 H＝`b89120f2fa79c6ecf5f371376fc00f1ccd10809c`（树 `e7b2335c…`），单父实质头 S＝`a3cfc09ed0cf6fae88845500fc6ddf2155aafb7c`，规范基线 B＝`01a3d6d208fb7a22886f3cc0b54f4b6499d83400`，原 #118 头 O₀＝`f09850ba…`，与 exact-candidate.json:3-7 逐项一致。
+**本轮 UTC 日期**：2026-11-22（证据时戳跨 2026-11-21T23:36 至 2026-11-22T00:30 UTC）。
+**限审范围**：已签补页第 2 步的 H 推送门（final-head-plan.md:8）——S→H 纯文档性、计划原件与首败归属、H 本机门（聚焦、全量、自检、敏感扫描、CodeGraph）、一轮精确 H CI 方案的原审签署与既有 S 冲突审查链一致性。不重做 S 实质审计，不覆盖远端 CI 及后续步骤。
+**约束遵守**：全程仅以只读 Read 浏览附件目录；未运行命令、未写入、未联网、未访问目录外、未使用凭据或服务器地址。附件不含地址、凭据或连接串值（仅变量名层面出现），无可披露项。
+
+## 实际读取证据（14 件，全部完整读取）
+
+| 附件 | 作用 |
+|---|---|
+| exact-candidate.json | H/S/B/O₀/树、S 复审会话与时戳、38 项归档路径 |
+| source-to-final-files.txt | S→H 完整 diff --raw：1 M＋37 A |
+| archived-files-manifest.json | 入库文档双哈希与脱敏标记 |
+| ledger-addition.md | DELIVERY_PLAN.md 新增登记段 87 |
+| pr-118-review.md | 入库的 S 本机验收与冲突复审正文 |
+| substantive-conflict-review.txt | 既有 S 冲突审查（PASS） |
+| final-head-plan.md | 一轮精确 H CI 方案（补页） |
+| final-head-plan-review.txt | 原计划复审会话对补页的窄变更复核（PASS） |
+| local-linux.json / local-focused.txt | H 全量八阶段 / H 聚焦 |
+| linux-executor.json | H 验证执行回执 |
+| hygiene.json / codegraph.json / selfcheck.txt | 敏感扫描 / 索引 / 自检 |
+
+## S→H 差异核对
+
+- **纯文档与登记**：source-to-final-files.txt:1-38 共 38 项——M 仅 `DELIVERY_PLAN.md`（`aa1b6b97→0e40a42c`，即协调者登记段），A 为 `docs/paper-sim/design/pr-118-review.md` 与 `pr-118/` 下 36 件；无任何 src/tests/夹具/`.github/workflows`/配置路径，模式全部 100644→100644。raw diff 不含可执行路径即 S/H 可执行与配置 blob 相同，满足补页第 2 步要求；新增均为 docs/ 下的 md/json/txt 与 JUnit 证据 XML，对产品行为、测试选择和 CI 控制无影响（workflow yml 出现在 files_before 系 B→S 继承，S→H 未动）。
+- **路径闭环**：exact-candidate.json archived_paths 38 项与 raw diff 完全一致；local-linux.json files_before 53 项 ＝ B→S 15 ＋ S→H 38，与 S 轮"15 个变更文件 SHA 前后一致"互证（substantive-conflict-review.txt:29）。
+- **归档清单自洽**：archived-files-manifest 36 键恰为入库文档除 `pr-118/manifest.json` 自身（清单不含自身，避免自引）；34 项带源对照中 27 项 `projected_or_redacted: false` 且 source sha256 逐项相等，7 项披露脱敏；`local-verification.json` 与 `pr-118-review.md` 为 H 新制件仅记档。
+- **计划原件归属**：合并条件首稿/二稿、#118 刷新补记、单轮最终头补页 `pr118-final-head-ci-plan-astra.5k4cc36p.md`（sha256 `86e74815…`，与原复审文中"链证号 86e74815…"互证，final-head-plan-review.txt:3）及历次复审原文与回执（first/-v2/refresh/final-head-rereview/source-conflict 各 .txt＋receipt）均在 `pr-118/` 原位。
+- **首败归属**：三次 S 侧失败（原生专项与全分区首轮磁盘不足、launcher 预检退出）归 S 的入库回执 `pr-118/local-verification.json`，由 pr-118-review.md:18 与登记段第 6 行摘要披露；H 全量 `failures: []` 干净（local-linux.json:70）。H 自身运行原件按补页第 4 步归 E 回执、不入 H 树，归属正确、无循环自证。
+- **登记段一致**：87 号段的 S 侧数字（专项 479/1 预期跳过、原生 35、全分区 845、全量 43951/437/2699.92s、自检 10/10）均引自 S 回执；S 复审会话 `sess_077a1f26…` 与时戳三处一致（exact-candidate.json:10-12、归档清单、pr-118-review.md:11）；远端三项明确记为待办（ledger-addition.md:8），无越权声明。
+
+## 精确 H 本机门
+
+- **聚焦**：53 passed in 34.65s（local-focused.txt:1-2）。
+- **全量**：`verify_local.py --full` 八阶段全 PASS，pytest `43951 passed, 437 skipped, 20 warnings in 2778.10s`，exit 0，`head_before == head_after == b89120f2…`，files_match true（local-linux.json:3,59-75）；计数与 S 轮一致、时长不同，符合同一可执行内容重跑。
+- **自检**：PASS (10/10)（selfcheck.txt:1）。
+- **敏感扫描**：B→H 三类 new_paths/new_lines 全 0、passed（hygiene.json:4-25）。
+- **CodeGraph**：complete、pending 0/0/0、worktreeMismatch null（codegraph.json:2-9）。
+- **时序**：候选固定 23:41:54 → 执行服务 23:42:18 → 全量 23:43:34–00:30:15；S 复审 23:36:32 先于 H 组建，顺序自洽。
+
+## 计划签署与 S 冲突审查链
+
+- **一轮精确 H CI 方案**：补页要求 S 承接全部本机实质验证＋独立冲突签署、单父 H 折入回执、仅在精确 H 的真实合并对象 M 跑三条远端工作流、E 归档后合入；生效条件（原审批准、S 未发布、等价可证）与自动回退齐备（final-head-plan.md:5-11）。原独立计划复审会话 `sess_5494f412…`（首签 FAIL、二稿 PASS、刷新补记 PASS 的同一会话，pr-118-review.md:9）对其作窄变更复核：MC-4/MC-5、根规则、推送门、等价性（blob 等价 ⇒ 单轮恰测同一可执行内容）、可达性与角色纪律逐条满足，**VERDICT: PASS**（final-head-plan-review.txt:34-36）。
+- **S 冲突审查**：`sess_077a1f26…` 于 `2026-11-21T23:36:32.392367Z` 对精确 S（父序 O₀/B、树 `0964373…`）签署 PASS；sha256 `1cd7e996…` 在 exact-candidate、归档清单与送审原件三处一致（substantive-conflict-review.txt:44、archived-files-manifest.json:236-243）。
+
+## 待办（不得声称已通过）
+
+Offline/Native/Research 三条远端工作流尚未运行；B＋H 真实合并对象 M 的组建与 `tree(M)=tree(H)` 核验、E 证据提交与保留 ref 推送、PR 正文更新、CI 后独立复审均待完成。H 仍是本机候选，S 未发布（pr-118-review.md:20 与补页前提一致）。本签署仅闭合补页第 2 步的 H 推送门。
+
+## 发现（不阻塞）
+
+1. 入库件 7 项为脱敏/投影版（三份 connection.txt、workflow.xml、三个 JUnit XML），双哈希留痕（如 native_focus 109752→8350、native_full 334249→175669 字节），方向与入库脱敏一致；原版未随本包附送，无工具约束下不可复算，与历轮"链证哈希未重算"实践一致。
+2. local-focused.txt 未锚定 head 与选择集 nodeid，证据粒度薄；权威覆盖由锚定 H 的全量、hygiene、CodeGraph 承担。
+3. `DELIVERY_PLAN.md` 的 M 仅以 ledger-addition.md 佐证为新增 87 段，未附全文件前后差异；H 侧 sha `a5e75756…` 已记录（local-linux.json:6）但未重算。
+4. linux-executor.json 服务窗口（23:42:18–23:42:46）早于全量运行窗口（23:43:34–00:30:15），为启动器分离执行的记账形态，两者 exit 0。
+5. 全部链证哈希（含执行器 stdout/stderr sha256）按只读实践采信提交方记录，未重算。
+
+## 结论
+
+在限审范围内：S→H 仅为 1 处登记段修改＋37 件纯文档新增，可执行内容与配置 blob 不变；计划原件、历次复审与首败各归其位；精确 H 的聚焦、全量、自检、敏感扫描、CodeGraph 全部通过且锚定 `b89120f2fa79c6ecf5f371376fc00f1ccd10809c`；一轮精确 H CI 方案已获原复审会话明确签署，既有 S 冲突审查 PASS 且链证一致。三条远端 CI 及后续步骤按补页仍待完成，本结论不覆盖之。
+
+VERDICT: PASS
