@@ -2,6 +2,8 @@
 
 下面"提示词正文"一节可以整段转发给本地 agent。它写下了交付提交号和清单校验值，所以这个文件不在清单的覆盖范围内，放在交付提交之后的下一个提交里。
 
+这条分支上有两个交付提交。第一个（`4242bb7c35e32f9e1aa9df478cd7341e98f93d07`）里有一份证据输出的一行被截断在一个多字节字符中间，从 GitHub 的网页接口读回时字节对不上；第二个交付提交更正了它，结论和发现没有变化（见 `README.md` 的"更正记录"）。下面固定的是第二个交付提交，这份提示词是它之后的那个提交。
+
 两段脚本在临时克隆里各测过正常和异常的情况，推送之后又用原样的脚本对 GitHub 跑过一遍。
 
 ## 提示词正文
@@ -37,16 +39,16 @@
 | 仓库 | `https://github.com/wmqfl861/polymarket-alpha-lab`（命令里写完整地址，不依赖本地 `origin` 指向哪里） |
 | 交付分支 | `handoff/incremental-review-2026-11-24` |
 | 被审核的提交 | `ab6edff2d64ac8aa5c2831d748b8730b63f8312d` |
-| 交付提交 | `4242bb7c35e32f9e1aa9df478cd7341e98f93d07` |
-| 交付目录 | `docs/handoffs/2026-11-24-incremental-review/`，33 个文件，git 树对象 `df741b8ae80363527d557ba951e204696e4c20bb` |
-| 清单 | 该目录下的 `MANIFEST.sha256`：4516 字节，32 行，SHA-256 `7ae9cbd55b35a0002ad5703aad598f08e39cb0ed9200725fa1fffe6d4aa991a5` |
+| 交付提交 | `b3e6f6d3eb3615b74b677658065de43d84147c94` |
+| 交付目录 | `docs/handoffs/2026-11-24-incremental-review/`，在交付提交上是 34 个文件（其中一个是这份提示词的第一版，不在清单里），git 树对象 `5b8640f0b83ae67d1015a0e800fc5b69f7d07b4e` |
+| 清单 | 该目录下的 `MANIFEST.sha256`：4516 字节，32 行，SHA-256 `d3054cfe2fef5e3ec321551bafc19bfdbbad5f12bfe3f5d545d895002c109884` |
 
 把下面的命令保存成仓库之外的一个脚本文件，在仓库检出的根目录用 `bash` 运行。它只读取，不改动任何东西；任何一步不符都会以非零状态退出，这时停下来把输出报告给我，不要继续，也不要换别的来源代替。校验读的是 git 对象而不是工作区文件，所以不受换行符转换的影响。
 
 ```bash
 set -euo pipefail
 REPO=https://github.com/wmqfl861/polymarket-alpha-lab.git
-DELIVERY=4242bb7c35e32f9e1aa9df478cd7341e98f93d07
+DELIVERY=b3e6f6d3eb3615b74b677658065de43d84147c94
 BASE=ab6edff2d64ac8aa5c2831d748b8730b63f8312d
 DIR=docs/handoffs/2026-11-24-incremental-review
 
@@ -64,14 +66,14 @@ test "$(git diff --name-only "$DELIVERY" FETCH_HEAD)" = "$DIR/03-local-agent-pro
   || { echo "STOP: unexpected changes after the delivery commit"; exit 1; }
 
 # 3. pinned tree, file count and manifest
-test "$(git rev-parse "$DELIVERY:$DIR")" = "df741b8ae80363527d557ba951e204696e4c20bb" \
+test "$(git rev-parse "$DELIVERY:$DIR")" = "5b8640f0b83ae67d1015a0e800fc5b69f7d07b4e" \
   || { echo "STOP: directory tree mismatch"; exit 1; }
-test "$(git ls-tree -r --name-only "$DELIVERY" -- "$DIR" | wc -l)" -eq 33 \
+test "$(git ls-tree -r --name-only "$DELIVERY" -- "$DIR" | wc -l)" -eq 34 \
   || { echo "STOP: file count mismatch"; exit 1; }
 test "$(git cat-file blob "$DELIVERY:$DIR/MANIFEST.sha256" | wc -c)" -eq 4516 \
   || { echo "STOP: manifest size mismatch"; exit 1; }
 test "$(git cat-file blob "$DELIVERY:$DIR/MANIFEST.sha256" | sha256sum | cut -d' ' -f1)" \
-  = "7ae9cbd55b35a0002ad5703aad598f08e39cb0ed9200725fa1fffe6d4aa991a5" \
+  = "d3054cfe2fef5e3ec321551bafc19bfdbbad5f12bfe3f5d545d895002c109884" \
   || { echo "STOP: manifest hash mismatch"; exit 1; }
 
 # 4. every file listed in the manifest matches its hash
@@ -82,7 +84,7 @@ done
 echo "handoff package verified: $DELIVERY"
 ```
 
-预期的最后一行输出是 `handoff package verified: 4242bb7c35e32f9e1aa9df478cd7341e98f93d07`。
+预期的最后一行输出是 `handoff package verified: b3e6f6d3eb3615b74b677658065de43d84147c94`。
 
 ### 4. 允许与禁止
 
@@ -110,7 +112,7 @@ echo "handoff package verified: $DELIVERY"
 
 **这一包允许的**
 
-- 对外可达性检查：只做 TCP 连接，不登录，不发送任何口令。
+- 对外可达性检查：只看端口通不通、登录入口对外提供哪些认证方式。不登录，不提交任何口令或密钥。
 - 在 Windows 主机上手动演练固定脚本（发送那一步用替身程序），以及一次真实投递的验证。动 Windows 主机之前，把要放的文件和位置告诉我，等我回一句。
 - 四类日常运行照常。
 
@@ -124,7 +126,7 @@ echo "handoff package verified: $DELIVERY"
 ```bash
 set -euo pipefail
 REPO=https://github.com/wmqfl861/polymarket-alpha-lab.git
-DELIVERY=4242bb7c35e32f9e1aa9df478cd7341e98f93d07
+DELIVERY=b3e6f6d3eb3615b74b677658065de43d84147c94
 DIR=docs/handoffs/2026-11-24-incremental-review
 WORK=integrate/incremental-review-2026-11-24
 
@@ -211,6 +213,7 @@ FX-48 和 FX-50，照 `02` 号文件。FX-48 的第一个 PR 排在 FX-49 之后
 
 - `02-remediation-and-next-steps.md` 里每个条目的"怎么验收"逐条满足，每条写明提交号和回执在库内的路径。
 - 前几轮的验收标准全部照旧：没有任何测试被跳过、删除或放宽；自检十项的输出逐字节不变；四个冻结夹具不变；优化器规则的数字只在一处定义；每个合入 `main` 的 PR，合入的那个头上三条工作流都为绿，`check_ci_merge.sh` 对它报 CURRENT。
+- 在终点提交上重跑本包的两个证据脚本（用法写在各自开头，基线都取 `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`）：`docs/handoffs/2026-11-24-incremental-review/evidence/test_weakening_scan.py` 报告的"被移除的测试""断言变少的测试""新增的预期失败标记"要么为 0，要么在交接书里逐条说明；同一目录下的 `address_occurrence_diff.py` 的输出里没有新出现地址的文件。
 - 运行层纳管完成时，服务器上跑的是 `main` 上某个提交的检出，登记里有提交号。
 - 最终是否通过由审计方的复审给出。要变成通过，R6-1 和 R6-2 必须关闭。
 
@@ -227,11 +230,18 @@ FX-48 和 FX-50，照 `02` 号文件。FX-48 的第一个 PR 排在 FX-49 之后
 
 ### 8. 需要返回的证据
 
-1. `docs/handoffs/2026-11-19-optimizer-phase1.md`（已合入 `main`）：内容照 11-21 两份提示词的要求，另外加：
-   - 登记簿补到交接时的 `main`，包括 #123。
-   - NBA v2 的运行号、终态和记分卡摘要；俱乐部足球还差多少、什么条件下可以重跑。
+1. `docs/handoffs/2026-11-19-optimizer-phase1.md`（已合入 `main`），含：
+   - 固定版本：起点、每个节点的提交号和 PR 编号、终点提交号。
+   - 逐条处置表：FX-36 至 FX-54 各做了什么、提交号、三条工作流的运行编号、复审结论和回执在库内的路径。没做的写原因。
+   - FX-36（续）：我对 OD-O 的答复原话；对外可达性的结论（不写地址和端口）；已关闭项的复查结果。
+   - FX-49 做到了哪一步：固定脚本的路径和哈希、六种情况的输出、一次真实投递的回执。
+   - NBA v2 的运行号、终态和记分卡摘要；俱乐部足球还差多少、什么条件下可以重跑；三张原始记分卡并列保留。
    - 哪些路径在真实数据上走过，哪些只在测试里走过。
+   - "注册表为空时逐位不变"的证据。
+   - 登记簿补到交接时的 `main`，包括 #123。
+   - 偏差和未完成事项。
 2. FX-49 部署完成时给我一条简短消息：提交号、回执在库内的路径、第 84.2.4 节下面对外可达性结果的位置。
 3. 运行层的现状，随 FX-48 的登记：哪些定时器启用着、从哪天开始、服务器检出的提交号。
+4. 第一阶段交接书合入时给我一条简短消息：终点提交号、交接书的路径、三条工作流的运行编号。
 
 任何汇报、日志或提交里都不要出现凭据、数据库密码、服务器的公网地址和端口、机器标识、微信收件人标识。
