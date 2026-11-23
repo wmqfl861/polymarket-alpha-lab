@@ -560,31 +560,46 @@ def _row_reason_codes(
 ) -> tuple[str, ...]:
     codes = {
         f"resolution_probability_scenario_ladder_{status}",
-        f"base_evidence_strength_{_floor_status(
-            item.base_evidence_strength,
-            config.min_pass_base_evidence_strength,
-            config.min_watch_base_evidence_strength,
-        )}",
-        f"cost_drag_{_ceiling_status(
-            item.cost_drag,
-            config.max_pass_cost_drag,
-            config.max_watch_cost_drag,
-        )}",
-        f"liquidity_reliability_{_floor_status(
-            item.liquidity_reliability,
-            config.min_pass_liquidity_reliability,
-            config.min_watch_liquidity_reliability,
-        )}",
-        f"resolution_ambiguity_{_ceiling_status(
-            item.resolution_ambiguity,
-            config.max_pass_resolution_ambiguity,
-            config.max_watch_resolution_ambiguity,
-        )}",
-        f"specialist_confidence_{_floor_status(
-            item.specialist_confidence,
-            config.min_pass_specialist_confidence,
-            config.min_watch_specialist_confidence,
-        )}",
+        (
+            "base_evidence_strength_"
+            + _floor_status(
+                item.base_evidence_strength,
+                config.min_pass_base_evidence_strength,
+                config.min_watch_base_evidence_strength,
+            )
+        ),
+        (
+            "cost_drag_"
+            + _ceiling_status(
+                item.cost_drag,
+                config.max_pass_cost_drag,
+                config.max_watch_cost_drag,
+            )
+        ),
+        (
+            "liquidity_reliability_"
+            + _floor_status(
+                item.liquidity_reliability,
+                config.min_pass_liquidity_reliability,
+                config.min_watch_liquidity_reliability,
+            )
+        ),
+        (
+            "resolution_ambiguity_"
+            + _ceiling_status(
+                item.resolution_ambiguity,
+                config.max_pass_resolution_ambiguity,
+                config.max_watch_resolution_ambiguity,
+            )
+        ),
+        (
+            "specialist_confidence_"
+            + _floor_status(
+                item.specialist_confidence,
+                config.min_pass_specialist_confidence,
+                config.min_watch_specialist_confidence,
+            )
+        ),
     }
     for code in item.reason_codes:
         codes.add(f"input_{code}")
