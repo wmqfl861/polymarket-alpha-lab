@@ -23,6 +23,7 @@ import subprocess
 import sys
 from decimal import Decimal
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -181,6 +182,59 @@ def test_fx34_crypto_boundary_is_the_market_expiry():
     assert capture.classify_observation("CLOSE", EXPIRY, EXPIRY)[0] == "PERIODIC"
     assert capture.classify_observation("CLOSE", EXPIRY + datetime.timedelta(seconds=1),
                                         EXPIRY)[0] == "PERIODIC"
+
+
+@pytest.mark.parametrize("boundary", [NOW, EXPIRY], ids=["sports-start", "crypto-expiry"])
+@pytest.mark.parametrize(("minutes_until_event", "expected"), [
+    (61, ("PERIODIC", capture.DOWNGRADE_OBSERVED_AT_BEFORE_CLOSE_WINDOW)),
+    (60, ("CLOSE", None)),
+    (59, ("CLOSE", None)),
+    (0, ("PERIODIC", capture.DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)),
+    (-1, ("PERIODIC", capture.DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)),
+])
+def test_fx44_classifies_each_observation_in_its_registered_window(boundary, minutes_until_event, expected):
+    observed_at = boundary - datetime.timedelta(minutes=minutes_until_event)
+    assert capture.classify_observation(
+        "CLOSE", observed_at, boundary, apply_registered_close_window=True) == expected
+
+
+def test_fx44_preserves_the_historical_rule_for_an_earlier_observation():
+    observed_at = NOW - datetime.timedelta(minutes=61)
+    assert capture.classify_observation("CLOSE", observed_at, NOW) == ("CLOSE", None)
+
+
+def test_fx44_handles_missing_boundaries_and_explicit_periodic_requests():
+    assert capture.classify_observation(
+        "CLOSE", NOW, None, apply_registered_close_window=True
+    ) == ("PERIODIC", capture.DOWNGRADE_MISSING_EVENT_START)
+    assert capture.classify_observation(
+        "CLOSE", NOW, EXPIRY.replace(tzinfo=None), apply_registered_close_window=True
+    ) == ("PERIODIC", capture.DOWNGRADE_MISSING_EVENT_START)
+    assert capture.classify_observation(
+        "PERIODIC", NOW, EXPIRY, apply_registered_close_window=True
+    ) == ("PERIODIC", None)
+
+
+def test_fx44_compares_utc_instants_across_a_repeated_local_hour():
+    zone = ZoneInfo("America/New_York")
+    observed_at = datetime.datetime(2026, 11, 1, 1, 30, tzinfo=zone, fold=0)
+    boundary = datetime.datetime(2026, 11, 1, 1, 30, tzinfo=zone, fold=1)
+    received_at = observed_at.replace(minute=31)
+    assert capture.classify_observation(
+        "CLOSE", observed_at, boundary, received_at=received_at, apply_registered_close_window=True
+    ) == ("CLOSE", None)
+
+
+@pytest.mark.parametrize("apply_window", [False, True], ids=["historical", "registered-window"])
+def test_close_classification_preserves_the_d1_receipt_cutoff(apply_window):
+    observed_at = NOW - datetime.timedelta(minutes=59)
+    for received_at in (NOW, NOW + datetime.timedelta(seconds=1)):
+        assert capture.classify_observation(
+            "CLOSE", observed_at, NOW, received_at=received_at, apply_registered_close_window=apply_window
+        ) == ("PERIODIC", "received_at_after_event_start")
+    assert capture.classify_observation(
+        "CLOSE", NOW, NOW, received_at=NOW, apply_registered_close_window=apply_window
+    ) == ("PERIODIC", capture.DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)
 
 
 # ---------------------------------------------------------------------------

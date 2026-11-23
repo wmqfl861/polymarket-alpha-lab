@@ -341,34 +341,49 @@ def load_mark_packs(config: CaptureConfig, *, base_dir) -> tuple[MarkPack, ...]:
 
 
 # ---------------------------------------------------------------------------
-# FX-34 classification and record construction (pure)
+# Observation classification and record construction (pure)
 # ---------------------------------------------------------------------------
 
 #: Downgrade reasons reported in the coverage summary (fixed vocabulary).
 DOWNGRADE_MISSING_EVENT_START = "missing_event_start"
 DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START = "observed_at_after_event_start"
+DOWNGRADE_OBSERVED_AT_BEFORE_CLOSE_WINDOW = "observed_at_before_close_window"
+_DOWNGRADE_LATE_RECEIPT = "received_at_after_event_start"
+_REGISTERED_CLOSE_WINDOW = datetime.timedelta(minutes=60)
 
 
 def classify_observation(mark_kind: str, observed_at: datetime.datetime,
-                         event_start_at: datetime.datetime | None) -> tuple[str, str | None]:
-    """FX-34 classification: the stored sampling kind of one observation.
+                         event_start_at: datetime.datetime | None, *,
+                         received_at: datetime.datetime | None = None,
+                         apply_registered_close_window: bool = False) -> tuple[str, str | None]:
+    """Classify one observation under its applicable CLOSE rule.
 
-    A CLOSE is eligible only when the observation is STRICTLY before the
-    candidate's ``event_start_at``; observed AT or after the start
-    (equality refused -- for example an NBA full-game mark during
-    overtime, hours after tip-off) it is stored PERIODIC only. A
-    candidate without an event start produces no CLOSE at all (FX-34:
-    counted as missing in criterion C coverage). No rule here uses game
-    duration or a "scheduled end": ``event_start_at`` is the only
-    boundary, and the final score including overtime is settled later by
-    B3 outcome observations, never by capture.
+    FX-34 requires a requested CLOSE to precede the event boundary.
+    D1 supplies the actual book receipt time, which must also precede it.
+    For FX-44, the caller must first establish that this individual
+    acquisition is governed by the registered window. The event boundary
+    must then be the source-verified sports start or contract expiry
+    (``None`` if unavailable). The lower bound is inclusive and the upper
+    bound is exclusive. Inputs carry explicit time zones and the window
+    is measured between UTC instants.
     """
     if mark_kind != "CLOSE":
         return ("PERIODIC", None)
     if event_start_at is None:
         return ("PERIODIC", DOWNGRADE_MISSING_EVENT_START)
+    if apply_registered_close_window:
+        if event_start_at.utcoffset() is None:
+            return ("PERIODIC", DOWNGRADE_MISSING_EVENT_START)
+        event_start_at = event_start_at.astimezone(datetime.UTC)
+        observed_at = _pack_datetime(observed_at, "observed_at").astimezone(datetime.UTC)
+        if received_at is not None:
+            received_at = _pack_datetime(received_at, "received_at").astimezone(datetime.UTC)
     if observed_at >= event_start_at:
         return ("PERIODIC", DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)
+    if received_at is not None and received_at >= event_start_at:
+        return ("PERIODIC", _DOWNGRADE_LATE_RECEIPT)
+    if apply_registered_close_window and event_start_at - observed_at > _REGISTERED_CLOSE_WINDOW:
+        return ("PERIODIC", DOWNGRADE_OBSERVED_AT_BEFORE_CLOSE_WINDOW)
     return ("CLOSE", None)
 
 
@@ -446,7 +461,6 @@ _NUMERIC_FRACTIONAL_PLACES = 16_383
 _DECIMAL_TEXT = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
 _PRICE_FIELDS = ("bid", "ask", "mid", "last")
 _CLOB_MARK_SOURCE = "clob_book"
-_DOWNGRADE_LATE_RECEIPT = "received_at_after_event_start"
 _EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
 _MICROSECOND = datetime.timedelta(microseconds=1)
 
@@ -715,9 +729,8 @@ def _d1_capture_materials(conn, sources: _D1BookSources, target: dict, raw: dict
     priced = replace(observation, **claims)
     event_start = candidate["event_start_at"]
     boundary = None if event_start is None else _pack_datetime(event_start, "event_start_at")
-    kind, downgrade = classify_observation(priced.sampling_kind, priced.observed_at, boundary)
-    if kind == "CLOSE" and received_at >= boundary:
-        kind, downgrade = "PERIODIC", _DOWNGRADE_LATE_RECEIPT
+    kind, downgrade = classify_observation(
+        priced.sampling_kind, priced.observed_at, boundary, received_at=received_at)
     target.update(sampling_kind=kind, downgrade=downgrade)
     if not has_any_price(priced):
         target.update(status="MISSING_QUOTE", reason="d1_capture_no_quote")
@@ -824,8 +837,9 @@ def _d1_capture_summary(config: CaptureConfig, code_commit: str, input_evidence,
         if observation is not None:
             source = observation["source_kind"]
             source_kinds[source] = source_kinds.get(source, 0) + 1
-        if target["status"] == "READY" and target.get("downgrade") is not None:
-            downgrades[target["downgrade"]] += 1
+        downgrade = target.get("downgrade")
+        if target["status"] == "READY" and downgrade is not None:
+            downgrades[downgrade] = downgrades.get(downgrade, 0) + 1
     return {
         "command": CAPTURE_COMMAND, "team": config.team, "operator": config.operator, "code_commit": code_commit,
         "packs": [{"pack": item["pack"], "snapshot_sha256": item["snapshot_sha256"]} for item in input_evidence],
@@ -988,7 +1002,7 @@ def run_capture(config: CaptureConfig, packs: Sequence[MarkPack], *,
                 observation.sampling_kind, observation.observed_at,
                 target["event_start_at"])
             if downgrade is not None:
-                downgrade_reasons[downgrade] += 1
+                downgrade_reasons[downgrade] = downgrade_reasons.get(downgrade, 0) + 1
             capture = capture_from_observation(
                 observation, candidate_id=target["candidate_id"],
                 sampling_kind=stored_kind, pack_snapshot_sha256=digest)
