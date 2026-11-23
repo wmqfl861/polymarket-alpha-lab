@@ -7,6 +7,11 @@
 The owner's 2026-11-21 instruction applies to newly assigned project work
 from the time it was issued.
 
+The owner's 2026-11-22 exception applies to every scan, modeling run,
+paper-betting task, and recommendation, whether scheduled or requested on demand.
+The assigned operator runs the task and reports the result directly. These runs
+require no ZCode review, reviewer dispatch, or verdict before or after execution.
+
 - **Plan drafting and substantive revision** use native Codex
   `model="gpt-6.2-astra"` and `reasoning_effort="max"`.
 - **Development, implementation, and fixes** use native Codex
@@ -39,6 +44,8 @@ invocation settings apply only to OpenCode calls.
 
 本地协调者负责 `DELIVERY_PLAN.md` 和根规则的最终落笔、归集各泳道的证据及命令行和导出清单、提交 owner 审阅和通过门禁后的普通合并。
 根规则须由 owner 明确确认拟合入的完整正文，方可经 PR 合入。
+
+按 owner 2026-11-22 的指令，每次扫描、建模、模拟下注和推荐均由执行方直接处理和返回结果，定时运行和临时请求均免 ZCode 审核。此例外优先于下列通用派工及复审规则。
 
 计划编写和实质修订由原生 Codex `gpt-6.2-astra` 子代理承担。开发、实施及修复由原生 Codex `gpt-6.2-sol` 子代理承担，包括修改测试代码。其余所有项目工作，包括未列明的任务，交本机实际 ZCode 客户端，涵盖计划审核、代码审核、独立复审、阶段和交接审核、调查、测试执行、独立验收、文档清点、交接准备及既有授权内的独立裁定。嵌套派工沿用同一分工。每次原生派工显式指定模型和 `reasoning_effort=max`，各角色关闭快速模式。独立复审按铁律 4 执行。
 
@@ -226,7 +233,9 @@ the user explicitly changes them in a later instruction.
    `paper_only=True`, `report_only=True`, and `readonly=True` where those flags
    exist, and must describe any DB persistence as local paper evidence storage
    rather than execution authorization.
-4. **Independent ZCode review.** Assign each new plan review, code review,
+4. **Independent ZCode review.** The four operational runs exempted in
+   [Project Agent Routing](#project-agent-routing) can proceed directly.
+   Assign each new plan review, code review,
    stage audit, post-node external review, and handoff review gate to an
    independent, freshly dispatched read-only ZCode session. The reviewer must
    have had no role in planning or implementing the reviewed change or
