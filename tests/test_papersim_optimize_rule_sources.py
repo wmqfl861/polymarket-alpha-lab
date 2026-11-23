@@ -112,6 +112,22 @@ def _imports(tree, module):
     }
 
 
+def test_public_and_managed_runner_share_registered_rules():
+    source = _syntax(runner)
+    for name, claims in (
+        ("execute_optimization_run", []),
+        ("_execute_claimed_nba_odr", ["claim"]),
+    ):
+        result = _function(source, name).body[-1]
+        assert isinstance(result, ast.Return) and isinstance(result.value, ast.Call)
+        assert ast.unparse(result.value.func) == "_execute_optimization_run"
+        assert [
+            ast.unparse(argument.value)
+            for argument in result.value.keywords
+            if argument.arg == "nba_odr_claim"
+        ] == claims
+
+
 def test_holdout_tables_project_the_four_registry_rows():
     source = _syntax(runner)
     facts = _syntax(registry)
@@ -132,7 +148,7 @@ def test_holdout_tables_project_the_four_registry_rows():
         "min_blocks": "STAGE1_HOLDOUT_FLOORS[floor_class][1]",
     }
     assert _compare_sources(source, "_apply_holm", "float(upper)", ast.Lt) == ["_STAGE1_CI_UPPER_BOUND"]
-    for entry in ("evaluate_stage1_rule", "execute_optimization_run"):
+    for entry in ("evaluate_stage1_rule", "_execute_optimization_run"):
         assert _compare_sources(source, entry, "stat.ci95_upper", ast.Lt) == ["_STAGE1_CI_UPPER_BOUND"]
     assert ast.literal_eval(_assignment(facts, "_STAGE1_CI_UPPER_BOUND")) == 0.0
     assert ast.unparse(_assignment(source, "_STAGE1_CI_UPPER_BOUND")) == "_rule_registry._STAGE1_CI_UPPER_BOUND"
@@ -255,7 +271,7 @@ def test_statistics_have_one_owner_per_registered_parameter():
     assert [node.attr for node in ast.walk(label) if isinstance(node, ast.Attribute)] == [
         "_FIRST_EVIDENCE_CI_PERCENTILES", "_FIRST_EVIDENCE_CI_PERCENTILES",
     ]
-    execute = _function(runner_source, "execute_optimization_run")
+    execute = _function(runner_source, "_execute_optimization_run")
     artifact = next(
         node.value for node in ast.walk(execute)
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)
