@@ -25,6 +25,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 from decimal import Decimal, localcontext
+from hashlib import sha256
 import inspect
 import json
 from pathlib import Path
@@ -94,6 +95,51 @@ def _run(harness, entries, *, team="pal-b3", operator="unattended",
         open_entries=lambda conn: tuple(entries), operator=operator,
         operation_key=operation_key, commit_check=lambda: commit,
         settle_writer=harness.settle, receipt_writer=harness.receipt)
+
+
+@pytest.mark.parametrize(
+    "status_fields, observation_delay, accepted",
+    [
+        ({}, 0, True),
+        ({"umaResolutionStatus": None}, -1, True),
+        ({"umaResolutionStatus": "resolved"}, 0, True),
+        ({"umaResolutionStatus": "proposed"}, 0, False),
+        ({"umaResolutionStatus": "resolved"}, 1, False),
+    ],
+    ids=["legacy-missing", "legacy-null", "resolved", "proposed", "observed-after-receipt"],
+)
+def test_d1_legacy_gamma_terminal_status_and_observation_time(status_fields, observation_delay, accepted):
+    from polymarket_alpha_lab.papersim.adapters import polymarket
+
+    condition = "0x" + "1" * 64
+    slug = "d1-legacy-gamma"
+    url = polymarket.GAMMA_MARKET_PREFIX + slug
+    question = "Will Ethereum be below 2,000 at the end of this period?"
+    entry = {"market_id": "123", "market_slug": slug, "condition_id": condition}
+    buy = {"question": question, "side_tokens": {"YES": "111", "NO": "222"}}
+    body = {
+        "id": "123", "slug": slug, "conditionId": condition, "question": question,
+        "outcomes": '["No","Yes"]', "clobTokenIds": '["222","111"]',
+        "closed": True, "outcomePrices": '["0","1"]',
+        "closedTime": NOW.isoformat(), "endDate": NOW.isoformat(), **status_fields,
+    }
+    content = json.dumps(body).encode()
+    snapshot = {
+        "content": content, "content_sha256": sha256(content).hexdigest(), "byte_length": len(content),
+        "kind": polymarket.SOURCE_KIND_GAMMA, "source": url, "fetched_at": T_OBSERVED,
+        "schema_version": "v1",
+    }
+    selected = {
+        "source_kind": "gamma_close", "source_ref": url, "outcome": "YES",
+        "observed_at": T_OBSERVED + datetime.timedelta(seconds=observation_delay),
+    }
+    if not accepted:
+        with pytest.raises(settle.SettleError, match="^d1_settlement_outcome_time_conflict$"):
+            settle._d1_gamma_result(snapshot, entry, selected, buy)
+        return
+    winning_token, proof = settle._d1_gamma_result(snapshot, entry, selected, buy)
+    assert winning_token == "111"
+    assert proof["snapshot"]["content_sha256"] == snapshot["content_sha256"]
 
 
 # ---------------------------------------------------------------------------

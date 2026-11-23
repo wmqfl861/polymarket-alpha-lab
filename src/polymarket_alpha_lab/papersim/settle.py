@@ -687,7 +687,8 @@ def _d1_gamma_result(snapshot: dict, entry: dict, selected: dict, buy: dict) -> 
                 and (yes, no) == (buy["side_tokens"]["YES"], buy["side_tokens"]["NO"]),
                 "d1_settlement_outcome_market_conflict")
     fetched, observed = _d1_time(snapshot["fetched_at"]), _d1_time(selected["observed_at"])
-    _d1_require(body.get("closed") is True and ends is not None
+    _d1_require(body.get("closed") is True and body.get("umaResolutionStatus") in (None, "resolved")
+                and ends is not None and observed <= fetched
                 and ((body.get("closedTime") is None and ends <= observed == fetched)
                      or (closed is not None and closed <= observed and closed <= fetched)),
                 "d1_settlement_outcome_time_conflict")
