@@ -1,0 +1,2 @@
+# The Git-format patches are hashed byte for byte, including their context markers.
+*.patch -text -whitespace

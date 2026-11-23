@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh football model inputs and run the daily out-of-sample comparison
+
+[Timer]
+OnCalendar=*-*-* *:02/10:00 UTC
+AccuracySec=1s
+Persistent=true
+Unit=pal-football-learning@study.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Recheck basketball models and admission with final scores
+
+[Timer]
+OnCalendar=*-*-* *:04:20 UTC
+AccuracySec=1s
+Persistent=true
+Unit=pal-sports-paper@basketball-study.service
+
+[Install]
+WantedBy=timers.target

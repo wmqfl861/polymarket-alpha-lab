@@ -1,0 +1,11 @@
+[Unit]
+Description=Collect pre-match forecasts, closing books and final results
+
+[Timer]
+OnCalendar=*-*-* *:*:12 UTC
+AccuracySec=1s
+Persistent=true
+Unit=pal-football-learning@evidence.service
+
+[Install]
+WantedBy=timers.target

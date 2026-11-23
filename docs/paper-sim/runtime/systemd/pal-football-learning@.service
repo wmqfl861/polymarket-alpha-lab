@@ -1,0 +1,16 @@
+[Unit]
+Description=Football paper model and evidence task %i
+Requires=pal-football-notify-pg.service
+After=pal-football-notify-pg.service
+
+[Service]
+Type=oneshot
+UMask=0077
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=%h/.config/pal-sports-paper/runtime.env
+WorkingDirectory=@PAL_WORKING_DIR@
+ExecStart="@PAL_PYTHON@" -B "@PAL_RUNTIME_ROOT@/scripts/football_learning.py" %i
+TimeoutStartSec=15min
+KillMode=control-group
+NoNewPrivileges=yes

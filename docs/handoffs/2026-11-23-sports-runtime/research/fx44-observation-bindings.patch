@@ -1,0 +1,230 @@
+diff --git a/database/papersim/migrations.lock.json b/database/papersim/migrations.lock.json
+index 1344c8ab82f7599237d6e79844deba3303422220..75e19428450f25cdca4c545a9efe346a032b1c3b 100644
+--- a/database/papersim/migrations.lock.json
++++ b/database/papersim/migrations.lock.json
+@@ -30,6 +30,11 @@
+       "name": "20261119210907_papersim_model_registry.sql",
+       "sha256": "2547b93d10ffe103e5c3fb9ec457c6e95c8336eb87674f164cdc96bbe17dc416",
+       "transaction_wrapper": true
++    },
++    {
++      "name": "20261122035500_papersim_observation_bindings.sql",
++      "sha256": "7dcb490d945eb2a39801f08f220963e11bf3fb202ea936cba20319eeca096423",
++      "transaction_wrapper": true
+     }
+   ]
+ }
+diff --git a/database/papersim/migrations/20261122035500_papersim_observation_bindings.sql b/database/papersim/migrations/20261122035500_papersim_observation_bindings.sql
+new file mode 100644
+index 0000000000000000000000000000000000000000..15389c662e5d0380e52249599f8f9c25d630a1db
+--- /dev/null
++++ b/database/papersim/migrations/20261122035500_papersim_observation_bindings.sql
+@@ -0,0 +1,28 @@
++-- FX-44 B2 marks and CLOSE evidence bind to a registered observation snapshot.
++-- Each new key uses its table's prefix and the SHA-256 of the occurrence
++-- identity. The writer uses the same occurrence and binding for both rows.
++-- The binding records the supported capture facts and their applicable rule.
++begin;
++
++alter table papersim.candidate_marks
++    add column observation_binding_sha256 text references papersim.snapshots(content_sha256),
++    add constraint candidate_marks_observation_binding_check check (
++        (candidate_mark_key like 'cm2|%') = (observation_binding_sha256 is not null)
++        and (observation_binding_sha256 is null or candidate_mark_key ~ '^cm2[|][0-9a-f]{64}$')
++    );
++
++alter table papersim.candidate_price_evidence
++    add column observation_binding_sha256 text references papersim.snapshots(content_sha256),
++    add constraint candidate_price_evidence_observation_binding_check check (
++        (evidence_key like 'cpe2|%') = (observation_binding_sha256 is not null)
++        and (observation_binding_sha256 is null or (
++            evidence_role = 'CLOSE' and evidence_key ~ '^cpe2[|][0-9a-f]{64}$'
++        ))
++    );
++
++drop index papersim.candidate_marks_one_close_per_candidate_idx;
++create unique index candidate_marks_one_close_per_candidate_idx
++    on papersim.candidate_marks(candidate_id)
++    where sampling_kind = 'CLOSE' and observation_binding_sha256 is null;
++
++commit;
+diff --git a/src/polymarket_alpha_lab/papersim/capture.py b/src/polymarket_alpha_lab/papersim/capture.py
+index b837e3fb7dabf96338be6d21557afa1544831ad4..de95be95e8f747e77b17603381c92cbe97be883e 100644
+--- a/src/polymarket_alpha_lab/papersim/capture.py
++++ b/src/polymarket_alpha_lab/papersim/capture.py
+@@ -341,34 +341,49 @@ def load_mark_packs(config: CaptureConfig, *, base_dir) -> tuple[MarkPack, ...]:
+ 
+ 
+ # ---------------------------------------------------------------------------
+-# FX-34 classification and record construction (pure)
++# Observation classification and record construction (pure)
+ # ---------------------------------------------------------------------------
+ 
+ #: Downgrade reasons reported in the coverage summary (fixed vocabulary).
+ DOWNGRADE_MISSING_EVENT_START = "missing_event_start"
+ DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START = "observed_at_after_event_start"
++DOWNGRADE_OBSERVED_AT_BEFORE_CLOSE_WINDOW = "observed_at_before_close_window"
++_DOWNGRADE_LATE_RECEIPT = "received_at_after_event_start"
++_REGISTERED_CLOSE_WINDOW = datetime.timedelta(minutes=60)
+ 
+ 
+ def classify_observation(mark_kind: str, observed_at: datetime.datetime,
+-                         event_start_at: datetime.datetime | None) -> tuple[str, str | None]:
+-    """FX-34 classification: the stored sampling kind of one observation.
+-
+-    A CLOSE is eligible only when the observation is STRICTLY before the
+-    candidate's ``event_start_at``; observed AT or after the start
+-    (equality refused -- for example an NBA full-game mark during
+-    overtime, hours after tip-off) it is stored PERIODIC only. A
+-    candidate without an event start produces no CLOSE at all (FX-34:
+-    counted as missing in criterion C coverage). No rule here uses game
+-    duration or a "scheduled end": ``event_start_at`` is the only
+-    boundary, and the final score including overtime is settled later by
+-    B3 outcome observations, never by capture.
++                         event_start_at: datetime.datetime | None, *,
++                         received_at: datetime.datetime | None = None,
++                         apply_registered_close_window: bool = False) -> tuple[str, str | None]:
++    """Classify one observation under its applicable CLOSE rule.
++
++    FX-34 requires a requested CLOSE to precede the event boundary.
++    D1 supplies the actual book receipt time, which must also precede it.
++    For FX-44, the caller must first establish that this individual
++    acquisition is governed by the registered window. The event boundary
++    must then be the source-verified sports start or contract expiry
++    (``None`` if unavailable). The lower bound is inclusive and the upper
++    bound is exclusive. Inputs carry explicit time zones and the window
++    is measured between UTC instants.
+     """
+     if mark_kind != "CLOSE":
+         return ("PERIODIC", None)
+     if event_start_at is None:
+         return ("PERIODIC", DOWNGRADE_MISSING_EVENT_START)
++    if apply_registered_close_window:
++        if event_start_at.utcoffset() is None:
++            return ("PERIODIC", DOWNGRADE_MISSING_EVENT_START)
++        event_start_at = event_start_at.astimezone(datetime.UTC)
++        observed_at = _pack_datetime(observed_at, "observed_at").astimezone(datetime.UTC)
++        if received_at is not None:
++            received_at = _pack_datetime(received_at, "received_at").astimezone(datetime.UTC)
+     if observed_at >= event_start_at:
+         return ("PERIODIC", DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)
++    if received_at is not None and received_at >= event_start_at:
++        return ("PERIODIC", _DOWNGRADE_LATE_RECEIPT)
++    if apply_registered_close_window and event_start_at - observed_at > _REGISTERED_CLOSE_WINDOW:
++        return ("PERIODIC", DOWNGRADE_OBSERVED_AT_BEFORE_CLOSE_WINDOW)
+     return ("CLOSE", None)
+ 
+ 
+@@ -446,7 +461,6 @@ _NUMERIC_FRACTIONAL_PLACES = 16_383
+ _DECIMAL_TEXT = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
+ _PRICE_FIELDS = ("bid", "ask", "mid", "last")
+ _CLOB_MARK_SOURCE = "clob_book"
+-_DOWNGRADE_LATE_RECEIPT = "received_at_after_event_start"
+ _EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.UTC)
+ _MICROSECOND = datetime.timedelta(microseconds=1)
+ 
+@@ -715,9 +729,8 @@ def _d1_capture_materials(conn, sources: _D1BookSources, target: dict, raw: dict
+     priced = replace(observation, **claims)
+     event_start = candidate["event_start_at"]
+     boundary = None if event_start is None else _pack_datetime(event_start, "event_start_at")
+-    kind, downgrade = classify_observation(priced.sampling_kind, priced.observed_at, boundary)
+-    if kind == "CLOSE" and received_at >= boundary:
+-        kind, downgrade = "PERIODIC", _DOWNGRADE_LATE_RECEIPT
++    kind, downgrade = classify_observation(
++        priced.sampling_kind, priced.observed_at, boundary, received_at=received_at)
+     target.update(sampling_kind=kind, downgrade=downgrade)
+     if not has_any_price(priced):
+         target.update(status="MISSING_QUOTE", reason="d1_capture_no_quote")
+@@ -824,8 +837,9 @@ def _d1_capture_summary(config: CaptureConfig, code_commit: str, input_evidence,
+         if observation is not None:
+             source = observation["source_kind"]
+             source_kinds[source] = source_kinds.get(source, 0) + 1
+-        if target["status"] == "READY" and target.get("downgrade") is not None:
+-            downgrades[target["downgrade"]] += 1
++        downgrade = target.get("downgrade")
++        if target["status"] == "READY" and downgrade is not None:
++            downgrades[downgrade] = downgrades.get(downgrade, 0) + 1
+     return {
+         "command": CAPTURE_COMMAND, "team": config.team, "operator": config.operator, "code_commit": code_commit,
+         "packs": [{"pack": item["pack"], "snapshot_sha256": item["snapshot_sha256"]} for item in input_evidence],
+@@ -988,7 +1002,7 @@ def run_capture(config: CaptureConfig, packs: Sequence[MarkPack], *,
+                 observation.sampling_kind, observation.observed_at,
+                 target["event_start_at"])
+             if downgrade is not None:
+-                downgrade_reasons[downgrade] += 1
++                downgrade_reasons[downgrade] = downgrade_reasons.get(downgrade, 0) + 1
+             capture = capture_from_observation(
+                 observation, candidate_id=target["candidate_id"],
+                 sampling_kind=stored_kind, pack_snapshot_sha256=digest)
+diff --git a/tests/test_papersim_capture_marks.py b/tests/test_papersim_capture_marks.py
+index 7fb9cb108944f0f07d598117802120f1e0753c8f..62b4dd35ac2c3bf47102f2b5052857563d2a350f 100644
+--- a/tests/test_papersim_capture_marks.py
++++ b/tests/test_papersim_capture_marks.py
+@@ -23,6 +23,7 @@ import subprocess
+ import sys
+ from decimal import Decimal
+ from pathlib import Path
++from zoneinfo import ZoneInfo
+ 
+ import pytest
+ 
+@@ -183,6 +184,59 @@ def test_fx34_crypto_boundary_is_the_market_expiry():
+                                         EXPIRY)[0] == "PERIODIC"
+ 
+ 
++@pytest.mark.parametrize("boundary", [NOW, EXPIRY], ids=["sports-start", "crypto-expiry"])
++@pytest.mark.parametrize(("minutes_until_event", "expected"), [
++    (61, ("PERIODIC", capture.DOWNGRADE_OBSERVED_AT_BEFORE_CLOSE_WINDOW)),
++    (60, ("CLOSE", None)),
++    (59, ("CLOSE", None)),
++    (0, ("PERIODIC", capture.DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)),
++    (-1, ("PERIODIC", capture.DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)),
++])
++def test_fx44_classifies_each_observation_in_its_registered_window(boundary, minutes_until_event, expected):
++    observed_at = boundary - datetime.timedelta(minutes=minutes_until_event)
++    assert capture.classify_observation(
++        "CLOSE", observed_at, boundary, apply_registered_close_window=True) == expected
++
++
++def test_fx44_preserves_the_historical_rule_for_an_earlier_observation():
++    observed_at = NOW - datetime.timedelta(minutes=61)
++    assert capture.classify_observation("CLOSE", observed_at, NOW) == ("CLOSE", None)
++
++
++def test_fx44_handles_missing_boundaries_and_explicit_periodic_requests():
++    assert capture.classify_observation(
++        "CLOSE", NOW, None, apply_registered_close_window=True
++    ) == ("PERIODIC", capture.DOWNGRADE_MISSING_EVENT_START)
++    assert capture.classify_observation(
++        "CLOSE", NOW, EXPIRY.replace(tzinfo=None), apply_registered_close_window=True
++    ) == ("PERIODIC", capture.DOWNGRADE_MISSING_EVENT_START)
++    assert capture.classify_observation(
++        "PERIODIC", NOW, EXPIRY, apply_registered_close_window=True
++    ) == ("PERIODIC", None)
++
++
++def test_fx44_compares_utc_instants_across_a_repeated_local_hour():
++    zone = ZoneInfo("America/New_York")
++    observed_at = datetime.datetime(2026, 11, 1, 1, 30, tzinfo=zone, fold=0)
++    boundary = datetime.datetime(2026, 11, 1, 1, 30, tzinfo=zone, fold=1)
++    received_at = observed_at.replace(minute=31)
++    assert capture.classify_observation(
++        "CLOSE", observed_at, boundary, received_at=received_at, apply_registered_close_window=True
++    ) == ("CLOSE", None)
++
++
++@pytest.mark.parametrize("apply_window", [False, True], ids=["historical", "registered-window"])
++def test_close_classification_preserves_the_d1_receipt_cutoff(apply_window):
++    observed_at = NOW - datetime.timedelta(minutes=59)
++    for received_at in (NOW, NOW + datetime.timedelta(seconds=1)):
++        assert capture.classify_observation(
++            "CLOSE", observed_at, NOW, received_at=received_at, apply_registered_close_window=apply_window
++        ) == ("PERIODIC", "received_at_after_event_start")
++    assert capture.classify_observation(
++        "CLOSE", NOW, NOW, received_at=NOW, apply_registered_close_window=apply_window
++    ) == ("PERIODIC", capture.DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)
++
++
+ # ---------------------------------------------------------------------------
+ # Record construction and missing-quote accounting
+ # ---------------------------------------------------------------------------

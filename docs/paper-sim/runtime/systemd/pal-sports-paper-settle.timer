@@ -1,0 +1,11 @@
+[Unit]
+Description=Settle recorded football and basketball simulated entries in CNY
+
+[Timer]
+OnCalendar=*-*-* *:*:43 UTC
+AccuracySec=1s
+Persistent=true
+Unit=pal-sports-paper@settle.service
+
+[Install]
+WantedBy=timers.target

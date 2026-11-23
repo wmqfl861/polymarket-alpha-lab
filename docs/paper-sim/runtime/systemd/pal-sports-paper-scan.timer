@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh public basketball fixtures and pregame markets
+
+[Timer]
+OnCalendar=*-*-* *:08/10:00 UTC
+AccuracySec=1s
+Persistent=true
+Unit=pal-sports-paper@basketball-scan.service
+
+[Install]
+WantedBy=timers.target

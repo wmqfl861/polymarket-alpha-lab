@@ -1,0 +1,20 @@
+[Unit]
+Description=Private PostgreSQL for football Weixin reminders
+RequiresMountsFor="@PAL_PG_MOUNT_DIR@"
+ConditionPathExists=@PAL_PG_DATA_DIR@/PG_VERSION
+
+[Service]
+Type=notify
+RuntimeDirectory=pal-football-notify-pg
+RuntimeDirectoryMode=0700
+UMask=0077
+ExecStart="@PAL_POSTGRES@" -D "@PAL_PG_DATA_DIR@" -c listen_addresses= -c unix_socket_directories=%t/pal-football-notify-pg -c unix_socket_permissions=0700 -c port=@PAL_PG_PORT@ -c shared_buffers=32MB -c max_connections=28 -c min_wal_size=32MB -c max_wal_size=128MB -c log_statement=none
+Restart=on-failure
+RestartSec=8s
+TimeoutStartSec=90s
+TimeoutStopSec=60s
+KillSignal=SIGINT
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target

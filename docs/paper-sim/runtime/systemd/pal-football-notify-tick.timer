@@ -1,0 +1,12 @@
+[Unit]
+Description=Check pending football reminders each minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00 UTC
+AccuracySec=1s
+RandomizedDelaySec=0
+Persistent=true
+Unit=pal-football-notify-tick.service
+
+[Install]
+WantedBy=timers.target

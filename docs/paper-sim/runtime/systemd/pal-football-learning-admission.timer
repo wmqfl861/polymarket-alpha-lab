@@ -1,0 +1,11 @@
+[Unit]
+Description=Evaluate registered football paper market admission criteria
+
+[Timer]
+OnCalendar=*-*-* *:04/10:00 UTC
+AccuracySec=1s
+Persistent=true
+Unit=pal-football-learning@admission.service
+
+[Install]
+WantedBy=timers.target
