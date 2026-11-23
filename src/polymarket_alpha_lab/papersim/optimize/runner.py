@@ -112,6 +112,7 @@ from polymarket_alpha_lab.papersim.store import OPTIMIZATION_OUTCOMES, Optimizat
 if TYPE_CHECKING:
     from polymarket_alpha_lab.papersim.optimize.dataset import HistoryAudit, MarketObservation
     from polymarket_alpha_lab.papersim.optimize.families.nba import NbaFamilyFixture
+    from polymarket_alpha_lab.papersim.optimize.nba_odr import NBASeasonArchive, NBASeasonMetadata
 
 
 __all__ = (
@@ -154,6 +155,10 @@ __all__ = (
     "LineageDecision",
     "LineageStat",
     "MAX_TRIALS",
+    "NBA_ODR_MAX_TRIALS",
+    "NBA_ODR_REGISTRATION_MATERIALS_KIND",
+    "NBA_ODR_SCHEDULE_ID",
+    "NBAODRPlan",
     "NBASourceManifest",
     "NO_IMPROVEMENT",
     "OptimizationRunResult",
@@ -174,6 +179,7 @@ __all__ = (
     "VariantPrediction",
     "banned_spec_digests",
     "bootstrap_resamples",
+    "build_nba_odr_plan",
     "club_fixture_records",
     "club_model_history",
     "evaluate_stage1_rule",
@@ -184,6 +190,7 @@ __all__ = (
     "international_replay_prediction",
     "international_snapshot_records",
     "nba_history_at",
+    "nba_odr_historical_protocol",
     "nba_snapshot_cohort",
     "optimization_search_descriptor",
     "resolve_fold_kind",
@@ -2573,6 +2580,40 @@ _NBA_LINES = MappingProxyType({
     "totals": (225.5, ("under", "over")),
 })
 
+NBA_ODR_SCHEDULE_ID = "fx41-odr-nba-regular-2024-25-2025-26-v2"
+NBA_ODR_MAX_TRIALS = 4_811
+_NBA_ODR_FAMILY_ID = "nba-pace-efficiency"
+_NBA_ODR_PROCEDURE = "wp-nba2"
+_NBA_ODR_SEED = 20261120
+_NBA_ODR_TARGETS = ("moneyline", "totals")
+_NBA_ODR_SEARCH_DAYS = 289
+_NBA_ODR_TEST_DAYS = 283
+_NBA_ODR_SEARCH_GAMES = 2_156
+_NBA_ODR_TEST_GAMES = 2_124
+_NBA_ODR_HOLDOUT_DAYS = 38
+_NBA_ODR_HOLDOUT_GAMES = 304
+_NBA_ODR_SHORTER_HOLDOUT_GAMES = 295
+_NBA_ODR_HOLDOUT_FLOORS = (300, 30)
+_NBA_ODR_MIN_TRAIN_BLOCKS = 2
+_NBA_ODR_GRID_SIZE = 17
+_NBA_ODR_GRID_SHA256 = "71dd8e754ee83e6b359156da637bdcdfced8724560bb371b6cd668759c44d60d"
+_NBA_ODR_TARGET_USES = 9_622
+_NBA_ODR_BUDGET = MappingProxyType({"max_trials": NBA_ODR_MAX_TRIALS, "time_budget_seconds": TIME_BUDGET_SECONDS,
+                                    "terminal_reserve_seconds": 60})
+NBA_ODR_REGISTRATION_MATERIALS_KIND = "optimizer_experiment_registration_materials"
+_NBA_ODR_SOURCE_CALENDAR = "ESPN NBA source date"
+_NBA_ODR_REGISTRATION_REQUIRED = "NBA v2 execution requires a verified managed registration binding"
+
+# These are the owner-plan input identities, ordered by source day, season and event ID.
+_NBA_ODR_MEMBERSHIP = {
+    "all": ("9248675aab18961a1bf3c6f325d3a0f2b3e9182013c31d494d1b4ce570ab02b4",
+            "f31c3c0775bec0c0c3f0d933986e81fc4d3f1c83f670b04d42333103c2eb1075"),
+    "search": ("327b7afa0dc46d69469d6c54c2ab492f64cc8e3ed38678fe3f1800e5aa53342b",
+               "c3e6deb25f99920c5c048990376916b4847cdf125dbf3553d1e7c5c8794c7313"),
+    "holdout": ("ed406e326358659a4f3cfa56f15e19686c40dc608c5ed544cd121910ce8bad6d",
+                "eaa8af29c4db20cee08105346200e6521e1d9038bccb72a0d8fea8c7e6109748"),
+}
+
 
 def _canonical_json(payload: object) -> bytes:
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
@@ -2885,6 +2926,29 @@ class ScopedFold(WalkFold):
         default_factory=lambda: MappingProxyType({}), repr=False, compare=False,
     )
     _nba_history: Mapping[str, object] | None = field(default=None, repr=False, compare=False)
+    history_partition: str | None = field(default=None, kw_only=True)
+
+
+@dataclass(frozen=True, slots=True)
+class NBAODRPlan:
+    """Outcome-free plan and canonical bytes for managed registration to verify."""
+
+    run_key: str
+    cohort: CausalCohort = field(repr=False)
+    training_only_group_ids: tuple[str, ...]
+    search_folds: tuple[ScopedFold, ...] = field(repr=False)
+    holdout_folds: tuple[ScopedFold, ...] = field(repr=False)
+    trials: tuple[search.PlannedTrial, ...] = field(repr=False)
+    plan_bytes: bytes = field(repr=False)
+    metadata_bytes: bytes = field(repr=False)
+
+    @property
+    def plan_ref(self) -> SourceArtifactRef:
+        return SourceArtifactRef(sha256(self.plan_bytes).hexdigest(), len(self.plan_bytes))
+
+    @property
+    def metadata_ref(self) -> SourceArtifactRef:
+        return SourceArtifactRef(sha256(self.metadata_bytes).hexdigest(), len(self.metadata_bytes))
 
 
 @dataclass(frozen=True)
@@ -3089,6 +3153,13 @@ def optimization_search_descriptor(
                                  None if targets is None else _items(targets, "requested targets"))
     if not isinstance(schedule_id, str) or not schedule_id.strip():
         raise ValueError("schedule_id must identify the preregistered schedule")
+    if schedule_id == NBA_ODR_SCHEDULE_ID:
+        from polymarket_alpha_lab.papersim.optimize.nba_odr import NBA_ODR_AS_OF
+
+        if (family.family_id, family.procedure_version, selected) != (
+            _NBA_ODR_FAMILY_ID, _NBA_ODR_PROCEDURE, _NBA_ODR_TARGETS,
+        ) or data_cutoff is None or _aware(data_cutoff, "data_cutoff") != NBA_ODR_AS_OF:
+            raise ValueError("NBA v2 schedule requires its fixed family, targets and research cutoff")
     descriptor = {
         "label": RULE_VERSION,
         "strategy": _SEARCH_STRATEGY,
@@ -4084,7 +4155,289 @@ def _scoped_folds(folds, records, source_calendar):
     return tuple(ScopedFold(
         fold.block_id, _aware(fold.cutoff, "fold cutoff"), fold.train_keys, fold.test_keys, fold.train_block_ids,
         records[fold.test_keys[0]].source_day, source_calendar,
+        history_partition=getattr(fold, "history_partition", None),
     ) for fold in folds)
+
+
+def nba_odr_historical_protocol(registration_materials: SourceArtifactRef) -> dict:
+    """Describe the fixed v2 manifest protocol without granting execution authority."""
+    from polymarket_alpha_lab.papersim.optimize.nba_odr import (
+        NBA_ODR_ARCHIVE_PINS,
+        NBA_ODR_AS_OF,
+        NBA_ODR_HOLDOUT_END,
+        NBA_ODR_HOLDOUT_START,
+        NBA_ODR_LINES,
+        NBA_ODR_SOURCE_TIMEZONE,
+        source_day_start_utc,
+    )
+
+    if not isinstance(registration_materials, SourceArtifactRef):
+        raise ValueError("NBA v2 protocol requires its registration-materials byte identity")
+    return {
+        "family": _NBA_ODR_FAMILY_ID, "procedure_version": _NBA_ODR_PROCEDURE, "rule_version": RULE_VERSION,
+        "schedule_id": NBA_ODR_SCHEDULE_ID, "seed": _NBA_ODR_SEED, "data_cutoff": _iso(NBA_ODR_AS_OF),
+        "targets": list(_NBA_ODR_TARGETS), "source_calendar": _NBA_ODR_SOURCE_CALENDAR,
+        "source_timezone": str(NBA_ODR_SOURCE_TIMEZONE), "last_complete_date": _iso(NBA_ODR_HOLDOUT_END),
+        "lines": {target: [{"market_type": target, "line": line, "class_order": list(order)}]
+                  for target, (line, order) in NBA_ODR_LINES.items()},
+        "cohort": {
+            "search_rule": "all_preceding_complete_source_dates_with_same_season_history",
+            "min_train_blocks": _NBA_ODR_MIN_TRAIN_BLOCKS,
+            "training_only_dates": [_iso(day) for pin in NBA_ODR_ARCHIVE_PINS.values()
+                                    for day, _ in pin.training_only],
+            "holdout_rule": "shortest_complete_source_date_suffix_meeting_registered_floors",
+            "first_holdout_date": _iso(NBA_ODR_HOLDOUT_START),
+            "first_holdout_boundary": _iso(source_day_start_utc(NBA_ODR_HOLDOUT_START)),
+        },
+        "budget": dict(_NBA_ODR_BUDGET),
+        "registration_materials": {
+            "kind": NBA_ODR_REGISTRATION_MATERIALS_KIND, "schema_version": 1, **asdict(registration_materials),
+        },
+    }
+
+
+def _nba_odr_cohort(seasons: Mapping[str, NBASeasonMetadata | NBASeasonArchive]) -> CausalCohort:
+    from polymarket_alpha_lab.papersim.optimize.nba_odr import (
+        NBA_ODR_ARCHIVE_PINS,
+        NBA_ODR_AS_OF,
+        NBA_ODR_HOLDOUT_END,
+        NBA_ODR_HOLDOUT_START,
+        NBA_ODR_SOURCE_TIMEZONE,
+    )
+
+    if seasons.keys() != NBA_ODR_ARCHIVE_PINS.keys():
+        raise ValueError("NBA v2 cohort requires the two approved seasons")
+    events = sorted(
+        (game for season in seasons.values() for game in season.games),
+        key=lambda game: (game.source_day, game.season, game.event_id),
+    )
+    holdout = tuple(sorted({day for season in seasons.values() for day in season.holdout_days}))
+    records = tuple(
+        FixtureRecord(game.event_key, _iso(game.source_day), available_at=game.available_at,
+                      source_day=game.source_day, label_day=game.label_day, floor_block=_iso(game.source_day))
+        for game in events
+    )
+    cohort = validate_cohort(
+        records, tuple(map(_iso, holdout)), data_cutoff=NBA_ODR_AS_OF,
+        source_days={game.event_key: SourceDay(_NBA_ODR_SOURCE_CALENDAR, game.source_day, game.label_day,
+                                               game.available_at, history_partition=game.season)
+                     for game in events},
+        source_timezone=NBA_ODR_SOURCE_TIMEZONE, last_complete_date=NBA_ODR_HOLDOUT_END,
+        source_order={game.event_key: index for index, game in enumerate(events)},
+    )
+    min_events, min_days = resolve_stage1_floors(_NBA_ODR_FAMILY_ID)
+    holdout_games = len(cohort.holdout_records)
+    shorter_games = sum(row.group_id != cohort.holdout_group_ids[0] for row in cohort.holdout_records)
+    if (len(cohort.search_group_ids), len(cohort.search_records), cohort.search_group_ids[-1:]) != (
+        _NBA_ODR_SEARCH_DAYS, _NBA_ODR_SEARCH_GAMES, ("2026-03-04",),
+    ):
+        raise ValueError("NBA v2 search membership does not match the approved date and game counts")
+    if (len(holdout), holdout[0], holdout[-1], holdout_games, shorter_games) != (
+        _NBA_ODR_HOLDOUT_DAYS, NBA_ODR_HOLDOUT_START, NBA_ODR_HOLDOUT_END,
+        _NBA_ODR_HOLDOUT_GAMES, _NBA_ODR_SHORTER_HOLDOUT_GAMES,
+    ) or (min_events, min_days) != _NBA_ODR_HOLDOUT_FLOORS:
+        raise ValueError("NBA v2 source membership or shortest holdout does not match the approved counts")
+    return cohort
+
+
+def _nba_odr_membership(seasons: Mapping[str, NBASeasonMetadata], cohort: CausalCohort) -> dict:
+    events = {game.event_key: game for season in seasons.values() for game in season.games}
+    membership = {}
+    for scope, records in (("all", (*cohort.search_records, *cohort.holdout_records)),
+                           ("search", cohort.search_records), ("holdout", cohort.holdout_records)):
+        keys = [(row.group_id, events[row.event_key].season, events[row.event_key].event_id) for row in records]
+        counts = defaultdict(int)
+        for day, _, _ in keys:
+            counts[day] += 1
+        digests = (sha256(_canonical_json(keys)).hexdigest(),
+                   sha256(_canonical_json(sorted(counts.items()))).hexdigest())
+        if digests != _NBA_ODR_MEMBERSHIP[scope]:
+            raise ValueError(f"NBA v2 {scope} members or day counts disagree with the owner-approved identity")
+        membership[scope] = {"days": len(counts), "games": len(keys), "members_sha256": digests[0],
+                             "day_counts_sha256": digests[1]}
+    return membership
+
+
+def _nba_odr_catalogs(family, policy_context: PolicyContext, model_contexts: Mapping[str, str]):
+    from polymarket_alpha_lab.papersim.optimize.families.nba import _validated_params
+    from polymarket_alpha_lab.papersim.optimize.nba_odr import NBA_ODR_AS_OF
+
+    if (not isinstance(model_contexts, Mapping) or model_contexts.keys() != set(_NBA_ODR_TARGETS)
+            or not all(map(_identifier, model_contexts.values())) or len(set(model_contexts.values())) != 1):
+        raise ValueError("NBA v2 targets require one shared frozen model context")
+    if (not isinstance(policy_context, PolicyContext) or policy_context.global_issue
+            or policy_context.started_at < NBA_ODR_AS_OF):
+        raise ValueError("NBA v2 plan requires verified registry context at or after the research cutoff")
+    baseline = family.baseline_spec()
+    lineages = tuple(lineage_id(_NBA_ODR_FAMILY_ID, target) for target in _NBA_ODR_TARGETS)
+    comparisons, active, evidence, issues = _registry_comparisons(family, lineages, policy_context, None, baseline)
+    if issues or active.keys() != set(lineages):
+        raise ValueError("NBA v2 plan requires both verified registry comparators")
+    definitions = family.param_space()
+    build = _nba_spec_builder(baseline)
+    for spec in comparisons.values():
+        if build(_validated_params(spec)) != spec:
+            raise ValueError("NBA v2 comparator is incompatible with the canonical NBA model spec")
+    catalogs = {
+        target: build_catalog(comparisons[lineage], definitions, build, one_coordinate=True)
+        for target, lineage in zip(_NBA_ODR_TARGETS, lineages, strict=True)
+    }
+    spec_orders = []
+    for catalog in catalogs.values():
+        coordinates = _canonical_json([[spec.params[definition.name] for definition in definitions]
+                                       for spec in catalog.specs])
+        if (len(catalog.entries), len(coordinates), sha256(coordinates).hexdigest()) != (
+            _NBA_ODR_GRID_SIZE, 421, _NBA_ODR_GRID_SHA256,
+        ):
+            raise ValueError("NBA v2 comparator does not produce the approved ordered 17-point grid")
+        spec_orders.append(tuple((spec.spec_sha256(), spec.model_version()) for spec in catalog.specs))
+    if spec_orders[0] != spec_orders[1]:
+        raise ValueError("NBA v2 targets do not share the same ordered full model specs")
+    for lineage in lineages:
+        evidence[lineage]["model_version"] = comparisons[lineage].model_version()
+    return baseline, catalogs, evidence
+
+
+def _nba_odr_plan_bytes(
+    folds: Sequence[ScopedFold],
+    trials: Sequence[search.PlannedTrial],
+    catalog: search.SearchCatalog,
+    model_context: str,
+) -> bytes:
+    if len(folds) != _NBA_ODR_TEST_DAYS or len({fold.source_day for fold in folds}) != _NBA_ODR_TEST_DAYS:
+        raise ValueError("NBA v2 requires exactly 283 distinct outer test dates")
+    if len(trials) != NBA_ODR_MAX_TRIALS or len(catalog.entries) != _NBA_ODR_GRID_SIZE:
+        raise ValueError("NBA v2 physical plan requires exactly 4,811 trials and 17 specs per date")
+    fold_digests = tuple(search._fold_digest(fold, _aware(fold.cutoff, "plan fold cutoff")) for fold in folds)
+    identities = set()
+    rows = []
+    for index, trial in enumerate(trials):
+        fold_index, candidate_index = divmod(index, _NBA_ODR_GRID_SIZE)
+        fold, entry = folds[fold_index], catalog.entries[candidate_index]
+        if (trial.trial_index, trial.candidate_index, trial.fold, trial.fold_sha256, trial.spec_sha256,
+            trial.targets, trial.model_context) != (
+            index, candidate_index, fold, fold_digests[fold_index], entry.spec_sha256,
+            _NBA_ODR_TARGETS, model_context,
+        ) or (trial.spec is not entry.spec and (
+            trial.spec != entry.spec or trial.spec.model_version() != entry.spec.model_version()
+        )):
+            raise ValueError("NBA v2 physical trial differs from its approved fold, spec or target mask")
+        identities.add((trial.fold_sha256, trial.spec_sha256, trial.model_context))
+        rows.append((index, fold.history_partition, _iso(fold.source_day), trial.fold_sha256,
+                     trial.spec_sha256, trial.model_context, trial.targets))
+    if len(identities) != NBA_ODR_MAX_TRIALS or sum(len(row.targets) for row in trials) != _NBA_ODR_TARGET_USES:
+        raise ValueError("NBA v2 plan does not conserve unique physical trials and 9,622 target uses")
+    return _canonical_json(rows)
+
+
+def build_nba_odr_plan(
+    *,
+    content_by_season: Mapping[str, bytes],
+    code_commit: str,
+    policy_context: PolicyContext,
+    model_contexts: Mapping[str, str],
+) -> NBAODRPlan:
+    """Build the fixed v2 registration evidence from identities and field presence."""
+    from polymarket_alpha_lab.papersim.optimize.nba_odr import NBA_ODR_AS_OF, load_nba_odr_metadata
+
+    _require_hex(code_commit, 40, "code_commit")
+    if not isinstance(model_contexts, Mapping):
+        raise ValueError("NBA v2 requires model contexts keyed by target")
+    contexts = dict(model_contexts)
+    seasons = load_nba_odr_metadata(content_by_season)
+    cohort = _nba_odr_cohort(seasons)
+    membership = _nba_odr_membership(seasons, cohort)
+    records = {row.event_key: row for row in (*cohort.search_records, *cohort.holdout_records)}
+    training_only = tuple(_iso(day) for season in seasons.values() for day, _ in season.pin.training_only)
+    search_prefixes, skipped = selected_prefix_folds(
+        cohort, training_only_group_ids=training_only, min_train_blocks=_NBA_ODR_MIN_TRAIN_BLOCKS,
+    )
+    holdout_prefixes, holdout_skipped = holdout_prefix_folds(cohort, min_train_blocks=_NBA_ODR_MIN_TRAIN_BLOCKS)
+    if skipped or holdout_skipped:
+        reasons = tuple((row.block_id, row.reason) for row in (*skipped, *holdout_skipped))
+        raise ValueError(f"NBA v2 requires every declared test date to be executable: {reasons}")
+    folds = _scoped_folds(search_prefixes, records, _NBA_ODR_SOURCE_CALENDAR)
+    holdout_folds = _scoped_folds(holdout_prefixes, records, _NBA_ODR_SOURCE_CALENDAR)
+    if (len(training_only), sum(len(group.keys) for group in cohort._groups if group.group_id in training_only),
+        sum(len(fold.test_keys) for fold in folds)) != (6, 32, _NBA_ODR_TEST_GAMES):
+        raise ValueError("NBA v2 training-only and scored members must match the approved counts")
+    if {fold.history_partition: fold.block_id for fold in reversed(folds)} != {
+        "2024-25": "2024-10-25", "2025-26": "2025-10-24",
+    }:
+        raise ValueError("NBA v2 first eligible test dates must match the approved schedule")
+
+    family = _historical_family(_NBA_ODR_FAMILY_ID)
+    descriptor = optimization_search_descriptor(family, schedule_id=NBA_ODR_SCHEDULE_ID, data_cutoff=NBA_ODR_AS_OF)
+    baseline, catalogs, comparisons = _nba_odr_catalogs(family, policy_context, contexts)
+    plan = plan_evaluations(folds, catalogs, model_contexts=contexts)
+    catalog = catalogs[_NBA_ODR_TARGETS[0]]
+    plan_bytes = _nba_odr_plan_bytes(folds, plan, catalog, contexts[_NBA_ODR_TARGETS[0]])
+    plan_ref = SourceArtifactRef(sha256(plan_bytes).hexdigest(), len(plan_bytes))
+    run_key = store.optimization_run_key(_NBA_ODR_FAMILY_ID, NBA_ODR_AS_OF, RULE_VERSION, _NBA_ODR_SEED, descriptor)
+    return NBAODRPlan(
+        run_key, cohort, training_only, folds, holdout_folds, plan, plan_bytes, _canonical_json({
+            "schema_version": 1, "code_commit": code_commit, "run_key": run_key, "search_space": descriptor,
+            "budget": dict(_NBA_ODR_BUDGET),
+            "source_archives": {season: {"sha256": archive.pin.gzip_sha256,
+                                         "byte_length": archive.pin.gzip_byte_length,
+                                         "retrieved_at": _iso(archive.retrieved_at),
+                                         "independent_espn": _nba_odr_inventory_evidence(archive)}
+                                for season, archive in seasons.items()},
+            "membership": membership, "training_only_group_ids": training_only,
+            "first_holdout_boundary": _iso(holdout_folds[0].cutoff),
+            "holdout_without_first_group": {"days": len(cohort.holdout_group_ids) - 1,
+                                            "games": _NBA_ODR_SHORTER_HOLDOUT_GAMES},
+            "baseline": {"spec_sha256": baseline.spec_sha256(), "model_version": baseline.model_version()},
+            "comparisons": comparisons, "model_contexts": contexts,
+            "policy_controls": {"watermark": policy_context.watermark, "global_frozen": policy_context.global_frozen,
+                                "frozen_lineages": sorted(policy_context.frozen_lineages)},
+            "ordered_specs": [{"spec_sha256": entry.spec_sha256, "model_version": entry.spec.model_version(),
+                               "canonical_spec": entry.spec.canonical_json()} for entry in catalog.entries],
+            "physical_plan": {**asdict(plan_ref), "physical_trials": len(plan), "target_uses": _NBA_ODR_TARGET_USES},
+            "fold_membership": [_nba_odr_fold_evidence(trial.fold, trial.fold_sha256)
+                                for trial in plan[::_NBA_ODR_GRID_SIZE]],
+            "holdout_fold_membership": [_nba_odr_fold_evidence(fold, search._fold_digest(fold, fold.cutoff))
+                                        for fold in holdout_folds],
+            "daily_evidence": _nba_odr_daily_evidence(seasons, cohort, training_only),
+        }),
+    )
+
+
+def _nba_odr_fold_evidence(fold: WalkFold, fold_sha256: str) -> dict:
+    return {"day": fold.block_id, "cutoff": _iso(fold.cutoff), "fold_sha256": fold_sha256,
+            "train_days": len(fold.train_block_ids), "train_games": len(fold.train_keys),
+            "test_games": len(fold.test_keys), "train_days_sha256": search._sequence_digest(fold.train_block_ids),
+            "train_games_sha256": search._sequence_digest(fold.train_keys),
+            "test_games_sha256": search._sequence_digest(fold.test_keys)}
+
+
+def _nba_odr_daily_evidence(
+    seasons: Mapping[str, NBASeasonMetadata], cohort: CausalCohort, training_only: tuple[str, ...],
+) -> list[dict]:
+    from polymarket_alpha_lab.papersim.optimize.nba_odr import NBA_ODR_LINES
+
+    events = {game.event_key: game for season in seasons.values() for game in season.games}
+    holdout = set(cohort.holdout_group_ids)
+    return [{
+        "season": group.history_partition, "day": group.group_id,
+        "role": ("holdout" if group.group_id in holdout else
+                 "training_only" if group.group_id in training_only else "search_test"),
+        "complete": group.group_id in cohort._complete_groups, "reciprocal_team_pairs": len(group.keys),
+        "source_fields_present": True, "event_keys": group.keys,
+        "contracts": {target: {"count": len(group.keys), "line": line, "classes": order}
+                      for target, (line, order) in NBA_ODR_LINES.items()},
+        "teams_without_earlier_games": sorted({team for key in group.keys for team, rest in (
+            (events[key].home_team, events[key].rest_home), (events[key].away_team, events[key].rest_away),
+        ) if rest is None}),
+    } for group in cohort._groups]
+
+
+def _nba_odr_inventory_evidence(season: NBASeasonMetadata | NBASeasonArchive) -> dict:
+    if season.independent_espn is None:
+        raise ValueError(f"NBA v2 {season.season} is missing its registered ESPN inventory evidence")
+    evidence = asdict(season.independent_espn)
+    evidence["inventory_observed_at"] = _iso(evidence["inventory_observed_at"])
+    return evidence
 
 
 def _verified_sources(source_artifacts, snapshot_refs):
@@ -5034,6 +5387,9 @@ def _nba_folds(folds, source, identities):
 
 def historical_run_arguments(*, family, manifest, source_artifacts, deadline):
     """Build a fixed historical cohort and callbacks exclusively from registered bytes."""
+    supplied_protocol = manifest.get("protocol") if isinstance(manifest, Mapping) else None
+    if isinstance(supplied_protocol, Mapping) and supplied_protocol.get("schedule_id") == NBA_ODR_SCHEDULE_ID:
+        raise ValueError(_NBA_ODR_REGISTRATION_REQUIRED)
     family = _historical_family(family)
     protocol = historical_protocol(family)
     if (not isinstance(manifest, Mapping) or set(manifest) != {"schema_version", "protocol", "sources"}
@@ -5074,6 +5430,12 @@ def historical_run_arguments(*, family, manifest, source_artifacts, deadline):
         common.update(source_calendar=protocol["source_calendar"], source_timezone=ZoneInfo(protocol["source_timezone"]),
                       last_complete_date=dt.date.fromisoformat(protocol["last_complete_date"]))
 
+    return {**common, **arguments, "evaluate": predict_fold,
+            "evaluate_holdout": _historical_holdout_evaluator(predict_fold),
+            "dataset_summary": {**summary, "historical_protocol": protocol, "absent_sources": absent}}
+
+
+def _historical_holdout_evaluator(predict_fold):
     def evaluate_holdout(spec, target, folds):
         events, refusals = [], []
         for fold in folds:
@@ -5082,8 +5444,7 @@ def historical_run_arguments(*, family, manifest, source_artifacts, deadline):
             refusals.extend(batch.refusals)
         return HoldoutEvaluation(tuple(events), refusals=tuple(refusals))
 
-    return {**common, **arguments, "evaluate": predict_fold, "evaluate_holdout": evaluate_holdout,
-            "dataset_summary": {**summary, "historical_protocol": protocol, "absent_sources": absent}}
+    return evaluate_holdout
 
 
 def _historical_contracts(key, home, away, competition, margin, total, terms):
@@ -5197,8 +5558,7 @@ def _historical_intl(family, protocol, inventories, archives, deadline):
 
 
 def _historical_nba(family, protocol, inventories, archives, deadline):
-    from polymarket_alpha_lab.papersim import espn_nba, nba_model
-    from polymarket_alpha_lab.papersim.optimize.families.nba import NbaFamilyHistory, _envelope_mappings
+    from polymarket_alpha_lab.papersim import espn_nba
 
     snapshots = inventories.get("nba_snapshot", {})
     if inventories.keys() - {"nba_snapshot", "team_schedule", "event_summary"} or snapshots.keys() != {"snapshot"}:
@@ -5222,10 +5582,23 @@ def _historical_nba(family, protocol, inventories, archives, deadline):
     schedules = raw_refs("team_schedule", "schedule_", f"_{espn_nba.season_year(season)}.json")
     summaries = raw_refs("event_summary", "summary_", ".json")
     manifest = NBASourceManifest(ref, season, schedules, summaries) if schedules or summaries else None
-    baseline = family.baseline_spec()
+    arguments = {"records": records, "fixture_lines": lines, "holdout_group_ids": holdout,
+                 "nba_source_manifest": manifest, "build_candidate_spec": _nba_spec_builder(family.baseline_spec())}
+    return arguments, _nba_family_evaluator(family, lines, deadline), {"snapshot_sha256": ref.sha256}
+
+
+def _nba_spec_builder(baseline):
+    from polymarket_alpha_lab.papersim.optimize.families.nba import _envelope_mappings
 
     def build(params):
         return replace(baseline, params=params, legacy_model_version=None, envelope=_envelope_mappings(params["half_life"]))
+
+    return build
+
+
+def _nba_family_evaluator(family, lines, deadline):
+    from polymarket_alpha_lab.papersim import nba_model
+    from polymarket_alpha_lab.papersim.optimize.families.nba import NbaFamilyHistory
 
     def prepare(spec, fold):
         history = nba_history_at(fold=fold)
@@ -5262,9 +5635,138 @@ def _historical_nba(family, protocol, inventories, archives, deadline):
 
         return predict
 
-    arguments = {"records": records, "fixture_lines": lines, "holdout_group_ids": holdout,
-                 "nba_source_manifest": manifest, "build_candidate_spec": build}
-    return arguments, _historical_evaluator(lines, prepare, deadline), {"snapshot_sha256": ref.sha256}
+    return _historical_evaluator(lines, prepare, deadline)
+
+
+@dataclass(frozen=True, slots=True)
+class _NBAODRReplay:
+    records: tuple[FixtureRecord, ...]
+    fixture_lines: tuple[FixtureLine, ...]
+    source_checks: tuple[GateResult, ...]
+    source_quality: Mapping[str, object]
+    source_games: Mapping[str, object]
+    evaluate: Callable[[ModelSpec, ScopedFold, tuple[str, ...]], Mapping[str, HoldoutEvaluation]]
+    evaluate_holdout: Callable[[ModelSpec, str, tuple[ScopedFold, ...]], HoldoutEvaluation]
+
+
+def _nba_odr_source_checks(seasons: Mapping[str, NBASeasonArchive]) -> tuple[tuple[GateResult, ...], dict]:
+    checks, quality = [], {}
+    for season, archive in seasons.items():
+        inventory = _nba_odr_inventory_evidence(archive)
+        if inventory["available_team_schedules"] or inventory["available_game_summaries"]:
+            raise ValueError("NBA v2 independent source inventory conflicts with the approved missing-source roles")
+        paired_games = len(archive.games)
+        quality[season] = {
+            "snapshot_sha256": archive.pin.gzip_sha256, "snapshot_byte_length": archive.pin.gzip_byte_length,
+            "paired_games": paired_games, "paired_team_rows": 2 * paired_games,
+            "paired_source_days": len(archive.games_by_day), "rebuild_verdict": VERDICT_NOT_ASSESSABLE,
+            **inventory,
+        }
+        checks.extend((
+            _check("A", f"provider_schema_reload/{season}", 1, 1, "gte", 1, 1,
+                   source=_NBA_REPORT, unit="pinned NBA season archives"),
+            _check("A", f"paired_official_schedule/{season}", paired_games, inventory["required_game_summaries"],
+                   "gte", paired_games, 1, source=_NBA_REPORT, unit="paired NBA games"),
+            _report_check(GateResult("A", f"independent_espn_snapshot_rebuild/{season}", VERDICT_NOT_ASSESSABLE,
+                                     tuple((field, str(inventory[field])) for field in (
+                                         "available_team_schedules", "required_team_schedules",
+                                         "available_game_summaries", "required_game_summaries",
+                                         "teams_equal", "injuries_equal", "inventory_sha256",
+                                     ))), source=_NBA_REPORT, denominator=paired_games, unit="paired NBA games",
+                          required=True, reason=inventory["reason"]),
+        ))
+    return tuple(checks), quality
+
+
+def _nba_odr_scoring_inputs(
+    plan: NBAODRPlan, content_by_season: Mapping[str, bytes], deadline: Callable[[], bool],
+) -> _NBAODRReplay:
+    """Prepare keyed contracts and callbacks after the caller verifies the managed binding."""
+    from polymarket_alpha_lab.papersim.optimize.nba_odr import NBA_ODR_LINES, load_nba_odr_archives
+
+    if not isinstance(plan, NBAODRPlan) or not callable(deadline):
+        raise ValueError("NBA v2 replay requires its sealed plan and deadline")
+    if deadline():
+        raise _DeadlineExpired
+    seasons = load_nba_odr_archives(content_by_season)
+    cohort = _nba_odr_cohort(seasons)
+    if cohort != plan.cohort:
+        raise ValueError("NBA v2 scoring source does not match the reserved fixture identities and clocks")
+    source_checks, quality = _nba_odr_source_checks(seasons)
+    records = (*cohort.search_records, *cohort.holdout_records)
+    lines, source_games = [], {}
+    for archive in seasons.values():
+        for game in archive.games:
+            contracts = {}
+            for target, (line, order) in NBA_ODR_LINES.items():
+                outcome = order.index(game.settled_side(target))
+                observation_id = f"{game.event_key}/{target}"
+                lines.append(FixtureLine(
+                    game.event_key, target, target, observation_id, order, outcome, target, line,
+                    actual_total=game.total, actual_margin=game.margin,
+                    home_team=game.home_team, away_team=game.away_team,
+                ))
+                contracts[target] = {"market_type": target, "line": line, "line_key": target,
+                                     "observation_id": observation_id, "class_order": order,
+                                     "outcome_index": outcome, "realized_side": order[outcome]}
+            source_games[game.event_key] = {
+                "source_identity": game.source_identity, "source_event_key": game.event_key,
+                "source_day": _iso(game.source_day), "label_day": _iso(game.label_day),
+                "available_at": None if game.available_at is None else _iso(game.available_at),
+                "started": _iso(game.started), "retrieved_at": _iso(archive.retrieved_at),
+                "home": game.home_team, "away": game.away_team, "neutral": game.neutral,
+                "home_points": game.home_points, "away_points": game.away_points,
+                "actual_total": game.total, "actual_margin": game.margin, "contracts": contracts,
+            }
+
+    family = _historical_family(_NBA_ODR_FAMILY_ID)
+    predict = _nba_family_evaluator(family, lines, deadline)
+    search_folds = {fold.block_id: fold for fold in plan.search_folds}
+    holdout_folds = {fold.block_id: fold for fold in plan.holdout_folds}
+    specs = {trial.spec_sha256: trial.spec.model_version() for trial in plan.trials[:_NBA_ODR_GRID_SIZE]}
+
+    def scheduled_spec(spec):
+        if not isinstance(spec, ModelSpec) or specs.get(spec.spec_sha256()) != spec.model_version():
+            raise ValueError("NBA v2 replay spec does not match the approved catalog")
+
+    def scope(fold):
+        if deadline():
+            raise _DeadlineExpired
+        archive = seasons[fold.history_partition]
+        games = archive.games_by_day[fold.source_day]
+        if {game.event_key for game in games} != set(fold.test_keys):
+            raise ValueError("NBA v2 replay test keys must identify one whole source day")
+        return replace(
+            fold, nba_fixtures=MappingProxyType({game.event_key: game.prediction_fixture() for game in games}),
+            _nba_history=freeze_value(archive.history_at(fold.source_day, fold.train_keys)),
+        )
+
+    @lru_cache(maxsize=1)
+    def search_scope(block_id):
+        return scope(search_folds[block_id])
+
+    @lru_cache(maxsize=_NBA_ODR_HOLDOUT_DAYS)
+    def holdout_scope(block_id):
+        return scope(holdout_folds[block_id])
+
+    holdout_predict = _historical_holdout_evaluator(
+        lambda spec, fold, mask: predict(spec, holdout_scope(fold.block_id), mask),
+    )
+
+    def evaluate(spec, fold, targets):
+        scheduled_spec(spec)
+        if search_folds.get(fold.block_id) != fold or targets != _NBA_ODR_TARGETS:
+            raise ValueError("NBA v2 search requires one registered outer fold with both targets")
+        return predict(spec, search_scope(fold.block_id), targets)
+
+    def evaluate_holdout(spec, target, folds):
+        scheduled_spec(spec)
+        if target not in _NBA_ODR_TARGETS or folds != plan.holdout_folds:
+            raise ValueError("NBA v2 holdout replay requires its fixed causal suffix and one target")
+        return holdout_predict(spec, target, folds)
+
+    return _NBAODRReplay(records, tuple(lines), source_checks, freeze_value(quality), freeze_value(source_games),
+                         evaluate, evaluate_holdout)
 
 
 def _historical_club(family, protocol, inventories, archives, deadline):
@@ -5756,6 +6258,8 @@ def execute_optimization_run(
     per call. Its outcome, proposals, and rejection records inform the managed
     publisher, which owns the final receipt, transaction, and committed state.
     """
+    if schedule_id == NBA_ODR_SCHEDULE_ID:
+        raise ValueError(_NBA_ODR_REGISTRATION_REQUIRED)
     _require_hex(code_commit, 40, "code_commit")
     data_cutoff = _aware(data_cutoff, "data_cutoff")
     if type(random_seed) is not int or not callable(deadline):

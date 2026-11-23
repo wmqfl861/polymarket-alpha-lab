@@ -30,7 +30,8 @@ from tests.papersim_mo6_synthetic import (
     run_coin,
     theta_spec,
 )
-from polymarket_alpha_lab.papersim.optimize import runner, scorecard as scorecard_mod, search
+from polymarket_alpha_lab.papersim.optimize import nba_odr, runner, scorecard as scorecard_mod, search
+from polymarket_alpha_lab.papersim.optimize.families.nba import NBA_PACE_EFFICIENCY
 from polymarket_alpha_lab.papersim.optimize.runner import (
     DataIntegrityError,
     FixtureLine,
@@ -4405,3 +4406,219 @@ def test_international_source_conflicts_fail_before_model_callbacks(mode, expect
     with pytest.raises(ValueError, match=expected):
         execute_optimization_run(**dict(inputs, records=records, fixture_lines=lines), evaluate=unopened,
                                  evaluate_holdout=unopened, build_candidate_spec=unopened)
+
+
+def _odr_policy(*, moneyline=None, totals=None):
+    baseline = NBA_PACE_EFFICIENCY.baseline_spec()
+    registry = {}
+    for target, spec in (("moneyline", moneyline or baseline), ("totals", totals or baseline)):
+        lineage = f"{baseline.family}/{target}"
+        registry[lineage] = RegistryComparison(
+            LineageRoles(lineage, baseline.spec_sha256(), spec.spec_sha256()), spec,
+        )
+    return PolicyContext(STARTED_AT, registry, watermark="synthetic-watermark")
+
+
+@pytest.fixture
+def odr_metadata(monkeypatch):
+    from collections import Counter
+
+    teams = tuple(nba_odr.espn_nba.NBA_TEAMS)
+    pairs = tuple(zip(teams[::2], teams[1::2], strict=True))
+    metadata, membership_rows = {}, []
+    event_id = 0
+
+    def counts(total, group_count):
+        quotient, remainder = divmod(total, group_count)
+        return [quotient + (index < remainder) for index in range(group_count)]
+
+    def dates(first, last, opening, day_count):
+        rest = tuple(first + dt.timedelta(days=offset) for offset in range(3, (last - first).days))
+        return (*opening, *rest[:day_count - 4], last)
+
+    def season(season_id, days, per_day):
+        nonlocal event_id
+        pin = nba_odr.NBA_ODR_ARCHIVE_PINS[season_id]
+        last_team_days = {}
+        rows = []
+        for day, count in zip(days, per_day, strict=True):
+            for _ in range(count):
+                home, away = pairs[event_id % len(pairs)]
+                event_id += 1
+                rest_home, rest_away = (
+                    None if team not in last_team_days else (day - last_team_days[team]).days
+                    for team in (home, away)
+                )
+                row = nba_odr.NBAArchiveEvent(
+                    season=season_id,
+                    event_id=str(event_id),
+                    season_source_sha256=pin.gzip_sha256,
+                    source_day=day,
+                    label_day=day,
+                    started=nba_odr.source_day_start_utc(day) + dt.timedelta(hours=19),
+                    home_team=home,
+                    away_team=away,
+                    neutral=False,
+                    rest_home=rest_home,
+                    rest_away=rest_away,
+                )
+                rows.append(row)
+                membership_rows.append((day.isoformat(), season_id, row.event_id))
+                last_team_days.update(dict.fromkeys((home, away), day))
+        return nba_odr.NBASeasonMetadata(pin, pin.retrieved_at, tuple(rows), nba_odr.NBA_ODR_INDEPENDENT_ESPN)
+
+    prior, recent = nba_odr.NBA_ODR_ARCHIVE_PINS.values()
+    prior_opening, prior_count = zip(*prior.training_only, strict=True)
+    recent_opening, recent_count = zip(*recent.training_only, strict=True)
+    metadata[prior.season] = season(
+        prior.season, dates(prior.first_day, prior.last_day, prior_opening, 163),
+        [*prior_count, *counts(1_214, 160)],
+    )
+    last_search = nba_odr.NBA_ODR_HOLDOUT_START - dt.timedelta(days=1)
+    tail = tuple(nba_odr.NBA_ODR_HOLDOUT_START + dt.timedelta(days=offset) for offset in range(39) if offset != 2)
+    metadata[recent.season] = season(
+        recent.season, (*dates(recent.first_day, last_search, recent_opening, 126), *tail),
+        [*recent_count, *counts(910, 123), 9, *counts(295, 37)],
+    )
+    membership_rows.sort()
+    boundary = nba_odr.NBA_ODR_HOLDOUT_START.isoformat()
+    groups = {"all": membership_rows, "search": [row for row in membership_rows if row[0] < boundary],
+              "holdout": [row for row in membership_rows if row[0] >= boundary]}
+    digests = {}
+    for scope, rows in groups.items():
+        per_day = sorted(Counter(day for day, _, _ in rows).items())
+        digests[scope] = tuple(sha256(runner._canonical_json(value)).hexdigest() for value in (rows, per_day))
+    monkeypatch.setattr(runner, "_NBA_ODR_MEMBERSHIP", digests)
+    monkeypatch.setattr(nba_odr, "load_nba_odr_metadata", lambda content: metadata)
+    return metadata
+
+
+def test_odr_metadata_plan_pins_days_full_specs_and_order_without_opening_results(odr_metadata, monkeypatch):
+    def unopened(*args, **kwargs):
+        pytest.fail("metadata planning accessed scores or inference")
+
+    monkeypatch.setattr(nba_odr, "load_nba_odr_archives", unopened)
+    monkeypatch.setattr(type(NBA_PACE_EFFICIENCY), "fit", unopened)
+    monkeypatch.setattr(type(NBA_PACE_EFFICIENCY), "predict", unopened)
+    contexts = dict.fromkeys(NBA_PACE_EFFICIENCY.targets(), "fixture_context")
+    plan = runner.build_nba_odr_plan(content_by_season={}, code_commit=CODE_COMMIT,
+                                     policy_context=_odr_policy(), model_contexts=contexts)
+    metadata = json.loads(plan.metadata_bytes)
+    rows = json.loads(plan.plan_bytes)
+
+    assert metadata["membership"]["all"]["games"] == 2_460
+    assert metadata["membership"]["search"]["days"] == len(plan.cohort.search_group_ids) == 289
+    assert metadata["membership"]["holdout"]["games"] == 304
+    assert metadata["first_holdout_boundary"] == "2026-03-05T05:00:00Z"
+    assert metadata["holdout_without_first_group"] == {"days": 37, "games": 295}
+    assert len(plan.holdout_folds) == 38
+    assert len(rows) == len(plan.trials) == 4_811 and sum(len(row[-1]) for row in rows) == 9_622
+    assert len({row[2] for row in rows}) == len(plan.search_folds) == 283
+    assert len({tuple(row[3:6]) for row in rows}) == 4_811
+    assert all(row[-1] == ["moneyline", "totals"] for row in rows)
+    assert len(metadata["ordered_specs"]) == 17
+    assert all(sha256(row["canonical_spec"].encode()).hexdigest() == row["spec_sha256"]
+               for row in metadata["ordered_specs"])
+    assert plan.plan_ref == runner.SourceArtifactRef(sha256(plan.plan_bytes).hexdigest(), len(plan.plan_bytes))
+    assert plan.metadata_ref == runner.SourceArtifactRef(sha256(plan.metadata_bytes).hexdigest(), len(plan.metadata_bytes))
+    for season in odr_metadata.values():
+        first = next(fold for fold in plan.search_folds if fold.history_partition == season.season)
+        assert tuple(first.train_block_ids) == tuple(day.isoformat() for day, _ in season.pin.training_only)
+        assert search.nested_fold_ids(first, plan.search_folds) == ()
+    assert all(fold.block_id not in plan.training_only_group_ids for fold in plan.search_folds)
+    assert plan.holdout_folds[2].cutoff == dt.datetime(2026, 3, 8, 5, tzinfo=UTC)
+    assert plan.holdout_folds[3].cutoff == dt.datetime(2026, 3, 9, 4, tzinfo=UTC)
+
+    family = NBA_PACE_EFFICIENCY
+    _, catalogs, _ = runner._nba_odr_catalogs(family, _odr_policy(), contexts)
+    full = plan.trials
+    for altered, reason in ((full[:-1], "exactly 4,811"), ((*full, full[-1]), "exactly 4,811"),
+                            ((full[0], full[0], *full[2:]), "differs"),
+                            ((replace(full[0], targets=("totals",)), *full[1:]), "target mask"),
+                            ((replace(full[0], fold_sha256="0" * 64), *full[1:]), "differs")):
+        with pytest.raises(ValueError, match=reason):
+            runner._nba_odr_plan_bytes(plan.search_folds, altered, catalogs["moneyline"], contexts["moneyline"])
+
+
+def test_odr_plan_refuses_changed_comparator_version_grid_or_context():
+    baseline = NBA_PACE_EFFICIENCY.baseline_spec()
+    version_change = replace(baseline, legacy_model_version="another-version")
+    changed_grid = runner._nba_spec_builder(baseline)({**baseline.params, "half_life": 10.0})
+    contexts = dict.fromkeys(NBA_PACE_EFFICIENCY.targets(), "fixture_context")
+    for policy, fit_contexts, reason in (
+        (_odr_policy(totals=version_change), contexts, "same ordered full model specs"),
+        (_odr_policy(moneyline=changed_grid, totals=changed_grid), contexts, "approved ordered 17-point grid"),
+        (_odr_policy(), {**contexts, "totals": "different-fit"}, "shared frozen model context"),
+    ):
+        with pytest.raises(ValueError, match=reason):
+            runner._nba_odr_catalogs(NBA_PACE_EFFICIENCY, policy, fit_contexts)
+
+
+def test_odr_protocol_and_user_supplied_budget_cannot_authorize_execution():
+    family = NBA_PACE_EFFICIENCY
+    protocol = runner.nba_odr_historical_protocol(runner.SourceArtifactRef("1" * 64, 1))
+    assert protocol["budget"] == {"max_trials": 4_811, "time_budget_seconds": 3_600, "terminal_reserve_seconds": 60}
+    assert protocol["schedule_id"] == runner.NBA_ODR_SCHEDULE_ID
+    assert runner.historical_protocol(family)["schedule_id"] == "mo6-nba-espn-november-suffix-v1"
+
+    def unopened(*args):
+        pytest.fail("an unbound request reached a callback")
+
+    with pytest.raises(ValueError, match="verified managed registration binding"):
+        runner.historical_run_arguments(family=family, manifest={"schema_version": 1, "protocol": protocol,
+                                                                 "sources": []},
+                                        source_artifacts={}, deadline=unopened)
+    arguments = {"family": family, "records": (), "fixture_lines": (), "holdout_group_ids": (),
+                 "evaluate": unopened, "evaluate_holdout": unopened, "data_cutoff": nba_odr.NBA_ODR_AS_OF,
+                 "random_seed": 20261120, "code_commit": CODE_COMMIT, "policy_context": _odr_policy(),
+                 "deadline": unopened}
+    with pytest.raises(ValueError, match="verified managed registration binding"):
+        runner.execute_optimization_run(**arguments, schedule_id=runner.NBA_ODR_SCHEDULE_ID)
+    with pytest.raises(ValueError, match="within the registered cap"):
+        runner.execute_optimization_run(**arguments, max_trials=4_811)
+
+
+def test_odr_scoring_inputs_keep_holdout_lazy_and_require_season_specific_quality(odr_metadata, monkeypatch):
+    contexts = dict.fromkeys(NBA_PACE_EFFICIENCY.targets(), "fixture_context")
+    plan = runner.build_nba_odr_plan(content_by_season={}, code_commit=CODE_COMMIT,
+                                     policy_context=_odr_policy(), model_contexts=contexts)
+    seasons = {}
+    for season, metadata in odr_metadata.items():
+        fields = ("season", "event_id", "season_source_sha256", "source_day", "label_day", "started",
+                  "home_team", "away_team", "neutral", "rest_home", "rest_away", "available_at")
+        games = tuple(nba_odr.NBAArchiveGame(
+            **{key: getattr(event, key) for key in fields}, home_points=116, away_points=112,
+            home_possessions=100.0, away_possessions=90.0,
+        ) for event in metadata.games)
+        seasons[season] = nba_odr.NBASeasonArchive(metadata.pin, metadata.retrieved_at, games,
+                                                   metadata.independent_espn)
+    monkeypatch.setattr(nba_odr, "load_nba_odr_archives", lambda content: seasons)
+    calls = []
+
+    def evaluator(family, lines, deadline):
+        def evaluate(spec, fold, targets):
+            calls.append((fold.block_id, targets))
+            history = runner.nba_history_at(fold=fold)
+            assert history["season"] == fold.history_partition and not history["injuries"]
+            assert all(row["date"] < fold.block_id for team in history["teams"].values() for row in team["games"])
+            assert set(fold.nba_fixtures) == set(fold.test_keys)
+            return dict.fromkeys(targets, HoldoutEvaluation(()))
+
+        return evaluate
+
+    monkeypatch.setattr(runner, "_nba_family_evaluator", evaluator)
+    replay = runner._nba_odr_scoring_inputs(plan, {}, lambda: False)
+    assert calls == []
+    spec, fold = plan.trials[0].spec, plan.search_folds[0]
+    with pytest.raises(ValueError, match="both targets"):
+        replay.evaluate(spec, fold, ("moneyline",))
+    replay.evaluate(spec, fold, ("moneyline", "totals"))
+    assert calls == [(fold.block_id, ("moneyline", "totals"))]
+    replay.evaluate_holdout(plan.trials[1].spec, "moneyline", plan.holdout_folds)
+    replay.evaluate_holdout(spec, "moneyline", plan.holdout_folds)
+    assert calls[1:39] == calls[39:] == [(fold.block_id, ("moneyline",)) for fold in plan.holdout_folds]
+    assert all(row.outcome_index == 1 and row.actual_total == 228 for row in replay.fixture_lines)
+    required = {check.check for check in replay.source_checks if check.verdict == runner.VERDICT_NOT_ASSESSABLE
+                and ("required", "true") in check.numbers}
+    assert required == {f"independent_espn_snapshot_rebuild/{season}" for season in seasons}
+    assert all(row["teams_equal"] is None and row["injuries_equal"] is None for row in replay.source_quality.values())
