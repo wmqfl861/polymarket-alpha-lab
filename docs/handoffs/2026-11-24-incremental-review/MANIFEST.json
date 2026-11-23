@@ -1,0 +1,169 @@
+{
+ "format": "handoff-manifest-v1",
+ "directory": "docs/handoffs/2026-11-24-incremental-review",
+ "reviewed_commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+ "excluded": [
+  "03-local-agent-prompt.md",
+  "MANIFEST.json",
+  "MANIFEST.sha256"
+ ],
+ "file_count": 31,
+ "total_bytes": 150512,
+ "files": [
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/01-review-report.md",
+   "bytes": 39047,
+   "sha256": "252158abc70bb6f60cadf85411b8a164fc82c7225573639ee23a9ec626d9a3bb"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md",
+   "bytes": 18733,
+   "sha256": "2739eb6993ad50a5236be2f124e96c94b3a06c832877dcead0ee4b012b961921"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/README.md",
+   "bytes": 4329,
+   "sha256": "fae956d427555e9d07b94f50eb40b448bf38541851ec68ed909a58971f407a9c"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/README.md",
+   "bytes": 8641,
+   "sha256": "57c72b0a0b53d3e2357ce848f7b214793745b34b6549d46250d85c4ae276b996"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan.py",
+   "bytes": 6701,
+   "sha256": "b71adb796c92f80feff6d52b6dad89220745305814066a55cf6bb054cbd9b3ab"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan_output.txt",
+   "bytes": 3617,
+   "sha256": "e50247ee8dc5be6b9b2a9695102cfdbc7a68371d9b6fe92dd9b189a705212f59"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/address_occurrence_diff.py",
+   "bytes": 3204,
+   "sha256": "1561d5518cd7f36864fe67356ca8a235b98b2190fdf5630917962e0c0e384f3e"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/address_occurrence_output.txt",
+   "bytes": 1091,
+   "sha256": "28806c9ed9e8b1c2a44b77cea942287146ad5ca83bb75a4813c4507c8262e74a"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/ci_main_runs.sh",
+   "bytes": 1993,
+   "sha256": "f830a041bac95221df1bcefcd682e8b0fbc3f0a6da447be84fb773fd046fa988"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/ci_main_runs.txt",
+   "bytes": 3341,
+   "sha256": "5385bd506e347dc2628b5744bcc332a15e4f056cbeede9a293cddb120ae37550"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/ci_main_tip_jobs.txt",
+   "bytes": 2488,
+   "sha256": "65f604bfca60ad7d10b9c9b144edb6e7821f39ff2964b38f2a681ad145c20406"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/ci_merge_audit.sh",
+   "bytes": 2618,
+   "sha256": "48292f1635ec4e136ead61968d19c4296db6e3125b9fd3beab44354bb0d30968"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/ci_merge_audit.tsv",
+   "bytes": 3709,
+   "sha256": "3e6602d960cd268e4175670347d7d10855e75c2e62701d62bdd03071b4d38fa1"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/ci_native_dispatch_runs.tsv",
+   "bytes": 1131,
+   "sha256": "87568335961763dab293471ea128630c4007fa49e82ae8a19cae309f051a0e41"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/collect_local.sh",
+   "bytes": 14709,
+   "sha256": "024f7b367d7ae870f5cd6cc40535eb635a36b8574d723efac0612068b2784534"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/commit_identity_domains.txt",
+   "bytes": 505,
+   "sha256": "a1d3869b664765eff53eae3e39bbf5022ef4e298c147cb90228a291c2a217184"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/frozen_content_check.txt",
+   "bytes": 180,
+   "sha256": "e0f5fda77cd388d3f06781d821570ec0500fdcfe8b79481859f1dfcdf18403b2"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/main_delta.txt",
+   "bytes": 2629,
+   "sha256": "6456644af3e62f34dc11182459fc87e827c08636df26fe69a4ccfd5b7f474418"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/merge_tree_equivalence.txt",
+   "bytes": 848,
+   "sha256": "42bdf3990d27f78961c257c9d2d42fc864cc5cc7f111deb0e31458fdb88324ec"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/opening_checks.txt",
+   "bytes": 2705,
+   "sha256": "0d89f4571e137fa220576d0e4ee55bc1d5d51391711d16aeb3fc8e5c1f2030a8"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/p1_fix_locations.txt",
+   "bytes": 2703,
+   "sha256": "b4b51377df0233f6077659e5b57c9c56992a872530395a144d25b9df81653829"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/plan_reference_scan.py",
+   "bytes": 2762,
+   "sha256": "c20be169a9b410a6f751fa99eee99ba2bf5e08f650def5d740b0988afbc76388"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/plan_reference_scan_output.txt",
+   "bytes": 1438,
+   "sha256": "9b7428307dcd877367761ee691333a75c2e19e78fea1771cf5ed5368449c12c0"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/pr_metadata.tsv",
+   "bytes": 2210,
+   "sha256": "9a7c4b98ccb1f15410e28f1bab3900474a267aa3e3691bcf3b87aa458ac7182d"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/python_version_check.txt",
+   "bytes": 597,
+   "sha256": "14e3979313600924b8b06e22f0b60eb9edc657a02be702e0642575982ca9e5d4"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/retrospective_followups.txt",
+   "bytes": 1812,
+   "sha256": "c428795859c7354818e18e37a1c44efe6098afb69cbb85d571bd5751786a21e0"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/sports_handoff_verification.txt",
+   "bytes": 950,
+   "sha256": "05054305403fe85c625611bfa78d8ffddcc94d92319c7054716bdbf030fff0d0"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/sports_runtime_inventory.txt",
+   "bytes": 7587,
+   "sha256": "ce5f35109a73679ccec74269fdc049926024db425a3fc12cfb77621dcf53e49c"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/test_weakening_scan.py",
+   "bytes": 5775,
+   "sha256": "dfebe6186983895b2849c7d07904756f146bf32f65e2710557a8d621f4e9c32b"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/test_weakening_scan_output.txt",
+   "bytes": 791,
+   "sha256": "57c5ee3060c6a32a87b85e19be30bfbdde61845bd97c0a0401547bda206ea579"
+  },
+  {
+   "path": "docs/handoffs/2026-11-24-incremental-review/evidence/variant_quotes_trace.txt",
+   "bytes": 1668,
+   "sha256": "f7b13d121bfb1a27f3f2ed4e60ab02dd8dfec1879eb5a3345d5770e92dd5fdea"
+  }
+ ]
+}

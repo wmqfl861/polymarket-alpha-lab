@@ -1,0 +1,136 @@
+# branch handoff/sports-runtime-20261123 at bcce1b17f7263ab89859febfcb56188c295ab371 (parent ab6edff2d64ac8aa5c2831d748b8730b63f8312d)
+files added against main: 71;  71 files changed, 29257 insertions(+)
+scripts: 27 Python files, 16687 lines
+legacy:  4 Python files, 1539 lines
+tests:   9 Python files, 1694 lines
+systemd: 7 services, 9 timers
+workflow files changed by the branch: 0
+DELIVERY_PLAN.md / AGENTS.md changed by the branch: 0
+
+# mentions of the runtime on main (football_notify|weixin|pal-football|pal-sports|sports_portfolio|herdr|hermes), files: 0
+
+# database access
+uses of the project's DSN validator (validate_local_postgres_dsn|local_postgres_dsn|project_postgres): 0 files
+direct psycopg.connect calls:
+docs/paper-sim/runtime/scripts/football_store.py:244:    connection = psycopg.connect(
+read-only use of the managed paper-sim database:
+docs/paper-sim/runtime/scripts/basketball_forward.py:363:        with store_psycopg.connect_managed(root) as native:
+docs/paper-sim/runtime/scripts/football_admission.py:369:        with store_psycopg.connect_managed(project_root) as native:
+tables created by code (CREATE TABLE ... in Python sources): 32
+    football_notify.attempt
+    football_notify.basketball_daily_study
+    football_notify.basketball_forward_result
+    football_notify.basketball_forward_result_retry
+    football_notify.basketball_forward_snapshot
+    football_notify.basketball_forward_study
+    football_notify.binding
+    football_notify.college_basketball_day
+    football_notify.college_basketball_forecast
+    football_notify.digest_day
+    football_notify.fixture
+    football_notify.fixture_alias
+    football_notify.football_admission_history
+    football_notify.football_admission_state
+    football_notify.football_admission_study
+    football_notify.football_domestic_study
+    football_notify.football_forward_chat_watch
+    football_notify.football_forward_close
+    football_notify.football_forward_contract
+    football_notify.football_forward_observation
+    football_notify.football_forward_recommendation
+    football_notify.football_forward_result
+    football_notify.football_forward_work
+    football_notify.football_learning_study
+    football_notify.job
+    football_notify.legacy_acceptance
+    football_notify.native_binding
+    football_notify.pregame_round
+    football_notify.scan_state
+    football_notify.source_cache
+    football_notify.sports_portfolio_account
+    football_notify.sports_portfolio_position
+files containing DDL:
+    docs/paper-sim/runtime/scripts/basketball_college_forward.py:3
+    docs/paper-sim/runtime/scripts/basketball_forward.py:6
+    docs/paper-sim/runtime/scripts/football_admission.py:3
+    docs/paper-sim/runtime/scripts/football_forward.py:9
+    docs/paper-sim/runtime/scripts/football_learning.py:2
+    docs/paper-sim/runtime/scripts/football_store.py:22
+    docs/paper-sim/runtime/scripts/sports_portfolio.py:4
+    docs/paper-sim/runtime/scripts/sports_runtime.py:1
+
+# execution-path keywords (order placement, signing, wallets): matches outside comments/tests
+0
+# HTTP requests with a method other than GET:
+docs/paper-sim/runtime/scripts/football_feed.py:868:        request = Request(url, method="POST", data=body, headers=headers)
+docs/paper-sim/runtime/scripts/football_feed.py:874:        data, fetched = _public(pm.CLOB_BASE_URL + "/books", public_budget(deadline), clock, _BooksRequest(t
+# third-party hosts named in the scripts:
+          7 https://polymarket.com
+          2 https://www.fotmob.com
+          1 https://www.football-data.co.uk
+          1 https://www.euroleaguebasketball.net
+          1 https://www.easycredit-bbl.de
+          1 https://www.betexplorer.com
+          1 https://www
+          1 https://site.api.espn.com
+          1 https://r.jina.ai
+          1 https://polymarket
+          1 https://github.com
+          1 https://api.vtb-league.com
+          1 https://api.basketball-bundesliga.de
+          1 https://api-live.euroleague.net
+
+# process launches
+docs/paper-sim/runtime/legacy/window_runner.py:386:        with subprocess.Popen(
+docs/paper-sim/runtime/scripts/football_daily.py:423:        result = subprocess.run(["/usr/bin/systemctl", "--user", "start", "--no-block", *units],
+docs/paper-sim/runtime/scripts/football_daily.py:1131:        result = subprocess.run(["/usr/bin/loginctl", "show-user", store.ROLE, "--property=Linge
+docs/paper-sim/runtime/scripts/weixin_delivery.py:175:        result = subprocess.run(
+# the launcher line in the delivery module:
+docs/paper-sim/runtime/scripts/weixin_delivery.py:221:              "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", source],
+docs/paper-sim/runtime/scripts/weixin_delivery.py:290:& zcode.cmd {resume_argument}--mode yolo --workflow-mode disabled --toolsearch-mode off --no-browser --no-color --json --prompt $paperFootballTask
+# dynamic code loading:
+docs/paper-sim/runtime/scripts/football_legacy.py:28:    exec(compile(source, str(path), "exec"), vars(module))
+# files written outside PostgreSQL:
+docs/paper-sim/runtime/legacy/window_runner.py:374:    descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}-")
+docs/paper-sim/runtime/legacy/window_runner.py:379:        os.replace(temporary, path)
+
+# owner binding scope string required by the code:
+docs/paper-sim/runtime/scripts/football_store.py:335:            or owner.get("scope") != "2026-11-22 current five fixtures / private simulated advice only"
+# admission policy version and its numbers:
+docs/paper-sim/runtime/scripts/football_admission.py:31:POLICY_VERSION = "football-admission-2026-11-19/wp-p3-wp-p4-v1"
+docs/paper-sim/runtime/scripts/football_admission.py:37:GATE_E_FIXTURES = {"elc": 12, "ere": 8}
+docs/paper-sim/runtime/scripts/football_admission.py:38:GATE_E_MAX_MAD = 0.06
+docs/paper-sim/runtime/scripts/football_admission.py:39:FULL_MATCHWEEKS = 2
+docs/paper-sim/runtime/scripts/sports_portfolio.py:19:OPENING_CASH_FEN = 1_000_000
+docs/paper-sim/runtime/scripts/sports_portfolio.py:23:BASIS_POINTS = {"low": 50, "medium": 100, "high": 150}
+# timers:
+    pal-football-learning-admission.timer: OnCalendar=*-*-* *:04/10:00 UTC
+    pal-football-learning-evidence.timer: OnCalendar=*-*-* *:*:12 UTC
+    pal-football-learning-study.timer: OnCalendar=*-*-* *:02/10:00 UTC
+    pal-football-notify-digest.timer: OnCalendar=*-*-* 08:00:00 Asia/Shanghai
+    pal-football-notify-scan.timer: OnCalendar=*-*-* *:00/10:00 UTC
+    pal-football-notify-tick.timer: OnCalendar=*-*-* *:*:00 UTC
+    pal-sports-paper-scan.timer: OnCalendar=*-*-* *:08/10:00 UTC
+    pal-sports-paper-settle.timer: OnCalendar=*-*-* *:*:43 UTC
+    pal-sports-paper-study.timer: OnCalendar=*-*-* *:04:20 UTC
+# runtime tests (static count, nothing executed):
+    test_correction_recovery.py: 9 test functions, 9 cases
+    test_focus_early.py: 5 test functions, 5 cases
+    test_football_focus.py: 9 test functions, 9 cases
+    test_lineup_history.py: 8 test functions, 30 cases
+    test_sports_value_producers.py: 6 test functions, 6 cases
+    test_weekend_football_model.py: 10 test functions, 10 cases
+# runtime scripts whose module name appears in no test file:
+    basketball_bbl
+    basketball_college
+    basketball_college_forward
+    basketball_forward
+    basketball_nba_ratings
+    basketball_nba_ratings_replay
+    football_admission
+    football_domestic_study
+    football_research
+    sports_runtime
+# a plan section the handoff cites that main does not have:
+docs/handoffs/2026-11-23-sports-runtime/research/README.md:11:FX-40、FX-44 的�
+    headings of section 87 on main: ### 87.1 PR ### 87.2 FX-

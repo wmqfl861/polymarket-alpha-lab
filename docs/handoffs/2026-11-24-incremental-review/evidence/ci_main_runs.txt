@@ -1,0 +1,48 @@
+# workflow runs on branch main created on or after 2026-11-21 (id | event | conclusion | started | head)
+## offline-verification.yml
+  44850802255 | push | success | 2026-11-21T01:32:48Z | 8cba9d37
+  44858594587 | push | success | 2026-11-21T02:57:08Z | 2bdc4ccc
+  44912190957 | push | cancelled | 2026-11-21T14:06:20Z | a3492ea6
+  44912306593 | push | success | 2026-11-21T14:07:40Z | cd53ce25
+  44936462096 | push | success | 2026-11-21T18:36:32Z | d2160593
+  44943072121 | push | success | 2026-11-21T19:50:24Z | 0c64a989
+  44950081206 | push | success | 2026-11-21T21:09:46Z | 01a3d6d2
+  44974619173 | push | success | 2026-11-22T02:07:44Z | 00199b24
+  44981897345 | push | success | 2026-11-22T03:43:11Z | 6d880008
+  45173749617 | push | success | 2026-11-23T12:22:52Z | ab6edff2
+## native-postgres.yml
+  44850802098 | push | success | 2026-11-21T01:32:48Z | 8cba9d37
+  44936462214 | push | success | 2026-11-21T18:36:32Z | d2160593
+  44950081115 | push | success | 2026-11-21T21:09:46Z | 01a3d6d2
+  44974619186 | push | success | 2026-11-22T02:07:44Z | 00199b24
+  45173749622 | push | success | 2026-11-23T12:22:52Z | ab6edff2
+  45195355725 | schedule | success | 2026-11-23T14:32:47Z | ab6edff2
+## research-paper.yml
+
+# offline-verification.yml, every run created on or after 2026-11-21: whole-run minutes (queue time included)
+   13.1 | 44849474414 | pull_request | success | 2026-11-21T01:19:20Z | 39c6c2e6
+   12.8 | 44850543464 | pull_request | success | 2026-11-21T01:30:14Z | 8c7b5365
+   12.6 | 44850802255 | push | success | 2026-11-21T01:32:48Z | 8cba9d37
+   14.6 | 44853537834 | pull_request | success | 2026-11-21T02:01:31Z | 26dfa2a0
+   12.8 | 44857462556 | pull_request | success | 2026-11-21T02:43:53Z | 8d41cba5
+   15.2 | 44858594587 | push | success | 2026-11-21T02:57:08Z | 2bdc4ccc
+   24.2 | 44859358224 | pull_request | success | 2026-11-21T03:06:06Z | 26dfa2a0
+   12.9 | 44869068160 | pull_request | success | 2026-11-21T05:03:44Z | f09850ba
+   12.8 | 44911055691 | pull_request | success | 2026-11-21T13:52:50Z | 9a38b628
+    1.6 | 44912190957 | push | cancelled | 2026-11-21T14:06:20Z | a3492ea6
+   15.4 | 44912306593 | push | success | 2026-11-21T14:07:40Z | cd53ce25
+   15.5 | 44918091022 | pull_request | success | 2026-11-21T15:14:07Z | c4791fb8
+   12.7 | 44920217381 | pull_request | success | 2026-11-21T15:38:01Z | 19103ccd
+   15.7 | 44928160743 | pull_request | success | 2026-11-21T17:05:53Z | 9647a3ef
+   18.9 | 44936462096 | push | success | 2026-11-21T18:36:32Z | d2160593
+   19.1 | 44941245957 | pull_request | success | 2026-11-21T19:30:03Z | 50267f7e
+   15.7 | 44943072121 | push | success | 2026-11-21T19:50:24Z | 0c64a989
+   19.2 | 44947875366 | pull_request | success | 2026-11-21T20:44:35Z | d362b510
+   15.8 | 44950081206 | push | success | 2026-11-21T21:09:46Z | 01a3d6d2
+   15.5 | 44968419459 | pull_request | success | 2026-11-22T00:48:33Z | b89120f2
+   20.7 | 44974619173 | push | success | 2026-11-22T02:07:44Z | 00199b24
+   15.9 | 44980320797 | pull_request | success | 2026-11-22T03:22:21Z | 8bb0dce7
+   15.4 | 44981897345 | push | success | 2026-11-22T03:43:11Z | 6d880008
+   15.8 | 45169585443 | pull_request | success | 2026-11-23T11:56:02Z | 2fbcd0d8
+   15.4 | 45173749617 | push | success | 2026-11-23T12:22:52Z | ab6edff2
+  successful runs: 24; shortest 12.6 min; longest 24.2 min

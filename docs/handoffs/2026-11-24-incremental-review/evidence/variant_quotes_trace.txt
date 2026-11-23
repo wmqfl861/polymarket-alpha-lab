@@ -1,0 +1,16 @@
+# main ab6edff2d64ac8aa5c2831d748b8730b63f8312d
+src/polymarket_alpha_lab/papersim/scan.py:304:    variant_quotes: str | list = "[]"
+src/polymarket_alpha_lab/papersim/store.py:613:    variant_quotes: str | list = '[]'
+src/polymarket_alpha_lab/papersim/store.py:639:        _require_json_list(self.variant_quotes, 'variant_quotes')
+src/polymarket_alpha_lab/papersim/store.py:1648:    variant_quotes: str | list = '[]'
+src/polymarket_alpha_lab/papersim/store.py:1662:        _require_json_list(self.variant_quotes, 'variant_quotes')
+src/polymarket_alpha_lab/papersim/scan.py:403:        variant_quotes=raw.get("variant_quotes", "[]"),
+src/polymarket_alpha_lab/papersim/scan.py:986:                variant_quotes=record.variant_quotes,
+src/polymarket_alpha_lab/papersim/store_psycopg.py:502:            candidate.median_probability, candidate.variant_quotes, candidate.input_payload,
+database/papersim/migrations/20261115000100_papersim_v2_core.sql:69:  variant_quotes jsonb not null default '[]'::jsonb,
+database/papersim/migrations/20261119210907_papersim_model_registry.sql:153:  variant_quotes jsonb not null default '[]'::jsonb
+# FX-40 draft 7f92e0356888785e7b1e1bc88c24ffd1edbe8ac7 writes the list form into the market pack:
+src/polymarket_alpha_lab/papersim/prepare.py:574:        return {**record, "construction": quote, "variant_quotes": [], "median_probability": None}
+src/polymarket_alpha_lab/papersim/prepare.py:577:            "variant_quotes": list(variants), "median_probability": median}
+# the local agent's own record of the failure:
+docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md:11:前两轮用市场包支持的数组形态输入 `v

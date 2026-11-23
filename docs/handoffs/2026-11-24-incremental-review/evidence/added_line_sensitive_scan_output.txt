@@ -1,0 +1,51 @@
+##### main: 2bdc4ccc -> ab6edff2
+base=2bdc4cccacc9 head=origin/main
+  email_benign: 1
+  wechat_id: 11
+    wechat_id	docs/paper-sim/design/d1-operation-recovery-plan.md:5	aaaaaaaaa-aaaaaaaa-aaaa-aaaa
+    wechat_id	docs/paper-sim/design/fx-42/documents.tsv:16	aaaaaaaa-aaaaaa-aaaa-aaaaaaa
+    wechat_id	docs/paper-sim/design/fx-42/documents.tsv:16	aaaaaaaa-aaaaaa-aaaa-aaaaaaa
+    wechat_id	docs/paper-sim/design/fx-42/documents.tsv:26	aaaaaaaaa-aaaaaaaa-a9-aaaaaa
+    wechat_id	docs/paper-sim/design/fx-42/documents.tsv:27	aaaaaaaaa-aaaaaaaa-a9-aaaaaa
+    wechat_id	docs/paper-sim/design/fx-42/documents.tsv:28	aaaaaaaaa-aaaaaaaa-a9-aaaaaa
+    wechat_id	docs/paper-sim/design/fx-42/documents.tsv:28	aaaaaaaaa-aaaaaaaa-aaaa-aaaa
+    wechat_id	docs/paper-sim/design/pr-118/offline_focus.xml:2	aaa_aaa-aaaaaaaaa_aaaaaaaaaa
+    wechat_id	docs/paper-sim/design/pr-118/offline_focus.xml:2	aaaaaaaa_aaaaaa_aaaaa-aaaaaa
+    wechat_id	src/polymarket_alpha_lab/papersim/optimize/runner.py:3706	aaaaaaa_aaaaaaaa_aaa_aaaaaaa
+    wechat_id	tests/test_papersim_optimize_runner.py:3666	aaaaaaa_aaaaaaaa_aaa_aaaaaaa
+##### handoff/sports-runtime-20261123 (vs merge-base ab6edff2)
+base=ab6edff2d64a head=origin/hando
+  email: 6
+  email_benign: 22
+  wechat_id: 5
+    wechat_id	docs/handoffs/2026-11-23-sports-runtime/research/fx41-nba-v2.patch:244	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	docs/handoffs/2026-11-23-sports-runtime/research/fx41-nba-v2.patch:1167	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/handoffs/2026-11-23-sports-runtime/research/fx41-nba-v2.patch:2862	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	docs/handoffs/2026-11-23-sports-runtime/research/fx41-nba-v2.patch:3900	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	docs/handoffs/2026-11-23-sports-runtime/research/fx41-nba-v2.patch:4042	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    email	docs/paper-sim/runtime/systemd/pal-football-learning-admission.timer:8	aaa-aaaaaaaa-aaaaaaaa@aaaaaaaaa.aaaaaaa
+    email	docs/paper-sim/runtime/systemd/pal-football-learning-evidence.timer:8	aaa-aaaaaaaa-aaaaaaaa@aaaaaaaa.aaaaaaa
+    email	docs/paper-sim/runtime/systemd/pal-football-learning-study.timer:8	aaa-aaaaaaaa-aaaaaaaa@aaaaa.aaaaaaa
+    email	docs/paper-sim/runtime/systemd/pal-sports-paper-scan.timer:8	aaa-aaaaaa-aaaaa@aaaaaaaaaa-aaaa.aaaaaaa
+    email	docs/paper-sim/runtime/systemd/pal-sports-paper-settle.timer:8	aaa-aaaaaa-aaaaa@aaaaaa.aaaaaaa
+    email	docs/paper-sim/runtime/systemd/pal-sports-paper-study.timer:8	aaa-aaaaaa-aaaaa@aaaaaaaaaa-aaaaa.aaaaaaa
+##### handoff/sports-fx40-20261123 (vs merge-base 00199b24)
+base=00199b24d38d head=origin/hando
+  (no matches)
+##### handoff/sports-fx44-20261123 (vs merge-base 00199b24)
+base=00199b24d38d head=origin/hando
+  (no matches)
+##### handoff/sports-fx41-nba-v2-20261123 (vs merge-base 6d880008)
+base=6d880008fc18 head=origin/hando
+  wechat_id: 5
+    wechat_id	src/polymarket_alpha_lab/papersim/nba_odr_registration.py:32	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	src/polymarket_alpha_lab/papersim/optimize/runner.py:2584	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	src/polymarket_alpha_lab/papersim/store_psycopg.py:3387	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	tests/test_papersim_nba_odr_registration.py:192	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	tests/test_papersim_nba_odr_registration.py:334	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+##### evidence/pr-114-final-9647a3ef68c18e5fd5356aeb81bf8df06976a433 (vs merge-base 9647a3ef)
+base=9647a3ef68c1 head=origin/evide
+  (no matches)
+##### evidence/pr-118-final-b89120f2fa79c6ecf5f371376fc00f1ccd10809c (vs merge-base b89120f2)
+base=b89120f2fa79 head=origin/evide
+  (no matches)
