@@ -1,0 +1,32 @@
+# first-parent merges 2bdc4cccacc925ea8e6569c8865b90c0b0c671e6..ab6edff2d64ac8aa5c2831d748b8730b63f8312d (commit, committer date, subject) and their size
+a3492ea66d3d9e18d62d1e8c4919582710124416 2026-11-21T22:06:17+08:00 Merge pull request #119 from wmqfl861/integrate/nov21-audit-packages
+     47 files changed, 3213 insertions(+)
+cd53ce25f65716e6151238beba253618caca7e98 2026-11-21T22:07:37+08:00 Merge pull request #116 from wmqfl861/fx18/b1-marking-11fb457c-20261120
+     2 files changed, 287 insertions(+), 4 deletions(-)
+d216059339dba9c3ca34d65813e9cf2ba98a0dd5 2026-11-22T02:36:29+08:00 Merge pull request #114 from wmqfl861/fix/mo6-native-evidence-fixtures-20261120
+     36 files changed, 17853 insertions(+), 925 deletions(-)
+0c64a98946dcbdb5ed550c5a57c0f6127837fb76 2026-11-22T03:50:22+08:00 Merge pull request #120 from wmqfl861/gov/nov21-audit-registration
+     17 files changed, 631 insertions(+), 81 deletions(-)
+01a3d6d208fb7a22886f3cc0b54f4b6499d83400 2026-11-22T05:09:43+08:00 Merge pull request #121 from wmqfl861/fix/nov21-fx38-fx39-step1
+     19 files changed, 2023 insertions(+), 264 deletions(-)
+00199b24d38d5d9334ec7eb07ca8141db33852da 2026-11-22T10:07:38+08:00 Merge pull request #118 from wmqfl861/m2/d1-public-market-settlement-recovery-20261121
+     53 files changed, 7186 insertions(+), 66 deletions(-)
+6d880008fc183a259298b6065ff6d5cb19b66fc3 2026-11-22T11:43:08+08:00 Merge pull request #122 from wmqfl861/docs/pr118-evidence-and-fx41-w45
+     22 files changed, 1112 insertions(+)
+ab6edff2d64ac8aa5c2831d748b8730b63f8312d 2026-11-23T20:22:49+08:00 Merge pull request #123 from wmqfl861/maintenance/consolidate-main-20261123
+     11 files changed, 735 insertions(+), 2 deletions(-)
+# total: 49 commits;  192 files changed, 32994 insertions(+), 1296 deletions(-)
+# source and tool files changed:
+    +455 -1 src/polymarket_alpha_lab/papersim/capture.py
+    +727 -374 src/polymarket_alpha_lab/papersim/cli.py
+    +675 -14 src/polymarket_alpha_lab/papersim/d1compare/acquire.py
+    +1126 -0 src/polymarket_alpha_lab/papersim/d1compare/operations.py
+    +335 -40 src/polymarket_alpha_lab/papersim/optimize/metrics.py
+    +126 -56 src/polymarket_alpha_lab/papersim/optimize/policy.py
+    +100 -1 src/polymarket_alpha_lab/papersim/optimize/registry.py
+    +4304 -263 src/polymarket_alpha_lab/papersim/optimize/runner.py
+    +5 -2 src/polymarket_alpha_lab/papersim/optimize/scorecard.py
+    +1224 -3 src/polymarket_alpha_lab/papersim/optimize/search.py
+    +388 -3 src/polymarket_alpha_lab/papersim/settle.py
+    +1944 -143 src/polymarket_alpha_lab/papersim/store_psycopg.py
+    +30 -11 tools/d1_compare.py

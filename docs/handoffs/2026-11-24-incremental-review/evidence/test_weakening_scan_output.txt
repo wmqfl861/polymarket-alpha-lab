@@ -1,0 +1,13 @@
+base=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 head=ab6edff2d64ac8aa5c2831d748b8730b63f8312d
+test python files: added=4 modified=17 deleted=0
+tests/test_papersim_capture_marks_native.py: tests 6 -> 10
+    skip markers/calls: 6 -> 8
+tests/test_papersim_d1compare_journal.py: tests 40 -> 49
+    skip markers/calls: 4 -> 6
+tests/test_papersim_optimize_cli.py: tests 14 -> 14
+    removed test: test_apply_pending_confirm_requires_human_actor_and_flag (had 6 checks)
+    removed test: test_apply_promote_without_config_for_retire_only (had 3 checks)
+    removed test: test_apply_promote_writes_the_handover_batch (had 3 checks)
+modified files: test functions 278 -> 460
+totals: removed tests=3 tests with fewer checks=0 new skip markers=4 new xfail markers=0
+added files: 4 with 53 test functions

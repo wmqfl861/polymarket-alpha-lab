@@ -1,0 +1,17 @@
+# manifest entries: 69; mismatches against git blobs:
+    0
+# research sources.tsv against the retained branches (tip, tree, base is ancestor of main, patch sha256)
+    fx40-prepare.patch: commit 7f92e035 tree==yes base_in_main==yes patch_sha256==yes
+    fx44-observation-bindings.patch: commit 3bc5a234 tree==yes base_in_main==yes patch_sha256==yes
+    fx41-nba-v2.patch: commit 256f8491 tree==yes base_in_main==yes patch_sha256==yes
+# merge simulation (git merge-tree --write-tree): clean or conflicting paths
+    main + sports-runtime: clean
+    main + fx40: clean
+    main + fx44: clean
+    main + fx41-nba-v2: clean
+    fx40 + fx44: clean
+    fx40 + fx41-nba-v2: clean
+    fx44 + fx41-nba-v2: clean
+# numbers the NBA v2 draft adds next to the registered trial cap
+    main: src/polymarket_alpha_lab/papersim/optimize/runner.py:2345:MAX_TRIALS = 2000
+    fx41: src/polymarket_alpha_lab/papersim/optimize/runner.py:2585:NBA_ODR_MAX_TRIALS = 4_811
