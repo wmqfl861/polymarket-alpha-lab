@@ -10,6 +10,16 @@ set -euo pipefail
 repo="$1"; out="$2"; mkdir -p "$out"
 g() { git -C "$repo" "$@"; }
 gg() { git -C "$repo" grep "$@" || true; }   # a search with no match is a result, not an error
+# Truncate each line to N characters and drop trailing blanks. GNU cut counts bytes and can split a multi-byte character.
+clip() {
+  python3 -I -c '
+import sys
+limit = int(sys.argv[1])
+for raw in sys.stdin.buffer:
+    line = raw.decode("utf-8", errors="replace").rstrip("\n")
+    sys.stdout.buffer.write((line[:limit].rstrip() + "\n").encode("utf-8"))
+' "$1"
+}
 BASE=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6
 MAIN=ab6edff2d64ac8aa5c2831d748b8730b63f8312d
 SPORTS=bcce1b17f7263ab89859febfcb56188c295ab371
@@ -37,7 +47,7 @@ P=src/polymarket_alpha_lab/papersim
     p1=$(g rev-parse "$m^1"); h=$(g rev-parse "$m^2")
     contains=no; g merge-base --is-ancestor "$p1" "$h" && contains=yes
     same=no; [ "$(g rev-parse "$m^{tree}")" = "$(g rev-parse "$h^{tree}")" ] && same=yes
-    echo "${m:0:8} | ${h:0:8} | $contains | $same | $(g log -1 --format=%s "$m" | cut -c1-60)"
+    echo "${m:0:8} | ${h:0:8} | $contains | $same | $(g log -1 --format=%s "$m" | clip 60)"
   done
 } > "$out/merge_tree_equivalence.txt"
 
@@ -53,24 +63,24 @@ P=src/polymarket_alpha_lab/papersim
 # 4. where the P1 fixes live on main
 {
   echo "# FX-38 / FX-39 step 1 / O-5 on main $MAIN (path:line: text)"
-  gg -n -E '_PROMOTION_UNAVAILABLE|_PROMOTION_CONCLUSIONS|def _optimize_close_deviation|def _optimize_close_sample|def _optimize_close_prices|def _optimize_forward_comparison|pricing_spec_mismatch' "$MAIN" -- "$P/cli.py" | sed "s/^$MAIN://" | cut -c1-170
-  gg -n -E 'class CloseDeviationSample|def _close_deviation_gap|def close_deviation_metrics|^CLOSE_DEVIATION_MIN' "$MAIN" -- "$P/optimize/policy.py" | sed "s/^$MAIN://" | cut -c1-170
-  gg -n -E '^def test_native_clv|def test_apply_refuses_fresh_and_replayed_promotions|def test_apply_pending_confirm_is_unavailable_with_any_actor|def test_native_managed_cli_seals_and_replays_calibration_nonconvergence' "$MAIN" -- tests | sed "s/^$MAIN://" | cut -c1-170
+  gg -n -E '_PROMOTION_UNAVAILABLE|_PROMOTION_CONCLUSIONS|def _optimize_close_deviation|def _optimize_close_sample|def _optimize_close_prices|def _optimize_forward_comparison|pricing_spec_mismatch' "$MAIN" -- "$P/cli.py" | sed "s/^$MAIN://" | clip 170
+  gg -n -E 'class CloseDeviationSample|def _close_deviation_gap|def close_deviation_metrics|^CLOSE_DEVIATION_MIN' "$MAIN" -- "$P/optimize/policy.py" | sed "s/^$MAIN://" | clip 170
+  gg -n -E '^def test_native_clv|def test_apply_refuses_fresh_and_replayed_promotions|def test_apply_pending_confirm_is_unavailable_with_any_actor|def test_native_managed_cli_seals_and_replays_calibration_nonconvergence' "$MAIN" -- tests | sed "s/^$MAIN://" | clip 170
   echo "# decide path still pairs by the registered active's model version:"
-  gg -n 'priced_model_version=state\["active_model_version"\]' "$MAIN" -- "$P/cli.py" | sed "s/^$MAIN://" | cut -c1-170
+  gg -n 'priced_model_version=state\["active_model_version"\]' "$MAIN" -- "$P/cli.py" | sed "s/^$MAIN://" | clip 170
 } > "$out/p1_fix_locations.txt"
 
 # 5. FX-47: list-form variant_quotes reaches a jsonb column unconverted
 {
   echo "# main $MAIN"
-  gg -n -E 'variant_quotes: str \| list|_require_json_list\(self.variant_quotes' "$MAIN" -- "$P/store.py" "$P/scan.py" | sed "s/^$MAIN://" | cut -c1-170
-  gg -n -E 'variant_quotes=raw.get|variant_quotes=record.variant_quotes' "$MAIN" -- "$P/scan.py" | sed "s/^$MAIN://" | cut -c1-170
-  gg -n -E 'candidate.median_probability, candidate.variant_quotes' "$MAIN" -- "$P/store_psycopg.py" | sed "s/^$MAIN://" | cut -c1-170
-  gg -n -E 'variant_quotes jsonb' "$MAIN" -- database/papersim/migrations | sed "s/^$MAIN://" | cut -c1-170
+  gg -n -E 'variant_quotes: str \| list|_require_json_list\(self.variant_quotes' "$MAIN" -- "$P/store.py" "$P/scan.py" | sed "s/^$MAIN://" | clip 170
+  gg -n -E 'variant_quotes=raw.get|variant_quotes=record.variant_quotes' "$MAIN" -- "$P/scan.py" | sed "s/^$MAIN://" | clip 170
+  gg -n -E 'candidate.median_probability, candidate.variant_quotes' "$MAIN" -- "$P/store_psycopg.py" | sed "s/^$MAIN://" | clip 170
+  gg -n -E 'variant_quotes jsonb' "$MAIN" -- database/papersim/migrations | sed "s/^$MAIN://" | clip 170
   echo "# FX-40 draft $FX40 writes the list form into the market pack:"
-  gg -n -E '"variant_quotes": (\[\]|list\()' "$FX40" -- "$P/prepare.py" | sed "s/^$FX40://" | cut -c1-170
+  gg -n -E '"variant_quotes": (\[\]|list\()' "$FX40" -- "$P/prepare.py" | sed "s/^$FX40://" | clip 170
   echo "# the local agent's own record of the failure:"
-  gg -n '42846' "$MAIN" -- docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md | sed "s/^$MAIN://" | cut -c1-120
+  gg -n '42846' "$MAIN" -- docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md | sed "s/^$MAIN://" | clip 120
 } > "$out/variant_quotes_trace.txt"
 
 # 6. retrospective-review follow-ups still open on main
@@ -86,7 +96,7 @@ P=src/polymarket_alpha_lab/papersim
   echo "# the managed connection is opened in psycopg's default mode (not autocommit):"
   gg -n -E 'connection = psycopg\.connect\(dsn\)' "$MAIN" -- "$P/store_psycopg.py" | sed "s/^$MAIN://" | sed 's/^/    /'
   echo "# call sites of the three readers on main (whether each sits inside a transaction block was read by hand, see the report):"
-  gg -n -E '(load_optimization_runs|load_promotion_decisions|registry_freeze_state|_registry_controls)\(' "$MAIN" -- src | sed "s/^$MAIN://" | grep -v ':def ' | cut -c1-150 | sed 's/^/    /'
+  gg -n -E '(load_optimization_runs|load_promotion_decisions|registry_freeze_state|_registry_controls)\(' "$MAIN" -- src | sed "s/^$MAIN://" | grep -v ':def ' | clip 150 | sed 's/^/    /'
 } > "$out/retrospective_followups.txt"
 
 # 7. Python version declaration against 3.12-only syntax
@@ -116,8 +126,8 @@ lines() { local n=0 f; for f in $(ls_py "$1"); do n=$((n + $(g show "$SPORTS:$f"
   echo
   echo "# database access"
   echo "uses of the project's DSN validator (validate_local_postgres_dsn|local_postgres_dsn|project_postgres): $(gg -c -E 'validate_local_postgres_dsn|local_postgres_dsn|project_postgres' "$SPORTS" -- $R | wc -l) files"
-  echo "direct psycopg.connect calls:"; gg -n 'psycopg.connect(' "$SPORTS" -- $R | sed "s/^$SPORTS://" | cut -c1-120
-  echo "read-only use of the managed paper-sim database:"; gg -n 'connect_managed' "$SPORTS" -- $R | sed "s/^$SPORTS://" | cut -c1-140
+  echo "direct psycopg.connect calls:"; gg -n 'psycopg.connect(' "$SPORTS" -- $R | sed "s/^$SPORTS://" | clip 120
+  echo "read-only use of the managed paper-sim database:"; gg -n 'connect_managed' "$SPORTS" -- $R | sed "s/^$SPORTS://" | clip 140
   echo "tables created by code (CREATE TABLE ... in Python sources): $(gg -h -o -E 'CREATE TABLE( IF NOT EXISTS)? [A-Za-z_.]+' "$SPORTS" -- $R/scripts $R/legacy | awk '{print $NF}' | sort -u | wc -l)"
   gg -h -o -E 'CREATE TABLE( IF NOT EXISTS)? [A-Za-z_.]+' "$SPORTS" -- $R/scripts $R/legacy | awk '{print $NF}' | sort -u | sed 's/^/    /'
   echo "files containing DDL:"; gg -c -E 'CREATE (TABLE|SCHEMA|INDEX|UNIQUE INDEX)|ALTER TABLE' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | sed 's/^/    /'
@@ -125,25 +135,25 @@ lines() { local n=0 f; for f in $(ls_py "$1"); do n=$((n + $(g show "$SPORTS:$f"
   echo "# execution-path keywords (order placement, signing, wallets): matches outside comments/tests"
   gg -n -i -E 'private[_ ]?key|mnemonic|create_order|post_order|place_order|cancel_order|py_clob_client|ClobClient|api_secret|passphrase|eth_account|web3' "$SPORTS" -- $R/scripts $R/legacy | wc -l
   echo "# HTTP requests with a method other than GET:"
-  gg -n -E 'method="(POST|PUT|PATCH|DELETE)"|\.post\(' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | cut -c1-140
-  gg -n 'CLOB_BASE_URL + "/books"' "$SPORTS" -- $R/scripts | sed "s/^$SPORTS://" | cut -c1-160
+  gg -n -E 'method="(POST|PUT|PATCH|DELETE)"|\.post\(' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | clip 140
+  gg -n 'CLOB_BASE_URL + "/books"' "$SPORTS" -- $R/scripts | sed "s/^$SPORTS://" | clip 160
   echo "# third-party hosts named in the scripts:"
   gg -h -o -E 'https://[A-Za-z0-9.-]+' "$SPORTS" -- $R/scripts $R/legacy | sort | uniq -c | sort -rn | sed 's/^/    /'
   echo
   echo "# process launches"
-  gg -n -E 'subprocess\.(run|Popen)|os\.system' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | cut -c1-150
+  gg -n -E 'subprocess\.(run|Popen)|os\.system' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | clip 150
   echo "# the launcher line in the delivery module:"
-  gg -n -E 'zcode\.cmd .*--mode yolo|powershell\.exe' "$SPORTS" -- $R/scripts/weixin_delivery.py | sed "s/^$SPORTS://" | cut -c1-200
+  gg -n -E 'zcode\.cmd .*--mode yolo|powershell\.exe' "$SPORTS" -- $R/scripts/weixin_delivery.py | sed "s/^$SPORTS://" | clip 200
   echo "# dynamic code loading:"
-  gg -n -E '\bexec\(compile\(' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | cut -c1-150
+  gg -n -E '\bexec\(compile\(' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | clip 150
   echo "# files written outside PostgreSQL:"
-  gg -n -E 'os\.replace\(|tempfile\.mkstemp|\.write_text\(|\.write_bytes\(' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | cut -c1-150
+  gg -n -E 'os\.replace\(|tempfile\.mkstemp|\.write_text\(|\.write_bytes\(' "$SPORTS" -- $R/scripts $R/legacy | sed "s/^$SPORTS://" | clip 150
   echo
   echo "# owner binding scope string required by the code:"
-  gg -n 'owner.get("scope")' "$SPORTS" -- $R/scripts/football_store.py | sed "s/^$SPORTS://" | cut -c1-170
+  gg -n 'owner.get("scope")' "$SPORTS" -- $R/scripts/football_store.py | sed "s/^$SPORTS://" | clip 170
   echo "# admission policy version and its numbers:"
-  gg -n -E '^(POLICY_VERSION|GATE_E_FIXTURES|GATE_E_MAX_MAD|FULL_MATCHWEEKS) =' "$SPORTS" -- $R/scripts/football_admission.py | sed "s/^$SPORTS://" | cut -c1-150
-  gg -n -E '^(OPENING_CASH_FEN|BASIS_POINTS) =' "$SPORTS" -- $R/scripts/sports_portfolio.py | sed "s/^$SPORTS://" | cut -c1-150
+  gg -n -E '^(POLICY_VERSION|GATE_E_FIXTURES|GATE_E_MAX_MAD|FULL_MATCHWEEKS) =' "$SPORTS" -- $R/scripts/football_admission.py | sed "s/^$SPORTS://" | clip 150
+  gg -n -E '^(OPENING_CASH_FEN|BASIS_POINTS) =' "$SPORTS" -- $R/scripts/sports_portfolio.py | sed "s/^$SPORTS://" | clip 150
   echo "# timers:"
   for t in $(g ls-tree -r --name-only "$SPORTS" -- $R/systemd | grep '\.timer$'); do
     echo "    $(basename "$t"): $(g show "$SPORTS:$t" | grep -E '^OnCalendar=' | paste -sd' ' -)"
@@ -176,8 +186,8 @@ if functions:
     if [ "$n" -eq 0 ]; then echo "    $m"; fi
   done
   echo "# a plan section the handoff cites that main does not have:"
-  gg -n '§87.3' "$SPORTS" -- docs/handoffs/2026-11-23-sports-runtime | sed "s/^$SPORTS://" | cut -c1-80
-  echo "    headings of section 87 on main: $(g show "$MAIN:DELIVERY_PLAN.md" | grep -E '^### 87\.' | cut -c1-12 | sed 's/ *$//' | paste -sd' ' -)"
+  gg -n '§87.3' "$SPORTS" -- docs/handoffs/2026-11-23-sports-runtime | sed "s/^$SPORTS://" | clip 140
+  echo "    headings of section 87 on main: $(g show "$MAIN:DELIVERY_PLAN.md" | grep -E '^### 87\.' | clip 12 | sed 's/ *$//' | paste -sd' ' -)"
 } > "$out/sports_runtime_inventory.txt"
 
 # 9. the handoff's own pins, and whether the research branches still merge

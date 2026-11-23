@@ -13,4 +13,4 @@ database/papersim/migrations/20261119210907_papersim_model_registry.sql:153:  va
 src/polymarket_alpha_lab/papersim/prepare.py:574:        return {**record, "construction": quote, "variant_quotes": [], "median_probability": None}
 src/polymarket_alpha_lab/papersim/prepare.py:577:            "variant_quotes": list(variants), "median_probability": median}
 # the local agent's own record of the failure:
-docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md:11:前两轮用市场包支持的数组形态输入 `v
+docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md:11:前两轮用市场包支持的数组形态输入 `variant_quotes`。扫描在写入候选时失败。第二轮确认

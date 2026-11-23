@@ -132,5 +132,5 @@ docs/paper-sim/runtime/scripts/sports_portfolio.py:23:BASIS_POINTS = {"low": 50,
     football_research
     sports_runtime
 # a plan section the handoff cites that main does not have:
-docs/handoffs/2026-11-23-sports-runtime/research/README.md:11:FX-40、FX-44 的�
+docs/handoffs/2026-11-23-sports-runtime/research/README.md:11:FX-40、FX-44 的具体验收口径和 FX-41 的留出规则见既有进度审核。NBA 历史记录和先登记再执行的批准状态见公开账本 §87.3。[整改与下一
     headings of section 87 on main: ### 87.1 PR ### 87.2 FX-

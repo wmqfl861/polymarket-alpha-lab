@@ -8,7 +8,7 @@
   "MANIFEST.sha256"
  ],
  "file_count": 31,
- "total_bytes": 150512,
+ "total_bytes": 152067,
  "files": [
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/01-review-report.md",
@@ -17,18 +17,18 @@
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md",
-   "bytes": 18733,
-   "sha256": "2739eb6993ad50a5236be2f124e96c94b3a06c832877dcead0ee4b012b961921"
+   "bytes": 18810,
+   "sha256": "5afdaccaa9b11b02b52cd6c62e80cb880aa4bdd0c0fea5b0186fa45a9599b1cd"
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/README.md",
-   "bytes": 4329,
-   "sha256": "fae956d427555e9d07b94f50eb40b448bf38541851ec68ed909a58971f407a9c"
+   "bytes": 4974,
+   "sha256": "3c10be06db6092c609dafb9d79b9e6cff4ac1d6a7a7448277bab349e154f6d7d"
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/evidence/README.md",
-   "bytes": 8641,
-   "sha256": "57c72b0a0b53d3e2357ce848f7b214793745b34b6549d46250d85c4ae276b996"
+   "bytes": 8963,
+   "sha256": "0016815533366e5154a1fdbcf20e2160739edb2d2261c15f7f5d569a259022f5"
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan.py",
@@ -82,8 +82,8 @@
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/evidence/collect_local.sh",
-   "bytes": 14709,
-   "sha256": "024f7b367d7ae870f5cd6cc40535eb635a36b8574d723efac0612068b2784534"
+   "bytes": 14996,
+   "sha256": "71ad5b4d3964ceccaeec7f77900b56e10d041e3dc1e583a18bc1cd5b6dd3a7e9"
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/evidence/commit_identity_domains.txt",
@@ -147,8 +147,8 @@
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/evidence/sports_runtime_inventory.txt",
-   "bytes": 7587,
-   "sha256": "ce5f35109a73679ccec74269fdc049926024db425a3fc12cfb77621dcf53e49c"
+   "bytes": 7746,
+   "sha256": "c325de7e2a256024b3a8c637ab38db0142307546c9cb0936e5dcf56179e68bb7"
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/evidence/test_weakening_scan.py",
@@ -162,8 +162,8 @@
   },
   {
    "path": "docs/handoffs/2026-11-24-incremental-review/evidence/variant_quotes_trace.txt",
-   "bytes": 1668,
-   "sha256": "f7b13d121bfb1a27f3f2ed4e60ab02dd8dfec1879eb5a3345d5770e92dd5fdea"
+   "bytes": 1733,
+   "sha256": "7b714359b5233ad4d84025551a2816d03f1e7a198303fa4953a9dffca513cab1"
   }
  ]
 }

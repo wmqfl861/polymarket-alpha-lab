@@ -41,6 +41,7 @@
 
 ## 读法和局限
 
+- **截断按字符做**。`collect_local.sh` 第一版用 `cut -c` 截断长行，GNU 的 `cut` 按字节数，把一行中文截在了一个字符中间。现在改成了按字符截断并去掉行尾空白，受影响的两份输出（`sports_runtime_inventory.txt`、`variant_quotes_trace.txt`）已经重新生成。
 - **CURRENT 和 STALE**：#116 是 STALE，这是第五轮明确允许的纯文档例外。其余七个 PR 的 pull_request 运行都是 CURRENT，而且合并时 PR 头已经包含当时的 `main`，所以"PR 头上的绿"就是"合并结果上的绿"。
 - **原生库工作流有路径过滤**：#120、#121、#122 的 PR 事件没有触发它。本地 agent 的做法是把 GitHub 生成的合并对象原样推成一个 `ci/pr-N-merge-<提交>` 分支，在上面手动触发。我核对了这些分支的提交号就是 `ci_merge_audit.tsv` 里 pull_request 运行检出的那个合并对象，树也和真实合并提交相同。
 - **敏感形态扫描的 27 行命中**：21 行是以小写字母 o 开头的普通标识符里 28 个字符的一段（比如 `optimize-register-experiment`、`operation-recovery-node-plan`），撞上了"微信 openid"的形状；6 行是 `名字@实例.service` 这种 systemd 单元名，撞上了邮箱的形状。我把命中的原文逐个看过，一共八种不同的字符串，没有一个是真实标识。这个脚本只认形状，认不出没有固定形状的秘密；它没报不等于没有。
