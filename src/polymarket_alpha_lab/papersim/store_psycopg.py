@@ -389,6 +389,9 @@ def decision_time_evidence(conn, candidate_id: int) -> dict | None:
     return dict(zip(columns, row, strict=True))
 
 
+_SCAN_BY_KEY = ('SELECT scan_id, scan_payload_sha256 FROM papersim.scan_runs '
+                'WHERE scan_key = %s')
+
 _CANDIDATE_INSERT = ('INSERT INTO papersim.candidates (scan_id, candidate_key, legacy_source_id, '
                      'condition_id, market_id, market_slug, yes_token_id, no_token_id, side, '
                      'market_kind, market_type, event_key, event_start_at, team, binding_version, '
@@ -451,29 +454,37 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
     payload = normalized.payload_sha256()
     with conn.transaction():
         cursor = conn.cursor()
-        cursor.execute('SELECT scan_id, scan_payload_sha256 FROM papersim.scan_runs '
-                       'WHERE scan_key = %s', (key,))
+        cursor.execute(_SCAN_BY_KEY, (key,))
         existing = cursor.fetchone()
-        if existing is not None:
-            # Historical writes hashed the submitted text, including its spelling.
-            if existing[1] != payload and (
-                not all(type(candidate.variant_quotes) is str for candidate in submission.candidates)
-                or existing[1] != submission.payload_sha256()
-            ):
+        new_row = None
+        if existing is None:
+            cursor.execute(
+                'INSERT INTO papersim.scan_runs (scan_key, scan_payload_sha256, team, '
+                'started_at, finished_at, code_commit, schema_version, gate_version, '
+                'operator, params, is_legacy, operation_key) '
+                'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) '
+                'ON CONFLICT (scan_key) DO NOTHING RETURNING scan_id',
+                (key, payload, scan.team, scan.started_at, scan.finished_at, scan.code_commit,
+                 scan.schema_version, scan.gate_version, scan.operator, scan.params,
+                 scan.is_legacy, scan.operation_key),
+            )
+            new_row = cursor.fetchone()
+            if new_row is None:
+                # A new statement sees the complete committed winner in READ COMMITTED.
+                cursor.execute(_SCAN_BY_KEY, (key,))
+                existing = cursor.fetchone()
+        if new_row is None:
+            if existing is None:
                 raise PapersimStoreError('papersim_scan_payload_conflict')
             scan_id = int(existing[0])
+            if not _scan_payload_matches(
+                cursor, scan_id, existing[1], submission, normalized, payload
+            ):
+                raise PapersimStoreError('papersim_scan_payload_conflict')
             return {'scan_id': scan_id, 'scan_key': key, 'inserted': False,
                     'candidate_ids': _read_back_candidates(cursor, scan_id),
                     'bankroll_event_keys': _read_back_event_keys(cursor, scan_id)}
-        cursor.execute('INSERT INTO papersim.scan_runs (scan_key, scan_payload_sha256, team, '
-                       'started_at, finished_at, code_commit, schema_version, gate_version, '
-                       'operator, params, is_legacy, operation_key) '
-                       'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) '
-                       'RETURNING scan_id',
-                       (key, payload, scan.team, scan.started_at, scan.finished_at, scan.code_commit,
-                        scan.schema_version, scan.gate_version, scan.operator, scan.params,
-                        scan.is_legacy, scan.operation_key))
-        scan_id = int(cursor.fetchone()[0])
+        scan_id = int(new_row[0])
         candidate_ids: dict[str, int] = {}
         bankroll_keys: list[str] = []
         for candidate in normalized.candidates:
@@ -509,6 +520,48 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
                 bankroll_keys.append(event_key)
     return {'scan_id': scan_id, 'scan_key': key, 'inserted': True,
             'candidate_ids': candidate_ids, 'bankroll_event_keys': tuple(bankroll_keys)}
+
+
+def _scan_payload_matches(cursor, scan_id: int, stored_digest: str, submission: ScanSubmission,
+                          normalized: ScanSubmission, normalized_digest: str) -> bool:
+    if stored_digest == normalized_digest:
+        return True
+    original_digest = submission.payload_sha256()
+    if original_digest != normalized_digest and stored_digest == original_digest:
+        return True
+
+    # The old bind could store Python [] as the JSONB object {}. Inspect the
+    # shape only to choose which empty quotes to hash as lists in the retry.
+    cursor.execute("SELECT candidate_key, jsonb_typeof(variant_quotes) = 'object' "
+                   "AND variant_quotes = '{}'::jsonb FROM papersim.candidates WHERE scan_id = %s",
+                   (scan_id,))
+    stored_empty_lists = dict(cursor.fetchall())
+    if stored_empty_lists.keys() != {candidate.candidate_key for candidate in submission.candidates}:
+        return False
+
+    preserved_text = []
+    normalized_text = []
+    for original, canonical in zip(submission.candidates, normalized.candidates, strict=True):
+        if stored_empty_lists[original.candidate_key]:
+            if canonical.variant_quotes != '[]':
+                return False
+            empty_list = replace(original, variant_quotes=[])
+            preserved_text.append(empty_list)
+            normalized_text.append(empty_list)
+        else:
+            # A historical noncanonical spelling must come from the retry itself.
+            preserved_text.append(original if type(original.variant_quotes) is str else canonical)
+            normalized_text.append(canonical)
+
+    checked = {normalized_digest, original_digest}
+    for candidates in (preserved_text, normalized_text):
+        digest = replace(submission, candidates=tuple(candidates)).payload_sha256()
+        if digest in checked:
+            continue
+        if stored_digest == digest:
+            return True
+        checked.add(digest)
+    return False
 
 
 def _read_back_candidates(cursor, scan_id: int) -> dict:
