@@ -25,6 +25,16 @@
       "gate_receipt_sha256": "84372e90347203341bcae2cd45f6526e59ed1977b948010806c3d964f498367b",
       "harness_exit": 0
     },
+    "full_test_suite_run_3": {
+      "candidate": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+      "receipt_sha256": "c611931b72e3e2930d89d758961488a8199cb2d6d39bbd1ad8b992af05d358da",
+      "pytest_exit": 0,
+      "passed": 43956,
+      "skipped": 437,
+      "warnings": 20,
+      "duration_seconds": 3201.88,
+      "clean_checkout": true
+    },
     "original_reviewer_followup": {
       "reviewed_candidate": "e05824c2f1e4acb36a5cd090c72ea0a9e680ae38",
       "reviewer_receipt_sha256": "83e0dd6de6fe023b8ead8f13b92abff4d9f7f3f81d6a6d12074b14a83578fe5f",
@@ -60,7 +70,8 @@
     {
       "purpose": "full-suite run 3 from a separate clean checkout after serial focused checks",
       "started_at_utc": "2026-11-24T20:08:19Z",
-      "result": "running; no completion receipt yet"
+      "finished_at_utc": "2026-11-24T21:03:01Z",
+      "result": "PASS, 43,956 passed, 437 skipped, 20 warnings, pytest exit 0, clean checkout"
     }
   ],
   "checks": {
@@ -199,7 +210,7 @@
       "exit": 0
     },
     "full_test_suite": {
-      "status": "RUN_3_IN_PROGRESS",
+      "status": "PASS",
       "run_1": {
         "result": "Interrupted with KeyboardInterrupt after 4204 passed and 15 skipped",
         "pytest_exit": null
@@ -210,14 +221,19 @@
       },
       "run_3": {
         "started_at_utc": "2026-11-24T20:08:19Z",
-        "pytest_exit": null,
-        "result": "In progress when this receipt was prepared"
+        "finished_at_utc": "2026-11-24T21:03:01Z",
+        "pytest_exit": 0,
+        "passed": 43956,
+        "skipped": 437,
+        "warnings": 20,
+        "duration_seconds": 3201.88,
+        "clean_checkout": true,
+        "result": "PASS"
       }
     }
   },
   "pending_acceptance": [
-    "Run a complete full test suite to a recorded zero exit and complete pytest summary.",
-    "After the complete full-suite receipt is available, return the updated evidence to the original FX-54 code reviewer for another re-review.",
+    "Return the completed full-suite evidence update to the original FX-54 code reviewer for another re-review.",
     "Rebase after the FX-52, FX-51 and FX-53 registration lane and bind final PR, CI and merge evidence."
   ]
 }

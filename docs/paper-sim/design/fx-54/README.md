@@ -45,15 +45,15 @@ The [verification receipt](evidence/fx54-local-verification.json) records local 
 | Frozen objects | The independent ZCode comparison matched the ladder module and all four fixtures. The receipt gives both blob IDs and sizes. |
 | Tracked diff secret scan | The corrected scan of the baseline-to-candidate additions returned 1 from the secret matcher, meaning no matches, with a zero-byte findings file. The original runner recorded the added-line filter's exit 0 under `pattern_status` and stopped with exit 1. |
 | CodeGraph | CodeGraph 1.6.3 synchronized a private snapshot of the existing project index to `4818bef8`. Strict status and content verification passed for 6,761 indexed files with zero parse errors. |
+| Full test suite | Run 3 passed on a separate clean checkout of `4818bef8`: 43,956 passed, 437 skipped, 20 warnings, pytest exit 0 in 3,201.88 seconds. The receipt SHA-256 is recorded in the verification JSON. |
 
 The ZCode turn that recorded the positive install was interrupted after the individual checks. The continuation recorded the 3.11 refusal, both distribution checks, compile verification, and `git diff --check` before it stopped at the scan reporting error. The corrected scan ran separately.
 
-The first full-suite attempt was interrupted after 4,204 passed and 15 skipped, with no recorded pytest exit. The second returned pytest exit 137 and an empty summary. The third run began at 20:08:19 UTC in a separate clean checkout. Its result is pending.
+The first full-suite attempt was interrupted after 4,204 passed and 15 skipped, with no recorded pytest exit. The second returned pytest exit 137 and an empty summary. The third run completed at 21:03:01 UTC on a separate clean checkout of `4818bef8` with a complete passing summary.
 
 ## Pending Candidate Gates
 
-- A complete full-suite receipt.
-- The original reviewer returned `VERDICT: FAIL` on `4818bef8` and returned `VERDICT: FAIL` again on evidence commit `e05824c2`. Submit an updated evidence candidate to the same reviewer after full-suite run 3 finishes.
+- The original reviewer returned `VERDICT: FAIL` on `4818bef8` and returned `VERDICT: FAIL` again on evidence commit `e05824c2`. Submit the completed full-suite evidence update to the same reviewer for another re-review.
 - Final registration-lane integration, PR creation, CI receipts bound to the final PR head, `check_ci_merge.sh` status, and merge registration.
 
 Record the native kit status against the final PR paths. The expected path-filter result is `NOT_TRIGGERED / kit proof 未运行`.
