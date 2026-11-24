@@ -27,8 +27,9 @@ The generated delta consists of `requires-python = ">=3.12"`, removal of eleven 
 
 - CPython 3.11.15 is installed under the uv-managed user directory, exposed as `~/.local/bin/python3.11`.
 - System CPython 3.12.3 is available as `/usr/bin/python3.12`.
-- No managed CPython 3.12.14 was present during the inventory. Both available uv executables reported `No download found for request: cpython-3.12.14-linux-x86_64-gnu` when asked to install it. No Python download or build has yet been performed.
-- The exact 3.12.14 positive installation and metadata proof remains pending. CPython 3.12.3 can exercise the declared `>=3.12` floor but does not satisfy that exact-version gate.
+- No managed CPython 3.12.14 was present during the inventory. Both available uv executables reported `No download found for request: cpython-3.12.14-linux-x86_64-gnu` when asked to install it.
+- The official `Python-3.12.14.tgz` source tarball was downloaded from `python.org` to the isolated FX-54 tools directory. Its SHA-256 `6c6df908d2c3fd24e6d76869e92542abd0f33aec9dfc18df8875f89660286d43` matches the official release page. The `.asc` and `.sigstore` sidecars are retained beside it. The archive has been extracted under the same isolated tools directory, but has not been configured or built. No system packages or directories were changed.
+- Build inspection found `gcc`, `make`, `zlib1g-dev`, and `libffi-dev` installed. `libssl-dev`, `libbz2-dev`, `libreadline-dev`, `libsqlite3-dev`, `liblzma-dev`, `libgdbm-dev`, `libncursesw5-dev`, and `uuid-dev` are absent. The exact 3.12.14 positive installation and metadata proof remains pending. CPython 3.12.3 can exercise the declared `>=3.12` floor but does not satisfy that exact-version gate.
 - The existing isolated PG18 prefix reports PostgreSQL 18.6.
 
 ## Pending candidate gates

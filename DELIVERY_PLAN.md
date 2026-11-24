@@ -4589,7 +4589,7 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 | 实施与 NBA v2 泳道 | `pyproject.toml`、`uv.lock` 与现行 Linux 安装说明采用新下限。NBA v2 开工时分支头为 `2933a375fdc3c248514968277effb9a699097131`，以双方共同祖先比较，`pyproject.toml` 与 `uv.lock` 均无写入交集。 |
 | 计划及锁裁定 | 原计划 FAIL、修订计划 PASS 和固定 uv 0.10.0 原生锁差异的增量 PASS 均来自原审者 `sess_26cca700-c1b2-4a11-98ed-21ab96227f36`。锁差异为新下限、移除十一条 cp311 `psycopg-binary` wheel 和三条 `requires-dist` 记录的排列调整。[计划、原回执和锁摘要](docs/paper-sim/design/fx-54/README.md) |
 | 锁前后核验 | 父锁 SHA-256 `114db5230ce1b51130a6f2b246c807f4e142229c5717354edf95c8e44fc22d9f`，原生生成锁 SHA-256 `9ed26c40ee1a48ef98cb6c8183db5202bc308eb5f57c46ffcf9f10a97f012b6c`。三项生成差异见[原审提示词](docs/paper-sim/design/fx-54/fx54-lock-delta-review.prompt)及[同 session 裁定](docs/paper-sim/design/fx-54/fx54-lock-delta-review.json)。 |
-| 正反例与冻结验收 | 已核实本机 CPython 为 3.12.3 及 3.11.15。精确 3.12.14 锁定安装和元数据读回、3.11 离线拒绝、冻结源码及四份夹具的 Git blob 比对均待候选验收回填。[本机解释器清点及候选验收](docs/paper-sim/design/fx-54/README.md) |
+| 正反例与冻结验收 | 已核实 CPython 3.11.15 和 3.12.3。官方 CPython 3.12.14 源码 tarball 已在隔离工具目录下载，SHA-256 与 Python.org 发布页一致；构建尚未执行，所缺开发头文件见节点回执。精确 3.12.14 锁定安装和元数据读回、3.11 离线拒绝、冻结源码及四份夹具的 Git blob 比对均待候选验收回填。[本机解释器、源码及候选验收](docs/paper-sim/design/fx-54/README.md) |
 | 分发兼容 | 由候选的合成 v1 清单回归和 Native project PostgreSQL Linux/PG18 storage 的版本切换步骤分别取证。独立 kit 构建待最终 PR 路径核对后登记触发状态。后继事项见 §84.2.3 的“v1 分发清单的 Python 下限”。 |
 | 代码复审与合入 | 候选代码复审、PR 号、最终 PR 头、Offline verification / Research paper bridge / Native project PostgreSQL 三条运行号和合并提交待验收回填。 |
 | FX-48 运行层交接 | 由实际引入 README 的 FX-48 PR 一并验证运行解释器和锁定安装。[FX-48 验收登记](#fx-48-运行层-readme-后继验收登记) |
