@@ -1,0 +1,24 @@
+{
+  "started": "2026-11-21T19:21:08.012645+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "dd808329cd336e11f8fd507cabb901a6e11359b204d3a10898a09d1306ca82bd",
+  "purpose": "fx41-nba-v2-managed-binding-plan-review",
+  "resume": null,
+  "attachments": {
+    "managed-seam-plan.md": "e0590ca6c43b2da74b949f920618b3117c1772b23a073bf2ca833a2edf597c7c",
+    "approved-parent-plan.md": "558a5f27f97827d54360b62e71336fe012d56e20e807a893a3894d8318fb321f",
+    "owner-approval.json": "bc33ccee3864a6b33116105f8fc373f0acc614eb34b1148d04ccf69e2dfd4313",
+    "actual-variant-correction.md": "ca3e7eb9606424b510d5dd14c404398a7f8984fbbdd7db7dd3ea3f372dc59f9c"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T19:25:37.763521+00:00",
+  "exit": 0,
+  "stdout_sha256": "d1a0acd5ffb34c2d3930171eceb74f7ea6b53ae2385019122bbe23d6023c191f",
+  "stderr_sha256": "99835e000ac38da5984d8b9352f37f3c33b4ecd7bea6e7186a07eb1a46511e75",
+  "stdout_bytes": 8897,
+  "stderr_bytes": 165,
+  "safe_diagnostics": []
+}

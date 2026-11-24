@@ -50,6 +50,7 @@ from math import isfinite
 from pathlib import Path, PurePosixPath
 from selectors import DefaultSelector
 import time
+from uuid import uuid4
 
 from polymarket_alpha_lab.local_postgres_dsn import validate_local_postgres_dsn
 from polymarket_alpha_lab.papersim import settle
@@ -2367,6 +2368,11 @@ _OPTIMIZE_ARTIFACT = 'papersim.optimize/managed-artifact/v2'
 _OPTIMIZE_MANIFEST_KIND = 'optimizer_experiment_manifest'
 _OPTIMIZE_ARTIFACT_KIND = 'optimizer_run_artifact'
 _OPTIMIZE_BUDGET_CONFLICT = 'papersim_optimize_budget_conflict'
+_NBA_ODR_BINDING_REQUIRED = 'papersim_optimize_nba_odr_registration_required'
+_NBA_ODR_MANAGED_REQUIRED = 'papersim_optimize_nba_odr_managed_required'
+_NBA_ODR_INTERRUPTED = 'papersim_optimize_nba_odr_interrupted'
+_NBA_ODR_FIRST_ATTEMPT = 1
+_MISSING_OPTIMIZER_COMPUTE = object()
 
 
 def _optimize_time(moment: datetime) -> str:
@@ -2396,6 +2402,23 @@ def _optimize_snapshot(conn, digest, length, kind, schema_version):
             or sha256(row['content']).hexdigest() != digest):
         raise PapersimStoreError('papersim_optimize_snapshot_identity_invalid')
     return row['content']
+
+
+def _nba_odr_registration_snapshot_content(conn, ref, *, kind, source=None):
+    # Type the lookup before fetching content, including for an untrusted pointer
+    # or a reference taken from a corrupted registration event.
+    query = ('SELECT content FROM papersim.snapshots WHERE content_sha256 = %s '
+             'AND kind = %s AND schema_version = 1 AND byte_length = %s')
+    params = (ref.sha256, kind, ref.byte_length)
+    if source is not None:
+        query += ' AND source = %s'
+        params += (source,)
+    with conn.cursor() as cursor:
+        cursor.execute(query, params)
+        row = cursor.fetchone()
+    if row is None or len(row[0]) != ref.byte_length or sha256(row[0]).hexdigest() != ref.sha256:
+        raise PapersimStoreError('papersim_optimize_snapshot_identity_invalid')
+    return bytes(row[0])
 
 
 def _optimize_manifest_sources(manifest, manifest_sha256):
@@ -2505,16 +2528,26 @@ def _optimize_request(*, clock, family, data_cutoff, random_seed, code_commit, a
         registered = None
     if registered is None or family is not registered:
         raise PapersimStoreError('papersim_optimize_family_unregistered')
-    protocol = runner.historical_protocol(registered)
+    if (not isinstance(manifest, dict) or set(manifest) != {'schema_version', 'protocol', 'sources'}
+            or type(manifest['schema_version']) is not int or manifest['schema_version'] != 1
+            or not isinstance(manifest['protocol'], dict)):
+        raise PapersimStoreError('papersim_optimize_request_conflict')
+    if schedule_id == runner.NBA_ODR_SCHEDULE_ID:
+        materials = manifest['protocol'].get('registration_materials')
+        if family_id != runner._NBA_ODR_FAMILY_ID or not isinstance(materials, dict):
+            raise PapersimStoreError('papersim_optimize_request_conflict')
+        protocol = runner.nba_odr_historical_protocol(
+            runner.SourceArtifactRef(materials.get('sha256'), materials.get('byte_length')),
+        )
+    else:
+        protocol = runner.historical_protocol(registered)
     cutoff = _optimize_time(data_cutoff)
     if (type(random_seed) is not int or random_seed != protocol['seed']
             or cutoff != _optimize_time(datetime.fromisoformat(protocol['data_cutoff']))
             or schedule_id != protocol['schedule_id'] or isinstance(targets, (str, bytes))
             or list(targets) != protocol['targets']):
         raise PapersimStoreError('papersim_optimize_request_conflict')
-    if (not isinstance(manifest, dict) or set(manifest) != {'schema_version', 'protocol', 'sources'}
-            or type(manifest['schema_version']) is not int or manifest['schema_version'] != 1
-            or _optimize_json(manifest['protocol']) != _optimize_json(protocol)):
+    if _optimize_json(manifest['protocol']) != _optimize_json(protocol):
         raise PapersimStoreError('papersim_optimize_request_conflict')
     normalized = _optimize_json(manifest)
     if (type(attempt) is not int or attempt < 1 or type(manifest_byte_length) is not int
@@ -2543,8 +2576,21 @@ def _optimize_request(*, clock, family, data_cutoff, random_seed, code_commit, a
     return identity
 
 
-def _verify_optimizer_inputs(conn, identity, manifest):
+def _verify_optimizer_inputs(conn, identity, manifest, *, nba_odr_context=None):
+    from polymarket_alpha_lab.papersim.optimize import runner
+
     manifest_ref = identity['manifest']
+    if identity['search_space']['schedule_id'] == runner.NBA_ODR_SCHEDULE_ID:
+        if nba_odr_context is None:
+            raise PapersimStoreError(_NBA_ODR_MANAGED_REQUIRED)
+        facts = _read_nba_odr_facts(conn, nba_odr_context,
+                                   expected_manifest=runner.SourceArtifactRef(**manifest_ref))
+        if facts is None:
+            raise PapersimStoreError(_NBA_ODR_BINDING_REQUIRED)
+        if (facts.manifest_bytes != _optimize_json(manifest) or facts.plan.run_key != identity['run_key']
+                or facts.policy_context.registry.keys() != set(identity['lineages'])):
+            raise PapersimStoreError('papersim_optimize_request_conflict')
+        return facts
     content = _optimize_snapshot(conn, manifest_ref['sha256'], manifest_ref['byte_length'],
                                  _OPTIMIZE_MANIFEST_KIND, 1)
     document = json.loads(content)
@@ -2607,7 +2653,7 @@ def _registry_comparison_snapshot(conn, family, lineages):
     return facts
 
 
-def _optimization_registry_snapshot(conn, family, lineages):
+def _optimization_registry_snapshot(conn, family, lineages, *, comparison=None):
     declared = [f'{family.family_id}/{target}' for target in family.targets()]
     controls = _registry_controls(conn)
     controls['lineages'] = {lineage: event for lineage, event in controls['lineages'].items()
@@ -2618,26 +2664,34 @@ def _optimization_registry_snapshot(conn, family, lineages):
                        'ORDER BY lineage, decided_at DESC, decision_id DESC', (declared,))
         decisions = {lineage: {'id': decision_id, 'decided_at': _optimize_time(decided_at)}
                      for lineage, decision_id, decided_at in cursor.fetchall()}
-    return {'lineages': _registry_comparison_snapshot(conn, family, lineages), 'controls': controls,
+    lineages = _registry_comparison_snapshot(conn, family, lineages) if comparison is None else comparison
+    return {'lineages': lineages, 'controls': controls,
             'decision_heads': decisions, 'prior_rejections': _optimization_rejections(conn, family.family_id)}
 
 
-def _optimization_policy(original):
+def _decode_optimizer_comparisons(rows):
     from polymarket_alpha_lab.papersim.optimize.registry import LineageRoles
-    from polymarket_alpha_lab.papersim.optimize.runner import PolicyContext, RegistryComparison
+    from polymarket_alpha_lab.papersim.optimize.runner import RegistryComparison
     from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
 
-    fact = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
-    snapshot = fact['registry']
-    if fact['registry_sha256'] != _optimize_digest(snapshot):
-        raise PapersimStoreError('papersim_optimize_linkage_invalid')
     registry = {}
-    for lineage, row in snapshot['lineages'].items():
+    for lineage, row in rows.items():
         roles, spec = row['roles'], row['spec']
         if spec is not None:
             spec = ModelSpec(**_spec_sequences_to_tuples(spec))
         registry[lineage] = RegistryComparison(None if roles is None else LineageRoles(**roles), spec,
                                                row['issue'])
+    return registry
+
+
+def _optimization_policy(original):
+    from polymarket_alpha_lab.papersim.optimize.runner import PolicyContext
+
+    fact = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
+    snapshot = fact['registry']
+    if fact['registry_sha256'] != _optimize_digest(snapshot):
+        raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    registry = _decode_optimizer_comparisons(snapshot['lineages'])
     return PolicyContext(original['occurred_at'], registry, _rejection_receipts(snapshot['prior_rejections']),
                          watermark=fact['registry_sha256'], **_freeze_state(snapshot['controls']))
 
@@ -2762,7 +2816,7 @@ def _publication_role_ids(conn, run_key, dispositions, code_commit):
     return ids
 
 
-def _optimization_terminal(conn, original, run, terminal, *, replayed):
+def _optimization_terminal(conn, original, run, terminal, *, replayed, registration=None):
     claim = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
     identity = claim['request']
     linkage = _optimization_event_evidence(terminal, 'output_evidence', _OPTIMIZE_TERMINAL)
@@ -2808,6 +2862,8 @@ def _optimization_terminal(conn, original, run, terminal, *, replayed):
             or (run['outcome'] in {'RUN_FAILED', 'INSUFFICIENT_DATA'} and rejections)
             or not all(_verified_rejection(pure, lineage, row) for lineage, row in rejections.items())):
         raise PapersimStoreError('papersim_optimize_linkage_invalid')
+    if registration is not None:
+        _validate_nba_odr_artifact(pure, identity, original, registration)
     return {'outcome': run['outcome'], 'run_key': run['optimization_key'], 'optimization_id': run['optimization_id'],
             'started_event_id': original['run_event_id'], 'terminal_event_id': terminal['run_event_id'],
             'started_event_key': original['run_event_key'], 'terminal_event_key': terminal['run_event_key'],
@@ -2907,7 +2963,68 @@ def latest_optimization_for_lineage(conn, lineage: str) -> dict | None:
                 'terminal_event_id': result['terminal_event_id'], 'artifact_issue': None}
 
 
-def _validate_optimization_result(result, identity, policy):
+def _validate_nba_odr_artifact(pure, identity, original, registration):
+    from polymarket_alpha_lab.papersim.optimize import runner, search
+
+    code = 'papersim_optimize_pure_result_invalid'
+    plan = registration.plan
+    physical, reported = plan.trials, pure['planned_evaluations']
+    recorded, counts = pure['trials'], pure['counts']
+    holdout = pure['holdout']
+    holdout_folds = [fold.block_id for fold in plan.holdout_folds]
+    expected_link = {**identity['nba_odr_registration'], 'started_event_id': original['run_event_id']}
+    if (pure['schema'] != 'papersim.optimize.runner/artifact/v2' or pure['nba_odr_registration'] != expected_link
+            or len(physical) != runner.NBA_ODR_MAX_TRIALS or len(reported) != len(physical)
+            or len(recorded) > len(physical) or holdout['planned_folds'] != holdout_folds
+            or holdout['group_ids'] != list(plan.cohort.holdout_group_ids)
+            or holdout['n_events'] != len(plan.cohort.holdout_records) or holdout['n_blocks'] != len(holdout_folds)):
+        raise PapersimStoreError(code)
+    for row, trial in zip(reported, physical, strict=True):
+        if not isinstance(row, dict) or type(row.get('index')) is not int or row != {
+            'index': trial.trial_index, 'fold': trial.fold.block_id, 'spec_sha256': trial.spec_sha256,
+            'targets': list(trial.targets), 'model_context': trial.model_context,
+            'fold_sha256': trial.fold_sha256, 'season': trial.fold.history_partition,
+        }:
+            raise PapersimStoreError(code)
+    status_counts = {search.TRIAL_COMPLETED: 0, search.TRIAL_NO_EVENTS: 0, search.TRIAL_ABORTED: 0}
+    for index, record in enumerate(recorded):
+        trial = physical[index]
+        if (not isinstance(record, dict) or type(record.get('trial_index')) is not int
+                or type(record.get('candidate_index')) is not int
+                or record['trial_index'] != trial.trial_index or record['fold_block_id'] != trial.fold.block_id
+                or record['candidate_index'] != trial.candidate_index or record['spec_sha256'] != trial.spec_sha256
+                or record['targets'] != list(trial.targets) or record['model_context'] != trial.model_context
+                or record['status'] not in status_counts):
+            raise PapersimStoreError(code)
+        status_counts[record['status']] += 1
+    started, planned = len(recorded), len(physical)
+    planned_uses = sum(len(trial.targets) for trial in physical)
+    target_starts = sum(len(trial.targets) for trial in physical[:started])
+    callbacks = holdout['callbacks']
+    callback_keys = set()
+    for call in callbacks:
+        key = (call['lineage'], call['side'])
+        if (key in callback_keys or call['lineage'] not in identity['lineages']
+                or call['side'] not in {'candidate', 'incumbent'} or call['status'] not in {'completed', 'aborted'}
+                or call['target'] != call['lineage'].split('/', 1)[1] or call['folds'] != holdout_folds):
+            raise PapersimStoreError(code)
+        callback_keys.add(key)
+    expected = {'started_trials': started, 'evaluated_trials': started, 'planned_trials': planned,
+                'completed_trials': status_counts[search.TRIAL_COMPLETED],
+                'empty_trials': status_counts[search.TRIAL_NO_EVENTS],
+                'aborted_trials': status_counts[search.TRIAL_ABORTED], 'unexecuted_trials': planned - started,
+                'target_uses_planned': planned_uses, 'target_uses_started': target_starts,
+                'shared_target_uses_planned': planned_uses - planned,
+                'shared_target_uses_completed': target_starts - started - status_counts[search.TRIAL_ABORTED],
+                'holdout_callbacks': len(callbacks),
+                'completed_holdout_callbacks': sum(call['status'] == 'completed' for call in callbacks),
+                'aborted_holdout_callbacks': sum(call['status'] == 'aborted' for call in callbacks)}
+    if (any(type(counts.get(name)) is not int or counts[name] != value for name, value in expected.items())
+            or (pure['outcome'] != 'RUN_FAILED' and (started != planned or expected['aborted_trials']))):
+        raise PapersimStoreError(code)
+
+
+def _validate_optimization_result(result, identity, policy, *, registration=None, original=None):
     from polymarket_alpha_lab.papersim.optimize.runner import OptimizationRunResult, _judgment_reasons, _trial_payload
     from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
 
@@ -2937,6 +3054,8 @@ def _validate_optimization_result(result, identity, policy):
             or pure['counts']['planned_trials'] != len(planned_trials) or len(result.trials) > len(planned_trials)
             or pure['decisions'] != _plain_json([asdict(decision) for decision in result.decisions])):
         raise PapersimStoreError(code)
+    if registration is not None:
+        _validate_nba_odr_artifact(pure, identity, original, registration)
     for index, trial in enumerate(result.trials):
         plan = planned_trials[index]
         if (index != trial.trial_index or index != plan['index'] or trial.fold_block_id != plan['fold']
@@ -3066,13 +3185,14 @@ def _optimizer_dispositions(result, rejections, identity, original, publication,
     return outcome, dispositions, publishable
 
 
-def _optimization_budget(identity, result, pure, *, compute_expired):
+def _optimization_budget(identity, result, pure, *, compute_expired, registration=None):
     budget = identity['budget']
     reported = _json_like(result.submission.budget)
     limits = reported if isinstance(reported, dict) else {}
     maximum = budget['max_trials']
     duration = budget['command_nanoseconds'] / _NS_PER_SECOND
-    trial_count, planned = result.submission.trial_count, pure['counts']['planned_trials']
+    trial_count = result.submission.trial_count
+    planned = pure['counts']['planned_trials'] if registration is None else len(registration.plan.trials)
     cap_reached = trial_count == maximum and planned > maximum
     violations = []
     if type(limits.get('max_trials')) is not int or limits['max_trials'] != maximum:
@@ -3201,6 +3321,211 @@ def _managed_write_transaction(conn, clock, *, stage, closeout):
             raise
 
 
+@dataclass(frozen=True)
+class _NBAODRManagedContext:
+    root: Path
+    code_commit: str
+    instance: tuple[str, str, str]
+    migration_version: str
+
+    def registration_identity(self):
+        fields = ('instance_id', 'root_sha256', 'system_identifier')
+        return {'code_commit': self.code_commit, 'migration_version': self.migration_version,
+                'instance_sha256': _optimize_digest(dict(zip(fields, self.instance, strict=True)))}
+
+
+def _require_nba_odr_connection(conn, root):
+    from psycopg.pq import TransactionStatus
+
+    if root is None or getattr(conn, '_papersim_managed_root', None) != root:
+        raise PapersimStoreError(_NBA_ODR_MANAGED_REQUIRED)
+    if conn.info.transaction_status != TransactionStatus.IDLE:
+        raise PapersimStoreError('papersim_optimize_connection_not_idle')
+    conn.autocommit = True
+
+
+def _nba_odr_managed_context(conn, clock, code_commit, *, repo_root=None):
+    from polymarket_alpha_lab.papersim.migrations import PapersimMigrationError, papersim_migration_catalog
+    from polymarket_alpha_lab.papersim.scan import ScanError, require_clean_worktree
+    from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
+
+    root = getattr(conn, '_papersim_managed_root', None) if repo_root is None else Path(repo_root).resolve()
+    _validate_optimization_clock(clock)
+    _remaining_ns(clock.hard_ns, 'registration_identity')
+    _require_nba_odr_connection(conn, root)
+    try:
+        if require_clean_worktree(root) != code_commit:
+            raise PapersimStoreError('papersim_nba_odr_registration_identity_invalid')
+    except ScanError as error:
+        raise PapersimStoreError(error.code) from None
+    try:
+        info = read_instance(root)
+        instance = (info['instance_id'], info['root_sha256'], info['system_identifier'])
+        # Bind the schema version required by this checkout. The operator
+        # separately verifies the applied hashes in the owner-only ledger.
+        catalog = papersim_migration_catalog(root)
+    except (ProjectDatabaseError, PapersimMigrationError) as error:
+        raise PapersimStoreError(str(error)) from None
+    _remaining_ns(clock.hard_ns, 'registration_identity')
+    return _NBAODRManagedContext(root, code_commit, instance, catalog[-1][0].split('_', 1)[0])
+
+
+def _guard_nba_odr_registration_references(conn):
+    from polymarket_alpha_lab.papersim import nba_odr_registration as registration
+    from polymarket_alpha_lab.papersim.optimize.runner import SourceArtifactRef
+
+    # The pin set and reconstructed plan determine the other snapshot digests.
+    # Only the materials and comparison digests are followed from stored links.
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT command, phase, output_evidence->0->'materials'->>'sha256', "
+                       "output_evidence->0->'materials'->>'byte_length' "
+                       'FROM papersim.command_run_events WHERE run_event_key = %s',
+                       (registration.NBA_ODR_REGISTRATION_EVENT_KEY,))
+        row = cursor.fetchone()
+    if row is None:
+        return
+    command, phase, digest, length = row
+    if (command, phase) != ('optimize-register-experiment', 'SUCCEEDED'):
+        raise PapersimStoreError('papersim_nba_odr_registration_conflict')
+    try:
+        materials = _nba_odr_registration_snapshot_content(
+            conn, SourceArtifactRef(digest, int(length)), kind=registration._MATERIALS_KIND,
+            source=registration._generated_source(registration._MATERIALS_NAME),
+        )
+        comparison = json.loads(materials)['comparison']
+        _nba_odr_registration_snapshot_content(
+            conn, SourceArtifactRef(comparison['sha256'], comparison['byte_length']),
+            kind=registration._COMPARE_KIND,
+            source=registration._generated_source(registration._COMPARISON_NAME),
+        )
+    except (ValueError, TypeError, KeyError) as error:
+        if isinstance(error, PapersimStoreError):
+            raise
+        raise PapersimStoreError('papersim_nba_odr_registration_evidence_invalid') from None
+
+
+def _read_nba_odr_facts(conn, context, *, expected_manifest=None):
+    from polymarket_alpha_lab.papersim import nba_odr_registration as registration
+    from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
+
+    try:
+        with binding.bound(*context.instance), conn.cursor() as cursor:
+            binding.verify_connection(cursor)
+    except ProjectDatabaseError as error:
+        raise PapersimStoreError(str(error)) from None
+    _guard_nba_odr_registration_references(conn)
+    return registration._read_nba_odr_registration(
+        conn, **context.registration_identity(), decode_comparisons=_decode_optimizer_comparisons,
+        expected_manifest=expected_manifest,
+    )
+
+
+def _bind_nba_odr_request(conn, identity, manifest, context):
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    facts = _verify_optimizer_inputs(conn, identity, manifest, nba_odr_context=context)
+    plan = facts.plan
+    registration = {
+        'registration_event_id': facts.run_event_id, 'registration_event_key': facts.run_event_key,
+        'registration_config_digest': facts.config_digest, 'manifest': asdict(facts.manifest_ref),
+        'materials': asdict(facts.materials_ref), 'physical_plan': asdict(plan.plan_ref),
+        'metadata': asdict(plan.metadata_ref), 'training_only_group_ids': list(plan.training_only_group_ids),
+    }
+    return {**identity, 'nba_odr_registration': registration,
+            'budget': {**identity['budget'], 'max_trials': runner.NBA_ODR_MAX_TRIALS}}, facts
+
+
+def _read_nba_odr_registration_archives(repo_root):
+    from polymarket_alpha_lab.papersim.optimize.nba_odr import NBA_ODR_ARCHIVE_PINS
+
+    archives = {}
+    for season, pin in NBA_ODR_ARCHIVE_PINS.items():
+        path = repo_root / pin.relpath
+        no_links(path)
+        with path.open('rb') as stream:
+            archives[season] = stream.read(pin.gzip_byte_length + 1)
+    return archives
+
+
+def _register_nba_odr(conn, clock, context, originals, *, stage, confirm=False):
+    from polymarket_alpha_lab.papersim import nba_odr_registration as registration
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    key = (_advisory_lock_number(registration.NBA_ODR_REGISTRATION_LOCK_NAMESPACE),
+           _advisory_lock_number(runner.NBA_ODR_SCHEDULE_ID))
+    family = runner._historical_family(runner._NBA_ODR_FAMILY_ID)
+    with _managed_write_transaction(conn, clock, stage=stage, closeout=True):
+        _try_advisory_lock(conn, key=key, transaction=True, cutoff_ns=clock.hard_ns, stage=f'{stage}_schedule_lock')
+        if confirm:
+            facts = _read_nba_odr_facts(conn, context)
+            if facts is not None:
+                return facts
+        with binding.bound(*context.instance), conn.cursor() as cursor:
+            binding.verify_connection(cursor)
+        _guard_nba_odr_registration_references(conn)
+        return registration._write_nba_odr_registration(
+            conn, **context.registration_identity(), **originals,
+            read_comparisons=lambda: _registry_comparison_snapshot(conn, family, registration.NBA_ODR_REGISTRATION_LINEAGES),
+            decode_comparisons=_decode_optimizer_comparisons, record_command_run_event=record_command_run_event,
+            wall_clock=lambda: d1_database_time(conn),
+        )
+
+
+def register_managed_nba_odr_experiment(conn, *, clock, repo_root, code_commit, approval_bytes,
+                                       source_inventory_bytes, reconnect=None):
+    """Verify and commit the fixed NBA v2 registration before exposing its pointer."""
+    from psycopg import Error
+    from polymarket_alpha_lab.papersim import nba_odr_registration as registration
+    from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
+
+    stage = 'registration_identity'
+    try:
+        context = _nba_odr_managed_context(conn, clock, code_commit, repo_root=repo_root)
+        stage = 'registration_originals'
+        archives = _read_nba_odr_registration_archives(context.root)
+        originals = {'approval_bytes': approval_bytes, 'source_inventory_bytes': source_inventory_bytes,
+                     'content_by_season': archives}
+        # The same originals must still be proved if another caller wins after
+        # a rolled-back COMMIT, so verify these before either transaction.
+        submitted = {'approval': approval_bytes, 'source_inventory': source_inventory_bytes, **archives}
+        pins = registration._pinned_originals()
+        if submitted.keys() != pins.keys():
+            raise PapersimStoreError('papersim_nba_odr_registration_conflict')
+        for name, pin in pins.items():
+            pin.registration(submitted[name])
+        stage = 'registration'
+        try:
+            return _register_nba_odr(conn, clock, context, originals, stage=stage)
+        except ManagedOptimizationError as error:
+            if not error.indeterminate or reconnect is None:
+                raise
+            stage = 'confirm_registration'
+            try:
+                _remaining_ns(clock.hard_ns, stage)
+                with reconnect() as fresh:
+                    _require_nba_odr_connection(fresh, context.root)
+                    return _register_nba_odr(fresh, clock, context, originals, stage=stage, confirm=True)
+            except (Error, OSError, PapersimStoreError, ProjectDatabaseError):
+                raise error from None
+    except ProjectDatabaseError as error:
+        raise ManagedOptimizationError(str(error), stage=stage) from None
+    except (Error, OSError, TypeError, KeyError, ValueError) as error:
+        raise _optimizer_error(error, stage=stage) from None
+
+
+def read_managed_nba_odr_registration(conn, *, clock, repo_root, code_commit, expected_manifest=None):
+    """Independently reconstruct a committed registration using one managed read view."""
+    from psycopg import Error
+
+    stage = 'registration_readback'
+    try:
+        context = _nba_odr_managed_context(conn, clock, code_commit, repo_root=repo_root)
+        with _managed_read_transaction(conn, clock, stage=stage, closeout=True):
+            return _read_nba_odr_facts(conn, context, expected_manifest=expected_manifest)
+    except (Error, OSError, TypeError, KeyError, ValueError) as error:
+        raise _optimizer_error(error, stage=stage) from None
+
+
 @contextmanager
 def _optimizer_operation_lock(conn, clock, run_key, *, confirmation=False):
     key = (_OPERATION_NAMESPACE, _advisory_lock_number(run_key))
@@ -3248,7 +3573,88 @@ def _optimizer_write_event(conn, identity, *, phase, attempt, at, inputs, output
     return readback
 
 
-def _optimizer_claim(conn, clock, identity, family, attempt, original, events):
+_NBA_ODR_CLAIM_ISSUER = object()
+_NBA_ODR_SESSION_PREFIX = 'papersim-nba-odr:'
+
+
+class _NBAODRComputeClaim:
+    """A process-local handoff of the one durable claim to the private runner."""
+
+    __slots__ = ('_available',)
+
+    def __init__(self, inputs, *, issuer):
+        if issuer is not _NBA_ODR_CLAIM_ISSUER:
+            raise PapersimStoreError(_NBA_ODR_BINDING_REQUIRED)
+        self._available = [inputs]
+
+    def _take_for_runner(self):
+        try:
+            return self._available.pop()
+        except IndexError:
+            raise PapersimStoreError(_NBA_ODR_BINDING_REQUIRED) from None
+
+
+@dataclass
+class _NBAODRInvocation:
+    token: str
+    prepared_start: dict | None = None
+    entered_compute: bool = False
+    publication: _OptimizationPublication | None = None
+    result: tuple | None = None
+
+
+@contextmanager
+def _nba_odr_claim_activity(conn, clock, token):
+    # Tie preview's live state to the lock holder for this invocation, even
+    # when the caller has reconnected to confirm its own original claim.
+    from psycopg import Error
+
+    with optimization_database_phase(conn, clock, stage='claim_activity', closeout=True):
+        original, = conn.execute("SELECT current_setting('application_name')").fetchone()
+        conn.execute("SELECT set_config('application_name', %s, false)", (_NBA_ODR_SESSION_PREFIX + token,))
+    try:
+        yield
+    finally:
+        if not conn.closed:
+            try:
+                with optimization_database_phase(conn, clock, stage='claim_activity_restore', closeout=True):
+                    conn.execute("SELECT set_config('application_name', %s, false)", (original,))
+            except (Error, ManagedOptimizationError, OSError):
+                conn.close()
+
+
+def _verify_nba_odr_comparators(family, lineages, registered, snapshot, instant):
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    code = 'papersim_optimize_nba_odr_comparison_conflict'
+    current = _decode_optimizer_comparisons(snapshot['lineages'])
+    for lineage in lineages:
+        observed, expected = current[lineage], registered.policy_context.registry[lineage]
+        if (observed.issue is not None or observed.roles is None or observed.spec is None
+                or (observed.roles.baseline, observed.roles.active, observed.spec.model_version()) !=
+                (expected.roles.baseline, expected.roles.active, expected.spec.model_version())
+                or observed.spec != expected.spec):
+            raise PapersimStoreError(code)
+    contexts = dict.fromkeys(runner._NBA_ODR_TARGETS, 'shared')
+    metadata = json.loads(registered.plan.metadata_bytes)
+    try:
+        baseline, catalogs, _ = runner._nba_odr_catalogs(family, runner.PolicyContext(instant, current), contexts)
+    except ValueError:
+        raise PapersimStoreError(code) from None
+    specs = [{'spec_sha256': spec.spec_sha256(), 'model_version': spec.model_version(),
+              'canonical_spec': spec.canonical_json()} for spec in catalogs[runner._NBA_ODR_TARGETS[0]].specs]
+    if (instant < registered.occurred_at or contexts != metadata['model_contexts']
+            or metadata['baseline'] != {'spec_sha256': baseline.spec_sha256(), 'model_version': baseline.model_version()}
+            or specs != metadata['ordered_specs']):
+        raise PapersimStoreError(code)
+
+
+def _optimizer_claim(conn, clock, identity, family, attempt, original, events, *, registration=None, invocation=None):
+    if registration is not None:
+        if original is not None or events or invocation is None:
+            raise PapersimStoreError(_NBA_ODR_INTERRUPTED)
+        if attempt != _NBA_ODR_FIRST_ATTEMPT:
+            raise PapersimStoreError('papersim_optimize_nba_odr_first_attempt_required')
     if any(event['phase'] == 'FAILED' and event['attempt'] == attempt for event in events):
         raise ManagedOptimizationError('papersim_optimize_attempt_already_failed', stage='claim',
                                        retryable=True, started_event_id=original['run_event_id'])
@@ -3274,10 +3680,20 @@ def _optimizer_claim(conn, clock, identity, family, attempt, original, events):
                     raise PapersimStoreError('papersim_optimize_existing_holdout_assignment')
             if instant < datetime.fromisoformat(identity['data_cutoff']):
                 raise PapersimStoreError('papersim_optimize_cutoff_in_future')
-            facts = _optimization_registry_snapshot(conn, family, identity['lineages'])
+            if registration is None:
+                facts = _optimization_registry_snapshot(conn, family, identity['lineages'])
+            else:
+                comparison = _registry_comparison_snapshot(conn, family, identity['lineages'])
+                _verify_nba_odr_comparators(family, identity['lineages'], registration, {'lineages': comparison}, instant)
+                facts = _optimization_registry_snapshot(conn, family, identity['lineages'], comparison=comparison)
+            claim = {'schema': _OPTIMIZE_CLAIM, 'request': identity,
+                     'registry': facts, 'registry_sha256': _optimize_digest(facts)}
+            if registration is not None:
+                claim['claim_token'] = invocation.token
             original = _optimizer_write_event(conn, identity, phase='STARTED', attempt=attempt, at=instant,
-                                              inputs=[{'schema': _OPTIMIZE_CLAIM, 'request': identity,
-                                                       'registry': facts, 'registry_sha256': _optimize_digest(facts)}])
+                                              inputs=[claim])
+            if registration is not None:
+                invocation.prepared_start = original
             added = original
         else:
             added = _optimizer_write_event(conn, identity, phase='STARTED', attempt=attempt, at=instant,
@@ -3309,35 +3725,65 @@ def _optimizer_record_failed_attempt(conn, clock, identity, original, attempt, e
             raise receipt_error from None
 
 
+@dataclass(frozen=True)
+class _OptimizationPublication:
+    instant: datetime
+    registry: dict
+    artifact: bytes
+    budget: dict
+    outcome: str
+    dispositions: dict
+    publishable: dict
+    rejections: dict
+
+
+def _prepare_optimizer_publication(conn, identity, family, original, result, pure, rejections, budget):
+    publication = _optimization_registry_snapshot(conn, family, identity['lineages'])
+    instant = datetime.now(UTC)
+    if instant < original['occurred_at']:
+        raise PapersimStoreError('papersim_optimize_publication_time_invalid')
+    rejections = rejections.copy()
+    if budget.get('violations'):
+        outcome, publishable = 'RUN_FAILED', {}
+        rejections.clear()
+        dispositions = {decision.lineage: {'status': 'registered_budget_conflict',
+                        'statistical_status': decision.status} for decision in result.decisions}
+    else:
+        outcome, dispositions, publishable = _optimizer_dispositions(
+            result, rejections, identity, original, publication, instant)
+        if outcome != result.outcome:
+            budget = {**budget, 'stopping_causes': ['publication_veto'], 'stopping_stage': 'publication_veto'}
+    claim = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
+    artifact = _optimize_json({
+        'schema': _OPTIMIZE_ARTIFACT, 'request': identity, 'budget': budget, 'outcome': outcome,
+        'original_started': _original_start_proof(original, claim),
+        'publication': {'observed_at': _optimize_time(instant), 'registry': publication},
+        'pure_sha256': result.artifacts_sha256, 'pure': pure, 'dispositions': dispositions, 'rejections': rejections,
+    })
+    return _OptimizationPublication(instant, publication, artifact, budget, outcome, dispositions, publishable,
+                                     rejections)
+
+
 def _optimizer_publish(conn, clock, identity, family, original, events, attempt, result, pure,
-                       rejections, budget, *, resumed_attempt):
+                       rejections, budget, *, resumed_attempt, registration=None, invocation=None):
     from polymarket_alpha_lab.papersim.snapshots import SnapshotRegistration, register_snapshot
 
     budget_conflict = bool(budget.get('violations'))
     stage = 'failure_publication' if result.outcome == 'RUN_FAILED' or budget_conflict else 'publication'
     with _managed_write_transaction(conn, clock, stage=stage, closeout=True):
-        publication = _optimization_registry_snapshot(conn, family, identity['lineages'])
-        instant = datetime.now(UTC)
-        if instant < original['occurred_at']:
-            raise PapersimStoreError('papersim_optimize_publication_time_invalid')
-        rejections = rejections.copy()
-        if budget_conflict:
-            outcome, publishable = 'RUN_FAILED', {}
-            rejections.clear()
-            dispositions = {decision.lineage: {'status': 'registered_budget_conflict',
-                            'statistical_status': decision.status} for decision in result.decisions}
-        else:
-            outcome, dispositions, publishable = _optimizer_dispositions(
-                result, rejections, identity, original, publication, instant)
-            if outcome != result.outcome:
-                budget = {**budget, 'stopping_causes': ['publication_veto'], 'stopping_stage': 'publication_veto'}
-        claim = _optimization_event_evidence(original, 'input_evidence', _OPTIMIZE_CLAIM)
-        artifact = _optimize_json({
-            'schema': _OPTIMIZE_ARTIFACT, 'request': identity, 'budget': budget, 'outcome': outcome,
-            'original_started': _original_start_proof(original, claim),
-            'publication': {'observed_at': _optimize_time(instant), 'registry': publication},
-            'pure_sha256': result.artifacts_sha256, 'pure': pure, 'dispositions': dispositions, 'rejections': rejections,
-        })
+        prepared = None if invocation is None else invocation.publication
+        if prepared is None:
+            prepared = _prepare_optimizer_publication(conn, identity, family, original, result, pure,
+                                                      rejections, budget)
+            if invocation is not None:
+                invocation.publication = prepared
+        elif prepared.publishable or prepared.rejections:
+            # The first publication released the registry lock when its
+            # connection was lost. Recheck any proposed registry effects.
+            if _optimization_registry_snapshot(conn, family, identity['lineages']) != prepared.registry:
+                raise PapersimStoreError('papersim_optimize_publication_veto')
+        instant, artifact, budget, outcome = prepared.instant, prepared.artifact, prepared.budget, prepared.outcome
+        dispositions, publishable, rejections = prepared.dispositions, prepared.publishable, prepared.rejections
         _remaining_ns(clock.hard_ns, f'{stage}_serialization')
         stored = register_snapshot(conn, SnapshotRegistration(
             content=artifact, kind=_OPTIMIZE_ARTIFACT_KIND, source=_OPTIMIZE_COMMAND,
@@ -3395,7 +3841,11 @@ def _optimizer_publish(conn, clock, identity, family, original, events, attempt,
                                           outputs=[linkage], error_code=error_code)
         with conn.cursor() as cursor:
             run = _optimization_run_row(cursor, 'WHERE optimization_key = %s', (identity['run_key'],))
-        confirmed = _optimization_terminal(conn, original, run, terminal, replayed=False)
+        if registration is None:
+            confirmed = _optimization_terminal(conn, original, run, terminal, replayed=False)
+        else:
+            confirmed = _optimization_terminal(conn, original, run, terminal, replayed=False,
+                                               registration=registration)
     return confirmed
 
 
@@ -3504,14 +3954,138 @@ def _confirm_optimizer_commit(clock, identity, family, manifest, attempt, comput
                                    started_event_id=None if original is None else original['run_event_id']) from None
 
 
+def _nba_odr_publish(conn, clock, identity, family, original, events, registration, invocation):
+    result, pure, rejections, budget = invocation.result
+    return _optimizer_publish(conn, clock, identity, family, original, events, original['attempt'],
+                              result, pure, rejections, budget, resumed_attempt=False,
+                              registration=registration, invocation=invocation)
+
+
+def _compute_nba_odr_claim(conn, clock, identity, family, original, events, registration, invocation):
+    from psycopg import Error
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    stage, pure = 'compute', None
+    try:
+        _remaining_ns(clock.hard_ns, stage)
+        policy = _optimization_policy(original)
+        observed_expiry = False
+
+        def deadline():
+            nonlocal observed_expiry
+            observed_expiry = observed_expiry or clock.compute_expired()
+            return observed_expiry
+
+        plan = registration.plan
+        inputs = runner._NBAODRClaimInputs(
+            registration, identity['run_key'], identity['code_commit'], registration.run_event_id,
+            original['run_event_id'], registration.manifest_ref, registration.materials_ref,
+            plan.plan_ref, plan.metadata_ref, policy, deadline,
+        )
+        claim = _NBAODRComputeClaim(inputs, issuer=_NBA_ODR_CLAIM_ISSUER)
+        invocation.entered_compute = True
+        result = runner._execute_claimed_nba_odr(claim)
+        expired = deadline()
+        stage = 'validate_result'
+        _remaining_ns(clock.hard_ns, stage)
+        pure, rejections = _validate_optimization_result(result, identity, policy,
+                                                          registration=registration, original=original)
+        budget = _optimization_budget(identity, result, pure, compute_expired=expired, registration=registration)
+        invocation.result = (result, pure, rejections, budget)
+        stage = 'failure_publication' if result.outcome == 'RUN_FAILED' or budget.get('violations') else 'publication'
+        return _nba_odr_publish(conn, clock, identity, family, original, events, registration, invocation)
+    except (Error, OSError, TypeError, KeyError, ValueError) as error:
+        failure = _optimizer_error(error, stage=stage, original=original)
+        try:
+            _optimizer_record_failed_attempt(conn, clock, identity, original, original['attempt'], failure, pure)
+        except ManagedOptimizationError:
+            # A failed-attempt receipt with an uncertain COMMIT must not
+            # replace the first failure or lead to another compute call.
+            pass
+        if not failure.indeterminate:
+            failure.retryable = False
+        raise failure from None
+
+
+def _execute_nba_odr_operation(conn, clock, request, family, manifest, attempt, context, invocation,
+                               *, confirmation=False):
+    from psycopg import Error
+
+    run_key = request['run_key']
+    original, stage = None, 'operation_lock'
+    try:
+        with _optimizer_operation_lock(conn, clock, run_key, confirmation=confirmation):
+            stage = 'confirm_commit' if confirmation else 'verify_inputs'
+            with _managed_read_transaction(conn, clock, stage=stage, closeout=True):
+                identity, registration = _bind_nba_odr_request(conn, request, manifest, context)
+                original, events, run, terminal = _optimization_operation(conn, run_key, identity)
+                if original is not None and original['attempt'] != _NBA_ODR_FIRST_ATTEMPT:
+                    raise PapersimStoreError('papersim_optimize_linkage_invalid')
+                if terminal is not None:
+                    return _optimization_terminal(conn, original, run, terminal, replayed=True,
+                                                  registration=registration)
+            own_start = confirmation and original is not None and original == invocation.prepared_start
+            if original is not None and (not own_start or len(events) != 1):
+                failed_attempt = next((row for row in events if row['phase'] == 'FAILED'), None)
+                raise ManagedOptimizationError(
+                    _NBA_ODR_INTERRUPTED, stage='claim', started_event_id=original['run_event_id'],
+                    attempt_event_id=None if failed_attempt is None else failed_attempt['run_event_id'],
+                )
+            if invocation.entered_compute and (not own_start or invocation.publication is None):
+                raise PapersimStoreError(_NBA_ODR_INTERRUPTED)
+            with _nba_odr_claim_activity(conn, clock, invocation.token):
+                if invocation.entered_compute:
+                    stage = 'confirm_publication'
+                    return _nba_odr_publish(conn, clock, identity, family, original, events, registration, invocation)
+                if original is None:
+                    stage = 'claim'
+                    original, events = _optimizer_claim(conn, clock, identity, family, attempt, original, events,
+                                                        registration=registration, invocation=invocation)
+                stage = 'compute'
+                return _compute_nba_odr_claim(conn, clock, identity, family, original, events, registration, invocation)
+    except (Error, OSError, TypeError, KeyError, ValueError) as error:
+        raise _optimizer_error(error, stage=stage, original=original) from None
+
+
+def _run_managed_nba_odr(conn, clock, identity, family, manifest, attempt, reconnect):
+    from psycopg import Error
+    from polymarket_alpha_lab.project_postgres.files import ProjectDatabaseError
+
+    try:
+        context = _nba_odr_managed_context(conn, clock, identity['code_commit'])
+    except (Error, OSError, TypeError, KeyError, ValueError) as error:
+        raise _optimizer_error(error, stage='registration_identity') from None
+    invocation = _NBAODRInvocation(uuid4().hex)
+    try:
+        return _execute_nba_odr_operation(conn, clock, identity, family, manifest, attempt, context, invocation)
+    except ManagedOptimizationError as error:
+        if not error.indeterminate or reconnect is None:
+            raise
+        fresh = None
+        try:
+            _remaining_ns(clock.hard_ns, 'confirm_commit')
+            fresh = reconnect()
+            _require_nba_odr_connection(fresh, context.root)
+        except (Error, OSError, PapersimStoreError, ProjectDatabaseError):
+            if fresh is not None:
+                fresh.close()
+            raise error from None
+        with fresh:
+            return _execute_nba_odr_operation(fresh, clock, identity, family, manifest, attempt,
+                                              context, invocation, confirmation=True)
+
+
 def _managed_optimizer_request(conn, *, clock, family, data_cutoff, random_seed, code_commit, attempt, targets,
                                schedule_id, manifest_sha256, manifest_byte_length, manifest, source_refs,
                                operation_key):
     from psycopg.pq import TransactionStatus
+    from polymarket_alpha_lab.papersim.optimize import runner
 
-    if not conn.autocommit or conn.info.transaction_status != TransactionStatus.IDLE:
-        raise ManagedOptimizationError('papersim_optimize_connection_not_idle', stage='connect')
     try:
+        if schedule_id == runner.NBA_ODR_SCHEDULE_ID:
+            _require_nba_odr_connection(conn, getattr(conn, '_papersim_managed_root', None))
+        elif not conn.autocommit or conn.info.transaction_status != TransactionStatus.IDLE:
+            raise ManagedOptimizationError('papersim_optimize_connection_not_idle', stage='connect')
         _validate_optimization_clock(clock)
         _remaining_ns(clock.hard_ns, 'request')
         identity = _optimize_request(clock=clock, family=family, data_cutoff=data_cutoff, random_seed=random_seed,
@@ -3525,11 +4099,106 @@ def _managed_optimizer_request(conn, *, clock, family, data_cutoff, random_seed,
         raise _optimizer_error(error, stage='request') from None
 
 
+def _nba_odr_started_is_live(cursor, run_key, token):
+    cursor.execute("SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_locks AS locks "
+                   'JOIN pg_catalog.pg_stat_activity AS activity USING (pid) '
+                   "WHERE locks.locktype = 'advisory' AND locks.granted AND locks.objsubid = 2 "
+                   "AND locks.mode = 'ExclusiveLock' AND activity.datname = current_database() "
+                   'AND locks.classid = %s::oid AND locks.objid = %s::oid AND activity.application_name = %s)',
+                   (_OPERATION_NAMESPACE & 0xffffffff, _advisory_lock_number(run_key) & 0xffffffff,
+                    _NBA_ODR_SESSION_PREFIX + token))
+    return cursor.fetchone()[0]
+
+
+def _preview_nba_odr_state(conn, identity, registration):
+    code = 'papersim_optimize_linkage_invalid'
+    run_key = identity['run_key']
+    operation_key = _optimize_operation_key(run_key)
+    config_digest = _optimize_digest(identity)
+    plan = registration.plan
+    receipt = {
+        'status': 'not_run', 'code_commit': identity['code_commit'], 'outcome': None, 'exit_code': 0,
+        'registration_event_id': registration.run_event_id, 'registration_event_key': registration.run_event_key,
+        'registration_config_digest': registration.config_digest,
+        'planned_trials': len(plan.trials), 'target_uses_planned': sum(len(row.targets) for row in plan.trials),
+        'planned_holdout_days': len(plan.holdout_folds), 'planned_holdout_matches': len(plan.cohort.holdout_records),
+        'started_event_id': None, 'started_event_key': None, 'attempt_event_id': None, 'attempt_event_key': None,
+        'terminal_event_id': None, 'terminal_event_key': None, 'optimization_id': None, 'error_code': None,
+    }
+    columns = ('id', 'key', 'attempt', 'phase', 'commit', 'config', 'cutoff', 'at', 'error',
+               'input_schema', 'request_matches', 'token', 'original_id', 'original_key', 'request_sha256',
+               'output_empty', 'output_schema', 'output_run_key', 'output_optimization_id', 'output_outcome',
+               'output_artifact_sha256', 'output_exit')
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT run_event_id, run_event_key, attempt, phase, code_commit, config_digest, "
+                       "scheduled_for, occurred_at, error_code, input_evidence->0->>'schema', "
+                       "input_evidence->0->'request' = %s::jsonb, input_evidence->0->>'claim_token', "
+                       "input_evidence->0->>'original_started_event_id', "
+                       "input_evidence->0->>'original_started_event_key', input_evidence->0->>'request_sha256', "
+                       "output_evidence->0 IS NULL, output_evidence->0->>'schema', "
+                       "output_evidence->0->>'run_key', output_evidence->0->>'optimization_id', "
+                       "output_evidence->0->>'outcome', output_evidence->0->>'artifacts_sha256', "
+                       "output_evidence->0->>'exit_code' FROM papersim.command_run_events "
+                       'WHERE operation_key = %s AND command = %s ORDER BY run_event_id LIMIT 3',
+                       (_optimize_json(identity).decode(), operation_key, _OPTIMIZE_COMMAND))
+        events = [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+        cursor.execute('SELECT optimization_id, code_commit, outcome, artifacts_sha256 '
+                       'FROM papersim.optimization_runs WHERE optimization_key = %s', (run_key,))
+        run = cursor.fetchone()
+        if not events:
+            if run is not None:
+                raise PapersimStoreError(code)
+            return receipt
+        root = events[0]
+        token = root['token']
+        if (len(events) > 2 or root['attempt'] != _NBA_ODR_FIRST_ATTEMPT
+                or root['phase'] != 'STARTED' or root['input_schema'] != _OPTIMIZE_CLAIM
+                or not root['output_empty'] or root['error'] is not None
+                or not isinstance(token, str) or len(token) != 32
+                or any(char not in '0123456789abcdef' for char in token)):
+            raise PapersimStoreError(code)
+        if not root['request_matches']:
+            raise PapersimStoreError('papersim_optimize_request_conflict')
+        for event in events:
+            if (event['commit'] != identity['code_commit'] or event['config'] != config_digest
+                    or _optimize_time(event['cutoff']) != identity['data_cutoff'] or event['at'] < root['at']
+                    or event['key'] != command_run_event_key(operation_key, event['attempt'], event['phase'])):
+                raise PapersimStoreError(code)
+        receipt.update(started_event_id=root['id'], started_event_key=root['key'])
+        if len(events) == 1:
+            if run is not None:
+                raise PapersimStoreError(code)
+            live = _nba_odr_started_is_live(cursor, run_key, token)
+            return {**receipt, 'status': 'in_progress' if live else 'interrupted'}
+
+    tail = events[1]
+    if (tail['input_schema'] != _OPTIMIZE_ATTEMPT or tail['original_id'] != str(root['id'])
+            or tail['original_key'] != root['key'] or tail['request_sha256'] != config_digest
+            or tail['attempt'] != root['attempt'] or tail['phase'] not in {'FAILED', 'SUCCEEDED'}):
+        raise PapersimStoreError(code)
+    if tail['phase'] == 'FAILED' and tail['output_schema'] == _OPTIMIZE_ATTEMPT and tail['error'] and run is None:
+        return {**receipt, 'status': 'interrupted', 'attempt_event_id': tail['id'],
+                'attempt_event_key': tail['key'], 'error_code': tail['error']}
+    if run is None or tail['output_schema'] != _OPTIMIZE_TERMINAL:
+        raise PapersimStoreError(code)
+    optimization_id, commit, outcome, artifact_sha256 = run
+    failed = outcome == 'RUN_FAILED'
+    if (commit != identity['code_commit'] or tail['output_run_key'] != run_key
+            or tail['output_optimization_id'] != str(optimization_id) or tail['output_outcome'] != outcome
+            or tail['output_artifact_sha256'] != artifact_sha256 or tail['output_exit'] != str(int(failed))
+            or tail['phase'] != ('FAILED' if failed else 'SUCCEEDED') or bool(tail['error']) != failed):
+        raise PapersimStoreError(code)
+    return {**receipt, 'status': 'sealed_failure' if failed else 'sealed_success', 'outcome': outcome,
+            'optimization_id': optimization_id, 'terminal_event_id': tail['id'], 'terminal_event_key': tail['key'],
+            'error_code': tail['error']}
+
+
 def preview_managed_optimization(conn, *, clock, family, data_cutoff, random_seed, code_commit, attempt, targets,
                                  schedule_id, manifest_sha256, manifest_byte_length, manifest, source_refs,
                                  operation_key=None) -> dict:
     """Verify the registered request and read its current state in one read-only snapshot."""
     from psycopg import Error
+    from polymarket_alpha_lab.papersim.optimize import runner
 
     identity = _managed_optimizer_request(
         conn, clock=clock, family=family, data_cutoff=data_cutoff, random_seed=random_seed, code_commit=code_commit,
@@ -3543,6 +4212,12 @@ def preview_managed_optimization(conn, *, clock, family, data_cutoff, random_see
                'manifest_byte_length': manifest_byte_length}
     original, stage = None, 'verify_inputs'
     try:
+        if schedule_id == runner.NBA_ODR_SCHEDULE_ID:
+            context = _nba_odr_managed_context(conn, clock, code_commit)
+            with _managed_read_transaction(conn, clock, stage=stage, closeout=True):
+                identity, registration = _bind_nba_odr_request(conn, identity, manifest, context)
+                stage = 'read_operation'
+                return {**preview, **_preview_nba_odr_state(conn, identity, registration)}
         with _managed_read_transaction(conn, clock, stage=stage, closeout=True):
             _verify_optimizer_inputs(conn, identity, manifest)
             stage = 'read_operation'
@@ -3562,14 +4237,23 @@ def preview_managed_optimization(conn, *, clock, family, data_cutoff, random_see
 
 def run_managed_optimization(conn, *, clock, family, data_cutoff, random_seed, code_commit, attempt, targets,
                              schedule_id, manifest_sha256, manifest_byte_length, manifest, source_refs,
-                             compute, reconnect=None, operation_key=None) -> dict:
+                             compute=_MISSING_OPTIMIZER_COMPUTE, reconnect=None, operation_key=None) -> dict:
     """Claim, compute outside a transaction, and seal one managed experiment."""
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    nba_odr = schedule_id == runner.NBA_ODR_SCHEDULE_ID
+    if nba_odr and compute is not _MISSING_OPTIMIZER_COMPUTE:
+        raise ManagedOptimizationError('papersim_optimize_nba_odr_callback_forbidden', stage='request')
+    if not nba_odr and compute is _MISSING_OPTIMIZER_COMPUTE:
+        raise TypeError("run_managed_optimization() missing required keyword-only argument: 'compute'")
     identity = _managed_optimizer_request(
         conn, clock=clock, family=family, data_cutoff=data_cutoff, random_seed=random_seed, code_commit=code_commit,
         attempt=attempt, targets=targets, schedule_id=schedule_id, manifest_sha256=manifest_sha256,
         manifest_byte_length=manifest_byte_length, manifest=manifest, source_refs=source_refs,
         operation_key=operation_key,
     )
+    if nba_odr:
+        return _run_managed_nba_odr(conn, clock, identity, family, manifest, attempt, reconnect)
     state = {}
     try:
         return _execute_optimizer_operation(conn, clock, identity, family, manifest, attempt, compute, state)

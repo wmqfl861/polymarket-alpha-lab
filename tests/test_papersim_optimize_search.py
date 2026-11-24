@@ -1022,3 +1022,63 @@ def test_large_source_inventory_only_constructs_selected_folds_with_shared_prefi
     assert folds[-1].train_keys[0] == records[0].event_key
     assert folds[-1].train_keys[-1] == records[-3].event_key
     assert search.nested_fold_ids(folds[-1], folds) == tuple(selected[:-1])
+
+
+def test_training_only_days_count_in_each_season_and_never_become_outer_folds():
+    records, source_days, days = _dated_records((2,) * 12)
+    first_season, second_season = set(days[:5]), set(days[5:])
+    source_days = {
+        row.event_key: replace(source_days[row.event_key],
+                               history_partition="first" if row.group_id in first_season else "second")
+        for row in records
+    }
+    cohort = _cohort(records, source_days, days[-2:])
+    training = (*days[:3], *days[5:8])
+    outer, skipped = search.selected_prefix_folds(cohort, training_only_group_ids=training)
+
+    assert not skipped
+    assert cohort.search_group_ids == tuple(days[:-2])
+    assert [fold.block_id for fold in outer] == [*days[3:5], *days[8:10]]
+    assert outer[0].train_block_ids == tuple(days[:3])
+    assert outer[2].train_block_ids == tuple(days[5:8])
+    assert set(outer[0].train_keys) == {row.event_key for row in records if row.group_id in days[:3]}
+    assert set(outer[2].train_keys) == {row.event_key for row in records if row.group_id in days[5:8]}
+    assert search.nested_fold_ids(outer[1], outer) == (days[3],)
+    assert search.nested_fold_ids(outer[2], outer) == ()
+    assert search.nested_fold_ids(outer[3], outer) == (days[8],)
+
+    holdout, holdout_skips = search.holdout_prefix_folds(cohort)
+    assert not holdout_skips and [fold.block_id for fold in holdout] == days[-2:]
+    assert all(set(fold.train_block_ids) <= second_season for fold in holdout)
+    assert set(holdout[-1].train_block_ids) - set(holdout[0].train_block_ids) == {days[-2]}
+    with pytest.raises(ValueError, match="cannot include training-only"):
+        search.selected_prefix_folds(cohort, selected_group_ids=days[:-2], training_only_group_ids=training)
+    with pytest.raises(ValueError, match="complete and inside"):
+        search.selected_prefix_folds(cohort, training_only_group_ids=days[-2:])
+
+
+def test_partitioned_folds_preserve_late_and_incomplete_day_reasons():
+    records, source_days, days = _dated_records((1,) * 11)
+    source_days = {
+        row.event_key: replace(source_days[row.event_key], history_partition="first" if index < 5 else "second")
+        for index, row in enumerate(records)
+    }
+    late_day = source_days[records[8].event_key].prediction_date
+    source_days[records[2].event_key] = replace(
+        source_days[records[2].event_key], observed_label_at=dt.datetime.combine(late_day, dt.time(1), UTC),
+    )
+    cohort = search.validate_cohort(
+        records, days[-1:], data_cutoff=dt.datetime.fromisoformat(days[-1] + "T00:00:00+00:00") + dt.timedelta(days=1),
+        source_days=source_days, source_timezone=UTC, last_complete_date=dt.date.fromisoformat(days[-1]),
+        complete_groups=set(days) - {days[9]},
+    )
+    folds, skipped = search.selected_prefix_folds(cohort, training_only_group_ids=(*days[:3], *days[5:8]))
+    assert [(skip.block_id, skip.reason) for skip in skipped] == [
+        (days[3], "prior_block_prefix_incomplete_at_cutoff"),
+        (days[4], "prior_block_prefix_incomplete_at_cutoff"),
+        (days[9], "target_block_incomplete"),
+    ]
+    assert [fold.block_id for fold in folds] == [days[8]]
+    assert tuple(folds[0].train_block_ids) == tuple(days[5:8])
+    holdout, holdout_skips = search.holdout_prefix_folds(cohort)
+    assert not holdout_skips and holdout[0].train_block_ids == tuple(days[5:9])

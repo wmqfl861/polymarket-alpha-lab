@@ -1,0 +1,26 @@
+{
+  "started": "2026-11-21T17:31:18.500576+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "b21cd08bad11c523070525ff656ec9032f64261be05d478082ecc03ea96b1cf8",
+  "purpose": "fx41-nba-v2-owner-registration-plan-review",
+  "resume": null,
+  "attachments": {
+    "approved-scope-plan.md": "558a5f27f97827d54360b62e71336fe012d56e20e807a893a3894d8318fb321f",
+    "owner-approval.json": "bc33ccee3864a6b33116105f8fc373f0acc614eb34b1148d04ccf69e2dfd4313",
+    "preregistered-input-draft.md": "97e03298c0eb61e7d958953cfce1c3855ca88289e52c372073fb57bb190a42e1",
+    "prior-plan-review-followup.md": "e0c3ceccd956f87c27362c01b3d8571eadc22d95c5656f8ebfb060d505fd9aeb",
+    "source-inventory.json": "f3bf0c46a3596de85353327b8fead7ceed274f7c00ee8aa88648eb9586c5dd48",
+    "source-inventory-executor.json": "52ab35d21f6c35b1e39695446d47115d64b375b3607bfe7ad5ed649e6bdd1f43"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T17:35:50.855253+00:00",
+  "exit": 0,
+  "stdout_sha256": "191033f53eedc6c367af89bb56041b0090c7f9eaa4e1b2a43a3898879dbc7c0c",
+  "stderr_sha256": "99835e000ac38da5984d8b9352f37f3c33b4ecd7bea6e7186a07eb1a46511e75",
+  "stdout_bytes": 6564,
+  "stderr_bytes": 165,
+  "safe_diagnostics": []
+}

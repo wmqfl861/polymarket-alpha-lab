@@ -1,0 +1,23 @@
+{
+  "started": "2026-11-21T18:57:16.218713+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "96aa505abcd3342af6be192dc7106137c6d8506f901ee38b391af543b38d9b09",
+  "purpose": "fx41-nba-six-variant-plan-rereview",
+  "resume": "sess_85726871-25be-4fbe-b5fc-048c14effe67",
+  "attachments": {
+    "author-correction.md": "ca3e7eb9606424b510d5dd14c404398a7f8984fbbdd7db7dd3ea3f372dc59f9c",
+    "original-plan.md": "558a5f27f97827d54360b62e71336fe012d56e20e807a893a3894d8318fb321f",
+    "original-verdict.txt": "191033f53eedc6c367af89bb56041b0090c7f9eaa4e1b2a43a3898879dbc7c0c"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T18:59:16.363610+00:00",
+  "exit": 0,
+  "stdout_sha256": "662080e263a158c28303ea9aef8b4b3d7af6e36efa9455ab06287fdd5ba1573a",
+  "stderr_sha256": "a569c63fef5e141573ae9be5020a02b7dd0916778ae05748ebda383092dcdccf",
+  "stdout_bytes": 6242,
+  "stderr_bytes": 66,
+  "safe_diagnostics": []
+}
