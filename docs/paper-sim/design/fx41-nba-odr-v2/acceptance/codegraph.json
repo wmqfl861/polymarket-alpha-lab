@@ -1,0 +1,16 @@
+{
+  "candidate": "nba",
+  "changed_git_blobs_sha256": "826d0b63b3def53872a0282c594901a2440d090b149bfe3fe212db28130ac533",
+  "changed_indexed_files": 13,
+  "changed_unindexed_files": 30,
+  "codegraph_version": "1.6.3",
+  "commit": "2933a375fdc3c248514968277effb9a699097131",
+  "files_with_parse_errors": 0,
+  "indexed_content_sha256": "4033d5af10cf231be94b4ac7df124a1735964c9ec494ba8a394b65d079b29397",
+  "reindex_recommended": false,
+  "removed_indexed_files": 4,
+  "result": "pass",
+  "source_index_commit": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+  "tree": "446be10b502632b3a1acbf3b774aecd65a2ce48e",
+  "verified_indexed_files": 6765
+}

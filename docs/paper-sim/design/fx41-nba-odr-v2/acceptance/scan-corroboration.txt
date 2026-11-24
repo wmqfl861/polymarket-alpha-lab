@@ -1,0 +1,51 @@
+退出码 0，命令原样执行了一次。补充检查的脱敏 JSON 原样如下：
+
+```json
+{
+  "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "candidate": "2933a375fdc3c248514968277effb9a699097131",
+  "classification": "preexisting_program_field_for_reference_row_indexes",
+  "findings": [
+    {
+      "base_blob": "c389fd72c003da7f4a613d8f8d7643a1f7597734",
+      "base_line": 3706,
+      "candidate_blob": "cd9627795365a080ce3e70e89594581a3fc68b35",
+      "candidate_line": 3795,
+      "context": "gate_metric_construction",
+      "enclosing_function_bytes_match": true,
+      "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py"
+    },
+    {
+      "base_blob": "fdd8e42b8332228022079b8d837e3685f4c77f5a",
+      "base_line": 3666,
+      "candidate_blob": "dbc19d51169e865d7bfe48db03ae50b2083a8b64",
+      "candidate_line": 3667,
+      "context": "gate_metric_assertion",
+      "enclosing_function_bytes_match": true,
+      "path": "tests/test_papersim_optimize_runner.py"
+    }
+  ],
+  "source_receipt_sha256": "f1ce327dfd324698d086a80adbd7ebca2f0ea44ea9ca2a167096a33cf82d7869"
+}
+```
+
+## 这次检查确认了什么
+
+以下依据脚本的断言逻辑，我没有打开两处源码。
+
+- **同一字面量**：两处命中是同一个独立的字符串字面量，各在固定行上只匹配一次。
+- **生产端写入**：在 `_intl_gate_d` 中，它是传给 `numbers.update({...})` 的字典键，值是 `references` 中参考行序号的拼接串。
+- **测试断言**：在 Gate D 测试函数中，同一键从 `numbers = dict(gate['numbers'])` 读出，断言等于 `range(cut, cut + nations_games)` 的拼接串。
+- **基线与候选一致**：两个函数各自逐字节相同，只是行号变了（3706 变为 3795，3666 变为 3667）。
+- **出处一致**：四个 blob 与上一份回执的清单和两个固定提交一致。
+
+## 这份证据的边界
+
+- 检查只做 AST 形状比对，没有运行该测试，也没有核对测试里的 `gate` 是否由这个生产函数产生。
+- 函数的逐字节比对从 `def` 行开始，不含装饰器。
+
+## 状态保持
+
+- `corroborate-contact-shapes.py` 的校验值与给定值一致（`9af763fe96582c9d6dd4e35508c7a6e6a446fcd5615cd8c33b70d9a7d3220669`）。
+- 上一份回执和 `capture.py` 的校验值未变，脚本没有写出任何文件。
+- 源码工作区无改动，未重跑全量静态收集。

@@ -1,0 +1,32 @@
+The script ran verbatim in a single Bash call, reached its last command, and the tool reported no error, so every built-in assertion held.
+
+**Exit codes**
+
+| File | Value |
+|---|---|
+| `base.selfcheck.exit` | 0 |
+| `candidate.selfcheck.exit` | 0 |
+| `candidate.anchor.exit` | 0 |
+| `compare.stdout.exit` | 0 |
+| `compare.stderr.exit` | 0 |
+
+**Byte counts and SHA-256**
+
+| File | Bytes | SHA-256 |
+|---|---|---|
+| `base.selfcheck.stdout` | 1663 | `a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9` |
+| `candidate.selfcheck.stdout` | 1663 | `a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9` |
+| `base.selfcheck.stderr` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `candidate.selfcheck.stderr` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `candidate.anchor.stdout` | not printed | `fee1b06fef83902f6c6dcfdcf736e2ed3fc88d11ce69548eee59757d9438f620` |
+| `candidate.anchor.stderr` | not printed | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+
+The script's `wc -c` line covers only the four selfcheck streams, so there is no byte count for the two anchor files.
+
+**Pytest result:** `candidate.anchor.stdout` contains exactly `1 passed in 1.74s`.
+
+**Selfchecks:** both trees printed `selfcheck: PASS (10/10 checks)`, and each stdout has 10 `[PASS]` lines. Base and candidate selfcheck output is byte-identical on both stdout and stderr.
+
+**Tree state:** `post-checkout-status.txt` reads `both clean`. Before and after the run, each tree was at its expected commit (`ab6edff2…` for base, `2933a375…` for candidate) with an empty `git status --porcelain=v1 --untracked-files=all`.
+
+The Python version gate (`Python 3.12.3`) and the import-path assertion passed in both trees, since the script continued past them under `set -eu`.

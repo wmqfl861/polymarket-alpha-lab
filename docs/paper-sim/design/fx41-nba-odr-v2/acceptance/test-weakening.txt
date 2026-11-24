@@ -1,0 +1,7 @@
+base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=2933a375fdc3c248514968277effb9a699097131
+test python files: added=2 modified=5 deleted=0
+tests/test_papersim_cli_optimize.py: tests 17 -> 21
+    removed test: test_optimize_help_names_the_four_subcommands (had 3 checks)
+modified files: test functions 227 -> 244
+totals: removed tests=1 tests with fewer checks=0 new skip markers=0 new xfail markers=0
+added files: 2 with 22 test functions

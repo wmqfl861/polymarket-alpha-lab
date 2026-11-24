@@ -1,0 +1,168 @@
+{
+  "full": {
+    "batches_started": 64,
+    "commit": "2933a375fdc3c248514968277effb9a699097131",
+    "completed_utc": "2026-11-24T05:27:19+00:00",
+    "counts": {
+      "cases_completed": 551,
+      "errors": 0,
+      "failures": 0,
+      "passed": 551,
+      "skipped": 0,
+      "tests": 551
+    },
+    "error": null,
+    "first_failure": null,
+    "focus_gate_sha256": "b3f117f018065a311d8cf9fcad0b9eeda8ecbea663afe9f47c23e605300a0430",
+    "fully_checked_files": {
+      "tests/test_papersim_cli_optimize.py": 93,
+      "tests/test_papersim_nba_odr_registration.py": 20,
+      "tests/test_papersim_optimize_nba_odr.py": 21,
+      "tests/test_papersim_optimize_registered_runner_native.py": 82,
+      "tests/test_papersim_optimize_rule_sources.py": 8,
+      "tests/test_papersim_optimize_runner.py": 283,
+      "tests/test_papersim_optimize_search.py": 44
+    },
+    "lock_sha256": "114db5230ce1b51130a6f2b246c807f4e142229c5717354edf95c8e44fc22d9f",
+    "pytest_config_sha256": "e1f90078087b7f005d8558acb1318bada78c30e5fb4f400681417963410c8ca8",
+    "script_sha256": "73c174510f4d12012031a2d675e33c5844282f47c88bd9c1400919ef515e1aad",
+    "status": "passed",
+    "wrapper_sha256": "8396b7befbe15ef31b408703e0c94d25e9284d1ba3dfd9f84735884b451c7c62"
+  },
+  "original_failure_comparison": {
+    "cases": 9,
+    "harness_sha256": "bd1131f91b0fd0e01cbc78aaf4a82388bf72a9df3ac64e2ab2cb575e766b8270",
+    "old_baseline": {
+      "collection_sha256": "2651dd857e8a13ae2e7a71e5356095b8ac6c4d5fc93a56b87386c64fdc511a0a",
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "counts": {
+        "failure": 9
+      },
+      "node_sha256": {
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery": "98f8df174484ed66273d3c3d231ac0f5dd6f34d761cffc7fa3c6831da30fc8bf",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-01]": "ecc810c4915d753e43962d0a0833aaf4d7739d58746a6be3607595659cac9a4a",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-02]": "cb4bda0c314e56ce02bee112b09c83937891eda0baaa5e1b9eaa62cca06e5fdc",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-03]": "0eb1bcb9f9c28741e14f4f7a266f84d9746c578c86d29a7f4d4ea1ba678c34de",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifest_mutations_reject_before_claim_and_inference": "1ea5b3275333f11b4f28238cebb6aec2f15754bc7dada2d4b7ca6cb5c0c77339",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-01]": "83016ce5983da5e05760f39f163f0200d471bb97c21c2254615daef78748a8e2",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-02]": "0c3893786ff617ce048270a00c4638ffbfe37969262c85e555857bb90d556405",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-01]": "9ce2b812d632e4486b27dffdc9a622237ed2fcee12233f9baa98776ad08aa4f3",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-02]": "c538abea009e326f730c82399558a658a7186d26c568a41093b99689fd31d4c8"
+      },
+      "outcomes": {
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-01]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-02]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-03]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifest_mutations_reject_before_claim_and_inference": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-01]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-02]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-01]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-02]": "failure"
+      }
+    },
+    "old_candidate": {
+      "collection_sha256": "1a9a67ad59ad027019a7c64aad1eb1e1c75bf1588181ee48e470cda81b061bac",
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "counts": {
+        "failure": 9
+      },
+      "outcomes": {
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-01]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-02]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-03]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifest_mutations_reject_before_claim_and_inference": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-01]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-02]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-01]": "failure",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-02]": "failure"
+      },
+      "receipts": {
+        "26": {
+          "junit_sha256": "e0107b40fae9aaf97ba8d81b9a300f9af9acab5521d61af9b38eeb03c796def4",
+          "receipt_sha256": "1cc9a3b62b4391ece1a4776e85cd3fab8ff234a24c6e333719c9b3fd1b78febc"
+        },
+        "29": {
+          "junit_sha256": "0a6a5b9338a71fd832a09b875aa2b07ca840334f2d3965d3916992f7f21457bd",
+          "receipt_sha256": "4af2f613798102c9f57ad6a62762161207c8684cab25b4ce79c0ba75b3124041"
+        },
+        "30": {
+          "junit_sha256": "cac9a81d31928ef9bcfb6c1bcf0d4359a90ec33bc9edec4f7a9f743bd7d98c36",
+          "receipt_sha256": "013f51d1abde383fefdb3babb379c6254ed3963566cf77e47af1b62b1329abab"
+        },
+        "31": {
+          "junit_sha256": "130adba19719f09fa2616939661a2f6226ec4a46d5227749f5ebf1a0439241f5",
+          "receipt_sha256": "700d7868121130d91034ba469f54c1b27979b207d8a9643a45f7d82f694f44ea"
+        }
+      }
+    },
+    "revised_baseline": {
+      "collection_sha256": "2651dd857e8a13ae2e7a71e5356095b8ac6c4d5fc93a56b87386c64fdc511a0a",
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "counts": {
+        "passed": 9
+      },
+      "node_sha256": {
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery": "98f8df174484ed66273d3c3d231ac0f5dd6f34d761cffc7fa3c6831da30fc8bf",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-01]": "ecc810c4915d753e43962d0a0833aaf4d7739d58746a6be3607595659cac9a4a",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-02]": "cb4bda0c314e56ce02bee112b09c83937891eda0baaa5e1b9eaa62cca06e5fdc",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-03]": "0eb1bcb9f9c28741e14f4f7a266f84d9746c578c86d29a7f4d4ea1ba678c34de",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifest_mutations_reject_before_claim_and_inference": "1ea5b3275333f11b4f28238cebb6aec2f15754bc7dada2d4b7ca6cb5c0c77339",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-01]": "83016ce5983da5e05760f39f163f0200d471bb97c21c2254615daef78748a8e2",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-02]": "0c3893786ff617ce048270a00c4638ffbfe37969262c85e555857bb90d556405",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-01]": "9ce2b812d632e4486b27dffdc9a622237ed2fcee12233f9baa98776ad08aa4f3",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-02]": "c538abea009e326f730c82399558a658a7186d26c568a41093b99689fd31d4c8"
+      },
+      "outcomes": {
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-01]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-02]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-03]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifest_mutations_reject_before_claim_and_inference": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-01]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-02]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-01]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-02]": "passed"
+      }
+    },
+    "revised_candidate": {
+      "collection_sha256": "1a9a67ad59ad027019a7c64aad1eb1e1c75bf1588181ee48e470cda81b061bac",
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "counts": {
+        "passed": 9
+      },
+      "node_sha256": {
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery": "98f8df174484ed66273d3c3d231ac0f5dd6f34d761cffc7fa3c6831da30fc8bf",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-01]": "ecc810c4915d753e43962d0a0833aaf4d7739d58746a6be3607595659cac9a4a",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-02]": "cb4bda0c314e56ce02bee112b09c83937891eda0baaa5e1b9eaa62cca06e5fdc",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-03]": "0eb1bcb9f9c28741e14f4f7a266f84d9746c578c86d29a7f4d4ea1ba678c34de",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifest_mutations_reject_before_claim_and_inference": "1ea5b3275333f11b4f28238cebb6aec2f15754bc7dada2d4b7ca6cb5c0c77339",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-01]": "83016ce5983da5e05760f39f163f0200d471bb97c21c2254615daef78748a8e2",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-02]": "0c3893786ff617ce048270a00c4638ffbfe37969262c85e555857bb90d556405",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-01]": "9ce2b812d632e4486b27dffdc9a622237ed2fcee12233f9baa98776ad08aa4f3",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-02]": "c538abea009e326f730c82399558a658a7186d26c568a41093b99689fd31d4c8"
+      },
+      "outcomes": {
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_completed_handshake_after_deadline_is_closed_without_delivery": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-01]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-02]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_explicit_handshake_recovers_before_earlier_deadline[case-03]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifest_mutations_reject_before_claim_and_inference": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-01]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources[case-02]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-01]": "passed",
+        "tests/test_papersim_optimize_registered_runner_native.py::test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline[case-02]": "passed"
+      }
+    },
+    "same_original_failures_on_old_baseline": true,
+    "status": "passed",
+    "unchanged_functions": {
+      "test_native_completed_handshake_after_deadline_is_closed_without_delivery": "0ac0fe7c01d1350bff35a57711308a99388a329817e7bbc43ff3c5014365e104",
+      "test_native_explicit_handshake_recovers_before_earlier_deadline": "77bd704a5cd32bf05153825b6f5ab9a96b12b4bae696a47b44debd16696611af",
+      "test_native_nba_manifest_mutations_reject_before_claim_and_inference": "daa8cccf9ed7e269ee2e0dd7ddff8d44293db5b809d1514d3637a15f4c025f8b",
+      "test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources": "c7580ef89620d60d437a99e9d753e265c8553f05ca10d531cc19284d65be126b",
+      "test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline": "637eb97c6b0df53912903cff821645da7048072c4e216c1c2a1b2bf25b23ccd9"
+    }
+  }
+}
