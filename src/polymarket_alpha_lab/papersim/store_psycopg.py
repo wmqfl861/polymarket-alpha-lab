@@ -43,7 +43,7 @@ from collections.abc import Mapping
 from contextlib import closing, contextmanager
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import MAX_EMAX, MIN_EMIN, Context, Decimal
 from hashlib import sha256
 import json
 from math import isfinite
@@ -411,6 +411,28 @@ _CASH_INSERT = ('INSERT INTO papersim.bankroll_events (event_key, occurred_at, c
                 'reason, entry_id, scan_id, note, is_legacy) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)')
 
 
+def _encode_quote_json(value) -> str:
+    """Encode decoded quote JSON with exact decimal values."""
+    if isinstance(value, Decimal):
+        float_text = json.dumps(float(value))
+        if Decimal(float_text) == value:
+            return float_text
+        context = Context(prec=len(value.as_tuple().digits), Emin=MIN_EMIN, Emax=MAX_EMAX)
+        return str(value.normalize(context))
+    if isinstance(value, list):
+        return '[' + ','.join(_encode_quote_json(item) for item in value) + ']'
+    if isinstance(value, dict):
+        return '{' + ','.join(f'{json.dumps(key)}:{_encode_quote_json(item)}'
+                              for key, item in sorted(value.items())) + '}'
+    return json.dumps(value)
+
+
+def _variant_quotes_text(value) -> str:
+    if type(value) is str:
+        return _encode_quote_json(json.loads(value, parse_float=Decimal))
+    return _json_text(value)
+
+
 def record_scan(conn, submission: ScanSubmission) -> dict:
     """Write one complete scan in a single transaction (09D v2 section 5.8).
 
@@ -420,16 +442,24 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
     back so no half scan ever survives.
     """
     submission.validate()
+    normalized = replace(submission, candidates=tuple(
+        replace(candidate, variant_quotes=_variant_quotes_text(candidate.variant_quotes))
+        for candidate in submission.candidates
+    ))
     scan = submission.scan
     key = scan.key()
-    payload = submission.payload_sha256()
+    payload = normalized.payload_sha256()
     with conn.transaction():
         cursor = conn.cursor()
         cursor.execute('SELECT scan_id, scan_payload_sha256 FROM papersim.scan_runs '
                        'WHERE scan_key = %s', (key,))
         existing = cursor.fetchone()
         if existing is not None:
-            if existing[1] != payload:
+            # Historical writes hashed the submitted text, including its spelling.
+            if existing[1] != payload and (
+                not all(type(candidate.variant_quotes) is str for candidate in submission.candidates)
+                or existing[1] != submission.payload_sha256()
+            ):
                 raise PapersimStoreError('papersim_scan_payload_conflict')
             scan_id = int(existing[0])
             return {'scan_id': scan_id, 'scan_key': key, 'inserted': False,
@@ -446,7 +476,7 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
         scan_id = int(cursor.fetchone()[0])
         candidate_ids: dict[str, int] = {}
         bankroll_keys: list[str] = []
-        for candidate in submission.candidates:
+        for candidate in normalized.candidates:
             references = json.loads(candidate.snapshot_refs)
             if references:
                 # 09D v2 5.3/D-4: snapshot references are validated jsonb

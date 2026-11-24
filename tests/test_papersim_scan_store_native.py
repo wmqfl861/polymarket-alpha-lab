@@ -22,20 +22,23 @@ from __future__ import annotations
 
 import dataclasses
 import datetime
+from importlib import import_module
 import json
 import os
 from pathlib import Path
 import subprocess
+import sys
+from types import ModuleType
 import uuid
 
 import pytest
 
 from polymarket_alpha_lab import replay
 from polymarket_alpha_lab.papersim import migrations as pm
-from polymarket_alpha_lab.papersim import evaluation, pipeline, queue_policy, scan, store
+from polymarket_alpha_lab.papersim import cli, evaluation, pipeline, queue_policy, scan, store
 from polymarket_alpha_lab.papersim.crypto_model import TerminalProbability
 from polymarket_alpha_lab.papersim.gates import NewsCheck
-from polymarket_alpha_lab.papersim.optimize.provider import FrozenBaselineProvider
+from polymarket_alpha_lab.papersim.optimize.provider import FrozenBaselineProvider, RegistryProvider
 from polymarket_alpha_lab.papersim.pipeline import EntryRequest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -91,9 +94,14 @@ def _fresh_managed_database() -> str:
 
 
 @pytest.fixture
-def app():
+def app_dsn():
+    return _fresh_managed_database()
+
+
+@pytest.fixture
+def app(app_dsn):
     from polymarket_alpha_lab.papersim import store_psycopg
-    connection = store_psycopg.connect_explicit(_fresh_managed_database(),
+    connection = store_psycopg.connect_explicit(app_dsn,
                                                 label='PAPERSIM_MIGRATIONS_PG_DSN')
     connection.autocommit = True
     yield connection
@@ -216,6 +224,256 @@ def _run(conn, repo_root, config, records, *, evaluation_candidates=(),
         now_utc=lambda: moment, evaluation_candidates=evaluation_candidates,
         operation_key=operation_key,
     )
+
+
+# ---------------------------------------------------------------------------
+# FX-47 CLI quote persistence and replay
+# ---------------------------------------------------------------------------
+
+VARIANT_QUOTES = [0.1, 0.2]
+CANONICAL_QUOTES = "[0.1,0.2]"
+NONCANONICAL_QUOTES = "[ 0.10, 0.2 ]"
+QUOTE_OPERATION = "run-scan|pal-b1|variant-quotes"
+
+
+@pytest.fixture
+def variant_quote_pack(app, tmp_path):
+    _seed_initial_cash(app)
+    pack_path = tmp_path / "quotes.json"
+    config_path = tmp_path / "scan-config.json"
+    config = _config()
+    config = dataclasses.replace(config, queues=(
+        dataclasses.replace(config.queues[0], pack=pack_path.name),))
+    config_path.write_text(json.dumps(dataclasses.asdict(config)), encoding="utf-8")
+    return config, config_path, pack_path
+
+
+def _write_variant_quote_pack(pack_path, quotes, **changes):
+    record = dataclasses.replace(_crypto_record(stale_book=True), variant_quotes=quotes, **changes)
+    pack_path.write_text(json.dumps([dataclasses.asdict(record)],
+                                    default=datetime.datetime.isoformat), encoding="utf-8")
+
+
+@pytest.fixture
+def run_variant_quote_scan(app_dsn, repo, variant_quote_pack, monkeypatch, capsys):
+    _, config_path, pack_path = variant_quote_pack
+    # The store and psycopg have already bound a real timestamp when seeding cash.
+    # Load the CLI's delayed imports before scoping the local datetime import.
+    for module in ("optimize.provider", "optimize.shadow", "snapshots"):
+        import_module(f"polymarket_alpha_lab.papersim.{module}")
+
+    class FixedScanDateTime(datetime.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            if tz is None:
+                return T0.astimezone().replace(tzinfo=None)
+            return T0.astimezone(tz)
+
+    clock = ModuleType("datetime")
+    vars(clock).update(vars(datetime))
+    clock.datetime = FixedScanDateTime
+
+    def run(quotes, *, attempt=1, **changes):
+        _write_variant_quote_pack(pack_path, quotes, **changes)
+        args = ["run-scan", "--config", str(config_path), "--dsn", app_dsn,
+                "--repo-root", str(repo[0]), "--operation-key", QUOTE_OPERATION,
+                "--attempt", str(attempt)]
+        with monkeypatch.context() as clock_patch:
+            clock_patch.setitem(sys.modules, "datetime", clock)
+            code = cli.main(args)
+        assert sys.modules["datetime"] is datetime
+        return code, capsys.readouterr()
+
+    return run
+
+
+def _variant_quote_submission(app, repo, variant_quote_pack, quotes):
+    config, config_path, pack_path = variant_quote_pack
+    _write_variant_quote_pack(pack_path, quotes)
+    records = scan.load_pack_records(config, base_dir=config_path.parent)
+    return scan.assemble_scan(
+        config, records, admissions=scan.pause_admissions((), config.queues, {}),
+        portfolio=scan.read_portfolio_state(app), started_at=T0, finished_at=T0,
+        code_commit=repo[1], specs=scan.consult_provider(RegistryProvider.from_connection(app), records),
+        operation_key=QUOTE_OPERATION,
+    ).submission
+
+
+def _seed_old_variant_quote_scan(app, submission):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    # Reproduce the old digest and bind the original quote string as JSONB.
+    row = submission.scan
+    (candidate,) = submission.candidates
+    assert candidate.entry is None
+    with app.transaction():
+        (scan_id,) = app.execute(
+            "INSERT INTO papersim.scan_runs (scan_key, scan_payload_sha256, team, started_at, "
+            "finished_at, code_commit, schema_version, gate_version, operator, params, "
+            "is_legacy, operation_key) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s) "
+            "RETURNING scan_id",
+            (row.key(), submission.payload_sha256(), row.team, row.started_at, row.finished_at,
+             row.code_commit, row.schema_version, row.gate_version, row.operator, row.params,
+             row.is_legacy, row.operation_key),
+        ).fetchone()
+        (candidate_id,) = app.execute(
+            store_psycopg._CANDIDATE_INSERT, store_psycopg._candidate_params(scan_id, candidate),
+        ).fetchone()
+        for evidence in candidate.price_evidence:
+            app.execute(store_psycopg._EVIDENCE_INSERT,
+                        store_psycopg._evidence_params(candidate_id, evidence))
+
+
+def _stored_variant_quote_scan(app):
+    scans = app.execute(
+        "SELECT scan_id, scan_key, convert_to(scan_payload_sha256, 'UTF8'), code_commit, "
+        "operation_key FROM papersim.scan_runs",
+    ).fetchall()
+    candidates = app.execute(
+        "SELECT candidate_id, scan_id, candidate_key, conclusion, jsonb_typeof(variant_quotes), "
+        "variant_quotes, convert_to(variant_quotes::text, 'UTF8') FROM papersim.candidates",
+    ).fetchall()
+    [(scan_id, key, digest, commit, operation)] = scans
+    [(candidate_id, candidate_scan_id, candidate_key, conclusion, kind, quotes, quote_bytes)] = candidates
+    (entry_rows, cash_rows) = app.execute(
+        "SELECT (SELECT count(*) FROM papersim.entries), "
+        "(SELECT count(*) FROM papersim.bankroll_events WHERE scan_id IS NOT NULL)",
+    ).fetchone()
+    assert operation == QUOTE_OPERATION
+    assert candidate_scan_id == scan_id and conclusion == "REJECTED"
+    assert kind == "array" and quotes == VARIANT_QUOTES
+    assert entry_rows == cash_rows == 0
+    return {"scan_id": scan_id, "scan_key": key, "code_commit": commit,
+            "candidate_ids": {candidate_key: candidate_id}, "scan_payload_sha256": digest.decode("utf-8"),
+            "variant_quotes_type": kind, "variant_quotes": quotes,
+            "variant_quotes_db_text": quote_bytes.decode("utf-8"),
+            "scan_rows": len(scans), "candidate_rows": len(candidates),
+            "entry_rows": entry_rows, "cash_rows": cash_rows}
+
+
+def _variant_quote_receipts(app, attempt=1):
+    return app.execute(
+        "SELECT phase, scan_id, error_code FROM papersim.command_run_events "
+        "WHERE operation_key = %s AND attempt = %s ORDER BY run_event_id",
+        (QUOTE_OPERATION, attempt),
+    ).fetchall()
+
+
+def _successful_variant_quote_run(app, outcome, *, inserted, expected_digest):
+    code, output = outcome
+    assert code == 0, output.err
+    assert not output.err
+    result = json.loads(output.out)
+    stored = _stored_variant_quote_scan(app)
+    assert result["inserted"] is inserted
+    for field in ("scan_id", "scan_key", "candidate_ids", "code_commit"):
+        assert result[field] == stored[field]
+    assert stored["scan_payload_sha256"] == expected_digest
+    assert result["bankroll_event_keys"] == []
+    return {"exit_code": code, "inserted": inserted, **stored}
+
+
+def _conflicting_variant_quote_run(app, outcome, original, attempt):
+    code, output = outcome
+    error = "papersim_scan_payload_conflict"
+    assert code == 1
+    assert not output.out and output.err == f"run-scan: FAIL: {error}\n"
+    assert _stored_variant_quote_scan(app) == original
+    receipts = _variant_quote_receipts(app, attempt)
+    assert receipts == [("STARTED", None, None), ("FAILED", None, error)]
+    return {"exit_code": code, "error": error, "attempt": attempt, "receipts": receipts}
+
+
+@NATIVE
+@pytest.mark.parametrize(("first", "second"), (
+    pytest.param(NONCANONICAL_QUOTES, VARIANT_QUOTES, id="text-first"),
+    pytest.param(VARIANT_QUOTES, NONCANONICAL_QUOTES, id="array-first"),
+))
+def test_run_scan_variant_quotes_replays_both_forms(
+        app, repo, variant_quote_pack, run_variant_quote_scan, record_property, first, second):
+    submission = _variant_quote_submission(app, repo, variant_quote_pack, CANONICAL_QUOTES)
+    digest = submission.payload_sha256()
+    inserted = _successful_variant_quote_run(app, run_variant_quote_scan(first),
+                                             inserted=True, expected_digest=digest)
+    replayed = _successful_variant_quote_run(app, run_variant_quote_scan(second),
+                                             inserted=False, expected_digest=digest)
+    assert replayed == {**inserted, "inserted": False}
+    receipts = _variant_quote_receipts(app)
+    assert receipts == [("STARTED", None, None), ("SUCCEEDED", inserted["scan_id"], None)]
+    record_property("fx47_variant_quotes", json.dumps({"runs": [inserted, replayed], "receipts": receipts}))
+
+
+@NATIVE
+@pytest.mark.parametrize("text", (CANONICAL_QUOTES, NONCANONICAL_QUOTES), ids=("canonical", "noncanonical"))
+def test_run_scan_replays_legacy_variant_quotes(
+        app, repo, variant_quote_pack, run_variant_quote_scan, record_property, text):
+    legacy = _variant_quote_submission(app, repo, variant_quote_pack, text)
+    digest = legacy.payload_sha256()
+    canonical_digest = _variant_quote_submission(app, repo, variant_quote_pack,
+                                                CANONICAL_QUOTES).payload_sha256()
+    assert (digest == canonical_digest) is (text == CANONICAL_QUOTES)
+    _seed_old_variant_quote_scan(app, legacy)
+    original = _stored_variant_quote_scan(app)
+    assert original["scan_payload_sha256"] == digest
+    quote_scale = "[0.1, 0.2]" if text == CANONICAL_QUOTES else "[0.10, 0.2]"
+    assert original["variant_quotes_db_text"] == quote_scale
+    exact = _successful_variant_quote_run(app, run_variant_quote_scan(text),
+                                          inserted=False, expected_digest=digest)
+    assert exact == {"exit_code": 0, "inserted": False, **original}
+
+    if text == CANONICAL_QUOTES:
+        alternate = [_successful_variant_quote_run(app, run_variant_quote_scan(VARIANT_QUOTES),
+                                                   inserted=False, expected_digest=digest)]
+        assert alternate == [exact]
+    else:
+        alternate = []
+        for attempt, quotes in ((2, VARIANT_QUOTES), (3, "[0.10, 0.2]")):
+            outcome = run_variant_quote_scan(quotes, attempt=attempt)
+            alternate.append(_conflicting_variant_quote_run(app, outcome, original, attempt))
+    receipts = _variant_quote_receipts(app)
+    assert receipts == [("STARTED", None, None), ("SUCCEEDED", original["scan_id"], None)]
+    record_property("fx47_legacy_variant_quotes", json.dumps({
+        "input_text": text, "seed": original, "exact": exact, "alternate": alternate, "receipts": receipts,
+    }))
+
+
+@NATIVE
+@pytest.mark.parametrize("legacy", (False, True), ids=("new", "legacy-noncanonical"))
+def test_run_scan_variant_quotes_conflict_preserves_rows(
+        app, repo, variant_quote_pack, run_variant_quote_scan, record_property, legacy):
+    original_submission = _variant_quote_submission(
+        app, repo, variant_quote_pack, NONCANONICAL_QUOTES if legacy else CANONICAL_QUOTES)
+    if legacy:
+        _seed_old_variant_quote_scan(app, original_submission)
+    else:
+        _successful_variant_quote_run(app, run_variant_quote_scan(VARIANT_QUOTES), inserted=True,
+                                      expected_digest=original_submission.payload_sha256())
+    original = _stored_variant_quote_scan(app)
+    assert original["scan_payload_sha256"] == original_submission.payload_sha256()
+    changes = (
+        ("[ 0.11, 0.2 ]" if legacy else [0.11, 0.2], {}),
+        ("[ 0.2, 0.10 ]" if legacy else [0.2, 0.1], {}),
+        (NONCANONICAL_QUOTES if legacy else VARIANT_QUOTES, {"median_probability": 0.24}),
+        ("[ 0.10000000000000001, 0.2 ]", {}),
+    )
+    rejected = []
+    for attempt, (quotes, fields) in enumerate(changes, start=2):
+        outcome = run_variant_quote_scan(quotes, attempt=attempt, **fields)
+        rejected.append(_conflicting_variant_quote_run(app, outcome, original, attempt))
+    record_property("fx47_variant_quotes_conflicts", json.dumps({"seed": original, "runs": rejected}))
+
+
+@NATIVE
+def test_run_scan_preserves_precise_variant_quote_text(app, repo, variant_quote_pack, run_variant_quote_scan):
+    canonical = "[0.10000000000000001,0.2]"
+    submission = _variant_quote_submission(app, repo, variant_quote_pack, canonical)
+    digest = submission.payload_sha256()
+    first = _successful_variant_quote_run(app, run_variant_quote_scan("[ 0.10000000000000001, 0.2 ]"),
+                                          inserted=True, expected_digest=digest)
+    assert first["variant_quotes_db_text"] == "[0.10000000000000001, 0.2]"
+    second = _successful_variant_quote_run(app, run_variant_quote_scan("[0.100000000000000010,0.20]"),
+                                           inserted=False, expected_digest=digest)
+    assert second == {**first, "inserted": False}
 
 
 # ---------------------------------------------------------------------------
