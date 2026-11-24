@@ -15,7 +15,7 @@ readonly. It does not fetch market data or require a database.
 ## Prerequisites
 
 - Git, uv, and network access for the pinned interpreter/packages when they
-  are not cached. The project supports Python 3.11 or newer; **Python 3.12.14
+  are not cached. The project supports Python 3.12 or newer; **Python 3.12.14
   is the pinned release interpreter** for this setup.
 - A checkout of this repository. The examples use `~/polymarket-alpha-lab`
   (the recorded development host deployment path); adjust the path for your
