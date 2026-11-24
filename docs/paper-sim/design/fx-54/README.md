@@ -5,6 +5,7 @@
 - The baseline was `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`, the PR #123 merge on `main`.
 - Workspace was an isolated Git worktree.
 - The implementation branch is `fix/fx54-python-floor-20261124`.
+- Implementation commit `c00a50e08f56ab0a03ad7d023a28984c4b2ec973` changes the project floor and generated lock. Documentation candidate `4818bef8f2e63e06ff0974b0fbdaa5081f6684de`, tree `fcd2607b8fe7f30fadeabf73bb2e6075c551f778`, is the source checked by the local verification and initial code review.
 - NBA v2 head at node start was `2933a375fdc3c248514968277effb9a699097131`. Its merge base with the FX-54 baseline was `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`. `git diff --name-only <merge-base>..<NBA-head> -- pyproject.toml uv.lock` returned no paths.
 - Plan v2 has SHA-256 `474222c711cf92c6e753cee4d29e6881e5a9e475c12d2c711017c0c7608a4a10`. The original plan and FAIL receipt, revised plan, and PASS rereview are retained byte-for-byte in this directory.
 
@@ -28,18 +29,31 @@ The generated delta consists of `requires-python = ">=3.12"`, removal of eleven 
 - CPython 3.11.15 is installed under the uv-managed user directory, exposed as `~/.local/bin/python3.11`.
 - System CPython 3.12.3 is available as `/usr/bin/python3.12`.
 - No managed CPython 3.12.14 was present during the inventory. Both available uv executables reported `No download found for request: cpython-3.12.14-linux-x86_64-gnu` when asked to install it.
-- The official `Python-3.12.14.tgz` source tarball was downloaded from `python.org` to the isolated FX-54 tools directory. Its SHA-256 `6c6df908d2c3fd24e6d76869e92542abd0f33aec9dfc18df8875f89660286d43` matches the official release page. The `.asc` and `.sigstore` sidecars are retained beside it. The archive has been extracted under the same isolated tools directory, but has not been configured or built. No system packages or directories were changed.
-- Build inspection found `gcc`, `make`, `zlib1g-dev`, and `libffi-dev` installed. `libssl-dev`, `libbz2-dev`, `libreadline-dev`, `libsqlite3-dev`, `liblzma-dev`, `libgdbm-dev`, `libncursesw5-dev`, and `uuid-dev` are absent. The exact 3.12.14 positive installation and metadata proof remains pending. CPython 3.12.3 can exercise the declared `>=3.12` floor but does not satisfy that exact-version gate.
+- The official `Python-3.12.14.tgz` source tarball has SHA-256 `6c6df908d2c3fd24e6d76869e92542abd0f33aec9dfc18df8875f89660286d43`. The `.asc` and `.sigstore` sidecars remain in the isolated tools directory. CPython was built and installed in an isolated prefix using GCC 13.3.0, OpenSSL from the isolated build sysroot, `--with-openssl-rpath=auto`, and `--with-ensurepip=install`.
 - The existing isolated PG18 prefix reports PostgreSQL 18.6.
 
-## Pending candidate gates
+## Local Verification
 
-The coordinator will bind these checks to the clean candidate and use the local ZCode test executor and independent reviewer.
+The [verification receipt](evidence/fx54-local-verification.json) records local ZCode session identities and the results for candidate `4818bef8f2e63e06ff0974b0fbdaa5081f6684de` on November 24, 2026 UTC.
 
-- `uv lock --check`, locked installation with dev and postgres extras on CPython 3.12.14, and the `Requires-Python` value in project, lock, and installed metadata.
-- Offline locked installation refusal using the verified CPython 3.11.15 executable before resolution, download, or environment creation. Both installation attempts use uv 0.10.0.
-- Focused `tests/test_project_postgres_session_bundle.py` results and the Native PG18 storage opt-in case `test_native_same_root_source_selection_rollback_and_refusals`, including full-file pass/skip counts.
-- Full test suite, Python compile check, `git diff --check`, CodeGraph sync, and tracked-content secret scan.
-- Independent read-only ZCode code review, PR creation, final PR-head CI, and `check_ci_merge.sh` status.
+| Check | Recorded result |
+| --- | --- |
+| Lock and supported installation | With uv 0.10.0 on a clean checkout of `4818bef8`, `uv lock --check` selected isolated CPython 3.12.14 and exited 0. The lock stayed unchanged. The earlier check used system CPython 3.12.3 and also exited 0. The locked install with dev and postgres extras used CPython 3.12.14 and exited 0. Metadata readback exited 0 and reported `>=3.12` in the project, lock, and installed distribution. |
+| Unsupported installation | uv 0.10.0 checked CPython 3.11.15 in a separate clean, detached candidate checkout in offline mode with Python downloads disabled. The command exited 2 with an explicit incompatibility with `>=3.12`. The check found no resolution, download, or environment creation. |
+| v1 session-bundle fixture | `tests/test_project_postgres_session_bundle.py` exited 0 with 29 passed and 0 skipped. |
+| Native version switch | The opt-in PG18 run of `tests/test_project_postgres_version_switch_native.py` exited 0 with 89 passed and 0 skipped. The case `test_native_same_root_source_selection_rollback_and_refusals` ran and passed once. |
+| Frozen objects | The independent ZCode comparison matched the ladder module and all four fixtures. The receipt gives both blob IDs and sizes. |
+| Tracked diff secret scan | The corrected scan of the baseline-to-candidate additions returned 1 from the secret matcher, meaning no matches, with a zero-byte findings file. The original runner recorded the added-line filter's exit 0 under `pattern_status` and stopped with exit 1. |
+| CodeGraph | CodeGraph 1.6.3 synchronized a private snapshot of the existing project index to `4818bef8`. Strict status and content verification passed for 6,761 indexed files with zero parse errors. |
+
+The ZCode turn that recorded the positive install was interrupted after the individual checks. The continuation recorded the 3.11 refusal, both distribution checks, compile verification, and `git diff --check` before it stopped at the scan reporting error. The corrected scan ran separately.
+
+The first full-suite attempt was interrupted after 4,204 passed and 15 skipped, with no recorded pytest exit. The second returned pytest exit 137 and an empty summary. The third run began at 20:08:19 UTC in a separate clean checkout. Its result is pending.
+
+## Pending Candidate Gates
+
+- A complete full-suite receipt.
+- Re-review by the original independent code reviewer, who returned `VERDICT: FAIL` on `4818bef8`.
+- Final registration-lane integration, PR creation, CI receipts bound to the final PR head, `check_ci_merge.sh` status, and merge registration.
 
 Record the native kit status against the final PR paths. The expected path-filter result is `NOT_TRIGGERED / kit proof 未运行`.
