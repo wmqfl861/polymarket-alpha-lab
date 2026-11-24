@@ -53,7 +53,7 @@ The first full-suite attempt was interrupted after 4,204 passed and 15 skipped, 
 ## Pending Candidate Gates
 
 - A complete full-suite receipt.
-- Re-review by the original independent code reviewer, who returned `VERDICT: FAIL` on `4818bef8`.
+- The original reviewer returned `VERDICT: FAIL` on `4818bef8` and returned `VERDICT: FAIL` again on evidence commit `e05824c2`. Submit an updated evidence candidate to the same reviewer after full-suite run 3 finishes.
 - Final registration-lane integration, PR creation, CI receipts bound to the final PR head, `check_ci_merge.sh` status, and merge registration.
 
 Record the native kit status against the final PR paths. The expected path-filter result is `NOT_TRIGGERED / kit proof 未运行`.

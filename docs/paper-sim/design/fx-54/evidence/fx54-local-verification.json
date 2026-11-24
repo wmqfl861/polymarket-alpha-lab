@@ -24,21 +24,19 @@
     "isolated_candidate_codegraph_sync": {
       "gate_receipt_sha256": "84372e90347203341bcae2cd45f6526e59ed1977b948010806c3d964f498367b",
       "harness_exit": 0
+    },
+    "original_reviewer_followup": {
+      "reviewed_candidate": "e05824c2f1e4acb36a5cd090c72ea0a9e680ae38",
+      "reviewer_receipt_sha256": "83e0dd6de6fe023b8ead8f13b92abff4d9f7f3f81d6a6d12074b14a83578fe5f",
+      "verdict": "VERDICT: FAIL"
     }
   },
   "execution_sessions": [
     {
-      "session": "sess_615523d0-7f48-46b0-9bff-1f705fe0db32",
-      "turn": "turn_9f28ac99-d06c-4650-8c2b-bbc2375dabd8",
-      "trace": "955fd297-96fb-4856-abb9-454832c87072",
       "purpose": "candidate preflight, uv lock check under system CPython 3.12.3, and Python 3.12.14 locked installation and metadata readback",
       "result": "The individual checks completed before the executor turn was interrupted. The subsequent exact-version lock check has its own receipt."
     },
     {
-      "session": "sess_615523d0-7f48-46b0-9bff-1f705fe0db32",
-      "turn": "turn_8c6c04a6-94c3-4003-b3e3-cd1e1f419e6c",
-      "trace": "ace45747-b39c-4b21-a5a0-79e293e185ba",
-      "tool_call": "call_8c83471d70a942de990532c4",
       "purpose": "offline Python 3.11 refusal, session-bundle and native PostgreSQL version-switch checks, followed by remaining focused gates",
       "started_at_utc": "2026-11-24T17:55:04Z",
       "finished_at_utc": "2026-11-24T18:00:48Z",
@@ -48,26 +46,18 @@
       "result": "The individual checks completed. The continuation exited 1 because it checked the line-filter status as if it were the credential-pattern matcher status. The corrected scan has its own receipt."
     },
     {
-      "session": "sess_95ce1e1b-79ff-4486-99d3-7d00bebbd4c4",
-      "turn": "turn_3aab9f2a-9aef-4d39-a046-ec9955ac6bad",
-      "trace": "8404a03a-f8fb-4e5e-bb3c-1b10ea8d2984",
       "purpose": "independent read-only frozen-object comparison on the candidate",
       "result": "PASS, 5 of 5 objects match, with 10 blob and content comparisons"
     },
     {
-      "session": "sess_ace6ffd3-1aa6-4d93-9113-f0f86f16d718",
-      "turn": "turn_543524e9-59ab-4604-aa61-dade7295998a",
-      "trace": "3daca26d-7d78-4bb6-a3d7-ec37c6027d10",
       "purpose": "independent read-only code review of the candidate",
       "result": "FAIL; preserve the original verdict and return the documentation-only correction to this reviewer"
     },
     {
-      "session": "sess_e71727ab-1752-4c7f-bcf2-2a207ddb6e07",
       "purpose": "guarded full-suite run 2 on the candidate",
       "result": "exit code 137; final summary is empty; no full-suite pass"
     },
     {
-      "session": "sess_4ca38823-f8dc-4ea7-8a3b-0f4c2018f4ca",
       "purpose": "full-suite run 3 from a separate clean checkout after serial focused checks",
       "started_at_utc": "2026-11-24T20:08:19Z",
       "result": "running; no completion receipt yet"
@@ -227,7 +217,7 @@
   },
   "pending_acceptance": [
     "Run a complete full test suite to a recorded zero exit and complete pytest summary.",
-    "Return this documentation-only evidence correction to the original FX-54 code reviewer.",
+    "After the complete full-suite receipt is available, return the updated evidence to the original FX-54 code reviewer for another re-review.",
     "Rebase after the FX-52, FX-51 and FX-53 registration lane and bind final PR, CI and merge evidence."
   ]
 }
