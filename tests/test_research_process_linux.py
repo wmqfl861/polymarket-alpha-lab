@@ -8,6 +8,7 @@ missing prerequisites after an explicit opt-in are failures, never skips. The
 stand-in's version output and envelope are explicitly synthetic and are never
 official-image evidence.
 """
+from contextlib import ExitStack
 from hashlib import sha256
 import ast
 import json
@@ -806,26 +807,91 @@ def test_run_research_process_none_launch_keeps_legacy_path(monkeypatch, tmp_pat
 
 
 def test_cleanup_failure_is_reported_not_swallowed():
+    slots = (
+        ('_liveness_w', os.O_WRONLY),
+        ('_prompt_w', os.O_WRONLY),
+        ('_credential_w', os.O_WRONLY),
+        ('_control_w', os.O_WRONLY),
+        ('_stdout_r', os.O_RDONLY),
+        ('_stderr_r', os.O_RDONLY),
+        ('_report_r', os.O_RDONLY),
+    )
+    session = linux._ContainedSession.__new__(linux._ContainedSession)
+    session._supervisor = None
+
+    expected_exit = SystemExit(0)
+
     class Stuck:
+        def __init__(self):
+            self.kill_called = False
+
         def poll(self):
             return None
 
         def kill(self):
-            raise SystemExit(0)  # even an interrupt cannot mask cleanup state
+            self.kill_called = True
+            raise expected_exit
 
     class FakeAdmission:
-        closed = False
+        def __init__(self):
+            self.closed = False
 
         def close(self):
-            pass
+            self.closed = True
 
-    session = linux._ContainedSession.__new__(linux._ContainedSession)
-    session._supervisor = Stuck()
-    session._admission = FakeAdmission()
-    session._liveness_w = session._prompt_w = session._credential_w = session._control_w = 11
-    session._stdout_r = session._stderr_r = session._report_r = 12
-    with pytest.raises(SystemExit):
-        session._cleanup(5)
+    stuck = Stuck()
+    admission = FakeAdmission()
+    session._supervisor = stuck
+    session._admission = admission
+
+    ownership_transferred = False
+
+    def close_owned_slot(name):
+        if ownership_transferred:
+            fd = getattr(session, name, None)
+            if fd is not None:
+                setattr(session, name, None)
+                os.close(fd)
+            return
+        fd = allocated_by_slot.pop(name, None)
+        if fd is not None:
+            if getattr(session, name, None) == fd:
+                setattr(session, name, None)
+            os.close(fd)
+
+    owner = ExitStack()
+    allocated_fds = []
+    allocated_by_slot = {}
+    try:
+        for name, flags in slots:
+            fd = os.open(os.devnull, flags)
+            try:
+                allocated_fds.append(fd)
+                allocated_by_slot[name] = fd
+                owner.callback(close_owned_slot, name)
+            except BaseException:
+                allocated_by_slot.pop(name, None)
+                os.close(fd)
+                raise
+            setattr(session, name, fd)
+
+        actual_fds = tuple(getattr(session, name) for name, _ in slots)
+        assert actual_fds == tuple(allocated_fds)
+        assert len(set(actual_fds)) == len(slots)
+        for fd in actual_fds:
+            os.fstat(fd)
+
+        ownership_transferred = True
+
+        with pytest.raises(SystemExit) as raised:
+            session._cleanup(5)
+
+        assert raised.value is expected_exit
+        assert raised.value.code == 0
+        assert stuck.kill_called
+        assert admission.closed
+    finally:
+        owner.close()
 
 
 @pytest.mark.skipif(sys.platform != 'linux',
