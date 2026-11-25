@@ -4657,6 +4657,14 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 2026-11-25 05:20 UTC，协调者经已核实的 HC 路线在 Windows 上查询一次。系统 PowerShell 5.1 的有效策略为 `Restricted`，进程级为 `Undefined`。约定演练位置的脚本缺失，进程、用户和系统三种作用域均未登记运行层的固定脚本路径。现场无可核对的脚本 ACL，通用远程能力是否收窄仍未获证。自动投递切换待具备受保护且强制唯一的入口。此次检查的固定脚本执行数、配置修改数、微信发送数均为 0。[现场核对回执](docs/paper-sim/design/fx-49/2026-11-25-owner-fixed-entry-observation.json)
 
+##### FX-49 固定微信投递入口
+
+固定运行提交为 `97e9cbcbf510de0f10606ec06380376d627bff50`，树为 `1bbf62faec2b0415599da5a4b4243b8da2bf4928`，父为 `bcce1b17f7263ab89859febfcb56188c295ab371`。固定脚本 [Invoke-PaperWeixin.ps1](docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1) 的 SHA-256 为 `e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6`。用已留存基线与普通 PR 的精确输入重建同一个版本，计划原审通过。[发布复现补遗](docs/paper-sim/design/fx-49/publication-addendum-v2.md) · [计划复审](docs/paper-sim/design/fx-49/publication-review-v2.json)
+
+`42080d20` 的原主线及运行侧代码复审均为 FAIL。`df524c98` 的运行侧源码复审为 PASS，原主线复审为 FAIL，原因是后续 PR 能加入未登记、未扫描的 FX-49 文件。当前修订按发布索引逐项核对后续回执路径和内容，保留原 Windows 研究桥接试验的检出条件和 10 分钟时限，并为独立 FX-49 作业固定 Python 3.12 安装及运行入口。计划审阅回执记录公开投影的精确替换行及摘要。当前修订的独立复审、实际 PR 和 CI 待登记。
+
+此前机主确认收到一次人工微信投递。目标现场的受限账户、固定脚本执行策略及人工六例仍待验。自动自然业务投递验证次数为 0，现场部署提交待登记。
+
 #### 84.2.5 历史优化卡
 
 原运行提交 `e234c3364c204db513cc4fbcdcb6d5eb43c7417b`，种子 `20261120`，规则 v1。原档 88,845 字节，登记 SHA-256 为 `03c616e1d94efe5e3a7879e3277645b5d60e4e407bdef6e9d31d9f7eb3366ad5`。卡片按原登记保留，操作员原件的本轮核对另记。

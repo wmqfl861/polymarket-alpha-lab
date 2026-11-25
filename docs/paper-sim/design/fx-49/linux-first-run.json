@@ -1,0 +1,62 @@
+{
+  "checked_script_sha256": "bdbee89deb47f5ab283413724d2b3bc61cc32da33ca48c85d8ab700376ab796c",
+  "executor_session": "sess_6892f3cc-12ba-4ab7-8208-edea0752669b",
+  "run_log_bytes": 1409,
+  "run_log_sha256": "bdd36d44f88ebe080eaadd7392d576c899071658f3fa74684fe85a912486912d",
+  "scope": "Linux fake transport and isolated, disposable PostgreSQL. No production, Windows or recipient access.",
+  "skips": "The sixteen optional Linux PowerShell cases require a pre-existing pwsh. The full runtime command also discovered these same sixteen cases. Windows PowerShell 5.1 acceptance and a natural delivery receipt are pending.",
+  "source_commit": "c5de8ef5aa0d82e5b0e21c6eb2fa93ee11a07443",
+  "stages": [
+    {
+      "counts": {
+        "failed": 5,
+        "passed": 43
+      },
+      "exit_code": 1,
+      "failed_cases": [
+        "tests/test_fx49_weixin_delivery.py::test_protected_paths_are_required_before_any_windows_start",
+        "tests/test_fx49_weixin_delivery.py::test_protected_paths_are_required_before_any_windows_start",
+        "tests/test_fx49_weixin_delivery.py::test_protected_paths_are_required_before_any_windows_start",
+        "tests/test_fx49_weixin_delivery.py::test_protected_paths_are_required_before_any_windows_start",
+        "tests/test_fx49_weixin_delivery.py::test_protected_paths_are_required_before_any_windows_start"
+      ],
+      "head": "c5de8ef5aa0d82e5b0e21c6eb2fa93ee11a07443",
+      "portable_linux_interpreter_available": false,
+      "reason": "case_assertion",
+      "stage": "linux_transport",
+      "utc": "2026-11-24T01:17:50+00:00"
+    },
+    {
+      "counts": {
+        "passed": 2,
+        "skipped": 16
+      },
+      "exit_code": 0,
+      "failed_cases": [],
+      "head": "c5de8ef5aa0d82e5b0e21c6eb2fa93ee11a07443",
+      "portable_linux_interpreter_available": false,
+      "reason": "complete",
+      "stage": "portable_script",
+      "utc": "2026-11-24T01:17:51+00:00"
+    },
+    {
+      "counts": {
+        "passed": 79,
+        "skipped": 16
+      },
+      "exit_code": 0,
+      "failed_cases": [],
+      "head": "c5de8ef5aa0d82e5b0e21c6eb2fa93ee11a07443",
+      "portable_linux_interpreter_available": false,
+      "reason": "complete",
+      "stage": "whole_runtime_pg",
+      "utc": "2026-11-24T01:18:00+00:00"
+    },
+    {
+      "head": "c5de8ef5aa0d82e5b0e21c6eb2fa93ee11a07443",
+      "passed": false,
+      "stage": "completed",
+      "utc": "2026-11-24T01:18:00+00:00"
+    }
+  ]
+}
