@@ -390,18 +390,9 @@ def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_pro
             actor="auto:rules-v1", code_commit=case.project.head,
             forward_plan={"forward_metric": "log_loss"},
         ),)))
-        assert RegistryProvider.from_connection(writer).specs_for_lineage("crypto/terminal").candidates == (changed,)
-        handover_at = pg.d1_database_time(writer)
         baseline = CRYPTO_GBM.baseline_spec()
-        pg.record_role_events(writer, store.RoleEventBatch(events=tuple(
-            store.RoleEventSubmission(
-                lineage="crypto-gbm/terminal", spec_sha256=spec.spec_sha256(), role=role,
-                effective_at=handover_at, reason="isolated FX-40 handover",
-                actor="auto:rules-v1", code_commit=case.project.head,
-            )
-            for spec, role in ((baseline, "GUARD"), (changed, "ACTIVE"))
-        )))
-        assert RegistryProvider.from_connection(writer).specs_for_lineage("crypto/terminal").active == changed
+        current = RegistryProvider.from_connection(writer).specs_for_lineage("crypto/terminal")
+        assert current.active == baseline and current.candidates == (changed,)
     resumed = _b1(case, 2, path_n=True)
     assert resumed.returncode == 0, resumed.stderr
     result = json.loads(resumed.stdout)
@@ -428,11 +419,23 @@ def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_pro
         assert [row["phase"] for row in pg.d1_operation_receipts(reader, case.key)] == [
             "STARTED", "PREPARED", "STARTED", "RECOVERY_READ", "SUCCEEDED",
         ]
-    fresh = _b1(SimpleNamespace(**{**vars(case), "key": case.key + ":fresh"}), 1)
+    fresh_case = SimpleNamespace(**{**vars(case), "key": case.key + ":fresh"})
+    fresh = _b1(fresh_case, 1)
     assert fresh.returncode == 0, fresh.stderr
     next_scan = json.loads(fresh.stdout)
-    assert next_scan["scan_id"] != scan_id and next_scan["model_versions"] == [changed.model_version()]
+    assert next_scan["scan_id"] != scan_id and next_scan["model_versions"] == [baseline.model_version()]
     assert next_scan["entry_ids"] == {}
+    with pg.connect_managed(case.project.root) as reader:
+        reader.autocommit = True
+        original = pg.read_command_run_event(reader, case.key, 1, "PREPARED")
+        current = pg.read_command_run_event(reader, fresh_case.key, 1, "PREPARED")
+        original_binding, _ = prepared_scan._read_bound(reader, original)
+        current_binding, _ = prepared_scan._read_bound(reader, current)
+        original_specs = original_binding["specs"]["crypto/terminal"]
+        assert original_specs["active"] == current_binding["specs"]["crypto/terminal"]["active"]
+        assert original_specs["candidates"] == []
+        current_specs = prepared_scan._load_specs(current_binding["specs"])["crypto/terminal"]
+        assert current_specs.candidates == (changed,)
     replayed = _d1_child(case.project, ["replay", str(candidate_id), "--managed", "--repo-root",
                                         str(case.project.root), "--trusted-commit", case.project.head])
     assert replayed.returncode == 0 and json.loads(replayed.stdout)["matched"], replayed.stderr
