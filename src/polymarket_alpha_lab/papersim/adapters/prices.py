@@ -969,6 +969,7 @@ def fetch_closed_candles(
     bar_hours: int = SUPPORTED_BAR_HOURS,
     budget: FetchBudget,
     allow_public_fetch: bool = False,
+    register_response=None,
 ) -> AdapterResult:
     """Fetch complete six-hour closed candles for BTC or ETH.
 
@@ -1006,18 +1007,21 @@ def fetch_closed_candles(
         if source == "binance":
             bars, missing, duplicates, unfinished, out_of_window = (
                 _fetch_binance_and_merge(
-                    asset, binding, start_s, effective_end_s, now_s, budget, source_kind, evidence
+                    asset, binding, start_s, effective_end_s, now_s, budget, source_kind, evidence,
+                    register_response,
                 )
             )
         elif source == "coinbase":
             bars, missing, duplicates, unfinished, out_of_window = (
                 _fetch_coinbase_and_merge(
-                    asset, binding, start_s, effective_end_s, now_s, budget, source_kind, evidence
+                    asset, binding, start_s, effective_end_s, now_s, budget, source_kind, evidence,
+                    register_response,
                 )
             )
         else:
             bars, missing, duplicates, unfinished, out_of_window = _fetch_kraken_candles(
-                asset, binding, start_s, effective_end_s, now_s, budget, source_kind, evidence
+                asset, binding, start_s, effective_end_s, now_s, budget, source_kind, evidence,
+                register_response,
             )
     except _InsufficientCoverage as coverage:
         return AdapterResult.failure(
@@ -1071,6 +1075,7 @@ def _fetch_binance_and_merge(
     budget: FetchBudget,
     source_kind: str,
     evidence: list[FetchEvidence],
+    register_response=None,
 ) -> tuple[tuple[ClosedBar, ...], int, int, int, int]:
     pair = binding.pair_for(asset)
     row_lists: list[tuple[tuple[object, ...], ...]] = []
@@ -1091,6 +1096,8 @@ def _fetch_binance_and_merge(
         )
         url = f"{_BINANCE_BASE_URL}/klines?{query}"
         raw, fetch_evidence = _bounded_get(url, budget, source_kind)
+        if register_response is not None:
+            register_response(fetch_evidence)
         evidence.append(fetch_evidence)
         row_lists.append(_parse_binance_klines(raw))
         cursor += page_bars * BAR_SECONDS
@@ -1106,6 +1113,7 @@ def _fetch_coinbase_and_merge(
     budget: FetchBudget,
     source_kind: str,
     evidence: list[FetchEvidence],
+    register_response=None,
 ) -> tuple[tuple[ClosedBar, ...], int, int, int, int]:
     pair = binding.pair_for(asset)
     row_lists: list[tuple[tuple[object, ...], ...]] = []
@@ -1123,6 +1131,8 @@ def _fetch_coinbase_and_merge(
         )
         url = chunk.source_reference
         raw, fetch_evidence = _bounded_get(url, budget, source_kind)
+        if register_response is not None:
+            register_response(fetch_evidence)
         evidence.append(fetch_evidence)
         row_lists.append(_parse_coinbase_candles(raw))
         cursor += chunk_bars * BAR_SECONDS
@@ -1138,6 +1148,7 @@ def _fetch_kraken_candles(
     budget: FetchBudget,
     source_kind: str,
     evidence: list[FetchEvidence],
+    register_response=None,
 ) -> tuple[tuple[ClosedBar, ...], int, int, int, int]:
     pair = binding.pair_for(asset)
     hours_needed = (effective_end_s - start_s) // KRAKEN_HOUR_SECONDS
@@ -1155,6 +1166,8 @@ def _fetch_kraken_candles(
     )
     url = f"{_KRAKEN_BASE_URL}/OHLC?{query}"
     raw, fetch_evidence = _bounded_get(url, budget, source_kind)
+    if register_response is not None:
+        register_response(fetch_evidence)
     evidence.append(fetch_evidence)
     rows, _cursor = _parse_kraken_ohlc(raw, _KRAKEN_RESULT_KEYS[pair])
     return _aggregate_hourly(rows, start_s, effective_end_s, now_s)
@@ -1166,6 +1179,7 @@ def fetch_spot(
     *,
     budget: FetchBudget,
     allow_public_fetch: bool = False,
+    register_response=None,
 ) -> AdapterResult:
     """Fetch one independent spot price observation for BTC or ETH.
 
@@ -1196,6 +1210,8 @@ def fetch_spot(
     evidence: list[FetchEvidence] = []
     try:
         raw, fetch_evidence = _bounded_get(url, budget, source_kind)
+        if register_response is not None:
+            register_response(fetch_evidence)
         evidence.append(fetch_evidence)
         price = _parse_spot_price(raw, source, binding, asset)
     except BudgetExhaustedError as error:

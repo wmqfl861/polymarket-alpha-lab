@@ -948,6 +948,24 @@ def _cmd_run_scan(args) -> int:
 
     try:
         config_path = Path(args.config)
+        if args.prepare_from is not None:
+            if not args.managed or args.operation_key is None:
+                raise scan.ScanError("papersim_prepare_requires_managed_operation_key")
+            from polymarket_alpha_lab.papersim import prepared_scan
+
+            connection = _open_readonly_connection(args, label="PAPERSIM_SCAN_PG_DSN")
+            try:
+                result = prepared_scan.run_prepared_scan(
+                    connection, repo_root=args.repo_root, config_bytes=config_path.read_bytes(),
+                    input_set_sha256=args.prepare_from, operation_key=args.operation_key, attempt=args.attempt,
+                    now=lambda: _datetime.datetime.now(_datetime.UTC), evaluation_loader=_evaluation_candidates_in_snapshot,
+                    shadow_budget_seconds=args.shadow_budget_seconds, pack_base_dir=config_path.parent,
+                )
+            finally:
+                connection.close()
+            print(json.dumps(result, sort_keys=True, allow_nan=False))
+            return 0
+
         try:
             document = json.loads(config_path.read_text(encoding="utf-8"))
         except OSError as error:
@@ -2745,6 +2763,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--operation-key", default=None,
         help="stable scheduling identity of this unattended run (default: "
              "run-scan|<team>|<started UTC stamp>|b1)",
+    )
+    run_scan_parser.add_argument(
+        "--prepare-from", metavar="SHA256",
+        help="sealed preparation input set (requires --managed and --operation-key)",
     )
     run_scan_parser.add_argument(
         "--attempt", type=int, default=1,

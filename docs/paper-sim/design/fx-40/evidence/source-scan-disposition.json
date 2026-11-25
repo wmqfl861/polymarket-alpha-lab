@@ -1,0 +1,74 @@
+{
+  "base": "a7dbd8a3e14f5f86f9f26e2f05b76a46927cf4ee",
+  "head": "11d24be68fea3d16d334284a6ca0175a6e25a386",
+  "raw_exit": 1,
+  "raw_sha256": "a28632fcbc7fffc5000ff0fad273f910ff4958ce00fb0609cbf212c938b44965",
+  "scanner_sha256": "96183c0533c67b0e45a3d7d61c25594952f78590fad77c761d9efed983e7d8f7",
+  "attributions": [
+    {
+      "path": "src/polymarket_alpha_lab/replay.py",
+      "blob": "d3454a807782e99759d71a0425a26ab9d2900235",
+      "section": "target",
+      "line": 106,
+      "reason": "unchanged replay bundle protocol marker"
+    },
+    {
+      "path": "src/polymarket_alpha_lab/replay.py",
+      "blob": "d3454a807782e99759d71a0425a26ab9d2900235",
+      "section": "target",
+      "line": 107,
+      "reason": "unchanged replay bundle protocol marker"
+    },
+    {
+      "path": "src/polymarket_alpha_lab/replay.py",
+      "blob": "d3454a807782e99759d71a0425a26ab9d2900235",
+      "section": "target",
+      "line": 460,
+      "reason": "assignment of market-token parameter, no literal"
+    },
+    {
+      "path": "src/polymarket_alpha_lab/replay.py",
+      "blob": "d72882e4a0c238277e9b7580432def33f6d7faf2",
+      "section": "history_only",
+      "line": 106,
+      "reason": "unchanged replay bundle protocol marker"
+    },
+    {
+      "path": "src/polymarket_alpha_lab/replay.py",
+      "blob": "d72882e4a0c238277e9b7580432def33f6d7faf2",
+      "section": "history_only",
+      "line": 107,
+      "reason": "unchanged replay bundle protocol marker"
+    },
+    {
+      "path": "src/polymarket_alpha_lab/replay.py",
+      "blob": "d72882e4a0c238277e9b7580432def33f6d7faf2",
+      "section": "history_only",
+      "line": 460,
+      "reason": "assignment of market-token parameter, no literal"
+    },
+    {
+      "path": "tests/test_papersim_prepare.py",
+      "blob": "485ba19e515bec68d84a9689a5efa9a366b2015c",
+      "section": "target",
+      "line": 168,
+      "reason": "synthetic outcome token in the same local market-data fixture"
+    },
+    {
+      "path": "tests/test_papersim_prepare.py",
+      "blob": "485ba19e515bec68d84a9689a5efa9a366b2015c",
+      "section": "target",
+      "line": 174,
+      "reason": "synthetic outcome token in the same local market-data fixture"
+    },
+    {
+      "path": "tests/test_papersim_prepare.py",
+      "blob": "485ba19e515bec68d84a9689a5efa9a366b2015c",
+      "section": "target",
+      "line": 306,
+      "reason": "synthetic outcome token in the same local market-data fixture"
+    }
+  ],
+  "attributed": 9,
+  "unresolved": 0
+}

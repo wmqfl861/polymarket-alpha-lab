@@ -1,0 +1,80 @@
+{
+  "cases": {
+    "BOU-LEE_O2.5": {
+      "both_token_positions_identical_across_three_files": true,
+      "buy_ask_vwap_equals_frozen": true,
+      "buy_depth_equals_frozen": true,
+      "buy_fill_equals_frozen": true,
+      "buy_side_ask_price_size_ladder_stored": false,
+      "buy_side_book_hash_recorded": true,
+      "buy_side_source_clock": "2026-10-29T04:10:16.210+00:00",
+      "exact_question_in_each_projection": [
+        true,
+        true,
+        true
+      ],
+      "over_is_first_side_in_each_file": true,
+      "per_request_received_at_present": false,
+      "shortlist_has_both_side_projections": true
+    },
+    "BRE-FOR_O2.5": {
+      "both_token_positions_identical_across_three_files": true,
+      "buy_ask_vwap_equals_frozen": true,
+      "buy_depth_equals_frozen": true,
+      "buy_fill_equals_frozen": true,
+      "buy_side_ask_price_size_ladder_stored": false,
+      "buy_side_book_hash_recorded": true,
+      "buy_side_source_clock": "2026-10-29T04:10:21.338+00:00",
+      "exact_question_in_each_projection": [
+        true,
+        true,
+        true
+      ],
+      "over_is_first_side_in_each_file": true,
+      "per_request_received_at_present": false,
+      "shortlist_has_both_side_projections": true
+    },
+    "CHE-MUN_O3.5": {
+      "both_token_positions_identical_across_three_files": true,
+      "buy_ask_vwap_equals_frozen": true,
+      "buy_depth_equals_frozen": true,
+      "buy_fill_equals_frozen": true,
+      "buy_side_ask_price_size_ladder_stored": false,
+      "buy_side_book_hash_recorded": true,
+      "buy_side_source_clock": "2026-10-29T04:09:59.658+00:00",
+      "exact_question_in_each_projection": [
+        true,
+        true,
+        true
+      ],
+      "over_is_first_side_in_each_file": true,
+      "per_request_received_at_present": false,
+      "shortlist_has_both_side_projections": true
+    },
+    "HUL-IPS_O2.5": {
+      "both_token_positions_identical_across_three_files": true,
+      "buy_ask_vwap_equals_frozen": true,
+      "buy_depth_equals_frozen": true,
+      "buy_fill_equals_frozen": true,
+      "buy_side_ask_price_size_ladder_stored": false,
+      "buy_side_book_hash_recorded": true,
+      "buy_side_source_clock": "2026-10-29T04:10:15.471+00:00",
+      "exact_question_in_each_projection": [
+        true,
+        true,
+        true
+      ],
+      "over_is_first_side_in_each_file": true,
+      "per_request_received_at_present": false,
+      "shortlist_has_both_side_projections": true
+    }
+  },
+  "fixture_sha256": "d9914c23645a54f405ea246aa7ea574afe7515cd176e321d1536db8b60f689f9",
+  "input_files": {
+    "round23/raw/events_window.json": "eca62c5dc5adc73d6c161494aebad934d00b45ea0c181e69324af9662ce2bc5b",
+    "round23/raw/shortlist_books23.json": "e490b63ad86cc31d61e1c1a7533406f7e32d056230e7eb4265da06b332af75cc",
+    "round24/raw/events_window.json": "f58d7f645e7b0410a026c5e11cc4ddf4e4586c944510e1355ca44dc9773ff379"
+  },
+  "measured_utc": "2026-11-25T14:12:40+00:00",
+  "scope": "Archived reduced Gamma and per-side CLOB statistics. Source timestamps belong to order books. Complete response bytes and independent custody require their own evidence."
+}

@@ -1,0 +1,511 @@
+{
+  "cases": {
+    "banned_cross_league_path": {
+      "baseline_and_test_code": [
+        {
+          "blob": "4846713a6f59451dd3c74094fc51ac7beec4fb38",
+          "bytes": 32815,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mode": "100644",
+          "path": "src/polymarket_alpha_lab/papersim/soccer_model.py",
+          "sha256": "e1c5df21dfa7db3cd9eac669921101c76fca743715b1ba72e9bd94a8f33c97ac",
+          "type": "blob"
+        },
+        {
+          "blob": "5df3fffb7a9ac3430e7f2df8dd20360a14aea0f4",
+          "bytes": 47542,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mode": "100644",
+          "path": "src/polymarket_alpha_lab/replay.py",
+          "sha256": "8b0990cf09919325692bb53eff2c4b1c855000c96300eca560cfc05bd50fe8e0",
+          "type": "blob"
+        }
+      ],
+      "fixture_blobs_on_checked_trees": {
+        "audit_anchor": "a4cedf029fba95222a411856484e9d98449329a8",
+        "nov24_handoff": "a4cedf029fba95222a411856484e9d98449329a8",
+        "observed_local_main_only": "a4cedf029fba95222a411856484e9d98449329a8",
+        "retained_fx40_draft": "a4cedf029fba95222a411856484e9d98449329a8",
+        "retained_fx41": "a4cedf029fba95222a411856484e9d98449329a8",
+        "retained_fx44": "a4cedf029fba95222a411856484e9d98449329a8",
+        "retained_runtime": "a4cedf029fba95222a411856484e9d98449329a8"
+      },
+      "fixture_provenance_as_safe_relative_names": [
+        "round10/raw/model_round10.json",
+        "review/FIXES.md"
+      ],
+      "frozen_fixture": {
+        "blob": "a4cedf029fba95222a411856484e9d98449329a8",
+        "bytes": 2618,
+        "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "mode": "100644",
+        "path": "tests/fixtures/papersim/regression_banned_path.json",
+        "sha256": "0a8acce166cc92d744751b29d3c0a6abb8abb8ac67a4d1b30d2eef584255245d",
+        "type": "blob"
+      },
+      "mirrored_producer_or_guard_code": [
+        {
+          "blob": "64fd92d3dfaefcf75d5c9cfe0c5e85ec9c0c3968",
+          "bytes": 9473,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "eed5fc546f820b6214b48a043cf3179f1862301c346e1ba6fdc067e6bdeb1544",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round5/tools/model_round5c.py",
+          "sha256": "eed5fc546f820b6214b48a043cf3179f1862301c346e1ba6fdc067e6bdeb1544",
+          "type": "blob"
+        },
+        {
+          "blob": "fe55e27facaafc548f93633ab982a0267c12fc02",
+          "bytes": 11939,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "a7d489acf968fbc9dda0a83a0676d39ad38b3aaf1a0f65f76e9faca3ad0ebfa7",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round10/tools/model10.py",
+          "sha256": "a7d489acf968fbc9dda0a83a0676d39ad38b3aaf1a0f65f76e9faca3ad0ebfa7",
+          "type": "blob"
+        }
+      ],
+      "named_historical_inputs": [
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round10/raw/model_round10.json",
+          "matching_basename_tree_entries": []
+        }
+      ],
+      "retained_incident_review_document": {
+        "blob": "b61f34abf5da5a7d4571ca04b25f7320daaf2c8d",
+        "bytes": 3873,
+        "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "mode": "100644",
+        "path": "docs/paper-sim/review-2026-10-30/FIXES.md",
+        "sha256": "989750f643e7d87c647da367a59eec9208ada103244e0988cbea39e48c7f37a9",
+        "type": "blob"
+      },
+      "reviewed_plan_expected": {
+        "bytes": 2618,
+        "sha256": "0a8acce166cc92d744751b29d3c0a6abb8abb8ac67a4d1b30d2eef584255245d"
+      }
+    },
+    "r19_crypto": {
+      "baseline_and_test_code": [
+        {
+          "blob": "251ef0e2165fa3cc0c03e509a89fad49da4fec4e",
+          "bytes": 16026,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mode": "100644",
+          "path": "src/polymarket_alpha_lab/papersim/crypto_model.py",
+          "sha256": "5d31a34263a6346d284385572a41a80a5942a42c25e63f322339833f732e8713",
+          "type": "blob"
+        },
+        {
+          "blob": "eabcb3e5d4eacafa32269dbc21054ef5305a7724",
+          "bytes": 33654,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mode": "100644",
+          "path": "tests/test_papersim_crypto_model.py",
+          "sha256": "22b6e2c99640374ecb4fdcde71d115c77de755dcc727d119b8b075658a3dd641",
+          "type": "blob"
+        }
+      ],
+      "fixture_blobs_on_checked_trees": {
+        "audit_anchor": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "nov24_handoff": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "observed_local_main_only": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "retained_fx40_draft": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "retained_fx41": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "retained_fx44": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "retained_runtime": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053"
+      },
+      "fixture_provenance_as_safe_relative_names": [
+        "round19/raw/crypto_scan.json",
+        "round19/crypto_recommendations.json"
+      ],
+      "frozen_fixture": {
+        "blob": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "bytes": 1902,
+        "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "mode": "100644",
+        "path": "tests/fixtures/papersim/regression_r19_crypto.json",
+        "sha256": "7e07f02424a9c37cfb518c2ad997ecb88efe6d422b5afe558b1be96174b2a2c3",
+        "type": "blob"
+      },
+      "mirrored_producer_or_guard_code": [
+        {
+          "blob": "974592e462b158f7cb2da93b14354c45a7cf08b0",
+          "bytes": 6229,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "c3c773c7fb5395328b2b14027d62ff7e8e0c8a556564e3b8ed9ad0de39deccba",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round19/fetch19.py",
+          "sha256": "c3c773c7fb5395328b2b14027d62ff7e8e0c8a556564e3b8ed9ad0de39deccba",
+          "type": "blob"
+        },
+        {
+          "blob": "a8f73f44a88032fb9d8989e5521e4238f5a6cec4",
+          "bytes": 15634,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "e7f4928651e158f78ab7e2372f5ff06a9197871c6682768b065b5af078abe65a",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round19/model19.py",
+          "sha256": "e7f4928651e158f78ab7e2372f5ff06a9197871c6682768b065b5af078abe65a",
+          "type": "blob"
+        },
+        {
+          "blob": "c09f8bd1884c09c1d8cd2bf9a10f3a9d69918932",
+          "bytes": 9712,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "78448072ac2b4ca31766e2036ade5b67eb83fd57d288d5a2ccb3c4257db1806c",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round19/finalize19.py",
+          "sha256": "78448072ac2b4ca31766e2036ade5b67eb83fd57d288d5a2ccb3c4257db1806c",
+          "type": "blob"
+        }
+      ],
+      "named_historical_inputs": [
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round19/raw/crypto_scan.json",
+          "matching_basename_tree_entries": []
+        },
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round19/crypto_recommendations.json",
+          "matching_basename_tree_entries": []
+        }
+      ],
+      "reviewed_plan_expected": {
+        "bytes": 1902,
+        "sha256": "7e07f02424a9c37cfb518c2ad997ecb88efe6d422b5afe558b1be96174b2a2c3"
+      }
+    },
+    "r23_r24_gate_arithmetic": {
+      "baseline_and_test_code": [
+        {
+          "blob": "b23ca28e6fd6ac0c457275d3bee3050b6a0503b0",
+          "bytes": 36616,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mode": "100644",
+          "path": "src/polymarket_alpha_lab/papersim/gates.py",
+          "sha256": "b3b417399e6629a8632e9a2483a0104f3961fd6f16ab9daf6651ea88e8195e9f",
+          "type": "blob"
+        },
+        {
+          "blob": "306229e67144358ca133dea36b3cc95417ba8370",
+          "bytes": 47706,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mode": "100644",
+          "path": "tests/test_papersim_pipeline.py",
+          "sha256": "6db8fada31e48bcb59c59f1f936c546ef1376ab5b2c858b2bd90486699ad5a69",
+          "type": "blob"
+        }
+      ],
+      "fixture_blobs_on_checked_trees": {
+        "audit_anchor": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "nov24_handoff": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "observed_local_main_only": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "retained_fx40_draft": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "retained_fx41": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "retained_fx44": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "retained_runtime": "c9841b860f3389bcedcfcb805b9086888a903b26"
+      },
+      "fixture_provenance_as_safe_relative_names": [
+        "round23/epl_candidates.json",
+        "round24/epl_candidates.json",
+        "round24/raw/books24.json"
+      ],
+      "frozen_fixture": {
+        "blob": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "bytes": 2763,
+        "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "mode": "100644",
+        "path": "tests/fixtures/papersim/regression_gate_arithmetic.json",
+        "sha256": "4f19389c921444e94e8845d1759d942d9a13c99969362ab49293be40193b83d6",
+        "type": "blob"
+      },
+      "mirrored_producer_or_guard_code": [
+        {
+          "blob": "7389fa90983d3ee5424338ca75cbae2126a0a019",
+          "bytes": 3894,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "27102ec313560a79be35de29d06b75f1fa2bda89d34bd60df9e27fd794304aae",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round24/raw/books24.py",
+          "sha256": "27102ec313560a79be35de29d06b75f1fa2bda89d34bd60df9e27fd794304aae",
+          "type": "blob"
+        },
+        {
+          "blob": "1fbe8ff3adf8e75206c069c996fa74a7be92cab2",
+          "bytes": 6528,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "ae730d19ca7b0d897001825159e579cbd14baf9517d400042518912ffc50878f",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round24/raw/finalize24.py",
+          "sha256": "ae730d19ca7b0d897001825159e579cbd14baf9517d400042518912ffc50878f",
+          "type": "blob"
+        },
+        {
+          "blob": "b810020075feb4efb3ef443bdc57d03c121c5555",
+          "bytes": 10813,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "71609dfa809352a04d956c76febd6efc8be3c0c121766237691821e9d96f61da",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round24/raw/assemble24.py",
+          "sha256": "71609dfa809352a04d956c76febd6efc8be3c0c121766237691821e9d96f61da",
+          "type": "blob"
+        }
+      ],
+      "named_historical_inputs": [
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round23/epl_candidates.json",
+          "matching_basename_tree_entries": []
+        },
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round24/epl_candidates.json",
+          "matching_basename_tree_entries": []
+        },
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round24/raw/books24.json",
+          "matching_basename_tree_entries": []
+        },
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round24/raw/epl_scan.json",
+          "matching_basename_tree_entries": []
+        }
+      ],
+      "reviewed_plan_expected": {
+        "bytes": 2763,
+        "sha256": "4f19389c921444e94e8845d1759d942d9a13c99969362ab49293be40193b83d6"
+      }
+    },
+    "r23_soccer": {
+      "baseline_and_test_code": [
+        {
+          "blob": "4846713a6f59451dd3c74094fc51ac7beec4fb38",
+          "bytes": 32815,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mode": "100644",
+          "path": "src/polymarket_alpha_lab/papersim/soccer_model.py",
+          "sha256": "e1c5df21dfa7db3cd9eac669921101c76fca743715b1ba72e9bd94a8f33c97ac",
+          "type": "blob"
+        },
+        {
+          "blob": "3c88085c98c51a26b0d2670bc8897dadd967f05a",
+          "bytes": 48785,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mode": "100644",
+          "path": "tests/test_papersim_soccer_model.py",
+          "sha256": "169c1bb922a4b7d1d8132bfdb3145ef429a7472341e5b691cb799e9ec024ebfc",
+          "type": "blob"
+        }
+      ],
+      "fixture_blobs_on_checked_trees": {
+        "audit_anchor": "4bfccb907890253078e1aee0a39b51ec45f590af",
+        "nov24_handoff": "4bfccb907890253078e1aee0a39b51ec45f590af",
+        "observed_local_main_only": "4bfccb907890253078e1aee0a39b51ec45f590af",
+        "retained_fx40_draft": "4bfccb907890253078e1aee0a39b51ec45f590af",
+        "retained_fx41": "4bfccb907890253078e1aee0a39b51ec45f590af",
+        "retained_fx44": "4bfccb907890253078e1aee0a39b51ec45f590af",
+        "retained_runtime": "4bfccb907890253078e1aee0a39b51ec45f590af"
+      },
+      "fixture_provenance_as_safe_relative_names": [
+        "round23/epl_candidates.json",
+        "round23/raw/epl_scan.json",
+        "round23/raw/xg_epl_23.json"
+      ],
+      "frozen_fixture": {
+        "blob": "4bfccb907890253078e1aee0a39b51ec45f590af",
+        "bytes": 38115,
+        "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "mode": "100644",
+        "path": "tests/fixtures/papersim/regression_r23_soccer.json",
+        "sha256": "d9914c23645a54f405ea246aa7ea574afe7515cd176e321d1536db8b60f689f9",
+        "type": "blob"
+      },
+      "mirrored_producer_or_guard_code": [
+        {
+          "blob": "a98f89bbc6fba484cd47ed56e3e761530722819c",
+          "bytes": 12020,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "c298b40d0927e87a2f6ea5eeb46fffc63a5ce6042795b56f05a8cb23be7dcc4f",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round23/raw/model23.py",
+          "sha256": "c298b40d0927e87a2f6ea5eeb46fffc63a5ce6042795b56f05a8cb23be7dcc4f",
+          "type": "blob"
+        },
+        {
+          "blob": "a2f77bd370749880f6136dac4a12b87db0b318e9",
+          "bytes": 3725,
+          "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "mirror_manifest_match": true,
+          "mirror_manifest_sha256": "7f8832589b136f935d9e97c03cbf52b6bf6a3df94bea131684e2edcad14b8399",
+          "mode": "100644",
+          "path": "docs/paper-sim/server-mirror/round23/raw/books23.py",
+          "sha256": "7f8832589b136f935d9e97c03cbf52b6bf6a3df94bea131684e2edcad14b8399",
+          "type": "blob"
+        }
+      ],
+      "named_historical_inputs": [
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round23/epl_candidates.json",
+          "matching_basename_tree_entries": []
+        },
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round23/raw/epl_scan.json",
+          "matching_basename_tree_entries": []
+        },
+        {
+          "audited_byte_source_verified": false,
+          "historical_relative_reference": "round23/raw/xg_epl_23.json",
+          "matching_basename_tree_entries": []
+        }
+      ],
+      "reviewed_plan_expected": {
+        "bytes": 38115,
+        "sha256": "d9914c23645a54f405ea246aa7ea574afe7515cd176e321d1536db8b60f689f9"
+      }
+    }
+  },
+  "checked_commits": {
+    "audit_anchor": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "nov24_handoff": "b3e6f6d3eb3615b74b677658065de43d84147c94",
+    "observed_local_main_only": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+    "retained_fx40_draft": "7f92e0356888785e7b1e1bc88c24ffd1edbe8ac7",
+    "retained_fx41": "256f8491c324b04e5dd9789c012ae84f654853f2",
+    "retained_fx44": "3bc5a234023ee0f322e693e380ed115eb6491547",
+    "retained_runtime": "bcce1b17f7263ab89859febfcb56188c295ab371"
+  },
+  "frozen_anchor": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "plan": {
+    "bytes": 46062,
+    "file": "fx40-node-plan-v3.md",
+    "sha256": "1589414ec6f81554b2570ad57392046476acb20c1c840515005b7a855c9f941a"
+  },
+  "prior_plan_reviews": [
+    {
+      "bound_plan_sha256": "bd097a8bfa2a3e171b6d3179d18c4c928bd430c30ed87a44517476d970379740",
+      "bytes": 10550,
+      "file": "fx40-plan-review.json",
+      "session_id": "sess_d149e0d3-3541-48ec-8f30-e6d319ba6dfe",
+      "sha256": "5b85a62109870253095ab0d2e3d82f4be7fa853444f08c969e225cdb599a8029",
+      "turn_id": "turn_3f5fc028-e7e0-403d-b8c8-8c9809a5328e",
+      "verdict": "FAIL"
+    },
+    {
+      "bound_plan_sha256": "8b3ab87684570396cb8620a4f13dcaa603bff9c3047a020d23360b68600aab4e",
+      "bytes": 6037,
+      "file": "fx40-plan-review-revision2.json",
+      "session_id": "sess_d149e0d3-3541-48ec-8f30-e6d319ba6dfe",
+      "sha256": "b765b915073d72e0e6a48cc110994e2de0d78e3202341ed50882a1fd2954711f",
+      "turn_id": "turn_5509d962-00bc-4512-ba7d-f722284e3144",
+      "verdict": "FAIL"
+    },
+    {
+      "bound_plan_sha256": "1589414ec6f81554b2570ad57392046476acb20c1c840515005b7a855c9f941a",
+      "bytes": 5078,
+      "file": "fx40-plan-review-revision3.json",
+      "session_id": "sess_d149e0d3-3541-48ec-8f30-e6d319ba6dfe",
+      "sha256": "787295778d8a5ba5965083bf3dd5d2ba31c20c878accb0dee5b0cb60e6c7c991",
+      "turn_id": "turn_04e94635-6485-42ca-8abd-aa41131168e2",
+      "verdict": "PASS"
+    }
+  ],
+  "scope": "static local Git preflight at reviewed anchor and named retained commits",
+  "status": "inventory_measured",
+  "supporting_documents_and_boundaries": [
+    {
+      "blob": "07a1e74b84c17983cb3bdfdcd3ec6bfbb4ed6f02",
+      "bytes": 15179,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "docs/handoffs/2026-11-21-progress-review/02-remediation-and-next-steps.md",
+      "sha256": "92dbba354da4f1583a036465d3a33e79ca4785e29e2aac6f42379afadbb619b7",
+      "type": "blob"
+    },
+    {
+      "blob": "83888e021f11c4dd2556db97e85e0e7867edfcc6",
+      "bytes": 4474,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "docs/handoffs/2026-11-21-pr-review/02-merge-conditions-and-next-steps.md",
+      "sha256": "9ed477fc61a146288beb8102e5057b427cddf20d2094954c44d2db4cc1878ef7",
+      "type": "blob"
+    },
+    {
+      "blob": "8c93ad8542e3130e1ee1e79230d731d2b805fe6b",
+      "bytes": 16012,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "docs/handoffs/2026-11-21-pr-review/03-local-agent-prompt.md",
+      "sha256": "875933582c84ec52778b9989b7a5bf4992b2bdf977aecf3f6f8f6dd29d1b5fea",
+      "type": "blob"
+    },
+    {
+      "blob": "0d5a76f55a0e82da915281d35c685f6cebd7407a",
+      "bytes": 2323,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "docs/paper-sim/server-mirror/MANIFEST-NOT-MIRRORED.md",
+      "sha256": "935db2c9c0c912eb315025962d9d792e19fdeb1660d3540e4693e59d4b40d9ef",
+      "type": "blob"
+    },
+    {
+      "blob": "2e85e0bbad2d0dd621723bb248da58806be7b5d7",
+      "bytes": 49851,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "docs/paper-sim/server-mirror/MANIFEST.sha256",
+      "sha256": "37fac2e0416deaf314acd0547d32157d3f62e3652d9c44e0fd611c8471a1862b",
+      "type": "blob"
+    },
+    {
+      "blob": "198021d8140698d865dab329d57bc4d00d2fcb8f",
+      "bytes": 39463,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "tests/fixtures/papersim/m2/prices.json",
+      "sha256": "dc516fb3ee30cfd60d7011060c7d607e14c9775352cb72ef7762144297a952db",
+      "type": "blob"
+    },
+    {
+      "blob": "6a8845aeaac4edd0eb38517ce017d3f2d642d307",
+      "bytes": 18810,
+      "commit": "b3e6f6d3eb3615b74b677658065de43d84147c94",
+      "mode": "100644",
+      "path": "docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md",
+      "sha256": "5afdaccaa9b11b02b52cd6c62e80cb880aa4bdd0c0fea5b0186fa45a9599b1cd",
+      "type": "blob"
+    },
+    {
+      "blob": "a66a58d10c5036fc5d9a5ef8f59f0f1555a7c830",
+      "bytes": 16692,
+      "commit": "b3e6f6d3eb3615b74b677658065de43d84147c94",
+      "mode": "100644",
+      "path": "docs/handoffs/2026-11-24-incremental-review/03-local-agent-prompt.md",
+      "sha256": "f3bf5d6e61dd44ccec7e6117caec0d14b2a12e2f791ec3d2cc5186b46557718c",
+      "type": "blob"
+    }
+  ],
+  "unverified": [
+    "FX-47 merged launch parent",
+    "FX-40 implementation candidate",
+    "private historical originals",
+    "managed historical snapshot custody",
+    "complete request byte identity"
+  ],
+  "utc": "2026-11-25T03:12:09+00:00"
+}

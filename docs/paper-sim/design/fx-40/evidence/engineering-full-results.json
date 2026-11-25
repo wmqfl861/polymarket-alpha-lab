@@ -1,0 +1,24 @@
+{
+  "engineering_head": "11d24be68fea3d16d334284a6ca0175a6e25a386",
+  "engineering_tree": "29a4a40fa7635d649780f8a9f7aae705169180db",
+  "exit": 0,
+  "passed": 44057,
+  "raw_receipts_sha256": {
+    "complete_exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "full_log": "bc5dafc2db18f721aa71557c91cd6c350f68e1a2707b06036ffe045c181d9d07",
+    "status_tsv": "54b55532950731a7859dd7a88e7b471f2ffced9273960623134c67912e208970"
+  },
+  "recorded_steps": {
+    "compile": 0,
+    "focused": 0,
+    "frozen": 0,
+    "full": 0,
+    "install": 0,
+    "patch": 0,
+    "selfcheck": 0
+  },
+  "seconds_reported_by_pytest": 4071.77,
+  "skipped": 473,
+  "test_command": "python scripts/verify_local.py --full",
+  "warnings": 20
+}

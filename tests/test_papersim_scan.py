@@ -232,6 +232,46 @@ def test_provider_params_are_canonical_and_time_free():
     assert first["provider"]["specs"]["crypto/terminal"]["fallback_reason"] == "registry_empty"
 
 
+@pytest.mark.parametrize("prepared_second", [False, True], ids=["legacy", "prepared"])
+def test_portfolio_correlation_applies_across_markets_in_a_prepared_scan(prepared_second):
+    first = _crypto_record()
+    second = _crypto_record(key="other-market", sports_materials=True)
+    specs = scan.consult_provider(PROVIDER, (first, second))
+    active = specs[first.lineage].active
+    provenance = {"model_spec_sha256": active.spec_sha256(), "model_version": active.model_version()}
+
+    def prepared(record, yes_token, no_token):
+        request = dataclasses.replace(replay.request_from_replay_bundle(record.request_bundle),
+                                      market_id=record.market_id, yes_token=yes_token,
+                                      no_token=no_token, buy_token=yes_token)
+        book_digest = "b" * 64
+        return dataclasses.replace(
+            record, yes_token_id=yes_token, no_token_id=no_token, snapshot_refs=(book_digest,),
+            book_snapshot_sha256=book_digest, decision_snapshot_sha256=book_digest,
+            request_bundle=replay.replay_bundle_payload(request), prepared_provenance=provenance,
+        )
+
+    first = prepared(first, "123", "456")
+    second = dataclasses.replace(second, market_id="m-other-eth")
+    request = dataclasses.replace(replay.request_from_replay_bundle(second.request_bundle),
+                                  market_id=second.market_id)
+    second = dataclasses.replace(second, request_bundle=replay.replay_bundle_payload(request))
+    if prepared_second:
+        second = prepared(second, "789", "101")
+
+    result = scan.assemble_scan(
+        _config(), (first, second), admissions=scan.AdmissionReport(),
+        portfolio=scan.PortfolioState(bankroll=10_000.0, cash=10_000.0),
+        started_at=NOW, finished_at=NOW + datetime.timedelta(minutes=5),
+        code_commit="a" * 40, specs=specs, preparation={"input_set_sha256": "c" * 64},
+    )
+    entered, blocked = result.submission.candidates
+    assert entered.event_key != blocked.event_key
+    assert entered.entry is not None
+    assert blocked.entry is None
+    assert "held_fixture_blocked" in json.loads(blocked.rejection_reasons)
+
+
 # ---------------------------------------------------------------------------
 # FX-17 admission wiring
 # ---------------------------------------------------------------------------

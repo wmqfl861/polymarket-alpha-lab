@@ -102,6 +102,8 @@ LATER_RECEIPTS = frozenset(DESIGN + path for path in (
     "publication-independent-test-v2.json", "publication-code-review-v2.json",
     "publication-stage-review-v2.json", "publication-merge-v2.json",
     "2026-11-25-owner-fixed-entry-observation.json",
+    "publication-independent-test-v3.json", "publication-code-review-v3.json",
+    "publication-stage-review-v3.json",
 ))
 PUBLICATION_INPUTS = REQUIRED_MAIN - {PUBLICATION_INDEX} | EVIDENCE
 MAINTAINABLE_INPUTS = WORKFLOWS | {ATTRIBUTES, GATE, POSTGRES_GATE}
@@ -1083,6 +1085,98 @@ def verify_windows_report(report, script_sha):
                 f"Windows drill assertion failed ({name}/{variant})", DRILL)
 
 
+def windows_failure_details(result):
+    returncode = result.returncode
+    stderr = result.stderr
+    has_exit_code = type(returncode) is int
+    has_stderr_bytes = type(stderr) is bytes
+    outer_code = (
+        {0: "0", 1: "1", 2: "2"}.get(returncode, "unknown")
+        if has_exit_code else "unknown"
+    )
+    outer_stderr_nonempty = ("1" if stderr else "0") if has_stderr_bytes else "unknown"
+    prefix = f"outer_code={outer_code}, outer_stderr_nonempty={outer_stderr_nonempty}"
+    fallback = (
+        f"{prefix}, no_inner_report, invocation_exit=unreported, "
+        "invocation_stderr=unreported"
+    )
+
+    def code_label(fields, field, allowed):
+        if field not in fields:
+            return "unreported"
+        value = fields[field]
+        if type(value) is not int:
+            return "unknown"
+        return next((str(code) for code in allowed if code == value), "unknown")
+
+    def check_depth(value, remaining=16):
+        if type(value) in (dict, list):
+            if remaining == 0:
+                raise ValueError
+            children = value.values() if type(value) is dict else value
+            for child in children:
+                check_depth(child, remaining - 1)
+
+    try:
+        stdout = result.stdout
+        if type(stdout) is not bytes or len(stdout) > 16 * 1024:
+            raise ValueError
+        report = json.loads(
+            stdout.decode("utf-8"), object_pairs_hook=unique_object,
+            parse_constant=int,  # Reject NaN and Infinity.
+            parse_int=lambda token: int(token) if len(token) <= 3 else -1,
+        )
+        check_depth(report)
+        if type(report) is not dict or report.get("protocol") != "fx49-offline-acceptance-v1":
+            raise ValueError
+        phases = ("staging", "compile-substitute", "entry-check", "cutoff-equality", "cases")
+        phase = next((label for label in phases if label == report.get("phase")), "unknown")
+        cases = report.get("cases")
+        remaining_cases = {(name, variant): variant for name, variant, *_ in WINDOWS_CASES}
+        if type(cases) is not list or len(cases) > len(remaining_cases):
+            raise ValueError
+
+        gate_codes = (0, 1, 2, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32)
+        invocation_exit = (
+            ("zero" if returncode == 0 else "nonzero") if has_exit_code else "unreported"
+        )
+        invocation_stderr = (
+            ("nonempty" if stderr else "empty") if has_stderr_bytes else "unreported"
+        )
+        status = report.get("status")
+        reported_status = next((label for label in ("passed", "failed") if label == status), "unknown")
+        details = [
+            prefix,
+            f"invocation_exit={invocation_exit}",
+            f"invocation_stderr={invocation_stderr}",
+            f"phase={phase}",
+            f"reported_status={reported_status}",
+        ]
+        for field, codes in (
+            ("compiler_exit_code", (0, 1, 2)),
+            ("check_exit_code", gate_codes),
+            ("cutoff_equality_exit_code", gate_codes),
+        ):
+            details.append(f"{field}={code_label(report, field, codes)}")
+        for case in cases:
+            if type(case) is not dict or type(case.get("passed")) is not bool:
+                raise ValueError
+            name, variant = case.get("case"), case.get("variant")
+            if type(name) is not str or type(variant) is not str:
+                raise ValueError
+            known_variant = remaining_cases.pop((name, variant), "unknown")
+            if not case["passed"]:
+                prepare = code_label(case, "prepare_exit_code", gate_codes)
+                send = code_label(case, "observed_exit_code", gate_codes)
+                replay = code_label(case, "replay_exit_code", gate_codes)
+                details.append(
+                    f"(case_variant={known_variant}, prepare={prepare}, send={send}, replay={replay})"
+                )
+    except (GateError, KeyError, ValueError, RecursionError):
+        return fallback
+    return ", ".join(details)
+
+
 def verify_windows(scratch, workspace, manifest):
     system_root = os.environ.get("SystemRoot")
     require(sys.platform == "win32" and system_root, "system Windows PowerShell 5.1 is required")
@@ -1092,7 +1186,12 @@ def verify_windows(scratch, workspace, manifest):
         str(engine), "-NoProfile", "-NonInteractive", "-File", str(scratch / DRILL),
         "-Workspace", str(workspace), "-ApprovedScriptSha256", manifest["script_sha256"],
     ], scratch, timeout=240)
-    require(result.returncode == 0 and not result.stderr, "Windows offline drill failed", DRILL)
+    if result.returncode != 0 or result.stderr:
+        require(
+            False,
+            f"Windows offline drill failed ({windows_failure_details(result)})",
+            DRILL,
+        )
     report = decode_json(result.stdout, DRILL)
     verify_windows_report(report, manifest["script_sha256"])
     output = json_bytes(report)

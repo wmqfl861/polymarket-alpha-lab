@@ -1,0 +1,1 @@
+{"baseline": {"bytes": 762725, "reachable": 470, "sha256": "0cb633302b9f3a0a72d04d6e1ae742cc58fe094479920f2ea22e7f13989bb9d6", "unreachable": 2442}, "candidate": {"bytes": 763618, "reachable": 477, "sha256": "c95d9671696773b05943b7b683033c79bbc07fb5ef174acf4d811a028e78911f", "unreachable": 2439}, "new_unreachable": 0}

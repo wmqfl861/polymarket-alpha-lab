@@ -1,0 +1,204 @@
+{
+  "base": "631259a22a50ac5d06be7512ed6bbc32c87e3fbf",
+  "candidate": "1286922d7da21625bc1c683e0d4488821d604fd2",
+  "commit": "093063000a704727f243c02a7b420c49afa37027",
+  "completed_utc": "2026-11-25T13:32:29+00:00",
+  "early_archive": {
+    "checksums": 42,
+    "commit": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+    "immutable_manifest_url": "https://github.com/wmqfl861/polymarket-alpha-lab/blob/b0807e322f8705548e80f3b67ac61a836a5864ef/docs/paper-sim/design/fx41-nba-odr-v2/MANIFEST.sha256",
+    "manifest": {
+      "bytes": 4267,
+      "sha256": "d0775b456a9aa18eebc9acd6824af852e93b65b712c1f4a11ff1bc73acbf0df6"
+    },
+    "payload_bytes": 454376,
+    "prior_readback_receipt": {
+      "bytes": 403,
+      "sha256": "ddeec6b85488c71bdb4b9dfeddbc36c95814d0daaac852612d13b037447a1afa"
+    },
+    "tree": "4e3481541d6f63ea8e5a9782c0c84ab1861daf37"
+  },
+  "frozen_script_sources": {
+    "address_occurrence_diff.py": {
+      "bytes": 3204,
+      "sha256": "1561d5518cd7f36864fe67356ca8a235b98b2190fdf5630917962e0c0e384f3e"
+    },
+    "test_weakening_scan.py": {
+      "bytes": 5775,
+      "sha256": "dfebe6186983895b2849c7d07904756f146bf32f65e2710557a8d621f4e9c32b"
+    }
+  },
+  "handoff": {
+    "bytes": 26372,
+    "immutable_url": "https://github.com/wmqfl861/polymarket-alpha-lab/blob/093063000a704727f243c02a7b420c49afa37027/docs/handoffs/2026-11-19-optimizer-phase1.md",
+    "sha256": "9354a4e109c504bd7dfa4e4a51c3601255407d0d19dc2f90d37544b15a9cfaba"
+  },
+  "immutable_commit_url": "https://github.com/wmqfl861/polymarket-alpha-lab/commit/093063000a704727f243c02a7b420c49afa37027",
+  "landed_frozen_audits": {
+    "audit_helper_sha256": "5a05af48483d44e5acdec37d5ccaf473ab48274af53760a697a0d09c3f956bc2",
+    "commit": "093063000a704727f243c02a7b420c49afa37027",
+    "comparison_base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "executed_utc": "2026-11-25T13:30:00+00:00",
+    "exit_code": 0,
+    "public_merge_readback": {
+      "bytes": 5029,
+      "sha256": "06211b423f3440788da54cdac578cabc041d95b35eaef6f173afbd8155addcc2"
+    },
+    "results": {
+      "address_occurrence_diff.py": {
+        "new_paths": 0,
+        "output": {
+          "bytes": 128,
+          "sha256": "7ff16432202aef08cb73e3f1bc64957fa262f784286ca3b441f81bfa2c18f867"
+        },
+        "script_sha256": "1561d5518cd7f36864fe67356ca8a235b98b2190fdf5630917962e0c0e384f3e"
+      },
+      "test_weakening_scan.py": {
+        "fewer": 0,
+        "new_skips": 0,
+        "new_xfails": 0,
+        "output": {
+          "bytes": 440,
+          "sha256": "0f4a641d756b85e3c197d864c381f98e51ac8bdeb2ecaceebc852612c99b62d3"
+        },
+        "removed": 1,
+        "removed_test": "test_optimize_help_names_the_four_subcommands",
+        "script_sha256": "dfebe6186983895b2849c7d07904756f146bf32f65e2710557a8d621f4e9c32b"
+      }
+    },
+    "status": "two_frozen_scripts_completed",
+    "tree": "00cfbeaa8a92acd30a1ab708890d7b872049602f"
+  },
+  "merge_utc": "2026-11-25T13:14:20Z",
+  "original_handoff_rereview": {
+    "candidate": "1286922d7da21625bc1c683e0d4488821d604fd2",
+    "first_receipt": {
+      "bytes": 4863,
+      "sha256": "82e71cbafef03bbd65bb89b57c098d001c52152ceba4ca773d4852fcd369d45d",
+      "verdict": "FAIL"
+    },
+    "prompt": {
+      "bytes": 2183,
+      "sha256": "d79a4b8dafbd9598b8c0b56a256b8f6204c714904aef614342a4d987aa62e5e9"
+    },
+    "receipt": {
+      "bytes": 3799,
+      "sha256": "6bf4b3b69482d6610ed88d9f626ac3af7fbe4757c386c4c2c2e1192aa5b320ce"
+    },
+    "same_session_new_turn": true,
+    "tree": "00cfbeaa8a92acd30a1ab708890d7b872049602f",
+    "verdict": "PASS"
+  },
+  "pr": 130,
+  "pr_url": "https://github.com/wmqfl861/polymarket-alpha-lab/pull/130",
+  "readback_utc": "2026-11-25T13:15:08+00:00",
+  "repository_id": 1366812716,
+  "repository_route": "direct",
+  "repository_url": "https://github.com/wmqfl861/polymarket-alpha-lab",
+  "retained_ref": "refs/heads/main",
+  "scorecard_readback": {
+    "bytes": 901,
+    "sha256": "1e63c8362a12a3f0f3493a37c42dfb3e5c0091622c63fd910ce933dcee27e847"
+  },
+  "scorecards": {
+    "historical-run-1-scorecard.json": {
+      "bytes": 8214,
+      "sha256": "b27ca7855ae147d27c76537289fd904c61f1fdb95be28fb5815cbd5f12a34fb9"
+    },
+    "historical-run-2-scorecard.json": {
+      "bytes": 5031,
+      "sha256": "e47b518723c52ac369562af6a11b85ae24cb4c62fb6262e6ae298784a91e3d65"
+    },
+    "historical-run-3-scorecard.json": {
+      "bytes": 8938,
+      "sha256": "8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10"
+    },
+    "nba-v2-scorecard.json": {
+      "bytes": 10351,
+      "sha256": "f37e5be480ac8a63f70ca871eb90a5886301884a574ea953bfa1375f1de7cd91"
+    }
+  },
+  "source_review": {
+    "clock_addendum_source_pin": {
+      "bytes": 9485,
+      "sha256": "bda2ebe7101e4c8dd7c50236c0c3b7866c3bb7da9ab723d7d2e8f48fd0dfca60"
+    },
+    "clock_rereview": "PASS",
+    "clock_resource_source_pin": {
+      "bytes": 3417,
+      "sha256": "b16866e8c977bd20839c59981f29456689230dc50293a6d2a92d62fecf26c751"
+    },
+    "execution_commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "execution_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+    "reviewed_source_commit": "2933a375fdc3c248514968277effb9a699097131",
+    "reviewed_source_tree": "446be10b502632b3a1acbf3b774aecd65a2ce48e",
+    "software_code_review": {
+      "bytes": 10115,
+      "sha256": "06912b7bbe1f5d305cbac6afd49ec349bdf0bf5a9f94d7bac38dc34c3e325f96",
+      "verdict": "PASS"
+    },
+    "software_handoff_rereview": "PASS",
+    "software_source_pin": {
+      "bytes": 48863,
+      "file": "software-evidence-v1.json",
+      "sha256": "676930e39257149853d1403668a07099a073d68d91d46c07609d73ef682d0f49"
+    },
+    "software_stage_rereview": "PASS",
+    "source_blobs_verified": 13
+  },
+  "status": "public_merge_readback_and_frozen_audits_passed",
+  "support_archive": {
+    "checksum_list": {
+      "bytes": 2256,
+      "sha256": "9f77666bd5c2ee206f46a35c20385f670655b3de46e0f983008c71191d95ac31"
+    },
+    "checksums": 24,
+    "files": 25,
+    "immutable_manifest_url": "https://github.com/wmqfl861/polymarket-alpha-lab/blob/093063000a704727f243c02a7b420c49afa37027/docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/MANIFEST.json",
+    "immutable_review_url": "https://github.com/wmqfl861/polymarket-alpha-lab/blob/093063000a704727f243c02a7b420c49afa37027/docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-support-archive-review.json",
+    "manifest": {
+      "bytes": 10074,
+      "sha256": "5f7bd868a7986ff331012d9f5bb365f739996cf81d1d421b4dc02ef8bd47a704"
+    },
+    "manifest_sizes": 23,
+    "review_receipt": {
+      "bytes": 7392,
+      "sha256": "fb05bfb747e8871804a87ae52ea07223a812ace35497f4a92a1bcbc2f1cbbc25"
+    },
+    "review_verdict": "PASS"
+  },
+  "terminal_record": {
+    "bytes": 10705,
+    "completed_trials": 4811,
+    "exit_code": 0,
+    "holdout_callbacks": 0,
+    "optimization_id": 4,
+    "outcome": "NO_IMPROVEMENT",
+    "sha256": "356898b6e8e5d87b9463e77266274057b37020e611969386b90e0cd6af0774e0"
+  },
+  "tree": "00cfbeaa8a92acd30a1ab708890d7b872049602f",
+  "zcode_execution": {
+    "client": "local ZCode CLI",
+    "client_exit_code": 0,
+    "effort": "max",
+    "fast_mode": "off",
+    "identity": {
+      "sessionId": "sess_3da756aa-7fbc-4a0f-ae3d-6743c2b90075",
+      "traceId": "d4a59098-1791-4cc8-96f0-2b20c08607df",
+      "turnId": "turn_4600c001-b361-49a3-9bbb-a1400f62d464"
+    },
+    "launch_receipt": {
+      "bytes": 856,
+      "sha256": "18d4f43ed0730d1699fe15392f70486c29df52798de486298a11908855bcca8f"
+    },
+    "mode": "guarded",
+    "original_operator": {
+      "bytes": 1075,
+      "sha256": "011430adf0c0fed3127705859d2bad4b3634d75c8c8739779afd4abe65fc9e05"
+    },
+    "response": {
+      "bytes": 2845,
+      "sha256": "cca6ad65074c4853339695a5f47b9e5df493284aaebc507ba027f6c1476a1217"
+    }
+  }
+}

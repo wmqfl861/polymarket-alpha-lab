@@ -1,0 +1,277 @@
+{
+  "archive": "local paper-sim round archive; public FX-03 manifest names server archive category",
+  "archive_manifest_names_checked_without_opening": {
+    "MANIFEST-NOT-MIRRORED.md": "absent",
+    "MANIFEST.sha256": "absent",
+    "round10/MANIFEST.sha256": "absent",
+    "round19/MANIFEST.sha256": "absent",
+    "round23/MANIFEST.sha256": "absent",
+    "round24/MANIFEST.sha256": "absent"
+  },
+  "artifacts": {
+    "round10/raw/fixt_markets10.json": {
+      "bytes": 77155,
+      "json": "parsed",
+      "kind": "historical_fixture_market_snapshot",
+      "mirrored_producer_or_consumer": "round10/tools/model10.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "HOF_LYO_event_market_rows": 69,
+        "HOF_LYO_event_market_rows_with_direction_question": 2
+      },
+      "sha256": "c769aa5e8cf11a80b69452ed3caf5284677d4cf190bdf7339df3d1dd3fee836e",
+      "status": "measured"
+    },
+    "round10/raw/model_round10.json": {
+      "bytes": 48938,
+      "json": "parsed",
+      "kind": "incident_model_output",
+      "phase": "initial",
+      "public_source_metadata": {},
+      "sha256": "9c776db3a58a6137ef0e53f46f96b5ccf99228f7d19cd6f4fc8093c4087fe35c",
+      "status": "measured"
+    },
+    "round10/raw/xg_understat_10.json": {
+      "bytes": 4424569,
+      "json": "parsed",
+      "kind": "historical_xg_snapshot",
+      "mirrored_producer_or_consumer": "round10/tools/model10.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "Bundesliga_current_season_section": true,
+        "EPL_current_season_section": true,
+        "EPL_prior_season_section": true,
+        "Hoffenheim_in_current_Bundesliga": true,
+        "Ligue_1_current_season_section": true,
+        "Lyon_in_current_Ligue_1": true
+      },
+      "sha256": "d4de955223b18583151ec7b14cdd31f9e8018c04bb9fa17c4592d4975a81baf3",
+      "status": "measured"
+    },
+    "round19/crypto_recommendations.json": {
+      "bytes": 10861,
+      "json": "parsed",
+      "kind": "derived_recommendations",
+      "phase": "initial",
+      "public_source_metadata": {
+        "generated_at": "2026-10-26T12:58:37+00:00"
+      },
+      "sha256": "605e117f81e0e7c3a49aa099697e5d5c8299e0952196bfe41f7bebeb26f94e3c",
+      "status": "measured"
+    },
+    "round19/raw/btc_candles.json": {
+      "bytes": 38205,
+      "json": "parsed",
+      "kind": "transformed_6h_candles",
+      "mirrored_producer_or_consumer": "round19/fetch19.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "distinct_starts": 591,
+        "first_bar_start_utc": "2026-06-01T00:00:00+00:00",
+        "last_bar_start_utc": "2026-10-26T12:00:00+00:00",
+        "nonstandard_intervals": 0,
+        "numeric_ohlc_rows": 591,
+        "rows": 591
+      },
+      "sha256": "402c77e95b62e63f6aa2ab0f9eac7187457be0cef2465381100d019d750dd525",
+      "status": "measured"
+    },
+    "round19/raw/crypto_scan.json": {
+      "bytes": 17893,
+      "json": "parsed",
+      "kind": "derived_scan",
+      "phase": "initial",
+      "public_source_metadata": {
+        "generated_at": "2026-10-26T12:51:40+00:00"
+      },
+      "sha256": "55a7c14cce56d3d6c51c3be42d01864306f3cfb1c72f6dc065ef8f4bbb389ebc",
+      "status": "measured"
+    },
+    "round19/raw/eth_1m_weekend.json": {
+      "bytes": 180311,
+      "json": "parsed",
+      "kind": "transformed_1m_candles",
+      "mirrored_producer_or_consumer": "round19/fetch19.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "distinct_starts": 3645,
+        "first_bar_start_utc": "2026-10-24T00:00:00+00:00",
+        "last_bar_start_utc": "2026-10-26T12:44:00+00:00",
+        "nonstandard_intervals": 0,
+        "numeric_ohlc_rows": 3645,
+        "rows": 3645
+      },
+      "sha256": "e29eb8058de0ede1b129670921030f651dc2f3507c447d8bfb3d2b32482b7304",
+      "status": "measured"
+    },
+    "round19/raw/eth_candles.json": {
+      "bytes": 36326,
+      "json": "parsed",
+      "kind": "transformed_6h_candles",
+      "mirrored_producer_or_consumer": "round19/fetch19.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "distinct_starts": 591,
+        "first_bar_start_utc": "2026-06-01T00:00:00+00:00",
+        "last_bar_start_utc": "2026-10-26T12:00:00+00:00",
+        "nonstandard_intervals": 0,
+        "numeric_ohlc_rows": 591,
+        "rows": 591
+      },
+      "sha256": "7ec47d23e33fe98b0adc32a68139c66e78f7d79f1b1cfa0fba8c0619b2018ebf",
+      "status": "measured"
+    },
+    "round19/raw/market_refresh.json": {
+      "bytes": 333209,
+      "json": "parsed",
+      "kind": "parsed_gamma_batch_objects",
+      "mirrored_producer_or_consumer": "round19/fetch19.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "fetched_at": "2026-10-26T12:47:05+00:00",
+        "market_objects": 55
+      },
+      "sha256": "cd63b5b7aca82b149ee64e205b946b5af74418e2a5ed801e87f592f1d6661394",
+      "status": "measured"
+    },
+    "round19/raw/position_books.json": {
+      "bytes": 13823,
+      "json": "parsed",
+      "kind": "parsed_clob_objects",
+      "mirrored_producer_or_consumer": "round19/fetch19.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "book_objects": 6,
+        "books_with_source_timestamp": 6,
+        "earliest_book_source_utc": "2026-10-26T12:44:44+00:00",
+        "fetched_at": "2026-10-26T12:44:39+00:00",
+        "latest_book_source_utc": "2026-10-26T12:44:55+00:00",
+        "objects_with_numeric_asks": 6
+      },
+      "sha256": "0f664b07cc64055b3b66073fea7a3092f4a5f354f8a45dc10d10ad52e434666b",
+      "status": "measured"
+    },
+    "round19/raw/position_markets.json": {
+      "bytes": 12228,
+      "json": "parsed",
+      "kind": "parsed_gamma_objects",
+      "mirrored_producer_or_consumer": "round19/fetch19.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "market_objects": 3,
+        "objects_with_description": 3
+      },
+      "sha256": "c364e9d16430b49815a59d1e446986276e7cfd484ed8322338abce512ea7e827",
+      "status": "measured"
+    },
+    "round23/epl_candidates.json": {
+      "bytes": 30487,
+      "json": "parsed",
+      "kind": "derived_candidates",
+      "phase": "initial",
+      "public_source_metadata": {
+        "generated_utc": "2026-10-29T04:21:38+00:00"
+      },
+      "sha256": "cc6cc47dc7e6bd9556aa994f5e373a857201813ac3ee14a307107a8d3d8c4cf9",
+      "status": "measured"
+    },
+    "round23/raw/epl_scan.json": {
+      "bytes": 43550,
+      "json": "parsed",
+      "kind": "derived_scan",
+      "phase": "initial",
+      "public_source_metadata": {
+        "generated_utc": "2026-10-29T04:21:38+00:00"
+      },
+      "sha256": "f12c0c3a6c9815ebe9e5724884739b21be5c83fea8dcc0f26a523920c6c160dd",
+      "status": "measured"
+    },
+    "round23/raw/xg_epl_23.json": {
+      "bytes": 928715,
+      "json": "parsed",
+      "kind": "historical_xg_snapshot",
+      "phase": "initial",
+      "public_source_metadata": {
+        "Bundesliga_current_season_section": false,
+        "EPL_current_season_section": true,
+        "EPL_prior_season_section": true,
+        "Hoffenheim_in_current_Bundesliga": false,
+        "Ligue_1_current_season_section": false,
+        "Lyon_in_current_Ligue_1": false
+      },
+      "sha256": "194d23da8b20128b466da22e9500f66f226c9d0880361d85cdac03c7fc287ad4",
+      "status": "measured"
+    },
+    "round24/epl_candidates.json": {
+      "bytes": 23998,
+      "json": "parsed",
+      "kind": "derived_candidates",
+      "phase": "initial",
+      "public_source_metadata": {
+        "generated_utc": "2026-10-30T11:48:29+00:00"
+      },
+      "sha256": "7150e925295de653d293f6101a14750fe4b0e18a55b8790685709da62e9efd49",
+      "status": "measured"
+    },
+    "round24/raw/books24.json": {
+      "bytes": 86887,
+      "json": "parsed",
+      "kind": "derived_book_aggregates",
+      "phase": "initial",
+      "public_source_metadata": {
+        "brentford_forest_o25_rows": 1,
+        "rows": 53,
+        "side_objects": 106,
+        "side_objects_with_aggregate_ask": 106,
+        "side_objects_with_ask_level_lists": 0,
+        "side_objects_with_timestamp_field": 106
+      },
+      "sha256": "abe262c7b17d6708d21eb9c0e23f822481f8c9bf1e99e58134177ae51be98faf",
+      "status": "measured"
+    },
+    "round24/raw/epl_model24.json": {
+      "bytes": 210348,
+      "json": "parsed",
+      "kind": "derived_epl_model",
+      "mirrored_producer_or_consumer": "round24/raw/finalize24.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "generated_utc": "2026-10-30T11:40:46+00:00"
+      },
+      "sha256": "3a668c4f30d82e6578aa691db590d0686f063478d031d5f85990e0706a9cb086",
+      "status": "measured"
+    },
+    "round24/raw/epl_scan.json": {
+      "bytes": 102166,
+      "json": "parsed",
+      "kind": "derived_scan",
+      "phase": "initial",
+      "public_source_metadata": {
+        "generated_utc": "2026-10-30T11:45:16+00:00"
+      },
+      "sha256": "1fa24377d5ff2dea2a60292a568868010226330dbef076676e1f08c0b732ddeb",
+      "status": "measured"
+    },
+    "round24/raw/shortlist24.json": {
+      "bytes": 38243,
+      "json": "parsed",
+      "kind": "derived_epl_shortlist",
+      "mirrored_producer_or_consumer": "round24/raw/books24.py",
+      "phase": "expanded",
+      "public_source_metadata": {
+        "items": 53
+      },
+      "sha256": "e1444279e85fb6d875d7a60aaabfa9881fbc1faa3b7ab086338a2c4d1b0af33a",
+      "status": "measured"
+    }
+  },
+  "counts": {
+    "expanded_allowlisted_total": 19,
+    "expanded_measured_total": 19,
+    "initial_allowlisted": 9,
+    "initial_measured": 9
+  },
+  "hash_meaning": "bytes read from local filesystem during this inventory",
+  "independent_custody": "unverified; named manifest presence checks only",
+  "measured_at_utc": "2026-11-25T12:08:58+00:00"
+}

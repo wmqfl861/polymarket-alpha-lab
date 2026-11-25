@@ -193,6 +193,7 @@ def events_materials(observation: d1_journal.MarketObservation,
     """
     kickoff = _parse_stamp(observation.game_start_time_raw, name="gameStartTime")
     expiry = _parse_stamp(observation.end_date_raw, name="endDate")
+    boundary = expiry if plan.market_class == MARKET_CLASS_CRYPTO else kickoff
     return {
         "market_class": plan.market_class,
         "gamma_event_id": plan.gamma_event_id or observation.gamma_event_id,
@@ -203,8 +204,7 @@ def events_materials(observation: d1_journal.MarketObservation,
         "asset": plan.asset,
         "expiry_at": expiry.isoformat() if expiry else None,
         "market_ref": observation.market_id,
-        "event_start_at": (kickoff or expiry).isoformat()
-        if (kickoff or expiry) else None,
+        "event_start_at": boundary.isoformat() if boundary else None,
     }
 
 

@@ -590,6 +590,7 @@ def fetch_league_snapshot(
     now: datetime,
     budget: FetchBudget,
     allow_public_fetch: bool = False,
+    register_response=None,
 ) -> AdapterResult:
     """Fetch and validate one Understat league/season block.
 
@@ -641,6 +642,7 @@ def fetch_league_snapshot(
         try:
             _verify_response_origin(response)
             raw = public_http.read_public_body(response, read_limit)
+            received_at = datetime.now(now.tzinfo) if register_response is not None else now
         finally:
             response.close()
     except _ValidationError as exc:
@@ -665,10 +667,12 @@ def fetch_league_snapshot(
         FetchEvidence.from_bytes(
             source_kind=SOURCE_KIND,
             source_reference=_league_source_reference(league, season),
-            fetched_at=now,
+            fetched_at=received_at,
             raw_bytes=raw,
         ),
     )
+    if register_response is not None:
+        register_response(evidence[0])
     try:
         payload = _parse_league_payload(raw)
         view = _validate_league_payload(league, season, payload, now=now)
@@ -685,7 +689,7 @@ def fetch_league_snapshot(
             "source_kind": SOURCE_KIND,
             "source_reference": _league_source_reference(league, season),
             "content_sha256": evidence[0].content_sha256,
-            "fetched_at": now.isoformat(),
+            "fetched_at": received_at.isoformat(),
         },
         "data": payload,
         "matches": view["matches"],

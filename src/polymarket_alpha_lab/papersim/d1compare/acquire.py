@@ -226,12 +226,13 @@ class _Response:
 class _Transport(polymarket.PublicResponseOpener):
     """Observe adapter requests without changing their transport or byte limits."""
 
-    def __init__(self, window_start: datetime, window_end: datetime) -> None:
+    def __init__(self, window_start: datetime, window_end: datetime, *, register_response=None) -> None:
         self.window_start = window_start
         self.window_end = window_end
         self.requests: list[_Request] = []
         self.upstream = polymarket.BoundedPublicOpener()
         self.resolution_target: dict | None = None
+        self.register_response = register_response
 
     def open(self, url: str, *, timeout_seconds: float):
         if self.requests and self.requests[-1].finished_at is None:
@@ -270,6 +271,8 @@ class _Transport(polymarket.PublicResponseOpener):
         attempt = self.requests[-1]
         if attempt.read_at is None or type(attempt.body) is not bytes:
             raise AcquisitionError("d1_capture_response_unwitnessed")
+        if self.register_response is not None:
+            self.register_response(attempt)
         attempt.fetched_at = attempt.read_at
         attempt.finished_at = attempt.read_at
         return attempt.read_at
@@ -675,10 +678,11 @@ def _save_responses(connection, attempts: Sequence[_Request]) -> None:
 
 
 def _collect(connection, scope: dict, started_at: datetime,
-             window_start: datetime, window_end: datetime) -> dict:
+             window_start: datetime, window_end: datetime, *, preparation=None) -> dict:
     budget = contracts.FetchBudget(deadline_monotonic=time.monotonic() + min(
         contracts.FIRST_VERSION_ROUND_DEADLINE_SECONDS, (window_end - started_at).total_seconds()))
-    transport = _Transport(window_start, window_end)
+    transport = _Transport(window_start, window_end, **(
+        {"register_response": preparation.register_market} if preparation is not None else {}))
     discoveries = []
     markets: dict[str, dict] = {}
     for tag in scope["tag_slugs"]:
@@ -700,6 +704,8 @@ def _collect(connection, scope: dict, started_at: datetime,
             for identity in sorted(owners):
                 books.append({"token_id": token, "condition_id": identity, "request_sequence": None,
                               "reason_code": "d1_capture_token_condition_conflict"})
+    if preparation is not None:
+        preparation.collect_models(markets, transport.requests, budget)
     # Two different scopes can share arbitrary raw hashes. Serialize only the
     # D1 database publication, including the manifest hash computed below.
     connection.execute(_LOCK, (_PUBLICATION_LOCK,))
@@ -925,18 +931,7 @@ def _summary(document: dict, digest: str, *, reused: bool, occurred_at: datetime
     }
 
 
-def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datetime,
-                   tag_slugs: Sequence[str], allow_public_fetch: bool) -> dict:
-    """Collect once per UTC window and tag set, and return its managed receipt.
-
-    Use the project root of the designated D1 research instance. Retry of an
-    already sealed scope verifies and returns the same bytes without networking.
-    The window is inclusive at its start and exclusive at its end.
-    """
-    try:
-        contracts.require_public_fetch(allow_public_fetch)
-    except (contracts.FetchPermissionError, ValueError):
-        raise AcquisitionError("public_fetch_not_allowed") from None
+def discovery_scope(window_start: datetime, window_end: datetime, tag_slugs: Sequence[str]) -> dict:
     start, end = _utc(window_start), _utc(window_end)
     if start >= end:
         raise AcquisitionError("d1_capture_window_invalid")
@@ -946,7 +941,24 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
         tags = sorted({polymarket.DiscoveryQuery(tag).tag_slug for tag in tag_slugs})
     except ValueError:
         raise AcquisitionError("d1_capture_tags_invalid") from None
-    scope = {"window_start": _stamp(start), "window_end": _stamp(end), "tag_slugs": tags}
+    return {"window_start": _stamp(start), "window_end": _stamp(end), "tag_slugs": tags}
+
+
+def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datetime,
+                   tag_slugs: Sequence[str], allow_public_fetch: bool, _preparation=None) -> dict:
+    """Collect once per UTC window and tag set, and return its managed receipt.
+
+    Use the project root of the designated D1 research instance. Retry of an
+    already sealed scope verifies and returns the same bytes without networking.
+    The window is inclusive at its start and exclusive at its end.
+    """
+    if _preparation is None:
+        try:
+            contracts.require_public_fetch(allow_public_fetch)
+        except (contracts.FetchPermissionError, ValueError):
+            raise AcquisitionError("public_fetch_not_allowed") from None
+    scope = discovery_scope(window_start, window_end, tag_slugs)
+    start, end = (_utc(window_start), _utc(window_end))
     scope_sha = _digest(_canonical(scope))
     operation_key = f"{_OPERATION_PREFIX}:{scope_sha}"
     sealed_key = store.command_run_event_key(operation_key, 1, "SUCCEEDED")
@@ -968,12 +980,22 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
                              else occurred_at < sealed_at)
             if document["scope"] != scope or invalid_clock:
                 raise AcquisitionError("d1_capture_receipt_conflict")
-            _read_entries(connection, document)
+            entries = _read_entries(connection, document)
+            if _preparation is not None:
+                _preparation.seal(connection, scope, digest, document, entries)
             return _summary(document, digest, reused=True, occurred_at=occurred_at)
+        if _preparation is not None:
+            try:
+                contracts.require_public_fetch(allow_public_fetch)
+            except (contracts.FetchPermissionError, ValueError):
+                raise AcquisitionError("public_fetch_not_allowed") from None
         started_at = _now_utc()
         if started_at < start:
             raise AcquisitionError("d1_capture_window_not_open")
-        document = _collect(connection, scope, started_at, start, end)
+        if _preparation is None:
+            document = _collect(connection, scope, started_at, start, end)
+        else:
+            document = _collect(connection, scope, started_at, start, end, preparation=_preparation)
         sealed_at = datetime.fromisoformat(document["sealed_at"])
         content = _canonical(document)
         digest = _digest(content)
@@ -988,6 +1010,8 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
         store_psycopg.record_command_run_event(connection, store.CommandRunEventSubmission(
             operation_key=operation_key, command=_COMMAND, phase="SUCCEEDED", scheduled_for=start,
             occurred_at=registered_at, config_digest=scope_sha, output_evidence=[digest]))
+        if _preparation is not None:
+            _preparation.seal(connection, scope, digest, document, _read_entries(connection, document))
     return _summary(document, digest, reused=False, occurred_at=registered_at)
 
 
