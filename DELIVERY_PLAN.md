@@ -4560,6 +4560,21 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 #### 84.2.3 事后复审及隔离复现
 
+
+**FX-47 扫描写入与幂等重放，2026-11-24**
+
+共同基线为 `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`。历史写入器将 Python 空列表写成 JSONB 空对象，并保存原提交的完整摘要。初始实现 `e0a8b6185b4b78a779b3f71f7ec4d5b874482c21` 拒绝了这类记录的原样重试。修正实现 `14f516ca562b218b776aa3f7fb174a39ba4ce66f` 核对完整提交摘要，对等价形态返回已有记录。不同内容仍触发 `papersim_scan_payload_conflict`。[旧库见证](docs/paper-sim/design/fx-47/legacy-empty-list-witness.jsonl) · [修前代码原审](docs/paper-sim/design/fx-47/initial-product-code-review.json) · [修订补篇](docs/paper-sim/design/fx-47/legacy-empty-list-plan.md) · [原计划审者 PASS](docs/paper-sim/design/fx-47/legacy-empty-list-plan-review.json) · [修正实现原审 PASS](docs/paper-sim/design/fx-47/legacy-empty-list-code-review.json)
+
+测试修复 `6ac6f5cca93c8299567380dec63c633089d7d2d2` 给清理回归用例分配七个专属文件描述符。原代码审者对这个独立提交给出 PASS。集成候选 `a77a67e7c157ac991229709aa5124fdfde81a365` 以修正实现和测试修复为两个父提交。相对修正实现，它只改动 `tests/test_research_process_linux.py`。[测试修复计划](docs/paper-sim/design/fx-47/test-fd-ownership-plan.md) · [计划原审](docs/paper-sim/design/fx-47/test-fd-ownership-plan-review.json) · [代码原审](docs/paper-sim/design/fx-47/test-fd-ownership-code-review.json)
+
+| 检查 | 实际执行提交 | 结果 |
+| --- | --- | --- |
+| 独立原生 PostgreSQL 18 | `14f516ca` | 23 项通过，0 项跳过，退出 0。[原生执行回执](docs/paper-sim/design/fx-47/native-scan-replay.jsonl) |
+| 离线全量 | `a77a67e7` | 13 时 21 分 17 秒 UTC 完成 31 组、3,338 个文件。43,956 项通过、457 项按既有条件跳过，0 组从历史回执导入。[分组执行摘要](docs/paper-sim/design/fx-47/offline-integrated-summary.json) |
+| 早先离线第 19 组 | `14f516ca` | pytest 会话收尾记录了 119 项通过、7 项跳过，外层进程退出 1。该次运行失败。 |
+
+该节点的 PR、三条工作流、当前合并检出及最终合入提交待登记。FX-40 依赖 FX-47 的合入结果。
+
 §84 的五项均在 2026-11-21 由实际 ZCode 完成独立事后复审。原合入时缺少回执的事实保留在各行。按首次审查或主机资源中断恢复的实际会话入档。
 
 [P1-4 第一处实测](docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md)中，隔离扫描写入一条原因是 `fit_materials_missing`、概率为空的影子拒绝记录。按实际出价版本 `soccer-r23` 关联到 1 条，按登记现役版本关联到 0 条。两种版本口径下的可评分配对均为 0。扫描和评分期间新增角色事件和判定均为零。另两次记录确认扫描处理市场包的 `variant_quotes` 数组时会在持久化前遇到 `42846`。该缺陷独立留证。
