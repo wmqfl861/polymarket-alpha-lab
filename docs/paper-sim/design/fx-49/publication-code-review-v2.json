@@ -1,0 +1,62 @@
+{
+  "client": "ZCode",
+  "commit": "7d55da74fc69377e1682f58f39a75dd6953cdda1",
+  "original_review_history": {
+    "main": [
+      {
+        "bytes": 5375,
+        "reviewed_commit": "42080d20c55f031d3f5f38a8473ebd4ce7ea836f",
+        "same_original_session": true,
+        "sha256": "5355d39a0f9f6a60215a088a3b03809e58f8e582b134a0bb23fad877385d6638",
+        "verdict": "FAIL"
+      },
+      {
+        "bytes": 3792,
+        "reviewed_commit": "df524c985a3ed84f82c9487e195bab0973f905fc",
+        "same_original_session": true,
+        "sha256": "96b485307dc10c6605b2cd6442e290d2c505d19cbd77f78b8baaf4a4477b83a1",
+        "verdict": "FAIL"
+      },
+      {
+        "bytes": 2937,
+        "reviewed_commit": "7d55da74fc69377e1682f58f39a75dd6953cdda1",
+        "same_original_session": true,
+        "sha256": "25994324228925c168253962fa02d04e6093928f9d2870332efd6b1b79014c47",
+        "verdict": "PASS"
+      }
+    ],
+    "runtime": [
+      {
+        "bytes": 3829,
+        "reviewed_commit": "42080d20c55f031d3f5f38a8473ebd4ce7ea836f",
+        "same_original_session": true,
+        "sha256": "880f1ec458884f726ee2f7c6ea075baed0cef408763ac5d72293fd758db24efe",
+        "verdict": "FAIL"
+      },
+      {
+        "bytes": 3346,
+        "reviewed_commit": "df524c985a3ed84f82c9487e195bab0973f905fc",
+        "same_original_session": true,
+        "sha256": "f8cb6087d6cd7a341ff354f350f483df1789c6da209d37c4d4ee0eeafd7e6c8b",
+        "verdict": "PASS"
+      },
+      {
+        "bytes": 2441,
+        "reviewed_commit": "7d55da74fc69377e1682f58f39a75dd6953cdda1",
+        "same_original_session": true,
+        "sha256": "c6b150eebf96097b5aba52c7d4daf7ece57a6d44118dce1c61247ad533326a08",
+        "verdict": "PASS"
+      }
+    ]
+  },
+  "previous_main_blocker": "Later PRs could add unlisted and unscanned FX-49 design or runtime files.",
+  "resolved_by": [
+    "Check FX-49 paths and content on the PR head, the synthetic merge checkout and intermediate commits.",
+    "Register five exact append-only receipt paths in the index and verifier.",
+    "Bind the full FX-49 Windows job and use its locked Python environment.",
+    "Document the sole redaction in the published plan and bind the original and public bytes."
+  ],
+  "schema_version": 1,
+  "scope": "independent source review only",
+  "tree": "fa0221a0c09aaf1f7ee12534b64e086a33be5871"
+}

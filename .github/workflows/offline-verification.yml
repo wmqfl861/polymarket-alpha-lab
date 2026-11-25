@@ -30,6 +30,14 @@ jobs:
           enable-cache: false
       - name: Install locked development environment
         run: uv sync --locked --extra dev --python 3.12
+      - name: Verify FX-49 checkout and offline transport
+        if: github.event_name == 'pull_request'
+        env:
+          FX49_BASE: ${{ github.event.pull_request.base.sha }}
+          FX49_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          .venv/bin/python scripts/verify_fx49_publication.py linux \
+            --base "$FX49_BASE" --pr-head "$FX49_HEAD" --checkout "$GITHUB_SHA"
       - name: Run sanitized full offline verification
         shell: bash
         run: |

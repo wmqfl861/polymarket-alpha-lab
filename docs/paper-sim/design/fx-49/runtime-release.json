@@ -1,0 +1,149 @@
+{
+  "baseline": "bcce1b17f7263ab89859febfcb56188c295ab371",
+  "changes": {
+    ".gitattributes": {
+      "after": {
+        "blob": "ddd2b4cfa5da7147bc415f6e2677be633fcaac56",
+        "mode": "100644"
+      },
+      "before": {
+        "blob": "48e2702035165a0f649ca37614c1767d0e8cb8c3",
+        "mode": "100644"
+      },
+      "main_path": ".gitattributes"
+    },
+    "docs/paper-sim/runtime/README.md": {
+      "after": {
+        "blob": "d0b6c004d84dfaa1d73646bbcb2773ae24816f8c",
+        "mode": "100644"
+      },
+      "before": {
+        "blob": "32b1311db9e6d8d5e635f7d67b67040993e5bb37",
+        "mode": "100644"
+      },
+      "delta": true
+    },
+    "docs/paper-sim/runtime/scripts/football_daily.py": {
+      "after": {
+        "blob": "3a9987a72079ef9cbce84b2d77b60e787966a9fd",
+        "mode": "100644"
+      },
+      "before": {
+        "blob": "dd1ea071cb383f086c14edf6ed22400214daf524",
+        "mode": "100644"
+      },
+      "delta": true
+    },
+    "docs/paper-sim/runtime/scripts/football_store.py": {
+      "after": {
+        "blob": "8f25711890bd9115e7b9bf50cd8d79f379cce513",
+        "mode": "100644"
+      },
+      "before": {
+        "blob": "acd99b52da18b771460333c55c5b915946751fed",
+        "mode": "100644"
+      },
+      "delta": true
+    },
+    "docs/paper-sim/runtime/scripts/weixin_delivery.py": {
+      "after": {
+        "blob": "a3c3587f62f95c7b77668e91bff27d53331e316c",
+        "mode": "100644"
+      },
+      "before": {
+        "blob": "0f6445080001e702ab7f433399ba722240d60372",
+        "mode": "100644"
+      },
+      "main_path": "docs/paper-sim/runtime/scripts/weixin_delivery.py"
+    },
+    "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1": {
+      "after": {
+        "blob": "e57e6d79749fc216246017e3b511566a45b8beef",
+        "mode": "100644"
+      },
+      "before": null,
+      "main_path": "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1"
+    },
+    "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1.sha256": {
+      "after": {
+        "blob": "8a3895322c0f1944331f18b1c003a4229b6e369a",
+        "mode": "100644"
+      },
+      "before": null,
+      "main_path": "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1.sha256"
+    },
+    "docs/paper-sim/runtime/scripts/windows/offline-acceptance/HermesSubstitute.cs": {
+      "after": {
+        "blob": "a00c9b30423744b7672771f8c15bbe54e0d5cd3e",
+        "mode": "100644"
+      },
+      "before": null,
+      "main_path": "docs/paper-sim/runtime/scripts/windows/offline-acceptance/HermesSubstitute.cs"
+    },
+    "docs/paper-sim/runtime/scripts/windows/offline-acceptance/README.md": {
+      "after": {
+        "blob": "46a852a60b26c7e00374e76aa2520b8c30b1ecb7",
+        "mode": "100644"
+      },
+      "before": null,
+      "main_path": "docs/paper-sim/runtime/scripts/windows/offline-acceptance/README.md"
+    },
+    "docs/paper-sim/runtime/scripts/windows/offline-acceptance/Test-PaperWeixinOffline.ps1": {
+      "after": {
+        "blob": "80401df29554bf4e2dcfdb560498e12bd7ecc934",
+        "mode": "100644"
+      },
+      "before": null,
+      "main_path": "docs/paper-sim/runtime/scripts/windows/offline-acceptance/Test-PaperWeixinOffline.ps1"
+    },
+    "docs/paper-sim/runtime/scripts/windows/weixin-binding.example.json": {
+      "after": {
+        "blob": "ad65aa36b3499535af30fd5c2a36f9516f001456",
+        "mode": "100644"
+      },
+      "before": null,
+      "main_path": "docs/paper-sim/runtime/scripts/windows/weixin-binding.example.json"
+    },
+    "docs/paper-sim/runtime/tests/test_football_focus.py": {
+      "after": {
+        "blob": "70635b4a40379d3f542000ff55d560640680a0bc",
+        "mode": "100644"
+      },
+      "before": {
+        "blob": "e307496d1551b66d96aeb64a26eff690b8ce2352",
+        "mode": "100644"
+      },
+      "delta": true
+    },
+    "docs/paper-sim/runtime/tests/test_fx49_fixed_script.py": {
+      "after": {
+        "blob": "f20a5395a19735cf6865748e55bacc48c10a277b",
+        "mode": "100644"
+      },
+      "before": null,
+      "delta": true
+    },
+    "docs/paper-sim/runtime/tests/test_fx49_football_delivery.py": {
+      "after": {
+        "blob": "45c9512a77f2f19bf01211b38a560823efb61070",
+        "mode": "100644"
+      },
+      "before": null,
+      "delta": true
+    },
+    "tests/test_fx49_weixin_delivery.py": {
+      "after": {
+        "blob": "2de139130c9fa90c4a9da160d86d23a47ee24db6",
+        "mode": "100644"
+      },
+      "before": null,
+      "main_path": "tests/test_fx49_weixin_delivery.py"
+    }
+  },
+  "delta_sha256": "6b95b29db3d3df06b7d378d33fa1cc54f3b6e9035cb65d584abef930997598ee",
+  "release": "97e9cbcbf510de0f10606ec06380376d627bff50",
+  "release_ref": "refs/heads/releases/fx49",
+  "release_tree": "1bbf62faec2b0415599da5a4b4243b8da2bf4928",
+  "script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "version": 1
+}
