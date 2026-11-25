@@ -20,10 +20,10 @@
       "sha256": "194ed30ef911d786770cdedca147a92ad0ad7b4e2066da04324233f6b75271d5"
     },
     ".github/workflows/research-paper.yml": {
-      "blob": "414503f011a9e21b6e7796c2f2b0b976704af772",
-      "bytes": 3371,
+      "blob": "024a28f7104a50c56c1404479c30829acb2c2aab",
+      "bytes": 3675,
       "mode": "100644",
-      "sha256": "4abaf8edd48f920324be3c6fefc9c500e137f3d30959459bfd98e7bd926887b0"
+      "sha256": "7b01b8ef83244bd86b087c297db32fdcbbee8e6b562f538ff28980343f2be9db"
     },
     "docs/paper-sim/design/fx-49/direct-hc-addendum.md": {
       "blob": "9cdf1d8c6dbb1a6315c540c94ec988ddecefe198",
@@ -98,10 +98,10 @@
       "sha256": "0b4cd8544ef694f9d8b6c02061bdb6d3634839def054d143e0e9b14e11bf7bed"
     },
     "docs/paper-sim/design/fx-49/publication-review-v2.json": {
-      "blob": "8afada6e1c2dd887cc30b506847d7f91569c20d1",
-      "bytes": 969,
+      "blob": "0ec4511bccd12bf330716c2f0922e13176593516",
+      "bytes": 1698,
       "mode": "100644",
-      "sha256": "57480396b288880d76b42c922957694dcde1762db9caaf4989d4eaf0ef20c856"
+      "sha256": "e91171113a5480f163f2326a053fd6c45b3d12166f8735a6ab416910915525bf"
     },
     "docs/paper-sim/design/fx-49/publication-review.json": {
       "blob": "5a1841edee775107314267471e6189197ac797b2",
@@ -200,10 +200,10 @@
       "sha256": "bb4b366ce4b212ee825ef38d6f8b80b010aba67d74b608e06c4608132af666c2"
     },
     "scripts/verify_fx49_publication.py": {
-      "blob": "d7bc4a5593f812327a444f94dd2b12a659cb7c73",
-      "bytes": 54701,
+      "blob": "beaa081ca4365765b845c3b37353aceaaf8fdf4c",
+      "bytes": 60844,
       "mode": "100644",
-      "sha256": "2e733d9602f7875a5905e653fb7d32bb13215707901c4688331ef7517a59a94e"
+      "sha256": "eef0d509fb568609ca9c35c60aac21d53314e17cfa63728abefbbc941e8bc823"
     },
     "tests/test_fx49_weixin_delivery.py": {
       "blob": "2de139130c9fa90c4a9da160d86d23a47ee24db6",
@@ -212,7 +212,14 @@
       "sha256": "2c2c9ee17c3e4e8d66df3aa2cb0736ace900018c87eb87302f8479cb1d734c9c"
     }
   },
+  "later_receipts": [
+    "docs/paper-sim/design/fx-49/2026-11-25-owner-fixed-entry-observation.json",
+    "docs/paper-sim/design/fx-49/publication-code-review-v2.json",
+    "docs/paper-sim/design/fx-49/publication-independent-test-v2.json",
+    "docs/paper-sim/design/fx-49/publication-merge-v2.json",
+    "docs/paper-sim/design/fx-49/publication-stage-review-v2.json"
+  ],
   "plan_sha256": "343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323",
   "schema_version": 2,
-  "source": "e6adba46d4648bef2567884ed84d020b996d6a3c"
+  "source": "2eec6abd8ffca585ec7842ec1f37621edd43890a"
 }
