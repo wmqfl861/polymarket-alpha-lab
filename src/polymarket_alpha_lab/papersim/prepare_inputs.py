@@ -206,13 +206,17 @@ def input_set_operation_key(config_sha256: str, scope: dict) -> str:
     return f"papersim:prepare-inputs:v1:{identity}"
 
 
-def _read_capture(connection, repo_root: Path, document: dict, registered_at: datetime):
+def _read_capture(connection, repo_root: Path, document: dict, registered_at: datetime, *,
+                  sealed_batch=None):
     batch_row = _read_reference(
         connection, document["capture"], kind=acquire._BATCH_KIND,
         source=acquire._BATCH_SOURCES[2], version=2,
     )
     digest = batch_row["content_sha256"]
-    manifest, entries = acquire.read_capture(repo_root=repo_root, batch_sha256=digest, _connection=connection)
+    if sealed_batch is None:
+        manifest, entries = acquire.read_capture(repo_root=repo_root, batch_sha256=digest, _connection=connection)
+    else:
+        manifest, entries = sealed_batch
     _fields(manifest, _CAPTURE_FIELDS, "papersim_prepare_capture_manifest_invalid")
     _require(acquire._canonical(manifest) == batch_row["content"], "papersim_prepare_capture_manifest_invalid")
     view = prepare._capture_view(digest, manifest, entries)
@@ -1158,7 +1162,7 @@ def _candidate_identity(view, selection, queue, target):
         raise prepare.PreparationError("papersim_prepare_target_identity_conflict")
     return {
         "queue": queue.queue, "team": selection.pack_spec.team, "candidate_key": selection.candidate_key,
-        "side": selection.buy_side, "market_kind": selection.plan.market_kind,
+        "side": selection.buy_side, "market_kind": _CRYPTO_TYPES.get(selection.plan.market_kind, "other"),
         "lineage": queue.lineage, "model_name": queue.model_key, "market_type": queue.market_type,
         "evaluated_at": view.cutoff.isoformat(), "condition_id": market.condition_id,
         "market_id": market.market_id, "market_slug": market.slug,

@@ -24,6 +24,8 @@ def _registered(conn, raw, kind, source, at, version=1) -> dict:
         raise prepare.PreparationError("papersim_prepare_snapshot_registration_conflict")
     if kind != acquire._BODY_KIND and row["schema_version"] != version:
         raise prepare.PreparationError("papersim_prepare_snapshot_registration_conflict")
+    if row["fetched_at"] > at:
+        raise prepare.PreparationError("papersim_prepare_snapshot_registration_conflict")
     return row
 
 
@@ -322,7 +324,7 @@ class _Capture:
     def seal(self, conn, scope, batch_sha, manifest, entries):
         existing = pg.read_command_run_event(conn, self.operation_key, 1, "SUCCEEDED")
         if existing is not None:
-            self.summary = _summary(conn, self.operation_key, existing, batch_sha)
+            self.summary = _summary(conn, self.operation_key, existing, batch_sha, self.config_bytes)
             return
         if manifest["capture_version"] != 2 or manifest["decision_as_of"] is None:
             return
@@ -345,6 +347,8 @@ class _Capture:
             selected.append({**target, "sources": sources, "news": reference})
         at = acquire._now_utc()
         config = _registered(conn, self.config_bytes, inputs.CONFIG_KIND, inputs.CONFIG_SOURCE, at)
+        if config["source"] != inputs.CONFIG_SOURCE:
+            raise prepare.PreparationError("papersim_prepare_config_binding_conflict")
         batch = snapshots.verify_snapshot(conn, batch_sha)
         document = {"version": 1, "instance_id": self.instance_id, "config": _ref(config), "capture": _ref(batch),
                     "window_start": scope["window_start"], "window_end": scope["window_end"],
@@ -353,6 +357,11 @@ class _Capture:
                     "targets": selected, "model_responses": self.responses,
                     "coverage": {"unbound": unbound, "model_fetches": self.fetches,
                                  "market": manifest["coverage"]}}
+        # The capture transaction already owns the receipt and manifest. Read
+        # back the same references before recording preparation success.
+        canonical = operations.canonical_document(document)
+        inputs._read_capture(conn, None, canonical, at, sealed_batch=(manifest, entries))
+        inputs._model_responses(conn, canonical["model_responses"], at)
         row = _registered(conn, operations.document_bytes(document), inputs.INPUT_SET_KIND, inputs.INPUT_SET_SOURCE, at)
         pg.record_command_run_event(conn, store.CommandRunEventSubmission(
             operation_key=self.operation_key, command=inputs.INPUT_SET_COMMAND, phase="SUCCEEDED",
@@ -361,13 +370,17 @@ class _Capture:
             output_evidence=operations._refs(row["content_sha256"], row["byte_length"]),
         ))
         receipt = pg.read_command_run_event(conn, self.operation_key, 1, "SUCCEEDED")
-        self.summary = _summary(conn, self.operation_key, receipt, batch_sha)
+        self.summary = _summary(conn, self.operation_key, receipt, batch_sha, self.config_bytes)
 
 
-def _summary(conn, key, receipt, batch_sha):
+def _summary(conn, key, receipt, batch_sha, config_bytes):
     document = operations._read_document(conn, receipt["output_evidence"], kind=inputs.INPUT_SET_KIND,
                                          source=inputs.INPUT_SET_SOURCE)
-    if document["capture"]["sha256"] != batch_sha or receipt["operation_key"] != key:
+    config = inputs._read_reference(conn, document["config"], kind=inputs.CONFIG_KIND, source=inputs.CONFIG_SOURCE)
+    if (document["capture"]["sha256"] != batch_sha or receipt["operation_key"] != key
+            or config["content"] != config_bytes or receipt["command"] != inputs.INPUT_SET_COMMAND
+            or receipt["config_digest"] != config["content_sha256"]
+            or receipt["error_code"] is not None or receipt["phase"] != "SUCCEEDED"):
         raise prepare.PreparationError("papersim_prepare_input_set_receipt_invalid")
     return {"input_set_sha256": receipt["output_evidence"][0].removeprefix("snapshot_sha256:"),
             "input_set_receipt": operations.canonical_document(operations._receipt_ref(receipt))}

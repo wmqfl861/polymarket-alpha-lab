@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 import json
 import os
+from pathlib import Path
 import runpy
 import sys
 import time
@@ -33,9 +34,13 @@ _CRASH = 87
 _BOOK_AGE = {"max_source_age_seconds": 600, "max_receipt_age_seconds": 600}
 
 
-def _drive_capture():
-    from pathlib import Path
+def _print_exception_location(error):
+    frames = traceback.extract_tb(error.__traceback__)
+    locations = " ".join(f"{Path(frame.filename).name}:{frame.lineno}" for frame in frames[-8:])
+    print(f"fixture failure {type(error).__name__} {locations}", file=sys.stderr)
 
+
+def _drive_capture():
     fixture = json.loads(Path(sys.argv[1]).read_bytes())
 
     class PublicFixture:
@@ -85,9 +90,7 @@ def _drive_capture():
             try:
                 yield conn
             except Exception as error:
-                frames = traceback.extract_tb(error.__traceback__)
-                locations = " ".join(f"{Path(frame.filename).name}:{frame.lineno}" for frame in frames[-8:])
-                print(f"fixture capture failure {type(error).__name__} {locations}", file=sys.stderr)
+                _print_exception_location(error)
                 raise
 
     acquire._managed = managed_fixture
@@ -100,6 +103,7 @@ def _fault():
     from polymarket_alpha_lab.papersim import cli
 
     boundary = sys.argv[1]
+    _explain_scan_error()
     original = prepared_scan._receipt
 
     def receipt(conn, key, attempt, commit, config_sha, refs, phase, at, **kwargs):
@@ -120,11 +124,21 @@ def _fault():
 
 
 def _path_n():
-    from pathlib import Path
-
+    _explain_scan_error()
     script = Path(sys.argv[1])
     sys.argv = [str(script), *sys.argv[2:]]
     runpy.run_path(str(script), run_name="__main__")
+
+
+def _explain_scan_error():
+    old = operations._error_code
+
+    def report(error, fallback):
+        if fallback == "papersim_prepare_scan_failed":
+            _print_exception_location(error)
+        return old(error, fallback)
+
+    operations._error_code = report
 
 
 def _drive_settle():
@@ -227,10 +241,8 @@ def _b1(case, attempt, *, fault=None, path_n=False):
                                    "--scan-config", str(case.config), "--authorization", str(authorization), *args],
                          code="from tests.test_papersim_prepared_scan_native import _path_n; _path_n()")
     args = ["run-scan", "--managed", "--config", str(case.config), *args]
-    if fault:
-        return _d1_child(project, [fault, *args],
-                         code="from tests.test_papersim_prepared_scan_native import _fault; _fault()")
-    return _d1_child(project, args)
+    return _d1_child(project, [fault or "none", *args],
+                     code="from tests.test_papersim_prepared_scan_native import _fault; _fault()")
 
 
 def _b2(case, candidate_id, scan_id):
