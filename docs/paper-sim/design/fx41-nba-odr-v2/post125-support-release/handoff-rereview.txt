@@ -1,0 +1,69 @@
+All eight of my original findings are closed on the shared evidence, and I found no remaining material gap in the step-1 software support handoff. This is a new turn of the reviewer that signed the original failure, using no tools and no writes.
+
+## Reviewed subject
+
+- Execution SHA: `9acfc3ad07f446415d092153effbc5b81e6b0e77`
+- Tree: `b348aa8af022e430d91ae78ae02143db6c4716aa`
+- CI-checked merge object: `35d1812e1b13ed5f2fa7e432749420082dff5ff4`, same tree
+- Support source: `2933a375fdc3c248514968277effb9a699097131`, tree `446be10b502632b3a1acbf3b774aecd65a2ce48e`
+- Shared evidence: `software-evidence-v1.json`, 48,863 bytes, SHA-256 `676930e39257149853d1403668a07099a073d68d91d46c07609d73ef682d0f49`
+- Role manifest: SHA-256 `4023e46c2923802d980ef38293d80856be31ffbf655ed8dcab6861c130c59397`
+- My original failure: `nba-support-handoff-release.json`, 8,786 bytes, SHA-256 `5b46411b79df057a6a0134b46b370efae4c7d761aaa1400688a29b23bf247a8d`, unchanged on record
+
+## Each original finding
+
+1. **CI checkout object and tree: closed.** All six jobs of the three runs checked out `35d1812e…`: one in Offline verification, four in Native project PostgreSQL, one in Research paper bridge. Its tree is `b348aa8a…`, the execution tree. The landing and that object share both parents, `525d2cbe…` and `f60a6acf…`, and the PR head merge carries the same tree. All three conclusions are success.
+
+   Limit: the recorded trigger SHA is the PR head for two workflows and the merge object for the native one. The difference is unexplained and does not matter, because every object involved has the same tree.
+
+2. **The 13 reviewed blobs at the landed tree: closed.** The 13-row table gives each blob at the retained draft, the support source and the landing, and the last two columns match on every row. Only `store_psycopg.py` and `tests/test_papersim_optimize_registered_runner_native.py` differ from the draft, as the integration evidence states. Eight files and five wiring or contract files are labelled. The full src tree and the full tests tree each have one object ID at both revisions. The code review is now bound to head `2933a375…`, tree `446be10b…`.
+
+   Limit: scripts and dependency objects are identical only by your covering note; the shared evidence binds object IDs for src and tests.
+
+3. **Static audit at the landed tree: closed.** Under the same script, the first parent `525d2cbe…` has 468 reachable and 2,442 unreachable modules. The landing has 470 and 2,442, with both sides clean. `git diff --check` at the landing exits 0.
+
+4. **Stage review verdict: closed.** The role manifest records the stage re-review as the same original session in a new turn, on the execution SHA and tree. Its receipt is `fbf4c5ca…` (8,602 bytes) and its last line passes. The stage reviewer's original failure, `3de97824…`, is preserved. With the code review and this review, that makes the three independent verdicts the mandate requires.
+
+   Limit: the manifest records bytes, digest and subject for that receipt but no process exit code. I hold it to the standard I applied to the code review.
+
+5. **Sensitive scan: closed.** The two older hits are in `optimize/runner.py` (base line 3706, candidate line 3795) and `tests/test_papersim_optimize_runner.py` (3666, 3667). Their line and enclosing-function digests are identical between base and candidate, so they predate this node. The original exit 1 is preserved, and the same executor's follow-up exited 0. At the landing the added-line scanner exited 0, and its 14 hits are the 9 schedule strings and 5 command strings classified earlier (comparison exit 0).
+
+   Limits: the landing scan output has one digest in the confirmation record and a different one in the classification record, with no stated relationship. No bound line covers commit messages.
+
+6. **Test-execution receipt: closed.**
+   - **Executor:** each launch is recorded as an actual local Linux ZCode, with a receipt digest.
+   - **Revision:** the offline and native outcomes carry commit `2933a375…`, whose src and tests trees are identical at the landing.
+   - **First outcomes:** the focused launcher exited 127 on a mistyped path with no tests run, then was corrected on the same source with exit 0. The first complete offline suite had no test failure. The native run was interrupted before tests; nine cases then failed identically on the prior baseline; the harness was corrected with product source unchanged; 551 of 551 pass.
+   - **Compile:** `compileall -q src tests scripts` through `scripts/verify_local.py --quick`, exit 0 at the source.
+   - **Frozen outputs:** `test_registry_provider_empty_registry_is_bit_identical_to_b1` exits 0, and the four fixture blobs and digests are bound.
+   - **Skips:** local counts go from 437 to 444 and hosted counts from 438 to 445. The whole hosted increase is in the opt-in native category. The seven native-only NBA cases each pass natively with JUnit digests. All 40 new or renamed definitions have passing cases, 68 case IDs in all. The 60 added passes are the 61 non-native cases minus the rename. The six budget functions have seven cases, two of them the expiry case.
+
+   Limits:
+   - The local log has no per-test reason strings, so those reasons are unavailable evidence.
+   - The hosted categories come from two job IDs that are not tied to a commit or to the three bound runs.
+   - The one-skip offset between local and hosted totals is not identified, though it is the same on both sides.
+   - The local baseline is at `e65be3e7…`, not the node base `ab6edff2…`.
+   - The harness correction is described, not digested.
+   - The frozen-output test ran at `b0807e32…`.
+   - Two skip-evidence runs exited 1 and are preserved; the terminal run's exit code is not stated.
+
+7. **Interpreter and instance identities: closed.** Both runs use Python 3.12.3. The tests used a candidate-specific locked uv editable environment. The formal run uses the designated Linux project virtualenv with source pinned to the detached checkout. The psycopg and tzdata versions match, and the formal binary has a bound digest. Two distinct labels are recorded, the historical archive and the synthetic timing database, each with a receipt and a label digest.
+
+   Limits: only the formal binary is digested. The live identity of the real instance is left for a later managed readback and is needed at registration. The two label hashes have different inputs, so they are not a same-field comparison.
+
+8. **Ancestry, manifest location and plan text: closed.** #118 resolves to `00199b24d38d5d9334ec7eb07ca8141db33852da`, with tree and parents. The remote readback is 403 bytes and verifies 42 entries at `b0807e322f8705548e80f3b67ac61a836a5864ef`, with manifest digest `d0775b45…`. The node `plan.md` is `240f6153…`, which `plan-review.json` signed. `operator-rereview.json` signed it again together with the addendum. `137a7386…` is the separate release plan in the same archive, and `b56c7926…` is its signed result, which is the text I reviewed under.
+
+   Limits: the #118 ancestry is a labelled check and the intermediate commits are not itemised. The readback's tree value and the landed design-subtree value are different object IDs of unlabelled kind. The supplement's own publication location and readback are not bound.
+
+## What this verdict does not do
+
+- It authorizes no registration, preview, launch or modeled result.
+- It makes no finding on the clock gate or on the timing receipts. The shared evidence carries a real-data metadata preflight summary and a synthetic timing receipt, and I read neither as a clock result. The synthetic metadata's written and read-back digests are equal; that is all I checked of it.
+- I read nothing beyond the bound text, so this says nothing about code correctness, which rests on the signed code review.
+- I can confirm receivability only for the 42-entry archive. The supplement and this verdict still need an immutable published location and a readback before delivery.
+- CodeGraph remains bound at the support source only.
+- The guarded, max and fast-off settings are attested by the launch record, not by me. The model identifier disclosed in my environment is GLM-5.4.
+
+Total blocking findings: 0.
+
+VERDICT: PASS

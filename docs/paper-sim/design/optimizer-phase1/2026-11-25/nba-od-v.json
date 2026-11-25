@@ -1,0 +1,108 @@
+{
+  "source_head": "2933a375fdc3c248514968277effb9a699097131",
+  "archive_head": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+  "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "published_archive": "https://github.com/wmqfl861/polymarket-alpha-lab/tree/b0807e322f8705548e80f3b67ac61a836a5864ef/docs/paper-sim/design/fx41-nba-odr-v2",
+  "code_review": {
+    "head": "2933a375fdc3c248514968277effb9a699097131",
+    "verdict": "PASS",
+    "source_receipt_sha256": "06912b7bbe1f5d305cbac6afd49ec349bdf0bf5a9f94d7bac38dc34c3e325f96"
+  },
+  "archive_review": {
+    "head": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+    "verdict": "PASS",
+    "source_receipt_sha256": "966a85d1ffb1b1834ea25232d136770b96c61d3a80bcafa0088f73262a410c5f"
+  },
+  "archive_static": {
+    "candidate": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+    "tree": "4e3481541d6f63ea8e5a9782c0c84ab1861daf37",
+    "original_auditor_exit": 0,
+    "full_report": {
+      "bytes": 762725,
+      "sha256": "fc918efe3d183c0af33fe85d7c5463dbda8d2a139dcc6936ee916908c2ab037c"
+    },
+    "all_report_fields_compared": 37,
+    "different_report_fields": 0,
+    "historical_report_bytes_match": false,
+    "base_unreachable_modules": 2442,
+    "candidate_unreachable_modules": 2442,
+    "newly_reachable_modules": [
+      "polymarket_alpha_lab.papersim.nba_odr_registration",
+      "polymarket_alpha_lab.papersim.optimize.nba_odr"
+    ]
+  },
+  "registry_empty": [
+    {
+      "test": "tests/test_papersim_optimize_runner.py::test_empty_registry_parity_executed_twice_exact_counts",
+      "executed_head": "2933a375fdc3c248514968277effb9a699097131",
+      "outcome": "pass",
+      "source_junit_sha256": "910d464e709f996562becb466796b2b5e514087be2e6373f5b4ca06713ac253e"
+    },
+    {
+      "test": "tests/test_papersim_scan.py::test_registry_provider_empty_registry_is_bit_identical_to_b1",
+      "executed_head": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+      "outcome": "pass",
+      "junit": {
+        "bytes": 381,
+        "sha256": "51064aac56d0614ddab09e8f274a5c44edca0c20f06b155cd75509228708f929"
+      },
+      "first_launch": {
+        "exit_code": 1,
+        "stage": "before pytest; namespace unavailable",
+        "receipt_sha256": "fad74a3c44721126f7816ea12af535ab68a7f63317c87df85fdcb150814dae32"
+      }
+    }
+  ],
+  "frozen_fixtures_byte_equal_on_three_commits": {
+    "tests/fixtures/papersim/regression_banned_path.json": {
+      "git_blob": "a4cedf029fba95222a411856484e9d98449329a8",
+      "bytes": 2618,
+      "sha256": "0a8acce166cc92d744751b29d3c0a6abb8abb8ac67a4d1b30d2eef584255245d"
+    },
+    "tests/fixtures/papersim/regression_gate_arithmetic.json": {
+      "git_blob": "c9841b860f3389bcedcfcb805b9086888a903b26",
+      "bytes": 2763,
+      "sha256": "4f19389c921444e94e8845d1759d942d9a13c99969362ab49293be40193b83d6"
+    },
+    "tests/fixtures/papersim/regression_r19_crypto.json": {
+      "git_blob": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+      "bytes": 1902,
+      "sha256": "7e07f02424a9c37cfb518c2ad997ecb88efe6d422b5afe558b1be96174b2a2c3"
+    },
+    "tests/fixtures/papersim/regression_r23_soccer.json": {
+      "git_blob": "4bfccb907890253078e1aee0a39b51ec45f590af",
+      "bytes": 38115,
+      "sha256": "d9914c23645a54f405ea246aa7ea574afe7515cd176e321d1536db8b60f689f9"
+    }
+  },
+  "formal_evaluations": 0,
+  "operator_basis": {
+    "reviewed_plan_line": 3,
+    "operator_addendum_lines": [
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "code_review_finding": 1,
+    "one_time_requirements": [
+      "merged execution SHA",
+      "second connection readback",
+      "clock GO",
+      "preview not_run",
+      "unique executor",
+      "attempt 1"
+    ],
+    "after_claim_disconnect": "read-only inspection of original claim and sealed durable result; record interruption or uncertain commit if applicable; preserve first failure; absent run or scorecard identifiers stay empty; no repeat",
+    "failure_label_rule": "RUN_FAILED requires a sealed optimization record and matching failure terminal"
+  },
+  "independent_remote_integrity_readback": {
+    "utc": "2026-11-25T01:39:47+00:00",
+    "commit": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+    "tree": "4e3481541d6f63ea8e5a9782c0c84ab1861daf37",
+    "manifest_sha256": "d0775b456a9aa18eebc9acd6824af852e93b65b712c1f4a11ff1bc73acbf0df6",
+    "verified_manifest_entries": 42,
+    "verified_payload_bytes": 454376
+  }
+}

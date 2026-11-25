@@ -1,0 +1,10 @@
+{
+  "readback_utc": "2026-11-24T08:10:36Z",
+  "main": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "intake_ref_present": false,
+  "writes_attempted": 0,
+  "earlier_intake_receipt": "intake-and-reviews.json",
+  "local_ledger_commit": "090313ea08b9523bbd63e4bd694e090639d5c04e",
+  "local_ledger_merge": "3c2df3d740007f18975b903e90b71905385b8b60",
+  "local_ledger_merge_both_identities_github_noreply": true
+}

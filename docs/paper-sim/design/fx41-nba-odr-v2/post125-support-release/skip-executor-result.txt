@@ -1,0 +1,83 @@
+The pinned command ran once and exited `0`, and the helper wrote all three receipts with every component filled in.
+
+## Start and outcome
+
+- **Before the run:** the guard receipt `independent-local-skip-accounting.json` was absent, and no receipts from an earlier run of this command existed.
+- **Run:** all four helper checksums matched, the helper emitted no failure code, and it wrote three receipts between 08:36:41 and 08:36:50 UTC.
+- **What else I ran:** only read-only checks. No pytest, no old unit, and I did not open the helper script or the coordinator's dispatch files.
+
+Values below are as the helper recorded them. I checked the arithmetic and the three files' digests, not the underlying receipts or job responses.
+
+## Receipt files
+
+| Receipt | SHA256 | Bytes |
+|---|---|---|
+| `independent-landed-contact-coordinates.json` | `d8ded144dd083a9a95d1e48d407c956a6bf413181e65756547295a29ffdf658b` | 583 |
+| `independent-hosted-and-local-skip-counts.json` | `e7e49b6dc9977a680da8f34b7eb63959ee12999b9932d845861410fbf0dad48c` | 1583 |
+| `independent-local-skip-accounting.json` | `fd926e115106e8d29103112bcbd5f8ac65e2638bf2a5fd70a1fcba6b087c4b11` | 5613 |
+
+All three are bound to source commit `2933a375fdc3c248514968277effb9a699097131`, landed commit `9acfc3ad07f446415d092153effbc5b81e6b0e77` and landed tree `b348aa8af022e430d91ae78ae02143db6c4716aa`.
+
+## Subtotals
+
+**Local full suite** (the original retained receipts, not re-run)
+
+| | Baseline | Candidate | Change |
+|---|---|---|---|
+| Passed | 43956 | 44016 | +60 |
+| Skipped | 437 | 444 | +7 |
+| Files | 3338 | 3340 | +2 |
+| Groups | 31 | 31 | 0 |
+
+- Baseline: commit `e65be3e7bfed96d52be1a2c9b392627b0ab2d23b`, receipt 129 bytes, SHA256 `e199ffd558620311773eb1b50c350c31031d4b45457e1c59b2a6d05f197e4b3e`.
+- Candidate: commit `2933a375fdc3c248514968277effb9a699097131`, receipt 129 bytes, SHA256 `d5f6e038fb5cad35143c7a9ae46976b614e0a7ff48dd7631a8b579c5b13e22fb`.
+
+**Hosted** (the two pinned public jobs)
+
+| Skip reason bucket | Baseline | Candidate | Change |
+|---|---|---|---|
+| OS and PowerShell specific | 28 | 28 | 0 |
+| opt-in native, database or isolated integration | 397 | 404 | +7 |
+| optional input or fixture | 13 | 13 | 0 |
+| **Total skips** | **438** | **445** | **+7** |
+
+- Baseline job response SHA256: `46bddf6ce5b2fa7a859125de767daa0786f8464d7878a84f6c7b8671a3cdfad6`
+- Candidate job response SHA256: `fbdd81d6207f8ce57bac5b4e8bd3086c71f9ba57f0e87cb4aa9768423966ae03`
+
+**Landing added-line shapes** (comparison exit `0`)
+
+- 14 masked coordinates were compared: 5 registration commands and 9 schedule identifiers.
+- Landing scanner output SHA256: `355c16f7befa3966680d3d2d9b946772ea32d3fb1d57a68d51b540b415e92676`
+- Earlier receipt SHA256: `f1ce327dfd324698d086a80adbd7ebca2f0ea44ea9ca2a167096a33cf82d7869`
+
+**Native passes** (7 cases from 4 new test definitions, taken from the original batch receipts)
+
+- Batch 1, `test_native_nba_v2_registration_is_atomic_and_reentrant`: receipt `42ca2f571dae576bacb70231c079d8ed0b4d60662b378175f2c6a20711e08e2e`, junit `cf14343707056da8a7ca3958af1fc9450f748f6d7ef37a38d3cac8d2436f56c4`
+- Batch 2, `test_native_nba_v2_store_rejects_forged_sources_callback_and_comparator`: receipt `626bb3ea4562615896f67df34133a2d0680f120d39485d1aa420815e6c058f23`, junit `9d31b38272ca883188e754537c05bdb6abdfe737a4a19d73f51298742ce47cea`
+- Batch 3, `test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-01]`: receipt `f5719e0b05f833949e5c0709a787b7e4f972d15ea1a8ed569850615e2d06667d`, junit `0388d440d5b5f29164410553c3f917efcfe01a05ee78fc9dcb89fe270bd9f2d1`
+- Batch 4, `test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-02]`: receipt `80232cb316e0f60cb43ca94feb42c418aaa76ee4604078f4a096ea69a2cc49ca`, junit `c49749e7f7c14f1dc0532c9857dd1f56e194a5869694b8d2e2172bbe322150b6`
+- Batch 5, `test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-03]`: receipt `6443c97701fd18fd3aabc42e83bef2c9a2e18010a9f2c38bc2195230cf95d6d0`, junit `48d7b125c1804e9c48c64e5be79dec415ab5c871adfd3ead675e232158101ae0`
+- Batch 6, `test_native_nba_v2_interrupted_root_never_allows_a_new_search[case-01]`: receipt `02f5e08ce0ec3ad73cf2a9ec095054b661e488441bca4eb8dca1d701aea1e8d2`, junit `beb24f63dd420ae78e097fabf9638850afe8c32a90e741d12a40afdeb9e8d9fc`
+- Batch 7, `test_native_nba_v2_interrupted_root_never_allows_a_new_search[case-02]`: receipt `3f97a03ed34553eacf34a39d2a16358021217b073b49e0eec9fcb05009785e04`, junit `896f20df2fa6c62d9950c442e968fd67d5aeea3477aedbccecc17695ce796900`
+- Collection receipt SHA256: `1b6af8f2fcea0ab7b609c2336b5ff91f8cdaad4588f9dd2704b5a1fd6e4c6d0d`
+
+**Retained executions** (carried in the third receipt; neither was re-issued)
+
+- r3: exit `1`, stage `offline-skip-accounting`.
+- r4: exit `1`, stage `NBA_BUDGET_ASSERTIONS_NOT_ALL_PASSED`; the seven-module pytest itself exited `0`, and no aggregate was created. The receipt's note: "Six function definitions include two parameter instances of the last function."
+- Formal NBA attempts: 0.
+
+## Scope boundary for the 444 local skips
+
+- **What 444 is:** only the skip total in the original retained local full-suite candidate receipt. This run bound that receipt's hash and totals and did not re-run the suite.
+- **What the reason buckets cover:** hosted jobs only. Hosted totals are one skip higher than local on each side (438 against 437, 445 against 444), and these receipts do not say why.
+- **What is still open:** the local per-case outcome for the 444 skips is not in these receipts. The receipt names it as a separate component.
+
+## Checks and withheld items
+
+- The bucket sums equal the totals (28 + 397 + 13 = 438 and 28 + 404 + 13 = 445), 5 + 9 = 14, and the third receipt repeats the first two's values unchanged.
+- I withheld the two hosted job numbers as identifiers. The receipts contain no masked-match values, raw hosted output or configuration.
+
+Executor: the same local Linux ZCode session, `[private client identity]` (backend disclosed as GLM-5.4; guarded, max-effort and fast-off remain launch parameters I cannot read from inside).
+
+SKIP COMPONENTS COMPLETE

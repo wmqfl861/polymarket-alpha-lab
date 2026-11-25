@@ -1,0 +1,143 @@
+{
+  "scope": "Host copies supply the plan byte sizes and SHA-256. Each verdict line is extracted from the named ZCode response.",
+  "plans": [
+    {
+      "node": "FX-40",
+      "version": 3,
+      "plan": {
+        "file": "fx40-node-plan-v3.md",
+        "bytes": 46062,
+        "sha256": "1589414ec6f81554b2570ad57392046476acb20c1c840515005b7a855c9f941a"
+      },
+      "review_history": [
+        {
+          "source": {
+            "file": "fx40-plan-review.json",
+            "bytes": 10550,
+            "sha256": "5b85a62109870253095ab0d2e3d82f4be7fa853444f08c969e225cdb599a8029"
+          },
+          "session": "sess_d149e0d3-3541-48ec-8f30-e6d319ba6dfe",
+          "turn": "turn_3f5fc028-e7e0-403d-b8c8-8c9809a5328e",
+          "verdict_line": "VERDICT: FAIL FX40 bd097a8bfa2a3e171b6d3179d18c4c928bd430c30ed87a44517476d970379740"
+        },
+        {
+          "source": {
+            "file": "fx40-plan-review-revision2.json",
+            "bytes": 6037,
+            "sha256": "b765b915073d72e0e6a48cc110994e2de0d78e3202341ed50882a1fd2954711f"
+          },
+          "session": "sess_d149e0d3-3541-48ec-8f30-e6d319ba6dfe",
+          "turn": "turn_5509d962-00bc-4512-ba7d-f722284e3144",
+          "verdict_line": "VERDICT: FAIL 8b3ab87684570396cb8620a4f13dcaa603bff9c3047a020d23360b68600aab4e"
+        },
+        {
+          "source": {
+            "file": "fx40-plan-review-revision3.json",
+            "bytes": 5078,
+            "sha256": "787295778d8a5ba5965083bf3dd5d2ba31c20c878accb0dee5b0cb60e6c7c991"
+          },
+          "session": "sess_d149e0d3-3541-48ec-8f30-e6d319ba6dfe",
+          "turn": "turn_04e94635-6485-42ca-8abd-aa41131168e2",
+          "verdict_line": "VERDICT: PASS 1589414ec6f81554b2570ad57392046476acb20c1c840515005b7a855c9f941a",
+          "digest_binding_excerpt": "VERDICT: PASS 1589414ec6f81554b2570ad57392046476acb20c1c840515005b7a855c9f941a"
+        }
+      ]
+    },
+    {
+      "node": "FX-44",
+      "version": 2,
+      "plan": {
+        "file": "fx44-node-plan-v2.md",
+        "bytes": 36171,
+        "sha256": "82955f0bba461c8ef7f45363da153fab9765646a33e424ec9f13436ef1ec0846"
+      },
+      "review_history": [
+        {
+          "source": {
+            "file": "fx44-plan-review-original-resume.json",
+            "bytes": 5823,
+            "sha256": "b2a46ae30e773bd50fb90b9192e2e77288b8cf59289afd7fdc24a9413c2de974"
+          },
+          "session": "sess_d9bf7b25-147b-4615-9fce-f02e53fe27d0",
+          "turn": "turn_d66c936e-7946-42b9-a879-8eac3a63a276",
+          "verdict_line": "结论：FAIL FX44 98203ff5cd151f443b7fcd9e572d69daa11296b79326c5f06b14c589fee7eb3e"
+        },
+        {
+          "source": {
+            "file": "fx44-plan-review-revision2.json",
+            "bytes": 4979,
+            "sha256": "82bdb0a0981a708bd8010c65e1d107ea76b05a6acea65e90b40b30715892d3d9"
+          },
+          "session": "sess_d9bf7b25-147b-4615-9fce-f02e53fe27d0",
+          "turn": "turn_0d25513d-46cd-493d-a22d-38eb12158c47",
+          "verdict_line": "VERDICT: PASS FX44 82955f0bba461c8ef7f45363da153fab9765646a33e424ec9f13436ef1ec0846",
+          "digest_binding_excerpt": "VERDICT: PASS FX44 82955f0bba461c8ef7f45363da153fab9765646a33e424ec9f13436ef1ec0846"
+        }
+      ]
+    },
+    {
+      "node": "FX-48",
+      "version": 2,
+      "plan": {
+        "file": "fx48-node-plan-v2.md",
+        "bytes": 21129,
+        "sha256": "b4cff1e3f92214144d0258e117363ca9a6df3b322cb07fe1137b8b357c0d8f34"
+      },
+      "review_history": [
+        {
+          "source": {
+            "file": "fx48-plan-review.json",
+            "bytes": 6444,
+            "sha256": "d5f67d4c0ad27d295457218b0c93eff066d0a0209467adea57d4581a3437875a"
+          },
+          "session": "sess_56d86a27-c160-45b2-ac01-e7ded1a773da",
+          "turn": "turn_c596c383-c998-4858-9b2a-b7b356d51bf5",
+          "verdict_line": "VERDICT: FAIL — plan SHA-256 bad53156490179731c19770a4685b26816f748ba93743980380acbd675f0a288"
+        },
+        {
+          "source": {
+            "file": "fx48-plan-review-revision2.json",
+            "bytes": 7038,
+            "sha256": "7f4e2f89df760c6fcebc30fec5b05d781e064de5286e870d4ae940b55fdb7dc8"
+          },
+          "session": "sess_56d86a27-c160-45b2-ac01-e7ded1a773da",
+          "turn": "turn_b3ca6d22-b850-44df-9f52-e848f44a12d3",
+          "verdict_line": "VERDICT: PASS",
+          "digest_binding_excerpt": "**Binding:** plan SHA-256 `b4cff1e3f92214144d0258e117363ca9a6df3b322cb07fe1137b8b357c0d8f34`, as stated by you. With tools disabled I could not recompute it, so the verdict is bound to the supplied v2 text under that digest."
+        }
+      ]
+    },
+    {
+      "node": "FX-54",
+      "version": 2,
+      "plan": {
+        "file": "fx54-plan-v2.md",
+        "bytes": 10169,
+        "sha256": "474222c711cf92c6e753cee4d29e6881e5a9e475c12d2c711017c0c7608a4a10"
+      },
+      "review_history": [
+        {
+          "source": {
+            "file": "fx54-plan-review.json",
+            "bytes": 7049,
+            "sha256": "5c92408a73fdef49e6b6d0d572b80796ec3e65c903f51196f07dab415c3a91d0"
+          },
+          "session": "sess_26cca700-c1b2-4a11-98ed-21ab96227f36",
+          "turn": "turn_9df60a87-1ba7-4b2c-a094-cbf5a1563cc7",
+          "verdict_line": "VERDICT: FAIL"
+        },
+        {
+          "source": {
+            "file": "fx54-v2-rereview.json",
+            "bytes": 3428,
+            "sha256": "50d78a5e435e7838099515edb020b59e6dd70e6e3aa169c8f1f954b7f1a54960"
+          },
+          "session": "sess_26cca700-c1b2-4a11-98ed-21ab96227f36",
+          "turn": "turn_f9bc47b2-dd32-4864-98c8-2eab1cfade8c",
+          "verdict_line": "VERDICT: PASS",
+          "digest_binding_excerpt": "fx54-plan.md (revision 2) sha256 474222c711cf92c6e753cee4d29e6881e5a9e475c12d2c711017c0c7608a4a10"
+        }
+      ]
+    }
+  ]
+}

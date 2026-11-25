@@ -1,0 +1,48 @@
+{
+  "landed": {
+    "head": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa"
+  },
+  "original_clock_verdict": "FAIL",
+  "clock_rereview_verdict": "PASS",
+  "same_original_review_session_new_turn": true,
+  "formal_go_established_by_this_review": false,
+  "clock_measured_bounds": {
+    "units": "ns",
+    "compute_upper_bound": 2330283746545,
+    "command_upper_bound": 2647062230564,
+    "compute_limit": 3540000000000,
+    "command_limit": 3600000000000,
+    "compute_margin": 1209716253455,
+    "command_margin": 952937769436
+  },
+  "launch_load_condition": {
+    "name": "CPU_LOAD_AT_LAUNCH",
+    "max_one_minute": 3.9736328125,
+    "max_five_minutes": 3.376953125,
+    "include_fifteen_minute_and_utc_in_launch_record": true,
+    "if_above": "Delay only launch and preserve registration. Repeat read-only preview after any wait."
+  },
+  "pinned_sources": {
+    "new_original_clock_review": {
+      "bytes": 4144,
+      "sha256": "3bd2e9615ebaba46d538c9917fdd17c31b55bc08fde6fed47a4314d0a47fa2c1"
+    },
+    "original_clock_review": {
+      "bytes": 4675,
+      "sha256": "808533641ab51927cbf18827f8193e6caac81283d5fa91ae148a015d9e042e55"
+    },
+    "addendum": {
+      "bytes": 9485,
+      "sha256": "bda2ebe7101e4c8dd7c50236c0c3b7866c3bb7da9ab723d7d2e8f48fd0dfca60"
+    },
+    "first_synthetic_receipt": {
+      "bytes": 125873,
+      "sha256": "8f7cf4f06bb9cd8db8989472580b63e0da6333672d4575710d79f31ddad6ceae"
+    },
+    "resource_observation": {
+      "bytes": 3417,
+      "sha256": "b16866e8c977bd20839c59981f29456689230dc50293a6d2a92d62fecf26c751"
+    }
+  }
+}

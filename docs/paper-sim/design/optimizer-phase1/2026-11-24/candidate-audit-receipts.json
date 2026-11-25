@@ -1,0 +1,411 @@
+{
+  "scripts_directory": "docs/handoffs/2026-11-24-incremental-review/evidence",
+  "scans": [
+    {
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "checks": {
+        "test_weakening_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/2933a375fdc3-test_weakening_scan.txt",
+            "bytes": 440,
+            "sha256": "85c13375e0731f23c00c9524ed54e67838c59a1937eeca236df03f9b493af18c"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=2933a375fdc3c248514968277effb9a699097131",
+            "test python files: added=2 modified=5 deleted=0",
+            "tests/test_papersim_cli_optimize.py: tests 17 -> 21",
+            "    removed test: test_optimize_help_names_the_four_subcommands (had 3 checks)",
+            "modified files: test functions 227 -> 244",
+            "totals: removed tests=1 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+            "added files: 2 with 22 test functions"
+          ]
+        },
+        "address_occurrence_diff": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/2933a375fdc3-address_occurrence_diff.txt",
+            "bytes": 128,
+            "sha256": "5d4dc47ff178b1cb3e3f484edcf015b3f7065c7e2bf72f7e5a7645114c1a161b"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=2933a375fdc3c248514968277effb9a699097131 distinct public IPv4-like values: 4"
+          ]
+        },
+        "added_line_sensitive_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/2933a375fdc3-added_line_sensitive_scan.txt",
+            "bytes": 52,
+            "sha256": "e95c28f5f7f6299f3242aae189e9e619bf9ae6a42f68904fd017cbfaf67ed620"
+          },
+          "output": [
+            "base=ab6edff2d64a head=2933a375fdc3",
+            "  wechat_id: 14"
+          ]
+        }
+      }
+    },
+    {
+      "commit": "97091184db35f4f6fe7d06d0cccb6472bcee7d23",
+      "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "checks": {
+        "test_weakening_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/97091184db35-test_weakening_scan.txt",
+            "bytes": 304,
+            "sha256": "107e57eeeef86d8b05be32cfda29b31e71068387979a41c1c041c292a1651fa9"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=97091184db35f4f6fe7d06d0cccb6472bcee7d23",
+            "test python files: added=0 modified=0 deleted=0",
+            "modified files: test functions 0 -> 0",
+            "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+            "added files: 0 with 0 test functions"
+          ]
+        },
+        "address_occurrence_diff": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/97091184db35-address_occurrence_diff.txt",
+            "bytes": 128,
+            "sha256": "6fb4ada60e28586eb568926d74c0dc8bfa83445c95384bc5cf86710090d422e2"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=97091184db35f4f6fe7d06d0cccb6472bcee7d23 distinct public IPv4-like values: 4"
+          ]
+        },
+        "added_line_sensitive_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/97091184db35-added_line_sensitive_scan.txt",
+            "bytes": 62,
+            "sha256": "b692e21596c161bc1ee719f92cf223561d122121809789888009675152f17189"
+          },
+          "output": [
+            "base=ab6edff2d64a head=97091184db35",
+            "  email: 6",
+            "  wechat_id: 2"
+          ]
+        }
+      }
+    },
+    {
+      "commit": "e0a8b6185b4b78a779b3f71f7ec4d5b874482c21",
+      "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "checks": {
+        "test_weakening_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/e0a8b6185b4b-test_weakening_scan.txt",
+            "bytes": 304,
+            "sha256": "1546750d800caac3b2ae4de7dfb1d2ca004a4cee080fcd0675bdef49324344ef"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=e0a8b6185b4b78a779b3f71f7ec4d5b874482c21",
+            "test python files: added=0 modified=1 deleted=0",
+            "modified files: test functions 3 -> 7",
+            "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+            "added files: 0 with 0 test functions"
+          ]
+        },
+        "address_occurrence_diff": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/e0a8b6185b4b-address_occurrence_diff.txt",
+            "bytes": 128,
+            "sha256": "27a4096b71aae5b041c61bb48cd276a7cf410309b1f9377bf7a300939a507281"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=e0a8b6185b4b78a779b3f71f7ec4d5b874482c21 distinct public IPv4-like values: 4"
+          ]
+        },
+        "added_line_sensitive_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/e0a8b6185b4b-added_line_sensitive_scan.txt",
+            "bytes": 51,
+            "sha256": "7540f7bc5e4efb6bc01064968ae19b50cbf781917c6e965b30bc15281e32040d"
+          },
+          "output": [
+            "base=ab6edff2d64a head=e0a8b6185b4b",
+            "  (no matches)"
+          ]
+        }
+      }
+    },
+    {
+      "commit": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+      "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "checks": {
+        "test_weakening_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/e65be3e7bfed-test_weakening_scan.txt",
+            "bytes": 304,
+            "sha256": "3b238b57dc12bff042b7bc54b80b183c18fbf7ce0bbb7ebed07575d80b433bfe"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+            "test python files: added=0 modified=0 deleted=0",
+            "modified files: test functions 0 -> 0",
+            "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+            "added files: 0 with 0 test functions"
+          ]
+        },
+        "address_occurrence_diff": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/e65be3e7bfed-address_occurrence_diff.txt",
+            "bytes": 128,
+            "sha256": "e975856bed119bdeaba2b7094494b8eff04ba044ff571819fe3ea48e1bdb067b"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=e65be3e7bfed96d52be1a2c9b392627b0ab2d23b distinct public IPv4-like values: 4"
+          ]
+        },
+        "added_line_sensitive_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/e65be3e7bfed-added_line_sensitive_scan.txt",
+            "bytes": 62,
+            "sha256": "beb86ef0c279ce71ff7d4ef5aa444d39cd6eb08b4ce6ec8fbfb916937a2c0740"
+          },
+          "output": [
+            "base=ab6edff2d64a head=e65be3e7bfed",
+            "  email: 6",
+            "  wechat_id: 2"
+          ]
+        }
+      }
+    },
+    {
+      "commit": "f8e81dd5ccb44444e15a00a53dc3534af82f2e53",
+      "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "checks": {
+        "test_weakening_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/f8e81dd5ccb4-test_weakening_scan.txt",
+            "bytes": 305,
+            "sha256": "292bbcffeaab28008e9f4b53f08295aec9792cd7e09691106b174f707ffe5dd6"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=f8e81dd5ccb44444e15a00a53dc3534af82f2e53",
+            "test python files: added=1 modified=0 deleted=0",
+            "modified files: test functions 0 -> 0",
+            "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+            "added files: 1 with 15 test functions"
+          ]
+        },
+        "address_occurrence_diff": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/f8e81dd5ccb4-address_occurrence_diff.txt",
+            "bytes": 128,
+            "sha256": "1066fabd2ab06a08ac4e81bb632f97afafeeba5d849188784ef758aecfe11f0d"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=f8e81dd5ccb44444e15a00a53dc3534af82f2e53 distinct public IPv4-like values: 4"
+          ]
+        },
+        "added_line_sensitive_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "current-node-audits/f8e81dd5ccb4-added_line_sensitive_scan.txt",
+            "bytes": 54,
+            "sha256": "00a1122b9970d45ca0bf96c404ae67938eedea29cfc7e106a32569bc9f0fb9ca"
+          },
+          "output": [
+            "base=ab6edff2d64a head=f8e81dd5ccb4",
+            "  email_benign: 1"
+          ]
+        }
+      }
+    },
+    {
+      "commit": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+      "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "checks": {
+        "test_weakening_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/14f516ca562b-test_weakening_scan.txt",
+            "bytes": 305,
+            "sha256": "b273b6aa3aa66289cb98c31014e984d61e178d6084bdfc24ccf92844ef81df41"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+            "test python files: added=0 modified=1 deleted=0",
+            "modified files: test functions 3 -> 15",
+            "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+            "added files: 0 with 0 test functions"
+          ]
+        },
+        "address_occurrence_diff": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/14f516ca562b-address_occurrence_diff.txt",
+            "bytes": 128,
+            "sha256": "1f6faa29eaaf64b35a3c4181656d5e064214991a071fde84a50a499851ba4a21"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=14f516ca562b218b776aa3f7fb174a39ba4ce66f distinct public IPv4-like values: 4"
+          ]
+        },
+        "added_line_sensitive_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/14f516ca562b-added_line_sensitive_scan.txt",
+            "bytes": 51,
+            "sha256": "4bb02aeb5ee345f03e06447ac6c85f8d1267bb7519d084dbe83f3edaa5de736f"
+          },
+          "output": [
+            "base=ab6edff2d64a head=14f516ca562b",
+            "  (no matches)"
+          ]
+        }
+      }
+    },
+    {
+      "commit": "a9176cc255054ebd74046bdac8fef0d98e715f6e",
+      "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "checks": {
+        "test_weakening_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/a9176cc25505-test_weakening_scan.txt",
+            "bytes": 305,
+            "sha256": "950bdbd507d849981c9170a7783ea14de7cccf92e2d22e7e5d0c03b24199fb61"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=a9176cc255054ebd74046bdac8fef0d98e715f6e",
+            "test python files: added=1 modified=0 deleted=0",
+            "modified files: test functions 0 -> 0",
+            "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+            "added files: 1 with 26 test functions"
+          ]
+        },
+        "address_occurrence_diff": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/a9176cc25505-address_occurrence_diff.txt",
+            "bytes": 128,
+            "sha256": "93220bd74e2944fcd946de6fb616f726f87e0b89ba98a06e800445530afc96d9"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=a9176cc255054ebd74046bdac8fef0d98e715f6e distinct public IPv4-like values: 4"
+          ]
+        },
+        "added_line_sensitive_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/a9176cc25505-added_line_sensitive_scan.txt",
+            "bytes": 54,
+            "sha256": "bd1fbacdf4bfb8fdb41d6b7bd2555318dc874a4d4151ca7c607266ff864212a0"
+          },
+          "output": [
+            "base=ab6edff2d64a head=a9176cc25505",
+            "  email_benign: 1"
+          ]
+        }
+      }
+    },
+    {
+      "commit": "dda71bb04419426ccb4fa1fd4a4dc5f703058718",
+      "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "checks": {
+        "test_weakening_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/dda71bb04419-test_weakening_scan.txt",
+            "bytes": 304,
+            "sha256": "66db4270937677a689947fadcfe8f9ea9f326e9eddf17b8beddc8fe3397637e1"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=dda71bb04419426ccb4fa1fd4a4dc5f703058718",
+            "test python files: added=0 modified=0 deleted=0",
+            "modified files: test functions 0 -> 0",
+            "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+            "added files: 0 with 0 test functions"
+          ]
+        },
+        "address_occurrence_diff": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/dda71bb04419-address_occurrence_diff.txt",
+            "bytes": 128,
+            "sha256": "e2e0881a9db177758e3d0c581c5b449288a34712d55bea22d124a8dac3120f24"
+          },
+          "output": [
+            "base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=dda71bb04419426ccb4fa1fd4a4dc5f703058718 distinct public IPv4-like values: 4"
+          ]
+        },
+        "added_line_sensitive_scan": {
+          "exit_code": 0,
+          "source": {
+            "file": "first-remediation-candidate-audits/dda71bb04419-added_line_sensitive_scan.txt",
+            "bytes": 62,
+            "sha256": "853f3ac21089e8ae2a797c3ff6b34e566d83836b8f799174ec90c1e86e7792bc"
+          },
+          "output": [
+            "base=ab6edff2d64a head=dda71bb04419",
+            "  email: 6",
+            "  wechat_id: 2"
+          ]
+        }
+      }
+    }
+  ],
+  "nba_help_test_git_objects": [
+    {
+      "source": {
+        "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "path": "tests/test_papersim_cli_optimize.py",
+        "blob": "793250f1516637825e02e54d17815cda7532ddb7",
+        "bytes": 17269,
+        "sha256": "0f7e90a59bdc33677e2a39563e20b3b62ee2e747783801be840c53c334c0f5af"
+      },
+      "function": "test_optimize_help_names_the_four_subcommands",
+      "assert_statements": [
+        "excinfo.value.code == 0",
+        "token in text"
+      ],
+      "exception_context": [
+        "pytest.raises(SystemExit)"
+      ],
+      "command_names": [
+        "families",
+        "init",
+        "run",
+        "status"
+      ]
+    },
+    {
+      "source": {
+        "commit": "2933a375fdc3c248514968277effb9a699097131",
+        "path": "tests/test_papersim_cli_optimize.py",
+        "blob": "1baede46f3a2ccae8a8a54856718f66cb11778d4",
+        "bytes": 25118,
+        "sha256": "02b1b39c736a4825fc8e3dd0efe312937dcc3b6b24e3133102344bca2954704b"
+      },
+      "function": "test_optimize_help_names_the_experiment_subcommands",
+      "assert_statements": [
+        "excinfo.value.code == 0",
+        "token in text"
+      ],
+      "exception_context": [
+        "pytest.raises(SystemExit)"
+      ],
+      "command_names": [
+        "families",
+        "init",
+        "register-experiment",
+        "run",
+        "status"
+      ]
+    }
+  ]
+}

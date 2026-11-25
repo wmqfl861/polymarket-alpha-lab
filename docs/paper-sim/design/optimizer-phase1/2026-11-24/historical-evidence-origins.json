@@ -1,0 +1,94 @@
+{
+  "club_result_original": {
+    "file": "09-1-club-soccer-recalib.result.json",
+    "bytes": 18050,
+    "sha256": "d8f806dfa2fe048a547d992c084fea8ae1f3e47077c3ba8d77c2e18f99a5bdd8",
+    "archive_directory": "formal-e234c336",
+    "referencing_receipt": {
+      "commit": "87a4dd2e5548bdc3c9c710c08fb3a33a6cb7d031",
+      "path": "docs/paper-sim/design/optimizer-phase1/2026-11-24/historical-scorecards-readback.json",
+      "blob": "a4812da64adc93845807e437a0202580649660f6",
+      "bytes": 4932,
+      "sha256": "fbb29ebb8b3dd02a7a9d37618e73d41ef2bbe98ba575b033212dd31d8ead7321"
+    },
+    "receipt_entry": {
+      "byte_length": 18050,
+      "sha256": "d8f806dfa2fe048a547d992c084fea8ae1f3e47077c3ba8d77c2e18f99a5bdd8"
+    }
+  },
+  "scorecard_projection": {
+    "commit": "87a4dd2e5548bdc3c9c710c08fb3a33a6cb7d031",
+    "path": "docs/paper-sim/design/optimizer-phase1/2026-11-24/historical-scorecards-projection.json",
+    "blob": "ec0f77533194e0fef5fa71d15a8d38563be1db34",
+    "bytes": 65443,
+    "sha256": "8fdf3a314059410830a4ddd426f7f8610db4ecd88da85867390d625918064e33"
+  },
+  "empty_registry": {
+    "original_summary": {
+      "file": "h-summary.json",
+      "bytes": 56675,
+      "sha256": "1951b0f62edcbbcc64dda256ee28058d612ef0f70b60daa8ae91e5124f6ad5f7"
+    },
+    "supervisor": {
+      "source": {
+        "file": "h-verified.json",
+        "bytes": 534,
+        "sha256": "edc8c8496533f75f457be4992241f26fe56e486b07b03003b50b687cf3763eec"
+      },
+      "fields": {
+        "head": "26dfa2a05357121665009981cd600e23c91e093a",
+        "commit": "26dfa2a05357121665009981cd600e23c91e093a",
+        "summary_sha256": "1951b0f62edcbbcc64dda256ee28058d612ef0f70b60daa8ae91e5124f6ad5f7",
+        "summary_bytes": 56675
+      }
+    },
+    "target_lane": "h",
+    "target": {
+      "commit": "26dfa2a05357121665009981cd600e23c91e093a",
+      "tree": "3f334c2ca975bb4e02947a5c2435a825e29a4e37",
+      "clean_before": true
+    },
+    "references": {
+      "a": {
+        "commit": "af4ff553262a7ee532e36e1b0d8ba4939522f4ba",
+        "tree": "6c7ad20f1db7dfaeadaab89e7661cdce18cdb6df"
+      },
+      "p": {
+        "commit": "e234c3364c204db513cc4fbcdcb6d5eb43c7417b",
+        "tree": "efb95f992a18f652bb40beba44c4a2ae0697296a"
+      }
+    },
+    "comparison_script": {
+      "file": "compare.py",
+      "bytes": 17776,
+      "sha256": "ca5dbb532f6ea6ddb62987d7b5311a314378e004857fd19968798cd526ce948d"
+    },
+    "projection_exclusions": {
+      "run-scan": [
+        "/code_commit",
+        "/scan_key",
+        "/shadow_seconds"
+      ],
+      "replay": [
+        "/code_commit"
+      ],
+      "settle": [
+        "/code_commit"
+      ],
+      "evaluate": [],
+      "report": [
+        "/as_of",
+        "/receipts/last_phase_by_operation/0/last_occurred_at",
+        "/receipts/last_phase_by_operation/1/last_occurred_at",
+        "/stages/outcomes/as_of",
+        "/stages/scan/as_of",
+        "/stages/scan/last_scan/code_commit",
+        "/stages/scan/last_scan/finished_at",
+        "/stages/scan/last_scan/scan_key",
+        "/stages/scan/last_scan/started_at",
+        "/stages/settle/as_of"
+      ]
+    },
+    "encoding": "Sorted JSON object keys, compact delimiters, original numeric spelling and array order."
+  }
+}

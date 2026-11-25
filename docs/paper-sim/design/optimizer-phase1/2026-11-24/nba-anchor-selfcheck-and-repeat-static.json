@@ -1,0 +1,90 @@
+{
+  "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "candidate": "2933a375fdc3c248514968277effb9a699097131",
+  "anchor_and_selfcheck": {
+    "source_receipt_filename": "nba-anchor-selfcheck-2933a375.json",
+    "source_receipt_bytes": 2066,
+    "source_receipt_sha256": "533266be77601963f9ccb434df4d99ce23fda6e9b2b0708517064395322f7d97",
+    "source_receipt_archived_in_repository": false,
+    "zcode_session": "sess_c39ed667-cb62-418e-bce3-42509f4f17b8",
+    "zcode_turn": "turn_dd2bf76c-71f8-4bee-bc46-ace0d47ba090",
+    "python": "3.12.3",
+    "pinned_trees_clean_before_and_after": true,
+    "selfcheck": {
+      "base_exit_code": 0,
+      "candidate_exit_code": 0,
+      "checks_passed_each": 10,
+      "checks_total_each": 10,
+      "stdout_compare_exit_code": 0,
+      "stdout_bytes_each": 1663,
+      "stdout_sha256_each": "a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9",
+      "stderr_compare_exit_code": 0,
+      "stderr_bytes_each": 0,
+      "stderr_sha256_each": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate_anchor": {
+      "test_node": "tests/test_papersim_optimize_metrics.py::test_anchor2_nba_group_logloss",
+      "historical_fixture_groups": 31,
+      "exit_code": 0,
+      "passed": 1,
+      "duration_seconds": 1.74,
+      "stdout_bytes": 98,
+      "stdout_sha256": "fee1b06fef83902f6c6dcfdcf736e2ed3fc88d11ce69548eee59757d9438f620",
+      "stderr_bytes": 0
+    }
+  },
+  "retrospective_static_audit": {
+    "source": "Coordinator comparison of output files in the base/candidate-labeled run directories",
+    "run_output_filenames": ["full.json", "summary.stdout.json", "stderr.txt", "exit_code.txt", "started_utc.txt", "ended_utc.txt"],
+    "run_output_files_archived_in_repository": false,
+    "run_commit_or_tree_binding": false,
+    "checkout_observation_after_runs": {
+      "base_head": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "candidate_head": "2933a375fdc3c248514968277effb9a699097131",
+      "both_worktrees_clean_when_inspected": true,
+      "inspection_time_bound_to_runs": false
+    },
+    "auditor_script": {
+      "repository_path": "docs/handoffs/2026-11-12-audit/evidence/audit_static.py",
+      "base_blob": "5cc4b621c2a4ac6156c78057361cb16e7cbd10ec",
+      "candidate_blob": "5cc4b621c2a4ac6156c78057361cb16e7cbd10ec",
+      "repeat_run_invocation_bound_to_script_blob": false
+    },
+    "exit_code_each": 0,
+    "stderr_bytes_each": 0,
+    "base": {
+      "intervals_utc": [
+        ["2026-11-24T16:30:18Z", "2026-11-24T16:33:43Z"],
+        ["2026-11-24T16:35:05Z", "2026-11-24T16:38:37Z"]
+      ],
+      "full_report_bytes_each": 762319,
+      "full_report_sha256_each": "c3cffe636d76cbb59b441a02ec5866d242663fd7289d859ccb9f099be69c625d",
+      "summary_bytes_each": 34575,
+      "summary_sha256_each": "3a1073c4733d35807553309bf88e509465acd48b6e7992d38f75cc64a3876cd5",
+      "reachable_modules_excluding_init": 468,
+      "unreachable_modules": 2442
+    },
+    "candidate": {
+      "intervals_utc": [
+        ["2026-11-24T16:41:51Z", "2026-11-24T16:45:26Z"],
+        ["2026-11-24T16:47:54Z", "2026-11-24T16:51:16Z"]
+      ],
+      "full_report_bytes_each": 762725,
+      "full_report_sha256_each": "89b7c2534895e693f767dbd92ef62c38678a754638e5888e1272009022ec8015",
+      "summary_bytes_each": 34582,
+      "summary_sha256_each": "ccd7fb63358185d6447439d0337c2344eee024c9ef5fced4b6cb89350d7385f2",
+      "reachable_modules_excluding_init": 470,
+      "unreachable_modules": 2442
+    },
+    "archived_report_comparison": {
+      "base_archived_report_sha256": "0d48b7aee52e297e4921a699d6a66abbddf50f855b0a7fd0be9a816653189948",
+      "base_repeat_report_sha256": "c3cffe636d76cbb59b441a02ec5866d242663fd7289d859ccb9f099be69c625d",
+      "base_byte_identical": false,
+      "candidate_archived_report_sha256": "af7e35f3dc7d64f17b506dc01f75df90b296c699902ce98a07e3efe1406a6655",
+      "candidate_repeat_report_sha256": "89b7c2534895e693f767dbd92ef62c38678a754638e5888e1272009022ec8015",
+      "candidate_byte_identical": false
+    },
+    "byte_comparison_scope": "Repeat runs within each base/candidate-labeled directory; neither repeat report matches its archived report. The run captures do not bind to the checked-out commits or auditor."
+  },
+  "formal_nba_evaluation_runs": 0
+}

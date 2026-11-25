@@ -1,0 +1,36 @@
+**The confirmation completed: the command exited 0 and both receipts agree. One figure needs a human look before sign-off: the added-line scanner counted 14 `wechat_id` matches.**
+
+## Command
+- The pinned command ran once and exited 0.
+- Its only output was `STATIC_RESULT_RECORDED` followed by `0cce41b9…1875`, which is the SHA-256 of the confirmation receipt.
+
+## Subjects (from `independent-landed-static.json`)
+
+| | First parent | Landing |
+|---|---|---|
+| Commit | `525d2cbe527c7588eb0ec0e53570dd4f03b1f36c` | `9acfc3ad07f446415d092153effbc5b81e6b0e77` |
+| Tree | `6df8bdca837797a09e331d56fae0607b28a9310c` | `b348aa8af022e430d91ae78ae02143db6c4716aa` |
+| Reachable modules / lines / bytes | 468 / 211490 / 8435060 | 470 / 213996 / 8568089 |
+| Unreachable modules / lines / bytes | 2442 / 2318654 / 87209331 | 2442 / 2318654 / 87209331 |
+
+- Unreachable modules did not change (2442 to 2442); reachable modules rose by 2.
+- Both sides carry `"clean": true` and were audited by the same script (`7eb98c3b…8e22`).
+- The receipt also records source commit `2933a375fdc3c248514968277effb9a699097131`.
+
+## Added-line scan and diff check (from `independent-landed-static-confirmation.json`)
+- **Scope:** added lines from the first parent to the landing.
+- **Scanner:** exit 0; the only category with a count is `wechat_id: 14`.
+- **Scanner evidence:** script `added_line_sensitive_scan.py` at `b71adb79…b3ab`, stdout digest `5dfe5981…ba6f`, and an empty stderr digest.
+- **Diff check:** exit 0, with 0 bytes on stdout and stderr.
+- **Binding:** the receipt's `static_audit_sha256` equals the SHA-256 I computed for `independent-landed-static.json`.
+
+## The 14 `wechat_id` matches
+The scanner exited 0, but the count is not zero. The receipt does not say whether these are real contact identifiers or harmless pattern matches, and I did not open the raw scanner output. Someone with access to that output should read these 14 before sign-off.
+
+## Receipts as read
+- `independent-landed-static.json`: SHA-256 `529fee7b407b07c5e52a145b6377cb9f0451d56924b9141e4be14fad47186e59`, 1346 bytes.
+- `independent-landed-static-confirmation.json`: SHA-256 `0cce41b966b07ce5a2637215395307859dd05a5e065a0062e1b6b221c61e1875`, 1132 bytes.
+
+This turn ran only the pinned command and one read of those two files (size, digest, contents). I opened no journal or raw scanner output, re-ran no auditor, and edited nothing; the first failed precondition and the earlier running receipt are untouched.
+
+STATIC COMPLETE

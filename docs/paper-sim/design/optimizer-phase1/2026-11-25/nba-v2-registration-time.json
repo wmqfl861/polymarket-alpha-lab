@@ -1,0 +1,11 @@
+{
+  "source_sha256": "59195537748fcbc4f835a1359d5a1b50cb065cdeb7ef0cbc69fd8788e5c76c5c",
+  "registration_event_id": 7,
+  "occurred_at": "2026-11-25T09:07:02.412339Z",
+  "config_digest": "552f59f2452a891d9afa55ad4d8cd15d1675d1c4086485589228a1c66d9102a8",
+  "pointer": {
+    "manifest_byte_length": 2933,
+    "manifest_sha256": "ea0888828fdd7826c92db4aff7b3a06b7ed0879f6cbf9142315ece5166b59603",
+    "schema_version": 1
+  }
+}

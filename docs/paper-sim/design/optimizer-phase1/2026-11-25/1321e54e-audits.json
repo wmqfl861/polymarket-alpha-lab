@@ -1,0 +1,30 @@
+{
+  "scope": "local documentary checkpoint; final stage and audit still require the actual endpoint",
+  "utc": "2026-11-25T04:21:18+00:00",
+  "head": "1321e54e68f41b65f3c1080da8d5d55bc2f3634d",
+  "parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "audited_base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "delivery": "b3e6f6d3eb3615b74b677658065de43d84147c94",
+  "paths": 60,
+  "diff_check_exit": 0,
+  "product_tests_workflows_and_migrations_same_as_parent": true,
+  "audits": {
+    "address_occurrence_diff.py": {
+      "script_sha256": "1561d5518cd7f36864fe67356ca8a235b98b2190fdf5630917962e0c0e384f3e",
+      "exit": 0,
+      "stdout_sha256": "8c1540a92302ddb718295b88fa83b42843e2d129519a1f14383b13fe26d816d2",
+      "stderr_bytes": 0,
+      "new_address_file_lines": 0
+    },
+    "test_weakening_scan.py": {
+      "script_sha256": "dfebe6186983895b2849c7d07904756f146bf32f65e2710557a8d621f4e9c32b",
+      "exit": 0,
+      "stdout_sha256": "e26ddc7404bc406622ffcf9c824cc0742e2cfd6012d84b9a944a63d47aaefbaf",
+      "stderr_bytes": 0,
+      "removed_tests": 1,
+      "assertions_decreased": 0,
+      "new_skip_markers": 0,
+      "new_xfail_markers": 0
+    }
+  }
+}

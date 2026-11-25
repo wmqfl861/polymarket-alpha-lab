@@ -1,0 +1,2199 @@
+{
+  "historical_archive_sha256": "03c616e1d94efe5e3a7879e3277645b5d60e4e407bdef6e9d31d9f7eb3366ad5",
+  "runs": [
+    {
+      "model": "club-soccer-recalib",
+      "observed_scorecards": {
+        "candidate_scorecards": {},
+        "diagnostic_scorecards": {
+          "club-soccer-recalib/match_winner": {
+            "archive_counts": {
+              "distinct_eligible_games": 639,
+              "distinct_games_with_refusal": 0,
+              "distinct_predicted_games": 639,
+              "prediction_rows": 639,
+              "predictions_by_line": {
+                "1x2": 639
+              },
+              "refusals_by_line": {},
+              "rows_with_variants": 639,
+              "scored_clusters": 639,
+              "scored_groups": 65
+            },
+            "argmax_hits": 319,
+            "brier": "0.6149379918913255",
+            "calibration_ece": "0.029280453693000003",
+            "calibration_intercept": null,
+            "calibration_slope": null,
+            "eligible_lines": 639,
+            "family_id": "club-soccer-recalib",
+            "forecast_mask_sha256": "0612da4711275aca309734bf336da81e9a4df56e6aad2a9587de3e70451b9243",
+            "gates": [
+              {
+                "check": "finished_official_fixture_xg_coverage",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "1646"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.95"
+                  ],
+                  [
+                    "value",
+                    "0.9902794653705954"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "1646"
+                  ],
+                  [
+                    "unit",
+                    "finished official fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "registered_snapshot_byte_identity",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "15"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "1"
+                  ],
+                  [
+                    "value",
+                    "1"
+                  ],
+                  [
+                    "source",
+                    "registered snapshot manifest"
+                  ],
+                  [
+                    "scope_denominator",
+                    "15"
+                  ],
+                  [
+                    "unit",
+                    "source snapshots"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "away_actual_score_integrity",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "0"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.009999999999999998"
+                  ],
+                  [
+                    "value",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "independently matched source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "missing_required_observable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "away_league_goal_fit",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "0"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.08"
+                  ],
+                  [
+                    "value",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "independently matched source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "missing_required_observable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "home_actual_score_integrity",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "0"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.009999999999999998"
+                  ],
+                  [
+                    "value",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "independently matched source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "missing_required_observable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "home_league_goal_fit",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "0"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.08"
+                  ],
+                  [
+                    "value",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "independently matched source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "missing_required_observable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "independent_score_join_coverage",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "858"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.99"
+                  ],
+                  [
+                    "value",
+                    "0.0"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "858"
+                  ],
+                  [
+                    "unit",
+                    "complete-season source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "team_xg_vs_goals_correlation",
+                "gate": "C",
+                "numbers": [
+                  [
+                    "denominator",
+                    "2"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.7000000000000001"
+                  ],
+                  [
+                    "value",
+                    "0.8586479501894607"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "2"
+                  ],
+                  [
+                    "unit",
+                    "completed source league-seasons"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "walk_forward_beats_published_prior_season_baseline",
+                "gate": "D",
+                "numbers": [
+                  [
+                    "missing",
+                    "brier,log_loss"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "639"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "published_benchmark_missing_on_comparison_cohort"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "market_mad",
+                "gate": "E",
+                "numbers": [
+                  [
+                    "min_events",
+                    "8"
+                  ],
+                  [
+                    "n_events",
+                    "0"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "same-time lines"
+                  ],
+                  [
+                    "required",
+                    "false"
+                  ],
+                  [
+                    "reason",
+                    "no_same_time_market_quotes"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              }
+            ],
+            "holdout_comparison": "unavailable_without_opened_qualifying_holdout",
+            "log_loss": "1.0261657787290517",
+            "model_version": "p4r1+6dc3f30fed0d",
+            "n_events": 639,
+            "paired_games": 0,
+            "paired_vs_incumbent": null,
+            "paired_vs_market": null,
+            "refusal_reasons_by_line": {},
+            "refusals": 0,
+            "sample_status": "descriptive_only",
+            "scope": "search_out_of_fold_descriptive",
+            "spec_sha256": "6dc3f30fed0d063ad75849b993edb1ac9e596303f71ec37c7772b91680240cd8",
+            "variant_spread_median": "0.09622976515515541",
+            "zero_probability_events": 0
+          },
+          "club-soccer-recalib/over_under": {
+            "archive_counts": {
+              "distinct_eligible_games": 639,
+              "distinct_games_with_refusal": 0,
+              "distinct_predicted_games": 639,
+              "prediction_rows": 1917,
+              "predictions_by_line": {
+                "over-1.5": 639,
+                "over-2.5": 639,
+                "over-3.5": 639
+              },
+              "refusals_by_line": {},
+              "rows_with_variants": 1917,
+              "scored_clusters": 639,
+              "scored_groups": 65
+            },
+            "argmax_hits": 1298,
+            "brier": "0.4097100085158952",
+            "calibration_ece": "0.021216890777",
+            "calibration_intercept": "0.07645773855834868",
+            "calibration_slope": "0.9652090678847083",
+            "eligible_lines": 1917,
+            "family_id": "club-soccer-recalib",
+            "forecast_mask_sha256": "7965643dd74fc2793030000d854a6cbf46b4072030d704a7d4efaf892be69e25",
+            "gates": [
+              {
+                "check": "finished_official_fixture_xg_coverage",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "1646"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.95"
+                  ],
+                  [
+                    "value",
+                    "0.9902794653705954"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "1646"
+                  ],
+                  [
+                    "unit",
+                    "finished official fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "registered_snapshot_byte_identity",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "15"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "1"
+                  ],
+                  [
+                    "value",
+                    "1"
+                  ],
+                  [
+                    "source",
+                    "registered snapshot manifest"
+                  ],
+                  [
+                    "scope_denominator",
+                    "15"
+                  ],
+                  [
+                    "unit",
+                    "source snapshots"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "away_actual_score_integrity",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "0"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.009999999999999998"
+                  ],
+                  [
+                    "value",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "independently matched source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "missing_required_observable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "away_league_goal_fit",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "0"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.08"
+                  ],
+                  [
+                    "value",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "independently matched source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "missing_required_observable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "home_actual_score_integrity",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "0"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.009999999999999998"
+                  ],
+                  [
+                    "value",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "independently matched source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "missing_required_observable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "home_league_goal_fit",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "0"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.08"
+                  ],
+                  [
+                    "value",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "independently matched source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "missing_required_observable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "independent_score_join_coverage",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "858"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.99"
+                  ],
+                  [
+                    "value",
+                    "0.0"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "858"
+                  ],
+                  [
+                    "unit",
+                    "complete-season source fixtures"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "team_xg_vs_goals_correlation",
+                "gate": "C",
+                "numbers": [
+                  [
+                    "denominator",
+                    "2"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "0.7000000000000001"
+                  ],
+                  [
+                    "value",
+                    "0.8586479501894607"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "2"
+                  ],
+                  [
+                    "unit",
+                    "completed source league-seasons"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "walk_forward_beats_published_prior_season_baseline",
+                "gate": "D",
+                "numbers": [
+                  [
+                    "missing",
+                    "brier,log_loss"
+                  ],
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "639"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "published_benchmark_missing_on_comparison_cohort"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "market_mad",
+                "gate": "E",
+                "numbers": [
+                  [
+                    "source",
+                    "round39/eredivisie_validation.md"
+                  ],
+                  [
+                    "scope_denominator",
+                    "639"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "false"
+                  ],
+                  [
+                    "reason",
+                    "no_published_market_gate_for_target"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              }
+            ],
+            "holdout_comparison": "unavailable_without_opened_qualifying_holdout",
+            "log_loss": "0.5964505338748305",
+            "model_version": "p4r1+6dc3f30fed0d",
+            "n_events": 1917,
+            "paired_games": 0,
+            "paired_vs_incumbent": null,
+            "paired_vs_market": null,
+            "refusal_reasons_by_line": {},
+            "refusals": 0,
+            "sample_status": "descriptive_only",
+            "scope": "search_out_of_fold_descriptive",
+            "spec_sha256": "6dc3f30fed0d063ad75849b993edb1ac9e596303f71ec37c7772b91680240cd8",
+            "variant_spread_median": "0.05683506551592121",
+            "zero_probability_events": 0
+          }
+        },
+        "incumbent_scorecards": {}
+      },
+      "original_scorecard_sha256": "b27ca7855ae147d27c76537289fd904c61f1fdb95be28fb5815cbd5f12a34fb9",
+      "outcome": "INSUFFICIENT_DATA",
+      "run_id": 1
+    },
+    {
+      "model": "intl-elo-goal-residuals",
+      "observed_scorecards": {
+        "candidate_scorecards": {},
+        "diagnostic_scorecards": {
+          "intl-elo-goal-residuals/over_under": {
+            "archive_counts": {
+              "distinct_eligible_games": 191,
+              "distinct_games_with_refusal": 0,
+              "distinct_predicted_games": 191,
+              "prediction_rows": 191,
+              "predictions_by_line": {
+                "over-2.5": 191
+              },
+              "refusals_by_line": {},
+              "rows_with_variants": 0,
+              "scored_clusters": 191,
+              "scored_groups": 24
+            },
+            "argmax_hits": 110,
+            "brier": "0.48679700900904765",
+            "calibration_ece": "0.077097666025",
+            "calibration_intercept": "0.14059993886043504",
+            "calibration_slope": "0.5228292906376537",
+            "eligible_lines": 191,
+            "family_id": "intl-elo-goal-residuals",
+            "forecast_mask_sha256": "caea0b8ad288c9ca96abd106dab1039bdfccf690bf0103ba640af039438720f7",
+            "gates": [
+              {
+                "check": "provider_schema_reload",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "1"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "1"
+                  ],
+                  [
+                    "value",
+                    "1"
+                  ],
+                  [
+                    "source",
+                    "WP-INTL-3/tools/wp_intl_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "1"
+                  ],
+                  [
+                    "unit",
+                    "provider snapshots"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "registered_snapshot_byte_identity",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "1"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "1"
+                  ],
+                  [
+                    "value",
+                    "1"
+                  ],
+                  [
+                    "source",
+                    "registered snapshot manifest"
+                  ],
+                  [
+                    "scope_denominator",
+                    "1"
+                  ],
+                  [
+                    "unit",
+                    "source snapshots"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "mean_total_bias",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "44"
+                  ],
+                  [
+                    "min_denominator",
+                    "20"
+                  ],
+                  [
+                    "threshold",
+                    "0.15"
+                  ],
+                  [
+                    "value",
+                    "0.23925548060020185"
+                  ],
+                  [
+                    "source",
+                    "WP-INTL-3/tools/wp_intl_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "44"
+                  ],
+                  [
+                    "unit",
+                    "paired UEFA Nations League matches"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "over_2_5_probability_bias",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "44"
+                  ],
+                  [
+                    "min_denominator",
+                    "20"
+                  ],
+                  [
+                    "threshold",
+                    "0.05"
+                  ],
+                  [
+                    "value",
+                    "0.012457964660701376"
+                  ],
+                  [
+                    "source",
+                    "WP-INTL-3/tools/wp_intl_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "44"
+                  ],
+                  [
+                    "unit",
+                    "paired UEFA Nations League matches"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "elo_rating_sanity",
+                "gate": "C",
+                "numbers": [
+                  [
+                    "source",
+                    "WP-INTL-3/tools/wp_intl_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "191"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "false"
+                  ],
+                  [
+                    "reason",
+                    "goal_residual_model_has_no_elo_ratings"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "walk_forward_beats_coin_flip",
+                "gate": "D",
+                "numbers": [
+                  [
+                    "n_events",
+                    "44"
+                  ],
+                  [
+                    "baseline_log_loss",
+                    "0.6931471805599445"
+                  ],
+                  [
+                    "model_log_loss",
+                    "0.6872916390249076"
+                  ],
+                  [
+                    "model_clipped",
+                    "0"
+                  ],
+                  [
+                    "baseline_clipped",
+                    "0"
+                  ],
+                  [
+                    "scope",
+                    "search_out_of_fold_descriptive"
+                  ],
+                  [
+                    "available_matches",
+                    "44"
+                  ],
+                  [
+                    "refused_matches",
+                    "0"
+                  ],
+                  [
+                    "all_eligible_matches",
+                    "191"
+                  ],
+                  [
+                    "all_refused_matches",
+                    "0"
+                  ],
+                  [
+                    "all_comparison_matches",
+                    "191"
+                  ],
+                  [
+                    "unclassified_matches",
+                    "0"
+                  ],
+                  [
+                    "missing_formal_contracts",
+                    "0"
+                  ],
+                  [
+                    "missing_causal_benchmarks",
+                    "0"
+                  ],
+                  [
+                    "source_snapshot_sha256",
+                    "2d0ed25277fda6315d1de18c8af5464575641076ff3d1cdb7a606cafdf6c26be"
+                  ],
+                  [
+                    "source_match_mask_sha256",
+                    "6c43f65c0b77eec771456ab93b82490267ea62a8b347b46dae578a14352d6ffb"
+                  ],
+                  [
+                    "ordered_original_row_indices",
+                    "47946,47947,47948,47949,47950,47951,47952,47953,47954,47979,47980,47981,47982,47983,47984,47985,47986,47987,47995,47996,47997,47998,47999,48000,48001,48002,48010,48011,48012,48013,48014,48015,48016,48017,48018,48039,48040,48041,48042,48043,48044,48045,48046,48047"
+                  ],
+                  [
+                    "order",
+                    "source day, original match row index"
+                  ],
+                  [
+                    "source",
+                    "WP-INTL-3/tools/wp_intl_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "44"
+                  ],
+                  [
+                    "unit",
+                    "paired UEFA Nations League matches"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "walk_forward_beats_tournament_mean_total",
+                "gate": "D",
+                "numbers": [
+                  [
+                    "n_events",
+                    "44"
+                  ],
+                  [
+                    "baseline_log_loss",
+                    "0.6891417549740537"
+                  ],
+                  [
+                    "model_log_loss",
+                    "0.6872916390249076"
+                  ],
+                  [
+                    "model_clipped",
+                    "0"
+                  ],
+                  [
+                    "baseline_clipped",
+                    "0"
+                  ],
+                  [
+                    "scope",
+                    "search_out_of_fold_descriptive"
+                  ],
+                  [
+                    "available_matches",
+                    "44"
+                  ],
+                  [
+                    "refused_matches",
+                    "0"
+                  ],
+                  [
+                    "all_eligible_matches",
+                    "191"
+                  ],
+                  [
+                    "all_refused_matches",
+                    "0"
+                  ],
+                  [
+                    "all_comparison_matches",
+                    "191"
+                  ],
+                  [
+                    "unclassified_matches",
+                    "0"
+                  ],
+                  [
+                    "missing_formal_contracts",
+                    "0"
+                  ],
+                  [
+                    "missing_causal_benchmarks",
+                    "0"
+                  ],
+                  [
+                    "source_snapshot_sha256",
+                    "2d0ed25277fda6315d1de18c8af5464575641076ff3d1cdb7a606cafdf6c26be"
+                  ],
+                  [
+                    "source_match_mask_sha256",
+                    "6c43f65c0b77eec771456ab93b82490267ea62a8b347b46dae578a14352d6ffb"
+                  ],
+                  [
+                    "ordered_original_row_indices",
+                    "47946,47947,47948,47949,47950,47951,47952,47953,47954,47979,47980,47981,47982,47983,47984,47985,47986,47987,47995,47996,47997,47998,47999,48000,48001,48002,48010,48011,48012,48013,48014,48015,48016,48017,48018,48039,48040,48041,48042,48043,48044,48045,48046,48047"
+                  ],
+                  [
+                    "order",
+                    "source day, original match row index"
+                  ],
+                  [
+                    "source",
+                    "WP-INTL-3/tools/wp_intl_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "44"
+                  ],
+                  [
+                    "unit",
+                    "paired UEFA Nations League matches"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "market_mad",
+                "gate": "E",
+                "numbers": [
+                  [
+                    "min_events",
+                    "10"
+                  ],
+                  [
+                    "n_events",
+                    "0"
+                  ],
+                  [
+                    "source",
+                    "WP-INTL-3/tools/wp_intl_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "same-time lines"
+                  ],
+                  [
+                    "required",
+                    "false"
+                  ],
+                  [
+                    "reason",
+                    "no_same_time_market_quotes"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              }
+            ],
+            "holdout_comparison": "unavailable_without_opened_qualifying_holdout",
+            "log_loss": "0.6878700535442331",
+            "model_version": "intl-elo-goal-residuals-v1",
+            "n_events": 191,
+            "paired_games": 0,
+            "paired_vs_incumbent": null,
+            "paired_vs_market": null,
+            "refusal_reasons_by_line": {},
+            "refusals": 0,
+            "sample_status": "descriptive_only",
+            "scope": "search_out_of_fold_descriptive",
+            "spec_sha256": "588b07deb13eb0b406316f6100ec958cc6ea4d81ea798b4cb73dbb0c4e5b1332",
+            "variant_spread_median": null,
+            "zero_probability_events": 0
+          }
+        },
+        "incumbent_scorecards": {}
+      },
+      "original_scorecard_sha256": "e47b518723c52ac369562af6a11b85ae24cb4c62fb6262e6ae298784a91e3d65",
+      "outcome": "NO_IMPROVEMENT",
+      "run_id": 2
+    },
+    {
+      "model": "nba-pace-efficiency",
+      "observed_scorecards": {
+        "candidate_scorecards": {},
+        "diagnostic_scorecards": {
+          "nba-pace-efficiency/moneyline": {
+            "archive_counts": {
+              "distinct_eligible_games": 74,
+              "distinct_games_with_refusal": 2,
+              "distinct_predicted_games": 72,
+              "prediction_rows": 72,
+              "predictions_by_line": {
+                "moneyline": 72
+              },
+              "refusals_by_line": {
+                "moneyline": 2
+              },
+              "rows_with_variants": 72,
+              "scored_clusters": 72,
+              "scored_groups": 9
+            },
+            "argmax_hits": 42,
+            "brier": "0.5768075504554022",
+            "calibration_ece": "0.234985360653",
+            "calibration_intercept": "0.03593011278080972",
+            "calibration_slope": "0.16903367196153474",
+            "eligible_lines": 74,
+            "family_id": "nba-pace-efficiency",
+            "forecast_mask_sha256": "1d4a81b08133f451efcfdb1a378b930eb4f3970cd68449b599d5e16af2b36883",
+            "gates": [
+              {
+                "check": "independent_espn_snapshot_rebuild",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "available_team_schedules",
+                    "0"
+                  ],
+                  [
+                    "required_team_schedules",
+                    "30"
+                  ],
+                  [
+                    "available_game_summaries",
+                    "0"
+                  ],
+                  [
+                    "required_game_summaries",
+                    "154"
+                  ],
+                  [
+                    "missing_team_schedules",
+                    "['ATL', 'BKN', 'BOS', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GS', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NO', 'NY', 'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SA', 'SAC', 'TOR', 'UTAH', 'WSH']"
+                  ],
+                  [
+                    "missing_game_summaries",
+                    "None"
+                  ],
+                  [
+                    "teams_equal",
+                    "None"
+                  ],
+                  [
+                    "injuries_equal",
+                    "None"
+                  ],
+                  [
+                    "rebuilt_normalized_tables_sha256",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "154"
+                  ],
+                  [
+                    "unit",
+                    "paired NBA games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "registered_raw_schedules_and_summaries_unavailable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "paired_official_schedule",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "teams",
+                    "30"
+                  ],
+                  [
+                    "team_rows",
+                    "308"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "154"
+                  ],
+                  [
+                    "unit",
+                    "paired NBA games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "provider_schema_reload",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "1"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "1"
+                  ],
+                  [
+                    "value",
+                    "1"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "1"
+                  ],
+                  [
+                    "unit",
+                    "provider snapshots"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "registered_snapshot_byte_identity",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "1"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "1"
+                  ],
+                  [
+                    "value",
+                    "1"
+                  ],
+                  [
+                    "source",
+                    "registered snapshot manifest"
+                  ],
+                  [
+                    "scope_denominator",
+                    "1"
+                  ],
+                  [
+                    "unit",
+                    "source snapshots"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "expected_vs_actual_total_pearson_p",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "72"
+                  ],
+                  [
+                    "min_denominator",
+                    "20"
+                  ],
+                  [
+                    "threshold",
+                    "0.049999999999999996"
+                  ],
+                  [
+                    "value",
+                    "0.8287103158300905"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "72"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "expected_vs_actual_total_pearson_r",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "72"
+                  ],
+                  [
+                    "min_denominator",
+                    "20"
+                  ],
+                  [
+                    "threshold",
+                    "0.25"
+                  ],
+                  [
+                    "value",
+                    "0.02604030479379761"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "72"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "net_rating_vs_win_rate_spearman",
+                "gate": "C",
+                "numbers": [
+                  [
+                    "denominator",
+                    "30"
+                  ],
+                  [
+                    "min_denominator",
+                    "30"
+                  ],
+                  [
+                    "threshold",
+                    "0.5"
+                  ],
+                  [
+                    "value",
+                    "0.47531627740019355"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "30"
+                  ],
+                  [
+                    "unit",
+                    "teams on paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "walk_forward_beats_coin_flip",
+                "gate": "D",
+                "numbers": [
+                  [
+                    "n_events",
+                    "72"
+                  ],
+                  [
+                    "baseline_brier",
+                    "0.5"
+                  ],
+                  [
+                    "model_brier",
+                    "0.5768075504554022"
+                  ],
+                  [
+                    "baseline_log_loss",
+                    "0.6931471805599453"
+                  ],
+                  [
+                    "model_log_loss",
+                    "0.9373562092595785"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "72"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "walk_forward_beats_home_always",
+                "gate": "D",
+                "numbers": [
+                  [
+                    "n_events",
+                    "72"
+                  ],
+                  [
+                    "baseline_brier",
+                    "1.0"
+                  ],
+                  [
+                    "model_brier",
+                    "0.5768075504554022"
+                  ],
+                  [
+                    "baseline_log_loss",
+                    "13.815510557964274"
+                  ],
+                  [
+                    "model_log_loss",
+                    "0.9373562092595785"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "72"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "market_mad",
+                "gate": "E",
+                "numbers": [
+                  [
+                    "min_events",
+                    "1"
+                  ],
+                  [
+                    "n_events",
+                    "0"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "0"
+                  ],
+                  [
+                    "unit",
+                    "same-time lines"
+                  ],
+                  [
+                    "required",
+                    "false"
+                  ],
+                  [
+                    "reason",
+                    "no_same_time_market_quotes"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              }
+            ],
+            "holdout_comparison": "unavailable_without_opened_qualifying_holdout",
+            "log_loss": "0.9373562092595785",
+            "model_version": "wp-nba2+6ec02b715c97",
+            "n_events": 72,
+            "paired_games": 0,
+            "paired_vs_incumbent": null,
+            "paired_vs_market": null,
+            "refusal_reasons_by_line": {
+              "away team 'CLE' is missing from the snapshot teams": 1,
+              "away team 'DEN' is missing from the snapshot teams": 1
+            },
+            "refusals": 2,
+            "sample_status": "descriptive_only",
+            "scope": "search_out_of_fold_descriptive",
+            "spec_sha256": "6ec02b715c9777d1a5c758fdafae8d571b19c8400668b0731aeb731110f2377c",
+            "variant_spread_median": "0.023450938561562634",
+            "zero_probability_events": 0
+          },
+          "nba-pace-efficiency/totals": {
+            "archive_counts": {
+              "distinct_eligible_games": 74,
+              "distinct_games_with_refusal": 2,
+              "distinct_predicted_games": 72,
+              "prediction_rows": 72,
+              "predictions_by_line": {
+                "totals": 72
+              },
+              "refusals_by_line": {
+                "totals": 2
+              },
+              "rows_with_variants": 72,
+              "scored_clusters": 72,
+              "scored_groups": 9
+            },
+            "argmax_hits": 44,
+            "brier": "0.5853326900208692",
+            "calibration_ece": "0.238271894168",
+            "calibration_intercept": "0.324252067074966",
+            "calibration_slope": "0.03695056944320615",
+            "eligible_lines": 74,
+            "family_id": "nba-pace-efficiency",
+            "forecast_mask_sha256": "0a5e04c9ba60abac4818a47db1d9c382f6f17609a14bf000d57e8b9980f3de0f",
+            "gates": [
+              {
+                "check": "independent_espn_snapshot_rebuild",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "available_team_schedules",
+                    "0"
+                  ],
+                  [
+                    "required_team_schedules",
+                    "30"
+                  ],
+                  [
+                    "available_game_summaries",
+                    "0"
+                  ],
+                  [
+                    "required_game_summaries",
+                    "154"
+                  ],
+                  [
+                    "missing_team_schedules",
+                    "['ATL', 'BKN', 'BOS', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GS', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NO', 'NY', 'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SA', 'SAC', 'TOR', 'UTAH', 'WSH']"
+                  ],
+                  [
+                    "missing_game_summaries",
+                    "None"
+                  ],
+                  [
+                    "teams_equal",
+                    "None"
+                  ],
+                  [
+                    "injuries_equal",
+                    "None"
+                  ],
+                  [
+                    "rebuilt_normalized_tables_sha256",
+                    "None"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "154"
+                  ],
+                  [
+                    "unit",
+                    "paired NBA games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ],
+                  [
+                    "reason",
+                    "registered_raw_schedules_and_summaries_unavailable"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              },
+              {
+                "check": "paired_official_schedule",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "teams",
+                    "30"
+                  ],
+                  [
+                    "team_rows",
+                    "308"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "154"
+                  ],
+                  [
+                    "unit",
+                    "paired NBA games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "provider_schema_reload",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "1"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "1"
+                  ],
+                  [
+                    "value",
+                    "1"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "1"
+                  ],
+                  [
+                    "unit",
+                    "provider snapshots"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "registered_snapshot_byte_identity",
+                "gate": "A",
+                "numbers": [
+                  [
+                    "denominator",
+                    "1"
+                  ],
+                  [
+                    "min_denominator",
+                    "1"
+                  ],
+                  [
+                    "threshold",
+                    "1"
+                  ],
+                  [
+                    "value",
+                    "1"
+                  ],
+                  [
+                    "source",
+                    "registered snapshot manifest"
+                  ],
+                  [
+                    "scope_denominator",
+                    "1"
+                  ],
+                  [
+                    "unit",
+                    "source snapshots"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "PASS"
+              },
+              {
+                "check": "expected_vs_actual_total_pearson_p",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "72"
+                  ],
+                  [
+                    "min_denominator",
+                    "20"
+                  ],
+                  [
+                    "threshold",
+                    "0.049999999999999996"
+                  ],
+                  [
+                    "value",
+                    "0.8287103158300905"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "72"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "expected_vs_actual_total_pearson_r",
+                "gate": "B",
+                "numbers": [
+                  [
+                    "denominator",
+                    "72"
+                  ],
+                  [
+                    "min_denominator",
+                    "20"
+                  ],
+                  [
+                    "threshold",
+                    "0.25"
+                  ],
+                  [
+                    "value",
+                    "0.02604030479379761"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "72"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "net_rating_vs_win_rate_spearman",
+                "gate": "C",
+                "numbers": [
+                  [
+                    "denominator",
+                    "30"
+                  ],
+                  [
+                    "min_denominator",
+                    "30"
+                  ],
+                  [
+                    "threshold",
+                    "0.5"
+                  ],
+                  [
+                    "value",
+                    "0.47531627740019355"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "30"
+                  ],
+                  [
+                    "unit",
+                    "teams on paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "walk_forward_beats_coin_flip",
+                "gate": "D",
+                "numbers": [
+                  [
+                    "n_events",
+                    "72"
+                  ],
+                  [
+                    "baseline_log_loss",
+                    "0.6931471805599453"
+                  ],
+                  [
+                    "model_log_loss",
+                    "0.9162301140410549"
+                  ],
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "72"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "true"
+                  ]
+                ],
+                "verdict": "FAIL"
+              },
+              {
+                "check": "market_mad",
+                "gate": "E",
+                "numbers": [
+                  [
+                    "source",
+                    "WP-NBA-3/tools/wp_nba_validate.py"
+                  ],
+                  [
+                    "scope_denominator",
+                    "72"
+                  ],
+                  [
+                    "unit",
+                    "paired games"
+                  ],
+                  [
+                    "required",
+                    "false"
+                  ],
+                  [
+                    "reason",
+                    "no_published_market_gate_for_target"
+                  ]
+                ],
+                "verdict": "NOT_ASSESSABLE"
+              }
+            ],
+            "holdout_comparison": "unavailable_without_opened_qualifying_holdout",
+            "log_loss": "0.9162301140410549",
+            "model_version": "wp-nba2+6ec02b715c97",
+            "n_events": 72,
+            "paired_games": 0,
+            "paired_vs_incumbent": null,
+            "paired_vs_market": null,
+            "refusal_reasons_by_line": {
+              "away team 'CLE' is missing from the snapshot teams": 1,
+              "away team 'DEN' is missing from the snapshot teams": 1
+            },
+            "refusals": 2,
+            "sample_status": "descriptive_only",
+            "scope": "search_out_of_fold_descriptive",
+            "spec_sha256": "6ec02b715c9777d1a5c758fdafae8d571b19c8400668b0731aeb731110f2377c",
+            "variant_spread_median": "0.023308152145588734",
+            "zero_probability_events": 0
+          }
+        },
+        "incumbent_scorecards": {}
+      },
+      "original_scorecard_sha256": "8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10",
+      "outcome": "INSUFFICIENT_DATA",
+      "run_id": 3
+    }
+  ],
+  "scope": "The scorecard projections from the three independent original readbacks, with the managed hash of each full original. The projection augments per-line refusal rows with archive counts; its bytes are distinct from the full original card.",
+  "source_commit": "e234c3364c204db513cc4fbcdcb6d5eb43c7417b"
+}

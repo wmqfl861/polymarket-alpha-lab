@@ -1,0 +1,22 @@
+{
+  "observed_utc": "2026-11-24T07:20:58Z",
+  "remote_main": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "intake_ref_present": false,
+  "local_merge_metadata": [
+    {
+      "commit": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+      "author_uses_github_noreply": true,
+      "committer_uses_github_noreply": true
+    },
+    {
+      "commit": "9cfcb0d5677d42212fb97dacca541e2f29bb5e39",
+      "author_uses_github_noreply": true,
+      "committer_uses_github_noreply": true
+    },
+    {
+      "commit": "8eeddb47cd5cb03ffafd3d29921f344b764094c8",
+      "author_uses_github_noreply": true,
+      "committer_uses_github_noreply": true
+    }
+  ]
+}

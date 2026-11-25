@@ -1,0 +1,40 @@
+{
+  "audited_base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "source_commit": "2933a375fdc3c248514968277effb9a699097131",
+  "landed_main": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "documentary_subject": "1321e54e68f41b65f3c1080da8d5d55bc2f3634d",
+  "file": "tests/test_papersim_cli_optimize.py",
+  "scanner_removed_name": "test_optimize_help_names_the_four_subcommands",
+  "current_name": "test_optimize_help_names_the_experiment_subcommands",
+  "base_checked_commands": [
+    "families",
+    "init",
+    "run",
+    "status"
+  ],
+  "current_checked_commands": [
+    "families",
+    "init",
+    "register-experiment",
+    "run",
+    "status"
+  ],
+  "base_check_nodes": {
+    "assert_statements": 2,
+    "pytest_raises": 1
+  },
+  "current_check_nodes": {
+    "assert_statements": 2,
+    "pytest_raises": 1
+  },
+  "verified_only_ast_changes": [
+    "function name",
+    "additional register-experiment CLI help token"
+  ],
+  "focused_pytest": {
+    "node": "tests/test_papersim_cli_optimize.py::test_optimize_help_names_the_experiment_subcommands",
+    "exit": 0,
+    "passed": 1,
+    "stdout_sha256": "4c1d70bc70c2221300b17f315e1384e26ab66137234ed663e4093b48bfadd9ca"
+  }
+}

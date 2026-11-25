@@ -1,0 +1,132 @@
+{
+  "retained_local_baseline": {
+    "bytes": 129,
+    "sha256": "e199ffd558620311773eb1b50c350c31031d4b45457e1c59b2a6d05f197e4b3e",
+    "result": {
+      "commit": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+      "counts": {
+        "passed": 43956,
+        "skipped": 437
+      },
+      "files": 3338,
+      "groups": 31
+    }
+  },
+  "retained_local_candidate": {
+    "bytes": 129,
+    "sha256": "d5f6e038fb5cad35143c7a9ae46976b614e0a7ff48dd7631a8b579c5b13e22fb",
+    "result": {
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "counts": {
+        "passed": 44016,
+        "skipped": 444
+      },
+      "files": 3340,
+      "groups": 31
+    }
+  },
+  "hosted_baseline": {
+    "job": 138738650157,
+    "skip_count": 438,
+    "reason_counts": {
+      "OS and PowerShell specific": 28,
+      "opt-in native, database or isolated integration": 397,
+      "optional input or fixture": 13
+    },
+    "job_response_sha256": "46bddf6ce5b2fa7a859125de767daa0786f8464d7878a84f6c7b8671a3cdfad6"
+  },
+  "hosted_candidate": {
+    "job": 138935810311,
+    "skip_count": 445,
+    "reason_counts": {
+      "OS and PowerShell specific": 28,
+      "opt-in native, database or isolated integration": 404,
+      "optional input or fixture": 13
+    },
+    "job_response_sha256": "fbdd81d6207f8ce57bac5b4e8bd3086c71f9ba57f0e87cb4aa9768423966ae03"
+  },
+  "utc": "2026-11-25T08:36:50.005795+00:00",
+  "source_commit": "2933a375fdc3c248514968277effb9a699097131",
+  "landed_commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "landed_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+  "landing_added_line_contact_shape_classification": {
+    "comparison_exit": 0,
+    "compared_masked_coordinates": 14,
+    "classifications": {
+      "registration_command": 5,
+      "schedule_identifier": 9
+    },
+    "landing_scanner_output_sha256": "355c16f7befa3966680d3d2d9b946772ea32d3fb1d57a68d51b540b415e92676",
+    "earlier_receipt_sha256": "f1ce327dfd324698d086a80adbd7ebca2f0ea44ea9ca2a167096a33cf82d7869",
+    "utc": "2026-11-25T08:36:41.986036+00:00",
+    "source_commit": "2933a375fdc3c248514968277effb9a699097131",
+    "landed_commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "landed_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa"
+  },
+  "local_native_node_proof": {
+    "new_test_definitions": [
+      "test_native_nba_v2_interrupted_root_never_allows_a_new_search",
+      "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery",
+      "test_native_nba_v2_registration_is_atomic_and_reentrant",
+      "test_native_nba_v2_store_rejects_forged_sources_callback_and_comparator"
+    ],
+    "native_passed_cases": [
+      {
+        "test": "test_native_nba_v2_registration_is_atomic_and_reentrant",
+        "batch": 1,
+        "receipt_sha256": "42ca2f571dae576bacb70231c079d8ed0b4d60662b378175f2c6a20711e08e2e",
+        "junit_sha256": "cf14343707056da8a7ca3958af1fc9450f748f6d7ef37a38d3cac8d2436f56c4"
+      },
+      {
+        "test": "test_native_nba_v2_store_rejects_forged_sources_callback_and_comparator",
+        "batch": 2,
+        "receipt_sha256": "626bb3ea4562615896f67df34133a2d0680f120d39485d1aa420815e6c058f23",
+        "junit_sha256": "9d31b38272ca883188e754537c05bdb6abdfe737a4a19d73f51298742ce47cea"
+      },
+      {
+        "test": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-01]",
+        "batch": 3,
+        "receipt_sha256": "f5719e0b05f833949e5c0709a787b7e4f972d15ea1a8ed569850615e2d06667d",
+        "junit_sha256": "0388d440d5b5f29164410553c3f917efcfe01a05ee78fc9dcb89fe270bd9f2d1"
+      },
+      {
+        "test": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-02]",
+        "batch": 4,
+        "receipt_sha256": "80232cb316e0f60cb43ca94feb42c418aaa76ee4604078f4a096ea69a2cc49ca",
+        "junit_sha256": "c49749e7f7c14f1dc0532c9857dd1f56e194a5869694b8d2e2172bbe322150b6"
+      },
+      {
+        "test": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-03]",
+        "batch": 5,
+        "receipt_sha256": "6443c97701fd18fd3aabc42e83bef2c9a2e18010a9f2c38bc2195230cf95d6d0",
+        "junit_sha256": "48d7b125c1804e9c48c64e5be79dec415ab5c871adfd3ead675e232158101ae0"
+      },
+      {
+        "test": "test_native_nba_v2_interrupted_root_never_allows_a_new_search[case-01]",
+        "batch": 6,
+        "receipt_sha256": "02f5e08ce0ec3ad73cf2a9ec095054b661e488441bca4eb8dca1d701aea1e8d2",
+        "junit_sha256": "beb24f63dd420ae78e097fabf9638850afe8c32a90e741d12a40afdeb9e8d9fc"
+      },
+      {
+        "test": "test_native_nba_v2_interrupted_root_never_allows_a_new_search[case-02]",
+        "batch": 7,
+        "receipt_sha256": "3f97a03ed34553eacf34a39d2a16358021217b073b49e0eec9fcb05009785e04",
+        "junit_sha256": "896f20df2fa6c62d9950c442e968fd67d5aeea3477aedbccecc17695ce796900"
+      }
+    ],
+    "collection_receipt_sha256": "1b6af8f2fcea0ab7b609c2336b5ff91f8cdaad4588f9dd2704b5a1fd6e4c6d0d"
+  },
+  "retained_execution_r3": {
+    "exit": 1,
+    "failed_stage": "offline-skip-accounting"
+  },
+  "retained_execution_r4": {
+    "exit": 1,
+    "failed_stage": "NBA_BUDGET_ASSERTIONS_NOT_ALL_PASSED",
+    "seven_module_pytest_exit": 0,
+    "budget_selection_fact": "Six function definitions include two parameter instances of the last function.",
+    "aggregate_created": false
+  },
+  "scope": "Current skip reason buckets are from pinned hosted jobs. Local full-suite comparison totals are the original local receipts. Native managed successful cases are independently named in original batch receipts. The final local per-case outcome is a separate component.",
+  "formal_nba_attempts": 0
+}

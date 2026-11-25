@@ -1,0 +1,371 @@
+{
+  "historical_candidate": "e0a8b6185b4b78a779b3f71f7ec4d5b874482c21",
+  "initial_code_review": {
+    "source": {
+      "file": "fx47-code-review.json",
+      "bytes": 6396,
+      "sha256": "68b2be06d27ebca85e7a45f4f5601d46b05521f6a8e7b2735bea1be8c0056c43"
+    },
+    "session": "sess_63be2759-d258-4404-943f-82e79d7c9200",
+    "turn": "turn_710a0fac-29f5-492e-a72a-66fa26b23f2b",
+    "verdict_line": "VERDICT: PASS — candidate e0a8b6185b4b78a779b3f71f7ec4d5b874482c21 (baseline ab6edff2d64ac8aa5c2831d748b8730b63f8312d)"
+  },
+  "old_offline": {
+    "manifest": {
+      "file": "offline-continuation/fx47-e0a8b6185b4b/manifest.json",
+      "bytes": 204191,
+      "sha256": "f255ce9f1c718d0c32975eddd8cb4032c12979d6c007e68ef2ed63100bf3ea00"
+    },
+    "progress": {
+      "file": "offline-continuation/fx47-e0a8b6185b4b/progress.jsonl",
+      "bytes": 36233,
+      "sha256": "7122f728cad180b7ceb31fb89fe2f5f27bb5e814325105e06e091195894033f8"
+    },
+    "groups_expected": 31,
+    "verified_groups": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "terminal_event": {
+      "event": "run_failed",
+      "head": "e0a8b6185b4b78a779b3f71f7ec4d5b874482c21",
+      "reason": "pytest group 19 exited 1",
+      "utc": "2026-11-24T03:59:16+00:00"
+    },
+    "group_19_diagnostic": {
+      "source": {
+        "file": "fx47-group19-synthetic-diagnostic-v2.json",
+        "bytes": 417,
+        "sha256": "11bc261d872821459a97da9aa5407dd855709e5c1090a2f75a6774645e905e7e"
+      },
+      "pytest_exit": 1,
+      "phases": [
+        {
+          "phase": "setup",
+          "result": "passed"
+        },
+        {
+          "phase": "call",
+          "result": "failed",
+          "exception_type": "TypeError"
+        },
+        {
+          "phase": "teardown",
+          "result": "passed"
+        }
+      ]
+    }
+  },
+  "corrected_candidate": {
+    "source": {
+      "file": "fx47-v3-native-archive-v2.jsonl",
+      "bytes": 16362,
+      "sha256": "9e8b66838ef3b84df0bb11ab1550481b4a5537792d23d266a8ed0b7581d47891"
+    },
+    "preflight": {
+      "expected_cases": 23,
+      "head": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+      "namespace": "unix",
+      "stage": "preflight",
+      "tree": "15dabd7731b2fb844e3d1e5a31df6302d1d2af9a"
+    },
+    "runtime": {
+      "head": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+      "postgres_major": 18,
+      "psycopg": "3.3.4",
+      "driver": "binary"
+    },
+    "pytest": {
+      "counts": {
+        "collection_errors": 0,
+        "deselected": 0,
+        "duplicate_receipts": 0,
+        "error": 0,
+        "failed": 0,
+        "missing_receipts": 0,
+        "not_run": 0,
+        "passed": 23,
+        "receipts": 23,
+        "rejected_receipts": 0,
+        "selected": 23,
+        "skipped": 0,
+        "xfailed": 0,
+        "xpassed": 0
+      },
+      "inventory": {
+        "duplicate": 0,
+        "expected": 23,
+        "missing": [],
+        "new_collected": 13,
+        "new_expected": 13,
+        "original_collected": 10,
+        "original_expected": 10,
+        "unexpected": 0
+      },
+      "exit_code": 0
+    },
+    "case_receipts": [
+      {
+        "case": 1,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_variant_quotes_replays_both_forms",
+        "outcome": "passed",
+        "fixture_case": "text-first",
+        "properties": [
+          "fx47_variant_quotes"
+        ]
+      },
+      {
+        "case": 2,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_variant_quotes_replays_both_forms",
+        "outcome": "passed",
+        "fixture_case": "array-first",
+        "properties": [
+          "fx47_variant_quotes"
+        ]
+      },
+      {
+        "case": 3,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_replays_legacy_variant_quotes",
+        "outcome": "passed",
+        "fixture_case": "canonical",
+        "properties": [
+          "fx47_legacy_variant_quotes"
+        ]
+      },
+      {
+        "case": 4,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_replays_legacy_variant_quotes",
+        "outcome": "passed",
+        "fixture_case": "noncanonical",
+        "properties": [
+          "fx47_legacy_variant_quotes"
+        ]
+      },
+      {
+        "case": 5,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_variant_quotes_conflict_preserves_rows",
+        "outcome": "passed",
+        "fixture_case": "new",
+        "properties": [
+          "fx47_variant_quotes_conflicts"
+        ]
+      },
+      {
+        "case": 6,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_variant_quotes_conflict_preserves_rows",
+        "outcome": "passed",
+        "fixture_case": "legacy-noncanonical",
+        "properties": [
+          "fx47_variant_quotes_conflicts"
+        ]
+      },
+      {
+        "case": 7,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_preserves_precise_variant_quote_text",
+        "outcome": "passed",
+        "properties": []
+      },
+      {
+        "case": 8,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_replays_legacy_empty_variant_quotes",
+        "outcome": "passed",
+        "fixture_case": "python-empty-list",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 9,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_replays_legacy_empty_variant_quotes",
+        "outcome": "passed",
+        "fixture_case": "canonical-empty-text",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 10,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_replays_legacy_empty_variant_quotes",
+        "outcome": "passed",
+        "fixture_case": "noncanonical-empty-text",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 11,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_writes_empty_variant_quotes_as_array",
+        "outcome": "passed",
+        "fixture_case": "text-first",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 12,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_writes_empty_variant_quotes_as_array",
+        "outcome": "passed",
+        "fixture_case": "list-first",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 13,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_replays_legacy_mixed_variant_quotes",
+        "outcome": "passed",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 14,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_replays_legacy_empty_list_with_equivalent_canonical_quote",
+        "outcome": "passed",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 15,
+        "test": "tests/test_papersim_scan_store_native.py::test_run_scan_legacy_empty_list_rejects_changed_submission",
+        "outcome": "passed",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 16,
+        "test": "tests/test_papersim_scan_store_native.py::test_record_scan_waits_for_legacy_scan_writer",
+        "outcome": "passed",
+        "fixture_case": "commit-equivalent",
+        "properties": [
+          "fx47_wait_observed",
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 17,
+        "test": "tests/test_papersim_scan_store_native.py::test_record_scan_waits_for_legacy_scan_writer",
+        "outcome": "passed",
+        "fixture_case": "commit-divergent",
+        "properties": [
+          "fx47_wait_observed",
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 18,
+        "test": "tests/test_papersim_scan_store_native.py::test_record_scan_waits_for_legacy_scan_writer",
+        "outcome": "passed",
+        "fixture_case": "rollback",
+        "properties": [
+          "fx47_wait_observed",
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 19,
+        "test": "tests/test_papersim_scan_store_native.py::test_record_scan_concurrent_new_writers_return_same_ids_and_cash_key",
+        "outcome": "passed",
+        "properties": [
+          "fx47_wait_observed",
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 20,
+        "test": "tests/test_papersim_scan_store_native.py::test_record_scan_different_key_preserves_operation_key_violation",
+        "outcome": "passed",
+        "properties": [
+          "fx47_quote_scan"
+        ]
+      },
+      {
+        "case": 21,
+        "test": "tests/test_papersim_scan_store_native.py::test_full_scan_writes_candidates_entries_cash_receipts_and_replays",
+        "outcome": "passed",
+        "properties": []
+      },
+      {
+        "case": 22,
+        "test": "tests/test_papersim_scan_store_native.py::test_retry_of_an_unchanged_scan_is_idempotent",
+        "outcome": "passed",
+        "properties": []
+      },
+      {
+        "case": 23,
+        "test": "tests/test_papersim_scan_store_native.py::test_pause_escalation_appends_rows_and_resume_unlatches_per_queue",
+        "outcome": "passed",
+        "properties": []
+      }
+    ],
+    "terminal": {
+      "exit_code": 0,
+      "head": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+      "result": "passed",
+      "same_head": true,
+      "stage": "complete"
+    },
+    "index": {
+      "source": {
+        "file": "fx47-v3-index-original.jsonl",
+        "bytes": 655,
+        "sha256": "132f7ac79cb82338ac93b626aa88b219757d719e411b360743c6723ff9cde7c9"
+      },
+      "receipt": {
+        "candidate": "fx47",
+        "changed_git_blobs_sha256": "b86b7260de76cb1ddfdff4f71cc2fb43ce52f6e091ae33acd98690aeadbc080a",
+        "changed_indexed_files": 2,
+        "changed_unindexed_files": 4,
+        "codegraph_version": "1.6.3",
+        "commit": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+        "files_with_parse_errors": 0,
+        "indexed_content_sha256": "9be542afb58e6bc45553bb38a1229f58559c9fd78cc5f9bf85751e8599c13012",
+        "reindex_recommended": false,
+        "removed_indexed_files": 4,
+        "result": "pass",
+        "same_head": true,
+        "source_index_commit": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+        "staged_checkout": true,
+        "tree": "15dabd7731b2fb844e3d1e5a31df6302d1d2af9a",
+        "verified_indexed_files": 6761
+      }
+    },
+    "original_code_reviewer": {
+      "source": {
+        "file": "fx47-v3-original-code-rereview.json",
+        "bytes": 5610,
+        "sha256": "fac136645e3abeeab0180e5e0c16cb7d4889ff2bc80f83c542cd691e49dfc2c6"
+      },
+      "session": "sess_63be2759-d258-4404-943f-82e79d7c9200",
+      "turn": "turn_f998b560-def2-4ba5-95d3-345101bbd56d",
+      "verdict_line": "VERDICT: PASS — candidate 14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+      "scope": "Reviewed code and supplied diff. Eight read-only viewer-status queries returned empty. The reviewer reported no files read or modified and no access to the raw tests."
+    },
+    "full_offline": "pending at the cut-off",
+    "property_counts": {
+      "fx47_variant_quotes": 2,
+      "fx47_legacy_variant_quotes": 2,
+      "fx47_variant_quotes_conflicts": 2,
+      "fx47_quote_scan": 13,
+      "fx47_wait_observed": 4
+    }
+  }
+}

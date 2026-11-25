@@ -1,0 +1,81 @@
+The handoff does not pass on the bound evidence. Several records that the step-1 mandate and the operator addendum name explicitly are absent from what I was given, so I cannot confirm that the tested candidate is the code that landed. I found no product defect, and nothing here overturns the signed code review.
+
+## Reviewed object
+
+| Role | Commit | Tree |
+|---|---|---|
+| Support source | `2933a375fdc3c248514968277effb9a699097131` | `446be10b502632b3a1acbf3b774aecd65a2ce48e` |
+| Landed subject: execution HEAD, the merge of PR #125 | `9acfc3ad07f446415d092153effbc5b81e6b0e77` | `b348aa8af022e430d91ae78ae02143db6c4716aa` |
+| CI-tested merge object | `35d1812e1b13ed5f2fa7e432749420082dff5ff4` | not supplied |
+| Node base for the static audit, scan and weakening report | `ab6edff2d64ac8aa5c2831d748b8730b63f8312d` | `5c7ac8af85aa4eb3b2ea9df7076c945451f8c09e` |
+
+- Plan SHA-256: `137a73862e08c75308c467f3f6fcbf64bbb5d5d88d95f87508cf4b20873cbfe0`
+- Original verdict SHA-256: `b56c792605e6c64fbbeb9f6093f7771b1a3e157eead189508bde2eca86b06a56`
+- Manifest `docs/paper-sim/design/fx41-nba-odr-v2/MANIFEST.sha256`: `d0775b456a9aa18eebc9acd6824af852e93b65b712c1f4a11ff1bc73acbf0df6`, 42 entries.
+- Scope: the step-1 software support handoff only.
+
+## Findings
+
+Every item below is named in the mandate or the addendum and blocks the handoff until supplied.
+
+### The tested candidate is not linked to the landed tree
+
+1. **CI checkout object and tree.** All three runs concluded `success`, and one merge-object SHA and one check line are bound. The check line covers only the Offline verification run, abbreviates the PR head (`f60a6acf`) and main (`525d2cbe`), and does not explain `CURRENT`. Nothing states which object each run checked out, the tree of that object, or whether it is `b348aa8a…`. That the trees coincide is plausible, but the PR head merged main after the candidate was tested, so it has to be shown. Supply:
+   - for each of the three runs (45533942383, 45534415758 and 45533942354), the checked-out SHA and its tree;
+   - the tree of `35d1812e…`;
+   - full SHAs and both parents of the landed merge and of the PR head merge;
+   - evidence that the tested tree equals `b348aa8a…`, or the exact difference.
+
+2. **The 13 reviewed blobs at the landed tree.** The 13 path-to-blob entries are bound without a stated revision, and the support source is listed only as an ancestor of the landed commit. An ancestor relation does not carry content identity through a merge, and the addendum requires the actual integration tree and any conflict handling to be checked. Supply:
+   - the same 13 entries read at tree `b348aa8a…`, identical or with the difference and its review;
+   - the revision and tree the code review signed;
+   - which entries are the eight files and which are the wiring key files.
+
+3. **Static audit at the landed tree.** The bound reports run from the node base to the candidate, with unreachable modules unchanged at 2,442. The package itself says the count is re-checked on the final support tree once other nodes land, and the landed tree also contains what main had at `525d2cbe`. Supply the `audit_static.py` counts for `b348aa8a…` against its first parent.
+
+### Required verdicts and receipts are incomplete
+
+4. **Stage review verdict.** The code review is bound as passing (ZCode, guarded, max, fast off; private receipt of 10,115 bytes, SHA-256 `06912b7bbe1f5d305cbac6afd49ec349bdf0bf5a9f94d7bac38dc34c3e325f96`). No stage-review receipt or result appears in the evidence or among the 42 manifest entries. The mandate and the original verdict clause require three independent read-only verdicts: code, stage and handoff. This review covers handoff only. Supply the stage review's receipt and retained result (exit code, byte count, SHA-256, reviewed revision and tree, session reference, final passing verdict line), added to the manifest.
+
+5. **Sensitive scan is not closed.** The retained verifier report records collector exit status 1, no re-run, and two `wechat_id`-shape findings in the whole-changed-file scan left `unresolved` (one source file, one test file, both status M). Their placement on unchanged lines is an inference; the verifier did not open the source. The bound scan summary reports only four secret categories at zero over 43 blobs and omits that class. No fix, re-run or re-review is bound. Supply:
+   - the masked coordinates and classification of the two findings (pre-existing at `ab6edff2…` or introduced, and what they are);
+   - a final scan receipt for the landed tree with a clean exit or a named acceptance;
+   - the original reviewer's re-review, if that non-zero result was a gate result.
+
+6. **Test-execution receipt is counts only.** The bound evidence gives offline 44,016 passed and 444 skipped, native PostgreSQL 551 passed, and digests of the evidence files without their contents. It does not show:
+   - that the executor was a newly dispatched independent Linux ZCode, or its session reference;
+   - the revision and tree behind the counts;
+   - first failure, fix and rerun per partition, or an explicit none;
+   - the reasons for the 444 skips;
+   - the compile result;
+   - the frozen-fixture and byte-regression outcomes the package says accompany acceptance.
+
+   Supply the executor's receipt content, or a faithful summary covering those points.
+
+### Required records are missing
+
+7. **Interpreter and instance identities.** The only interpreter trace is that a selfcheck script's Python 3.12.3 gate passed. Supply the actual interpreter version and where it was provisioned from, for the test run and for the formal run. Also supply the redacted identities of the real instance and the synthetic database as two distinct labels, with where they are recorded.
+
+8. **Ancestry, manifest location and plan text.**
+   - `checked_ancestors` lists #118 as a pull-request number. Supply the full SHA of the #118 merge commit checked as an ancestor of `9acfc3ad…`.
+   - The manifest's path, digest and 42 entry names are bound, but not the commit and tree at which the entries were verified; the readback is only a pointer string. Supply both, with the readback result.
+   - The addendum says it corresponds to plan SHA-256 `240f6153da3ff1a41625db89424bee537e662b0904abe4954491f84a6d3412ef`, while the plan I am reviewing under is `137a7386…`. Supply the digest of the manifest's `plan.md` and state which plan text the original verdict and the addendum re-review signed.
+
+## What the bound evidence supports
+
+- Selfcheck passes 10 of 10 on base and candidate with byte-identical output, the anchor test passes, and `git diff --check` exits 0 with empty output.
+- CodeGraph passes at the support commit and tree with no parse errors.
+- The one removed test is a rename: the AST difference is the function name plus one added help token, with the same two assertions and one `pytest.raises`. No test lost checks, and no skip or xfail marker was added.
+- At the candidate, reachable modules rise from 468 to 470 and unreachable stay at 2,442. The four secret categories are zero over 43 changed blobs and 12 new attachment payloads.
+- The described ordinary CLI flow keeps the legacy path and its 2,000 cap. It admits v2 only for the fixed NBA family through a managed connection, with `register-experiment` added and the four existing help checks kept.
+- The addendum's operator boundaries and terminal states are specific enough for a handoff: the clock gate, one execution SHA, instance, role, receipt and key throughout, a single executor with `--attempt 1` after `not_run`, dry-run monitoring, raw stream capture, and the failure reason codes.
+- Counts that can be cross-checked from the bound text agree (283 × 17 = 4,811; 42 entries; 43 = 13 + 30 changed files; test additions of 17 and 22).
+
+## Limits of this review
+
+- I used no tools and made no writes, and read no source, tests or receipts beyond the bound text. This review says nothing about code correctness, which rests on the signed code review.
+- The guarded, max and fast-off settings are attested by the launch record, not by me. The model identifier disclosed in my environment is GLM-5.4.
+- I make no finding on the clock gate, the timing receipts, formal registration, preview or the run. The stated absence of any registration, preview or attempt so far is taken as stated. I make none on the later research-result handoff.
+- This failure should stay on record. Supply items 1–8 and return them to this reviewer for re-review.
+
+VERDICT: FAIL

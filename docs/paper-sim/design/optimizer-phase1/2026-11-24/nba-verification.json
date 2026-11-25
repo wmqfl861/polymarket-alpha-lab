@@ -1,0 +1,263 @@
+{
+  "candidate": "2933a375fdc3c248514968277effb9a699097131",
+  "schedule_plan": {
+    "object": {
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "path": "docs/paper-sim/design/fx41-nba-odr-v2/plan.md",
+      "blob": "b33f332217db7939867abb25767f592ad7dac1c5",
+      "bytes": 17151,
+      "sha256": "240f6153da3ff1a41625db89424bee537e662b0904abe4954491f84a6d3412ef"
+    },
+    "schedule_excerpt": "留出为 2026-03-05 至 04-12 连续来源赛程末段的 38 个完整比赛日、304 场，再去一日只剩 295 场",
+    "limit_excerpt": "4,811 限额仅随这一固定日程、截止、登记回执、材料、受管实例绑定和首次认领取得。旧公开 Python 入口、旧日程和其他族沿用 2,000 次上限。"
+  },
+  "operator_record": {
+    "source": {
+      "file": "handoff-input-only/phase1-facts.json",
+      "bytes": 29478,
+      "sha256": "138fab9ec79457470c899fd130c973536a28d72b96bccf473da4312051c1fc52"
+    },
+    "field": "nodes.FX-41",
+    "formal_starts": 0
+  },
+  "seven_new_native_cases": [
+    {
+      "source": {
+        "file": "nba-capacity-2933a375fdc3-ere9noul/batch-001.json",
+        "bytes": 1895,
+        "sha256": "a97f09af4f406bbe0bbc63c9ec2602ee06e912b7581841e41162c1ddfe4579d6"
+      },
+      "node": "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_v2_registration_is_atomic_and_reentrant",
+      "batch": 1,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1,
+        "skipped": 0,
+        "tests": 1
+      }
+    },
+    {
+      "source": {
+        "file": "nba-capacity-2933a375fdc3-ere9noul/batch-002.json",
+        "bytes": 1959,
+        "sha256": "3d88c3784b7eeb3f9871ecb7dcad4301e1582474b08e66dead2bec13ee993d71"
+      },
+      "node": "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_v2_store_rejects_forged_sources_callback_and_comparator",
+      "batch": 2,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1,
+        "skipped": 0,
+        "tests": 1
+      }
+    },
+    {
+      "source": {
+        "file": "nba-capacity-2933a375fdc3-ere9noul/batch-003.json",
+        "bytes": 1967,
+        "sha256": "ff6f382d86bb39ac0155b19ec68091d7fa5ab90f03951377158682bf99cddbfd"
+      },
+      "node": "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-01]",
+      "batch": 3,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1,
+        "skipped": 0,
+        "tests": 1
+      }
+    },
+    {
+      "source": {
+        "file": "nba-capacity-2933a375fdc3-ere9noul/batch-004.json",
+        "bytes": 1967,
+        "sha256": "14a9d3758fc7f330099466916934404dc552473fc5b100d1c37217c6307b75d1"
+      },
+      "node": "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-02]",
+      "batch": 4,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1,
+        "skipped": 0,
+        "tests": 1
+      }
+    },
+    {
+      "source": {
+        "file": "nba-capacity-2933a375fdc3-ere9noul/batch-005.json",
+        "bytes": 1967,
+        "sha256": "c81dfe7c620819ff7bbff5a2ee0cf94bad4019bb6614ee39d4ac95f9ea074314"
+      },
+      "node": "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-03]",
+      "batch": 5,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1,
+        "skipped": 0,
+        "tests": 1
+      }
+    },
+    {
+      "source": {
+        "file": "nba-capacity-2933a375fdc3-ere9noul/batch-006.json",
+        "bytes": 1955,
+        "sha256": "832f844aeca50234b22ed1484d4248e831584e65d4be05161a1bee58f8693915"
+      },
+      "node": "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_v2_interrupted_root_never_allows_a_new_search[case-01]",
+      "batch": 6,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1,
+        "skipped": 0,
+        "tests": 1
+      }
+    },
+    {
+      "source": {
+        "file": "nba-capacity-2933a375fdc3-ere9noul/batch-007.json",
+        "bytes": 1955,
+        "sha256": "2538ce9cb2fbb5547c75c36da327026c5723fe332ed822b150281ee6185f0486"
+      },
+      "node": "tests/test_papersim_optimize_registered_runner_native.py::test_native_nba_v2_interrupted_root_never_allows_a_new_search[case-02]",
+      "batch": 7,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "passed": 1,
+        "skipped": 0,
+        "tests": 1
+      }
+    }
+  ],
+  "offline": {
+    "source": {
+      "file": "nba-offline-2933a375.jsonl",
+      "bytes": 1160,
+      "sha256": "f57069a7f2fc947258e7924c1dacb592d020e0c3ed1f21be5c0c98697106d71b"
+    },
+    "completion": {
+      "head": "2933a375fdc3c248514968277effb9a699097131",
+      "utc": "2026-11-24T03:02:00+00:00",
+      "stage": "completed",
+      "partition": {
+        "commit": "2933a375fdc3c248514968277effb9a699097131",
+        "counts": {
+          "passed": 44016,
+          "skipped": 444
+        },
+        "files": 3340,
+        "groups": 31
+      }
+    }
+  },
+  "nine_case_comparison": {
+    "source": {
+      "file": "nba-nine-comparison/focus/completed.json",
+      "bytes": 13322,
+      "sha256": "f43c0d1249dbe56fc7747334cdac6f43c1abf732b1ac33d1c65269efce5f127e"
+    },
+    "cases": 9,
+    "same_failures_on_old_baseline": true,
+    "old_baseline": {
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "counts": {
+        "failure": 9
+      }
+    },
+    "old_candidate": {
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "counts": {
+        "failure": 9
+      }
+    },
+    "revised_baseline": {
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "counts": {
+        "passed": 9
+      }
+    },
+    "revised_candidate": {
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "counts": {
+        "passed": 9
+      }
+    }
+  },
+  "full_native_rerun": {
+    "completed": {
+      "source": {
+        "file": "nba-nine-comparison/full/completed.json",
+        "bytes": 1049,
+        "sha256": "23cf400f93e2d1953e383120ac453b708169f353fc7bd63366f1e2b6ad2ab6e0"
+      },
+      "receipt": {
+        "batches_started": 64,
+        "commit": "2933a375fdc3c248514968277effb9a699097131",
+        "completed_utc": "2026-11-24T05:27:19+00:00",
+        "counts": {
+          "cases_completed": 551,
+          "errors": 0,
+          "failures": 0,
+          "passed": 551,
+          "skipped": 0,
+          "tests": 551
+        },
+        "error": null,
+        "first_failure": null,
+        "focus_gate_sha256": "b3f117f018065a311d8cf9fcad0b9eeda8ecbea663afe9f47c23e605300a0430",
+        "fully_checked_files": {
+          "tests/test_papersim_cli_optimize.py": 93,
+          "tests/test_papersim_nba_odr_registration.py": 20,
+          "tests/test_papersim_optimize_nba_odr.py": 21,
+          "tests/test_papersim_optimize_registered_runner_native.py": 82,
+          "tests/test_papersim_optimize_rule_sources.py": 8,
+          "tests/test_papersim_optimize_runner.py": 283,
+          "tests/test_papersim_optimize_search.py": 44
+        },
+        "lock_sha256": "114db5230ce1b51130a6f2b246c807f4e142229c5717354edf95c8e44fc22d9f",
+        "pytest_config_sha256": "e1f90078087b7f005d8558acb1318bada78c30e5fb4f400681417963410c8ca8",
+        "script_sha256": "73c174510f4d12012031a2d675e33c5844282f47c88bd9c1400919ef515e1aad",
+        "status": "passed",
+        "wrapper_sha256": "8396b7befbe15ef31b408703e0c94d25e9284d1ba3dfd9f84735884b451c7c62"
+      }
+    },
+    "verified": {
+      "source": {
+        "file": "nba-nine-comparison/full/verified.json",
+        "bytes": 335,
+        "sha256": "fbd7d19d140e567741bb583cdc3a59fe52fc69eb2924b4f60feb0a564790b726"
+      },
+      "receipt": {
+        "commit": "2933a375fdc3c248514968277effb9a699097131",
+        "counts": {
+          "cases_completed": 551,
+          "errors": 0,
+          "failures": 0,
+          "passed": 551,
+          "skipped": 0,
+          "tests": 551
+        },
+        "harness_sha256": "bd1131f91b0fd0e01cbc78aaf4a82388bf72a9df3ac64e2ab2cb575e766b8270",
+        "status": "passed",
+        "terminal_sha256": "23cf400f93e2d1953e383120ac453b708169f353fc7bd63366f1e2b6ad2ab6e0"
+      }
+    },
+    "service-result": {
+      "source": {
+        "file": "nba-nine-comparison/full/service-result.json",
+        "bytes": 131,
+        "sha256": "eb5d3dd120d344530321ad3934bc5368b63c8f8cdaba5ac9f5458ec0ed5557fc"
+      },
+      "receipt": {
+        "receipt_sha256": "fbd7d19d140e567741bb583cdc3a59fe52fc69eb2924b4f60feb0a564790b726",
+        "service_result": "success",
+        "status": "passed"
+      }
+    }
+  }
+}

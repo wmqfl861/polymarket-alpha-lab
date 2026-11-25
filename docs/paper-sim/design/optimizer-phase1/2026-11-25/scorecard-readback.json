@@ -1,0 +1,31 @@
+{
+  "execution_commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "files": {
+    "historical-run-1-scorecard.json": {
+      "bytes": 8214,
+      "sha256": "b27ca7855ae147d27c76537289fd904c61f1fdb95be28fb5815cbd5f12a34fb9"
+    },
+    "historical-run-2-scorecard.json": {
+      "bytes": 5031,
+      "sha256": "e47b518723c52ac369562af6a11b85ae24cb4c62fb6262e6ae298784a91e3d65"
+    },
+    "historical-run-3-scorecard.json": {
+      "bytes": 8938,
+      "sha256": "8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10"
+    },
+    "nba-v2-scorecard.json": {
+      "bytes": 10351,
+      "sha256": "f37e5be480ac8a63f70ca871eb90a5886301884a574ea953bfa1375f1de7cd91"
+    }
+  },
+  "historical_service_state_restored": true,
+  "optimization_ids": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "optimizer_invocations": 0,
+  "source": "project PostgreSQL sealed scorecards",
+  "transaction_read_only": true
+}

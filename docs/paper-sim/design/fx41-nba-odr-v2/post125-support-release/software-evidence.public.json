@@ -1,0 +1,822 @@
+{
+  "review_scope": "Step 1 software support release only. Surgical evidence response to the original stage failure; the existing failure is preserved. No formal run or historical registration in this evidence work.",
+  "at_utc": "2026-11-25T07:17:25.255370+00:00",
+  "node_designated_execution_commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "execution_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+  "ci_merge_commit": "35d1812e1b13ed5f2fa7e432749420082dff5ff4",
+  "ci_merge_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+  "ci_parents": [
+    "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+    "f60a6acf03022acb9c57c964718c2c18c651b68f"
+  ],
+  "workflows_actual_checkout": {
+    "Offline verification": {
+      "id": 45533942383,
+      "conclusion": "success",
+      "observed_trigger_sha": "f60a6acf03022acb9c57c964718c2c18c651b68f",
+      "actual_job_checkouts": [
+        {
+          "job": "offline",
+          "checkout": "35d1812e1b13ed5f2fa7e432749420082dff5ff4"
+        }
+      ],
+      "ci_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+      "verified_equal_to_execution_tree": true
+    },
+    "Native project PostgreSQL": {
+      "id": 45534415758,
+      "conclusion": "success",
+      "observed_trigger_sha": "35d1812e1b13ed5f2fa7e432749420082dff5ff4",
+      "actual_job_checkouts": [
+        {
+          "job": "linux-native-storage",
+          "checkout": "35d1812e1b13ed5f2fa7e432749420082dff5ff4"
+        },
+        {
+          "job": "linux-native-research",
+          "checkout": "35d1812e1b13ed5f2fa7e432749420082dff5ff4"
+        },
+        {
+          "job": "linux-native-dispatch",
+          "checkout": "35d1812e1b13ed5f2fa7e432749420082dff5ff4"
+        },
+        {
+          "job": "linux-native-papersim",
+          "checkout": "35d1812e1b13ed5f2fa7e432749420082dff5ff4"
+        }
+      ],
+      "ci_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+      "verified_equal_to_execution_tree": true
+    },
+    "Research paper bridge": {
+      "id": 45533942354,
+      "conclusion": "success",
+      "observed_trigger_sha": "f60a6acf03022acb9c57c964718c2c18c651b68f",
+      "actual_job_checkouts": [
+        {
+          "job": "windows-paper",
+          "checkout": "35d1812e1b13ed5f2fa7e432749420082dff5ff4"
+        }
+      ],
+      "ci_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+      "verified_equal_to_execution_tree": true
+    }
+  },
+  "full_workflow_proof": {
+    "file": "pr125-post124-exact.json",
+    "bytes": 8450,
+    "sha256": "9c7fcdf66bccafdfeed897f19d7e1404ed94810b872a88c08b40ab693739ac97"
+  },
+  "full_refs": {
+    "PR118_landed_ancestor_of_execution": "00199b24d38d5d9334ec7eb07ca8141db33852da",
+    "PR124_parent_of_execution": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+    "PR125_head": "f60a6acf03022acb9c57c964718c2c18c651b68f",
+    "draft_comparison_baseline": "256f8491c324b04e5dd9789c012ae84f654853f2",
+    "actual_support_source": "2933a375fdc3c248514968277effb9a699097131",
+    "actual_landing": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "prior_handoff_draft_not_execution": "1321e54e68f41b65f3c1080da8d5d55bc2f3634d"
+  },
+  "tree_binding": {
+    "draft": "256f8491c324b04e5dd9789c012ae84f654853f2",
+    "reviewed_support": "2933a375fdc3c248514968277effb9a699097131",
+    "reviewed_support_tree": "446be10b502632b3a1acbf3b774aecd65a2ce48e",
+    "landed": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "landed_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+    "full_src_trees": [
+      "9a7667ae855c4a6aac647309c00d2fcab9f9a997",
+      "9a7667ae855c4a6aac647309c00d2fcab9f9a997"
+    ],
+    "full_test_trees": [
+      "e4f9d9381fb27561aa930cde4abd5fac2bf9f741",
+      "e4f9d9381fb27561aa930cde4abd5fac2bf9f741"
+    ],
+    "immutable_candidate_mapping": [
+      {
+        "relative_file": "src/polymarket_alpha_lab/papersim/cli.py",
+        "original_schedule_module_or_wiring": "wiring or contract test",
+        "at_retained_draft": "69e5f1865378a10f69225c0b03b2ef60f1f07cd6",
+        "at_reviewed_support_source": "69e5f1865378a10f69225c0b03b2ef60f1f07cd6",
+        "at_actual_landed_execution_head": "69e5f1865378a10f69225c0b03b2ef60f1f07cd6"
+      },
+      {
+        "relative_file": "src/polymarket_alpha_lab/papersim/nba_odr_registration.py",
+        "original_schedule_module_or_wiring": "original eight",
+        "at_retained_draft": "d6b3b109960bd3994ebbed54983b2bce699c38b5",
+        "at_reviewed_support_source": "d6b3b109960bd3994ebbed54983b2bce699c38b5",
+        "at_actual_landed_execution_head": "d6b3b109960bd3994ebbed54983b2bce699c38b5"
+      },
+      {
+        "relative_file": "src/polymarket_alpha_lab/papersim/optimize/nba_odr.py",
+        "original_schedule_module_or_wiring": "original eight",
+        "at_retained_draft": "6728dee0df0716eefcc5c8bc4c801e138d2aef88",
+        "at_reviewed_support_source": "6728dee0df0716eefcc5c8bc4c801e138d2aef88",
+        "at_actual_landed_execution_head": "6728dee0df0716eefcc5c8bc4c801e138d2aef88"
+      },
+      {
+        "relative_file": "src/polymarket_alpha_lab/papersim/optimize/runner.py",
+        "original_schedule_module_or_wiring": "original eight",
+        "at_retained_draft": "cd9627795365a080ce3e70e89594581a3fc68b35",
+        "at_reviewed_support_source": "cd9627795365a080ce3e70e89594581a3fc68b35",
+        "at_actual_landed_execution_head": "cd9627795365a080ce3e70e89594581a3fc68b35"
+      },
+      {
+        "relative_file": "src/polymarket_alpha_lab/papersim/optimize/search.py",
+        "original_schedule_module_or_wiring": "original eight",
+        "at_retained_draft": "7dfeee3442db1d1db137f6735bb07e187c04b5d3",
+        "at_reviewed_support_source": "7dfeee3442db1d1db137f6735bb07e187c04b5d3",
+        "at_actual_landed_execution_head": "7dfeee3442db1d1db137f6735bb07e187c04b5d3"
+      },
+      {
+        "relative_file": "src/polymarket_alpha_lab/papersim/store_psycopg.py",
+        "original_schedule_module_or_wiring": "wiring or contract test",
+        "at_retained_draft": "47c7cb6cbab3c4923d207424d4f1f636ae018deb",
+        "at_reviewed_support_source": "e9922326093415afcd16ef58aa414979a7ff33af",
+        "at_actual_landed_execution_head": "e9922326093415afcd16ef58aa414979a7ff33af"
+      },
+      {
+        "relative_file": "tests/test_papersim_cli_optimize.py",
+        "original_schedule_module_or_wiring": "wiring or contract test",
+        "at_retained_draft": "1baede46f3a2ccae8a8a54856718f66cb11778d4",
+        "at_reviewed_support_source": "1baede46f3a2ccae8a8a54856718f66cb11778d4",
+        "at_actual_landed_execution_head": "1baede46f3a2ccae8a8a54856718f66cb11778d4"
+      },
+      {
+        "relative_file": "tests/test_papersim_nba_odr_registration.py",
+        "original_schedule_module_or_wiring": "original eight",
+        "at_retained_draft": "4de27178785c478896da0e92ec2972bd7f0749f0",
+        "at_reviewed_support_source": "4de27178785c478896da0e92ec2972bd7f0749f0",
+        "at_actual_landed_execution_head": "4de27178785c478896da0e92ec2972bd7f0749f0"
+      },
+      {
+        "relative_file": "tests/test_papersim_optimize_nba_odr.py",
+        "original_schedule_module_or_wiring": "original eight",
+        "at_retained_draft": "9713c9caad0e4167dcc723984c6a8b32f4092d03",
+        "at_reviewed_support_source": "9713c9caad0e4167dcc723984c6a8b32f4092d03",
+        "at_actual_landed_execution_head": "9713c9caad0e4167dcc723984c6a8b32f4092d03"
+      },
+      {
+        "relative_file": "tests/test_papersim_optimize_registered_runner_native.py",
+        "original_schedule_module_or_wiring": "wiring or contract test",
+        "at_retained_draft": "975ba90077aa9d30b30fc550b54d75ce99537f49",
+        "at_reviewed_support_source": "45379e3ecbff9e783fa4678ee44c6d25ffd957ec",
+        "at_actual_landed_execution_head": "45379e3ecbff9e783fa4678ee44c6d25ffd957ec"
+      },
+      {
+        "relative_file": "tests/test_papersim_optimize_rule_sources.py",
+        "original_schedule_module_or_wiring": "wiring or contract test",
+        "at_retained_draft": "3f13fc4bc97f58de677742bdf399b2e28c9ffaaf",
+        "at_reviewed_support_source": "3f13fc4bc97f58de677742bdf399b2e28c9ffaaf",
+        "at_actual_landed_execution_head": "3f13fc4bc97f58de677742bdf399b2e28c9ffaaf"
+      },
+      {
+        "relative_file": "tests/test_papersim_optimize_runner.py",
+        "original_schedule_module_or_wiring": "original eight",
+        "at_retained_draft": "dbc19d51169e865d7bfe48db03ae50b2083a8b64",
+        "at_reviewed_support_source": "dbc19d51169e865d7bfe48db03ae50b2083a8b64",
+        "at_actual_landed_execution_head": "dbc19d51169e865d7bfe48db03ae50b2083a8b64"
+      },
+      {
+        "relative_file": "tests/test_papersim_optimize_search.py",
+        "original_schedule_module_or_wiring": "original eight",
+        "at_retained_draft": "0893de81e44a8a53b5a8084b43f451d43b297788",
+        "at_reviewed_support_source": "0893de81e44a8a53b5a8084b43f451d43b297788",
+        "at_actual_landed_execution_head": "0893de81e44a8a53b5a8084b43f451d43b297788"
+      }
+    ],
+    "original_eight_source": {
+      "file": "fx41-nba-post118-eight-files-transfer.json",
+      "bytes": 1240,
+      "sha256": "9529029682d8afc289952d9aceb490b712edee9ad9444f35da9a8ec8969d0cc1"
+    }
+  },
+  "clean_tree": {
+    "execution": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+    "worktree_at_execution_sha": true,
+    "git_status_porcelain_nonempty": false
+  },
+  "plan_record_chain": {
+    "plan.md": {
+      "file": "plan.md",
+      "bytes": 17151,
+      "sha256": "240f6153da3ff1a41625db89424bee537e662b0904abe4954491f84a6d3412ef"
+    },
+    "operator-addendum.md": {
+      "file": "operator-addendum.md",
+      "bytes": 3304,
+      "sha256": "4bf724c6cf56e998cbc66195344da16355e91f31e3a7bb3e8d8e469794bbf30b"
+    },
+    "reviews/release-plan/plan.md": {
+      "file": "plan.md",
+      "bytes": 13118,
+      "sha256": "137a73862e08c75308c467f3f6fcbf64bbb5d5d88d95f87508cf4b20873cbfe0"
+    },
+    "plan-review.json": {
+      "file_sha256": "27fa7f0d93b9b308968c3b864b79816263f06d04a1a6d7a3d294461c110b1442",
+      "original_standalone_verdict": "PASS",
+      "subjects": [
+        "240f6153da3ff1a41625db89424bee537e662b0904abe4954491f84a6d3412ef"
+      ]
+    },
+    "operator-rereview.json": {
+      "file_sha256": "493c67e5c66588bbeeb949cdccba6fa88ca20f51aae63d4381d2d5f357da973b",
+      "original_standalone_verdict": "PASS",
+      "subjects": [
+        "4bf724c6cf56e998cbc66195344da16355e91f31e3a7bb3e8d8e469794bbf30b",
+        "240f6153da3ff1a41625db89424bee537e662b0904abe4954491f84a6d3412ef"
+      ]
+    },
+    "separate_full_release_plan": {
+      "file": "fx41-nba-v2-post118-managed-release-astra.GS8QaujB.md",
+      "bytes": 13118,
+      "sha256": "137a73862e08c75308c467f3f6fcbf64bbb5d5d88d95f87508cf4b20873cbfe0",
+      "signed_receipt": {
+        "file": "result.txt",
+        "bytes": 7151,
+        "sha256": "b56c792605e6c64fbbeb9f6093f7771b1a3e157eead189508bde2eca86b06a56"
+      }
+    }
+  },
+  "two_preexisting_findings": {
+    "raw_unfiltered_exit": 1,
+    "independent_followup_exit": 0,
+    "corroboration": {
+      "file": "scan-corroboration.txt",
+      "bytes": 2397,
+      "sha256": "7e0764e79598d54f75541bc878066541211c4bdfd6a0fe73cd7649cdb2dcb44b"
+    },
+    "source_receipt_identity": {
+      "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "candidate": "2933a375fdc3c248514968277effb9a699097131",
+      "classification": "preexisting_program_field_for_reference_row_indexes",
+      "findings": [
+        {
+          "base_blob": "c389fd72c003da7f4a613d8f8d7643a1f7597734",
+          "base_line": 3706,
+          "candidate_blob": "cd9627795365a080ce3e70e89594581a3fc68b35",
+          "candidate_line": 3795,
+          "context": "gate_metric_construction",
+          "enclosing_function_bytes_match": true,
+          "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py"
+        },
+        {
+          "base_blob": "fdd8e42b8332228022079b8d837e3685f4c77f5a",
+          "base_line": 3666,
+          "candidate_blob": "dbc19d51169e865d7bfe48db03ae50b2083a8b64",
+          "candidate_line": 3667,
+          "context": "gate_metric_assertion",
+          "enclosing_function_bytes_match": true,
+          "path": "tests/test_papersim_optimize_runner.py"
+        }
+      ],
+      "source_receipt_sha256": "f1ce327dfd324698d086a80adbd7ebca2f0ea44ea9ca2a167096a33cf82d7869"
+    },
+    "row_and_function_digests": {
+      "base_commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "head_commit": "2933a375fdc3c248514968277effb9a699097131",
+      "findings": [
+        {
+          "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py",
+          "base_line": 3706,
+          "head_line": 3795,
+          "line_sha256": {
+            "base": "083daff2085a3006c7aedcc5ddd5d32a0d0530e4427745e0db6d5d5817e37866",
+            "head": "083daff2085a3006c7aedcc5ddd5d32a0d0530e4427745e0db6d5d5817e37866"
+          },
+          "function_sha256": {
+            "base": "2a2598e3d7e128a7bf102c1a7df11295c19d1629ba8cd1311483e96bb5bb69e7",
+            "head": "2a2598e3d7e128a7bf102c1a7df11295c19d1629ba8cd1311483e96bb5bb69e7"
+          },
+          "conclusion": "候选与基线字节相同/新增行未增加命中"
+        },
+        {
+          "path": "tests/test_papersim_optimize_runner.py",
+          "base_line": 3666,
+          "head_line": 3667,
+          "line_sha256": {
+            "base": "24dae2e3bf610675b8cf8ec085cd50af377650fe8f3957120be0b5db78ddf383",
+            "head": "24dae2e3bf610675b8cf8ec085cd50af377650fe8f3957120be0b5db78ddf383"
+          },
+          "function_sha256": {
+            "base": "b284c326a06320bef1d6cf57746973dc8c5b0d94fcb6bf439f8dedc5dc8e72e8",
+            "head": "b284c326a06320bef1d6cf57746973dc8c5b0d94fcb6bf439f8dedc5dc8e72e8"
+          },
+          "conclusion": "候选与基线字节相同/新增行未增加命中"
+        }
+      ]
+    },
+    "no_new_match_on_changed_lines": true
+  },
+  "local_install_and_compile": {
+    "file": "nba-offline-2933a375.jsonl",
+    "bytes": 1160,
+    "sha256": "f57069a7f2fc947258e7924c1dacb592d020e0c3ed1f21be5c0c98697106d71b",
+    "verified_source": "2933a375fdc3c248514968277effb9a699097131",
+    "quick_command": "locked editable candidate-environment python scripts/verify_local.py --quick",
+    "underlying_command": "same interpreter -m compileall -q src tests scripts",
+    "exit": 0,
+    "checks": [
+      "editable installation",
+      "module help",
+      "module report discovery",
+      "console help",
+      "console report discovery",
+      "compile source, tests and scripts",
+      "quick pytest",
+      "quick local verification"
+    ],
+    "normal_interpreter": "candidate-specific uv locked editable virtual environment under the coordination directory",
+    "version": "Python 3.12.3"
+  },
+  "first_outcomes": {
+    "focused": {
+      "original_launcher_exit": 127,
+      "tested_on_failed_launch": false,
+      "reason": "mistyped path; original executor corrected launch on same source",
+      "original": {
+        "file": "nba-focus-test.json",
+        "bytes": 1437,
+        "sha256": "c3b2669813a20ca75c8f2a371fb00ec9245895db7cd2d72ed37013a663bdd3b0"
+      },
+      "corrected_dispatch": {
+        "file": "nba-focus-retry-network.json",
+        "bytes": 495,
+        "sha256": "87b8608fcb4f81d778cc4d3e443aa5fa48dfc2230719290a984e6e83b39d04fd"
+      },
+      "corrected_exit": 0,
+      "scope": "seven optimize/registration modules"
+    },
+    "offline": {
+      "first_complete_suite_passed_without_test_failure": true,
+      "groups": 31,
+      "files": 3340,
+      "counts": {
+        "passed": 44016,
+        "skipped": 444,
+        "failures": 0,
+        "errors": 0
+      },
+      "completed": {
+        "file": "completed.json",
+        "bytes": 129,
+        "sha256": "d5f6e038fb5cad35143c7a9ae46976b614e0a7ff48dd7631a8b579c5b13e22fb"
+      },
+      "per_partition_policy": "all 31 require successful pytest exit; error, failure and deselection counts checked before their immutable receipts"
+    },
+    "native": {
+      "first_pre_execution_failure": {
+        "file": "completed.json",
+        "bytes": 739,
+        "sha256": "ba462ec414e8888523ae7e9e8cbcc07727fede7368453550f1e4964f623a2827",
+        "outcome": {
+          "commit": "2933a375fdc3c248514968277effb9a699097131",
+          "status": "incomplete",
+          "error": "managed_driver_readiness",
+          "counts": {}
+        }
+      },
+      "then_first_testing_failure": "nine cases, identical failures on prior baseline, reconciled using corrected native verification harness at the identical product source. Both runs of the nine after correction pass.",
+      "nine_comparison": {
+        "old_baseline": {
+          "failure": 9
+        },
+        "old_candidate": {
+          "failure": 9
+        },
+        "revised_baseline": {
+          "passed": 9
+        },
+        "revised_candidate": {
+          "passed": 9
+        }
+      },
+      "nine_attachment": {
+        "file": "completed.json",
+        "bytes": 13322,
+        "sha256": "f43c0d1249dbe56fc7747334cdac6f43c1abf732b1ac33d1c65269efce5f127e"
+      },
+      "native_full": {
+        "file": "completed.json",
+        "bytes": 1049,
+        "sha256": "23cf400f93e2d1953e383120ac453b708169f353fc7bd63366f1e2b6ad2ab6e0",
+        "outcome": {
+          "commit": "2933a375fdc3c248514968277effb9a699097131",
+          "counts": {
+            "cases_completed": 551,
+            "errors": 0,
+            "failures": 0,
+            "passed": 551,
+            "skipped": 0,
+            "tests": 551
+          },
+          "status": "passed",
+          "error": null,
+          "first_failure": null
+        }
+      },
+      "registered_case_ids_distinct": [
+        {
+          "name": "test_native_nba_v2_registration_is_atomic_and_reentrant",
+          "result": "passed",
+          "junit_sha256": "cf14343707056da8a7ca3958af1fc9450f748f6d7ef37a38d3cac8d2436f56c4"
+        },
+        {
+          "name": "test_native_nba_v2_store_rejects_forged_sources_callback_and_comparator",
+          "result": "passed",
+          "junit_sha256": "9d31b38272ca883188e754537c05bdb6abdfe737a4a19d73f51298742ce47cea"
+        },
+        {
+          "name": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-01]",
+          "result": "passed",
+          "junit_sha256": "0388d440d5b5f29164410553c3f917efcfe01a05ee78fc9dcb89fe270bd9f2d1"
+        },
+        {
+          "name": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-02]",
+          "result": "passed",
+          "junit_sha256": "c49749e7f7c14f1dc0532c9857dd1f56e194a5869694b8d2e2172bbe322150b6"
+        },
+        {
+          "name": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery[case-03]",
+          "result": "passed",
+          "junit_sha256": "48d7b125c1804e9c48c64e5be79dec415ab5c871adfd3ead675e232158101ae0"
+        },
+        {
+          "name": "test_native_nba_v2_interrupted_root_never_allows_a_new_search[case-01]",
+          "result": "passed",
+          "junit_sha256": "beb24f63dd420ae78e097fabf9638850afe8c32a90e741d12a40afdeb9e8d9fc"
+        },
+        {
+          "name": "test_native_nba_v2_interrupted_root_never_allows_a_new_search[case-02]",
+          "result": "passed",
+          "junit_sha256": "896f20df2fa6c62d9950c442e968fd67d5aeea3477aedbccecc17695ce796900"
+        }
+      ]
+    }
+  },
+  "frozen_and_empty_registry": {
+    "receipt": {
+      "file": "receipt.json",
+      "bytes": 1803,
+      "sha256": "092a6169f6e6c328ef19f5517796181161b2d25058fdfec589b86dd11568712a"
+    },
+    "case": "tests/test_papersim_scan.py::test_registry_provider_empty_registry_is_bit_identical_to_b1",
+    "executed_archive": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+    "mapped_to_support": "2933a375fdc3c248514968277effb9a699097131",
+    "mapped_to_landed": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "exit": 0,
+    "status": "pass",
+    "junit": {
+      "bytes": 381,
+      "sha256": "51064aac56d0614ddab09e8f274a5c44edca0c20f06b155cd75509228708f929"
+    },
+    "four_fixtures": {
+      "tests/fixtures/papersim/regression_banned_path.json": {
+        "git_blob": "a4cedf029fba95222a411856484e9d98449329a8",
+        "bytes": 2618,
+        "sha256": "0a8acce166cc92d744751b29d3c0a6abb8abb8ac67a4d1b30d2eef584255245d"
+      },
+      "tests/fixtures/papersim/regression_gate_arithmetic.json": {
+        "git_blob": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "bytes": 2763,
+        "sha256": "4f19389c921444e94e8845d1759d942d9a13c99969362ab49293be40193b83d6"
+      },
+      "tests/fixtures/papersim/regression_r19_crypto.json": {
+        "git_blob": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "bytes": 1902,
+        "sha256": "7e07f02424a9c37cfb518c2ad997ecb88efe6d422b5afe558b1be96174b2a2c3"
+      },
+      "tests/fixtures/papersim/regression_r23_soccer.json": {
+        "git_blob": "4bfccb907890253078e1aee0a39b51ec45f590af",
+        "bytes": 38115,
+        "sha256": "d9914c23645a54f405ea246aa7ea574afe7515cd176e321d1536db8b60f689f9"
+      }
+    }
+  },
+  "policy_2000_evidence": {
+    "file": "docs/paper-sim/design/fx41-nba-odr-v2/plan.md",
+    "line": 31,
+    "text": "4,811 限额仅随这一固定日程、截止、登记回执、材料、受管实例绑定和首次认领取得。旧公开 Python 入口、旧日程和其他族沿用 2,000 次上限。登记 v2 使用相同 3,600 秒墙钟及 60 秒收尾预留。规则数值继续从原所有者读取，`tests/test_papersim_optimize_rule_sources.py` 的原断言沿实际函数名定位，新增断言核公开和受管两个入口都委派到原核心。固定样本下限、门阈、检验、网格、掩码、种子、时钟和已出版评估锚点。本节点只运行已登记的一次历史纸面研究。",
+    "code_and_callchain": "integration-evidence.md:24, signed source review and tests; fixed 4811 applies only to the pre-registered schedule"
+  },
+  "additional_subject_identity": {
+    "actual_landing": {
+      "commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+      "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+      "parents": [
+        "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+        "f60a6acf03022acb9c57c964718c2c18c651b68f"
+      ]
+    },
+    "ci_merge_ref": {
+      "commit": "35d1812e1b13ed5f2fa7e432749420082dff5ff4",
+      "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+      "parents": [
+        "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+        "f60a6acf03022acb9c57c964718c2c18c651b68f"
+      ]
+    },
+    "pr_head_merge": {
+      "commit": "f60a6acf03022acb9c57c964718c2c18c651b68f",
+      "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+      "parents": [
+        "b0807e322f8705548e80f3b67ac61a836a5864ef",
+        "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c"
+      ]
+    },
+    "verified_ancestors_with_tree": [
+      {
+        "commit": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+        "tree": "6df8bdca837797a09e331d56fae0607b28a9310c",
+        "parents": [
+          "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+          "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b"
+        ]
+      },
+      {
+        "commit": "2933a375fdc3c248514968277effb9a699097131",
+        "tree": "446be10b502632b3a1acbf3b774aecd65a2ce48e",
+        "parents": [
+          "ab6edff2d64ac8aa5c2831d748b8730b63f8312d"
+        ]
+      },
+      {
+        "commit": "00199b24d38d5d9334ec7eb07ca8141db33852da",
+        "tree": "e7b2335c0f9baea51a774eacc709f878b0875ab9",
+        "parents": [
+          "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+          "b89120f2fa79c6ecf5f371376fc00f1ccd10809c"
+        ]
+      }
+    ],
+    "github_readback_and_landed_design_subtree": "e06e739cd37d3f77d86f8f53d443ba8d1840223d"
+  },
+  "input_source_facts": {
+    "file": "stage-supplement-source-facts.json",
+    "bytes": 25210,
+    "sha256": "dd70356cd14a7a70c3c4935dbfd0054ffb0540c6f5b6dea96600f3887210224a"
+  },
+  "budget_2000_direct_proof": {
+    "applies_to": "2933a375fdc3c248514968277effb9a699097131",
+    "landed_subject": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "code": "src/polymarket_alpha_lab/papersim/optimize/runner.py:2353,2585,6481–6484",
+    "test": "tests/test_papersim_optimize_runner.py:773–775, test_locked_budget_and_grid_constants_are_runner_owned",
+    "meaning": "MAX_TRIALS = 2000 and the fixture asserts it. The runner selects 4811 only for the validated registered context; the unclaimed normal/public branch rejects an out-of-cap value."
+  },
+  "code_verdict": {
+    "verdict": "PASS",
+    "file": "nba-integration-code-review.json",
+    "bytes": 10115,
+    "sha256": "06912b7bbe1f5d305cbac6afd49ec349bdf0bf5a9f94d7bac38dc34c3e325f96",
+    "reviewed_head": "2933a375fdc3c248514968277effb9a699097131",
+    "reviewed_tree": "446be10b502632b3a1acbf3b774aecd65a2ce48e",
+    "client_identity_fields_all_nonempty": true,
+    "signed_failures_on_this_exact_integrated_code_subject": 0
+  },
+  "historical_software_archive_readback": {
+    "file": "remote-manifest-readback.json",
+    "bytes": 403,
+    "sha256": "ddeec6b85488c71bdb4b9dfeddbc36c95814d0daaac852612d13b037447a1afa",
+    "outcome": {
+      "verified_manifest_entries": 42,
+      "manifest_sha256": "d0775b456a9aa18eebc9acd6824af852e93b65b712c1f4a11ff1bc73acbf0df6",
+      "verified_payload_bytes": 454376,
+      "commit": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+      "tree": "4e3481541d6f63ea8e5a9782c0c84ab1861daf37"
+    }
+  },
+  "landed_audits": {
+    "first_dispatch_without_audit": {
+      "file": "stage-evidence-static.json",
+      "bytes": 3090,
+      "sha256": "102e72dda6193404f8883a2c908e527447b3f904649617dc7132d2fe6ad4884e"
+    },
+    "static_audit": {
+      "file": "independent-landed-static.json",
+      "bytes": 1346,
+      "sha256": "529fee7b407b07c5e52a145b6377cb9f0451d56924b9141e4be14fad47186e59",
+      "first_parent": {
+        "commit": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+        "tree": "6df8bdca837797a09e331d56fae0607b28a9310c",
+        "script_sha256": "7eb98c3bce666b4ef97c244247e1b2c4c3499f2c270e8560d268aec0d8c48e22",
+        "report_sha256": "daa21411a57bc731ecfb0e83919e4aff337e2c41b22bd0e7079fc28f251a9a10",
+        "report_bytes": 762319,
+        "reachable": {
+          "modules": 468,
+          "lines": 211490,
+          "bytes": 8435060
+        },
+        "unreachable": {
+          "modules": 2442,
+          "lines": 2318654,
+          "bytes": 87209331
+        },
+        "clean": true
+      },
+      "actual_main": {
+        "commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+        "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+        "script_sha256": "7eb98c3bce666b4ef97c244247e1b2c4c3499f2c270e8560d268aec0d8c48e22",
+        "report_sha256": "a81bd204d1b42a764d52c51eab14bda019dc99c8df9dc96dcd75fe744e9cbbeb",
+        "report_bytes": 762725,
+        "reachable": {
+          "modules": 470,
+          "lines": 213996,
+          "bytes": 8568089
+        },
+        "unreachable": {
+          "modules": 2442,
+          "lines": 2318654,
+          "bytes": 87209331
+        },
+        "clean": true
+      },
+      "utc": "2026-11-25T07:51:50.529150+00:00",
+      "source_commit": "2933a375fdc3c248514968277effb9a699097131",
+      "landed_commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+      "landed_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa"
+    },
+    "landed_confirmation": {
+      "file": "independent-landed-static-confirmation.json",
+      "bytes": 1132,
+      "sha256": "0cce41b966b07ce5a2637215395307859dd05a5e065a0062e1b6b221c61e1875",
+      "landing": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+      "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+      "first_parent": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+      "static_audit_sha256": "529fee7b407b07c5e52a145b6377cb9f0451d56924b9141e4be14fad47186e59",
+      "reachable_modules": [
+        468,
+        470
+      ],
+      "unreachable_modules": [
+        2442,
+        2442
+      ],
+      "scanner": {
+        "relative_path": "docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan.py",
+        "sha256": "b71adb796c92f80feff6d52b6dad89220745305814066a55cf6bb054cbd9b3ab",
+        "scope": "first-parent to actual landing added lines",
+        "exit": 0,
+        "stdout_sha256": "5dfe598194bcf979003fe80d6323cab6cc4f4e81ada235a91400d19ca685ba6f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "counts": {
+          "wechat_id": 14
+        }
+      },
+      "diff_check": {
+        "exit": 0,
+        "stdout_bytes": 0,
+        "stderr_bytes": 0,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  "software_test_provenance": [
+    {
+      "task": "offline full suite",
+      "receipt": {
+        "file": "nba-offline-test.json",
+        "bytes": 794,
+        "sha256": "28d52acd6c28d4369f27180eb01552c0e562ceaebea773fd73703f519e26179d"
+      },
+      "client": "actual local Linux ZCode",
+      "scope_of_client_report": "launch; local 31 partitions and compile receipts supply exit and results"
+    },
+    {
+      "task": "focused first launch",
+      "receipt": {
+        "file": "nba-focus-test.json",
+        "bytes": 1437,
+        "sha256": "c3b2669813a20ca75c8f2a371fb00ec9245895db7cd2d72ed37013a663bdd3b0"
+      },
+      "client": "actual local Linux ZCode",
+      "scope_of_client_report": "launcher exit 127; no pytest"
+    },
+    {
+      "task": "focused corrected launch",
+      "receipt": {
+        "file": "nba-focus-retry-network.json",
+        "bytes": 495,
+        "sha256": "87b8608fcb4f81d778cc4d3e443aa5fa48dfc2230719290a984e6e83b39d04fd"
+      },
+      "client": "actual local Linux ZCode",
+      "scope_of_client_report": "same candidate; job receipt supplies pytest exit"
+    },
+    {
+      "task": "native first launch",
+      "receipt": {
+        "file": "nba-native-parts-exec.json",
+        "bytes": 430,
+        "sha256": "1e462a22640847d21b1ef6bac4973a05e9367b394bc5e4588074f41a2b31dada"
+      },
+      "client": "actual local Linux ZCode",
+      "scope_of_client_report": "readiness interrupted before tests"
+    },
+    {
+      "task": "native corrected launch",
+      "receipt": {
+        "file": "nba-native-parts-corrected-resume.json",
+        "bytes": 484,
+        "sha256": "2625b9fa96fda61a8e5a0970f6b0240514cb913617f7590d79c05516210773bd"
+      },
+      "client": "actual local Linux ZCode",
+      "scope_of_client_report": "same executor and candidate; corrected independent partition receipts supply outcomes"
+    },
+    {
+      "task": "original candidate static/sensitive proof",
+      "receipt": {
+        "file": "nba-final-pr-packet-test.json",
+        "bytes": 3928,
+        "sha256": "e4c6267e9d1d8b812ab4416095164157cc5e6d4a38b1d5cdb293939e915c4ecb"
+      },
+      "client": "actual local Linux ZCode",
+      "scope_of_client_report": "first collector exit 1; heuristic false positives subsequently resolved"
+    },
+    {
+      "task": "same-executor contact-shape corroboration",
+      "receipt": {
+        "file": "nba-prepr-two-findings-original.json",
+        "bytes": 2700,
+        "sha256": "28fbb544a720ad650c829af9a3e03fdbef298a5f3bc26099986c11d5d4d15446"
+      },
+      "client": "actual local Linux ZCode",
+      "scope_of_client_report": "read-only AST and exact enclosing-byte comparison; exit 0"
+    }
+  ],
+  "independent_skip_evidence": {
+    "retained_named_cases": {
+      "source_commit": "2933a375fdc3c248514968277effb9a699097131",
+      "batch_scope": "original corrected native partition run",
+      "new_or_renamed_definitions": 40,
+      "passed_case_ids_in_retained_batches": 68,
+      "counts_by_changed_test_file": [
+        {
+          "file": "tests/test_papersim_cli_optimize.py",
+          "definitions": 5,
+          "passed": 10
+        },
+        {
+          "file": "tests/test_papersim_nba_odr_registration.py",
+          "definitions": 10,
+          "passed": 20
+        },
+        {
+          "file": "tests/test_papersim_optimize_nba_odr.py",
+          "definitions": 12,
+          "passed": 21
+        },
+        {
+          "file": "tests/test_papersim_optimize_registered_runner_native.py",
+          "definitions": 4,
+          "passed": 7
+        },
+        {
+          "file": "tests/test_papersim_optimize_rule_sources.py",
+          "definitions": 1,
+          "passed": 1
+        },
+        {
+          "file": "tests/test_papersim_optimize_runner.py",
+          "definitions": 6,
+          "passed": 7
+        },
+        {
+          "file": "tests/test_papersim_optimize_search.py",
+          "definitions": 2,
+          "passed": 2
+        }
+      ],
+      "budget_functions": 6,
+      "budget_cases": 7,
+      "budget_case_ids": [
+        "test_odr_claimed_budget_retains_full_plan_on_expiry[case-01]",
+        "test_odr_claimed_budget_retains_full_plan_on_expiry[case-02]",
+        "test_odr_compute_requires_the_store_claim_and_exact_registered_plan",
+        "test_odr_metadata_plan_pins_days_full_specs_and_order_without_opening_results",
+        "test_odr_plan_refuses_changed_comparator_version_grid_or_context",
+        "test_odr_protocol_and_user_supplied_budget_cannot_authorize_execution",
+        "test_odr_scoring_inputs_keep_holdout_lazy_and_require_season_specific_quality"
+      ],
+      "budget_bound_receipt": {
+        "file": "batch-058.json",
+        "bytes": 6501,
+        "sha256": "ac011a48b2a535421f5ab01d548c574e3552f3ca94151ab3d0c46b5c247cbe49"
+      },
+      "meaning": "All new or renamed definitions have at least one independently passed case; every case selected in these partition receipts passed. The native-only seven also appear in the hosted offline +7 skip bucket by purpose."
+    },
+    "known_limit": "The original local full-suite partition summaries kept totals and no reason strings. Reason categories here come from the bound hosted all-file logs. Their baseline and candidate each differ by one from the corresponding local aggregate. That one local-versus-hosted difference is not individually identified.",
+    "first_actual_failure": {
+      "phase": "offline-skip-accounting",
+      "unit_exit": 1,
+      "aggregate_artifact": false,
+      "stdout_sha256": "c7412e66d9843cf313d5c57dcd024a9e86e9a263ec78c8954e45958869961877",
+      "stderr_sha256": "19322d1a872175ab714c1628efd4b760c80517c8809e1f0a8400a79396386ef6"
+    },
+    "r4_terminal_zcode_receipt": {
+      "file": "stage-evidence-skips-targeted.json",
+      "bytes": 1440,
+      "sha256": "81e1e63b2a1cfe406d7fe9719bf7370aea48ff8618deff184d191fc6361faa48"
+    },
+    "terminal_scope": "The independent ZCode component command completed. Its readback covers the archived results and evidence categories. Separate transport receipts and command-test wrapper failures are preserved."
+  }
+}

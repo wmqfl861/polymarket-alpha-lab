@@ -1,0 +1,40 @@
+{
+  "base": "a7dbd8a3e14f5f86f9f26e2f05b76a46927cf4ee",
+  "head": "e94756c8a0e5f3cb9265ce36c2fe94869fbb1e2a",
+  "merge": "2c46f19952c6ab53ca0f442dff335180eb77d314",
+  "native_distribution": {
+    "changed_paths": 13,
+    "filter_patterns": 72,
+    "matching_paths": 0,
+    "matching_runs": 0,
+    "status": "NOT_TRIGGERED",
+    "workflow": ".github/workflows/native-distribution.yml",
+    "workflow_blob": "4abfe6eb2e12dbe14d5e78720c60992c8b6f0e24"
+  },
+  "native_version_switch": {
+    "artifact": 15015213814,
+    "artifact_sha256": "c8d49ad9131c522f11a7228e67af50a6c9d62a7744cc6eb6f2825f9158d08fe6",
+    "attempt": 1,
+    "checkout": "2c46f19952c6ab53ca0f442dff335180eb77d314",
+    "counts": {
+      "error": 0,
+      "failure": 0,
+      "passed": 89,
+      "skipped": 0
+    },
+    "job": 139161665660,
+    "junit_bytes": 20351,
+    "junit_sha256": "892f02b72ed8cafdfe5ee1d44d3e611b56ce9ef6e5dd1f135d454481559abd50",
+    "module": "test_project_postgres_version_switch_native",
+    "required_case": "test_native_same_root_source_selection_rollback_and_refusals",
+    "required_case_passed": 1,
+    "required_case_skipped": 0,
+    "run": 45601610520,
+    "run_number": 231,
+    "step": "Prove native version switch"
+  },
+  "pr": 129,
+  "result": "pass",
+  "tree": "272f096652696a85868e70082e0874f748c7c295",
+  "verified_utc": "2026-11-25T11:28:47.095455+00:00"
+}

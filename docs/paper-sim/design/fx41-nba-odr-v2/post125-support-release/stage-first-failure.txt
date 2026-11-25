@@ -1,0 +1,59 @@
+The stage does not pass on the bound record. Nothing bound shows a defect in the released code, but nine items the signed step-1 record names are absent or not tied to a revision. I used only the bound evidence: no tools, no writes, nothing else inspected.
+
+## Reviewed objects
+
+| Role | Commit | Tree |
+|---|---|---|
+| Support source (tested, scanned, code-reviewed) | `2933a375fdc3c248514968277effb9a699097131` | `446be10b502632b3a1acbf3b774aecd65a2ce48e` |
+| Landed subject, clean execution HEAD | `9acfc3ad07f446415d092153effbc5b81e6b0e77` | `b348aa8af022e430d91ae78ae02143db6c4716aa` |
+| CI-tested merge object | `35d1812e1b13ed5f2fa7e432749420082dff5ff4` | not supplied |
+| Node base | `ab6edff2d64ac8aa5c2831d748b8730b63f8312d` | `5c7ac8af85aa4eb3b2ea9df7076c945451f8c09e` |
+
+Plan digest of record: `137a73862e08c75308c467f3f6fcbf64bbb5d5d88d95f87508cf4b20873cbfe0`.
+Original verdict: `b56c792605e6c64fbbeb9f6093f7771b1a3e157eead189508bde2eca86b06a56`.
+Backend disclosed by the client for this session: GLM-5.4.
+
+## What the bound record establishes
+
+- **Renamed test:** clean. `test_optimize_help_names_the_four_subcommands` became `test_optimize_help_names_the_experiment_subcommands`. Both versions keep two asserts and one `pytest.raises`, and the current one checks one more help token. It is the weakening scan's only removal, no check count dropped, and no skip or xfail marker was added. The renamed node passed on its focused run. Test counts reconcile (17 to 21 in that file, 227 to 244 across modified files, 22 functions in the two added files).
+- **Partitions at the support source:** offline 44,016 passed and 444 skipped; native 551 of 551 passed, with no failure, error or skip.
+- **Selfcheck and anchor:** selfcheck is 10 of 10 on base and candidate with byte-identical output; the evaluation anchor passed.
+- **Static audit:** unreachable modules stay at 2,442 and reachable modules rise from 468 to 470. 34 fields were compared with no mismatch. The replay is not byte-identical to the historical report, and the record says so correctly; keep it described as "stable fields equal".
+- **CodeGraph, diff, scan:** CodeGraph passes at the support source with no parse errors. `git diff --check` exits 0. The scan reports zero hits in the four secret categories across 43 changed blobs and 12 new attachments.
+- **Code review:** signed pass by ZCode, guarded, max effort, fast off, workflow mode disabled, with the receipt digest bound.
+- **CI:** Offline verification, Native project PostgreSQL and Research paper bridge all report success on the merge object above.
+- **Registered-only search bound:** the 4,811 budget is described as assembled only after managed binding, with the public entry kept at the 2,000 cap. The code review covers all 13 blobs, and the four native registered-runner tests are covered by the partition's zero skips.
+- **Transferred code:** the 13 paths have candidate-side SHA-256 and blob values, with 11 stated byte-identical to the retained draft `256f8491c324…`.
+
+## Essential step-1 evidence missing
+
+The common thread is that every local receipt is bound to the support source, while the formal run will execute from the landed subject. Nothing bound says the two carry the same product and test code.
+
+1. **CI tree.** The record requires merge object, tree and conclusion for each workflow. The tree of `35d1812e…` is missing, so nothing bound shows the CI tested the landed tree `b348aa8a…`. Only run 45533942383 is tied to the PR head; runs 45534415758 and 45533942354 are tied to no checkout object. Supply the tree, its equality with the execution tree, and the checkout object per run.
+2. **Blob binding.** The 13 blob values carry no revision, and the record asks for them at both the support commit and the execution HEAD. Supply a 13-row table with each path's blob at the retained draft, at `2933a375…` and at `9acfc3ad…`, labelling the eight files against the wiring files.
+3. **Sensitive scan.** The original verifier exited 1 with two `wechat_id` findings unresolved, on lines this node did not change (one in a modified source file, one in a modified test file). The scan summary cites that same receipt, `f1ce327d…`, but reports only four categories, all zero. The integration evidence explains the class in general, not per finding. Supply file, line and meaning for each, or the corroboration receipt that closes them.
+4. **First failure, fix, rerun.** No first-run outcome is bound for the focused, offline or native partitions, nor any statement that there was none. The same holds for the code review gate. The offline summary also has no failure or error count. Supply each first outcome, any fix with its revision, and the rerun outcome, or an explicit "no first failure".
+5. **Skip reasons and node proof.** The 444 offline skips have no reason breakdown and no base count. Supply the reason categories and base count, and confirmation that no new NBA test node is among them. That covers the six tests named as pinning the search bound, starting with `test_odr_protocol_and_user_supplied_budget_cannot_authorize_execution`. Also supply the test or review line that backs the 2,000 figure.
+6. **Compile.** No compile receipt is bound. Supply the command, exit code and revision.
+7. **Frozen outputs.** The addendum requires the four frozen fixtures and the byte-for-byte regression of existing rules and results under an empty registry. No receipt for either is bound; the integration evidence lists both as still to be registered. Supply both at the support source, or state explicitly that they are scheduled with the execution-version receipts at a later gate.
+8. **Interpreter.** The only version in the record is 3.12.3, inside the selfcheck narrative, and no origin is bound. Supply version, path class and origin for the interpreter the test executor used and the formal run will use.
+9. **Handoff review.** The 42-entry manifest contains no handoff review. Supply an independent read-only ZCode receipt with session and reviewed object. It does not depend on the other items and can be dispatched now.
+
+## Record-precision items
+
+Supply these with the above; none changes the product result.
+
+- **Plan digest chain:** the operator addendum binds to plan digest `240f6153da3ff…`, not the digest of record. Supply the digest that `plan.md`, `plan-review.json` and `operator-rereview.json` each certify.
+- **Code review object:** the signed code review names no reviewed commit or tree, and its session fields are listed by name only. The integration evidence records two historical code-review receipts with empty `session_ids`. Supply the reviewed commit and tree, and confirmation that the three identity fields are non-empty.
+- **Unpinned references:** `#118` is recorded by pull-request number only, the ancestor check names no subject, `f60a6acf` and `525d2cbe` are abbreviated, and `1321e54e68f4…` in the help-rename evidence is unlabelled. Supply full values and the subject.
+- **Static audit on the landed tree:** the integration evidence says the unreachable count is re-checked on the final support tree, but the bound reports stop at `2933a375…`. Supply the audit on `9acfc3ad…` against its first parent.
+- **Mask proof:** it is referenced by name with no size or digest. Supply bytes, SHA-256 and result.
+- **Clean-tree receipt:** it covers `ab6edff2…` and `2933a375…` only. Supply one for `9acfc3ad…`. This session's start snapshot shows main clean at that commit, but that is corroboration, not a receipt.
+
+## Later gates, not counted
+
+The clock ruling, the isolated synthetic timing receipt, and registration, preview and attempt on `9acfc3ad…` are outside this verdict. The redacted identities of the real instance and the synthetic library are needed no later than registration.
+
+Per Iron Rule 4, the corrected record returns to this session for re-review, and this failure stays on record.
+
+VERDICT: FAIL

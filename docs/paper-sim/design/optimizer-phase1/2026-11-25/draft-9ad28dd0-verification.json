@@ -1,0 +1,49 @@
+{
+  "utc": "2026-11-25T02:41:15+00:00",
+  "head": "9ad28dd0a790f4fabdd54bddeaa9cf503ce3c7a3",
+  "parent": "a40581a36ad17c66809a5b89992ccc816907f1f0",
+  "audited_base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "working_tree_clean": true,
+  "tracked_scope_paths": 8,
+  "json_evidence_files": 6,
+  "checked_links": 17,
+  "six_actual_jobs_per_pr": {
+    "124": 6,
+    "125": 6
+  },
+  "diff_check_exit": 0,
+  "added_line_sensitive_shapes": 0,
+  "audit_results": {
+    "a40581a36ad17c66809a5b89992ccc816907f1f0": {
+      "address_occurrence_diff.py": {
+        "exit_code": 0,
+        "new_path_rows": 0,
+        "stdout_sha256": "8f382861337ede7be54a5a176226544b5aefe96178f98302b4f195bc67b177e3"
+      },
+      "test_weakening_scan.py": {
+        "exit_code": 0,
+        "removed": 0,
+        "fewer_checks": 0,
+        "added_skip": 0,
+        "added_xfail": 0,
+        "stdout_sha256": "e709449e914e4d2623b6eeb8d6f53db8839aa76eed15c7e7dd5465465486db7f"
+      }
+    },
+    "ab6edff2d64ac8aa5c2831d748b8730b63f8312d": {
+      "address_occurrence_diff.py": {
+        "exit_code": 0,
+        "new_path_rows": 0,
+        "stdout_sha256": "ccc31d5bb5e876e255b0a5882466cc570c9fa4d16028edae44d280063d678450"
+      },
+      "test_weakening_scan.py": {
+        "exit_code": 0,
+        "removed": 0,
+        "fewer_checks": 0,
+        "added_skip": 0,
+        "added_xfail": 0,
+        "stdout_sha256": "b78c0cfb1e9a368238a08885ddea475854857b3f11c55a55a2c9f294801ee6c5"
+      }
+    }
+  },
+  "scope": "Intermediate documentation commit. Formal phase signature, landed main and endpoint scans are separate."
+}

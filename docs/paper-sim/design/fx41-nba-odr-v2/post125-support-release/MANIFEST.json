@@ -1,0 +1,266 @@
+{
+  "purpose": "Post-PR-118 step 1 NBA software signoff and independent clock and launcher evidence",
+  "execution_head": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "execution_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+  "private_shared_software_evidence": {
+    "file": "software-evidence-v1.json",
+    "bytes": 48863,
+    "sha256": "676930e39257149853d1403668a07099a073d68d91d46c07609d73ef682d0f49"
+  },
+  "resource_source_pin": {
+    "file": "observed-resources.json",
+    "bytes": 3417,
+    "sha256": "b16866e8c977bd20839c59981f29456689230dc50293a6d2a92d62fecf26c751",
+    "binding": "original signed clock receipt and clock-evidence source pins"
+  },
+  "files": [
+    {
+      "file": "independent-landed-static.json",
+      "bytes": 1346,
+      "sha256": "529fee7b407b07c5e52a145b6377cb9f0451d56924b9141e4be14fad47186e59",
+      "transform": "exact",
+      "original": {
+        "file": "independent-landed-static.json",
+        "bytes": 1346,
+        "sha256": "529fee7b407b07c5e52a145b6377cb9f0451d56924b9141e4be14fad47186e59"
+      }
+    },
+    {
+      "file": "independent-landed-static-confirmation.json",
+      "bytes": 1132,
+      "sha256": "0cce41b966b07ce5a2637215395307859dd05a5e065a0062e1b6b221c61e1875",
+      "transform": "exact",
+      "original": {
+        "file": "independent-landed-static-confirmation.json",
+        "bytes": 1132,
+        "sha256": "0cce41b966b07ce5a2637215395307859dd05a5e065a0062e1b6b221c61e1875"
+      }
+    },
+    {
+      "file": "independent-landed-contact-coordinates.json",
+      "bytes": 583,
+      "sha256": "d8ded144dd083a9a95d1e48d407c956a6bf413181e65756547295a29ffdf658b",
+      "transform": "exact",
+      "original": {
+        "file": "independent-landed-contact-coordinates.json",
+        "bytes": 583,
+        "sha256": "d8ded144dd083a9a95d1e48d407c956a6bf413181e65756547295a29ffdf658b"
+      }
+    },
+    {
+      "file": "independent-hosted-and-local-skip-counts.json",
+      "bytes": 1583,
+      "sha256": "e7e49b6dc9977a680da8f34b7eb63959ee12999b9932d845861410fbf0dad48c",
+      "transform": "exact",
+      "original": {
+        "file": "independent-hosted-and-local-skip-counts.json",
+        "bytes": 1583,
+        "sha256": "e7e49b6dc9977a680da8f34b7eb63959ee12999b9932d845861410fbf0dad48c"
+      }
+    },
+    {
+      "file": "independent-local-skip-accounting.json",
+      "bytes": 5613,
+      "sha256": "fd926e115106e8d29103112bcbd5f8ac65e2638bf2a5fd70a1fcba6b087c4b11",
+      "transform": "exact",
+      "original": {
+        "file": "independent-local-skip-accounting.json",
+        "bytes": 5613,
+        "sha256": "fd926e115106e8d29103112bcbd5f8ac65e2638bf2a5fd70a1fcba6b087c4b11"
+      }
+    },
+    {
+      "file": "stage-first-failure.txt",
+      "bytes": 7935,
+      "sha256": "1d84848f1d952e424b840db8d7f99e355bea7137b98f3a7786265d90fef2136b",
+      "transform": "response UTF-8 with one final LF",
+      "original": {
+        "file": "nba-support-stage-release.json",
+        "bytes": 8187,
+        "sha256": "3de97824628cb1405e509fccabd6f01d828fce3aa96ef7e3331a8089761d5ab9"
+      }
+    },
+    {
+      "file": "handoff-first-failure.txt",
+      "bytes": 8516,
+      "sha256": "36e57865d1804d1d1ea090e01b6c2e9923efe4d33b6f3208c92e9b333eee3615",
+      "transform": "response UTF-8 with one final LF",
+      "original": {
+        "file": "nba-support-handoff-release.json",
+        "bytes": 8786,
+        "sha256": "5b46411b79df057a6a0134b46b370efae4c7d761aaa1400688a29b23bf247a8d"
+      }
+    },
+    {
+      "file": "stage-rereview.txt",
+      "bytes": 8342,
+      "sha256": "2a4b995955a395cf79e0501c8aa6a64dcd9f342cbd89c215c5bcc3210f541696",
+      "transform": "response UTF-8 with one final LF",
+      "original": {
+        "file": "nba-support-stage-rereview.json",
+        "bytes": 8602,
+        "sha256": "fbf4c5ca73fb1437485e76064dd196cef43a1ff19c0ef0a17af81114349ed521"
+      }
+    },
+    {
+      "file": "handoff-rereview.txt",
+      "bytes": 8257,
+      "sha256": "8fc13964a84c5f8f3072b33561fa8c7c2c70dd21ef2304a86217d95a2319e796",
+      "transform": "response UTF-8 with one final LF",
+      "original": {
+        "file": "nba-support-handoff-rereview.json",
+        "bytes": 8515,
+        "sha256": "4f817e1dd6e01f2fc6ecd3b6125ba126df178ae176eb2e69a21324dd0a4900ef"
+      }
+    },
+    {
+      "file": "launcher-implementation-rereview.txt",
+      "bytes": 3930,
+      "sha256": "58c48838c0ab530385b91db8c68b9fd918a48c46e6077d4b1662c91e8c4110bf",
+      "transform": "response UTF-8 with one final LF",
+      "original": {
+        "file": "load-implementation-original-review.json",
+        "bytes": 4173,
+        "sha256": "2c4c4c4ea72367a50244bf0d6057d1331faee7954da4551349bd80113ab48602"
+      }
+    },
+    {
+      "file": "stage-first-request.txt",
+      "bytes": 1102,
+      "sha256": "9cd75d2336d0e0ae6d1b91b3517b77fb0cec06c6ff3a67ca422484f24343f953",
+      "transform": "prompt lines 1–2, verbatim",
+      "original": {
+        "file": "nba-support-stage-release.prompt",
+        "bytes": 35060,
+        "sha256": "fc4412ac7debd7a9e7740231d0a99a4ee4dec7bfd801f959cca90be0b58cfe4a"
+      }
+    },
+    {
+      "file": "handoff-first-request.txt",
+      "bytes": 1199,
+      "sha256": "a8b9c0ea3b47ad320fa48b29a4ae4d64c118c410e3738d789d5d5a97e7095bdd",
+      "transform": "prompt lines 1–2, verbatim",
+      "original": {
+        "file": "nba-support-handoff-release.prompt",
+        "bytes": 35157,
+        "sha256": "112b40f7653c6c79ceffeb7ae2abc4a6bf40fa7961f81405a002dba7b599063a"
+      }
+    },
+    {
+      "file": "stage-rereview-request.txt",
+      "bytes": 2938,
+      "sha256": "de37e61ebd6050ba79007a9d2d135eca32b8ba3c8b58647fb512ddf9344c730a",
+      "transform": "prompt lines 1–9, verbatim",
+      "original": {
+        "file": "nba-support-stage-rereview.prompt",
+        "bytes": 69456,
+        "sha256": "ba3773d4dc357d64eacc7d80e8c50e30e89bc234cacd6ca070e730e996652ca3"
+      }
+    },
+    {
+      "file": "handoff-rereview-request.txt",
+      "bytes": 2876,
+      "sha256": "b372af051d56b63857d8b306837312c45830a45b255c95fd8263fcb63d37bc2f",
+      "transform": "prompt lines 1–9, verbatim",
+      "original": {
+        "file": "nba-support-handoff-rereview.prompt",
+        "bytes": 78200,
+        "sha256": "1e67472a6cabd1d476b02aa8549b78e0fa381cc3501cfe62efea9f81b3f8edf7"
+      }
+    },
+    {
+      "file": "static-executor-result.txt",
+      "bytes": 2503,
+      "sha256": "cac60ca3ff0fefad86bb4845f51c31b44551278443ce3f96176e52977a6d1b23",
+      "transform": "response with private client identifiers masked, UTF-8 with one final LF",
+      "original": {
+        "file": "stage-evidence-static-terminal.json",
+        "bytes": 2730,
+        "sha256": "2e2668b55f115de086e39cbf778b5511f812c1ae9ce83a3d9a0a82f264645432"
+      }
+    },
+    {
+      "file": "skip-executor-result.txt",
+      "bytes": 6102,
+      "sha256": "985fb99845220b3d463263da1ed3f669681947f9ef9552f931e850f90c11df9f",
+      "transform": "response with private client identifiers masked, UTF-8 with one final LF",
+      "original": {
+        "file": "stage-evidence-skip-components.json",
+        "bytes": 6392,
+        "sha256": "829ab63fe61dbb4e4fa5c0c70d5d5b367f1c97bdb28d6d17b76f2232cbcd09b0"
+      }
+    },
+    {
+      "file": "software-evidence.public.json",
+      "bytes": 34818,
+      "sha256": "fca3ed9be63faf20f0992ff6a28436724dc93c1f3ab61998f7e36d1efaf43238",
+      "transform": "software-facing field selection, retaining exact Git, CI, tests, scans and software provenance fields",
+      "original": {
+        "file": "software-evidence-v1.json",
+        "bytes": 48863,
+        "sha256": "676930e39257149853d1403668a07099a073d68d91d46c07609d73ef682d0f49"
+      }
+    },
+    {
+      "file": "software-signoff.public.json",
+      "bytes": 1925,
+      "sha256": "d09fdbc51c48de858a2c18572c7eff2c6a2d3734029ca7e76f35370f196c3925",
+      "transform": "terminal subject, receipt fingerprints, roles, verdicts and session continuity",
+      "original": {
+        "file": "terminal-support-release-signoff.json",
+        "bytes": 2121,
+        "sha256": "94a080b33aa37be7a6fdb1196128698ca4f843cc4bda3dd4ea67abd939d63f03"
+      }
+    },
+    {
+      "file": "stage-subject.public.json",
+      "bytes": 727,
+      "sha256": "80721cc2fb1eb036c96457a0db3c32b025ebd6fbf64c30cd301b00ef31848847",
+      "transform": "subject, evidence pins and receipt continuity fields",
+      "original": {
+        "file": "stage-rereview-subject.json",
+        "bytes": 955,
+        "sha256": "1a64561e51e8a03a1728db6b82f433ee0e7250a3dfe8fbd3dc2d53436d39c315"
+      }
+    },
+    {
+      "file": "handoff-subject.public.json",
+      "bytes": 991,
+      "sha256": "c214de0aa83b3ab955f8a6c64c66278cfc98141eb97569fe1c5051c189c34b8b",
+      "transform": "subject, evidence pins and receipt continuity fields",
+      "original": {
+        "file": "handoff-rereview-subject.json",
+        "bytes": 1329,
+        "sha256": "4023e46c2923802d980ef38293d80856be31ffbf655ed8dcab6861c130c59397"
+      }
+    },
+    {
+      "file": "clock-rereview.txt",
+      "bytes": 2404,
+      "sha256": "a291ac12ea775d5b2e882a2a98bc4c05c2eccc4b89b861cee108d30fb3aa5b0e",
+      "transform": "selected verbatim clock response paragraphs, two load conditions, and signed verdict block",
+      "original": {
+        "file": "original-review-resume.json",
+        "bytes": 4144,
+        "sha256": "3bd2e9615ebaba46d538c9917fdd17c31b55bc08fde6fed47a4314d0a47fa2c1"
+      }
+    },
+    {
+      "file": "clock-evidence.public.json",
+      "bytes": 1620,
+      "sha256": "7322008bb492454375cd18ac0c982034d506874d746104bbce603270e569ed9e",
+      "transform": "landing, original and final verdicts, timing bounds, launch load thresholds and source fingerprints",
+      "original": {
+        "file": "rereview-evidence.json",
+        "bytes": 4511,
+        "sha256": "3c0d5e408031414d5956527816dcccf0c213f7c2e92a3735230c5f8af66e7662"
+      }
+    },
+    {
+      "file": "README.md",
+      "bytes": 2561,
+      "sha256": "40c8c27091868827e8148ce2980ba970ddacb8cc3496ea12c4c636bfbdca2f56",
+      "transform": "archive-authored"
+    }
+  ]
+}

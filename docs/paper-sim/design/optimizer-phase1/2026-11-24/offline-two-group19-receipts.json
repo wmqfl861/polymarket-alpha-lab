@@ -1,0 +1,171 @@
+{
+  "registration_reuse": {
+    "head": "97091184db35f4f6fe7d06d0cccb6472bcee7d23",
+    "reuse_index_sha256": "e8ce41bdd722b239a270dae646006a348f08e59f3051cab1936fc4fcc3f3d06c",
+    "import_source_group_count": 18,
+    "import_complete_group_scopes": 116,
+    "import_extra_scopes": 4,
+    "distinct_scopes": 120,
+    "distinct_files": 2059,
+    "retained_prior_failure": {
+      "worker": {
+        "exit": 1,
+        "state": "failed",
+        "utc": "2026-11-24T05:34:28+00:00"
+      },
+      "pytest_exit": 1,
+      "failed_tests": [
+        {
+          "node_sha256": "711b296e9595d5c58694a5a7953e0b2d1080f0e5934a1d926ad3e18fead03586",
+          "test": "test_engine_conf_builder_shape_and_no_credential"
+        }
+      ],
+      "proofs_sha256": {
+        "inventory.json": "9877804d51c42a81aff0e06db44b564888fcbbdd895d825d2d9e902244f12fca",
+        "pytest.json": "cd75b2d63e1a05158244c15358080838caa366083d51612569f1c08294bd755e",
+        "request.json": "5cbbfeaf00b1154f6b5e5fa251245a0e5610ce6309014b9c281393c501685c78",
+        "result.json": "fa91b107ae337bf33afe16c21aea06e42a55962779fe56c52160c3bdcfa12a67"
+      }
+    }
+  },
+  "current_runs": {
+    "fx47": {
+      "candidate": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+      "suite_groups": 31,
+      "full_groups_verified": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "first_failure_utc": "2026-11-24T07:48:04+00:00",
+      "failed_group": 19,
+      "failed_scope_sha256": "f1862269bc9a9591caa1da75c8425d99c8c8409c4ab8746cc03e6eec46216af8",
+      "single_file": [
+        "tests/test_research_process_linux.py"
+      ],
+      "group_19_wrapper": {
+        "exit": 1,
+        "state": "failed",
+        "utc": "2026-11-24T07:48:04+00:00"
+      },
+      "selected": 126,
+      "pytest_exit_at_sessionfinish": 0,
+      "invalid": false,
+      "failed_tests": 0,
+      "phase_counts": [
+        {
+          "outcomes": {
+            "call": "passed",
+            "setup": "passed",
+            "teardown": "passed"
+          },
+          "count": 119
+        },
+        {
+          "outcomes": {
+            "setup": "skipped",
+            "teardown": "passed"
+          },
+          "count": 7
+        }
+      ],
+      "completion_receipt_present": false,
+      "proofs_sha256": {
+        "request.json": "f1862269bc9a9591caa1da75c8425d99c8c8409c4ab8746cc03e6eec46216af8",
+        "inventory.json": "9877804d51c42a81aff0e06db44b564888fcbbdd895d825d2d9e902244f12fca",
+        "pytest.json": "c12f496f38a1df6dbba904bb95856c3f9e05ffe1b3f449bd5eedba1bb1475ca1",
+        "result.json": "87b9b24594c62a1e6ef953d40bc2b4a90e49e6072ed774fbff3ecebe10ff62b5"
+      },
+      "observed_run_failed": {
+        "event": "run_failed",
+        "head": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+        "reason": "pytest group 19 exited 1",
+        "utc": "2026-11-24T07:48:05+00:00"
+      }
+    },
+    "registration": {
+      "candidate": "97091184db35f4f6fe7d06d0cccb6472bcee7d23",
+      "suite_groups": 31,
+      "full_groups_verified": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "first_failure_utc": "2026-11-24T07:50:25+00:00",
+      "failed_group": 19,
+      "failed_scope_sha256": "f67619f036d33b1464f2f474c256ed922601b74464b7fa04ea4426e74362def3",
+      "single_file": [
+        "tests/test_research_process_linux.py"
+      ],
+      "group_19_wrapper": {
+        "exit": 1,
+        "state": "failed",
+        "utc": "2026-11-24T07:50:25+00:00"
+      },
+      "selected": 126,
+      "pytest_exit_at_sessionfinish": 0,
+      "invalid": false,
+      "failed_tests": 0,
+      "phase_counts": [
+        {
+          "outcomes": {
+            "call": "passed",
+            "setup": "passed",
+            "teardown": "passed"
+          },
+          "count": 119
+        },
+        {
+          "outcomes": {
+            "setup": "skipped",
+            "teardown": "passed"
+          },
+          "count": 7
+        }
+      ],
+      "completion_receipt_present": false,
+      "proofs_sha256": {
+        "request.json": "f67619f036d33b1464f2f474c256ed922601b74464b7fa04ea4426e74362def3",
+        "inventory.json": "9877804d51c42a81aff0e06db44b564888fcbbdd895d825d2d9e902244f12fca",
+        "pytest.json": "09eb15bbaa7c35d1359ea02105fb35a42cbbfd111c66d5fe2c09c2a9645de7d3",
+        "result.json": "663855ca133a045a936b540399274d209641f767d643f6148c269c7d886c1c6d"
+      },
+      "observed_run_failed": {
+        "event": "run_failed",
+        "head": "97091184db35f4f6fe7d06d0cccb6472bcee7d23",
+        "reason": "pytest group 19 exited 1",
+        "utc": "2026-11-24T07:50:25+00:00"
+      }
+    }
+  }
+}

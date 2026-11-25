@@ -1,0 +1,32 @@
+{
+  "landing": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+  "first_parent": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+  "static_audit_sha256": "529fee7b407b07c5e52a145b6377cb9f0451d56924b9141e4be14fad47186e59",
+  "reachable_modules": [
+    468,
+    470
+  ],
+  "unreachable_modules": [
+    2442,
+    2442
+  ],
+  "scanner": {
+    "relative_path": "docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan.py",
+    "sha256": "b71adb796c92f80feff6d52b6dad89220745305814066a55cf6bb054cbd9b3ab",
+    "scope": "first-parent to actual landing added lines",
+    "exit": 0,
+    "stdout_sha256": "5dfe598194bcf979003fe80d6323cab6cc4f4e81ada235a91400d19ca685ba6f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "counts": {
+      "wechat_id": 14
+    }
+  },
+  "diff_check": {
+    "exit": 0,
+    "stdout_bytes": 0,
+    "stderr_bytes": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

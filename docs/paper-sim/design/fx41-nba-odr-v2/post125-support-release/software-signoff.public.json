@@ -1,0 +1,58 @@
+{
+  "utc": "2026-11-25T09:06:25.200006+00:00",
+  "subject": {
+    "head": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+    "ci_merge_checkout": "35d1812e1b13ed5f2fa7e432749420082dff5ff4",
+    "support_source": "2933a375fdc3c248514968277effb9a699097131"
+  },
+  "evidence": {
+    "file": "software-evidence-v1.json",
+    "bytes": 48863,
+    "sha256": "676930e39257149853d1403668a07099a073d68d91d46c07609d73ef682d0f49"
+  },
+  "software_handoff_cleared": true,
+  "formal_operation_authorized_by_this_evidence": false,
+  "stage": {
+    "role": "stage",
+    "original_receipt": {
+      "file": "nba-support-stage-release.json",
+      "bytes": 8187,
+      "sha256": "3de97824628cb1405e509fccabd6f01d828fce3aa96ef7e3331a8089761d5ab9",
+      "verdict": "FAIL"
+    },
+    "terminal_receipt": {
+      "file": "nba-support-stage-rereview.json",
+      "bytes": 8602,
+      "sha256": "fbf4c5ca73fb1437485e76064dd196cef43a1ff19c0ef0a17af81114349ed521",
+      "verdict": "PASS"
+    },
+    "same_session_new_turn": true,
+    "role_manifest": {
+      "file": "stage-rereview-subject.json",
+      "bytes": 955,
+      "sha256": "1a64561e51e8a03a1728db6b82f433ee0e7250a3dfe8fbd3dc2d53436d39c315"
+    }
+  },
+  "handoff": {
+    "role": "handoff",
+    "original_receipt": {
+      "file": "nba-support-handoff-release.json",
+      "bytes": 8786,
+      "sha256": "5b46411b79df057a6a0134b46b370efae4c7d761aaa1400688a29b23bf247a8d",
+      "verdict": "FAIL"
+    },
+    "terminal_receipt": {
+      "file": "nba-support-handoff-rereview.json",
+      "bytes": 8515,
+      "sha256": "4f817e1dd6e01f2fc6ecd3b6125ba126df178ae176eb2e69a21324dd0a4900ef",
+      "verdict": "PASS"
+    },
+    "same_session_new_turn": true,
+    "role_manifest": {
+      "file": "handoff-rereview-subject.json",
+      "bytes": 1329,
+      "sha256": "4023e46c2923802d980ef38293d80856be31ffbf655ed8dcab6861c130c59397"
+    }
+  }
+}

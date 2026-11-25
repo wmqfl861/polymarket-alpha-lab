@@ -4577,6 +4577,13 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 11 月 22 日原指令为“修改规则，每次扫描任务，建模任务，下注任务，推荐任务，不需要zcode审核”。#123 中的三处文字覆盖定时及按需的扫描、建模、模拟下注和推荐。运行层源码变更仍经分支、PR、CI 和独立复审。OD-U 尚待 owner 确认完整正文。供确认的 `AGENTS.md` 在上述合并提交中为 Git blob `ee1de5f23f9c39daeaf2b347919205f1504b7288`，27,514 字节，SHA-256 `0f4d79fa1380af4f0750b2b0f306e4c99fd8e643b766fcbfdfc2bf69d003cd20`。收到答复后在此登记原话。OD-U 的范围见本轮[整改清单](docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md)。以后变更根规则时，同一 PR 收入 owner 对完整正文的原话和文件哈希。[固定完整正文](https://github.com/wmqfl861/polymarket-alpha-lab/blob/ab6edff2d64ac8aa5c2831d748b8730b63f8312d/AGENTS.md)
 
+2026-11-25 普通 PR 合入登记。下表按实际合并树核对候选、三条工作流及原审。
+
+| PR | 纳入内容 | 主线合并提交 | 三条 CI 的实际检出 | Offline / Native PostgreSQL / Research | 原审与回执 |
+| --- | --- | --- | --- | --- | --- |
+| [#126](https://github.com/wmqfl861/polymarket-alpha-lab/pull/126) | FX-52、FX-51、FX-53 登记 | `56a6b59df074a319b57555fdeec334423d012327` | `5888804c47b0fddaae214374cbbe8353f454c64a` | 45556953685 / 45557220997 / 45556953646 | PASS，CURRENT。[合入回执](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr126-landed.json) · [三条 CI 的实际检出](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr126-exact-ci.json) · [整合复审原件](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr126-integration-review.json) |
+| [#127](https://github.com/wmqfl861/polymarket-alpha-lab/pull/127) | FX-36 授权与外部复查、FX-49 固定入口现场结果 | `9ce8290e90d82ae58928cea3eabca96d20d66217` | `76f6235362d8eac32eb795aa723e039199615b92` | 45568274535 / 45568555979 / 45568274603 | PASS，CURRENT。[合入回执](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr127-landed.json) · [三条 CI 的实际检出](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr127-exact-ci.json) · [整合复审原件](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr127-integration-review.json) |
+
 #### 84.2.3 事后复审及隔离复现
 
 
@@ -4592,7 +4599,11 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 | 离线全量 | `a77a67e7` | 13 时 21 分 17 秒 UTC 完成 31 组、3,338 个文件。43,956 项通过、457 项按既有条件跳过，0 组从历史回执导入。[分组执行摘要](docs/paper-sim/design/fx-47/offline-integrated-summary.json) |
 | 早先离线第 19 组 | `14f516ca` | pytest 会话收尾记录了 119 项通过、7 项跳过，外层进程退出 1。该次运行失败。 |
 
-该节点的 PR、三条工作流、当前合并检出及最终合入提交待登记。FX-40 依赖 FX-47 的合入结果。
+2026-11-25，FX-47 经 [PR #128](https://github.com/wmqfl861/polymarket-alpha-lab/pull/128) 普通合入 `a7dbd8a3e14f5f86f9f26e2f05b76a46927cf4ee`。三条工作流均检出 `260c986035ac81f5ac9e93b3710d9501feaf1794`，树与主线合并相同。Offline `45581744123`、Native PostgreSQL `45581744116`、Research `45581744049` 均通过，固定核验返回 `CURRENT`。FX-40 在该合并点启动。[合入回执](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr128-landed.json) · [精确 CI](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr128-exact-ci.json) · [原审](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr128-integration-review.json)
+
+优化线的登记从 #123 补到 #129，#124 和 #125 的普通合并提交分别为 `525d2cbe527c7588eb0ec0e53570dd4f03b1f36c` 和 `9acfc3ad07f446415d092153effbc5b81e6b0e77`。2026-11-25，NBA v2 在 #125 上仅执行 attempt 1，运行号 4，09:07:09 UTC 启动，09:49:41 UTC 封存 `NO_IMPROVEMENT`。4,811 个试验全部完成，两项目标均保留现役规格。俱乐部足球以 §87.2 的预检收束。[节点登记、三条 CI 和逐项处置](docs/handoffs/2026-11-19-optimizer-phase1.md) · [运行 4 原件](docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-v2-terminal.json)
+
+2026-11-25，FX-54 经 [PR #129](https://github.com/wmqfl861/polymarket-alpha-lab/pull/129) 普通合入 `631259a22a50ac5d06be7512ed6bbc32c87e3fbf`。三条工作流在 `2c46f19952c6ab53ca0f442dff335180eb77d314` 上通过，固定核验报 `CURRENT`。Offline `45601610469`、Native PostgreSQL `45601610520`、Research `45601610600`。[合入回执](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr129-landed.json) · [精确 CI](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr129-exact-ci.json)
 
 §84 的五项均在 2026-11-21 由实际 ZCode 完成独立事后复审。原合入时缺少回执的事实保留在各行。按首次审查或主机资源中断恢复的实际会话入档。
 
@@ -4800,7 +4811,7 @@ PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并�
 
 按 #118 实际合并对象复核：`historical_protocol` 的现行俱乐部日程为 `mo6-club-official-round-suffix-v1`，固定截止 2026-11-10 10:33:51 UTC。CLI 在连接前校验该日程时钟，清单和受管存储重新校验，历史适配器要求完整因果后缀和精确登记首界。W41 的西甲 R8 未闭，若把首界移至轮内，搜索侧标签仍晚于首预测。W42 的英冠和西甲两条搜索标签均晚于 10 月 13 日 18:45 UTC 的首预测。按当前证据，各目标的留出上界为 3 个完整比赛周、229 场，离 20 周且 300 场仍至少差 17 周、71 场，满足时点未知。新启动、搜索试验、预测、留出回调与比较均为 0，实际配对场数未测，无新运行 ID、终态或记分卡。独立本机 ZCode `sess_7bc3eeec-b3ad-43ff-96de-efc26b82819b` 于 `2026-11-21T20:39:17.867333+00:00` 通过该处置计划。[预检计划](docs/paper-sim/design/fx-41/club-w45-plan.txt) · [独立复审](docs/paper-sim/design/fx-41/club-w45-review.txt) · [复审回执](docs/paper-sim/design/fx-41/club-w45-review-receipt.json)
 
-§84.2.5 保留三张正式原卡。俱乐部 ID 1 与 NBA ID 3 为 `INSUFFICIENT_DATA`，国家队 ID 2 为 `NO_IMPROVEMENT`，三次原运行的实际留出回调均为 0。owner 于 2026-11-21 批准 NBA 双季日程先登记再执行一次。该日程使用 17 个完整规格和 4,811 次物理试验。受管执行和新卡待交付。O-5 的原生失败路径测试已随 #121 合入，专项 15 项通过。优化线第一阶段交接书待 NBA 执行和终点验收。[O-5 受管测试结果](docs/paper-sim/design/fx-38-fx-39-step1/focused-native.json)
+§84.2.5 保留三张正式原卡。俱乐部 ID 1 与 NBA ID 3 为 `INSUFFICIENT_DATA`，国家队 ID 2 为 `NO_IMPROVEMENT`，三次原运行的实际留出回调均为 0。owner 于 2026-11-21 批准 NBA 双季日程先登记再执行一次。该日程使用 17 个完整规格和 4,811 次物理试验。2026-11-25 已在原日程执行一次，运行 4 封存 `NO_IMPROVEMENT`，胜负和大小分均保留现役规格。O-5 的原生失败路径测试已随 #121 合入，专项 15 项通过。四张封存原卡及第一阶段处置见[交接书](docs/handoffs/2026-11-19-optimizer-phase1.md)。[O-5 受管测试结果](docs/paper-sim/design/fx-38-fx-39-step1/focused-native.json)
 
 ## 88. FX-51 足篮运行层的准入、金额和模型来源
 

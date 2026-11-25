@@ -1,0 +1,130 @@
+{
+  "evidence_type": "coordinator_status_snapshot",
+  "query_tool": "run-fx47-offline-v2.py status",
+  "candidate": "fx47-cleanup-merge-candidate",
+  "head": "a77a67e7c157ac991229709aa5124fdfde81a365",
+  "manifest_sha256": "7da17e4ba756df4b6bdb139eb77709b9cc77eeba3c281e01d47b295b1550853b",
+  "file_count": 3338,
+  "group_count": 31,
+  "status_observations": [
+    {
+      "queried_utc": "2026-11-24T11:40:33+00:00",
+      "verified_groups": 10,
+      "service_active": true,
+      "completed": null,
+      "latest_event": {
+        "event": "attempt_started",
+        "group": 11,
+        "files": 1,
+        "utc": "2026-11-24T11:40:33+00:00"
+      }
+    },
+    {
+      "queried_utc": "2026-11-24T12:08:31+00:00",
+      "verified_groups": 11,
+      "service_active": true,
+      "completed": null,
+      "latest_event": {
+        "event": "attempt_started",
+        "group": 12,
+        "files": 24,
+        "utc": "2026-11-24T12:08:31+00:00"
+      }
+    },
+    {
+      "queried_utc": "2026-11-24T12:29:17+00:00",
+      "verified_groups": 16,
+      "service_active": true,
+      "completed": null,
+      "latest_event": {
+        "event": "attempt_started",
+        "group": 17,
+        "utc": "2026-11-24T12:29:17+00:00"
+      }
+    },
+    {
+      "queried_utc": "2026-11-24T12:34:33+00:00",
+      "verified_groups": 18,
+      "service_active": true,
+      "completed": null,
+      "latest_event": {
+        "event": "attempt_started",
+        "group": 19,
+        "attempt": 1,
+        "utc": "2026-11-24T12:34:33+00:00"
+      }
+    },
+    {
+      "queried_utc": "2026-11-24T12:57:15+00:00",
+      "verified_groups": 24,
+      "service_active": true,
+      "completed": null,
+      "latest_event": {
+        "event": "attempt_started",
+        "group": 25,
+        "utc": "2026-11-24T12:57:15+00:00"
+      }
+    },
+    {
+      "queried_utc": "2026-11-24T13:04:02+00:00",
+      "verified_groups": 26,
+      "service_active": true,
+      "completed": null,
+      "latest_event": {
+        "event": "attempt_started",
+        "group": 27,
+        "utc": "2026-11-24T13:04:02+00:00"
+      }
+    },
+    {
+      "queried_utc": "2026-11-24T13:10:12+00:00",
+      "verified_groups": 28,
+      "service_active": true,
+      "completed": null,
+      "latest_event": {
+        "event": "attempt_started",
+        "group": 29,
+        "utc": "2026-11-24T13:10:12+00:00"
+      }
+    }
+  ],
+  "interpretation": "The 18 groups completed on corrected head 14f516ca were run group by group and each has a complete receipt. They are not imported or reused groups. The registration candidate 97091184 separately reused 18 earlier completed groups. The current merge-candidate status observations are pre-completion coordinator snapshots. The terminal completed receipt and progress event record 31/31 groups, 43,956 passed, 457 skipped, and zero historical unsuccessful attempts for this candidate. The completed.json receipt has no service_active field. Full runner completion does not certify that all node or PR gates passed.",
+  "candidate_relationship": {
+    "head": "a77a67e7c157ac991229709aa5124fdfde81a365",
+    "parent_commit": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+    "test_only_fix_commit": "6ac6f5cca93c8299567380dec63c633089d7d2d2",
+    "relationship": "merge candidate comprising the corrected FX-47 head and a cleanup test-only fix",
+    "test_only_fix_path": "tests/test_research_process_linux.py"
+  },
+  "completion": {
+    "completed_receipt_sha256": "8c3ea789d05ea57dfa02217e117c3fca6b1f7a93c7168d3ba1351ad7706f7eb3",
+    "progress_events_sha256": "10c0b0b7df8053f39ebd3be1ac94dbe5685ef56d150c9c366597611d4cab1fcd",
+    "terminal_progress_event": {
+      "event": "completed",
+      "utc": "2026-11-24T13:21:17+00:00",
+      "head": "a77a67e7c157ac991229709aa5124fdfde81a365",
+      "groups": 31,
+      "counts": {
+        "passed": 43956,
+        "skipped": 457
+      }
+    },
+    "completed_receipt": {
+      "utc": "2026-11-24T13:21:17+00:00",
+      "candidate": "fx47-cleanup-merge-candidate",
+      "head": "a77a67e7c157ac991229709aa5124fdfde81a365",
+      "groups": 31,
+      "files": 3338,
+      "node_outcome_files": 3338,
+      "counts": {
+        "passed": 43956,
+        "skipped": 457
+      },
+      "historical_unsuccessful_attempts": 0,
+      "legacy_groups": 0,
+      "manifest_sha256": "7da17e4ba756df4b6bdb139eb77709b9cc77eeba3c281e01d47b295b1550853b",
+      "focus_receipt_sha256": "c7ad3f2d688a9566507a38ef719e82b1d6f21f76961ad04171cefb4c2cbbaf2d"
+    },
+    "summary_path_from_repo_root": "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx47-offline-run-a77a67e7-summary.json"
+  }
+}

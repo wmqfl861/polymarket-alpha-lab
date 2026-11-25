@@ -1,0 +1,127 @@
+{
+  "candidates": {
+    "fx47": {
+      "head": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+      "last_event": {
+        "event": "attempt_started",
+        "group": 14,
+        "head": "14f516ca562b218b776aa3f7fb174a39ba4ce66f",
+        "utc": "2026-11-24T07:20:53+00:00"
+      },
+      "receipt_prefix_bytes": 49988,
+      "receipt_prefix_sha256": "c640c122e904bab886065b119b66bdcb0a6210baed44f8a177ae77bc280160f8",
+      "verified_groups": [
+        {
+          "counts": {
+            "passed": 1321
+          },
+          "group": 1,
+          "utc": "2026-11-24T06:00:33+00:00"
+        },
+        {
+          "counts": {
+            "passed": 2140,
+            "skipped": 15
+          },
+          "group": 2,
+          "utc": "2026-11-24T06:06:36+00:00"
+        },
+        {
+          "counts": {
+            "passed": 1857,
+            "skipped": 19
+          },
+          "group": 3,
+          "utc": "2026-11-24T06:11:15+00:00"
+        },
+        {
+          "counts": {
+            "passed": 1073
+          },
+          "group": 4,
+          "utc": "2026-11-24T06:14:16+00:00"
+        },
+        {
+          "counts": {
+            "passed": 933
+          },
+          "group": 5,
+          "utc": "2026-11-24T06:17:37+00:00"
+        },
+        {
+          "counts": {
+            "passed": 896
+          },
+          "group": 6,
+          "utc": "2026-11-24T06:21:00+00:00"
+        },
+        {
+          "counts": {
+            "passed": 1022
+          },
+          "group": 7,
+          "utc": "2026-11-24T06:24:26+00:00"
+        },
+        {
+          "counts": {
+            "passed": 1770
+          },
+          "group": 8,
+          "utc": "2026-11-24T06:27:44+00:00"
+        },
+        {
+          "counts": {
+            "passed": 1339
+          },
+          "group": 9,
+          "utc": "2026-11-24T06:31:03+00:00"
+        },
+        {
+          "counts": {
+            "passed": 1577,
+            "skipped": 1
+          },
+          "group": 10,
+          "utc": "2026-11-24T06:34:26+00:00"
+        },
+        {
+          "counts": {
+            "passed": 3343,
+            "skipped": 314
+          },
+          "group": 11,
+          "utc": "2026-11-24T07:11:26+00:00"
+        },
+        {
+          "counts": {
+            "passed": 1096,
+            "skipped": 31
+          },
+          "group": 12,
+          "utc": "2026-11-24T07:15:59+00:00"
+        },
+        {
+          "counts": {
+            "passed": 1197,
+            "skipped": 26
+          },
+          "group": 13,
+          "utc": "2026-11-24T07:20:53+00:00"
+        }
+      ]
+    },
+    "registration": {
+      "head": "97091184db35f4f6fe7d06d0cccb6472bcee7d23",
+      "last_event": {
+        "event": "waiting_for_serial_lock",
+        "head": "97091184db35f4f6fe7d06d0cccb6472bcee7d23",
+        "utc": "2026-11-24T06:19:05+00:00"
+      },
+      "receipt_prefix_bytes": 120,
+      "receipt_prefix_sha256": "9ae9e91cc14ece628b9fa7550f36b4e5c9788629d742ff750c74517ea1da839e",
+      "verified_groups": []
+    }
+  },
+  "cutoff_utc": "2026-11-24T07:21:00+00:00",
+  "registration_reuse_index_sha256": "e8ce41bdd722b239a270dae646006a348f08e59f3051cab1936fc4fcc3f3d06c"
+}

@@ -1,0 +1,132 @@
+{
+  "delivery": {
+    "files": 34,
+    "manifest_lines": 32,
+    "manifest": {
+      "commit": "b3e6f6d3eb3615b74b677658065de43d84147c94",
+      "path": "docs/handoffs/2026-11-24-incremental-review/MANIFEST.sha256",
+      "blob": "b4c7ae172be559baa347e52246b3340bec4412e4",
+      "bytes": 4516,
+      "sha256": "d3054cfe2fef5e3ec321551bafc19bfdbbad5f12bfe3f5d545d895002c109884"
+    }
+  },
+  "intake": {
+    "candidate": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+    "verified_delivery": "b3e6f6d3eb3615b74b677658065de43d84147c94",
+    "base_and_remote_main_at_check": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "tests": {
+      "commit": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+      "counts": {
+        "passed": 43956,
+        "skipped": 437
+      },
+      "files": 3338,
+      "groups": 31
+    },
+    "test_skips": "Existing opt-in and environment-conditioned tests retained. No new skip markers in the candidate.",
+    "workflow_runs": [],
+    "pull_request": null,
+    "last_publication_event": {
+      "exit_code": 128,
+      "operation": "git push",
+      "reason": "not found",
+      "stage": "halted",
+      "utc": "2026-11-24T01:22:41Z"
+    },
+    "sources": [
+      {
+        "file": "intake-publication-status.json",
+        "bytes": 918,
+        "sha256": "22166d79814eba16920b1becbcc05053ea6ac6518980b336565c4b264b86c8ba"
+      },
+      {
+        "file": "intake-publication.jsonl",
+        "bytes": 380,
+        "sha256": "6fb4eb384aff8de65548befc2e22f57a7f9bf1aaebaa13e2247a2302fedc40fd"
+      },
+      {
+        "file": "node0-partitioned.log",
+        "bytes": 1386,
+        "sha256": "1f2dcdb5ddc5513e90ab725a12a32cf2d3af306450c3c7d661bb9b545c0b5250"
+      }
+    ],
+    "publication_events": [
+      {
+        "head": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+        "stage": "waiting_for_local_full_suite",
+        "utc": "2026-11-24T00:27:06Z"
+      },
+      {
+        "files": 3338,
+        "groups": 31,
+        "stage": "local_gates_complete",
+        "tests": {
+          "passed": 43956,
+          "skipped": 437
+        },
+        "utc": "2026-11-24T01:22:40Z"
+      },
+      {
+        "exit_code": 128,
+        "operation": "git push",
+        "reason": "not found",
+        "stage": "halted",
+        "utc": "2026-11-24T01:22:41Z"
+      }
+    ],
+    "review": {
+      "source": {
+        "file": "node0-review-resumed.json",
+        "bytes": 5386,
+        "sha256": "ad190aff37faf243f77589a32858b7d639e072ce58ea28f29ec923ef1dc80adf"
+      },
+      "session": "sess_49b909d5-0728-4732-a376-136b8e103508",
+      "turn": "turn_98053c66-a29d-4234-b283-1aeda028af1a",
+      "verdict_line": "VERDICT: PASS e65be3e7bfed96d52be1a2c9b392627b0ab2d23b"
+    }
+  },
+  "registration": {
+    "initial": {
+      "source": {
+        "file": "registration-code-review-network.json",
+        "bytes": 6863,
+        "sha256": "a229c00de92e685e4d8fc8afd3bdf5ae9122c71f3dffd589ebca59510a42db1f"
+      },
+      "session": "sess_ab4a07b6-49d6-47b5-a71b-904916bb4661",
+      "turn": "turn_4add352a-1066-413d-b01a-907f52fbda2d",
+      "verdict_line": "VERDICT: PASS"
+    },
+    "intermediate": {
+      "source": {
+        "file": "registration-final-original-rereview.json",
+        "bytes": 4467,
+        "sha256": "72816efc16833ec8a991f39506910bded34ca2a52ebc75a5a845896aa6af2c85"
+      },
+      "session": "sess_ab4a07b6-49d6-47b5-a71b-904916bb4661",
+      "turn": "turn_9b51d0a5-e78c-4cdb-bcff-cbb7f6fca6e1",
+      "verdict_line": "VERDICT: FAIL"
+    },
+    "final": {
+      "source": {
+        "file": "registration-final-proof-review.json",
+        "bytes": 2390,
+        "sha256": "ff14d5857f560f4c45728bad418b4593ec6b86e6fcfb2b55be6efde0c288dfbe"
+      },
+      "session": "sess_ab4a07b6-49d6-47b5-a71b-904916bb4661",
+      "turn": "turn_43c7a553-aca0-4289-9a74-1f11123b13a2",
+      "verdict_line": "VERDICT: PASS"
+    },
+    "final_subject": "97091184db35f4f6fe7d06d0cccb6472bcee7d23"
+  },
+  "first_handoff_review": {
+    "candidate": "87a4dd2e5548bdc3c9c710c08fb3a33a6cb7d031",
+    "source": {
+      "file": "phase1-working-evidence-review.json",
+      "bytes": 4651,
+      "sha256": "ddc46753029ee6e3a94c0a5200e589e65a87a7878e8438cc96fd2ea0da63c7b0"
+    },
+    "session": "sess_63487136-27a4-47e1-a688-b00cc03b4d74",
+    "turn": "turn_ccf31a1c-4043-4dfe-8345-9b64c1689994",
+    "verdict_line": "VERDICT: FAIL"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "sessionId": "sess_ace6ffd3-1aa6-4d93-9113-f0f86f16d718",
+  "turnId": "turn_42694371-8eec-409b-b390-724efc69ec42",
+  "traceId": "dfa55af8-8f5b-498e-8bf7-3c23bee3dc68",
+  "response": "**Reviewed:** head `e94756c8a0e5f3cb9265ce36c2fe94869fbb1e2a`, tree `272f096652696a85868e70082e0874f748c7c295`, on base `a7dbd8a3e14f5f86f9f26e2f05b76a46927cf4ee` (#128), using the supplied facts only. The rebinding is exact for its stated scope, and I found no material defect. My earlier pass on `7248df36` stands as the record for that head.\n\n## What this proof establishes\n\n- **Ledger:** with the two blocks removed, the merged ledger hashes to the #128 ledger value, so the base is preserved byte for byte.\n- **Blocks:** the two digests and slices are the same as on the head I passed. Both blocks moved by the same 15 lines and the gap between them is unchanged, so #128 added nothing between them.\n- **Other files:** the other 12 blobs are identical to the signed archive and to my prior head.\n- **Heading:** you report `84.3` appears exactly once. That closes the placement item I left open.\n\n## Publication scope\n\n- **What is published:** two ledger inserts and 12 files, all identical to content already signed or described to me. No source, test, CI, migration or existing handoff file is in the change.\n- **Residual, not blocking:** `fx54-lock-delta-review.prompt` still carries absolute local filesystem paths. I raised this in my first review, and it remains part of what gets published. I saw no credentials, addresses or ports in the files I read.\n- **Not covered:** I have never read `fx54-review-and-execution-provenance.json`, and the archive README's later edits reached me only as your description. Their publication content rests on your scan gates.\n\n## Statuses this verdict does not change\n\n- No test or hosted CI result for this tree has been given to me; those are independent gates.\n- The FX-54 row still needs its PR number, head, run numbers, kit status, `CURRENT` and merge commit.\n\nI read no file and recomputed nothing this turn.\n\nVERDICT: PASS",
+  "verdicts": [
+    "PASS"
+  ],
+  "turns": [
+    {
+      "turn_id": "turn_42694371-8eec-409b-b390-724efc69ec42",
+      "status": "completed",
+      "tool_call_count": 0,
+      "error_code": null,
+      "started_at": 1795599783693,
+      "completed_at": 1795599916995
+    }
+  ]
+}

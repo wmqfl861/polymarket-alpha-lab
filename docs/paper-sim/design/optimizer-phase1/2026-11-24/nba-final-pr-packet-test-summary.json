@@ -1,0 +1,18 @@
+{
+  "source_receipt": {
+    "repo_relative_path": "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-prepr-original-execution.json",
+    "sha256": "e4c6267e9d1d8b812ab4416095164157cc5e6d4a38b1d5cdb293939e915c4ecb",
+    "exit_code": 1,
+    "base_commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "candidate_commit": "2933a375fdc3c248514968277effb9a699097131"
+  },
+  "baseline_verification": {
+    "repo_relative_path": "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-pr-existing-hits-provenance.json",
+    "sha256": "a72735564f85daa0c2746adb01eefbf4d129984f26e0b0f6eaca2286c6ae97f7",
+    "verified_locations": 2,
+    "both_locations_present_in_base": true,
+    "mapped_line_bytes_identical": true,
+    "enclosing_function_bytes_identical": true
+  },
+  "conclusion": "The original failed receipt remains preserved; baseline attribution for both locations is resolved."
+}

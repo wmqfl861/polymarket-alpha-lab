@@ -1,0 +1,121 @@
+{
+  "utc": "2026-11-21T18:07:57.789647+00:00",
+  "status": "MATCH",
+  "original_commit": "e234c3364c204db513cc4fbcdcb6d5eb43c7417b",
+  "archive": {
+    "byte_length": 88845,
+    "sha256": "03c616e1d94efe5e3a7879e3277645b5d60e4e407bdef6e9d31d9f7eb3366ad5"
+  },
+  "files": {
+    "11-before-restart-readback.json": {
+      "byte_length": 108456,
+      "sha256": "5624b75ea51bb7f40c5b48f3b8f972ef0b33929c8c907900ca2af697c659188a"
+    },
+    "13-after-restart-readback.json": {
+      "byte_length": 108455,
+      "sha256": "c49e741363900c6020ad1d92b9c4b63b69b5a46bae1d4e216091763a31e82a8f"
+    },
+    "15-after-replay-readback.json": {
+      "byte_length": 108454,
+      "sha256": "83d8b55d774998bb534cc19c9c761158e6c43679b5ad894b14a60e18a4c35daf"
+    },
+    "14-exact-terminal-replays.json": {
+      "byte_length": 5068,
+      "sha256": "221b3d79b56ede458b1f045f0b1e63b0d3ce31920c08a86510340c9969f68a8f"
+    },
+    "readback-formal.v2.py": {
+      "byte_length": 23197,
+      "sha256": "d3a27b53c836b18e1268e009d93cbb297c80e1fe7c0b741e70498cb41940ec8a"
+    },
+    "09-1-club-soccer-recalib.result.json": {
+      "byte_length": 18050,
+      "sha256": "d8f806dfa2fe048a547d992c084fea8ae1f3e47077c3ba8d77c2e18f99a5bdd8"
+    },
+    "14-club-soccer-recalib.replay.json": {
+      "byte_length": 1457,
+      "sha256": "174ab54c54d248e4fec1c60e771db4760ef1f91b63d39fe1a9f72d92270d845d"
+    },
+    "09-2-intl-elo-goal-residuals.result.json": {
+      "byte_length": 205757,
+      "sha256": "d4514a169811f2d0e1e98215e449826618f4c24a339140c8bf7976c0e7968d18"
+    },
+    "14-intl-elo-goal-residuals.replay.json": {
+      "byte_length": 1409,
+      "sha256": "15501933f607f565ccea2010697bdbb49905cff29e78b15b4041be1b40c56f99"
+    },
+    "09-3-nba-pace-efficiency.result.json": {
+      "byte_length": 5167,
+      "sha256": "01f7f287ca33f2e8fc8cb0fe87d0ec034abfd125acbb76680e3ab295fae11a35"
+    },
+    "14-nba-pace-efficiency.replay.json": {
+      "byte_length": 1448,
+      "sha256": "706921dc6f558210b7d221033342c36969f0a2d05af54af3c87d185cf144e251"
+    }
+  },
+  "models": {
+    "club-soccer-recalib": {
+      "scorecard_sha256": "b27ca7855ae147d27c76537289fd904c61f1fdb95be28fb5815cbd5f12a34fb9",
+      "initial_cli_matches": true,
+      "prior_persisted_readback": {
+        "11-before-restart-readback.json": {
+          "scorecard_sha256": "b27ca7855ae147d27c76537289fd904c61f1fdb95be28fb5815cbd5f12a34fb9",
+          "holdout_callbacks": 0
+        },
+        "13-after-restart-readback.json": {
+          "scorecard_sha256": "b27ca7855ae147d27c76537289fd904c61f1fdb95be28fb5815cbd5f12a34fb9",
+          "holdout_callbacks": 0
+        },
+        "15-after-replay-readback.json": {
+          "scorecard_sha256": "b27ca7855ae147d27c76537289fd904c61f1fdb95be28fb5815cbd5f12a34fb9",
+          "holdout_callbacks": 0
+        }
+      },
+      "exact_terminal_replay_matches": true,
+      "holdout_callbacks": 0,
+      "outcome": "INSUFFICIENT_DATA"
+    },
+    "intl-elo-goal-residuals": {
+      "scorecard_sha256": "e47b518723c52ac369562af6a11b85ae24cb4c62fb6262e6ae298784a91e3d65",
+      "initial_cli_matches": true,
+      "prior_persisted_readback": {
+        "11-before-restart-readback.json": {
+          "scorecard_sha256": "e47b518723c52ac369562af6a11b85ae24cb4c62fb6262e6ae298784a91e3d65",
+          "holdout_callbacks": 0
+        },
+        "13-after-restart-readback.json": {
+          "scorecard_sha256": "e47b518723c52ac369562af6a11b85ae24cb4c62fb6262e6ae298784a91e3d65",
+          "holdout_callbacks": 0
+        },
+        "15-after-replay-readback.json": {
+          "scorecard_sha256": "e47b518723c52ac369562af6a11b85ae24cb4c62fb6262e6ae298784a91e3d65",
+          "holdout_callbacks": 0
+        }
+      },
+      "exact_terminal_replay_matches": true,
+      "holdout_callbacks": 0,
+      "outcome": "NO_IMPROVEMENT"
+    },
+    "nba-pace-efficiency": {
+      "scorecard_sha256": "8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10",
+      "initial_cli_matches": true,
+      "prior_persisted_readback": {
+        "11-before-restart-readback.json": {
+          "scorecard_sha256": "8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10",
+          "holdout_callbacks": 0
+        },
+        "13-after-restart-readback.json": {
+          "scorecard_sha256": "8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10",
+          "holdout_callbacks": 0
+        },
+        "15-after-replay-readback.json": {
+          "scorecard_sha256": "8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10",
+          "holdout_callbacks": 0
+        }
+      },
+      "exact_terminal_replay_matches": true,
+      "holdout_callbacks": 0,
+      "outcome": "INSUFFICIENT_DATA"
+    }
+  },
+  "scope": "The existing native-archive receipts, direct CLI reporting, three original readback phases and exact replays were matched by bytes and digest. This check made no new database connection or fresh scorecard computation."
+}

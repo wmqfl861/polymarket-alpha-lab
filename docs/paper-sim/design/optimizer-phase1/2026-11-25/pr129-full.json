@@ -1,0 +1,18 @@
+{
+  "clean_checkout": true,
+  "execution_python": "Python 3.12.3",
+  "exit": 0,
+  "failing_nodes": [],
+  "head": "e94756c8a0e5f3cb9265ce36c2fe94869fbb1e2a",
+  "output_bytes": 86123,
+  "output_sha256": "9461747fcafe8501abb2b46a5256c56f92608678d540cf9f559de71d27f93953",
+  "passed": true,
+  "project_pass": true,
+  "pytest_started": true,
+  "seconds": 3669.172,
+  "summaries": [
+    "44016 passed, 464 skipped, 20 warnings in 3567.07s (0:59:27)"
+  ],
+  "tree": "272f096652696a85868e70082e0874f748c7c295",
+  "uv": "0.10.0"
+}
