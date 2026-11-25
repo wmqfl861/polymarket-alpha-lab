@@ -107,6 +107,7 @@ ENTRY_BUNDLE_TOKEN = 'papersim.replay.entry_request'
 CONSTRUCTION_BUNDLE_TOKEN = 'papersim.replay.construction_failure'
 
 CONSTRUCTOR_SOCCER = 'soccer_model.candidate_for_market'
+CONSTRUCTOR_MANAGED_PREPARATION = 'papersim.prepare_market_pack.v1'
 CONSTRUCTION_RETURNED_NONE = 'construction_returned_none'
 CONSTRUCTION_VALUE_ERROR = 'construction_value_error'
 
@@ -434,7 +435,8 @@ def bind_candidate(request: EntryRequest, decision: EntryDecision, *,
                    book_snapshot_sha256: str | None = None,
                    decision_snapshot_sha256: str | None = None,
                    source_kind: str = 'clob_book', source_ref: str | None = None,
-                   entry: store.EntrySubmission | None = None) -> store.CandidateSubmission:
+                   entry: store.EntrySubmission | None = None,
+                   prepared_buy_token: str | None = None) -> store.CandidateSubmission:
     """Bind one decided request into its replayable candidate row data.
 
     The bundle carries the full decision-time evidence; the gate report
@@ -455,11 +457,21 @@ def bind_candidate(request: EntryRequest, decision: EntryDecision, *,
         raise PapersimReplayError('papersim_replay_binding_market_ref_missing')
     if source_ref is None and source_kind != 'operator_attestation':
         source_ref = f'{market_ref_kind}:{market_ref}'
+    token = yes_token_id
+    if prepared_buy_token is not None:
+        token = {'YES': yes_token_id, 'NO': no_token_id}.get(side)
+        if (not token or token != prepared_buy_token or token != request.buy_token
+                or request.buy_side != side.lower()
+                or (request.yes_token, request.no_token) != (yes_token_id, no_token_id)
+                or request.market_id != market_id or request.now != evaluated_at
+                or not book_snapshot_sha256 or decision_snapshot_sha256 != book_snapshot_sha256
+                or book_snapshot_sha256 not in snapshot_refs):
+            raise PapersimReplayError('papersim_replay_prepared_buy_binding_invalid')
     ask = None if decision.acceptance_walk is None else decision.acceptance_walk.best
     evidence = store.PriceEvidenceObservation(
         observed_at=evaluated_at, evidence_role='DECISION',
         model_probability=None if median_probability is None else Decimal(str(median_probability)),
-        market_ref_kind=market_ref_kind, market_ref=market_ref, token_ref=yes_token_id,
+        market_ref_kind=market_ref_kind, market_ref=market_ref, token_ref=token,
         side=side, bid=None, ask=None if ask is None else Decimal(str(ask)), mid=None,
         book_sha256=book_snapshot_sha256, snapshot_sha256=decision_snapshot_sha256,
         source_kind=source_kind, source_ref=source_ref)
@@ -494,6 +506,8 @@ def bind_construction_failure(*, team: str, candidate_key: str, evaluated_at: da
                               model_name: str = 'soccer',
                               model_version: str = 'soccer-r23-construction',
                               snapshot_refs: tuple[str, ...] | list = (),
+                              yes_token_id: str | None = None, no_token_id: str | None = None,
+                              event_key: str | None = None, event_start_at: datetime | None = None,
                               constructor: str = CONSTRUCTOR_SOCCER) -> store.CandidateSubmission:
     """Record a construction failure by RE-RUNNING the pure constructor.
 
@@ -522,8 +536,31 @@ def bind_construction_failure(*, team: str, candidate_key: str, evaluated_at: da
                                            failure_detail=failure_detail),
         gate_report='{}', evaluated_at=evaluated_at, condition_id=condition_id,
         market_id=market_id, market_slug=market_slug, market_type=market_type,
+        yes_token_id=yes_token_id, no_token_id=no_token_id, event_key=event_key, event_start_at=event_start_at,
         snapshot_refs=json.dumps(list(snapshot_refs), separators=(',', ':')),
         rejection_reasons=json.dumps([failure], separators=(',', ':')))
+
+
+def bind_preparation_failure(*, team, candidate_key, evaluated_at, side, market_kind, market_id,
+                             market_slug, condition_id, yes_token_id, no_token_id, market_type,
+                             model_name, model_version, snapshot_refs, event_key, event_start_at, witness):
+    """Write a refused result from the versioned managed preparation checks."""
+    reason = witness['reason_code']
+    if (witness['version'] != 1 or witness['candidate_key'] != candidate_key
+            or witness['decision_as_of'] != evaluated_at.isoformat() or not snapshot_refs
+            or side not in ('YES', 'NO') or not yes_token_id or not no_token_id
+            or not isinstance(reason, str) or not reason):
+        raise PapersimReplayError('papersim_replay_prepared_failure_invalid')
+    return store.CandidateSubmission(
+        candidate_key=candidate_key, conclusion='CONSTRUCTION_FAILED', side=side, market_kind=market_kind,
+        team=team, model_name=model_name, model_version=model_version, condition_id=condition_id,
+        market_id=market_id, market_slug=market_slug, market_type=market_type, evaluated_at=evaluated_at,
+        yes_token_id=yes_token_id, no_token_id=no_token_id, event_key=event_key, event_start_at=event_start_at,
+        input_payload=construction_payload(witness, constructor=CONSTRUCTOR_MANAGED_PREPARATION,
+                                           failure=reason, failure_detail=''),
+        gate_report='{}', snapshot_refs=json.dumps(list(snapshot_refs), separators=(',', ':')),
+        rejection_reasons=json.dumps([reason], separators=(',', ':')),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -658,18 +695,44 @@ def replay(conn, candidate_id: int, *, trusted_code_commit: str,
         snapshots.verify_snapshot(conn, reference,
                                   expected_schema_version=expected_snapshot_schema_version)
     checks.append('snapshots')
+    prepared_record = None
+    from polymarket_alpha_lab.papersim import prepared_scan
+
+    if getattr(conn, '_papersim_managed_root', None) is not None:
+        binding = _fetch_one(conn, 'SELECT operation_key, params FROM papersim.scan_runs WHERE scan_id = %s',
+                             (row['scan_id'],))
+        material = _as_json(binding['params']).get('preparation') if binding is not None else None
+        if material is not None:
+            prepared_record = prepared_scan.replay_record(conn, binding['operation_key'], row['candidate_key'])
+            if prepared_record is not None:
+                checks.append('managed_preparation')
     if row['conclusion'] == 'CONSTRUCTION_FAILED':
-        return _replay_construction(row, checks)
-    return _replay_decision(conn, row, checks)
+        return _replay_construction(row, checks, prepared_record)
+    return _replay_decision(conn, row, checks, prepared_record)
 
 
-def _replay_construction(row: dict, checks: list) -> dict:
+def _replay_construction(row: dict, checks: list, prepared_record=None) -> dict:
     payload = _as_json(row['input_payload'])
     if not isinstance(payload, Mapping) or payload.get('bundle') != CONSTRUCTION_BUNDLE_TOKEN:
         raise PapersimReplayError('papersim_replay_bundle_invalid')
     if payload.get('version') != REPLAY_BUNDLE_VERSION:
         raise PapersimReplayError('papersim_replay_schema_version_mismatch')
-    failure, failure_detail = _run_constructor(payload)
+    if payload.get('constructor') == CONSTRUCTOR_MANAGED_PREPARATION:
+        if prepared_record is None or prepared_record.construction is None:
+            raise PapersimReplayError('papersim_replay_prepared_failure_invalid')
+        actual = prepared_record.construction
+        if actual.get('constructor') != CONSTRUCTOR_MANAGED_PREPARATION or {
+                key: _decode(value) for key, value in payload['inputs'].items()} != actual['witness']:
+            raise PapersimReplayError('papersim_replay_prepared_failure_invalid')
+        failure, failure_detail = actual['witness']['reason_code'], ''
+    else:
+        if prepared_record is not None and (
+                prepared_record.construction is None
+                or prepared_record.construction['constructor'] != payload['constructor']
+                or _encode(prepared_record.construction['inputs']) !=
+                _encode({key: _decode(value) for key, value in payload['inputs'].items()})):
+            raise PapersimReplayError('papersim_replay_prepared_failure_invalid')
+        failure, failure_detail = _run_constructor(payload)
     recorded_failure = payload.get('failure')
     if failure != recorded_failure or failure_detail != payload.get('failure_detail', ''):
         raise PapersimReplayError('papersim_replay_construction_mismatch',
@@ -683,8 +746,17 @@ def _replay_construction(row: dict, checks: list) -> dict:
             'matched': True, 'code_commit': row['code_commit'], 'checks': tuple(checks)}
 
 
-def _replay_decision(conn, row: dict, checks: list) -> dict:
+def _replay_decision(conn, row: dict, checks: list, prepared_record=None) -> dict:
     request = request_from_replay_bundle(row['input_payload'])
+    if prepared_record is not None:
+        if prepared_record.request_bundle is None:
+            raise PapersimReplayError('papersim_replay_prepared_buy_binding_invalid')
+        original = request_from_replay_bundle(prepared_record.request_bundle)
+        recalculated = dataclasses.replace(request, bankroll=original.bankroll, cash=original.cash,
+                                           reserved=original.reserved, team=original.team,
+                                           team_committed=original.team_committed, held_sides=original.held_sides)
+        if replay_bundle_payload(recalculated) != prepared_record.request_bundle:
+            raise PapersimReplayError('papersim_replay_prepared_buy_binding_invalid')
     checks.append('bundle')
     stored_book = _as_json(row['order_book'])
     _compare(stored_book, _encode(list(request.book)), 'order_book')
@@ -703,6 +775,12 @@ def _replay_decision(conn, row: dict, checks: list) -> dict:
         raise PapersimReplayError('papersim_replay_evidence_binding_mismatch')
     if evidence['side'] != row['side']:
         raise PapersimReplayError('papersim_replay_evidence_binding_mismatch')
+    if prepared_record is not None and (
+            evidence['token_ref'] != request.buy_token
+            or evidence['book_sha256'] != prepared_record.book_snapshot_sha256
+            or evidence['snapshot_sha256'] != prepared_record.decision_snapshot_sha256
+            or evidence['source_ref'] != prepared_record.source_ref):
+        raise PapersimReplayError('papersim_replay_prepared_buy_binding_invalid')
     checks.append('evidence')
     if evidence['book_sha256'] is not None:
         stored = snapshots.read_snapshot(conn, evidence['book_sha256'])
@@ -713,7 +791,17 @@ def _replay_decision(conn, row: dict, checks: list) -> dict:
         except (UnicodeDecodeError, PapersimReplayError) as exc:
             raise PapersimReplayError('papersim_replay_book_snapshot_mismatch',
                                       str(exc)) from exc
-        _compare(book_snapshot, stored_book, 'book_snapshot')
+        if prepared_record is not None:
+            from polymarket_alpha_lab.papersim.adapters import polymarket
+            from polymarket_alpha_lab.papersim.d1compare import journal
+
+            raw = journal.decode_public_json(stored['content'])
+            book = polymarket._parse_order_book(request.buy_token, raw)
+            if raw.get('market') != row['condition_id']:
+                raise PapersimReplayError('papersim_replay_evidence_binding_mismatch')
+            _compare(_encode([(level.price, level.size) for level in book.asks]), stored_book, 'book_snapshot')
+        else:
+            _compare(book_snapshot, stored_book, 'book_snapshot')
     if evidence['snapshot_sha256'] is not None:
         snapshots.verify_snapshot(conn, evidence['snapshot_sha256'])
     decision = decide_entry(request)

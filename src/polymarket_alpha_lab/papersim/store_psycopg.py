@@ -446,15 +446,14 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
     back so no half scan ever survives.
     """
     submission.validate()
-    normalized = replace(submission, candidates=tuple(
-        replace(candidate, variant_quotes=_variant_quotes_text(candidate.variant_quotes))
-        for candidate in submission.candidates
-    ))
+    normalized = canonical_scan_submission(submission)
     scan = submission.scan
     key = scan.key()
     payload = normalized.payload_sha256()
     with conn.transaction():
         cursor = conn.cursor()
+        if getattr(conn, '_papersim_managed_root', None) is not None:
+            _lock_portfolio(cursor)
         cursor.execute(_SCAN_BY_KEY, (key,))
         existing = cursor.fetchone()
         new_row = None
@@ -521,6 +520,55 @@ def record_scan(conn, submission: ScanSubmission) -> dict:
                 bankroll_keys.append(event_key)
     return {'scan_id': scan_id, 'scan_key': key, 'inserted': True,
             'candidate_ids': candidate_ids, 'bankroll_event_keys': tuple(bankroll_keys)}
+
+
+def canonical_scan_submission(submission: ScanSubmission) -> ScanSubmission:
+    return replace(submission, candidates=tuple(
+        replace(candidate, variant_quotes=_variant_quotes_text(candidate.variant_quotes))
+        for candidate in submission.candidates
+    ))
+
+
+def _lock_portfolio(cursor) -> None:
+    cursor.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))', ('papersim/portfolio/v1',))
+
+
+@contextmanager
+def prepared_scan_write_transaction(conn):
+    _require_d1_idle(conn)
+    with conn.transaction():
+        conn.execute("SET LOCAL lock_timeout = '30s'")
+        _lock_portfolio(conn.cursor())
+        yield
+
+
+def committed_prepared_scan(conn, operation_key, expected=None) -> dict | None:
+    """Read the immutable scan and prove its entry/cash ownership."""
+    with conn.transaction():
+        cursor = conn.execute(
+            'SELECT scan_id, scan_key, scan_payload_sha256, started_at, finished_at, code_commit, team '
+            'FROM papersim.scan_runs WHERE operation_key = %s', (operation_key,))
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        fields = dict(zip(_columns_of(cursor), row, strict=True))
+        if expected is None or any(fields[name] != expected[name] for name in (
+                'scan_key', 'scan_payload_sha256', 'started_at', 'finished_at', 'code_commit', 'team')):
+            raise PapersimStoreError('papersim_prepare_committed_scan_conflict')
+        cursor.execute('SELECT ' + _ENTRY_COLUMNS + ' ' + _ENTRY_JOIN +
+                       'WHERE c.scan_id = %s ORDER BY c.candidate_id', (fields['scan_id'],))
+        columns = _columns_of(cursor)
+        entries = [dict(zip(columns, item, strict=True)) for item in cursor.fetchall()]
+        candidate_ids = _read_back_candidates(cursor, fields['scan_id'])
+        entry_ids = {key: entry['entry_id'] for entry in entries for key, identifier in candidate_ids.items()
+                     if identifier == entry['candidate_id']}
+        event_keys = _read_back_event_keys(cursor, fields['scan_id'])
+        if (list(candidate_ids) != expected['candidate_keys'] or list(entry_ids) != expected['entry_keys']
+                or tuple(f"entry:{entry['entry_id']}:cash" for entry in entries) != event_keys
+                or any(not isinstance(_opening_cash(cursor, entry), settle.OpeningCash) for entry in entries)):
+            raise PapersimStoreError('papersim_prepare_committed_rows_conflict')
+        return {'scan_id': fields['scan_id'], 'scan_key': fields['scan_key'], 'inserted': False,
+                'candidate_ids': candidate_ids, 'entry_ids': entry_ids, 'bankroll_event_keys': event_keys}
 
 
 def _scan_payload_matches(cursor, scan_id: int, stored_digest: str, submission: ScanSubmission,
@@ -896,7 +944,7 @@ def d1_candidate_capture_target(conn, *, scan_id=None, scan_operation_key=None,
                'c.event_start_at, c.book_fetched_at, c.snapshot_refs, c.input_payload, '
                'c.is_legacy, s.operation_key AS scan_operation_key, s.team AS scan_team, '
                's.code_commit AS scan_code_commit, s.started_at AS scan_started_at, '
-               's.finished_at AS scan_finished_at')
+               's.finished_at AS scan_finished_at, s.params->\'preparation\' AS scan_preparation')
     if settlement:
         columns += ', c.market_kind, c.market_type, c.model_name, c.event_key, c.evaluated_at'
     ref_column, ref = ('c.scan_id', scan_id) if scan_id is not None else (
@@ -916,7 +964,17 @@ def d1_candidate_capture_target(conn, *, scan_id=None, scan_operation_key=None,
         decision_columns = _columns_of(cursor)
         candidate['decisions'] = [dict(zip(decision_columns, decision, strict=True))
                                   for decision in cursor.fetchall()]
-        candidate['scan_receipts'] = _d1_scan_receipts(conn, candidate)
+        if candidate['scan_preparation'] is None:
+            candidate['scan_receipts'] = _d1_scan_receipts(conn, candidate)
+        else:
+            from polymarket_alpha_lab.papersim import prepared_scan
+
+            candidate['scan_receipts'] = []
+            try:
+                candidate['scan_receipt_witness'] = prepared_scan.receipt_witness(
+                    conn, candidate, d1_operation_receipts(conn, candidate['scan_operation_key']))
+            except (ValueError, KeyError, TypeError):
+                candidate['scan_receipt_witness'] = None
     return candidate
 
 
@@ -933,6 +991,20 @@ def _d1_scan_receipts(conn, candidate: dict) -> list[dict]:
             return [row for row in receipts if row['command'] == 'run-scan'
                     and row['attempt'] == receipt['attempt']]
     return []
+
+
+def d1_scan_receipt_valid(candidate: dict) -> bool:
+    """Use a checked prepared witness, or verify the legacy same-attempt receipt pair."""
+    if 'scan_receipt_witness' in candidate:
+        return candidate['scan_receipt_witness'] is not None
+    receipts = {row['phase']: row for row in candidate['scan_receipts']}
+    started, succeeded = receipts.get('STARTED'), receipts.get('SUCCEEDED')
+    return (started is not None and succeeded is not None
+            and started['attempt'] == succeeded['attempt']
+            and started['code_commit'] == succeeded['code_commit'] == candidate['scan_code_commit']
+            and succeeded['scan_id'] == candidate['scan_id']
+            and candidate['scan_started_at'] <= started['occurred_at']
+            <= candidate['scan_finished_at'] <= succeeded['occurred_at'])
 
 
 class SettlementCashDiscrepancy(PapersimStoreError):
@@ -1009,6 +1081,7 @@ def _record_settlement(conn, record: SettlementRecord, *, automatic) -> dict:
         cursor = conn.cursor()
         if getattr(conn, '_papersim_managed_root', None) is not None:
             _lock_settlement_entry(cursor, record.entry_id)
+            _lock_portfolio(cursor)
         paid_fee = None
         if automatic is not None:
             paid_fee = _validate_automatic_settlement(cursor, record, values, automatic)
@@ -1527,6 +1600,8 @@ def record_queue_control_event(conn, submission: QueueControlSubmission) -> dict
     key = submission.key()
     with conn.transaction():
         cursor = conn.cursor()
+        if getattr(conn, '_papersim_managed_root', None) is not None:
+            _lock_portfolio(cursor)
         cursor.execute('SELECT queue_id, control_kind, rule, rule_version, metrics, '
                        'evidence_watermark, reason, reviewed_by, scan_id '
                        'FROM papersim.queue_control_events WHERE control_key = %s', (key,))

@@ -310,6 +310,7 @@ class MarketRecord:
     events: EventKeyMaterials | None = None
     request_bundle: str | None = None
     construction: Mapping[str, Any] | None = None
+    prepared_provenance: Mapping[str, Any] | None = None
 
 
 def _optional_datetime(value: Any, name: str) -> datetime.datetime | None:
@@ -366,7 +367,7 @@ def _events_from_mapping(raw: Any) -> EventKeyMaterials | None:
     )
 
 
-def _record_from_mapping(raw: Any) -> MarketRecord:
+def _record_from_mapping(raw: Any, *, managed_preparation: bool = False) -> MarketRecord:
     if not isinstance(raw, Mapping):
         raise ScanError("papersim_scan_pack_invalid", "records must be objects")
     construction = raw.get("construction")
@@ -411,10 +412,11 @@ def _record_from_mapping(raw: Any) -> MarketRecord:
         events=_events_from_mapping(raw.get("events")),
         request_bundle=request_bundle,
         construction=construction,
+        prepared_provenance=raw.get("prepared_provenance") if managed_preparation else None,
     )
 
 
-def records_from_pack(payload) -> tuple[MarketRecord, ...]:
+def records_from_pack(payload, *, managed_preparation: bool = False) -> tuple[MarketRecord, ...]:
     """Parse one pack (JSON text/bytes or an already-loaded list)."""
     if isinstance(payload, (str, bytes, bytearray)):
         try:
@@ -427,7 +429,7 @@ def records_from_pack(payload) -> tuple[MarketRecord, ...]:
         raise ScanError("papersim_scan_pack_invalid", "pack must be JSON text or a list")
     if not isinstance(document, list):
         raise ScanError("papersim_scan_pack_invalid", "pack must be a JSON array")
-    return tuple(_record_from_mapping(raw) for raw in document)
+    return tuple(_record_from_mapping(raw, managed_preparation=managed_preparation) for raw in document)
 
 
 def load_pack_records(config: ScanConfig, *, base_dir) -> tuple[MarketRecord, ...]:
@@ -559,20 +561,26 @@ class PortfolioState:
     reserved: float = 0.0
     team_committed: Mapping[str, float] = field(default_factory=dict)
     held_sides: tuple[str, ...] = ()
+    held_by_event: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
-    def with_entry(self, *, team: str, side: str, stake: float, fee: float) -> "PortfolioState":
+    def with_entry(self, *, team: str, side: str, stake: float, fee: float,
+                   event_scope: str | None = None) -> "PortfolioState":
         committed = dict(self.team_committed)
         committed[team] = committed.get(team, 0.0) + float(stake)
+        held_by_event = dict(self.held_by_event)
+        if event_scope is not None:
+            held_by_event[event_scope] = (*held_by_event.get(event_scope, ()), side)
         return PortfolioState(
             bankroll=self.bankroll,
             cash=self.cash - float(stake) - float(fee),
             reserved=self.reserved,
             team_committed=committed,
             held_sides=self.held_sides + (side,),
+            held_by_event=held_by_event,
         )
 
 
-def read_portfolio_state(conn) -> PortfolioState:
+def read_portfolio_state(conn, *, prepared: bool = False) -> PortfolioState:
     """Read the current bankroll/cash/open-exposure state (one snapshot).
 
     Same SQL shapes as ``store_psycopg.bankroll_daily_check``: cash is
@@ -598,8 +606,22 @@ def read_portfolio_state(conn) -> PortfolioState:
                        'WHERE NOT EXISTS (SELECT 1 FROM papersim.settlements s '
                        'WHERE s.entry_id = e.entry_id) ORDER BY e.entry_id')
         held = tuple(str(side) for (side,) in cursor.fetchall())
+        held_by_event: dict[str, list[str]] = {}
+        if prepared:
+            cursor.execute('SELECT c.event_key, c.market_id, c.input_payload, c.side '
+                           'FROM papersim.entries e JOIN papersim.candidates c USING (candidate_id) '
+                           'WHERE NOT EXISTS (SELECT 1 FROM papersim.settlements s '
+                           'WHERE s.entry_id = e.entry_id) ORDER BY e.entry_id')
+            for event_key, market_id, payload, side in cursor.fetchall():
+                try:
+                    model_side = replay.request_from_replay_bundle(payload).side
+                except replay.PapersimReplayError:
+                    model_side = side
+                scope = event_key or f"market:{market_id}"
+                held_by_event.setdefault(scope, []).append(model_side)
     return PortfolioState(bankroll=cash + deployed, cash=cash, reserved=0.0,
-                          team_committed=committed, held_sides=held)
+                          team_committed=committed, held_sides=held,
+                          held_by_event={key: tuple(sides) for key, sides in held_by_event.items()})
 
 
 # ---------------------------------------------------------------------------
@@ -893,7 +915,8 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
                   specs: Mapping[str, LineageSpecs] | None = None,
                   operation_key: str | None = None,
                   shadow_source=None,
-                  shadow_budget_seconds: float | None = None) -> ScanAssembly:
+                  shadow_budget_seconds: float | None = None,
+                  preparation: Mapping[str, Any] | None = None) -> ScanAssembly:
     """Bind every record through the frozen stack into one submission.
 
     Both binding paths (``specs`` given = provider-wired; ``specs=None``
@@ -917,6 +940,8 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
     params: dict[str, Any] = {}
     if specs is not None:
         params.update(provider_params(specs))
+    if preparation is not None:
+        params["preparation"] = preparation
     params["admission"] = {"paused_queues": sorted(admissions.paused_queues)}
     candidates: list[store.CandidateSubmission] = []
     model_versions: list[str] = []
@@ -925,16 +950,25 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
     shadow_runner = _ShadowRunner(shadow_source, records,
                                   budget_seconds=shadow_budget_seconds)
     for record in records:
+        version = None
+        if record.prepared_provenance is not None:
+            active = specs[record.lineage].active
+            version = active.model_version()
+            if (record.prepared_provenance.get("model_spec_sha256"),
+                    record.prepared_provenance.get("model_version")) != (active.spec_sha256(), version):
+                raise ScanError("papersim_prepare_scan_spec_conflict")
         if record.construction is not None:
-            candidates.append(_bind_construction(record))
+            candidates.append(_bind_construction(record, model_version=version))
             continue
         request = replay.request_from_replay_bundle(record.request_bundle)
+        event_key, event_start_at = bind_event_key(record.events)
+        event_scope = (event_key or f"market:{record.market_id}") if preparation is not None else None
         request = dataclasses.replace(
             request,
             bankroll=portfolio.bankroll,
             cash=portfolio.cash,
             reserved=portfolio.reserved,
-            held_sides=portfolio.held_sides,
+            held_sides=(portfolio.held_by_event.get(event_scope, ()) if event_scope else portfolio.held_sides),
             team=record.team,
             team_committed=portfolio.team_committed.get(record.team, 0.0),
         )
@@ -961,10 +995,11 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
                 model_version = decision.model_version
             entry = None
             if decision.accepted and record.queue not in admissions.paused_queues:
-                entry = replay.bind_entry(decision, entered_at=record.evaluated_at)
+                entry = replay.bind_entry(decision, entered_at=(
+                    max(started_at, record.evaluated_at)
+                    if record.prepared_provenance is not None else record.evaluated_at))
             elif decision.accepted:
                 suppressed.append(record.candidate_key)
-            event_key, event_start_at = bind_event_key(record.events)
             candidates.append(replay.bind_candidate(
                 request,
                 decision,
@@ -992,6 +1027,7 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
                 event_key=event_key,
                 event_start_at=event_start_at,
                 entry=entry,
+                prepared_buy_token=request.buy_token if record.prepared_provenance is not None else None,
             ))
             model_versions.append(model_version)
             if entry is not None:
@@ -1000,6 +1036,7 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
                     side=request.side,
                     stake=float(entry.stake),
                     fee=float(entry.entry_fee),
+                    event_scope=event_scope,
                 )
     shadow_runner.finish()
     if shadow_runner.materials:
@@ -1026,8 +1063,22 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
                         shadow_seconds=shadow_runner.seconds)
 
 
-def _bind_construction(record: MarketRecord) -> store.CandidateSubmission:
+def _bind_construction(record: MarketRecord, *, model_version=None) -> store.CandidateSubmission:
     construction = record.construction or {}
+    constructor = str(construction.get("constructor", replay.CONSTRUCTOR_SOCCER))
+    event_key, event_start_at = bind_event_key(record.events)
+    if constructor == replay.CONSTRUCTOR_MANAGED_PREPARATION:
+        if record.prepared_provenance is None or model_version is None:
+            raise ScanError("papersim_prepare_scan_failure_unverified")
+        return replay.bind_preparation_failure(
+            team=record.team, candidate_key=record.candidate_key, evaluated_at=record.evaluated_at,
+            side=record.side, market_kind=record.market_kind, market_id=record.market_id,
+            market_slug=record.market_slug, condition_id=record.condition_id,
+            yes_token_id=record.yes_token_id, no_token_id=record.no_token_id,
+            market_type=record.market_type, model_name=record.model_name, model_version=model_version,
+            snapshot_refs=record.snapshot_refs, event_key=event_key, event_start_at=event_start_at,
+            witness=construction["witness"],
+        )
     return replay.bind_construction_failure(
         team=record.team,
         candidate_key=record.candidate_key,
@@ -1041,7 +1092,10 @@ def _bind_construction(record: MarketRecord) -> store.CandidateSubmission:
         market_type=record.market_type,
         model_name=record.model_name,
         snapshot_refs=record.snapshot_refs,
-        constructor=str(construction.get("constructor", replay.CONSTRUCTOR_SOCCER)),
+        constructor=constructor,
+        **({"model_version": model_version, "yes_token_id": record.yes_token_id,
+            "no_token_id": record.no_token_id, "event_key": event_key, "event_start_at": event_start_at}
+           if model_version is not None else {}),
     )
 
 

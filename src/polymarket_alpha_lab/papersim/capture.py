@@ -565,21 +565,13 @@ def _d1_book_sources(conn, slot) -> _D1BookSources:
 def _d1_candidate_token(candidate: dict, observation: MarkObservation, team: str,
                         allowed_ids: set[int]) -> str:
     from polymarket_alpha_lab import replay
+    from polymarket_alpha_lab.papersim import store_psycopg
 
     if candidate["candidate_id"] not in allowed_ids:
         raise CaptureError("d1_capture_candidate_outside_slot")
     if candidate["is_legacy"] or candidate["team"] != team:
         raise CaptureError("d1_capture_candidate_team_invalid")
-    receipts = {receipt["phase"]: receipt for receipt in candidate["scan_receipts"]}
-    started = receipts.get("STARTED")
-    succeeded = receipts.get("SUCCEEDED")
-    if (started is None or succeeded is None
-            or started["attempt"] != succeeded["attempt"]
-            or started["code_commit"] != candidate["scan_code_commit"]
-            or succeeded["code_commit"] != candidate["scan_code_commit"]
-            or succeeded["scan_id"] != candidate["scan_id"]
-            or not (candidate["scan_started_at"] <= started["occurred_at"]
-                    <= candidate["scan_finished_at"] <= succeeded["occurred_at"])):
+    if not store_psycopg.d1_scan_receipt_valid(candidate):
         raise CaptureError("d1_capture_b1_receipt_missing")
     side = candidate["side"]
     yes_token, no_token = candidate["yes_token_id"], candidate["no_token_id"]
