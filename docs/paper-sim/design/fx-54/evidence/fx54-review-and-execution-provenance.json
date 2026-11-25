@@ -1,0 +1,136 @@
+{
+  "scope": "Local archive continuity. Verification and review remain attached to their original objects.",
+  "source_baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "verified_candidate": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+  "original_review_pass_commit": "974887ebd5b260cae05c6570a7d5b256c3a65aad",
+  "previous_archive_commit": "472fbc1932662bb10ecb51083411b1a38cac6928",
+  "previous_archive_tree": "d11ffbe56a7e63488a7bc1c7d6478fb72121ca8f",
+  "published_nba_head_for_overlap_check": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+  "overlap_in_pyproject_toml_or_uv_lock": false,
+  "recorded_install_and_test_results": {
+    "tracked_receipt": "docs/paper-sim/design/fx-54/evidence/fx54-local-verification.json",
+    "bytes": 9404,
+    "sha256": "77062ef62a3ce5845e467d7b873a2a2c01d53879d09c4fca6a588cdf4ed5e6f8"
+  },
+  "original_code_reviews": [
+    {
+      "reviewed_commit": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+      "verdict": "FAIL",
+      "scope": "five blocking evidence findings at the initial candidate",
+      "private_original": {
+        "file_name": "fx54-code-review.json",
+        "bytes": 6387,
+        "sha256": "03fd6a32607852d94126f08f93892c996eaf938829de12488f4dadf38193279c",
+        "retained_identity_fields": [
+          "sessionId",
+          "turnId",
+          "traceId"
+        ]
+      },
+      "public_response_mask_counts": {},
+      "response": "**FX-54 implementation review: candidate `4818bef8f2e63e06ff0974b0fbdaa5081f6684de`, baseline `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`**\n\nThe candidate fails as it stands. The diff itself matches the approved plan; what is missing is the evidence the plan requires this review to cover.\n\n## Blocking findings\n\n1. **The 3.12.14 positive evidence is absent.** `docs/paper-sim/design/fx-54/README.md:32` and `:39` and `DELIVERY_PLAN.md:4592` mark it pending. The 3.12.14 tarball is downloaded but not built (`README.md:31`). `fx54-plan-v2.md:15` requires `uv lock --check` and a locked sync on real 3.12.14, both exit 0, with three `>=3.12` fields read back. The README itself says 3.12.3 cannot stand in.\n2. **The real 3.11 negative evidence is absent.** `README.md:40` and `DELIVERY_PLAN.md:4592` mark it pending. `fx54-plan-v2.md:16` makes merge acceptance incomplete without it. A real 3.11.15 is reported available (`README.md:28`), so the \"not executed, no real 3.11\" branch does not apply.\n3. **The frozen blob comparisons are not recorded.** `fx54-plan-v2.md:31-36` requires both `git rev-parse` outputs and four per-file fixture comparisons saved; `DELIVERY_PLAN.md:4592` marks them pending.\n4. **The distribution coverage receipts are not recorded.** These are the session-bundle counts and the Native \"Prove native version switch\" JUnit binding with the named case at 1 pass / 0 skip (`fx54-plan-v2.md:25`). `DELIVERY_PLAN.md:4593` is only a placeholder.\n5. **The implementation commit is not registered.** `fx54-plan-v2.md:22` and `:27` require it. `c00a50e0` appears nowhere in the tree, and `DELIVERY_PLAN.md:4589-4594` has neither a value nor a placeholder for it. It predates the candidate, so there is no self-reference problem.\n\n`fx54-plan-v2.md:38` defines this review's coverage as changes, installation metadata, native version switch receipt, historical bytes, and the two follow-up registrations. On this candidate I could cover only the changes and the two follow-up registrations. The diff needs no correction; the candidate needs the receipts and the hash, then a re-review.\n\n## What conforms\n\n- **Floor:** `pyproject.toml:9` is `>=3.12`, and only that line differs from a pre-change copy.\n- **Linux guide:** `docs/development/linux-local-setup.md:17-19` states the 3.12 floor and keeps 3.12.14 as the release interpreter. The change is confined to that phrase.\n- **Lock:** the differences from a pre-change copy are exactly three:\n  - `uv.lock:3` is the new floor;\n  - the eleven cp311 `psycopg-binary` wheels are gone, with cp312–cp314 at `uv.lock:88-120`;\n  - the three `requires-dist` rows at `uv.lock:59-61` are reordered, each row unchanged.\n\n  That is the two plan-allowed changes plus the adjudicated reorder. The adjudication (`fx54-lock-delta-review.json:5`) is a pass scoped to that reorder and lock, from the same session as the plan FAIL and v2 PASS records.\n- **History intact:** 3.11 text is preserved at `docs/development/windows-local-setup.md:10`, `docs/safe-data-version-switching-compat-v0.1.0.md:107,145-146,274,330`, both `g2-*.md` handoffs, `europe-basketball/README.md:66`, and `DELIVERY_PLAN.md:3134` (inside §68) and `:4449`.\n- **Frozen content:** the ladder file is untouched, with its five multi-line f-string fields at lines 563–586. All four fixtures are present, and none of these paths changed.\n- **v1-kit deferral:** the named follow-up sits under §84.2.3 at `DELIVERY_PLAN.md:4557-4561`. It matches `src/polymarket_alpha_lab/project_postgres/distribution.py:35`, `:254` and `:294`, which are unchanged.\n- **FX-48 deferral:** a named entry is created at `DELIVERY_PLAN.md:4597-4599` and linked from `:4595`. The runtime README is not on this branch.\n- **Scope:** all 11 changed paths are inside the plan's write scope. In `DELIVERY_PLAN.md`, heading positions match a pre-change copy shifted by exactly the two new blocks (`:4557-4561`, `:4583-4599`).\n- **Retained records:** plan v1, plan v2, the FAIL receipt and the v2 PASS receipt read identically to the originals outside the worktree. Both conclusions are preserved; I resumed neither session.\n- **CI premise:** uv 0.10.0 is pinned at `offline-verification.yml:29`, `native-postgres.yml:445` and `research-paper.yml:20`. `native-postgres.yml:75-76` is triggered by both changed files. The `native-distribution.yml:7-78` path list matches none of the changed paths, so `NOT_TRIGGERED` is the expected value.\n\n## Non-blocking notes\n\n- **Lane order:** FX-54 is last in the registration lane (`fx54-plan-v2.md:3`), but the candidate is cut directly from #123 (`README.md:5`). §84.2.2 ends at #117 (`DELIVERY_PLAN.md:4542`), so there is no #123 row to sit beside as the plan rereview asked. The final head must be rebased after FX-52, FX-51 and FX-53 land and be `CURRENT` before merge.\n- **Hash binding:** the adjudicator compared content, not hashes, so the SHA pair at `README.md:24` is the implementer's figure. My comparison supports the three-difference content claim.\n- **3.12.14 build:** `README.md:32` lists eight missing dev-header packages. If the positive runs on a locally built interpreter, the receipt should state the build options. The recorded environment is a uv-managed 3.12.14 (`linux-local-setup.md:27-28`).\n- **Dangling references:** `docs/handoffs/2026-11-24-incremental-review/` is not on this branch, so the links at `fx54-plan-v1.md:11` and the basis at `fx54-plan-v2.md:38` do not resolve here. This is pre-existing and retained as the plan requires.\n- **Sanitization:** `fx54-lock-delta-review.prompt:3` and `:5` keep absolute local paths. I found no addresses, DSNs or tokens in the new directory; confirm this at the pending sensitive-content scan.\n\n## Limits of this review\n\n- I had read-only tools and no shell, so I ran no git command, test or hash, and CodeGraph was not available as a tool.\n- Baseline comparisons used pre-change copies from the primary checkout (ref `e65be3e7bfed96d52be1a2c9b392627b0ab2d23b`), which I could not tie to `ab6edff2`.\n- The NBA v2 head and merge-base claim at `README.md:8`, and all SHA-256 values, are unverified. I did not assess the test suite.\n\nVERDICT: FAIL"
+    },
+    {
+      "reviewed_commit": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+      "verdict": "FAIL",
+      "scope": "follow-up e05824c2 could not be executed; the reviewer did not conclude that its changes were defective",
+      "private_original": {
+        "file_name": "fx54-original-code-rereview-e05824c2-verdict.json",
+        "bytes": 1451,
+        "sha256": "83e0dd6de6fe023b8ead8f13b92abff4d9f7f3f81d6a6d12074b14a83578fe5f",
+        "retained_identity_fields": [
+          "sessionId",
+          "turnId",
+          "traceId"
+        ]
+      },
+      "public_response_mask_counts": {},
+      "response": "**No valid conclusion on `e05824c2f1e4acb36a5cd090c72ea0a9e680ae38`:** I could not read any of its three changed files, so the correction re-review was never executed. This result means \"not cleared\"; it is not a finding that the revision is deficient.\n\n**Reviewed commit SHA:** `4818bef8f2e63e06ff0974b0fbdaa5081f6684de` is the only commit I reviewed in this session. `e05824c2f1e4acb36a5cd090c72ea0a9e680ae38` was not reviewed.\n\n**Original findings, none verified closed:**\n1. **3.12.14 positive evidence:** your summary reports it done, but I have not seen the receipt.\n2. **Real 3.11 negative evidence:** your summary was silent.\n3. **Frozen blob comparisons** for the ladder file and four fixtures: silent.\n4. **Session-bundle counts and the native version switch case** (`fx54-plan-v2.md:25`): silent. A local run with the opt-in set and the registered PG18 prefix is an accepted equivalent, so this need not wait for PR CI.\n5. **Implementation commit registered in `DELIVERY_PLAN.md`:** silent.\n\nThe full suite, final PR/CI and merge remain separate gates, as before.\n\n**To clear this gate:** the same reviewer must read `DELIVERY_PLAN.md`, the FX-54 `README.md` and `evidence/fx54-local-verification.json` at `e05824c2`.\n\nVERDICT: FAIL"
+    },
+    {
+      "reviewed_commit": "974887ebd5b260cae05c6570a7d5b256c3a65aad",
+      "verdict": "PASS",
+      "scope": "original reviewer verified closure of the five initial findings; rebasing and final hosted gates remain separate",
+      "private_original": {
+        "file_name": "fx54-original-code-rereview-974887eb.json",
+        "bytes": 4079,
+        "sha256": "44f65f0cdb85bfc8474889f4af03e3bef1e70c99511fb3225def6a39c707dbe2",
+        "retained_identity_fields": [
+          "sessionId",
+          "turnId",
+          "traceId"
+        ]
+      },
+      "public_response_mask_counts": {},
+      "response": "**Reviewed commit:** `974887ebd5b260cae05c6570a7d5b256c3a65aad` (tree `2d735629c32d086fbe8d8b2dd16c5bf13bae614c`). All five original blockers are closed on the recorded evidence.\n\n**Correction to my previous turn:** I said the plain-text reader was unavailable without trying it, and it works here. That second failure was a review I did not execute, not a defect in that commit.\n\n## Original findings\n\n1. **3.12.14 positive: closed.** `evidence/fx54-local-verification.json:78-95` records uv 0.10.0, a lock check on 3.12.14 with exit 0 and the lock and checkout unchanged, a locked sync with exit 0, three `>=3.12` fields, and a clean candidate. Build options are now disclosed at `README.md:32`.\n2. **3.11 negative: closed.** `evidence/fx54-local-verification.json:96-103` and `README.md:42` record 3.11.15 on uv 0.10.0, offline with downloads disabled, exit 2, refused before resolution or environment creation citing `>=3.12`.\n3. **Frozen objects: closed.** `evidence/fx54-local-verification.json:136-180` records the ladder blob equal to the plan's historical object at the full `2fbcd0d8` commit, and the four fixtures equal at the baseline anchor: 5 of 5, no mismatch.\n4. **Distribution coverage: closed for this review.** `evidence/fx54-local-verification.json:104-127` and `README.md:43-44` record the session bundle at 29 passed / 0 skipped, and the native version-switch file at 89 passed / 0 skipped in an opt-in PG18 run, with the named case 1 passed / 0 skipped.\n5. **Implementation commit: closed.** The full SHA is registered at `DELIVERY_PLAN.md:4589`, `README.md:8` and `evidence/fx54-local-verification.json:4-8`.\n\nCompile, diff check, the corrected zero-match scan, CodeGraph and full-suite run 3 are also recorded (`evidence/fx54-local-verification.json:128-135`, `185-233`). Counts, durations and timestamps agree across the three files.\n\n## Non-blocking corrections\n\n- **Session identities:** `README.md:37` says the receipt records ZCode session identities, but `execution_sessions` (`evidence/fx54-local-verification.json:44-76`) has none. The project default binds verification receipts to the actual executor. Add the identities or correct the sentence in the final registration commit.\n- **Negative receipt detail:** it omits the interpreter's absolute path and an explicit \"project and lock unchanged\" line (`evidence/fx54-local-verification.json:96-103`; plan v2 line 16). The candidate's lock is shown unchanged at line 87, so the result stands.\n- **Scan scope:** the diff check and pattern scan are recorded for `4818bef8` only (`evidence/fx54-local-verification.json:187`). The two later commits' additions need both again at the final head. I saw no credentials or addresses in the parts of the three files I read.\n- **Run 3 interpreter:** it is not named (`evidence/fx54-local-verification.json:222-232`), and plan v2 line 38 requires a supported 3.12. That belongs to the full-suite gate.\n\n## Outstanding gates, not part of this verdict\n\n- Rebase after FX-52, FX-51 and FX-53.\n- PR number and head.\n- The three workflow runs and the PR-head native JUnit.\n- The kit `NOT_TRIGGERED` entry, `CURRENT`, and the merge commit.\n\n## Limits and scope\n\n- **Not confirmed by me:** I could not confirm the checkout is at `97488eb`, or that `pyproject.toml`, `uv.lock` and the Linux guide are unchanged since `4818bef8`. Both rest on your scope statement; the read tool did confirm plan v2 is unchanged.\n- **Not re-derived:** I recomputed no hashes and saw no raw outputs; I checked the recorded values for coverage and consistency.\n- **What this verdict covers:** `97488eb` as presented. A later commit limited to the rebase, registration backfill, review receipts and the `README.md:37` correction stays within it. Any change to the floor, lock, Linux guide, plan v2 or recorded evidence values comes back to me.\n\nVERDICT: PASS"
+    }
+  ],
+  "full_run3": {
+    "tested_head": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+    "interpreter": "Python 3.12.3",
+    "command": ".venv/bin/python scripts/verify_local.py --full",
+    "started_utc": "2026-11-24T20:08:19+00:00",
+    "completed_utc": "2026-11-24T21:03:01+00:00",
+    "exit_code": 0,
+    "post_checkout_clean": true,
+    "summary": "43956 passed, 437 skipped, 20 warnings in 3201.88s (0:53:21)",
+    "source_file": {
+      "name": "events.jsonl",
+      "bytes": 4003,
+      "sha256": "c611931b72e3e2930d89d758961488a8199cb2d6d39bbd1ad8b992af05d358da"
+    }
+  },
+  "negative_installation_supplement": {
+    "tested_head": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+    "interpreter": "CPython 3.11.15",
+    "recorded_absolute_executable_in_private_source": true,
+    "preflight_stdout": {
+      "name": "negative-python-version.log",
+      "bytes": 138,
+      "sha256": "fa2eb32a59b7987fb6a3c54201d2665e35e3a8526e1872fef0985e345968a844"
+    },
+    "locked_sync_exit": 2,
+    "refused_before_resolution_or_environment_creation": true,
+    "ordinary_worktree_removal_exit": 0,
+    "candidate_tracked_clean_exit": 0,
+    "explicit_pre_and_post_project_and_lock_digest_receipt": null
+  },
+  "native_JUnit": {
+    "tested_head": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+    "suites": {
+      "native-version-switch.sanitized.xml": {
+        "passed": 89,
+        "skipped": 0,
+        "bytes": 20328,
+        "sha256": "14e1e8559f85a7b7dba7b6ea21150487e0a009e4660791e87f9e8dc061afc155",
+        "anchor": {
+          "case": "test_native_same_root_source_selection_rollback_and_refusals",
+          "passed": 1,
+          "skipped": 0
+        }
+      },
+      "session-bundle.sanitized.xml": {
+        "passed": 29,
+        "skipped": 0,
+        "bytes": 6577,
+        "sha256": "5a8937a1023b48142f69851f18f2410a7384a9806d971ff84ff663346c4b8f4b"
+      }
+    }
+  },
+  "codegraph": {
+    "commit": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+    "tree": "fcd2607b8fe7f30fadeabf73bb2e6075c551f778",
+    "result": "pass",
+    "verified_indexed_files": 6761,
+    "files_with_parse_errors": 0
+  },
+  "execution_identity_source": "Client dispatch records retain executor and session identity in local evidence.",
+  "pending_acceptance": [
+    "Actual registration-lane main base",
+    "final candidate scoped gates",
+    "three exact merge-reference CI runs",
+    "PR native version-switch JUnit",
+    "kit path-filter disposition",
+    "CURRENT and ordinary merge backfill"
+  ]
+}

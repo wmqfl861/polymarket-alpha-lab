@@ -34,7 +34,7 @@ The generated delta consists of `requires-python = ">=3.12"`, removal of eleven 
 
 ## Local Verification
 
-The [verification receipt](evidence/fx54-local-verification.json) records local ZCode session identities and the results for candidate `4818bef8f2e63e06ff0974b0fbdaa5081f6684de` on November 24, 2026 UTC.
+The [verification receipt](evidence/fx54-local-verification.json) records local verification results for candidate `4818bef8f2e63e06ff0974b0fbdaa5081f6684de` on November 24, 2026 UTC.
 
 | Check | Recorded result |
 | --- | --- |
@@ -45,12 +45,14 @@ The [verification receipt](evidence/fx54-local-verification.json) records local 
 | Frozen objects | The independent ZCode comparison matched the ladder module and all four fixtures. The receipt gives both blob IDs and sizes. |
 | Tracked diff secret scan | The corrected scan of the baseline-to-candidate additions returned 1 from the secret matcher, meaning no matches, with a zero-byte findings file. The original runner recorded the added-line filter's exit 0 under `pattern_status` and stopped with exit 1. |
 | CodeGraph | CodeGraph 1.6.3 synchronized a private snapshot of the existing project index to `4818bef8`. Strict status and content verification passed for 6,761 indexed files with zero parse errors. |
-| Full test suite | Run 3 passed on a separate clean checkout of `4818bef8`: 43,956 passed, 437 skipped, 20 warnings, pytest exit 0 in 3,201.88 seconds. The receipt SHA-256 is recorded in the verification JSON. |
+| Full test suite | Run 3 used CPython 3.12.3 and passed on a separate clean checkout of `4818bef8`: 43,956 passed, 437 skipped, 20 warnings, pytest exit 0 in 3,201.88 seconds. The receipt SHA-256 is recorded in the verification JSON. |
 | Original code review | The original reviewer returned `VERDICT: PASS` on completed-evidence candidate `974887eb`. The earlier FAIL verdicts remain in the evidence history. |
 
 The ZCode turn that recorded the positive install was interrupted after the individual checks. The continuation recorded the 3.11 refusal, both distribution checks, compile verification, and `git diff --check` before it stopped at the scan reporting error. The corrected scan ran separately.
 
 The first full-suite attempt was interrupted after 4,204 passed and 15 skipped, with no recorded pytest exit. The second returned pytest exit 137 and an empty summary. The third run completed at 21:03:01 UTC on a separate clean checkout of `4818bef8` with a complete passing summary.
+
+The [review and execution provenance](evidence/fx54-review-and-execution-provenance.json) binds the public review responses to the retained originals. Local dispatch records keep the execution identities.
 
 ## Pending Candidate Gates
 
