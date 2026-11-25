@@ -1,0 +1,61 @@
+# FX-41 NBA v2 runner 私有执行切片 — 独立只读复审
+
+## 审阅范围与方法
+
+- 仅读附件：`patch-pages.json` 所列 4 个连续页（0001‑0240 / 0241‑0480 / 0481‑0720 / 0721‑0758，共 758 行）与 `approved-seam.md`；补丁 SHA‑256 与 `patch-pages.json` 声明一致（`1a75be…9b771`）。未运行命令、未写入、未联网、未读附件外文件。
+- 补丁改动 `optimize/runner.py`（私有 claim 通道 + 预算/记账）与 `tests/test_papersim_optimize_runner.py`（fixture 重构 + 3 组新测试）。store 侧 `_NBAODRComputeClaim` 与 `nba_odr_registration` 模块**不在本补丁内**——这与 seam 声明的切片边界一致。
+
+## 当前 patch 的发现（逐项）
+
+**私有 claim 绑定**
+- `_take_nba_odr_claim`（patch‑0001‑0240.txt:40）以 `type(claim) is store_psycopg._NBAODRComputeClaim` 精确类型门控；store 未接线时该属性缺失，`claim_type` 为 `None`，任何输入恒被拒——生产路径当前 **fail‑closed**。
+- 消费后逐项校验：started/registration 事件 ID 为正且互异、`registration_event_id == facts.run_event_id`、run_event_key 固定、`policy_context.started_at ≥ facts.occurred_at`、run_key 与四个 ref 匹配且 manifest_ref 由 manifest_bytes 重算、config_digest 64 位 hex、manifest 逐字节等于「materials_ref 派生协议 + 固定 sources」的规范 JSON。
+- 分层正确：take 只证 claim↔facts 自洽；`_verify_claimed_nba_odr_plan` 再证 facts.plan↔运行时重算（目录、17 规格顺序、283/38 折、6 个 training‑only、holdout 成员证据、`_nba_odr_plan_bytes` 重算、metadata `physical_plan` 绑 4,811/9,622）。facts↔DB 行绑定属 store 侧。
+- 注意：`_take_for_runner()` 先消费后校验，校验失败即烧毁 claim——失败记账须由 store 兜底（集成项）。
+
+**旧公共入口 2,000**
+- 公共 `execute_optimization_run` 保持无 `nba_odr_claim` 形参，入口即拒 NBA_ODR_SCHEDULE_ID（原已存在），并完整转发全部既有参数（patch‑0001‑0240.txt:136）；无私有通道泄漏。
+- 非 claim 路径仍强制 `1 ≤ max_trials ≤ MAX_TRIALS`（hunk5），公共传 4,811 依旧被拒（既有测试上下文 4,811 亦断言此点）。4,811 仅在 claimed 分支强制赋值。
+
+**固定 4,811 计数**
+- claimed 强制 `max_trials = NBA_ODR_MAX_TRIALS`，planned 直接取登记 `plan.trials`，`planned_target_uses` 取常量；counts 新增（仅 nba_plan）`started_trials/unexecuted_trials/target_uses_planned/target_uses_started`；`shared_target_uses_planned = 9,622 − 4,811 = 4,811`，与新测试断言一致。
+
+**第一条回调之前所有比对**
+- 顺序：claim/manifest 绑定 → 基础提交与 run_key → `_verify_claimed_nba_odr_plan` 全量比对 → 才 `_nba_odr_scoring_inputs` 开源 → 搜索回调。负向测试断言非法 claim 下 `load_nba_odr_archives` 从未打开。
+- `_verify_claimed_nba_odr_plan` 不检查 deadline——入口即过期也完成全量比对，使失败工件仍携带完整计划与登记身份（`expired_at_entry` 断言 4,811 planned 仍在）。比对工作量有界，属有意设计，可接受。
+
+**holdout 延迟开放与装载路径**
+- claimed 模式一律拒绝外部来源输入（patch‑0001‑0240.txt:193‑197），装载仅经 claim 的 `content_by_season`→适配器；`snapshot_refs`/`absent_sources` 均取自 manifest，无旁路。
+- 有 replay 时 holdout 尺寸强校验 `(304, 38)`；过期/源失败时计数取登记 cohort、`holdout.callbacks == []`（测试已断言）。
+
+**两季来源门**
+- manifest required 行即两季 gzip；既有 season‑specific quality / holdout lazy 测试保留且重构为共享 fixture。但新 claimed 测试将 `load_nba_odr_archives` 整体替换为合成 seasons——真实 gzip 摘要门在 claimed 全链路**未被本补丁测试证明**（见 stub 节）。
+
+**传统运行身份**
+- 转发参数齐全；所有新行为均以 `claimed is not None` / `nba_plan is not None` 门控；artifact 旧键取值对 legacy 等价（search_group_ids、planned_folds、planned_evaluations、counts 均条件展开）；run_key 计算路径不变；`_source_checks`/`_verify_nba_contracts`/`_registry_comparisons` 移入 else 分支后语义不变。`skipped`/`planned_holdout_skips` 在 claimed 分支不赋值——但原代码本就存在「入口过期先抛」路径并序列化同一 artifact，故这些变量必有前置初始化，不构成缺陷。
+
+**预算时钟与进程挂起**
+- runner 侧 deadline 为协作式旗标：PHASE_LOAD/BOUNDARY/WALK_FORWARD/FINAL_SELECTION/HOLDOUT/GATES 各阶段边界、搜索预算内、序列化后（转 `artifact_serialization`）均有检查，失败首因带 phase 标签。
+- 比对与序列化本体不可中断；进程挂起/强杀与 3,540/3,600 秒执法在 store/CLI 侧，本补丁未含，须集成证明。
+
+**未执行试验记账**
+- 首因保留完备：`source_failure` 优先、`claimed + search.issue + failure` 提前走 `_AdapterFailure`（避免 budget_exhausted 覆盖首因）、各 except 的 `failure is None` 守卫。过期工件保留完整 4,811 planned 与 started/unexecuted/target_uses 计数；测试覆盖入口过期与首条回调后过期两种参数化。
+
+**stub 误验评估**
+- 新测试 monkeypatch `_NBAODRComputeClaim`（`raising=False`——属性今日不存在）、`load_nba_odr_archives`、`_nba_family_evaluator`：证明的是 runner 侧门控与记账，**不证明**真实 claim 发放语义（一次性、注册表写锁内、唯一 STARTED）、真实两季 gzip 摘要校验、真实评分与时钟。
+- 精确 type 门 + 属性缺席即拒 ⇒ store 未来命名不一致会显式失败而非静默绕过，无「静默通过」型风险；但测试通过不能外推为生产链路成立。
+- 两处**执行期依赖**须跑测试显形：① `"target mask"` 文案依赖既有 `_nba_odr_plan_bytes` 对坏掩码先抛错（否则 `match` 失败）；② artifact 需含既有 `"failure"` 序列化键（补丁未新增该键，测试直接断言）。
+
+## 后继实际集成仍需证明（静态复审不构成验收）
+
+1. store 侧 `_NBAODRComputeClaim` 类、注册表写锁内发放 + 唯一 STARTED、facts 与 DB 读回一致、claim 消耗/失败记账、丢失提交回包恢复、attempt 规则。
+2. CLI/store 接线：v2 强请求身份、清单比对、其余日程 2,000 上限、preview 零读取、成功发布校验完整 4,811/9,622、重放与中断恢复。
+3. 执行本补丁合成测试（尚未运行）及 seam 指定的两个既有测试文件集成断言；六变体同规模计时实证。
+4. 真实双季 gzip 原件在 claimed 全链路的摘要与质量门、真实评分回调。
+5. `nba_odr_registration` 模块（facts 语义、occurred_at 时钟、config_digest 绑定）另片审阅；runner 对其私有助手 `_scoring_sources/_pinned_originals` 的耦合是跨片契约。
+
+## 结论
+
+补丁在其自限范围（runner 私有执行分支、拒绝面、记账、测试）内与 approved‑seam 一致、fail‑closed，未发现确定性缺陷；上述集成事项与两处执行期依赖须由后继切片与实际运行证明，本复审仅为静态结论、不算验收。
+
+VERDICT: PASS

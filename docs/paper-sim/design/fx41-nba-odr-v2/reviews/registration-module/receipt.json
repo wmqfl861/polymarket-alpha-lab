@@ -1,0 +1,30 @@
+{
+  "started": "2026-11-21T19:44:52.935671+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "53c1dad770d61ce4a9f005bae25db2e785f8798a7b09e38904f8dfba40bd5815",
+  "purpose": "fx41-nba-registration-module-readonly-review",
+  "resume": null,
+  "attachments": {
+    "approved-plan.md": "e0590ca6c43b2da74b949f920618b3117c1772b23a073bf2ca833a2edf597c7c",
+    "complete-source-pages.json": "e1ee1c67bcee266b087f84bc73c190dae57cbc26e3eb0fef34233a05d56b951d",
+    "fixed-source-sha256.txt": "bc3bca70715480ecbf2ce11769c0e62d1b6fc380826c817ebf7cb224e9a2e180",
+    "focused.txt": "48722b3fa71947dea665989da077e6b10bab7a9ef481414017232386d263fe98",
+    "nba_odr_registration-1-200.txt": "4c039efbb0a737e7d7f0e411edf12bbc85d7e55a5213c9aa6eaecd93b4202462",
+    "nba_odr_registration-201-400.txt": "0929fe6bbf66e550cb195226047cb31931bb6bda9f466638ce83b53372688276",
+    "nba_odr_registration-401-405.txt": "a779be0e9b337572779d18dd5ef4b8bb56f325258356a86dbb9bd46f34a05751",
+    "test-executor.json": "2a28568b834c82a8fa45e5c55cc6bca79a787ac38275a72f0c5f78aae9d06d11",
+    "test_papersim_nba_odr_registration-1-200.txt": "b054914c7418709b75285b90cdf448298937bb4b912118aff1f0b682231ea7b1",
+    "test_papersim_nba_odr_registration-201-383.txt": "a17e52f2437056ba1662df904addd3159ef9b6530d850d63bddc9a9ced1e9434"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T19:49:06.604327+00:00",
+  "exit": 0,
+  "stdout_sha256": "dfa85ca4879e64e8117f11409618c988d737f1af81a0c80ed670962949672cca",
+  "stderr_sha256": "99835e000ac38da5984d8b9352f37f3c33b4ecd7bea6e7186a07eb1a46511e75",
+  "stdout_bytes": 7279,
+  "stderr_bytes": 165,
+  "safe_diagnostics": []
+}

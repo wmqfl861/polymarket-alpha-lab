@@ -121,12 +121,12 @@ def test_optimize_run_rejects_unknown_connection_free_input_shapes(
     assert "papersim_optimize_inputs_empty" in capsys.readouterr().err
 
 
-def test_optimize_help_names_the_four_subcommands(capsys) -> None:
+def test_optimize_help_names_the_experiment_subcommands(capsys) -> None:
     with pytest.raises(SystemExit) as excinfo:
         main(["optimize", "--help"])
     assert excinfo.value.code == 0
     text = capsys.readouterr().out
-    for token in ("families", "init", "run", "status"):
+    for token in ("families", "init", "register-experiment", "run", "status"):
         assert token in text
 
 
@@ -252,6 +252,23 @@ def test_run_rejects_unregistered_protocol_before_opening_inputs(
     assert "papersim_optimize_" + expected in err
 
 
+@pytest.mark.parametrize("overrides, reason", [
+    (["--seed", "29", "--managed"], "protocol_mismatch"),
+    (["--attempt", "0", "--managed"], "protocol_mismatch"),
+    (["--dsn", "unused"], "nba_odr_managed_required"),
+])
+def test_v2_admits_only_the_managed_fixed_request(overrides, reason, monkeypatch, capsys):
+    from polymarket_alpha_lab.papersim import cli
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("invalid v2 request reached its pointer or database")
+
+    monkeypatch.setattr(cli, "_optimization_pointer", unexpected)
+    monkeypatch.setattr(cli, "_open_readonly_connection", unexpected)
+    assert main([*_run("unused.json"), "--as-of", "2026-11-19T02:00:00Z", *overrides]) == 1
+    assert "papersim_optimize_" + reason in capsys.readouterr().err
+
+
 def test_registered_pointer_rejects_duplicate_json_keys(tmp_path):
     from polymarket_alpha_lab.papersim import cli
 
@@ -260,6 +277,159 @@ def test_registered_pointer_rejects_duplicate_json_keys(tmp_path):
                        "a" * 64 + '","manifest_byte_length":44}')
     with pytest.raises(ValueError, match="manifest_pointer_invalid"):
         cli._optimization_pointer(pointer)
+
+
+def test_managed_registration_exports_only_the_committed_pointer(tmp_path, monkeypatch, capsys):
+    from pathlib import Path
+    from types import SimpleNamespace
+    from polymarket_alpha_lab.papersim import cli, store_psycopg
+
+    root = tmp_path / "worktree"
+    root.mkdir()
+    approval = tmp_path / "approval.json"
+    inventory = tmp_path / "inventory.json"
+    approval.write_bytes(b"approval")
+    inventory.write_bytes(b"inventory")
+    pointer = tmp_path / "registered-pointer.json"
+    document = {"schema_version": 1, "manifest_sha256": "b" * 64, "manifest_byte_length": 17}
+    events = []
+    connection = SimpleNamespace(close=lambda: events.append("close"))
+
+    def clean(path):
+        assert Path(path) == root
+        events.append("clean")
+        return "a" * 40
+
+    def connect(args, *, label, clock):
+        assert args.managed and Path(args.repo_root) == root
+        assert clock.allocation()["command_nanoseconds"] == 3_600_000_000_000
+        events.append("connect")
+        return connection
+
+    def register(conn, *, approval_bytes, source_inventory_bytes, repo_root, code_commit, clock, reconnect):
+        assert conn is connection and repo_root == root.resolve() and code_commit == "a" * 40
+        assert (approval_bytes, source_inventory_bytes) == (b"approval", b"inventory")
+        assert callable(reconnect) and not pointer.exists()
+        events.append("commit")
+        return SimpleNamespace(pointer=document)
+
+    monkeypatch.setattr(cli, "require_clean_worktree_path", clean)
+    monkeypatch.setattr(cli, "_open_readonly_connection", connect)
+    monkeypatch.setattr(store_psycopg, "register_managed_nba_odr_experiment", register)
+    argv = [
+        "optimize", "register-experiment", "--managed", "--repo-root", str(root),
+        "--approval-file", str(approval), "--source-inventory-file", str(inventory),
+    ]
+
+    assert cli.main([*argv, "--write-pointer", str(root / "inside.json")]) == 1
+    assert "papersim_optimize_manifest_pointer_inside_worktree" in capsys.readouterr().err
+    assert events == []
+
+    def failed_replace(temporary, target):
+        assert target == pointer and events[-1] == "commit"
+        assert json.loads(temporary.read_text(encoding="utf-8")) == document
+        raise OSError("test disk failure")
+
+    with monkeypatch.context() as export:
+        export.setattr(Path, "replace", failed_replace)
+        assert cli.main([*argv, "--write-pointer", str(pointer)]) == 1
+    captured = capsys.readouterr()
+    assert "papersim_optimize_manifest_pointer_write_failed" in captured.err
+    assert captured.out == ""
+    assert not pointer.exists()
+    assert not list(tmp_path.glob(".optimizer-pointer-*"))
+
+    assert cli.main([*argv, "--write-pointer", str(pointer)]) == 0
+    assert json.loads(capsys.readouterr().out) == document
+    assert json.loads(pointer.read_text(encoding="utf-8")) == document
+    assert events == ["clean", "connect", "commit", "close"] * 2
+
+
+@pytest.mark.parametrize("options", [[], ["--dsn", "unused"], ["--managed", "--schedule", "other"]])
+def test_registration_parser_requires_managed_and_has_no_schedule_override(options, capsys):
+    with pytest.raises(SystemExit) as error:
+        main(["optimize", "register-experiment", "--approval-file", "a.json",
+              "--source-inventory-file", "i.json", *options])
+    assert error.value.code == 2
+    assert "error:" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("preview", [False, True])
+def test_v2_managed_run_routes_to_store_without_legacy_compute(
+    preview, tmp_path, monkeypatch, capsys
+):
+    from contextlib import contextmanager
+    from hashlib import sha256
+    from types import SimpleNamespace
+    from polymarket_alpha_lab.papersim import cli, snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.optimize import runner
+
+    protocol = runner.nba_odr_historical_protocol(runner.SourceArtifactRef("c" * 64, 1))
+    manifest = {"schema_version": 1, "protocol": protocol, "sources": [{
+        "role": "nba_season_archive", "key": "season.gz", "kind": "registered_research_input",
+        "schema_version": 1, "sha256": "d" * 64, "byte_length": 9,
+    }]}
+    content = runner._canonical_json(manifest)
+    digest = sha256(content).hexdigest()
+    connection = SimpleNamespace(close=lambda: None)
+    pointer = tmp_path / "pointer.json"
+    pointer.write_text(json.dumps({"schema_version": 1, "manifest_sha256": digest,
+                                   "manifest_byte_length": len(content)}))
+    calls = []
+    monkeypatch.setattr(cli, "require_clean_worktree_path", lambda path: "a" * 40)
+    monkeypatch.setattr(cli, "_open_readonly_connection", lambda *args, **kwargs: connection)
+
+    def read(conn, ref, *, kind):
+        assert conn is connection and ref == runner.SourceArtifactRef(digest, len(content))
+        assert kind == "optimizer_experiment_manifest"
+        return content
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("NBA v2 reached the legacy path")
+
+    monkeypatch.setattr(store_psycopg, "_nba_odr_registration_snapshot_content", read)
+    monkeypatch.setattr(snapshots, "read_snapshot", unexpected)
+    monkeypatch.setattr(runner, "historical_run_arguments", unexpected)
+
+    @contextmanager
+    def read_transaction(*args, **kwargs):
+        yield
+    monkeypatch.setattr(store_psycopg, "optimization_read_transaction", read_transaction)
+
+    def store_call(conn, **request):
+        assert conn is connection
+        calls.append(request)
+        if preview:
+            return {"status": "sealed_failure", "outcome": "RUN_FAILED", "exit_code": 0}
+        return {"outcome": "RUN_FAILED", "exit_code": 1, "artifact_bytes": b"result"}
+
+    monkeypatch.setattr(store_psycopg, "preview_managed_optimization", store_call if preview else unexpected)
+    monkeypatch.setattr(store_psycopg, "run_managed_optimization", unexpected if preview else store_call)
+
+    argv = [
+        "optimize", "run", "--managed", "--repo-root", str(tmp_path),
+        "--family", "nba-pace-efficiency", "--as-of", "2026-11-19T02:00:00Z",
+        "--input-manifest", str(pointer), "--seed", "20261120",
+    ]
+    if preview:
+        argv.append("--dry-run")
+    assert cli.main(argv) == int(not preview)
+    reply = json.loads(capsys.readouterr().out)
+    assert reply["outcome"] == "RUN_FAILED" and "artifact_bytes" not in reply
+    if preview:
+        assert reply["status"] == "sealed_failure"
+    request, = calls
+    assert request["manifest"] == manifest and request["source_refs"] == {"d" * 64: 9}
+    assert request["schedule_id"] == runner.NBA_ODR_SCHEDULE_ID and "compute" not in request
+    assert ("reconnect" in request) is not preview
+
+    content = json.dumps(manifest).encode()
+    digest = sha256(content).hexdigest()
+    pointer.write_text(json.dumps({"schema_version": 1, "manifest_sha256": digest,
+                                   "manifest_byte_length": len(content)}))
+    assert cli.main(argv) == 1
+    assert "papersim_optimize_manifest_invalid" in capsys.readouterr().err
+    assert len(calls) == 1
 
 
 @pytest.mark.parametrize(("source", "outcome", "expected_exit"), [

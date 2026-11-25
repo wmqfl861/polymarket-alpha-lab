@@ -1,0 +1,24 @@
+{
+  "started": "2026-11-21T19:16:36.089099+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "724d22475a06d57f85177bcb87227fb12728729348b084703bb859034df34d4f",
+  "purpose": "fx41-nba-synthetic-timing-plan-review",
+  "resume": "sess_85726871-25be-4fbe-b5fc-048c14effe67",
+  "attachments": {
+    "synthetic-timing-plan.md": "5f0f4f09289621531a7f5ef635505acf590033c70b787be08e2a7ff9618ecc41",
+    "approved-parent.md": "558a5f27f97827d54360b62e71336fe012d56e20e807a893a3894d8318fb321f",
+    "actual-envelope.md": "ca3e7eb9606424b510d5dd14c404398a7f8984fbbdd7db7dd3ea3f372dc59f9c",
+    "last-review.txt": "662080e263a158c28303ea9aef8b4b3d7af6e36efa9455ab06287fdd5ba1573a"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T19:19:35.527732+00:00",
+  "exit": 0,
+  "stdout_sha256": "27df51acb7177663bbf56c99afbaa72ef6a513c4af32523e38c4f345c9d532fc",
+  "stderr_sha256": "b8efdb60d73583a4623c125d0253cfa5078ab9443de136e5cf080693e46e233a",
+  "stdout_bytes": 9276,
+  "stderr_bytes": 99,
+  "safe_diagnostics": []
+}

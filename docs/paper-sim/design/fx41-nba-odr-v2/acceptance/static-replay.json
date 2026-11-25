@@ -1,0 +1,1249 @@
+{
+  "auditor": {
+    "bytes": 16465,
+    "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "git_blob": "5cc4b621c2a4ac6156c78057361cb16e7cbd10ec",
+    "path": "docs/handoffs/2026-11-12-audit/evidence/audit_static.py",
+    "sha256": "7eb98c3bce666b4ef97c244247e1b2c4c3499f2c270e8560d268aec0d8c48e22"
+  },
+  "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "candidate": "2933a375fdc3c248514968277effb9a699097131",
+  "changed_paths": {
+    "by_status": {
+      "A": 34,
+      "M": 9
+    },
+    "documentation": 30,
+    "inventory": [
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "eb7c68cf4eabbca5e33e718e30538cab2854c1e5",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/MANIFEST.sha256",
+        "payload_encoding": "utf-8",
+        "physical_lines": 29,
+        "scanned_payload": {
+          "bytes": 2992,
+          "sha256": "52bad5c500ff0bac7b7592fa6d649264df0a27279cc96a8685e30c36efd1cae3"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 2992,
+          "sha256": "52bad5c500ff0bac7b7592fa6d649264df0a27279cc96a8685e30c36efd1cae3"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "e689b73f351fadd9ed084ac774f7964bde7a31b8",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/integration-evidence.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 76,
+        "scanned_payload": {
+          "bytes": 11537,
+          "sha256": "384e02730568dcf31e15c2e35e5a583249fd249f71040787b45abe0f0a2cc307"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 11537,
+          "sha256": "384e02730568dcf31e15c2e35e5a583249fd249f71040787b45abe0f0a2cc307"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "11afcc1cf680582281127c4f54b8ed269f74c1df",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/operator-addendum.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 18,
+        "scanned_payload": {
+          "bytes": 3304,
+          "sha256": "4bf724c6cf56e998cbc66195344da16355e91f31e3a7bb3e8d8e469794bbf30b"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 3304,
+          "sha256": "4bf724c6cf56e998cbc66195344da16355e91f31e3a7bb3e8d8e469794bbf30b"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "ba623bbd3d11c696b31d289993e57f3e76a99995",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/operator-rereview.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 6,
+        "scanned_payload": {
+          "bytes": 3400,
+          "sha256": "493c67e5c66588bbeeb949cdccba6fa88ca20f51aae63d4381d2d5f357da973b"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 3400,
+          "sha256": "493c67e5c66588bbeeb949cdccba6fa88ca20f51aae63d4381d2d5f357da973b"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "5603159f336ac6f5394b0da138d388ceecce505a",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/plan-review.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 6,
+        "scanned_payload": {
+          "bytes": 6125,
+          "sha256": "27fa7f0d93b9b308968c3b864b79816263f06d04a1a6d7a3d294461c110b1442"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 6125,
+          "sha256": "27fa7f0d93b9b308968c3b864b79816263f06d04a1a6d7a3d294461c110b1442"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "b33f332217db7939867abb25767f592ad7dac1c5",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/plan.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 80,
+        "scanned_payload": {
+          "bytes": 17151,
+          "sha256": "240f6153da3ff1a41625db89424bee537e662b0904abe4954491f84a6d3412ef"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 17151,
+          "sha256": "240f6153da3ff1a41625db89424bee537e662b0904abe4954491f84a6d3412ef"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "435e559b0294b452d9e2096599982463312f201a",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/managed-seam-plan.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 33,
+        "scanned_payload": {
+          "bytes": 10996,
+          "sha256": "e0590ca6c43b2da74b949f920618b3117c1772b23a073bf2ca833a2edf597c7c"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 10996,
+          "sha256": "e0590ca6c43b2da74b949f920618b3117c1772b23a073bf2ca833a2edf597c7c"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "f99f8eeaabc4529129c95111e052581f94fcf68b",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/receipt.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 24,
+        "scanned_payload": {
+          "bytes": 1053,
+          "sha256": "79535cbbbc67c8f21cca7b588b032de11c454c011961f5a08b9ea9788da153aa"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 1053,
+          "sha256": "79535cbbbc67c8f21cca7b588b032de11c454c011961f5a08b9ea9788da153aa"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "238661d256d6c857c9ab1ce4b1f5290412a03e5a",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/result.txt",
+        "payload_encoding": "utf-8",
+        "physical_lines": 44,
+        "scanned_payload": {
+          "bytes": 8897,
+          "sha256": "d1a0acd5ffb34c2d3930171eceb74f7ea6b53ae2385019122bbe23d6023c191f"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 8897,
+          "sha256": "d1a0acd5ffb34c2d3930171eceb74f7ea6b53ae2385019122bbe23d6023c191f"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "b78c5b59c8c23447cf6685093650a7439add5947",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/private-runner-seam/candidate-comparison.tsv",
+        "payload_encoding": "utf-8",
+        "physical_lines": 29,
+        "scanned_payload": {
+          "bytes": 5588,
+          "sha256": "5a7c9d13952a341dcfbaba2f70817ba9998094c81be4b827989f1888a6363872"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 5588,
+          "sha256": "5a7c9d13952a341dcfbaba2f70817ba9998094c81be4b827989f1888a6363872"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "dc3177b71a02be004d415e5ea4e7e570dddf892e",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/private-runner-seam/patch-pages.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 29,
+        "scanned_payload": {
+          "bytes": 766,
+          "sha256": "5c3dd9ee096dc8d02e99f92b793bf135bb5357f43413e2bf3b54580de78ea73c"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 766,
+          "sha256": "5c3dd9ee096dc8d02e99f92b793bf135bb5357f43413e2bf3b54580de78ea73c"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "0d5a3720e82bcca3b80a10a64b4ce2874cfc0b68",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/private-runner-seam/receipt.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 26,
+        "scanned_payload": {
+          "bytes": 1230,
+          "sha256": "d40da948ff398806e3a0d707010605dd20191f340c5861ab40cbd73a3e7deaf6"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 1230,
+          "sha256": "d40da948ff398806e3a0d707010605dd20191f340c5861ab40cbd73a3e7deaf6"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "bae111638643fe99d2460ad4a051feea63268506",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/private-runner-seam/result.txt",
+        "payload_encoding": "utf-8",
+        "physical_lines": 61,
+        "scanned_payload": {
+          "bytes": 7283,
+          "sha256": "024561971d7ff53f3b5b0909d6064a6084b2409f8741d51fcf43f23a23260bd6"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 7283,
+          "sha256": "024561971d7ff53f3b5b0909d6064a6084b2409f8741d51fcf43f23a23260bd6"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "1c9f90526b32b8726a3ca105d569c58358abe578",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/private-runner-seam/reviewed-patch.txt.gz",
+        "payload_encoding": "gzip+utf-8",
+        "physical_lines": 758,
+        "scanned_payload": {
+          "bytes": 43381,
+          "sha256": "1a75be79a9e0c49f2ceb74c09aca146b5fb238701fb2e2c2a257f14614e9b771"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 10120,
+          "sha256": "da75cead78eac2a63d7afabc3d1be98a0ab14aa6a9b835cbb12d7bea32058a10"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "b0209e5a0ac0bbd55b3db5fc3633ca36d9f7c30a",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/registration-module/complete-source-pages.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 21,
+        "scanned_payload": {
+          "bytes": 631,
+          "sha256": "e1ee1c67bcee266b087f84bc73c190dae57cbc26e3eb0fef34233a05d56b951d"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 631,
+          "sha256": "e1ee1c67bcee266b087f84bc73c190dae57cbc26e3eb0fef34233a05d56b951d"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "e20849c45b51fed8c9220f77039af595134877d3",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/registration-module/receipt.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 30,
+        "scanned_payload": {
+          "bytes": 1702,
+          "sha256": "69c2f1cddd116f5b36de8f206df6c203c2d2c4acd170ba0a3c0397a1d07118e8"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 1702,
+          "sha256": "69c2f1cddd116f5b36de8f206df6c203c2d2c4acd170ba0a3c0397a1d07118e8"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "2aa936e7128f9d33c16505ae4f3d50caccf88f83",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/registration-module/result.txt",
+        "payload_encoding": "utf-8",
+        "physical_lines": 55,
+        "scanned_payload": {
+          "bytes": 7279,
+          "sha256": "dfa85ca4879e64e8117f11409618c988d737f1af81a0c80ed670962949672cca"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 7279,
+          "sha256": "dfa85ca4879e64e8117f11409618c988d737f1af81a0c80ed670962949672cca"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "6a4e2178a87d69c487a05c1081446f7d44eacc50",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/approved-timing-checklist.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 16,
+        "scanned_payload": {
+          "bytes": 4387,
+          "sha256": "260a33ebe48747fbae047a5235690fd3d174bb06f1c2b3c55d529cc6bbdae376"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 4387,
+          "sha256": "260a33ebe48747fbae047a5235690fd3d174bb06f1c2b3c55d529cc6bbdae376"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "c2f9d33542f7b49909e57b685fa1f9f1f4d7f94c",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/plan.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 51,
+        "scanned_payload": {
+          "bytes": 13118,
+          "sha256": "137a73862e08c75308c467f3f6fcbf64bbb5d5d88d95f87508cf4b20873cbfe0"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 13118,
+          "sha256": "137a73862e08c75308c467f3f6fcbf64bbb5d5d88d95f87508cf4b20873cbfe0"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "64ca8081f2339bd0e5afdaa4a10644a09956de19",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/receipt.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 24,
+        "scanned_payload": {
+          "bytes": 1043,
+          "sha256": "57fd537183c37abccb0dd2eb69f0661661ff63fc75977d90135cf5589ad9f3d8"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 1043,
+          "sha256": "57fd537183c37abccb0dd2eb69f0661661ff63fc75977d90135cf5589ad9f3d8"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "76e38ffb74e54a3fe8dfce80f5294882e5be4a5c",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/result.txt",
+        "payload_encoding": "utf-8",
+        "physical_lines": 40,
+        "scanned_payload": {
+          "bytes": 7151,
+          "sha256": "b56c792605e6c64fbbeb9f6093f7771b1a3e157eead189508bde2eca86b06a56"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 7151,
+          "sha256": "b56c792605e6c64fbbeb9f6093f7771b1a3e157eead189508bde2eca86b06a56"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "cc20f3a2680a7c4a00efbfc10cee8ee4e4ea7604",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/scientific-plan/approved-scope-plan.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 133,
+        "scanned_payload": {
+          "bytes": 29890,
+          "sha256": "558a5f27f97827d54360b62e71336fe012d56e20e807a893a3894d8318fb321f"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 29890,
+          "sha256": "558a5f27f97827d54360b62e71336fe012d56e20e807a893a3894d8318fb321f"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "5b428d6559b7d1eb88838b9d1ca784f12dd2b76b",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/scientific-plan/receipt.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 26,
+        "scanned_payload": {
+          "bytes": 1267,
+          "sha256": "62130ffc43c6d1bc7daa65cbaeac39bc2f17995745e3861ebadc182b54c62b81"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 1267,
+          "sha256": "62130ffc43c6d1bc7daa65cbaeac39bc2f17995745e3861ebadc182b54c62b81"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "945de9287c127c6e72326aec6ed70c09b2f765c6",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/scientific-plan/result.txt",
+        "payload_encoding": "utf-8",
+        "physical_lines": 44,
+        "scanned_payload": {
+          "bytes": 6564,
+          "sha256": "191033f53eedc6c367af89bb56041b0090c7f9eaa4e1b2a43a3898879dbc7c0c"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 6564,
+          "sha256": "191033f53eedc6c367af89bb56041b0090c7f9eaa4e1b2a43a3898879dbc7c0c"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "5ec415eb4f32801011950cef94ed85b05f215c88",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/six-variant-addendum/author-correction.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 25,
+        "scanned_payload": {
+          "bytes": 4311,
+          "sha256": "ca3e7eb9606424b510d5dd14c404398a7f8984fbbdd7db7dd3ea3f372dc59f9c"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 4311,
+          "sha256": "ca3e7eb9606424b510d5dd14c404398a7f8984fbbdd7db7dd3ea3f372dc59f9c"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "23d0451d4f1cab45e183f6fa6e2619d213dc3e36",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/six-variant-addendum/receipt.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 23,
+        "scanned_payload": {
+          "bytes": 976,
+          "sha256": "43aa4f895b6299616a24bc63cafd017924620e9eeccc7e4bffdef90101d16372"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 976,
+          "sha256": "43aa4f895b6299616a24bc63cafd017924620e9eeccc7e4bffdef90101d16372"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "82f24c1914b014c4924c3f1c619835979c64abb0",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/six-variant-addendum/result.txt",
+        "payload_encoding": "utf-8",
+        "physical_lines": 38,
+        "scanned_payload": {
+          "bytes": 6242,
+          "sha256": "662080e263a158c28303ea9aef8b4b3d7af6e36efa9455ab06287fdd5ba1573a"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 6242,
+          "sha256": "662080e263a158c28303ea9aef8b4b3d7af6e36efa9455ab06287fdd5ba1573a"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "eb4ba5a71ceeea0b3f8ec2a046d3b52696feebf6",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/timing-plan/receipt.json",
+        "payload_encoding": "utf-8",
+        "physical_lines": 24,
+        "scanned_payload": {
+          "bytes": 1074,
+          "sha256": "8cf37edfd583d120866b907742ee610759e71ac29ce0d81537e80715c89a4e6f"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 1074,
+          "sha256": "8cf37edfd583d120866b907742ee610759e71ac29ce0d81537e80715c89a4e6f"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "5ddfb0604a6caa8735483764a75242e751de856f",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/timing-plan/result.txt",
+        "payload_encoding": "utf-8",
+        "physical_lines": 55,
+        "scanned_payload": {
+          "bytes": 9276,
+          "sha256": "27df51acb7177663bbf56c99afbaa72ef6a513c4af32523e38c4f345c9d532fc"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 9276,
+          "sha256": "27df51acb7177663bbf56c99afbaa72ef6a513c4af32523e38c4f345c9d532fc"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "8fc975a2862d66e98c626a8eae19e6dd68d229d5",
+        "candidate_mode": "100644",
+        "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/timing-plan/synthetic-timing-plan.md",
+        "payload_encoding": "utf-8",
+        "physical_lines": 46,
+        "scanned_payload": {
+          "bytes": 14534,
+          "sha256": "5f0f4f09289621531a7f5ef635505acf590033c70b787be08e2a7ff9618ecc41"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 14534,
+          "sha256": "5f0f4f09289621531a7f5ef635505acf590033c70b787be08e2a7ff9618ecc41"
+        }
+      },
+      {
+        "base_blob": "9069fd6e7a123c40aa16f2fd2abe94f20d4c3e03",
+        "base_mode": "100644",
+        "candidate_blob": "69e5f1865378a10f69225c0b03b2ef60f1f07cd6",
+        "candidate_mode": "100644",
+        "path": "src/polymarket_alpha_lab/papersim/cli.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 3079,
+        "scanned_payload": {
+          "bytes": 145817,
+          "sha256": "7ea5ca347ab23cb6c25d39d0e9757e0689e20784dc69ca22759e5768904b66be"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 140983,
+          "sha256": "f944b4fd18d2e311a4c7f1b626e96a4f1b47fdb2a9555d2260970c16c98c764c"
+        },
+        "stored_candidate_blob": {
+          "bytes": 145817,
+          "sha256": "7ea5ca347ab23cb6c25d39d0e9757e0689e20784dc69ca22759e5768904b66be"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "d6b3b109960bd3994ebbed54983b2bce699c38b5",
+        "candidate_mode": "100644",
+        "path": "src/polymarket_alpha_lab/papersim/nba_odr_registration.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 405,
+        "scanned_payload": {
+          "bytes": 21021,
+          "sha256": "6ea68cd333030d7bf982c4161c717b2701a5623e7b2a372de154d484bb4722fa"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 21021,
+          "sha256": "6ea68cd333030d7bf982c4161c717b2701a5623e7b2a372de154d484bb4722fa"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "6728dee0df0716eefcc5c8bc4c801e138d2aef88",
+        "candidate_mode": "100644",
+        "path": "src/polymarket_alpha_lab/papersim/optimize/nba_odr.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 499,
+        "scanned_payload": {
+          "bytes": 21486,
+          "sha256": "cdb6da71e6e533b37a5b9eee0d27295bd7ebc9adeb2ff12627ad1e8d5b94d196"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 21486,
+          "sha256": "cdb6da71e6e533b37a5b9eee0d27295bd7ebc9adeb2ff12627ad1e8d5b94d196"
+        }
+      },
+      {
+        "base_blob": "c389fd72c003da7f4a613d8f8d7643a1f7597734",
+        "base_mode": "100644",
+        "candidate_blob": "cd9627795365a080ce3e70e89594581a3fc68b35",
+        "candidate_mode": "100644",
+        "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 7240,
+        "scanned_payload": {
+          "bytes": 346343,
+          "sha256": "463bfd1668eeb9ce54fb24bf47b3d2febbddefad402d44da6e3435847e7b1559"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 301659,
+          "sha256": "cba99cfc8dbae4c8051080234cc6a99567e07a5de993ca580386efdddc9f04d6"
+        },
+        "stored_candidate_blob": {
+          "bytes": 346343,
+          "sha256": "463bfd1668eeb9ce54fb24bf47b3d2febbddefad402d44da6e3435847e7b1559"
+        }
+      },
+      {
+        "base_blob": "8e3d8d9e296e277b995c3913642a5b64754931bb",
+        "base_mode": "100644",
+        "candidate_blob": "7dfeee3442db1d1db137f6735bb07e187c04b5d3",
+        "candidate_mode": "100644",
+        "path": "src/polymarket_alpha_lab/papersim/optimize/search.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 1602,
+        "scanned_payload": {
+          "bytes": 64404,
+          "sha256": "0b1d0f1fe97089c9e5998e32fda19282ed17fd4792cb71eac8395e82181f1bb9"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 61524,
+          "sha256": "47b16b408ce2336f50a0b1be4f2550b9b5aa2663f6ca951385eec0396924d12d"
+        },
+        "stored_candidate_blob": {
+          "bytes": 64404,
+          "sha256": "0b1d0f1fe97089c9e5998e32fda19282ed17fd4792cb71eac8395e82181f1bb9"
+        }
+      },
+      {
+        "base_blob": "4b21d14152a4ed4efbe557365a9c14af1d5c2bc8",
+        "base_mode": "100644",
+        "candidate_blob": "e9922326093415afcd16ef58aa414979a7ff33af",
+        "candidate_mode": "100644",
+        "path": "src/polymarket_alpha_lab/papersim/store_psycopg.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 4574,
+        "scanned_payload": {
+          "bytes": 248817,
+          "sha256": "e9f0ee981749ed176ce8c2943475d67aa6d255c8a67d7df7be7cc6c97594f759"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 210693,
+          "sha256": "e208789305a839da2f5801cbbc865a8562ff1af39e1c20c3e59d3961187786b6"
+        },
+        "stored_candidate_blob": {
+          "bytes": 248817,
+          "sha256": "e9f0ee981749ed176ce8c2943475d67aa6d255c8a67d7df7be7cc6c97594f759"
+        }
+      },
+      {
+        "base_blob": "793250f1516637825e02e54d17815cda7532ddb7",
+        "base_mode": "100644",
+        "candidate_blob": "1baede46f3a2ccae8a8a54856718f66cb11778d4",
+        "candidate_mode": "100644",
+        "path": "tests/test_papersim_cli_optimize.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 578,
+        "scanned_payload": {
+          "bytes": 25118,
+          "sha256": "02b1b39c736a4825fc8e3dd0efe312937dcc3b6b24e3133102344bca2954704b"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 17269,
+          "sha256": "0f7e90a59bdc33677e2a39563e20b3b62ee2e747783801be840c53c334c0f5af"
+        },
+        "stored_candidate_blob": {
+          "bytes": 25118,
+          "sha256": "02b1b39c736a4825fc8e3dd0efe312937dcc3b6b24e3133102344bca2954704b"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "4de27178785c478896da0e92ec2972bd7f0749f0",
+        "candidate_mode": "100644",
+        "path": "tests/test_papersim_nba_odr_registration.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 383,
+        "scanned_payload": {
+          "bytes": 19530,
+          "sha256": "4374ad17544d3ad9444e7df15750f8fff037d09398022358819ea488adc31335"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 19530,
+          "sha256": "4374ad17544d3ad9444e7df15750f8fff037d09398022358819ea488adc31335"
+        }
+      },
+      {
+        "base_blob": null,
+        "base_mode": "000000",
+        "candidate_blob": "9713c9caad0e4167dcc723984c6a8b32f4092d03",
+        "candidate_mode": "100644",
+        "path": "tests/test_papersim_optimize_nba_odr.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 292,
+        "scanned_payload": {
+          "bytes": 14919,
+          "sha256": "906f34c36e7b4bf85393a6ec73932a5d3c94eb3ed1a5f69dde7d6c6489383b6c"
+        },
+        "status": "A",
+        "stored_base_blob": null,
+        "stored_candidate_blob": {
+          "bytes": 14919,
+          "sha256": "906f34c36e7b4bf85393a6ec73932a5d3c94eb3ed1a5f69dde7d6c6489383b6c"
+        }
+      },
+      {
+        "base_blob": "6c03779855c995bccd09508f0b958350fa7bfb94",
+        "base_mode": "100644",
+        "candidate_blob": "45379e3ecbff9e783fa4678ee44c6d25ffd957ec",
+        "candidate_mode": "100644",
+        "path": "tests/test_papersim_optimize_registered_runner_native.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 3368,
+        "scanned_payload": {
+          "bytes": 179016,
+          "sha256": "945a012845a7f086023de60fe93da2a6a7d19151ad09e7a5e8ec8796ae16ad30"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 145933,
+          "sha256": "744069654e4c66f0d6067c00b4af8a5620650592c3d07bd09711bea044e22611"
+        },
+        "stored_candidate_blob": {
+          "bytes": 179016,
+          "sha256": "945a012845a7f086023de60fe93da2a6a7d19151ad09e7a5e8ec8796ae16ad30"
+        }
+      },
+      {
+        "base_blob": "f21c7b364f8ded70dc1b74a5339d1d6654697c9b",
+        "base_mode": "100644",
+        "candidate_blob": "3f13fc4bc97f58de677742bdf399b2e28c9ffaaf",
+        "candidate_mode": "100644",
+        "path": "tests/test_papersim_optimize_rule_sources.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 447,
+        "scanned_payload": {
+          "bytes": 22401,
+          "sha256": "6f6d5b1073fe00fef627f2cfaf9b5190480210608f071f5afee173698e023bee"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 21797,
+          "sha256": "cca19d1b78cb4551cdcc8522da8ae2e61819cec933d4e3fc013074f481a9df36"
+        },
+        "stored_candidate_blob": {
+          "bytes": 22401,
+          "sha256": "6f6d5b1073fe00fef627f2cfaf9b5190480210608f071f5afee173698e023bee"
+        }
+      },
+      {
+        "base_blob": "fdd8e42b8332228022079b8d837e3685f4c77f5a",
+        "base_mode": "100644",
+        "candidate_blob": "dbc19d51169e865d7bfe48db03ae50b2083a8b64",
+        "candidate_mode": "100644",
+        "path": "tests/test_papersim_optimize_runner.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 4747,
+        "scanned_payload": {
+          "bytes": 238581,
+          "sha256": "67b19ca3f1f5d65fbcfb569cd2f4ea551b0c3ab7b0daf9c30a16fdaa7820ce33"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 219654,
+          "sha256": "45a31a62db02926795f4a07d0090daa555452dedf76dab2b9f59db8ced5c805f"
+        },
+        "stored_candidate_blob": {
+          "bytes": 238581,
+          "sha256": "67b19ca3f1f5d65fbcfb569cd2f4ea551b0c3ab7b0daf9c30a16fdaa7820ce33"
+        }
+      },
+      {
+        "base_blob": "0e04bda517d628608204550706654bf03152d837",
+        "base_mode": "100644",
+        "candidate_blob": "0893de81e44a8a53b5a8084b43f451d43b297788",
+        "candidate_mode": "100644",
+        "path": "tests/test_papersim_optimize_search.py",
+        "payload_encoding": "utf-8",
+        "physical_lines": 1084,
+        "scanned_payload": {
+          "bytes": 50497,
+          "sha256": "d1a13597b55a19d4c711db8833717ba9ff5f76857c0c123d448ecbdccfbfab1e"
+        },
+        "status": "M",
+        "stored_base_blob": {
+          "bytes": 47111,
+          "sha256": "4a884f11e2d2e301113908b91d6604d04c5c6948f3fc2fef7ddb5ce47aa6a001"
+        },
+        "stored_candidate_blob": {
+          "bytes": 50497,
+          "sha256": "d1a13597b55a19d4c711db8833717ba9ff5f76857c0c123d448ecbdccfbfab1e"
+        }
+      }
+    ],
+    "total": 43
+  },
+  "git_diff_check": {
+    "argv": [
+      "git",
+      "-c",
+      "core.attributesFile=/dev/null",
+      "-c",
+      "core.quotePath=false",
+      "-c",
+      "core.whitespace=blank-at-eol,blank-at-eof,space-before-tab",
+      "diff",
+      "--check",
+      "--no-ext-diff",
+      "--no-textconv",
+      "--no-color",
+      "--no-renames",
+      "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "2933a375fdc3c248514968277effb9a699097131",
+      "--"
+    ],
+    "environment": {
+      "GIT_ALLOW_PROTOCOL": "",
+      "GIT_ATTR_SOURCE": "2933a375fdc3c248514968277effb9a699097131",
+      "GIT_CONFIG_GLOBAL": "/dev/null",
+      "GIT_CONFIG_NOSYSTEM": "1",
+      "GIT_NO_LAZY_FETCH": "1",
+      "GIT_NO_REPLACE_OBJECTS": "1",
+      "GIT_OPTIONAL_LOCKS": "0",
+      "GIT_TERMINAL_PROMPT": "0",
+      "LC_ALL": "C.UTF-8",
+      "PATH": "/bin:/usr/bin"
+    },
+    "exit_code": 0,
+    "stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "git_version": "git version 2.43.0",
+  "helper": {
+    "bytes": 23335,
+    "sha256": "32faa624f804529a76b9e26866cba029c5cea5f1a92a158515f372852bd86fbe"
+  },
+  "python_version": [
+    3,
+    12,
+    3
+  ],
+  "scanner": {
+    "bytes": 6701,
+    "commit": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+    "git_blob": "8972aba0da4220b08469967f510114804101523e",
+    "path": "docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan.py",
+    "sha256": "b71adb796c92f80feff6d52b6dad89220745305814066a55cf6bb054cbd9b3ab"
+  },
+  "secret_shape_scan": {
+    "added_lines": {
+      "counts": {
+        "wechat_id": 14
+      },
+      "dispositions": {
+        "registration_command": 5,
+        "schedule_identifier": 9
+      },
+      "findings": [
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 29,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 47,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 3,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/managed-seam-plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 16,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/managed-seam-plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 9,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/result.txt"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 16,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/approved-timing-checklist.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 42,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 3,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/scientific-plan/approved-scope-plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 19,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/six-variant-addendum/author-correction.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 32,
+          "path": "src/polymarket_alpha_lab/papersim/nba_odr_registration.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 2584,
+          "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 3388,
+          "path": "src/polymarket_alpha_lab/papersim/store_psycopg.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 192,
+          "path": "tests/test_papersim_nba_odr_registration.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 334,
+          "path": "tests/test_papersim_nba_odr_registration.py"
+        }
+      ],
+      "scanner_heuristic_only_counts": {}
+    },
+    "added_lines_patch": {
+      "argv": [
+        "git",
+        "-c",
+        "core.attributesFile=/dev/null",
+        "-c",
+        "core.quotePath=false",
+        "-c",
+        "core.whitespace=blank-at-eol,blank-at-eof,space-before-tab",
+        "diff",
+        "-U0",
+        "--src-prefix=a/",
+        "--dst-prefix=b/",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--no-color",
+        "--no-renames",
+        "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "2933a375fdc3c248514968277effb9a699097131",
+        "--"
+      ],
+      "bytes": 470742,
+      "sha256": "aa02a6b0c659b5173d98f514fdc6e1d5059576535bf6e26351e54d6f112f10a7"
+    },
+    "entire_changed_candidate_blobs": {
+      "counts": {
+        "email_benign": 3,
+        "home_path_generic": 1,
+        "wechat_id": 16
+      },
+      "dispositions": {
+        "registration_command": 5,
+        "schedule_identifier": 9,
+        "unresolved": 2
+      },
+      "findings": [
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 29,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 47,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 3,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/managed-seam-plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 16,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/managed-seam-plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 9,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/result.txt"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 16,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/approved-timing-checklist.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 42,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 3,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/scientific-plan/approved-scope-plan.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 19,
+          "path": "docs/paper-sim/design/fx41-nba-odr-v2/reviews/six-variant-addendum/author-correction.md"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 32,
+          "path": "src/polymarket_alpha_lab/papersim/nba_odr_registration.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "schedule_identifier",
+          "line": 2584,
+          "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "unresolved",
+          "line": 3795,
+          "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 3388,
+          "path": "src/polymarket_alpha_lab/papersim/store_psycopg.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 192,
+          "path": "tests/test_papersim_nba_odr_registration.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "registration_command",
+          "line": 334,
+          "path": "tests/test_papersim_nba_odr_registration.py"
+        },
+        {
+          "category": "wechat_id",
+          "disposition": "unresolved",
+          "line": 3667,
+          "path": "tests/test_papersim_optimize_runner.py"
+        }
+      ],
+      "scanner_heuristic_only_counts": {
+        "email_benign": 3,
+        "home_path_generic": 1
+      }
+    },
+    "reviewed_project_identifier_sources": {
+      "registration_command": {
+        "candidate_blob": "d6b3b109960bd3994ebbed54983b2bce699c38b5",
+        "definition": "_COMMAND",
+        "line": 32,
+        "path": "src/polymarket_alpha_lab/papersim/nba_odr_registration.py",
+        "verified_occurrences": 5
+      },
+      "schedule_identifier": {
+        "candidate_blob": "cd9627795365a080ce3e70e89594581a3fc68b35",
+        "definition": "NBA_ODR_SCHEDULE_ID",
+        "line": 2584,
+        "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py",
+        "verified_occurrences": 9
+      }
+    }
+  },
+  "static_reports": {
+    "base": {
+      "audit_input_manifest": {
+        "bytes": 742624,
+        "sha256": "e42a0aca8477d76c1fea6cc91fcbd22eff01352c6cadb0cd2cf6566eb2a2cb63"
+      },
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "committed_input_replay": {
+        "compared_fields": 34,
+        "exact_report_bytes_match": false,
+        "full_output": {
+          "bytes": 762319,
+          "sha256": "7078a65c8854889993e5cfedd39042ba74c70e854adaecb2b4afef04a6ecad5a"
+        },
+        "mismatched_fields": []
+      },
+      "full_report": {
+        "artifact": "../nba-static-base.json",
+        "bytes": 762319,
+        "sha256": "0d48b7aee52e297e4921a699d6a66abbddf50f855b0a7fd0be9a816653189948"
+      },
+      "historical_provenance": "source_inventory_corroborated_execution_unattested",
+      "input_counts": {
+        "scripts": 23,
+        "src": 2911,
+        "tests": 3352,
+        "tools": 13
+      },
+      "reachable_modules": 468,
+      "summary": {
+        "artifact": "../nba-static-base-summary.json",
+        "bytes": 34575,
+        "sha256": "c0ef6943da596f8117d107007b5f4be85f5bd1166b19046801d836c1b9e1dbbe"
+      },
+      "tree": "5c7ac8af85aa4eb3b2ea9df7076c945451f8c09e",
+      "unreachable_modules": 2442
+    },
+    "candidate": {
+      "audit_input_manifest": {
+        "bytes": 743032,
+        "sha256": "7de38cd57214dd279635ca25e3ddd46d1f0d1cfbbf808cef3de3209768553358"
+      },
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "committed_input_replay": {
+        "compared_fields": 34,
+        "exact_report_bytes_match": false,
+        "full_output": {
+          "bytes": 762725,
+          "sha256": "393614f5d1e302a6a966f9feae00a455fbbd3dda08550f96b02ff494a516d2c5"
+        },
+        "mismatched_fields": []
+      },
+      "full_report": {
+        "artifact": "../nba-static-candidate.json",
+        "bytes": 762725,
+        "sha256": "af7e35f3dc7d64f17b506dc01f75df90b296c699902ce98a07e3efe1406a6655"
+      },
+      "historical_provenance": "source_inventory_corroborated_execution_unattested",
+      "input_counts": {
+        "scripts": 23,
+        "src": 2913,
+        "tests": 3354,
+        "tools": 13
+      },
+      "reachable_modules": 470,
+      "summary": {
+        "artifact": "../nba-static-candidate-summary.json",
+        "bytes": 34582,
+        "sha256": "da533f56db4050436382e0f1e901dc0cfbb312bd97229a78fae96e61073dea6e"
+      },
+      "tree": "446be10b502632b3a1acbf3b774aecd65a2ce48e",
+      "unreachable_modules": 2442
+    }
+  }
+}
