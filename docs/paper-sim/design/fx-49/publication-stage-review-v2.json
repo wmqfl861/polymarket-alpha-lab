@@ -1,0 +1,25 @@
+{
+  "base": "093063000a704727f243c02a7b420c49afa37027",
+  "client": "ZCode",
+  "commit": "de4a789a5dce16e38d7635af478ca46644c479ce",
+  "original_review": {
+    "bytes": 5963,
+    "path": "file-handoffs-post130/fx49-stage-de4a789a.json",
+    "sha256": "b2a05b1ff09e203eec8e7a323c331b5242d5aee358075c0dc5bfb1f1ff96dca9"
+  },
+  "review_prompt": {
+    "bytes": 26842,
+    "path": "fx49-v3-evidence/post129/093063000a70/publish/stage-review.prompt",
+    "sha256": "12a0152e4c7cb1c69407ef19598844f8410303f14bdbd9f77ad21abec53b9fb8"
+  },
+  "schema_version": 1,
+  "scope": "local repository stage signoff",
+  "test_projection": {
+    "bytes": 19212,
+    "path": "fx49-v3-evidence/post129/093063000a70/publish/publication-independent-test-v2.json",
+    "sha256": "5d9796a1fc000a23a3bf9842ea02da0c50d46433e9e740beb1a4866938f48446"
+  },
+  "tree": "3f773c8f0495c4b0104316410f769f271fb3298a",
+  "utc": "2026-11-25T16:43:53+00:00",
+  "verdict": "PASS"
+}

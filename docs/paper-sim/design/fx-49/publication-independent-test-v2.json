@@ -1,0 +1,367 @@
+{
+  "base": "093063000a704727f243c02a7b420c49afa37027",
+  "client": "ZCode",
+  "combined_full_offline": {
+    "commit": "de4a789a5dce16e38d7635af478ca46644c479ce",
+    "completion": {
+      "bytes": 3369,
+      "path": "offline-continuation/fx49-post129-093063000a70-de4a789a5dce-ssl-v2/completed.json",
+      "sha256": "f10db5f7d497cc3f9770c3f0eee42d518500a30abb341f61b0360264a0e437af"
+    },
+    "counts": {
+      "passed": 44095,
+      "skipped": 464
+    },
+    "executor": {
+      "bytes": 1756,
+      "path": "fx49-post130-full-launch.json",
+      "sha256": "898543bd5757e275bfc618349179da0f6f5bf3c8088cb092422f51a92f46385c"
+    },
+    "files": 3341,
+    "fixture_focus": {
+      "bytes": 519,
+      "path": "offline-continuation/fx49-post129-093063000a70-de4a789a5dce-ssl-v2/focus.json",
+      "sha256": "a458f714e1c05880a72997bcfb537a272e36d5247682d52a55f01d2b4332070b"
+    },
+    "groups": 31,
+    "imported_groups": 0,
+    "manifest": {
+      "bytes": 202393,
+      "path": "offline-continuation/fx49-post129-093063000a70-de4a789a5dce-ssl-v2/manifest.json",
+      "sha256": "4e45a556f60791825f3a1e81a8fac798959006e888fe08ad53a8bd91435401d2"
+    },
+    "progress": {
+      "bytes": 101588,
+      "path": "offline-continuation/fx49-post129-093063000a70-de4a789a5dce-ssl-v2/progress.jsonl",
+      "sha256": "9ca7dadd883bad53a15af9cdad92591b15b07a610c91ae19c698ef20d16f2274"
+    },
+    "unsuccessful_attempts": 0
+  },
+  "commit": "de4a789a5dce16e38d7635af478ca46644c479ce",
+  "documentation_successor": {
+    "comparison": {
+      "changed_documentation_paths": [
+        "DELIVERY_PLAN.md",
+        "docs/handoffs/2026-11-19-optimizer-phase1.md",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/MANIFEST.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/README.md",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/SHA256SUMS",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/clock-evidence.public.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/clock-rereview.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/handoff-first-failure.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/handoff-first-request.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/handoff-rereview-request.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/handoff-rereview.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/handoff-subject.public.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/independent-hosted-and-local-skip-counts.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/independent-landed-contact-coordinates.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/independent-landed-static-confirmation.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/independent-landed-static.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/independent-local-skip-accounting.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/launcher-implementation-rereview.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/skip-executor-result.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/software-evidence.public.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/software-signoff.public.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/stage-first-failure.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/stage-first-request.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/stage-rereview-request.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/stage-rereview.txt",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/stage-subject.public.json",
+        "docs/paper-sim/design/fx41-nba-odr-v2/post125-support-release/static-executor-result.txt",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/candidate-audit-receipts.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/candidate-graph-checks.jsonl",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/empty-registry-comparison.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx47-cleanup-current-status.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx47-corrected-native-execution.jsonl",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx47-corrected-original-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx47-legacy-retry.jsonl",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx47-offline-run-a77a67e7-summary.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx47-verification.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-direct-integration-original-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-direct-native-execution.jsonl",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-direct-runtime-original-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-direct-script-objects.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-pg-receipt.jsonl",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-verification.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/historical-evidence-origins.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/historical-scorecards-projection.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/historical-scorecards-readback.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/intake-and-reviews.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-anchor-selfcheck-and-repeat-static.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-final-pr-packet-test-summary.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-integration-original-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-native-completion.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-native-counts.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-pr-existing-hits-provenance.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-prepr-capture.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-prepr-original-execution.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-prepr-static-base.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-prepr-static-candidate.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-prepr-two-findings-original.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/nba-verification.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/node0-full-suite-and-publication.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/offline-progress-at-cutoff.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/offline-two-group19-receipts.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/owner-evidence.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/phase1-0721-original-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/phase1-draft-original-rereview.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/plan-review-receipts.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/publication-after-ledger-integration.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/publication-and-merge-identities.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-24/registration-offline-original-dispatch.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/1321e54e-audits.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/draft-9ad28dd0-verification.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/fx40-history-inventory-summary.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/handoff-review-first.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/historical-run-1-scorecard.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/historical-run-2-scorecard.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/historical-run-3-scorecard.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/hosted-prs.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/local-lanes.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-historical-cards-after.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-od-v.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-support-archive-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-v2-registration-time.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-v2-scorecard.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-v2-terminal.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr124-exact.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr124-owner-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr125-cli-help-rename.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr125-exact.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr125-post124-current.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr125-post124-exact.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr125-post124-landed.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr125-refresh-original-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr126-exact-ci.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr126-integration-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr126-landed.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr127-exact-ci.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr127-integration-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr127-landed.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr127-owner-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr128-current.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr128-exact-ci.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr128-integration-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr128-landed.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr129-exact-ci.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr129-focused.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr129-full.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr129-hosted-supplement.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr129-landed.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr129-original-review.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/registration-full.json",
+        "docs/paper-sim/design/optimizer-phase1/2026-11-25/scorecard-readback.json"
+      ],
+      "identical_product_and_test_paths": 6360,
+      "identical_product_blob_inventory_sha256": "358f928ceb29cb545e6e8476470b029947df8a228e7fa99005b833e87f51babb",
+      "tested_base": "631259a22a50ac5d06be7512ed6bbc32c87e3fbf",
+      "tested_candidate_sha256": "2c769888b6e3d9372c644c29a0d8c5d33576b66c2b9ea9d3488ecf8a22932eda",
+      "tested_head": "b2346a432761416c4d788dc0d8f864ac2602d1f0",
+      "tested_tree": "d1898b0d55581afd67516f8634d4ec06352094f7"
+    },
+    "executor": {
+      "bytes": 1250,
+      "path": "fx49-post130-docs-launch.json",
+      "sha256": "8e5bac24187702a9e4f286e374464539023ab9f0b28bd92589551b23ee7692cd"
+    },
+    "passed": 36,
+    "record": {
+      "bytes": 2080,
+      "path": "fx49-v3-evidence/post129/093063000a70/documentation.jsonl",
+      "sha256": "2f248fce7d5e51e4f966e858a8727ff0160ee1897cb450b389f0d09170c74ef7"
+    }
+  },
+  "fixture_blob": "d9673af4ffe1dddffd4a142fd1b335bc6a230f62",
+  "focused": {
+    "executor": {
+      "bytes": 1391,
+      "path": "fx49-post129-focus-launch.json",
+      "sha256": "ddb9d1dff4e5548ee9e66e402bd3bb8529e83d66f150435a3b3a0ad0c7eaedff"
+    },
+    "installed": {
+      "Requires-Python": ">=3.12",
+      "psycopg": "3.3.4",
+      "psycopg-binary": "3.3.4",
+      "pytest": "9.1.1",
+      "python": [
+        3,
+        12,
+        3
+      ]
+    },
+    "linux_main": 79,
+    "linux_runtime": 79,
+    "linux_static_powershell": 3,
+    "postgres": 19,
+    "receipt": {
+      "bytes": 2765,
+      "path": "fx49-v3-evidence/post129/631259a22a50/focused.jsonl",
+      "sha256": "9f89cdc1cf6f7aaf082376338ca725d98f4d7aa5519956977c957fd73f276496"
+    },
+    "tested_commit": "b2346a432761416c4d788dc0d8f864ac2602d1f0",
+    "tested_tree": "d1898b0d55581afd67516f8634d4ec06352094f7"
+  },
+  "hosted_ci": "pending",
+  "local_integration": {
+    "bytes": 55943,
+    "path": "fx49-v3-evidence/post129/093063000a70/candidate.json",
+    "sha256": "4601c5fb981b08eb0ce3537fd3199d4c2089287b054cc1554d5ccccd9fb37a83"
+  },
+  "prior_full_offline": {
+    "base": "a7dbd8a3e14f5f86f9f26e2f05b76a46927cf4ee",
+    "commit": "2cfcde81dd3090bb21e8d7fcca8b8c77e75669e5",
+    "completion": {
+      "bytes": 3363,
+      "path": "offline-continuation/fx49-post128-integrated-2cfcde81dd30-ssl-v2/completed.json",
+      "sha256": "d70f8a4b0e871f767bfb3a5a2d45ba9096d274609d562f1991ade31d83fc6b57"
+    },
+    "counts": {
+      "passed": 44095,
+      "skipped": 464
+    },
+    "executor": {
+      "bytes": 1679,
+      "path": "fx49-post128-full-launch.json",
+      "sha256": "eda314bc32b85028589e287c9cf5b74138254191bb52463491375a564073ced2"
+    },
+    "files": 3341,
+    "fixture_focus": {
+      "bytes": 519,
+      "path": "offline-continuation/fx49-post128-integrated-2cfcde81dd30-ssl-v2/focus.json",
+      "sha256": "93577a76d302e518a458524937bf569f513df749f5da1e4eb706e90c17c53743"
+    },
+    "groups": 31,
+    "imported_groups": 0,
+    "manifest": {
+      "bytes": 202379,
+      "path": "offline-continuation/fx49-post128-integrated-2cfcde81dd30-ssl-v2/manifest.json",
+      "sha256": "f343e2b6fe6e321009cb55a85f161f33c3506883c4f843936e66c76f4f36c97c"
+    },
+    "prior_group19_failure": {
+      "bytes": 62,
+      "path": "offline-continuation/fx49-rereview-fix-7d55da74fc69/attempts/8fbca57a3482fb423bc037fff25f544173aa8c6920e80285d31dce8fadbafeff/000001/result.json",
+      "sha256": "5858c1c23159ecb73b16cfc96b981aa34c5c831334a49fedc24e6df63e2a33b4"
+    },
+    "prior_unfinished_suite": {
+      "bytes": 65931,
+      "path": "offline-continuation/fx49-rereview-fix-7d55da74fc69/progress.jsonl",
+      "sha256": "82f2eb3147bf3d8794f980a77bd3fcfc0752998c2819e0c4c5d44e418f2bf532"
+    },
+    "progress": {
+      "bytes": 101588,
+      "path": "offline-continuation/fx49-post128-integrated-2cfcde81dd30-ssl-v2/progress.jsonl",
+      "sha256": "b1c62971738fd4d238f9d2b129b4039d20f7e2d1619ed7b37d11efdf476fa1a4"
+    },
+    "tree": "ac63e8cce0f523a3b8d9a48488cf23b2161b598a",
+    "unsuccessful_attempts": 0
+  },
+  "python_inputs": {
+    "pyproject.toml": {
+      "blob": "3806b2069435633fe98dc562d87eab50995cdf81",
+      "bytes": 829,
+      "mode": "100644",
+      "sha256": "ca4f0cdddefdcfca50036d22ba160a9479e2680488eb96e1477f3acf7427e0fd"
+    },
+    "uv.lock": {
+      "blob": "aa74cf578ef47c750f49cbaad6599830f0a82e2f",
+      "bytes": 18351,
+      "mode": "100644",
+      "sha256": "9ed26c40ee1a48ef98cb6c8183db5202bc308eb5f57c46ffcf9f10a97f012b6c"
+    }
+  },
+  "schema_version": 1,
+  "scope": "independent repository verification on Linux",
+  "source_reviews": {
+    "commit": "2cfcde81dd3090bb21e8d7fcca8b8c77e75669e5",
+    "continuity": {
+      "main": {
+        "continuation": {
+          "bytes": 2206,
+          "path": "fx49-post128-main-rereview.json",
+          "sha256": "61b22aededce6fb52f56ca287defc359571012302773baacfb3998c1fcc45104"
+        },
+        "prior_source_review": {
+          "bytes": 2937,
+          "path": "fx49-v3-original-main-rereview.json",
+          "sha256": "25994324228925c168253962fa02d04e6093928f9d2870332efd6b1b79014c47"
+        },
+        "same_original_session": true,
+        "verdict": "PASS"
+      },
+      "runtime": {
+        "continuation": {
+          "bytes": 2256,
+          "path": "fx49-post128-runtime-evidence-rereview.json",
+          "sha256": "e501ff0a6f6d87b78c880b462d8eef8a61a8fa8dd4a2512b2e0904b7c0940485"
+        },
+        "first_integration_review": {
+          "bytes": 2548,
+          "path": "fx49-post128-runtime-rereview.json",
+          "sha256": "0a74bf6770beb79d07f1646ae9375376e74a16aea7755f528a57635dec36b79f"
+        },
+        "first_integration_verdict": "FAIL",
+        "prior_source_review": {
+          "bytes": 2441,
+          "path": "fx49-v3-original-runtime-rereview.json",
+          "sha256": "c6b150eebf96097b5aba52c7d4daf7ece57a6d44118dce1c61247ad533326a08"
+        },
+        "same_original_session": true,
+        "verdict": "PASS"
+      }
+    }
+  },
+  "static": {
+    "codegraph_indexed": 6774,
+    "executor": {
+      "bytes": 1253,
+      "path": "fx49-post130-static-launch.json",
+      "sha256": "7960648fc2993e845a98ca1052f9ad49c2603d74b975a671eb1815c188e1daa5"
+    },
+    "parse_errors": 0,
+    "reachability": {
+      "base": {
+        "reachable": 470,
+        "unreachable": 2442
+      },
+      "candidate": {
+        "reachable": 470,
+        "unreachable": 2442
+      }
+    },
+    "receipt": {
+      "bytes": 2342,
+      "path": "fx49-v3-evidence/post129/093063000a70/static.jsonl",
+      "sha256": "d524d98dd24c07d97204e1be7bf8fa3fdbca1acd5f3d5599512f99c4a1cc99fa"
+    },
+    "tracked": {
+      "attributed": 5,
+      "evidence": [
+        {
+          "bytes": 3018,
+          "path": "fx49-v3-evidence/post129/093063000a70/tracked.jsonl",
+          "sha256": "a0bd4b3ab56a7788fb31b3e0574c039080aa699cd49bb9c8c53bd111258e5fc9"
+        },
+        {
+          "bytes": 300,
+          "path": "fx49-v3-evidence/post129/093063000a70/tracked-exit.json",
+          "sha256": "1752c2b48a15ca6cfb507b095ec8957d5bb51895601e34908c469f3df350a77b"
+        },
+        {
+          "bytes": 3374,
+          "path": "fx49-v3-evidence/post129/093063000a70/tracked-attribution.json",
+          "sha256": "9d64cf0f8a0ba89cbdf976a4ef44efb087dc2ba1f7b65e5afbae075b4d300e16"
+        }
+      ],
+      "executor": {
+        "bytes": 1253,
+        "path": "fx49-post130-static-launch.json",
+        "sha256": "7960648fc2993e845a98ca1052f9ad49c2603d74b975a671eb1815c188e1daa5"
+      },
+      "raw_exit": 1,
+      "unresolved": 0
+    }
+  },
+  "synthetic_checkout": "5344d4a825a468d8e51ba99c875e52f16cd2d495",
+  "tree": "3f773c8f0495c4b0104316410f769f271fb3298a",
+  "utc": "2026-11-25T16:30:39+00:00"
+}
