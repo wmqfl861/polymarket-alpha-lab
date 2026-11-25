@@ -512,7 +512,7 @@ def _crypto_contract(target: dict, market: polymarket.PolymarketMarket, raw: dic
     if opening is None or not cutoff < opening or market.end_at != opening + timedelta(minutes=1):
         raise prepare._Excluded("papersim_prepare_crypto_terminal_time_unproved")
     _require(_utc(target["event_start_at"]) == market.end_at, "papersim_prepare_target_clock_conflict")
-    return asset, _compatible_float(barrier), direction, binding.currency
+    return asset, _compatible_float(barrier), direction, binding
 
 
 def _spot_reference(provider: str, pair: str) -> str:
@@ -575,14 +575,15 @@ def _crypto_materials(sources: dict, selected: tuple[_ModelResponse, ...], view,
     evidence = tuple(item.usable(view.cutoff) for item in pages)
     if spot.fetched_at < view.start:
         raise prepare._Excluded("papersim_prepare_crypto_spot_outside_window")
-    asset, barrier, direction, currency = contract
+    asset, barrier, direction, requested_venue = contract
     spot_provider = spot_source.removeprefix("crypto-spot-")
     candle_provider = candle_source.removeprefix("crypto-candles-")
     spot_binding, candle_binding = prices._BINDINGS[spot_provider], prices._BINDINGS[candle_provider]
     spot_pair, candle_pair = spot_binding.pair_for(asset), candle_binding.pair_for(asset)
     _require(spot.source_reference == _spot_reference(spot_provider, spot_pair)
-             and spot_binding.currency == candle_binding.currency == currency,
+             and spot_binding == candle_binding == requested_venue,
              "papersim_prepare_crypto_request_conflict")
+    currency = requested_venue.currency
     start, end = _utc(sources["window_start"]), _utc(sources["window_end"])
     first_receipt = min(page.fetched_at for page in evidence)
     try:

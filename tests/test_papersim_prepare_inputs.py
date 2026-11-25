@@ -342,6 +342,22 @@ def test_registered_terminal_resolves_no_ladder_and_repeated_bytes_without_netwo
     assert proof["sources"][0]["path"] == "/0/markets/0"
 
 
+def test_terminal_contract_refuses_other_venue_with_same_currency(monkeypatch):
+    gamma = {"description": DESCRIPTION.replace("Binance ETH/USDT", "Coinbase ETH/USD")}
+    case = _case(monkeypatch, gamma_updates=gamma)
+    pair = prices._BINDINGS["kraken"].pair_for("ETH")
+    for response, kind, path in (
+        (case.doc["model_responses"][0], "crypto-candles-kraken",
+         f"OHLC?pair={pair}&interval=60&since=1"),
+        (case.doc["model_responses"][1], "crypto-spot-kraken",
+         f"Ticker?pair={pair}"),
+    ):
+        response.update(_record_model(case.db, response["sequence"], kind, f"{prices._KRAKEN_BASE_URL}/{path}",
+                                      _json_bytes({"fixture": kind})))
+    with pytest.raises(prepare.PreparationError, match="papersim_prepare_crypto_request_conflict"):
+        _resolve(case)
+
+
 def test_registered_understat_rebuilds_frozen_soccer(monkeypatch):
     case = _case(monkeypatch, soccer=True)
 

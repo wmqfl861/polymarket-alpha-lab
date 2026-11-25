@@ -479,7 +479,7 @@ def receipt_witness(conn, candidate, receipts):
     return {**witness, "resume": operations._receipt_ref(resume), "recovery": operations._receipt_ref(recovery)}
 
 
-def replay_record(conn, operation_key, candidate_key):
+def replay_record(conn, operation_key, candidate_key, material):
     """Reconstruct one originally prepared record using pinned specs and raw bytes."""
     root = getattr(conn, "_papersim_managed_root", None)
     _check(root is not None, "papersim_prepare_managed_required")
@@ -488,6 +488,7 @@ def replay_record(conn, operation_key, candidate_key):
     prepared = [row for row in receipts if row["phase"] == "PREPARED" and row["command"] == scan.SCAN_COMMAND]
     _check(len(prepared) == 1)
     binding, config_bytes = _read_bound(conn, prepared[0])
+    _check(material == {name: binding[name] for name in _MATERIAL_FIELDS})
     if candidate_key not in binding["candidate_keys"]:
         return None
     resolved = _verify_base(conn, root, config_bytes, binding["input_set_sha256"],

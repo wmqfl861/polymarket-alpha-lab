@@ -696,19 +696,39 @@ def replay(conn, candidate_id: int, *, trusted_code_commit: str,
                                   expected_schema_version=expected_snapshot_schema_version)
     checks.append('snapshots')
     prepared_record = None
-    from polymarket_alpha_lab.papersim import prepared_scan
-
     if getattr(conn, '_papersim_managed_root', None) is not None:
-        binding = _fetch_one(conn, 'SELECT operation_key, params FROM papersim.scan_runs WHERE scan_id = %s',
-                             (row['scan_id'],))
-        material = _as_json(binding['params']).get('preparation') if binding is not None else None
+        binding = _fetch_one(
+            conn, "SELECT s.operation_key, s.params->'preparation' AS material, "
+            "c.team, c.market_kind, c.market_type, c.model_name, c.model_version, "
+            "c.yes_token_id, c.no_token_id, c.variant_quotes, c.median_probability "
+            "FROM papersim.candidates c JOIN papersim.scan_runs s ON s.scan_id = c.scan_id "
+            "WHERE c.candidate_id = %s", (candidate_id,))
+        material = None if binding is None else _as_json(binding['material'])
         if material is not None:
-            prepared_record = prepared_scan.replay_record(conn, binding['operation_key'], row['candidate_key'])
+            from polymarket_alpha_lab.papersim import prepared_scan
+
+            prepared_record = prepared_scan.replay_record(conn, binding['operation_key'], row['candidate_key'], material)
             if prepared_record is not None:
+                _verify_prepared_candidate(row, binding, prepared_record)
                 checks.append('managed_preparation')
     if row['conclusion'] == 'CONSTRUCTION_FAILED':
         return _replay_construction(row, checks, prepared_record)
     return _replay_decision(conn, row, checks, prepared_record)
+
+
+def _verify_prepared_candidate(row, binding, record):
+    for field in ('condition_id', 'market_id', 'market_slug', 'side', 'evaluated_at'):
+        if row[field] != getattr(record, field):
+            raise PapersimReplayError('papersim_replay_prepared_candidate_mismatch', field)
+    for field in ('team', 'market_kind', 'market_type', 'model_name', 'yes_token_id', 'no_token_id'):
+        if binding[field] != getattr(record, field):
+            raise PapersimReplayError('papersim_replay_prepared_candidate_mismatch', field)
+    if binding['model_version'] != record.prepared_provenance['model_version']:
+        raise PapersimReplayError('papersim_replay_prepared_candidate_mismatch', 'model_version')
+    if _as_json(row['snapshot_refs']) != list(record.snapshot_refs):
+        raise PapersimReplayError('papersim_replay_prepared_candidate_mismatch', 'snapshots')
+    _compare(_as_json(binding['variant_quotes']), _as_json(record.variant_quotes), 'variant_quotes')
+    _compare(binding['median_probability'], record.median_probability, 'median_probability')
 
 
 def _replay_construction(row: dict, checks: list, prepared_record=None) -> dict:

@@ -513,6 +513,7 @@ def test_prepared_soccer_persists_ordered_quotes_and_replays_constructor_failure
     summary = json.loads(completed.stdout)
     assert len(summary["candidate_ids"]) == 4
     with pg.connect_managed(case.project.root) as reader:
+        reader.autocommit = True
         quotes = reader.execute(
             "SELECT candidate_id, candidate_key, conclusion, variant_quotes, input_payload, "
             "rejection_reasons, event_start_at FROM papersim.candidates WHERE scan_id = %s ORDER BY candidate_key",
