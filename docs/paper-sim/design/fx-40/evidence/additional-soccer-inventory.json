@@ -1,0 +1,102 @@
+{
+  "files": {
+    "round23/raw/clob_books23.json": {
+      "bytes": 16780,
+      "cases": {
+        "BOU-LEE_O2.5": {},
+        "BRE-FOR_O2.5": {},
+        "CHE-MUN_O3.5": {},
+        "HUL-IPS_O2.5": {}
+      },
+      "sha256": "91d5084c26743c34dff8f4a80014310e60aa41d82a2caa9d974d31d32464a589"
+    },
+    "round23/raw/events_window.json": {
+      "bytes": 1112950,
+      "cases": {
+        "BOU-LEE_O2.5": {
+          "exact_id_rows": 1
+        },
+        "BRE-FOR_O2.5": {
+          "exact_id_rows": 1
+        },
+        "CHE-MUN_O3.5": {
+          "exact_id_rows": 1
+        },
+        "HUL-IPS_O2.5": {
+          "exact_id_rows": 1
+        }
+      },
+      "sha256": "eca62c5dc5adc73d6c161494aebad934d00b45ea0c181e69324af9662ce2bc5b"
+    },
+    "round23/raw/events_window23.json": {
+      "bytes": 5485127,
+      "cases": {
+        "BOU-LEE_O2.5": {},
+        "BRE-FOR_O2.5": {},
+        "CHE-MUN_O3.5": {},
+        "HUL-IPS_O2.5": {}
+      },
+      "sha256": "34fa0bc19f204762f9f81f4911d74179ff7a88208aa5ac013176670aae2cc4f7"
+    },
+    "round23/raw/gamma_sweep23.json": {
+      "bytes": 1091513,
+      "cases": {
+        "BOU-LEE_O2.5": {},
+        "BRE-FOR_O2.5": {},
+        "CHE-MUN_O3.5": {},
+        "HUL-IPS_O2.5": {}
+      },
+      "sha256": "93d040324d9cd4ea20daf24fcb7ff16d35617b76af3d260034673ceb97d3d359"
+    },
+    "round23/raw/ligue_books23.json": {
+      "bytes": 10846,
+      "cases": {
+        "BOU-LEE_O2.5": {},
+        "BRE-FOR_O2.5": {},
+        "CHE-MUN_O3.5": {},
+        "HUL-IPS_O2.5": {}
+      },
+      "sha256": "b4c8d9b9a23b88cff29be4f57d14a9c0bc4f266ce86d47f67a45bf29f7b67c19"
+    },
+    "round23/raw/shortlist_books23.json": {
+      "bytes": 39897,
+      "cases": {
+        "BOU-LEE_O2.5": {
+          "exact_id_rows": 1
+        },
+        "BRE-FOR_O2.5": {
+          "exact_id_rows": 1
+        },
+        "CHE-MUN_O3.5": {
+          "exact_id_rows": 1
+        },
+        "HUL-IPS_O2.5": {
+          "exact_id_rows": 1
+        }
+      },
+      "sha256": "e490b63ad86cc31d61e1c1a7533406f7e32d056230e7eb4265da06b332af75cc"
+    },
+    "round24/raw/events_window.json": {
+      "bytes": 1114063,
+      "cases": {
+        "BOU-LEE_O2.5": {
+          "exact_id_rows": 1
+        },
+        "BRE-FOR_O2.5": {
+          "exact_id_rows": 1
+        },
+        "CHE-MUN_O3.5": {
+          "exact_id_rows": 1
+        },
+        "HUL-IPS_O2.5": {
+          "exact_id_rows": 1
+        }
+      },
+      "sha256": "f58d7f645e7b0410a026c5e11cc4ddf4e4586c944510e1355ca44dc9773ff379"
+    }
+  },
+  "fixture_sha256": "d9914c23645a54f405ea246aa7ea574afe7515cd176e321d1536db8b60f689f9",
+  "measured_utc": "2026-11-25T14:06:36+00:00",
+  "qualification": "A matching ID or field shape proves only present archived content. A zero count covers the named field representation and files only. Independent custody, per-request receipt clocks and complete canonical decision requests are not established by this measurement.",
+  "scope": "seven additional named r23/r24 files; case labels match the frozen r23 soccer fixture"
+}

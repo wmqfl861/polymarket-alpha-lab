@@ -90,7 +90,7 @@ def _capture_time(value: str) -> datetime.datetime:
 
 
 def command_capture_inputs(args: argparse.Namespace) -> int:
-    from polymarket_alpha_lab.papersim import store
+    from polymarket_alpha_lab.papersim import prepare, store
     from polymarket_alpha_lab.papersim.d1compare import acquire
 
     parameters = {
@@ -101,10 +101,20 @@ def command_capture_inputs(args: argparse.Namespace) -> int:
         if args.resolution_slot is None:
             if args.operation_key is not None or args.attempt is not None:
                 raise acquire.AcquisitionError("d1_resolution_flags_require_slot")
-            receipt = acquire.capture_inputs(tag_slugs=tuple(args.tag_slug), **parameters)
+            if args.prepare_config is None:
+                receipt = acquire.capture_inputs(tag_slugs=tuple(args.tag_slug), **parameters)
+            else:
+                from polymarket_alpha_lab.papersim import prepare_capture
+
+                receipt = prepare_capture.capture_preparation_inputs(
+                    config_bytes=Path(args.prepare_config).read_bytes(),
+                    tag_slugs=tuple(args.tag_slug), **parameters,
+                )
         else:
             from polymarket_alpha_lab.papersim.d1compare import operations
 
+            if args.prepare_config is not None:
+                raise acquire.AcquisitionError("papersim_prepare_discovery_required")
             if args.operation_key is None or args.attempt is None:
                 raise acquire.AcquisitionError("d1_resolution_operation_and_attempt_required")
             operations._validate_attempt(args.operation_key, args.attempt)
@@ -112,7 +122,10 @@ def command_capture_inputs(args: argparse.Namespace) -> int:
                 resolution_slot=args.resolution_slot, operation_key=args.operation_key,
                 attempt=args.attempt, **parameters,
             )
-    except (acquire.AcquisitionError, store.PapersimStoreError) as error:
+    except OSError:
+        print("d1_compare: capture-inputs failed: papersim_prepare_config_unreadable", file=sys.stderr)
+        return 2
+    except (acquire.AcquisitionError, prepare.PreparationError, store.PapersimStoreError) as error:
         print(f"d1_compare: capture-inputs failed: {error.code}", file=sys.stderr)
         return 2
     print(json.dumps(receipt, sort_keys=True, allow_nan=False))
@@ -182,6 +195,17 @@ def command_run_new(args: argparse.Namespace) -> int:
     argv = [sys.executable, "-m", "polymarket_alpha_lab.papersim.cli",
             "run-scan", "--config", str(Path(args.scan_config).resolve()),
             "--managed", "--repo-root", str(Path(args.repo_root).resolve())]
+    if args.prepare_from is not None:
+        from polymarket_alpha_lab.papersim import cli
+
+        if not args.operation_key:
+            print("d1_compare: run-new requires --operation-key with --prepare-from", file=sys.stderr)
+            return 2
+        return cli.main([*argv[3:], "--prepare-from", args.prepare_from,
+                         "--operation-key", args.operation_key, "--attempt", str(args.attempt)])
+    if args.operation_key is not None or args.attempt != 1:
+        print("d1_compare: run-new operation flags require --prepare-from", file=sys.stderr)
+        return 2
     plan = {"run_new_version": 1, "argv": argv,
             "gates": authorization.as_mapping() if authorization else {}}
     print(json.dumps(plan, indent=1, sort_keys=True))
@@ -331,6 +355,8 @@ def build_parser() -> argparse.ArgumentParser:
                          help="positive attempt number (required with --resolution-slot)")
     capture.add_argument("--allow-public-fetch", action="store_true",
                          help="enable the public market data adapters")
+    capture.add_argument("--prepare-config", metavar="PATH",
+                         help="seal separate managed preparation inputs for this scan config")
     capture.set_defaults(handler=command_capture_inputs)
 
     run_frozen = subparsers.add_parser(
@@ -365,11 +391,13 @@ def build_parser() -> argparse.ArgumentParser:
     build_packs.set_defaults(handler=command_build_packs)
 
     run_new = subparsers.add_parser(
-        "run-new", help="invoke the existing run-scan on built packs (same "
-                        "gates; never executed by this pass)")
+        "run-new", help="invoke the gated managed scan on a sealed preparation input set")
     run_new.add_argument("--scan-config", required=True,
                          help="run-scan --config JSON document (existing CLI)")
     run_new.add_argument("--repo-root", default=".")
+    run_new.add_argument("--prepare-from", metavar="SHA256", help="sealed preparation input set")
+    run_new.add_argument("--operation-key", metavar="KEY", help="stable managed run-scan operation key")
+    run_new.add_argument("--attempt", type=int, default=1)
     run_new.add_argument("--authorization", default=None,
                          help="JSON document recording the plan section 5 gates")
     run_new.set_defaults(handler=command_run_new)

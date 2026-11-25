@@ -1,0 +1,52 @@
+{
+  "kind": "local_git_tree_preflight",
+  "utc": "2026-11-25T13:55:12+00:00",
+  "fx40_opening_merge": "a7dbd8a3e14f5f86f9f26e2f05b76a46927cf4ee",
+  "reviewed_engineering_head": "11d24be68fea3d16d334284a6ca0175a6e25a386",
+  "main_at_pr_130": "093063000a704727f243c02a7b420c49afa37027",
+  "code_only_merge_tree": "796c858a93e3ca0f2368db9b23533af7440d6ebe",
+  "source_paths": [
+    ".github/workflows/native-postgres.yml",
+    "src/polymarket_alpha_lab/papersim/adapters/prices.py",
+    "src/polymarket_alpha_lab/papersim/adapters/sports.py",
+    "src/polymarket_alpha_lab/papersim/adapters/understat.py",
+    "src/polymarket_alpha_lab/papersim/capture.py",
+    "src/polymarket_alpha_lab/papersim/cli.py",
+    "src/polymarket_alpha_lab/papersim/d1compare/acquire.py",
+    "src/polymarket_alpha_lab/papersim/d1compare/packbuild.py",
+    "src/polymarket_alpha_lab/papersim/prepare.py",
+    "src/polymarket_alpha_lab/papersim/prepare_capture.py",
+    "src/polymarket_alpha_lab/papersim/prepare_inputs.py",
+    "src/polymarket_alpha_lab/papersim/prepared_scan.py",
+    "src/polymarket_alpha_lab/papersim/scan.py",
+    "src/polymarket_alpha_lab/papersim/settle.py",
+    "src/polymarket_alpha_lab/papersim/store_psycopg.py",
+    "src/polymarket_alpha_lab/replay.py",
+    "tests/test_native_postgres_workflow.py",
+    "tests/test_papersim_d1compare_journal.py",
+    "tests/test_papersim_prepare.py",
+    "tests/test_papersim_prepare_inputs.py",
+    "tests/test_papersim_prepared_scan_native.py",
+    "tests/test_papersim_scan.py",
+    "tools/d1_compare.py"
+  ],
+  "all_engineering_blobs_match": true,
+  "frozen_inputs_preserved": [
+    "AGENTS.md",
+    "database/papersim/migrations.lock.json",
+    "database/papersim/migrations",
+    "pyproject.toml",
+    "uv.lock",
+    "tests/fixtures/papersim",
+    "src/polymarket_alpha_lab/papersim/optimize"
+  ],
+  "synthetic_other_node_only": {
+    "other_head": "de4a789a5dce16e38d7635af478ca46644c479ce",
+    "overlapping_engineering_paths": [
+      ".github/workflows/native-postgres.yml"
+    ],
+    "clean_automatic_merge": true,
+    "result_tree": "b30135eb275144238fff56db5a7d035758ddec2c"
+  },
+  "review_sha256": "eee3d9736b984fe31d4469ca5d81e3332ae5b92be58bb942c4b8d39320301d0f"
+}

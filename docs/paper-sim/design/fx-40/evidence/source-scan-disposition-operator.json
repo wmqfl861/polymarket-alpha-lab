@@ -1,0 +1,6 @@
+{
+  "sessionId": "sess_ab815840-50ea-4c51-b1a4-da13f302bc39",
+  "turnId": "turn_a5e6ede6-8869-4068-be05-7d94a20cf1f7",
+  "traceId": "26eeb926-ad13-4703-a832-948eff451bed",
+  "response": "**成功：命令实际退出码为 0，九项全部归因，未解决 0 项。** 退出码覆盖整条命令链，即两份文件哈希校验通过且脚本正常结束。\n\n脚本在终端只打印了一行 `Attributed all 9 raw findings`，分类写在回执里：\n\n| 分组 | 文件 | 分类 | 数量 |\n|---|---|---|---|\n| target | `tests/test_papersim_prepare.py` | synthetic outcome token in the same local market-data fixture | 3 |\n| target | `src/polymarket_alpha_lab/replay.py` | unchanged replay bundle protocol marker | 2 |\n| target | `src/polymarket_alpha_lab/replay.py` | assignment of market-token parameter, no literal | 1 |\n| history_only | `src/polymarket_alpha_lab/replay.py` | unchanged replay bundle protocol marker | 2 |\n| history_only | `src/polymarket_alpha_lab/replay.py` | assignment of market-token parameter, no literal | 1 |\n\n合计 9 项，与原扫描的 3 / 3 / 3 分组一致。回执里 `raw_exit` 仍为 1，`raw_sha256` 与首轮 `result.jsonl` 的校验值相同，基线和候选仍是 `a7dbd8a3` 和 `11d24be6`。\n\n回执是 `file-handoffs-post130/fx40-scan-attribution.json`，2495 字节，sha256 `f7c6d61d002021f398b53a86a28ad45ee38bc166ca4a6f4d370f0bc99bec2c68`，行号和 blob 对象都在其中。\n\n为了拿到分类，我只读打开了这份回执（先看键结构，再看内容），没有打开归因脚本或两份被标记的源码，也没有改动任何文件。因此以上分类是脚本的输出，我没有对照源码逐行复核。"
+}

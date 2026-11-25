@@ -1,0 +1,145 @@
+{
+  "files": [
+    {
+      "path": "evidence/additional-soccer-inventory.json",
+      "bytes": 3033,
+      "sha256": "eb933cc1fc3d515902f4171e273fba15c6c81c1acb1a8cb871261896bcbc5f3c"
+    },
+    {
+      "path": "evidence/additional-soccer-operator.json",
+      "bytes": 3785,
+      "sha256": "0ec5b77fb88999324572d1d76bccef150356531032b18f503d2d68ba9b57790b"
+    },
+    {
+      "path": "evidence/codegraph.json",
+      "bytes": 614,
+      "sha256": "79b7acd3286f072d1a436174ddd97ca4df9f18bdaf8726801e56054eb5757912"
+    },
+    {
+      "path": "evidence/engineering-focused-results.json",
+      "bytes": 1077,
+      "sha256": "2fd18ef53ba0c673f238976786606643b8bdfc653975f5b58506b3df65b0d131"
+    },
+    {
+      "path": "evidence/engineering-full-results.json",
+      "bytes": 741,
+      "sha256": "fa9150f8dbafd967c88d6ce9e36fe85e157b1633511ce5906bb9ead896ee835f"
+    },
+    {
+      "path": "evidence/historical-input-custody.json",
+      "bytes": 9747,
+      "sha256": "8442044f6bb7e4827d5f75884e8c29ce65086bb7de8db17ef3202aa45c4f03b0"
+    },
+    {
+      "path": "evidence/historical-input-operator.json",
+      "bytes": 6668,
+      "sha256": "3f48d38821f766d7ed97dad3157a366fe7f0512f35da2c3eac19bb801e1628a0"
+    },
+    {
+      "path": "evidence/native-prepared-scan.json",
+      "bytes": 1484,
+      "sha256": "89b27107ef93a2bd869ff80a652025dccf898b08a75c76e9b6cfa795d7dd2fec"
+    },
+    {
+      "path": "evidence/reachability.json",
+      "bytes": 320,
+      "sha256": "95b1c08a40aa8c8cd63ec28e603e62fd1d137da189ff1c940f74cde9cc89b5ea"
+    },
+    {
+      "path": "evidence/seven-tree-inventory.json",
+      "bytes": 21600,
+      "sha256": "d31a4ebdec191c37823b0481351fb01adbbc3fd1fb76cd6b0c40c24e27847cf1"
+    },
+    {
+      "path": "evidence/soccer-projections.json",
+      "bytes": 3140,
+      "sha256": "e01377463df62c6552dcd548d8c3cc3bc63629ad0238d2676b908984b8966cb6"
+    },
+    {
+      "path": "evidence/source-integration.json",
+      "bytes": 2220,
+      "sha256": "2f2b397829a40e5f84fb3c694a137bd98a3ab0b7c8f813e18310dc7913b0900f"
+    },
+    {
+      "path": "evidence/source-review-first.json",
+      "bytes": 8095,
+      "sha256": "d9d74dfa9df1fcf892a4d2c4546895f578834447d072f6f7bd4c6a99b6554834"
+    },
+    {
+      "path": "evidence/source-review-pass.json",
+      "bytes": 6425,
+      "sha256": "eee3d9736b984fe31d4469ca5d81e3332ae5b92be58bb942c4b8d39320301d0f"
+    },
+    {
+      "path": "evidence/source-scan-disposition-operator.json",
+      "bytes": 1699,
+      "sha256": "8e6468f301cca677f7dfda714599b25517092f113e2ad1862775c8813b30b0eb"
+    },
+    {
+      "path": "evidence/source-scan-disposition.json",
+      "bytes": 2495,
+      "sha256": "f7c6d61d002021f398b53a86a28ad45ee38bc166ca4a6f4d370f0bc99bec2c68"
+    },
+    {
+      "path": "historical/market-preparation-plan.md",
+      "bytes": 18078,
+      "sha256": "d3e613096b7b0b6ad480e75ba85aa2bbe8f371eddc8ad07461762ca55bcad226"
+    },
+    {
+      "path": "historical/market-preparation-review.txt",
+      "bytes": 6738,
+      "sha256": "a42a30bd039275f0656cc16dfb808ef649a2f6675e47f6b2a0a4d42c5f5fd55e"
+    },
+    {
+      "path": "historical/post118-resolver-delta.md",
+      "bytes": 10886,
+      "sha256": "6636c4384a03b1b4affdd02219cadd5bb6d290a27724ed64d0351975ef1d861b"
+    },
+    {
+      "path": "historical/post118-resolver-review.txt",
+      "bytes": 6497,
+      "sha256": "c5b7e21122f67a3125d22ecdf70c3a60523a06d4ca348ffbf6f7d4e9e89a4c82"
+    },
+    {
+      "path": "historical/variant-array-addendum.md",
+      "bytes": 5295,
+      "sha256": "164a6e8ebf8f649e2ac09557ec391ad987315a5d355b2ce3e08bb15c144f49a6"
+    },
+    {
+      "path": "historical/variant-array-review.txt",
+      "bytes": 7511,
+      "sha256": "2e92d69ad2a79b676cec236280700a04e515cb80b1d1e8f12af2690543682a5a"
+    },
+    {
+      "path": "plan-v1-review.json",
+      "bytes": 10550,
+      "sha256": "5b85a62109870253095ab0d2e3d82f4be7fa853444f08c969e225cdb599a8029"
+    },
+    {
+      "path": "plan-v1.md",
+      "bytes": 12365,
+      "sha256": "bd097a8bfa2a3e171b6d3179d18c4c928bd430c30ed87a44517476d970379740"
+    },
+    {
+      "path": "plan-v2-review.json",
+      "bytes": 6037,
+      "sha256": "b765b915073d72e0e6a48cc110994e2de0d78e3202341ed50882a1fd2954711f"
+    },
+    {
+      "path": "plan-v2.md",
+      "bytes": 36594,
+      "sha256": "8b3ab87684570396cb8620a4f13dcaa603bff9c3047a020d23360b68600aab4e"
+    },
+    {
+      "path": "plan-v3-review.json",
+      "bytes": 5078,
+      "sha256": "787295778d8a5ba5965083bf3dd5d2ba31c20c878accb0dee5b0cb60e6c7c991"
+    },
+    {
+      "path": "plan-v3.md",
+      "bytes": 46062,
+      "sha256": "1589414ec6f81554b2570ad57392046476acb20c1c840515005b7a855c9f941a"
+    }
+  ],
+  "originals": "The historical plans and verdicts are preserved byte-for-byte. GitHub publication is bound to the ordinary pull request merge."
+}
