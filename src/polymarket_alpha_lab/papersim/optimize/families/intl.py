@@ -354,10 +354,9 @@ class IntlEloFamily:
     ) -> IntlEloFitted:
         """Bind one spec to the snapshot; ``as_of`` is provenance only.
 
-        The family is not frozen: any spec within the param space is
-        fittable. The spec's slope center acts through its envelope;
-        ``home_advantage`` is threaded to the replay engine and the
-        bridge.
+        The spec's slope must match the envelope variant at index
+        ``len(spec.envelope) // 2``. ``home_advantage`` enters both the
+        replay engine and the bridge.
         """
 
         if not isinstance(history, IntlHistory):
@@ -371,6 +370,12 @@ class IntlEloFamily:
             )
         checked = _fit_params(FAMILY_ID_ELO, self.param_space(), spec)
         variants = _variants_from_envelope(spec.envelope)
+        center_slope = variants[len(variants) // 2].slope
+        if checked["slope"] != center_slope:
+            raise ValueError(
+                f"{FAMILY_ID_ELO} spec slope {checked['slope']!r} does not match "
+                f"envelope center slope {center_slope!r}"
+            )
         return IntlEloFitted(
             snapshot=freeze_value(history.snapshot),
             home_advantage=float(checked["home_advantage"]),

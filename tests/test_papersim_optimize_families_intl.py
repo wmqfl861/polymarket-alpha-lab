@@ -40,7 +40,7 @@ from polymarket_alpha_lab.papersim import intl_model as im
 from polymarket_alpha_lab.papersim import intl_totals
 from polymarket_alpha_lab.papersim.optimize.families import intl as intl_family
 from polymarket_alpha_lab.papersim.optimize.families.base import ModelFamily
-from polymarket_alpha_lab.papersim.optimize.spec import validate_param
+from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec, validate_param
 
 GEN = "2026-11-12T06:00:00+00:00"
 AS_OF = datetime.datetime(2026, 11, 12, 6, 0, 0, tzinfo=datetime.timezone.utc)
@@ -378,6 +378,17 @@ def test_elo_envelope_around_new_center() -> None:
         for multiplier in im.SWEEP_TOTAL_MULTIPLIERS
     ]
 
+    fitted = intl_family.INTL_ELO.fit(
+        intl_family.IntlHistory(REPLAY_SNAP), spec, AS_OF
+    )
+    assert [dataclasses.asdict(variant) for variant in fitted.variants] == [
+        dict(item) for item in spec.envelope
+    ]
+    wrapped = intl_family.IntlFamilyFixture(fixture())
+    direct = im.fixture_prediction(REPLAY_SNAP, fixture(), variants=fitted.variants)
+    assert direct is not None
+    assert intl_family.INTL_ELO.predict(fitted, wrapped) == direct
+
 
 def test_out_of_space_parameters_are_rejected() -> None:
     for params in ({"slope": 0.39}, {"slope": 0.56}, {"home_advantage": 90.0}):
@@ -398,9 +409,14 @@ def test_out_of_space_parameters_are_rejected() -> None:
 
 
 def test_elo_family_predict_matches_direct_model() -> None:
-    history = intl_family.IntlHistory(NL_SNAP)
+    snapshot = copy.deepcopy(NL_SNAP)
+    history = intl_family.IntlHistory(snapshot)
     wrapped = intl_family.IntlFamilyFixture(fixture(), tournament="UEFA Nations League")
-    fitted = intl_family.INTL_ELO.fit(history, intl_family.INTL_ELO.baseline_spec(), AS_OF)
+    before_fit = copy.deepcopy(snapshot)
+    fitted = intl_family.INTL_ELO.fit(
+        history, intl_family.INTL_ELO.baseline_spec(), AS_OF
+    )
+    assert snapshot == before_fit
     assert intl_family.INTL_ELO.predict(fitted, wrapped) == im.fixture_prediction(
         NL_SNAP, fixture(), tournament="UEFA Nations League"
     )
@@ -413,7 +429,7 @@ def test_elo_family_predict_matches_direct_model() -> None:
     )
     assert through_family == direct
     assert through_family != intl_family.INTL_ELO.predict(fitted, wrapped)
-    # The history mapping is deep-frozen into the fitted state, unmutated.
+    assert snapshot == before_fit
     assert copy.deepcopy(NL_SNAP) == NL_SNAP
 
 
@@ -451,6 +467,37 @@ def test_totals_family_predict_matches_direct_model() -> None:
     )
 
 
+def test_elo_family_fit_rejects_slope_mismatch_at_envelope_center() -> None:
+    family = intl_family.INTL_ELO
+    baseline = family.baseline_spec()
+    spec = ModelSpec(
+        family=baseline.family,
+        procedure_version=baseline.procedure_version,
+        params={"slope": 0.40, "home_advantage": im.HOME_ADVANTAGE},
+        envelope=baseline.envelope,
+        data_contract=baseline.data_contract,
+    )
+    with pytest.raises(ValueError, match="does not match envelope center slope"):
+        family.fit(intl_family.IntlHistory(REPLAY_SNAP), spec, AS_OF)
+
+
+@pytest.mark.parametrize("variant_indices", [(4,), (6, 4), (0, 4, 1)])
+def test_elo_family_fit_accepts_shorter_envelopes(
+    variant_indices: tuple[int, ...],
+) -> None:
+    family = intl_family.INTL_ELO
+    baseline = family.baseline_spec()
+    spec = ModelSpec(
+        family=baseline.family,
+        procedure_version=baseline.procedure_version,
+        params=dict(baseline.params),
+        envelope=tuple(baseline.envelope[index] for index in variant_indices),
+        data_contract=baseline.data_contract,
+    )
+    fitted = family.fit(intl_family.IntlHistory(REPLAY_SNAP), spec, AS_OF)
+    assert fitted.variants == tuple(im.VARIANTS[index] for index in variant_indices)
+
+
 def test_fit_rejections() -> None:
     history = intl_family.IntlHistory(REPLAY_SNAP)
     with pytest.raises(TypeError, match="IntlHistory"):
@@ -463,8 +510,6 @@ def test_fit_rejections() -> None:
     with pytest.raises(ValueError, match="family"):
         intl_family.INTL_TOTALS.fit(history, intl_family.INTL_ELO.baseline_spec(), AS_OF)
     # A spec whose params are absent or out of space cannot be fitted.
-    from polymarket_alpha_lab.papersim.optimize.spec import ModelSpec
-
     empty_params = ModelSpec(
         family="intl-elo-poisson",
         procedure_version="intl-elo-v1",
