@@ -1,0 +1,247 @@
+{
+  "schema_version": "fx54-local-verification-v1",
+  "source_baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "implementation_commit": {
+    "sha": "c00a50e08f56ab0a03ad7d023a28984c4b2ec973",
+    "subject": "build: require Python 3.12",
+    "role": "metadata and generated-lock implementation"
+  },
+  "documentation_candidate": {
+    "sha": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+    "tree": "fcd2607b8fe7f30fadeabf73bb2e6075c551f778",
+    "role": "FX-54 documentation and registration candidate reviewed and used by local checks"
+  },
+  "additional_local_receipts": {
+    "original_independent_code_review": {
+      "verdict": "VERDICT: FAIL",
+      "receipt_sha256": "03fd6a32607852d94126f08f93892c996eaf938829de12488f4dadf38193279c"
+    },
+    "exact_interpreter_lock_check_and_corrected_scan": {
+      "executor_receipt_sha256": "d70b9e079828cb53b9e0beb55b38fbd0c2ca02a37db9fd66d37b46cc9489e1bc",
+      "summary_sha256": "18009add346e04736a87fae7505fa6895f6802869d664a3d6bb06f226740c379",
+      "harness_exit": 0
+    },
+    "isolated_candidate_codegraph_sync": {
+      "gate_receipt_sha256": "84372e90347203341bcae2cd45f6526e59ed1977b948010806c3d964f498367b",
+      "harness_exit": 0
+    },
+    "full_test_suite_run_3": {
+      "candidate": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+      "receipt_sha256": "c611931b72e3e2930d89d758961488a8199cb2d6d39bbd1ad8b992af05d358da",
+      "pytest_exit": 0,
+      "passed": 43956,
+      "skipped": 437,
+      "warnings": 20,
+      "duration_seconds": 3201.88,
+      "clean_checkout": true
+    },
+    "original_reviewer_followup": {
+      "reviewed_candidate": "e05824c2f1e4acb36a5cd090c72ea0a9e680ae38",
+      "reviewer_receipt_sha256": "83e0dd6de6fe023b8ead8f13b92abff4d9f7f3f81d6a6d12074b14a83578fe5f",
+      "verdict": "VERDICT: FAIL"
+    },
+    "original_reviewer_final_rereview": {
+      "reviewed_candidate": "974887ebd5b260cae05c6570a7d5b256c3a65aad",
+      "reviewer_receipt_sha256": "44f65f0cdb85bfc8474889f4af03e3bef1e70c99511fb3225def6a39c707dbe2",
+      "verdict": "VERDICT: PASS"
+    }
+  },
+  "execution_sessions": [
+    {
+      "purpose": "candidate preflight, uv lock check under system CPython 3.12.3, and Python 3.12.14 locked installation and metadata readback",
+      "result": "The individual checks completed before the executor turn was interrupted. The subsequent exact-version lock check has its own receipt."
+    },
+    {
+      "purpose": "offline Python 3.11 refusal, session-bundle and native PostgreSQL version-switch checks, followed by remaining focused gates",
+      "started_at_utc": "2026-11-24T17:55:04Z",
+      "finished_at_utc": "2026-11-24T18:00:48Z",
+      "tool_exit_code": 1,
+      "cancelled": false,
+      "timed_out": false,
+      "result": "The individual checks completed. The continuation exited 1 because it checked the line-filter status as if it were the credential-pattern matcher status. The corrected scan has its own receipt."
+    },
+    {
+      "purpose": "independent read-only frozen-object comparison on the candidate",
+      "result": "PASS, 5 of 5 objects match, with 10 blob and content comparisons"
+    },
+    {
+      "purpose": "independent read-only code review of the candidate",
+      "result": "FAIL; preserve the original verdict and return the documentation-only correction to this reviewer"
+    },
+    {
+      "purpose": "original independent code reviewer re-review of the completed-evidence candidate",
+      "result": "VERDICT: PASS"
+    },
+    {
+      "purpose": "guarded full-suite run 2 on the candidate",
+      "result": "exit code 137; final summary is empty; no full-suite pass"
+    },
+    {
+      "purpose": "full-suite run 3 from a separate clean checkout after serial focused checks",
+      "started_at_utc": "2026-11-24T20:08:19Z",
+      "finished_at_utc": "2026-11-24T21:03:01Z",
+      "result": "PASS, 43,956 passed, 437 skipped, 20 warnings, pytest exit 0, clean checkout"
+    }
+  ],
+  "checks": {
+    "python_3_12_14_positive": {
+      "status": "PASS_INDIVIDUAL_CHECK",
+      "uv": "0.10.0",
+      "python": "3.12.14",
+      "initial_lock_check_python": "3.12.3",
+      "initial_lock_check_exit": 0,
+      "uv_lock_check_python": "3.12.14",
+      "uv_lock_check_exit": 0,
+      "uv_lock_resolver_confirmed_exact_python": true,
+      "uv_lock_file_and_clean_checkout_unchanged": true,
+      "locked_sync_with_dev_and_postgres_extras_exit": 0,
+      "metadata_readback_exit": 0,
+      "project_requires_python": ">=3.12",
+      "lock_requires_python": ">=3.12",
+      "installed_requires_python": ">=3.12",
+      "candidate_preflight": "clean at 4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+      "source_tarball_sha256": "6c6df908d2c3fd24e6d76869e92542abd0f33aec9dfc18df8875f89660286d43"
+    },
+    "python_3_11_15_negative": {
+      "status": "PASS_INDIVIDUAL_CHECK",
+      "python": "3.11.15",
+      "uv": "0.10.0",
+      "offline_and_downloads_disabled": true,
+      "locked_sync_exit": 2,
+      "result": "Rejected before resolution or environment creation with the project's >=3.12 requirement"
+    },
+    "session_bundle": {
+      "status": "PASS_INDIVIDUAL_CHECK",
+      "tests": 29,
+      "passed": 29,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "duration_seconds": 2.572,
+      "exit": 0
+    },
+    "native_version_switch": {
+      "status": "PASS_INDIVIDUAL_CHECK",
+      "postgres_major": 18,
+      "tests": 89,
+      "passed": 89,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "duration_seconds": 253.422,
+      "named_case": "test_native_same_root_source_selection_rollback_and_refusals",
+      "named_case_passed": 1,
+      "named_case_skipped": 0,
+      "exit": 0
+    },
+    "compileall": {
+      "status": "PASS",
+      "exit": 0
+    },
+    "diff_check": {
+      "status": "PASS",
+      "exit": 0
+    },
+    "frozen_objects": [
+      {
+        "path": "src/polymarket_alpha_lab/research_strategy_resolution_probability_scenario_ladder_report.py",
+        "base": "2fbcd0d858bd1511c454edd65f568394642f08d8",
+        "base_blob": "f409b6165f2c7565b0d5ab0e4ff8657ca28adddd",
+        "candidate_blob": "f409b6165f2c7565b0d5ab0e4ff8657ca28adddd",
+        "bytes": 39754,
+        "result": "MATCH"
+      },
+      {
+        "path": "tests/fixtures/papersim/regression_banned_path.json",
+        "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "base_blob": "a4cedf029fba95222a411856484e9d98449329a8",
+        "candidate_blob": "a4cedf029fba95222a411856484e9d98449329a8",
+        "bytes": 2618,
+        "result": "MATCH"
+      },
+      {
+        "path": "tests/fixtures/papersim/regression_gate_arithmetic.json",
+        "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "base_blob": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "candidate_blob": "c9841b860f3389bcedcfcb805b9086888a903b26",
+        "bytes": 2763,
+        "result": "MATCH"
+      },
+      {
+        "path": "tests/fixtures/papersim/regression_r19_crypto.json",
+        "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "base_blob": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "candidate_blob": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+        "bytes": 1902,
+        "result": "MATCH"
+      },
+      {
+        "path": "tests/fixtures/papersim/regression_r23_soccer.json",
+        "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "base_blob": "4bfccb907890253078e1ee0a39b51ec45f590af",
+        "candidate_blob": "4bfccb907890253078e1ee0a39b51ec45f590af",
+        "bytes": 38115,
+        "result": "MATCH"
+      }
+    ],
+    "frozen_object_count": 5,
+    "frozen_object_mismatches": 0,
+    "frozen_comparison_session_result": "PASS",
+    "retired_historical_files": {
+      "status": "PASS",
+      "exit": 0
+    },
+    "tracked_diff_secret_scan": {
+      "status": "PASS",
+      "scope": "Added lines from the source baseline to the documentation candidate",
+      "initial_run": {
+        "git_diff_exit": 0,
+        "added_line_filter_exit": 0,
+        "secret_pattern_exit": null,
+        "findings_bytes": 0,
+        "overall_focused_command_exit": 1
+      },
+      "corrected_run": {
+        "git_diff_exit": 0,
+        "added_line_filter_exit": 0,
+        "secret_pattern_exit": 1,
+        "findings_bytes": 0,
+        "harness_exit": 0
+      }
+    },
+    "codegraph_sync": {
+      "status": "PASS",
+      "method": "Synchronized a private copy of the existing project index and verified the exact candidate commit, indexed file coverage and content hashes with strict status.",
+      "version": "1.6.3",
+      "verified_indexed_files": 6761,
+      "files_with_parse_errors": 0,
+      "reindex_recommended": false,
+      "exit": 0
+    },
+    "full_test_suite": {
+      "status": "PASS",
+      "run_1": {
+        "result": "Interrupted with KeyboardInterrupt after 4204 passed and 15 skipped",
+        "pytest_exit": null
+      },
+      "run_2": {
+        "pytest_exit": 137,
+        "summary_bytes": 0
+      },
+      "run_3": {
+        "started_at_utc": "2026-11-24T20:08:19Z",
+        "finished_at_utc": "2026-11-24T21:03:01Z",
+        "pytest_exit": 0,
+        "passed": 43956,
+        "skipped": 437,
+        "warnings": 20,
+        "duration_seconds": 3201.88,
+        "clean_checkout": true,
+        "result": "PASS"
+      }
+    }
+  },
+  "pending_acceptance": [
+    "Rebase after the FX-52, FX-51 and FX-53 registration lane and bind final PR, CI and merge evidence."
+  ]
+}
