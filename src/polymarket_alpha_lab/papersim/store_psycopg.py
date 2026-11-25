@@ -2412,34 +2412,38 @@ def load_model_spec(conn, spec_sha256: str):
 def load_optimization_runs(conn, family: str | None = None) -> list[dict]:
     """Read optimization runs (newest first), optionally one family."""
 
-    cursor = conn.cursor()
-    if family is None:
-        cursor.execute('SELECT optimization_id, optimization_key, ' + _RUN_COLUMNS
-                       + ' FROM papersim.optimization_runs '
-                       'ORDER BY optimization_id DESC')
-    else:
-        cursor.execute('SELECT optimization_id, optimization_key, ' + _RUN_COLUMNS
-                       + ' FROM papersim.optimization_runs WHERE family = %s '
-                       'ORDER BY optimization_id DESC', (family,))
+    with conn.transaction():
+        cursor = conn.cursor()
+        if family is None:
+            cursor.execute('SELECT optimization_id, optimization_key, ' + _RUN_COLUMNS
+                           + ' FROM papersim.optimization_runs '
+                           'ORDER BY optimization_id DESC')
+        else:
+            cursor.execute('SELECT optimization_id, optimization_key, ' + _RUN_COLUMNS
+                           + ' FROM papersim.optimization_runs WHERE family = %s '
+                           'ORDER BY optimization_id DESC', (family,))
+        rows = cursor.fetchall()
     columns = ['optimization_id', 'optimization_key'] \
         + _RUN_COLUMNS.replace(' ', '').split(',')
-    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    return [dict(zip(columns, row, strict=True)) for row in rows]
 
 
 def load_promotion_decisions(conn, lineage: str | None = None) -> list[dict]:
     """Read promotion decisions (newest first), optionally one lineage."""
 
-    cursor = conn.cursor()
-    if lineage is None:
-        cursor.execute('SELECT decision_id, decision_key, ' + _PROMOTION_COLUMNS
-                       + ' FROM papersim.promotion_decisions '
-                       'ORDER BY decision_id DESC')
-    else:
-        cursor.execute('SELECT decision_id, decision_key, ' + _PROMOTION_COLUMNS
-                       + ' FROM papersim.promotion_decisions WHERE lineage = %s '
-                       'ORDER BY decision_id DESC', (lineage,))
+    with conn.transaction():
+        cursor = conn.cursor()
+        if lineage is None:
+            cursor.execute('SELECT decision_id, decision_key, ' + _PROMOTION_COLUMNS
+                           + ' FROM papersim.promotion_decisions '
+                           'ORDER BY decision_id DESC')
+        else:
+            cursor.execute('SELECT decision_id, decision_key, ' + _PROMOTION_COLUMNS
+                           + ' FROM papersim.promotion_decisions WHERE lineage = %s '
+                           'ORDER BY decision_id DESC', (lineage,))
+        rows = cursor.fetchall()
     columns = ['decision_id', 'decision_key'] + _PROMOTION_COLUMNS.replace(' ', '').split(',')
-    return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    return [dict(zip(columns, row, strict=True)) for row in rows]
 
 
 def _registry_controls(conn) -> dict:
@@ -2471,7 +2475,9 @@ def registry_freeze_state(conn) -> dict:
     log; the MO-8 decide node consults this before any handover.
     """
 
-    return _freeze_state(_registry_controls(conn))
+    with conn.transaction():
+        controls = _registry_controls(conn)
+    return _freeze_state(controls)
 
 
 def initialize_registry(conn, *, families, actor: str, code_commit: str,
