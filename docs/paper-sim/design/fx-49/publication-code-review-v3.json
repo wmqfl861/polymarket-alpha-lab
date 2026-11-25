@@ -1,0 +1,394 @@
+{
+  "actual_base_plan_review": {
+    "response_sha256": "ccf16e291b5766ce3c6a56d3445a4b766ac0777296e85aee68b6315478584120",
+    "reviewed_commit": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+    "session_reference_sha256": "7637ace8cb6e88255ad5e5cf9d806db2c3017920d028827cbfda96f38b046b79",
+    "source_record": {
+      "bytes": 3821,
+      "sha256": "32a436efb81bf8e411a553100c57b7b3a5bd1d5df995a56f26aea73824d52837"
+    },
+    "verdict": "PASS",
+    "verdict_line": "VERDICT: PASS 289ed1c217cdd97a68da959bfcecdd17db9fc8e5"
+  },
+  "archived_scope_and_ledger": {
+    "additional_paths": {
+      "docs/paper-sim/design/fx-49/publication-addendum-v2.md": {
+        "indexed_blob": "4e933c244890d2f149d3a0a84200d529e00e8e6a",
+        "opening_blob": "4e933c244890d2f149d3a0a84200d529e00e8e6a"
+      },
+      "docs/paper-sim/design/fx-49/publication-code-review-v2.json": {
+        "indexed_blob": "5cfff7e4e5d8819458fb9b8d2773d307548b565c",
+        "opening_blob": "5cfff7e4e5d8819458fb9b8d2773d307548b565c"
+      },
+      "docs/paper-sim/design/fx-49/publication-independent-test-v2.json": {
+        "indexed_blob": "f3fd7f571e80886cabe8861f216c7489e6bf3423",
+        "opening_blob": "f3fd7f571e80886cabe8861f216c7489e6bf3423"
+      },
+      "docs/paper-sim/design/fx-49/publication-index-v2.json": {
+        "indexed_blob": "a2b61ce2c9a94cbff6e70288b65c44cb8d19ec8a",
+        "opening_blob": "3c09eb0a3b2204000b5a31584a7fc27be6426ae8"
+      },
+      "docs/paper-sim/design/fx-49/publication-review-v2.json": {
+        "indexed_blob": "0ec4511bccd12bf330716c2f0922e13176593516",
+        "opening_blob": "0ec4511bccd12bf330716c2f0922e13176593516"
+      },
+      "docs/paper-sim/design/fx-49/publication-stage-review-v2.json": {
+        "indexed_blob": "cf22215a0517a647d18da93f3a7c974e44b6d475",
+        "opening_blob": "cf22215a0517a647d18da93f3a7c974e44b6d475"
+      },
+      "docs/paper-sim/design/fx-49/runtime-object-v2.json": {
+        "indexed_blob": "0f3c6ded02b37e2e9362a4bcbf77305a32a6b73d",
+        "opening_blob": "0f3c6ded02b37e2e9362a4bcbf77305a32a6b73d"
+      }
+    },
+    "archive_commit": "6f177ca8d0fa786fa2950a59c4ab1e6d68c71d67",
+    "archive_parent": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "base": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+    "commit": "5bf015221f93ab4471250cb08829497864f88ea8",
+    "ledger": {
+      "combined_blob": "f396decde4691d9debd075574a5223872d693bc4",
+      "fx40_added_lines": 37,
+      "fx40_content_sha256": "99dce45a98d3e39099748a5c0274edc732f58e9052373f902b912eba83a1b7f1",
+      "fx40_delta_identical_to_landed_main": true,
+      "fx49_added_lines": 8,
+      "fx49_content_sha256": "f26dd235218243848966e3ddc9d70a93552c4768c6062f80edcf841df6d3fe47",
+      "fx49_delta_identical_to_open_head": true
+    },
+    "ledger_basis": "Same ledger blob, public opening head, base and archive as the earlier measured record.",
+    "missing_archived_paths": 0,
+    "open_head": "ec122eda6746acfddefeec15fd587db2441ab025",
+    "opening_and_indexed_paths": 40,
+    "original_public_paths": 33,
+    "previous_archive_paths_preserved": true,
+    "prior_record_sha256": "d5cd125f34868d8e700880e0e1f4b73e9eeba530cc898d1d551af9de98966e21"
+  },
+  "base": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+  "case_variant_correction": {
+    "corrected_checked_head": "5bf015221f93ab4471250cb08829497864f88ea8",
+    "corrected_record": {
+      "bytes": 597,
+      "sha256": "348fd7bd74a55ab552ea4f83f1a11736a26ebac1fe240bed13f07279a9611f76"
+    },
+    "exact_candidate_plan_review": {
+      "response_sha256": "eab4bf7729d2ab49b6632a736f11084ececc3c850705d96c9fbf8f018d830e64",
+      "reviewed_commit": "5bf015221f93ab4471250cb08829497864f88ea8",
+      "session_reference_sha256": "7637ace8cb6e88255ad5e5cf9d806db2c3017920d028827cbfda96f38b046b79",
+      "source_record": {
+        "bytes": 2593,
+        "sha256": "5f9c1646c1a2afef2202f2f2d48df1998773e58ebc5903112d9d18a0582080ab"
+      },
+      "verdict": "PASS",
+      "verdict_line": "VERDICT: PASS 5bf015221f93ab4471250cb08829497864f88ea8"
+    },
+    "prior_failed_cases": [
+      "repeated_failed_row_keeps_report",
+      "unlisted_failed_row_keeps_report"
+    ],
+    "prior_head": "af9a22fe8f4de13fac5bc7a7ddb4334e828b377d",
+    "prior_plan_review": {
+      "response_sha256": "d9c5a63e87ff749fc477ded8e9c87a253a5f1fbbe1d03c7d324e34c8cd5e9e8d",
+      "reviewed_commit": "af9a22fe8f4de13fac5bc7a7ddb4334e828b377d",
+      "session_reference_sha256": "7637ace8cb6e88255ad5e5cf9d806db2c3017920d028827cbfda96f38b046b79",
+      "source_record": {
+        "bytes": 4195,
+        "sha256": "3ab93f7a19a009cd5f653ebf1e7a18a32c8e1760f94eef83d9057b09d57b912d"
+      },
+      "verdict": "FAIL",
+      "verdict_line": "VERDICT: FAIL af9a22fe8f4de13fac5bc7a7ddb4334e828b377d"
+    },
+    "prior_record": {
+      "bytes": 693,
+      "sha256": "267aa7dedafbb8f892bf5d24b0c22a59b273811af0817fcbd09824dccc59ea66"
+    }
+  },
+  "client": "independent local Linux ZCode",
+  "commit": "5bf015221f93ab4471250cb08829497864f88ea8",
+  "diagnostic_correction": {
+    "corrected_checked_head": "af9a22fe8f4de13fac5bc7a7ddb4334e828b377d",
+    "corrected_record": {
+      "bytes": 596,
+      "sha256": "9aa8ac678de399ea309b42e41002423bfd2440b8ddcdf442d98df02c8beb4507"
+    },
+    "prior_failed_cases": [
+      "compiler_exit_code_null",
+      "check_exit_code_null",
+      "cutoff_equality_exit_code_null",
+      "early_stop_success"
+    ],
+    "prior_head": "b5fb66a675989808eafac7bf80ef740036e2528c",
+    "prior_record": {
+      "bytes": 743,
+      "sha256": "c3475604a3a2c1467dab45edcbb578480e14bc5c11d10b815be0ac9122fcc8b5"
+    },
+    "scope": "Null and early-stop synthetic regression results"
+  },
+  "intervening_source_reviews": {
+    "main-code": [
+      {
+        "response_sha256": "d92119d46ba200c721f063e40b672e052d501946f8f471acd127a68b497bffca",
+        "reviewed_commit": "ccc21a7519cbe234988639c3f91567e0b2f98fd3",
+        "session_reference_sha256": "a2e64a474f07452de85d1c3dbdb6f7bffb0caf129e8e1bd35b70548fa8d7551a",
+        "source_record": {
+          "bytes": 2776,
+          "sha256": "17112b4c9fc2a2c060117683edfeed5d0be060a17ca372ca2e3bd5d2eb09f95e"
+        },
+        "verdict": "PASS",
+        "verdict_line": "VERDICT: PASS ccc21a7519cbe234988639c3f91567e0b2f98fd3"
+      },
+      {
+        "response_sha256": "7a280f053fdddfffd4616e7e6ff2003c75f094cf2bc75371e66d648764909cf9",
+        "reviewed_commit": "9105bd661ca46dd67804810428e329fd7d2b5d36",
+        "session_reference_sha256": "a2e64a474f07452de85d1c3dbdb6f7bffb0caf129e8e1bd35b70548fa8d7551a",
+        "source_record": {
+          "bytes": 3871,
+          "sha256": "aeae5008a46b2c528bbbf062440c5bd18f3be22aa5b6951af8387dee087e1cd1"
+        },
+        "verdict": "PASS",
+        "verdict_line": "VERDICT: PASS 9105bd661ca46dd67804810428e329fd7d2b5d36"
+      },
+      {
+        "response_sha256": "a87842fdfac464555f3b4f4c61b27030e338b5ff0c70a292dcde14adc0e80f1d",
+        "reviewed_commit": "b5fb66a675989808eafac7bf80ef740036e2528c",
+        "session_reference_sha256": "a2e64a474f07452de85d1c3dbdb6f7bffb0caf129e8e1bd35b70548fa8d7551a",
+        "source_record": {
+          "bytes": 4411,
+          "sha256": "3b8a0cc1a0b866434ef87fdc3ca51fa2019e039ae609a851004ec94660130056"
+        },
+        "verdict": "PASS",
+        "verdict_line": "VERDICT: PASS b5fb66a675989808eafac7bf80ef740036e2528c"
+      },
+      {
+        "response_sha256": "b30f34bf15acd84e6e30f7c049b1b24f69310ab515db59e07b8522428bc35609",
+        "reviewed_commit": "af9a22fe8f4de13fac5bc7a7ddb4334e828b377d",
+        "session_reference_sha256": "a2e64a474f07452de85d1c3dbdb6f7bffb0caf129e8e1bd35b70548fa8d7551a",
+        "source_record": {
+          "bytes": 3835,
+          "sha256": "609b9eb44552c544dbb6fcc4289e2241cef4e5780b5c5cdfe15bdf1af409761e"
+        },
+        "verdict": "PASS",
+        "verdict_line": "VERDICT: PASS af9a22fe8f4de13fac5bc7a7ddb4334e828b377d"
+      }
+    ],
+    "runtime-code": [
+      {
+        "response_sha256": "9580e833f14c0fea64a1261f13f183ccec3e79f7fa0e4b7c394ab82b1ebdee99",
+        "reviewed_commit": "ccc21a7519cbe234988639c3f91567e0b2f98fd3",
+        "session_reference_sha256": "e7a7fe77cda0f394be274876d183f69151825a06deca68a229a6c5b9a4abfd71",
+        "source_record": {
+          "bytes": 2361,
+          "sha256": "afa167467c24fa4261093d702c7ede587a70c6f5f44d27ec5181646c649c21fc"
+        },
+        "verdict": "PASS",
+        "verdict_line": "VERDICT: PASS ccc21a7519cbe234988639c3f91567e0b2f98fd3"
+      },
+      {
+        "response_sha256": "297fcbe338e32e6520e38c4902ca337282fbb799d51b2fa7b029528e77d4806d",
+        "reviewed_commit": "9105bd661ca46dd67804810428e329fd7d2b5d36",
+        "session_reference_sha256": "e7a7fe77cda0f394be274876d183f69151825a06deca68a229a6c5b9a4abfd71",
+        "source_record": {
+          "bytes": 2588,
+          "sha256": "702e154f22702bbf06c61f3512c2164d6456fd27083661940598dce57e90edb3"
+        },
+        "verdict": "PASS",
+        "verdict_line": "VERDICT: PASS 9105bd661ca46dd67804810428e329fd7d2b5d36"
+      },
+      {
+        "response_sha256": "139231906606a051dae43acdeae4a77bdaf345c22e4416426ce9a2659c70ee4e",
+        "reviewed_commit": "b5fb66a675989808eafac7bf80ef740036e2528c",
+        "session_reference_sha256": "e7a7fe77cda0f394be274876d183f69151825a06deca68a229a6c5b9a4abfd71",
+        "source_record": {
+          "bytes": 2786,
+          "sha256": "eb6d0583e1063585bac1d0081a93517f0647ff8f1e28408990e48e2ef4beab75"
+        },
+        "verdict": "FAIL",
+        "verdict_line": "VERDICT: FAIL b5fb66a675989808eafac7bf80ef740036e2528c"
+      },
+      {
+        "response_sha256": "bde6320b92b9184317407d712b2e07f25c33a2d19f9be229fc2d17500d29d703",
+        "reviewed_commit": "af9a22fe8f4de13fac5bc7a7ddb4334e828b377d",
+        "session_reference_sha256": "e7a7fe77cda0f394be274876d183f69151825a06deca68a229a6c5b9a4abfd71",
+        "source_record": {
+          "bytes": 2712,
+          "sha256": "81597c17e61f16728b5e48087871d1a488189a9814f55870e915de1a1165ef1d"
+        },
+        "verdict": "PASS",
+        "verdict_line": "VERDICT: PASS af9a22fe8f4de13fac5bc7a7ddb4334e828b377d"
+      }
+    ]
+  },
+  "landed_base_pr": 132,
+  "prior_public_source_history": {
+    "main": [
+      {
+        "bytes": 5375,
+        "reviewed_commit": "42080d20c55f031d3f5f38a8473ebd4ce7ea836f",
+        "same_original_session": true,
+        "sha256": "5355d39a0f9f6a60215a088a3b03809e58f8e582b134a0bb23fad877385d6638",
+        "verdict": "FAIL"
+      },
+      {
+        "bytes": 3792,
+        "reviewed_commit": "df524c985a3ed84f82c9487e195bab0973f905fc",
+        "same_original_session": true,
+        "sha256": "96b485307dc10c6605b2cd6442e290d2c505d19cbd77f78b8baaf4a4477b83a1",
+        "verdict": "FAIL"
+      },
+      {
+        "bytes": 2937,
+        "reviewed_commit": "7d55da74fc69377e1682f58f39a75dd6953cdda1",
+        "same_original_session": true,
+        "sha256": "25994324228925c168253962fa02d04e6093928f9d2870332efd6b1b79014c47",
+        "verdict": "PASS"
+      }
+    ],
+    "runtime": [
+      {
+        "bytes": 3829,
+        "reviewed_commit": "42080d20c55f031d3f5f38a8473ebd4ce7ea836f",
+        "same_original_session": true,
+        "sha256": "880f1ec458884f726ee2f7c6ea075baed0cef408763ac5d72293fd758db24efe",
+        "verdict": "FAIL"
+      },
+      {
+        "bytes": 3346,
+        "reviewed_commit": "df524c985a3ed84f82c9487e195bab0973f905fc",
+        "same_original_session": true,
+        "sha256": "f8cb6087d6cd7a341ff354f350f483df1789c6da209d37c4d4ee0eeafd7e6c8b",
+        "verdict": "PASS"
+      },
+      {
+        "bytes": 2441,
+        "reviewed_commit": "7d55da74fc69377e1682f58f39a75dd6953cdda1",
+        "same_original_session": true,
+        "sha256": "c6b150eebf96097b5aba52c7d4daf7ece57a6d44118dce1c61247ad533326a08",
+        "verdict": "PASS"
+      }
+    ]
+  },
+  "schema_version": 3,
+  "scope": "Indexed verifier and publication source. Hosted verification and site delivery have separate evidence.",
+  "session_reference_sha256": "a2e64a474f07452de85d1c3dbdb6f7bffb0caf129e8e1bd35b70548fa8d7551a",
+  "signed_plan_material": {
+    "diagnostic_addendum": {
+      "bytes": 6160,
+      "markdown": "# FX-49 发布计划复审补遗（PR #131）\n\n范围依原审计划 §二、四、六，代码、测试及架构编号沿用原件。原计划、原稿及原裁定按原字节留存，路由意见仅供参考。托管 Windows 验证器首败对应 PR 头 `ec122eda`、合并检出 `503b8f33`。保留首败记录，原头不重试。首败的内层原因未定。现场主机及现网未受影响。\n\n## 验证器诊断\n\n诊断限于 `scripts/verify_fx49_publication.py`。沿用原物化方式、调用、时限、策略及 PASS 条件。退出非零或 stderr 非空即败，先按实际结果判定，再生成诊断，保留验证器原失败码。有内层报告时，退出状态取 `zero` 或 `nonzero`，stderr 独立取 `empty` 或 `nonempty`。非零与非空可同时记录，缺项记 `unreported`。未取得内层报告时记 `no_inner_report`，两项均记 `unreported`，外层退出码及 stderr 只作外层记录。\n\n暂存、编译器、入口、截止点及冻结十例的诊断字段，只能从逐字段、逐值列明的小型枚举表输出预置常量。退出码、超时位、stderr 非空位及字节数只接受 `type(x) is int` 且命中该字段显式整数白名单的输入，位字段仅准 `0`、`1`。类型不符或值未列入时统一记 `unknown`。所有输出均从常量表生成，禁止回显原始字段值、stdout 或 stderr 原文、路径、参数及异常文本。\n\n本补遗经原计划审阅者明确 `VERDICT: PASS` 后，即可开发诊断代码，无须等待 M2。协调者在 Linux 从验证器既有入口运行一条独立的一次性黑盒合成命令，覆盖正常、仅退出非零、仅 stderr 非空、两者并存、缺失内层报告，以及伪造枚举、布尔值和越界整数。核对实际返回码、两项诊断类别及原始标记零回显，将命令、所验完整 OID 和脱敏结果记为协调验证。所有冻结 DIRECT 测试逐字节保留。FX-49 首个诊断版本不新增工作流或入库测试。诊断不发真实业务请求，不操作凭据。本补遗不授权变更生产内容或生产工作流。\n\n## 发布基线与索引\n\n发布定版时读取当时实际 `main` 的完整 OID，并在 #131 原分支合入该基线，以普通推送快进远端。M2 尚未落地即可按当前 `main` 继续发布。若 M2 先落地，记录其实际合并 OID，按 FX-40 后的路径合并同一 Native 工作流文件。保留 `main` 已批准的非 FX-49 正向覆盖，核实 Native 增收 M2 正例，同时完整收集 FX-49 原定用例。两项 FX-49 必需作业各自的作业名、收集命令、测试选择、必需步骤、完整矩阵及聚合条件均按原契约逐项核对。若 M2 改变了初审基线，须在最终基线上复查 PR 历史、PR 头及合并检出差异，送回原计划审阅者重新取得明确 PASS，并据此固定源码和重建索引。契约如须改变，先复审新计划。\n\n1. 先作源码提交。以实际 `main` 基线叠加 #131 既有提交历史核算，本轮源码增量只准修改 `scripts/verify_fx49_publication.py`，以及合入该 `main` 时已有批准、可按来源 OID 核实的非 FX-49 Native 工作流重叠块。\n2. 紧接的提交以源码提交为唯一父提交，只重建 `publication-index-v2.json`。索引固定前一源码提交的完整 OID 及各输入的 Git blob OID。以此次索引提交的完整 OID 为独立测试、代码审阅和阶段审阅共同的被审源码头。原固定发布、全部旧证据及每份旧回执逐字节保留，历版索引均可按原提交、原路径回读。\n\n## 仓库回执与合并\n\n验证器与索引完整保留原五个准入名，只在原仓库回执目录增列以下三个固定文件名，共八名。三份均为入库回执，各自记录同一被审索引提交的完整 OID、实际执行或审阅会话及结论，仅对该确已独立测试的源码头有效。\n\n- `publication-independent-test-v3.json` 由独立测试执行方签发，记录该头的实际命令及结果。本地匿名重建原发布，核对 R、T、增量、清单及直收字节。制品有变即独立重跑原专项、全量测试及 CI。\n- `publication-code-review-v3.json` 由独立代码审阅者签发。文件内嵌原审计划及本补遗最终送审的完整 Markdown 文本，逐字保留换行，分别记录原始字节的 SHA-256。随文嵌入原计划裁定的脱敏副本，载明原审会话的可公开标识、所审计划的 SHA-256、原裁定及脱敏前裁定原件的 SHA-256，并将最终复审裁定绑定到对应文本和基线。该仓库文件可直接转交核验。\n- `publication-stage-review-v3.json` 由独立阶段审阅者签发。独测回执及阶段回执均载同一被审源码头、代码裁定及定稿代码回执的 SHA-256。代码回执按被审源码头和测试运行标识关联独测，避免循环引用。\n\n计划、代码及阶段分别回对应原审复审，均须明确 `VERDICT: PASS`，历次 `FAIL` 及其复审记录留存。回执提交以被审索引提交为唯一父提交，一次新增上述三份文件，父子差异须恰为这三个路径的 `A`，全部既有文件逐字节不变。三份回执一经新增即封存。索引只预列三个新增名，回执不写自身摘要、所在回执提交的 OID 或未来合并 OID。\n\n最终 PR 头及 GitHub 合并检出的完整 OID 可查后，逐项登记运行号及结论，三作业均须成功且为 `CURRENT`。`check_ci_merge.sh` 仅证 `Offline verification`，另两项分别核验各自的实际作业。普通合并后，在仓库保留分支的审计路径另存终头关联回执，登记最终 PR 头、合并检出、`main` 实际落点、三项 CI 运行及三份回执的仓库相对路径和 SHA-256。按原固定提交、实际合并提交和关联回执所在提交，从 GitHub 公开匿名回读原发布、旧证据及索引历史、落点上的索引与三份新回执，以及终头关联回执，核对路径、字节数与 SHA-256 后交付固定链接。\n\n若须改动运行或演练字节，即停审当前对象，另立新计划、固定新对象并重做重建、测试、复审及 CI 证明。",
+      "sha256": "4a85d886a7fa6acc5aa1b367f08f876ea4bb190340e225020d60d438ec0e8a75"
+    },
+    "diagnostic_plan_review": {
+      "reviewed_bytes": 6160,
+      "reviewed_sha256": "4a85d886a7fa6acc5aa1b367f08f876ea4bb190340e225020d60d438ec0e8a75",
+      "reviewer_response": "**计划层面的结论：这项修订通过了计划复审。** 我没有发现具体阻塞项。本裁定只覆盖修订文本：它允许开始开发诊断代码，不清除任何代码、测试、阶段、生产或合并门禁。我没有使用任何工具。\n\n## 我核对的内容\n\n- **三个 v3 文件与初始索引及准入名单。** 验证器和索引保留原五个名称并增列三个固定名称。这符合已签规则：新文件须先在索引和验证器中精确列名。已签文本中“每类回执一份具名文件”针对的是首批，其下一句规定了新增文件的做法，所以两者兼容。\n- **较早的回执。** 它们保持逐字节不变，历版索引都可按原提交和原路径回读。\n- **两步绑定。** 先有源码提交。索引提交是它唯一的子提交，并作为测试、代码和阶段审阅共同的被审头。回执提交是索引提交唯一的子提交，只能新增恰好三个路径。\n- **记录无循环。** 每份回执只写索引提交。回执不写自身摘要、所在提交的 OID 或合并 OID。代码回执按测试运行标识关联独测，独测和阶段回执携带代码回执的摘要，因此不存在哈希循环。最终头的 CI 结果和合并后的关联回执都在 PR 之外，即协调证据和保留分支。\n- **M2。** 如果它先落地，修订要求在最终基线上重新取得计划裁定。契约变更需要新计划。\n- **诊断。** 失败条件不变，先判定再输出。输出只来自小型常量表，且只改验证器文件。\n- **停止条件。** 任何运行或演练字节的改动都会停审当前对象，并需要新计划和新证明。\n- **归档。** 修订文本通过代码审阅回执进入仓库，并附哈希。实质上满足同节点归档。\n\n## 阻塞项\n\n无。\n\n## 建议\n\n- 让独立测试执行方也跑一遍已记录的黑盒用例集，并写入独测回执。按现在的写法，除代码检查外，只有协调者的自检会实际执行诊断行为。\n- 定义审阅会话的“可公开标识”是什么。\n- 让阶段回执也携带测试运行标识或独测回执的摘要。\n- 说明对本地测试执行方而言“重跑 CI”具体指什么。\n\n## 这里不授予的内容\n\n在被审头和最终头上仍然需要：带各自裁定的独立测试、代码和阶段回执，本地全量测试，以及三个托管作业全部成功且为 CURRENT。`check_ci_merge.sh` 只证明 Offline verification。之后由协调者合并。\n\n## 局限\n\n- 哈希和字节数没有重新计算。\n- 我没有看到验证器、索引、工作流、原五个名称或 M2 的差异。\n- FX-40 之后的路径引用按原文接受。\n- 我无法确认自己的会话身份和 fast 模式状态。\n\n```\nPLAN_SHA256: 4a85d886a7fa6acc5aa1b367f08f876ea4bb190340e225020d60d438ec0e8a75\nVERDICT: PASS\n```",
+      "session_reference_sha256": "7637ace8cb6e88255ad5e5cf9d806db2c3017920d028827cbfda96f38b046b79",
+      "source_review_bytes": 3075,
+      "source_review_sha256": "6b20abdfc7a1df9acac6a3e3a32123531c6954954e0c3526e4e046cec809deb9",
+      "verdict": "PASS"
+    },
+    "line_substitution": {
+      "bytes": 19568,
+      "change": "Replace the opening of line 81 containing the two private review identifiers with a redaction notice stating the reviewed byte count and digest. The rest of the line is identical.",
+      "line": 81,
+      "published_line_bytes": 550,
+      "published_line_sha256": "f19edea3c9ad69f0a30791abf581946d42183548f48f3fdd6d52c83249bf3636",
+      "reviewed_line_bytes": 541,
+      "reviewed_line_sha256": "26eeb21d841d1834f6e361cb8e08819e903e77ce7cd6795b0124b00bf3b53875",
+      "sha256": "a877a3cdb535d3139f0dc9ea54feef28ec1b97bb08f6330f57c7e56d05cfb48e",
+      "unchanged_bytes": 19018,
+      "unchanged_sha256": "d3f561600daf189f3e979d4db6fe0e69b877d5b1861307baf81b5bb3c255d848"
+    },
+    "line_substitution_attestation_path": "docs/paper-sim/design/fx-49/publication-review-v2.json",
+    "original_approved_public_review": {
+      "blocking_findings": 0,
+      "client": "ZCode",
+      "followups": [
+        "Use explicit trigger coverage for direct files, workflows and evidence.",
+        "Verify the actual three job checkouts separately from CURRENT.",
+        "Project the review without publishing session identity.",
+        "Record how the baseline can be restored from an independent retained source."
+      ],
+      "observed_limitations": [
+        "The verdict binds the plan text and its mechanism. Object identity and real CI still need independent verification."
+      ],
+      "original_review_bytes": 3680,
+      "original_review_sha256": "2e92e557c3740d741bc2287d826c0faa056622402f1c6e82f25722eed582bdc8",
+      "plan_bytes": 19559,
+      "plan_sha256": "343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323",
+      "public_plan_projection": {
+        "bytes": 19568,
+        "change": "Replace the opening of line 81 containing the two private review identifiers with a redaction notice stating the reviewed byte count and digest. The rest of the line is identical.",
+        "line": 81,
+        "published_line_bytes": 550,
+        "published_line_sha256": "f19edea3c9ad69f0a30791abf581946d42183548f48f3fdd6d52c83249bf3636",
+        "reviewed_line_bytes": 541,
+        "reviewed_line_sha256": "26eeb21d841d1834f6e361cb8e08819e903e77ce7cd6795b0124b00bf3b53875",
+        "sha256": "a877a3cdb535d3139f0dc9ea54feef28ec1b97bb08f6330f57c7e56d05cfb48e",
+        "unchanged_bytes": 19018,
+        "unchanged_sha256": "d3f561600daf189f3e979d4db6fe0e69b877d5b1861307baf81b5bb3c255d848"
+      },
+      "review_scope": "replacement mechanism for preserving, restoring and verifying the approved FX-49 release object",
+      "same_as_original_publication_reviewer": true,
+      "schema_version": 2,
+      "verdict": "PASS"
+    },
+    "original_plan_review": {
+      "reviewed_bytes": 19559,
+      "reviewed_sha256": "343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323",
+      "reviewer_response": "我没有发现这次对发布引用机制的替换存在阻塞性缺陷，此前的裁定保持不变。我的最终结论在文末，并绑定到你给出的计划哈希和字节数。我没有使用任何工具。\n\n## 你的检查项\n\n| 检查项 | 结论 |\n|---|---|\n| 精确重建 R | 可靠。树必须由 B 的索引加上冻结的 8 项直收、6 项行段增量和 1 项属性写出 T。提交是原始四行头载荷，身份字节从两个公开祖先提交切片，写入后回读；OID 必须等于 R，父为 B，`rev-list R ^B` 恰一条。 |\n| 未来取回 B | 充分且诚实。B 留在交接保留分支上，被匿名取入空对象库并按根树和父提交核对。用独立副本演练恢复。若只有单次匿名可读，缺口被准确命名并标待验，没有被掩盖。 |\n| 回退持久性 | 充分。R 由 B 加 M 中的材料完全确定，任何回退之后都能重建。回退按完整 OID 检出已记录的 B 和保护配置。 |\n| 独立保护 | 属于流程层面，计划也如实这样说。普通 PR 可以改清单、验证器和固定值，改不了的是 PR 之外的批准记录，独立验收方拿它逐项比对。没有声称 Git 层面的保护。 |\n| 真实边界下的信任与可用性 | 符合边界：不需要管理员操作、不引入新规则、不承诺抵抗删库。 |\n| 公开仓库无新暴露 | 预扫覆盖每个新文件、提交头配方和回执。身份文字只以提交和字段引用，从不写出。原始会话、提交头和作业日志不上载。另有一条建议见下。 |\n| 隔离检出上的真实 CI 与全量测试 | 可靠。三个真实作业各自从 G 和只含 B 的对象库重建 R，关闭替换对象、grafts、alternates 和网络，detached 检出 R，并在 G 和 R 上都跑测试。跳过和数量不符不能标绿。 |\n\n## 阻塞项\n\n无。\n\n## 建议\n\n- **触发集合。** 把直收文件路径、增量文件和清单明确列为触发项。现在的句子列了清单、证据、属性、门禁和工作流，改一个直收文件不应走“无关改动”捷径。\n- **另外两份作业的合并门。** `check_ci_merge.sh` 只看 Offline verification。要么把机械检查扩到另外两份，要么把独立核验命名为合并前的必备回执。\n- **公开文件中的会话标识。** 本件写明了审阅会话和 turn。请明确决定它们是否留在入库的公开文件里，因为本节点较早的一份补遗规定公开登记不留会话标识。\n- **B 的独立保留副本。** 写明由谁提供、何时提供，让“待验”这一支有责任人。同时写明待验期间合并可以照常进行。\n\n## 我能核对的内容\n\n- B 等于我在本次会话早先读到的工作树 HEAD。\n- P 的前缀与会话开始时的 git 快照一致。\n- 脚本 SHA 与此前各轮提供的一致。\n- 8 加 6 加 1 等于 15。\n- 314 字节的提交载荷只有在显示名加邮箱共 48 字节时才成立，其余各行我已逐项累加。\n\n## 局限\n\n- 计划哈希和字节数没有重新计算。\n- 表中其余 OID、摘要和对象数量按原文接受。我的签回只覆盖机制并绑定文本，不是对这些值的独立确认；它们由独立验收方对照代码审阅回执确立。\n- 我没有读链接的材料，也无法确认自己的会话身份和 fast 模式状态。\n\n```\nPLAN_SHA256: 343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323\nPLAN_BYTES: 19559\nVERDICT: PASS\n```",
+      "session_reference_sha256": "7637ace8cb6e88255ad5e5cf9d806db2c3017920d028827cbfda96f38b046b79",
+      "source_review_bytes": 3680,
+      "source_review_sha256": "2e92e557c3740d741bc2287d826c0faa056622402f1c6e82f25722eed582bdc8",
+      "verdict": "PASS"
+    },
+    "original_reviewed_bytes": 19559,
+    "original_reviewed_sha256": "343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323",
+    "privacy_amendment": {
+      "bytes": 1903,
+      "markdown": "### FX-49 发布计划回执隐私修订\n\n仅修正已签补遗中要求嵌入原提交稿全文的条款。权威发布代码审核回执须逐字节嵌入原计划的既有公开投影，载明下列字节数与 SHA-256，并收录已发布的第 81 行替换证明及两处 Git 相对链接。[公开投影](docs/paper-sim/design/fx-49/publication-addendum-v2.md) · [替换证明](docs/paper-sim/design/fx-49/publication-review-v2.json)\n\n| 对象 | 字节数 | SHA-256 |\n|---|---:|---|\n| 原提交稿 | 19559 | `343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323` |\n| 既有公开投影 | 19568 | `a877a3cdb535d3139f0dc9ea54feef28ec1b97bb08f6330f57c7e56d05cfb48e` |\n| 原稿第 81 行 | 541 | `26eeb21d841d1834f6e361cb8e08819e903e77ce7cd6795b0124b00bf3b53875` |\n| 投影第 81 行 | 550 | `f19edea3c9ad69f0a30791abf581946d42183548f48f3fdd6d52c83249bf3636` |\n| 其余各行按原序合计（两稿逐字节相同） | 19018 | `d3f561600daf189f3e979d4db6fe0e69b877d5b1861307baf81b5bb3c255d848` |\n| 已签补遗 | 6160 | `4a85d886a7fa6acc5aa1b367f08f876ea4bb190340e225020d60d438ec0e8a75` |\n\n现行身份过滤器拒收私稿，接受上述投影。原稿仅存既有本地归档，禁止以明文或编码披露原稿、第 81 行私文或审核身份原值。审核身份仅用已发布回执中的无盐 SHA-256 指纹。脱敏原裁决与脱敏前原文的 SHA-256 一并归档。\n\n回执另须逐字节嵌入已签补遗及本修订全文，分别附字节数和 SHA-256。补遗采用表列值，本修订的两项数值由回执在复审后按审定原文计算。\n\n已签补遗其余正文、诊断与开发范围、全部测试及原审条件继续适用。提请同一位原发布计划审核人正式复审。通过仅确认本文所载隐私修订，生产放行仍依既有发布及部署条件。若后续实际 M2 基线变更，仍执行既定的最终基线计划核查。",
+      "sha256": "5a03633d13f3c3c3b741562ed8653328f99e46adf4b0b77adafcbeca4846a3e8"
+    },
+    "privacy_plan_review": {
+      "reviewed_bytes": 1903,
+      "reviewed_sha256": "5a03633d13f3c3c3b741562ed8653328f99e46adf4b0b77adafcbeca4846a3e8",
+      "reviewer_response": "**此冲突已关闭，且我对 6160 字节修订的通过仍然有效**，除本隐私修订替换的一项条款外。此结论仅涵盖该具体问题。它没有对代码、测试、阶段、生产或合并授予任何内容。我没有使用任何工具。\n\n## 问题为何关闭\n\n- **仅更改了嵌入条款。** 权威代码审查回执现在按字节嵌入已发布的计划投影，而不是内部手稿。身份过滤器未被触及：你的测量显示它仍然拒绝原始手稿并接受投影。修复方案位于计划中，而不是在放宽过滤器。\n- **表格与你的事实相符。** 所有六行在字节计数和 SHA-256 上都完全匹配。算术也相符：541 加 19018 等于 19559，550 加 19018 等于 19568，这与除第 81 行之外手稿字节相同的陈述一致。\n- **隐私规则很严格。** 文本禁止以明文或编码形式披露手稿、第 81 行的私有文本和原始身份值。审查身份仅通过已发布的指纹表示，并且脱敏后的原始结论与未脱敏原始文件的哈希一起存档。\n- **修订文本本身不包含**原始标识符。\n- **无自引用。** 修订版自身的字节计数和哈希是在批准后由回执根据批准的文本计算的。此结论为该比较绑定了这些值。\n- **其他一切不变。** 签署修订的其余部分、诊断和开发范围、所有测试以及 M2 最终基线检查继续适用。\n\n## 阻碍\n\n无。\n\n## 非阻塞建议\n\n说明回执为本次修订计算的两个值必须等于此计划审查结论所绑定的值。\n\n## 局限性\n\n- 我没有重新计算此修订的哈希或 1903 字节的大小；此结论与收到的文本绑定。\n- 我没有在任一版本中比较第 81 行。我依赖于已发布的替换证明和你的测量。\n- 我没有看到身份过滤器或任何回执。\n\n```\nPLAN_SHA256: 5a03633d13f3c3c3b741562ed8653328f99e46adf4b0b77adafcbeca4846a3e8\nVERDICT: PASS\n```",
+      "session_reference_sha256": "7637ace8cb6e88255ad5e5cf9d806db2c3017920d028827cbfda96f38b046b79",
+      "source_review_bytes": 2142,
+      "source_review_sha256": "a67e3646bcca2376ab03d3a99b21af22b34a1a5caf610a5bce331fa5b49728e8",
+      "verdict": "PASS"
+    },
+    "public_original": {
+      "bytes": 19568,
+      "markdown": "# FX-49 普通 PR 发布补遗修订（2026-11-25）\n\n本件交原独立计划审者，只裁决 FX-49 发布对象的保存、复现和验收。原发布补遗以专用受保护分支持久保存 R，CI 从该分支读取 R，与 PR 输入重建的树对照。原审认可了这个做法，且注明真实托管取件未验。交接审计包的业务要求没有指定 Git 引用。既有只读记录显示，B 的保留分支可匿名读取，拟设的发布引用未公布，未配置相应保护，也没有发生过 FX-49 的 GitHub 写入拒绝。本件用现存公开基线和普通 PR 历史中可核验的最小材料交付同一个 R。机主无需更改仓库设置。\n\n## 一、发布身份和信任来源\n\n| 对象或材料 | 固定值 |\n| --- | --- |\n| B 的唯一父 P，也是原主线候选的起点 | `ab6edff2d64ac8aa5c2831d748b8730b63f8312d` |\n| 已归档运行基线 B | `bcce1b17f7263ab89859febfcb56188c295ab371` |\n| B 根树 | `6a18d926e7721cd1be0e4361e2ca909a21f20241` |\n| 已审运行提交 R，唯一父为 B | `97e9cbcbf510de0f10606ec06380376d627bff50` |\n| R 根树 T | `1bbf62faec2b0415599da5a4b4243b8da2bf4928` |\n| 原主线源码候选 S | `a9176cc255054ebd74046bdac8fef0d98e715f6e` |\n| 已审归档候选 A | `6f177ca8d0fa786fa2950a59c4ab1e6d68c71d67` |\n| 固定 Windows 脚本 SHA-256，35,487 字节 | `e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6` |\n| 原运行增量 SHA-256，56,597 字节 | `6b95b29db3d3df06b7d378d33fa1cc54f3b6e9035cb65d584abef930997598ee` |\n| 原发布清单 SHA-256，4,875 字节 | `aa8d9f9f63a171c164fe50e4d51016c56306b34ab61e761856878bd8a89b82b1` |\n\n真实性来自原审绑定的 R、固定树和脚本摘要，以及本件原审签回的准确文本。独立验收方从其已有审阅回执取得这些值，在独立对象库与实际候选、工作流和验证器逐一比对。普通 PR 可以编辑其中的清单或代码，不能自行更新该份独立的批准记录。相同树的其他提交、重签、改作者、改时间、改消息均视作不同版本。R 的现有作者署名不作为数字签名。\n\n## 二、进入普通 PR 的材料\n\n以下文件均以仓库根为起点。设计目录是 `docs/paper-sim/design/fx-49/`。以 A 的 33 条普通 PR 路径为归档基准，从受保护 main 的实际开工点做独立集成。在历史、PR 头和平台实际合并检出分别检查改动范围。B、R 不能成为主线候选新引入的祖先，旧运行整树、运行分支、定时器、部署及数据库配置均不进入此 PR。保留分支的指针和工作树沿用交接状态。普通 PR 分支更新只带本节点经核对的逐件材料，并逐条复查新提交的路径、模式及新增行。不得通过中间提交短暂引入整树后又删除。\n\n- 原 `runtime-delta.json`、`runtime-release.json`、全部直收文件和 R 的 15 条改动逐字节冻结。v1 清单的 `release_ref` 字段随原审历史保留。新验证器仅以该文件的固定摘要和其中的路径、模式、前后 blob 作为来源，新的取件协议只接受 v2。归档里的既往结论、旧版验证器在旧提交上的行为均按其原对象追溯。\n- 新增设计目录的 `runtime-object-v2.json`，只含固定版本、上表 OID/摘要、承载提交头的有限数据和下面给出的固定来源。不得接收任选仓库、引用、命令、文件名、身份文本、编码数据块、模板片段或环境覆盖值。沿用现有 `scripts/verify_fx49_publication.py`、三份已有工作流及 `verify_postgres.py` 的正常入口。改动限于重建、绑定和验收所需的位置。验证器内的接受值来自独立批准文本，清单自行换 R/T 并同时改表仍失败。\n- 同一源码节点 PR 另加设计目录的 `publication-addendum-v2.md`、`publication-review-v2.json`、`publication-index-v2.json`，完整保留旧回执。新索引固定计划、真实审阅回执、S/A、实际新源码头、候选验证器/三份工作流及各输入的 Git blob、字节数和 SHA-256。后续独立测试、代码、阶段审核回执只收录各一份具名的脱敏文件。需开新文件时先在计划索引和验证器精准列名，不接收通配证据目录。`DELIVERY_PLAN.md` 由协调者登记实际状态。合并落点 M 产生后写关联回执，避免自指。\n- 在生成、暂存或公开输出前，内存检查新增、删除、上下文、重建文件、提交头配方及审阅回执。新增任何真实设施、个人邮箱、凭据、绑定、收件标识及正文均拒绝。既有删除/上下文只有 blob、行范围和已审替换可公开。只输出固定类别、相对路径、行号、摘要与计数。原始审阅会话、Git 提交头、整库包、任意压缩脚本、原始作业日志不上载。由独立人员检查新增 PR 提交的实际 Git 身份满足现有隐私约束。\n\n## 三、从字节生成 R\n\n1. CI 取平台本次 `pull_request` 的实际 base、head 和合并检出 G，确认 `HEAD=G`、G 的两个父依次为该 base/head，同时核对 PR 头自分叉点以来和实际合并树自 base 以来的改动。工作区读取直收文件，逐个与实际 Git blob 比较；本地 `--staged` 仅用于开 PR 前验证。与节点有关的清单、证据、精确属性、门禁及工作流变化均触发检查，增量缺失、删除文件或只改 CI 也不能走“无关改动”捷径。\n2. 从同仓已归档 B 获得完整对象。固定 `refs/heads/handoff/sports-runtime-20261123` 只是已知位置，最终选择的是上表 B。用匿名只读方式展示既有受众在无需业务凭据或新仓库权限时能取得 B。取回的基线须有上表根树和唯一父 P。B 的原始 commit payload 为 450 字节，SHA-256 为 `cda09f641514d8dbdcf0b6f4034b5e980823ca8453d66354b13396c060acf902`。在一次性空 Git 对象库中只导入从 B 可达且连接完整的对象，完整核对 B 所需树和 blob；关闭替换对象、grafts、alternates、浅克隆、promisor/lazy fetch、钩子、子模块和外部过滤器。不要让现有 `new_checkout` 把主检出整个对象库作为运行库的 alternate。开工时断言运行库找不到 R，后续重建禁网络。若主检出恰已含 R，只能将可达集合过滤到 B 后才开始。主线候选和运行库有独立的 Git 索引与对象库。\n3. 从 B 的索引启动。原清单精确包含 8 项直收、6 项行段增量、1 项 `.gitattributes`。直收由 G 工作区输入，和真实 PR 头的对应源码及固定 blob 互核；行段复用 `apply_delta` 的唯一键、类型、边界、顺序、LF 及逐行隐私预扫；运行属性按 B 自身原字节加原来那一条精确规则，主线属性按实际 main 基线分别检查。逐件核对原 blob/模式、最终 blob/模式、清单映射、增量摘要、固定脚本 ASCII/LF 和清单 SHA。`git hash-object -w --stdin` 不经过滤；临时索引 `write-tree` 必须给出 T。比较 B 至该索引的全部路径和模式，恰好为原 15 项，所有未改路径由完整 B 树继承。\n4. R 的真实提交只有 `tree`、`parent`、`author`、`committer` 四行头，次序固定，然后是一个空行及一行以 LF 结束的 ASCII 消息。身份的显示名取自 B 的固定祖先 `2087121612725ad813dda1977db575896e430cff` 的原始 `author` 字段，邮箱部分原样取自 B 的原始 `author` 字段。先校验该祖先确属 B，其原始 commit payload SHA-256 为 `1d4922a204e77b166fa63b9496e528b4e54d799bc14a89c40c1132d63e63ee6e`。两项以 Git 原始字节切片，不使用 mailmap、地区格式或执行环境中的身份。R 中 `author` 和 `committer` 采用同一拼合结果，时间均为 `1795496371 +0000`。在内存逐字节拼接，对外不记上述身份的文字值。\n\n   固定消息单行的 ASCII 正文如下，行尾为一个 LF。\n\n   ```text\n   FX-49: deliver paper notifications over a pinned direct hc link\n   ```\n\n   完整 payload 须为 314 字节，SHA-256 须为 `1ed25e4cc19a270494f9da3ce826ccee881e5c78b33ae3d8a781d65d67e672d4`。Git 的对象前缀为 ASCII `commit 314` 后接一个 NUL；加前缀后的整串 SHA-256 为 `f01f66a48f30893fcb7e4cdbd7457960d56e9e7333cc4d6942550f2f3ad259a0`。用 `git hash-object -t commit -w --stdin` 写入已核对的原始 payload，返回完整 OID 必须等于 R。再用 `cat-file commit` 在内存回读比对，核验对象类型、唯一父 B、根树 T、`rev-list R ^B` 恰一条提交，新增对象正好 1 commit、9 tree、15 blob。普通 `commit-tree` 采用环境默认值会改变提交，在此不使用。上述 314 字节及两种摘要已经由计划作者用本地原对象独立拼合核对；此项是配方可行性说明，托管验收另计。\n5. 检查从 R 可达对象连接完整，确认固定对象库在脱离原仓和缓存后仍可重开。CI 在真实 Git 元数据中 detached 检出 R，只把本模式的已审和已预扫依赖物化到工作区，核对 `HEAD`、索引树、实际文件模式与工作区字节。完整树和全部可达对象已在对象库，未物化的运营脚本和历史程序不执行。部署验证从 R 运行原 `approved_script_sha256()` 断言，主线测试仍从 G 的真实工作区开始。只解压源码、显示 R 字样、借用已有 R 或仅比较根树均不能通过。\n\n## 四、验收入口与新增反例\n\n| 原工作流 | 原检查及本次新增的实证 |\n| --- | --- |\n| `offline-verification.yml` / Offline verification | G 和隔离 R 各跑原 79 条假传输。保留认领先于发送、精确 argv、完整正文、拒绝/并发/恢复次数及 `approved_script_sha256()`。原 Linux 可移植引擎在用时保留 20 项；未装时仅据实记录同一脚本 3 项静态、0 项行为。全量、编译、冻结及原公开面/可达性检查继续。新增脱离 R 的干净重建和故意损坏样本。 |\n| `native-postgres.yml` / Native project PostgreSQL | 原矩阵及聚合不变。在 Linux 原 storage 分区用独立临时 PostgreSQL、隔离配置和合成旧行实际跑 R 的 19 项；继续核对同期事务可见性、认领/拒投、清扫、一次只读恢复、新旧记录和既有结构。预装包 `src/` 与 R 对照，聚合不得将缺少或跳过的分区算成功。 |\n| `research-paper.yml` / Research paper bridge | 系统 Windows PowerShell 5.1、受审核的固定脚本字节、原精确 `-File` 与无网络替身。依序检查六类、十个变体，退出码 `0/24/25/26/22/32`、发送次数 `1/0/0/0/0/1`，仅第一类有接受回执；恰到截止时必须为 `22`，保留三类明确拒绝与重放断言。核对实际引擎、时间与脚本摘要。原有 research-paper 测试照跑。 |\n\n三个真实作业各自从 G 和仅含 B 的对象输入产生 R，并记录同一组 base/head/G/B/R/T 和模式检查结果。原生数据库只连临时夹具，传输及 Windows 替身无网络业务能力。版本或环境不符、必需测试被跳过、数量不符、超时或没有回执均不能标绿；不改既有超时、并发上限和业务隔离。无关 PR 沿用原作用域。独立 Linux 全量等待既有串行锁，原回执的 3,339 个文件、31 分区及当时的排队状态不作新候选 PASS。合并前独立核验全部实际作业的 checkout、结论、必需步骤及 `check_ci_merge.sh` 的 `CURRENT`；脚本单独只看 Offline verification，不替另外两份作业作证。base/head 变化后按项目规则重跑。\n\n新增验收用隔离本地 Git 夹具，不读取或改写实际托管引用。保留现有对工作区字节、索引 blob、额外路径、敏感值及历史证据篡改的负例。逐组必须看到相应阶段以非零拒绝，并在失败点前不执行候选程序。\n\n| 输入或故障 | 验收结果 |\n| --- | --- |\n| 空仓只取 B，无 `releases/fx49`、无缓存 R，亦无任何 Git 远端可用 | 由 G 实际文件重建确切 R 成功；关闭并重开独立对象库后可再检出 B 和 R。只在主对象库放入伪 R 或正确 R 均不影响结果。 |\n| B 缺失、错误基线、单个 B 依赖对象缺失、浅历史、共享 alternate、被替换对象或身份来源不符 | 在运行业务或测试入口前拒绝；恢复后必须重新从已批准的精确 B 开始。 |\n| 直收改一字节、行段改变/丢失、路径或模式多一项、符号链接、脚本换行变换、假清单和假树一起替换 | 由独立固定值、真实 checkout、前后 blob、模式、有效 SHA 或整树比较拒绝。历史索引、回执、额外文件不得取代被审源码。 |\n| 保留 T 而替换父、加第二父、改身份来源/时间/时区/消息/最后 LF、添未知头、错声明长度或对象摘要 | 拒绝；仅给正确的 40 位文本、预先注入正确 Git 对象或删除 v2 配方均不能掩盖缺材料。 |\n| 错的 G/base/head，材料缺失、重复字段、工作流删掉必跑步骤或输出唯有自报 PASS | 独立 gate 对照已审的输入、工作流/验证器 blob 和平台真实作业驳回；不接受孤立日志或单一路径 CI。 |\n\n## 五、留存、恢复和实际部署\n\n持久发布物是普通 main 历史的具体 M、该 M 下的已审材料和已列入交接保留的 B。R 的所有新增信息都随这个 PR 进入正常仓库保留范围，读者按同一公开项目的 B 和 M 复现。不得以有期限的作业产物、本机共享对象目录、可改动分支尖端、未锚定 SHA 下载或裸的 HTTP 成功响应充当唯一交付物。发布记录列 B/M 的固定 OID、项目保留来源、材料路径及恢复方式。PR 头、标签或部署缓存可以消失，不改变算法。\n\n基线保留与对象真实性分别验收。B 的 71 个新增文件及其公开交接清单、字节表在原保留历史中；B 本身不在主线候选的祖先链上。主线中的一个 B 哈希不能让 Git 垃圾回收器保留 B。先在不借本机共享库的空仓中从既有同受众归档完整取出 B；检查原交接清单和大小表作为数据，检查对象连接并生成脱敏回执。再用已获准的独立保留副本演练原保留引用不可用时的恢复。可对照 P 的主线历史，仅需保有 B 在 P 之上的既有对象和它们的准确字节，无需另备整个主线历史。在不同对象库断开首份来源及网络，以实际固定 M 或合并前等价候选材料重建、检出 B→R→B，核对每步的 HEAD、根树和受影响的实际文件。合并后用实际 M 再做一次用户视角的公开只读取件与复建。发布后继续沿用既有项目归档的保留及恢复责任；任何恢复的公开来源可见性必须与 B 相同。\n\n若现有独立副本只在内部可读，要记录同受众如何在原位置恢复服务，并实证公开复读；不得将私有副本写成第二个匿名渠道。普通、已授权的同仓保留分支也可另存精确 R 作为独立恢复来源：先完成全套公开面预扫和节点发布门，再验证同一受众可取回；原交接分支不移动；CI 和用户侧重建均须另做一次移除这个辅助来源的成功演示。只将其当辅助保管。若审计包只有 B 的单次匿名可读、没有按项目保留并可恢复的对象实证，准确缺口是 **B 从原公开保留点失去后如何取回其完整闭包**。此时可以完成普通 PR 的实现、独立测试和三项托管检查，发布等强性标待验。无需为此引入新保护规则、改设置、把 B/R 的历史接到 main，或承诺抵抗管理员删库。若已有持久归档和恢复回执，直接复用并核实际对象。\n\n生产软件交付只在适用授权后从固定 M 取材料、固定 B 取基线，在独立部署仓生成真实 R 并按完整 OID detached 检出；上一次实际检出、根树、文件模式、脚本源/清单/暂存/正式字节逐件核对。切换前实际基线应为 B；遇漂移记录实际 SHA 与差异并回到批准环节。回退使用实际记录的 B/经批准的先前对象及保护配置，以原业务锁和轮次边界进行，未决认领与回执保全。仓库只登记实际 M、R、部署实检 SHA、脚本 SHA 以及实际发生的操作。\n\n四项业务条件沿用原包：单一固定入库脚本及 SHA、Linux 固定直连调用、同一业务身份的远端限权证据或 owner 对残余通用执行/文件/终端能力的明确决定、原有绑定/正文/时间窗/发送前认领及独立核验。唯一一次现场放置停于 `execution_policy`，已核文件为零；后续独立读到有效策略 `Restricted`。当前目标人工六例为 0/6，自动自然业务回执待验。旧派发已用，任何新的现场操作须另有相应明确授权。维持既有策略、固定调用和所有原停点，禁止借其他方式重复被拒动作。现场六例、脚本字节、权限证据或明确残余决定、切换及一次真实验收的批准全部满足后，才按原范围取下一条尚未认领、自然到期的业务任务，一次发送，独立验收并由 owner 确认原私聊收到该条。个人手工路线的实收单记。日常扫描、建模、模拟下注和推荐照常；缺回执、明确拒绝、已认领及结果不明项按原合同处理，不发探测或补发。\n\n## 六、回到原审与发布顺序\n\n本公开副本隐去原计划审阅会话和对应轮次标识。原稿 19,559 字节，SHA-256 `343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323`。由协调者送同一实际本机 ZCode 会话，guarded 只读、fast 关闭、不给 shell 或其他工具，只审本件与原补遗之间的实质变化。以本文件精确字节数和 SHA-256 绑定审者本次真实 turn 和 `VERDICT`，回执保存于协调证据，再向同一源码 PR 投影。失败项由原计划作者修订并回此会话；旧 PASS 只覆盖旧件。\n\n原审对本件 PASS 后，由原生实现角色修改独立主线候选的验证器/工单及限定材料；不改 R、历史冻结件或现场。实际独立测试、两端代码/阶段复审与主线最终变更审核按既有分工，fast 均关闭。总门禁包括本地聚焦、全量、编译、冻结、敏感扫描、静态可达性、CodeGraph 和最终三份真实 CI。证据追加后复核内容及检查，确认 `CURRENT` 再普通合并。部署、现场、自然业务按各自实际状态登记。\n\n### 原始材料索引\n\n| 本地协调目录的相对文件 | 用途 |\n| --- | --- |\n| `fx49-publication-addendum.md`、`fx49-publication-original-review.json` | 原方案和原计划审者历史 PASS。原方案 SHA-256 `0b4cd8544ef694f9d8b6c02061bdb6d3634839def054d143e0e9b14e11bf7bed`。 |\n| `fx49-direct-next-action-independent-disposition.json`、`fx49-direct-next-action-disposition-clarification.json` | 发布依赖、平台实际拒绝、个人手工与自动业务证据的归属，以及 Windows 源审范围的补正。 |\n| `fx49-direct-release-readiness-6f177ca8.json`、`fx49-direct-final-archive-pr-checkout.json` | A/S/R、原路径数、旧验证器在缺引用时退出 1、临时本地引用时成功及真实托管的待验状态。 |\n| `fx49-plan-v2.md`、`fx49-direct-hc-addendum.md`、`fx49-policy-disposition/fx49-windows-policy-addendum.md` | 完整四条件、直连协议、六例/十变体、现场权限、回退与自然任务条件。 |\n| A 中的 `scripts/verify_fx49_publication.py`、设计目录的 `runtime-release.json`、`runtime-delta.json`、`release-index.json` 及上述三份工作流 | 可复核原程序、清单、运行增量、冻结字节与正常托管入口。 |\n",
+      "sha256": "a877a3cdb535d3139f0dc9ea54feef28ec1b97bb08f6330f57c7e56d05cfb48e"
+    },
+    "public_original_path": "docs/paper-sim/design/fx-49/publication-addendum-v2.md"
+  },
+  "source": "c54a56495443c1f589c762c3bc9b20d6ada2741c",
+  "source_roles": {
+    "main-code": {
+      "response_sha256": "2ed5b8a1a35c5ec1c9d5282dddd501c47509e0c0d82512f01cede5a90e260ee4",
+      "reviewed_commit": "5bf015221f93ab4471250cb08829497864f88ea8",
+      "session_reference_sha256": "a2e64a474f07452de85d1c3dbdb6f7bffb0caf129e8e1bd35b70548fa8d7551a",
+      "source_record": {
+        "bytes": 3290,
+        "sha256": "538dd4102f6fcbde0ebf06fb8a49a28276bd8c387616948c588e13082a40e841"
+      },
+      "verdict": "PASS",
+      "verdict_line": "VERDICT: PASS 5bf015221f93ab4471250cb08829497864f88ea8"
+    },
+    "runtime-code": {
+      "response_sha256": "6eb3b12799d00ace37b87416adef90577424e8291235773c0045077a981187f3",
+      "reviewed_commit": "5bf015221f93ab4471250cb08829497864f88ea8",
+      "session_reference_sha256": "e7a7fe77cda0f394be274876d183f69151825a06deca68a229a6c5b9a4abfd71",
+      "source_record": {
+        "bytes": 2509,
+        "sha256": "74cdda0eebdd6a772abaaf30e8519144d8ba980d98336317fbd71d76035bfecd"
+      },
+      "verdict": "PASS",
+      "verdict_line": "VERDICT: PASS 5bf015221f93ab4471250cb08829497864f88ea8"
+    }
+  },
+  "target_pr": 131,
+  "test_run_id": "8b0e53fe82c676ce5931e4a2b766d739da1bd0805b2a423bac6194080960a8d6",
+  "test_run_id_basis": "SHA-256 of the exact-source completed full-suite record",
+  "tree": "5bfd1f166f95e6a27c86d4d2b2f9720d30ae09a3",
+  "verdict": "PASS"
+}

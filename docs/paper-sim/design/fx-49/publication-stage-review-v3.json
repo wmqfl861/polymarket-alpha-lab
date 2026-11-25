@@ -1,0 +1,53 @@
+{
+  "base": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+  "client": "independent local Linux ZCode",
+  "code_attestation": {
+    "projected_session_sha256": "a2e64a474f07452de85d1c3dbdb6f7bffb0caf129e8e1bd35b70548fa8d7551a",
+    "signed_digests": {
+      "CODE_RECEIPT_SHA256": "91eef95d45fdb65cffed5beb7ea958317803505e2169a8d38f3d541b801db0d6"
+    },
+    "source": "5bf015221f93ab4471250cb08829497864f88ea8",
+    "source_receipt": {
+      "bytes": 2758,
+      "sha256": "7e53f0fef569051c3516dbce933ea1dc81a89f97823e3b6434729e2aaee63ace"
+    },
+    "verdict": "PASS"
+  },
+  "code_review_sha256": "91eef95d45fdb65cffed5beb7ea958317803505e2169a8d38f3d541b801db0d6",
+  "code_verdict": "PASS",
+  "commit": "5bf015221f93ab4471250cb08829497864f88ea8",
+  "schema_version": 3,
+  "scope": "Repository source and local test signoff only. Hosted verification and owner-site acceptance require separate evidence.",
+  "session_reference_sha256": "e21a59ea6347876928afb2afb964d7938ae98b641fea2288f2ceade94e95efe6",
+  "source": "c54a56495443c1f589c762c3bc9b20d6ada2741c",
+  "stage_attestation": {
+    "projected_session_sha256": "e21a59ea6347876928afb2afb964d7938ae98b641fea2288f2ceade94e95efe6",
+    "signed_digests": {
+      "CODE_RECEIPT_SHA256": "91eef95d45fdb65cffed5beb7ea958317803505e2169a8d38f3d541b801db0d6",
+      "TEST_RECEIPT_SHA256": "f39e6a8318366d83f154c9e8cf0ad51502cb790de64f43b6b20b7c585479e9e1"
+    },
+    "source": "5bf015221f93ab4471250cb08829497864f88ea8",
+    "source_receipt": {
+      "bytes": 5865,
+      "sha256": "5c4ea0df41dc5c29d65e7ede4a787e34cf9b66418478bfb2123914fd9f113b49"
+    },
+    "verdict": "PASS"
+  },
+  "test_attestation": {
+    "projected_session_sha256": "b3d837dc7dac2dc444bfe72c8cf672d595eddd82247e8f140246d3e1358f95de",
+    "signed_digests": {
+      "CODE_RECEIPT_SHA256": "91eef95d45fdb65cffed5beb7ea958317803505e2169a8d38f3d541b801db0d6",
+      "TEST_RECEIPT_SHA256": "f39e6a8318366d83f154c9e8cf0ad51502cb790de64f43b6b20b7c585479e9e1"
+    },
+    "source": "5bf015221f93ab4471250cb08829497864f88ea8",
+    "source_receipt": {
+      "bytes": 2084,
+      "sha256": "21a1cde6ea344474da9efa03337b67e29e86a12a246168954d0ed9920c434228"
+    },
+    "verdict": "PASS"
+  },
+  "test_receipt_sha256": "f39e6a8318366d83f154c9e8cf0ad51502cb790de64f43b6b20b7c585479e9e1",
+  "test_run_id": "8b0e53fe82c676ce5931e4a2b766d739da1bd0805b2a423bac6194080960a8d6",
+  "tree": "5bfd1f166f95e6a27c86d4d2b2f9720d30ae09a3",
+  "verdict": "PASS"
+}

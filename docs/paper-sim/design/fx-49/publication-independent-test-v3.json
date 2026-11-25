@@ -1,0 +1,285 @@
+{
+  "anonymous_rebuild": {
+    "command_output_sha256": "6a9bd7955e0d95590a39ab001803df531822385fc2111934b51603b9192d83fa",
+    "exit": 0,
+    "head": "5bf015221f93ab4471250cb08829497864f88ea8",
+    "measurements": {
+      "base": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+      "baseline": "bcce1b17f7263ab89859febfcb56188c295ab371",
+      "baseline_source": "anonymous-public-archive",
+      "checkout": "ba1c77123f119bc745eb50b072103262546bb80a",
+      "gate": "FX-49",
+      "head": "5bf015221f93ab4471250cb08829497864f88ea8",
+      "mode": "verify",
+      "release": "97e9cbcbf510de0f10606ec06380376d627bff50",
+      "runtime_object_delta": {
+        "blob": 15,
+        "commit": 1,
+        "tree": 9
+      },
+      "runtime_tree": "1bbf62faec2b0415599da5a4b4243b8da2bf4928",
+      "source": "c54a56495443c1f589c762c3bc9b20d6ada2741c"
+    }
+  },
+  "base": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+  "client": "independent local Linux ZCode",
+  "code_review_sha256": "91eef95d45fdb65cffed5beb7ea958317803505e2169a8d38f3d541b801db0d6",
+  "code_verdict": "PASS",
+  "commands": [
+    "uv sync --locked --offline --extra dev --extra postgres",
+    "python -m compileall -q src scripts tools tests",
+    "python scripts/verify_local.py --full"
+  ],
+  "commit": "5bf015221f93ab4471250cb08829497864f88ea8",
+  "executors": {
+    "focused": {
+      "session_reference_sha256": "65a35812322185541baf460b96c16430760c0b227035b1bde7d41b5626bc3155",
+      "source_dispatch": {
+        "bytes": 1656,
+        "sha256": "fa29105dccb048e10f1c0512a8990819594296beef29b5c10f6ab805daa01d6b"
+      }
+    },
+    "full": {
+      "session_reference_sha256": "b3d837dc7dac2dc444bfe72c8cf672d595eddd82247e8f140246d3e1358f95de",
+      "source_dispatch": {
+        "bytes": 1028,
+        "sha256": "2481e24b9b7964b6c4d657791299aaff5c160da52ba392f7f096b56047623eed"
+      }
+    },
+    "public": {
+      "session_reference_sha256": "f74776ffd315f93353495033fdf2228b570b587e997b63552237f648bcc0eeb3",
+      "source_dispatch": {
+        "bytes": 3867,
+        "sha256": "0d1d7a61481cbf173de57382b99a7590cf4d4e8942630550ae8a94471e98e531"
+      }
+    },
+    "static": {
+      "session_reference_sha256": "0493d5632f2d378f6cf004d129c9d01015270a42655e514f34e14f98a71ce83c",
+      "source_dispatch": {
+        "bytes": 2087,
+        "sha256": "d734873ebaf74d516e61a81032727e36590ddf66a038b0ac84ec27e3daa18285"
+      }
+    },
+    "tracked": {
+      "session_reference_sha256": "0493d5632f2d378f6cf004d129c9d01015270a42655e514f34e14f98a71ce83c",
+      "source_dispatch": {
+        "bytes": 2424,
+        "sha256": "070a8316e01de2dd7384e28e1b24dc5c40a14015a80dbec478bd38217c3f27fc"
+      }
+    }
+  },
+  "focused": {
+    "checks": [
+      {
+        "check": "synthetic PR source and history",
+        "exit": 0
+      },
+      {
+        "check": "locked environment",
+        "exit": 0,
+        "stderr_sha256": "65f90486904d5d0e09d8fa2c013a9b21f73222db2ef1b62715bae846e7d6019c",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "check": "installed Python and packages",
+        "exit": 0
+      },
+      {
+        "check": "linux",
+        "exit": 0,
+        "observations": [
+          "FX-49 negative proofs and independent offline B to R to B recovery passed",
+          "FX-49 main fake transport: 79 passed",
+          "FX-49 runtime fake transport: 79 passed",
+          "FX-49 optional Linux pwsh unavailable",
+          "FX-49 runtime static script: 3 passed"
+        ],
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "fb58f8f72b06ac3aea3f4782d270b819d8d68954e1fe923fb02d4ab9d53a38c4"
+      },
+      {
+        "check": "postgres",
+        "exit": 0,
+        "observations": [
+          "FX-49 runtime isolated PostgreSQL: 19 passed"
+        ],
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "bdbe3a9af64221d4eee010dffa16c1b05b3a66a81e874d2f7c3d5aaae540d179"
+      },
+      {
+        "check": "terminal",
+        "exit": 0
+      }
+    ],
+    "record": {
+      "bytes": 2765,
+      "sha256": "ea0ea32acfcad1e1d6f4b59dbf0e6a49e75b1593df21e5b79d0a5ba66769a1fb"
+    }
+  },
+  "full": {
+    "exit": 0,
+    "failing_nodes": [],
+    "head": "5bf015221f93ab4471250cb08829497864f88ea8",
+    "output_bytes": 86546,
+    "output_sha256": "d8fb8d0e69c6bb18649956cc85abac339f1bd6083b717a877f5bd720a6c0e7c5",
+    "record": {
+      "bytes": 371,
+      "sha256": "8b0e53fe82c676ce5931e4a2b766d739da1bd0805b2a423bac6194080960a8d6"
+    },
+    "seconds": 3327.207,
+    "summaries": [
+      "44136 passed, 473 skipped, 20 warnings in 3296.43s (0:54:56)"
+    ],
+    "tree": "5bfd1f166f95e6a27c86d4d2b2f9720d30ae09a3"
+  },
+  "hosted_ci": "pending actual PR head and its merge checkout",
+  "schema_version": 3,
+  "session_reference_sha256": "b3d837dc7dac2dc444bfe72c8cf672d595eddd82247e8f140246d3e1358f95de",
+  "site": "six physical cases and a natural delivery await protected entry",
+  "source": "c54a56495443c1f589c762c3bc9b20d6ada2741c",
+  "static": {
+    "checks": [
+      {
+        "check": "tracked scope, privacy, Git authors and compile",
+        "exit": 0
+      },
+      {
+        "check": "address_occurrence_diff.py",
+        "exit": 0,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "d58ed27f2f8cf04d0bc9efca887ecdc7b41e55b156e6865ac33c635fd73dd10f"
+      },
+      {
+        "check": "test_weakening_scan.py",
+        "exit": 0,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "a058dd529528912e89a8f1b30f771678e795701180602c436292a280d9c26f10"
+      },
+      {
+        "check": "static reachability",
+        "counts": {
+          "base": {
+            "reachable": 477,
+            "unreachable": 2439
+          },
+          "candidate": {
+            "reachable": 477,
+            "unreachable": 2439
+          }
+        },
+        "exit": 0
+      },
+      {
+        "check": "CodeGraph",
+        "exit": 0,
+        "indexed": 6781,
+        "parse_errors": 0
+      },
+      {
+        "check": "terminal",
+        "exit": 0
+      }
+    ],
+    "record": {
+      "bytes": 2342,
+      "sha256": "11a440272e80b497b374b4bd363e3168bd4748c16004e53ccd7a74e1c1c39913"
+    }
+  },
+  "synthetic": {
+    "checked_program_sha256": "e3c0c52be1ce783a952aa754f4720f13a240bdebd5742c2a789de5da81137d54",
+    "extended": 84,
+    "original": 32,
+    "prior_head": "af9a22fe8f4de13fac5bc7a7ddb4334e828b377d",
+    "prior_record": {
+      "bytes": 485,
+      "sha256": "f2d6ec82f595df3ce5ba00c7593f38373d28e3cf51fdca2bdbf8a3303251da83"
+    },
+    "record": {
+      "bytes": 485,
+      "sha256": "e6e7a7cbe74163c3bad9d44056af650f6f2a63f3510074b8ab4ae7628f9159ec"
+    },
+    "retained_extended": 77,
+    "scope": "coordinator Linux synthetic process results"
+  },
+  "test_run_id": "8b0e53fe82c676ce5931e4a2b766d739da1bd0805b2a423bac6194080960a8d6",
+  "tracked_scan": {
+    "adjudication": {
+      "bytes": 1488,
+      "sha256": "0777f122ebd1a54e8e14dff9c6d0fcda232b2f1104dbcf80c46222cd03b61b48"
+    },
+    "adjudication_program": {
+      "bytes": 4780,
+      "sha256": "842a2d738c127479c2cd4d5307c5b9af7b13f3d44c9263891ed1fa2f54478f75"
+    },
+    "attribution": {
+      "bytes": 5038,
+      "sha256": "d71ad932a4fe0f656989afeec7bbb705b58b0b4feab48f00e7991f2c881e2aae"
+    },
+    "base": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+    "dispatch_history": {
+      "actual_tracked_and_classification": {
+        "bytes": 1488,
+        "sha256": "0777f122ebd1a54e8e14dff9c6d0fcda232b2f1104dbcf80c46222cd03b61b48"
+      },
+      "canonical_exit_and_output_digests": {
+        "bytes": 320,
+        "sha256": "8ab99c6c570880db0c2da96e846db2551cd533323d40835893e1aeec1a1b5810"
+      },
+      "deferred_until_static_terminal": {
+        "bytes": 2523,
+        "sha256": "f695aeb427695b887eaac14dcbf824a26fbed9a34d0283f39d8ab56a6884f552"
+      },
+      "initial_static_mode_collision": {
+        "bytes": 2424,
+        "sha256": "070a8316e01de2dd7384e28e1b24dc5c40a14015a80dbec478bd38217c3f27fc"
+      }
+    },
+    "distinct_blobs": 7939,
+    "head": "5bf015221f93ab4471250cb08829497864f88ea8",
+    "initial_attribution": {
+      "bytes": 2424,
+      "sha256": "070a8316e01de2dd7384e28e1b24dc5c40a14015a80dbec478bd38217c3f27fc"
+    },
+    "initial_raw_exit": 1,
+    "prior_scan": {
+      "adjudication": {
+        "bytes": 2014,
+        "sha256": "719a2f112efc0b9729527c612280422cb172e046f4cdcd3be72df24423fccd7a"
+      },
+      "adjudication_program": {
+        "bytes": 4780,
+        "sha256": "06498dc7816d9840cac4e6324170a8eb3dfe82e9a427b9b6e7f7381b59d268dc"
+      },
+      "attribution": {
+        "bytes": 5038,
+        "sha256": "a88dc975a41baad107dbfbed8e1d746ff34ef241107fe175cd2346c4ad559623"
+      },
+      "base": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+      "distinct_blobs": 7939,
+      "head": "af9a22fe8f4de13fac5bc7a7ddb4334e828b377d",
+      "initial_attribution": {
+        "bytes": 2213,
+        "sha256": "c2800ce41f2c3d75aef35f5d1e87410195dd489388de2a842ee183d9f3562782"
+      },
+      "initial_raw_exit": 1,
+      "real_initial_scan": {
+        "bytes": 3322,
+        "sha256": "879c563c1e088f9c6fe0b9cf99a0ce3bc8552b8dc5fdfc9a88ded35aca56ac76"
+      },
+      "session_reference_sha256": "0493d5632f2d378f6cf004d129c9d01015270a42655e514f34e14f98a71ce83c",
+      "sources_attributed": 8,
+      "tree": "48b867cb39297bf081e7d4ab96f9d98ac585c5b4",
+      "unresolved": 0
+    },
+    "real_initial_scan": {
+      "bytes": 3322,
+      "sha256": "879c563c1e088f9c6fe0b9cf99a0ce3bc8552b8dc5fdfc9a88ded35aca56ac76"
+    },
+    "session_reference_sha256": "0493d5632f2d378f6cf004d129c9d01015270a42655e514f34e14f98a71ce83c",
+    "sources_attributed": 8,
+    "tree": "5bfd1f166f95e6a27c86d4d2b2f9720d30ae09a3",
+    "unresolved": 0
+  },
+  "tree": "5bfd1f166f95e6a27c86d4d2b2f9720d30ae09a3",
+  "verdict": "PASS"
+}
