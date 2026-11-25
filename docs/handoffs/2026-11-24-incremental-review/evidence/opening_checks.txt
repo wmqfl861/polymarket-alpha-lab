@@ -1,0 +1,32 @@
+# checked at 2026-11-23T17:13Z through the GitHub API and git ls-remote
+visibility=public private=false forks=1 default_branch=main pushed_at=2026-11-23T15:56:26Z
+main protected=false sha=ab6edff2d64ac8aa5c2831d748b8730b63f8312d
+forks:
+  one public fork (owner name omitted here), last pushed 2026-11-19T03:03:24Z
+server refs: heads=236 tags=3 pull_request_heads=123
+open pull requests:
+  #41 created 2026-09-15T15:48:56Z feature/wp06-handoff-cold-evidence-20260915
+  #35 created 2026-09-15T08:18:05Z feature/wp05-paper-replay-20260915
+  #34 created 2026-09-15T05:19:34Z feature/wp05-research-paper-20260915
+branches that are new or moved since the 2026-11-21 review:
+  main ab6edff2d64ac8aa5c2831d748b8730b63f8312d ahead_of_main=0
+  handoff/sports-runtime-20261123 bcce1b17f7263ab89859febfcb56188c295ab371 ahead_of_main=1
+  handoff/sports-fx40-20261123 7f92e0356888785e7b1e1bc88c24ffd1edbe8ac7 ahead_of_main=1
+  handoff/sports-fx44-20261123 3bc5a234023ee0f322e693e380ed115eb6491547 ahead_of_main=1
+  handoff/sports-fx41-nba-v2-20261123 256f8491c324b04e5dd9789c012ae84f654853f2 ahead_of_main=5
+  evidence/pr-114-final-9647a3ef68c18e5fd5356aeb81bf8df06976a433 b8c1571d5135a833939f31869d36c6e19eacd445 ahead_of_main=1
+  evidence/pr-118-final-b89120f2fa79c6ecf5f371376fc00f1ccd10809c e2d7c64f63283e981da23be0574dcbcbfd812ed5 ahead_of_main=1
+  docs/pr118-evidence-and-fx41-w45 8bb0dce7cff89d162b0aed8ab8498c73cd5fd328 ahead_of_main=0
+  fix/nov21-fx38-fx39-step1 d362b51067f58f7ec3416ccea702859f63cf3c57 ahead_of_main=0
+  gov/nov21-audit-registration 50267f7e46e44295c7d5613c125e81a0befd0bd0 ahead_of_main=0
+  integrate/nov21-audit-packages 9a38b62827d35d524e05d71f0d2f780c16baa86c ahead_of_main=0
+  fix/mo6-native-evidence-fixtures-20261120 9647a3ef68c18e5fd5356aeb81bf8df06976a433 ahead_of_main=0
+  m2/d1-public-market-settlement-recovery-20261121 b89120f2fa79c6ecf5f371376fc00f1ccd10809c ahead_of_main=0
+  ci/pr-120-merge-3045f00d58db7862bf813cb96396e0077f85aff4 3045f00d58db7862bf813cb96396e0077f85aff4 ahead_of_main=1
+  ci/pr-120-merge-a73fb3d3780cba679b126c5f46fc8ac7d5cdced6 a73fb3d3780cba679b126c5f46fc8ac7d5cdced6 ahead_of_main=1
+  ci/pr-121-merge-550f399cb843aade53c102c239ea55dd7a0ce951 550f399cb843aade53c102c239ea55dd7a0ce951 ahead_of_main=1
+  ci/pr-122-merge-a0ee4de05bb3e3c0479ee32a22437875d0ad2171 a0ee4de05bb3e3c0479ee32a22437875d0ad2171 ahead_of_main=1
+# checked again at 2026-11-23T17:40Z, before publishing: unchanged
+visibility=public private=false forks=1 default_branch=main pushed_at=2026-11-23T15:56:26Z
+main protected=false sha=ab6edff2d64ac8aa5c2831d748b8730b63f8312d
+server refs: heads=236 tags=3; open pull requests: #41 #35 #34; the fork: public, last pushed 2026-11-19T03:03:24Z

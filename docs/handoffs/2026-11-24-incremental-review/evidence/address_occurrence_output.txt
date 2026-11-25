@@ -1,0 +1,13 @@
+# main: 2bdc4ccc -> ab6edff2
+base=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 head=ab6edff2d64ac8aa5c2831d748b8730b63f8312d distinct public IPv4-like values: 6
+address #1: base occurrences=18 in 6 files; head occurrences=0 in 0 files; files newly containing it=0
+address #2: base occurrences=13 in 5 files; head occurrences=0 in 0 files; files newly containing it=0
+# branches against main ab6edff2 (a value line appears only when its count changed)
+--- handoff/sports-runtime-20261123
+base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=origin/handoff/sports-runtime-20261123 distinct public IPv4-like values: 4
+--- handoff/sports-fx41-nba-v2-20261123
+base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=origin/handoff/sports-fx41-nba-v2-20261123 distinct public IPv4-like values: 4
+--- handoff/sports-fx40-20261123
+base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=origin/handoff/sports-fx40-20261123 distinct public IPv4-like values: 4
+--- handoff/sports-fx44-20261123
+base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=origin/handoff/sports-fx44-20261123 distinct public IPv4-like values: 4

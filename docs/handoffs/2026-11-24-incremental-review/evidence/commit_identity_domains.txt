@@ -1,0 +1,7 @@
+# author / committer identities on the commits that are new since the 2026-11-21 review (names and e-mail DOMAINS only; local parts are never printed)
+# commits considered: 49
+     34 ZCode <@users.noreply.github.com> / ZCode <@users.noreply.github.com>
+     12 wmqfl861 <@gmail.com> / GitHub <@github.com>
+      2 Codex <@local> / Codex <@local>
+      1 ZCode <@local> / ZCode <@local>
+# first-parent merge commits on main in 2bdc4ccc..ab6edff2 whose author e-mail is at a personal mail provider: 8 of 8

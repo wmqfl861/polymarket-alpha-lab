@@ -1,0 +1,35 @@
+pr	merge_commit	first_parent	head	workflow	event	run_id	attempt	conclusion	checked_out	base_of_checkout	verdict
+#119	a3492ea6	2bdc4ccc	9a38b628	Native project PostgreSQL	workflow_dispatch	44911081568	1	success	-	-	-
+#119	a3492ea6	2bdc4ccc	9a38b628	Offline verification	pull_request	44911055691	1	success	f6c51942	2bdc4ccc	CURRENT
+#119	a3492ea6	2bdc4ccc	9a38b628	Research paper bridge	pull_request	44911055726	1	success	f6c5194	2bdc4ccc	CURRENT
+#119	a3492ea6	2bdc4ccc	(merge commit)	Offline verification	push	44912190957	1	cancelled	-	-	-
+#116	cd53ce25	a3492ea6	8c7b5365	Native project PostgreSQL	workflow_dispatch	44850545864	1	success	-	-	-
+#116	cd53ce25	a3492ea6	8c7b5365	Offline verification	pull_request	44850543464	1	success	fb69b63d	11fb457c	STALE
+#116	cd53ce25	a3492ea6	8c7b5365	Research paper bridge	pull_request	44850542816	1	success	fb69b63	11fb457c	STALE
+#116	cd53ce25	a3492ea6	(merge commit)	Offline verification	push	44912306593	1	success	-	-	-
+#114	d2160593	cd53ce25	9647a3ef	Native project PostgreSQL	pull_request	44928160706	1	success	1feabe95	cd53ce25	CURRENT
+#114	d2160593	cd53ce25	9647a3ef	Offline verification	pull_request	44928160743	1	success	1feabe95	cd53ce25	CURRENT
+#114	d2160593	cd53ce25	9647a3ef	Research paper bridge	pull_request	44928160726	1	success	1feabe9	cd53ce25	CURRENT
+#114	d2160593	cd53ce25	(merge commit)	Native project PostgreSQL	push	44936462214	1	success	-	-	-
+#114	d2160593	cd53ce25	(merge commit)	Offline verification	push	44936462096	1	success	-	-	-
+#120	0c64a989	d2160593	50267f7e	Offline verification	pull_request	44941245957	1	success	a73fb3d3	d2160593	CURRENT
+#120	0c64a989	d2160593	50267f7e	Research paper bridge	pull_request	44941245960	1	success	a73fb3d	d2160593	CURRENT
+#120	0c64a989	d2160593	(merge commit)	Offline verification	push	44943072121	1	success	-	-	-
+#121	01a3d6d2	0c64a989	d362b510	Offline verification	pull_request	44947875366	1	success	550f399c	0c64a989	CURRENT
+#121	01a3d6d2	0c64a989	d362b510	Research paper bridge	pull_request	44947875309	1	success	550f399	0c64a989	CURRENT
+#121	01a3d6d2	0c64a989	(merge commit)	Native project PostgreSQL	push	44950081115	1	success	-	-	-
+#121	01a3d6d2	0c64a989	(merge commit)	Offline verification	push	44950081206	1	success	-	-	-
+#118	00199b24	01a3d6d2	b89120f2	Native project PostgreSQL	pull_request	44968419447	1	success	6c7f9e77	01a3d6d2	CURRENT
+#118	00199b24	01a3d6d2	b89120f2	Offline verification	pull_request	44968419459	1	success	6c7f9e77	01a3d6d2	CURRENT
+#118	00199b24	01a3d6d2	b89120f2	Research paper bridge	pull_request	44968419472	1	success	6c7f9e7	01a3d6d2	CURRENT
+#118	00199b24	01a3d6d2	(merge commit)	Native project PostgreSQL	push	44974619186	1	success	-	-	-
+#118	00199b24	01a3d6d2	(merge commit)	Offline verification	push	44974619173	1	success	-	-	-
+#122	6d880008	00199b24	8bb0dce7	Offline verification	pull_request	44980320797	1	success	a0ee4de0	00199b24	CURRENT
+#122	6d880008	00199b24	8bb0dce7	Research paper bridge	pull_request	44980320763	1	success	a0ee4de	00199b24	CURRENT
+#122	6d880008	00199b24	(merge commit)	Offline verification	push	44981897345	1	success	-	-	-
+#123	ab6edff2	6d880008	2fbcd0d8	Native project PostgreSQL	workflow_dispatch	45170610241	1	success	-	-	-
+#123	ab6edff2	6d880008	2fbcd0d8	Offline verification	pull_request	45169585443	1	success	f8fd94ba	6d880008	CURRENT
+#123	ab6edff2	6d880008	2fbcd0d8	Research paper bridge	pull_request	45169585610	1	success	f8fd94b	6d880008	CURRENT
+#123	ab6edff2	6d880008	(merge commit)	Native project PostgreSQL	push	45173749622	1	success	-	-	-
+#123	ab6edff2	6d880008	(merge commit)	Native project PostgreSQL	schedule	45195355725	1	success	-	-	-
+#123	ab6edff2	6d880008	(merge commit)	Offline verification	push	45173749617	1	success	-	-	-

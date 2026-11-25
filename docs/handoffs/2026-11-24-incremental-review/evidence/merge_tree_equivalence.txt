@@ -1,0 +1,9 @@
+# merge commit | head (2nd parent) | head contains first parent | merge tree == head tree
+a3492ea6 | 9a38b628 | yes | yes | Merge pull request #119 from wmqfl861/integrate/nov21-audit-
+cd53ce25 | 8c7b5365 | no | no | Merge pull request #116 from wmqfl861/fx18/b1-marking-11fb45
+d2160593 | 9647a3ef | yes | yes | Merge pull request #114 from wmqfl861/fix/mo6-native-evidenc
+0c64a989 | 50267f7e | yes | yes | Merge pull request #120 from wmqfl861/gov/nov21-audit-regist
+01a3d6d2 | d362b510 | yes | yes | Merge pull request #121 from wmqfl861/fix/nov21-fx38-fx39-st
+00199b24 | b89120f2 | yes | yes | Merge pull request #118 from wmqfl861/m2/d1-public-market-se
+6d880008 | 8bb0dce7 | yes | yes | Merge pull request #122 from wmqfl861/docs/pr118-evidence-an
+ab6edff2 | 2fbcd0d8 | yes | yes | Merge pull request #123 from wmqfl861/maintenance/consolidat
