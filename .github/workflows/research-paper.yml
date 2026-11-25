@@ -44,3 +44,26 @@ jobs:
             ${{ runner.temp }}/research-paper.xml
           retention-days: 7
           if-no-files-found: ignore
+
+  windows-fx49:
+    if: github.event_name == 'pull_request'
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - name: Check out the FX-49 PR merge in an isolated runner
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        env:
+          GIT_CONFIG_COUNT: '1'
+          GIT_CONFIG_KEY_0: core.autocrlf
+          GIT_CONFIG_VALUE_0: 'false'
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify FX-49 Windows PowerShell 5.1 offline drill
+        env:
+          FX49_BASE: ${{ github.event.pull_request.base.sha }}
+          FX49_HEAD: ${{ github.event.pull_request.head.sha }}
+        shell: cmd
+        run: >-
+          python -I -B scripts\verify_fx49_publication.py windows
+          --base "%FX49_BASE%" --pr-head "%FX49_HEAD%" --checkout "%GITHUB_SHA%"

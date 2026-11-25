@@ -1,0 +1,21 @@
+{
+  "blocking_findings": 0,
+  "client": "ZCode",
+  "followups": [
+    "Use explicit trigger coverage for direct files, workflows and evidence.",
+    "Verify the actual three job checkouts separately from CURRENT.",
+    "Project the review without publishing session identity.",
+    "Record how the baseline can be restored from an independent retained source."
+  ],
+  "observed_limitations": [
+    "The verdict binds the plan text and its mechanism. Object identity and real CI still need independent verification."
+  ],
+  "original_review_bytes": 3680,
+  "original_review_sha256": "2e92e557c3740d741bc2287d826c0faa056622402f1c6e82f25722eed582bdc8",
+  "plan_bytes": 19559,
+  "plan_sha256": "343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323",
+  "review_scope": "replacement mechanism for preserving, restoring and verifying the approved FX-49 release object",
+  "same_as_original_publication_reviewer": true,
+  "schema_version": 2,
+  "verdict": "PASS"
+}

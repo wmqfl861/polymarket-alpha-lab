@@ -93,6 +93,14 @@ on:
       - 'database/**'
       - 'supabase/migrations/**'
       - 'tests/test_native_postgres_workflow*.py'
+      - 'docs/paper-sim/design/fx-49/**'
+      - 'docs/paper-sim/runtime/scripts/weixin_delivery.py'
+      - 'docs/paper-sim/runtime/scripts/windows/**'
+      - 'scripts/verify_fx49_publication.py'
+      - 'tests/test_fx49_weixin_delivery.py'
+      - '.gitattributes'
+      - '.github/workflows/offline-verification.yml'
+      - '.github/workflows/research-paper.yml'
       - '.github/workflows/native-postgres.yml'
   # FX-07 (2026-11-12): this repository works by direct pushes to main, so a
   # pull_request-only trigger left the real-Postgres matrix unrun. Push now
@@ -552,6 +560,15 @@ jobs:
           for variable in $(compgen -e PG); do unset "$variable"; done
           .venv/bin/python -u -m pytest -q -s -o junit_family=legacy tests/test_project_postgres_version_switch_native.py --durations=20 --junitxml="$RUNNER_TEMP/version-switch-proof.xml" 2>&1 | tee "$RUNNER_TEMP/version-switch-proof.log"
           test ${PIPESTATUS[0]} -eq 0
+      - name: Verify FX-49 against independent temporary PostgreSQL
+        if: matrix.partition == 'storage' && github.event_name == 'pull_request'
+        env:
+          FX49_BASE: ${{ github.event.pull_request.base.sha }}
+          FX49_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          .venv/bin/python scripts/verify_fx49_publication.py postgres \
+            --base "$FX49_BASE" --pr-head "$FX49_HEAD" --checkout "$GITHUB_SHA" \
+            --postgres-bin "$RUNNER_TEMP/pg18-portable-prefix/bin"
       - name: Verify tracked source unchanged
         run: |
           git diff --check

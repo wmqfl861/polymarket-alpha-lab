@@ -1,0 +1,22 @@
+{
+  "archive_commit": "6f177ca8d0fa786fa2950a59c4ab1e6d68c71d67",
+  "author_display_source": "2087121612725ad813dda1977db575896e430cff",
+  "author_display_source_payload_sha256": "1d4922a204e77b166fa63b9496e528b4e54d799bc14a89c40c1132d63e63ee6e",
+  "author_timestamp": 1795496371,
+  "author_timezone": "+0000",
+  "baseline": "bcce1b17f7263ab89859febfcb56188c295ab371",
+  "baseline_payload_bytes": 450,
+  "baseline_payload_sha256": "cda09f641514d8dbdcf0b6f4034b5e980823ca8453d66354b13396c060acf902",
+  "baseline_tree": "6a18d926e7721cd1be0e4361e2ca909a21f20241",
+  "delta_sha256": "6b95b29db3d3df06b7d378d33fa1cc54f3b6e9035cb65d584abef930997598ee",
+  "manifest_sha256": "aa8d9f9f63a171c164fe50e4d51016c56306b34ab61e761856878bd8a89b82b1",
+  "parent_of_baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "release": "97e9cbcbf510de0f10606ec06380376d627bff50",
+  "release_object_sha256": "f01f66a48f30893fcb7e4cdbd7457960d56e9e7333cc4d6942550f2f3ad259a0",
+  "release_payload_bytes": 314,
+  "release_payload_sha256": "1ed25e4cc19a270494f9da3ce826ccee881e5c78b33ae3d8a781d65d67e672d4",
+  "release_tree": "1bbf62faec2b0415599da5a4b4243b8da2bf4928",
+  "schema_version": 2,
+  "script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "source_commit": "a9176cc255054ebd74046bdac8fef0d98e715f6e"
+}

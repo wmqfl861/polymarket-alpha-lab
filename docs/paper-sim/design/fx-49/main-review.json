@@ -1,0 +1,38 @@
+{
+  "archive_draft_session_id": "sess_33396b0e-e140-4c47-9c55-71a5e12255af",
+  "client": "ZCode",
+  "decisions": [
+    {
+      "commit": "c1c161ffb01724b96fc1c9fd964cc6a6554f516c",
+      "recorded_utc": "2026-11-24T03:05:36Z",
+      "tree": "955a3e227fef3e16f601a150b8326d59106857e6",
+      "turn_id": "turn_1cb92b8f-84de-4254-992f-cb06daf35fc3",
+      "verdict": "FAIL"
+    },
+    {
+      "available_input_commit": "c1c161ffb01724b96fc1c9fd964cc6a6554f516c",
+      "commit": "f8e81dd5ccb44444e15a00a53dc3534af82f2e53",
+      "recorded_utc": "2026-11-24T04:02:09Z",
+      "scope_note": "The C2 re-review was declined because only C1 source bytes were available.",
+      "tree": "ea1cb43d5a552127dc54e26bd8220e373196f049",
+      "turn_id": "turn_a2c0d0bb-5f1f-4903-a1fb-ed7843557d29",
+      "verdict": "FAIL"
+    },
+    {
+      "commit": "a9176cc255054ebd74046bdac8fef0d98e715f6e",
+      "recorded_utc": "2026-11-24T05:48:31Z",
+      "tree": "a084981eabd4aa8fa65794de7891da87c71235be",
+      "turn_id": "turn_c6aa5b87-e46e-4647-9f25-87383ed25637",
+      "verdict": "PASS"
+    }
+  ],
+  "scope": "main source code review",
+  "separate_gates": [
+    "independent full testing",
+    "protected release reference",
+    "hosted CI",
+    "deployment acceptance"
+  ],
+  "session_id": "sess_35771157-e562-4cd3-97c6-7c62b8fb10e2",
+  "version": 1
+}

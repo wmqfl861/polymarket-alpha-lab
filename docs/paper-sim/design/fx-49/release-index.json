@@ -1,0 +1,255 @@
+{
+  "archive_draft_session_id": "sess_1dd389e6-18bc-4d37-87f1-fcea2b051889",
+  "archive_refinement_session_id": "sess_1dd389e6-18bc-4d37-87f1-fcea2b051889",
+  "archived_file_inventory": {
+    "docs/paper-sim/design/fx-49/direct-hc-addendum.md": {
+      "bytes": 11705,
+      "sha256": "7b5992f3c3d886197a4e2511082e453911eca04b02749f01ec6e3869129bee6c"
+    },
+    "docs/paper-sim/design/fx-49/direct-hc-plan-review.json": {
+      "bytes": 4420,
+      "sha256": "1b89049387b99d7900ba59cafc44649e61acfa5c16449b06dd0adce01d9d7b87"
+    },
+    "docs/paper-sim/design/fx-49/linux-first-run.json": {
+      "bytes": 2448,
+      "sha256": "6ae08bd2f66a7542acbe68c71166b5f4ddf2f94fcb9966aabe1ddadca7607dd3"
+    },
+    "docs/paper-sim/design/fx-49/linux-framework.json": {
+      "bytes": 1883,
+      "sha256": "a68a4ed4ccab48590206fa5deeaec2271771e42c5785724549f2303e043acc5f"
+    },
+    "docs/paper-sim/design/fx-49/linux-recheck.json": {
+      "bytes": 1883,
+      "sha256": "762b9356e356779872aded5f4808ca97d63c4f32399f0a1e3d6b01055303e88a"
+    },
+    "docs/paper-sim/design/fx-49/main-review.json": {
+      "bytes": 1337,
+      "sha256": "99e2cd0763faf9d7d4609670684ddf674867a19b1d1a85a9990798a90b285f40"
+    },
+    "docs/paper-sim/design/fx-49/plan-original.md": {
+      "bytes": 15633,
+      "sha256": "fe91fbfe6e248dbd28797c8cad3c7b5e2a423fb753d441a49c7aa0582fedaad5"
+    },
+    "docs/paper-sim/design/fx-49/plan-review-initial.json": {
+      "bytes": 4688,
+      "sha256": "0cadc7fcbe996414a73ae51126bd7af522f8d5b64831e732c49b586756a830a2"
+    },
+    "docs/paper-sim/design/fx-49/plan-review-v2.json": {
+      "bytes": 4657,
+      "sha256": "518abd77a2e0c88ae23d9f1237af1e76468308f45caf7a72e61e4653c4b3ea7a"
+    },
+    "docs/paper-sim/design/fx-49/plan-v2.md": {
+      "bytes": 20559,
+      "sha256": "89a308911213e5c176e4f8e4a23a321bd18a6838e8cbf387dba8e341eadcc361"
+    },
+    "docs/paper-sim/design/fx-49/publication-addendum.md": {
+      "bytes": 5337,
+      "sha256": "0b4cd8544ef694f9d8b6c02061bdb6d3634839def054d143e0e9b14e11bf7bed"
+    },
+    "docs/paper-sim/design/fx-49/publication-review.json": {
+      "bytes": 4074,
+      "sha256": "18fbd8c60e0ab4cb3ed99c1a8bf00f8f2f57612ee5b8ba173880eba3258197c9"
+    },
+    "docs/paper-sim/design/fx-49/release-review-framework.json": {
+      "bytes": 3720,
+      "sha256": "ac61ee27d98931b8f87d7e64e3727bfbf213d97c9baed6a6797a476eddbc0f69"
+    },
+    "docs/paper-sim/design/fx-49/release-review-initial.json": {
+      "bytes": 5992,
+      "sha256": "69d814eba20036dc8fa912d8adad08fea145e9cf095241ceaf2b2bc213367dcd"
+    },
+    "docs/paper-sim/design/fx-49/release-review.json": {
+      "bytes": 1734,
+      "sha256": "d3558deaceb8e1cb1b5fef12832dfd0d3876d21e91d113cca7bbce540145e274"
+    },
+    "docs/paper-sim/design/fx-49/runtime-delta.json": {
+      "bytes": 56597,
+      "sha256": "6b95b29db3d3df06b7d378d33fa1cc54f3b6e9035cb65d584abef930997598ee"
+    },
+    "docs/paper-sim/design/fx-49/runtime-release.json": {
+      "bytes": 4875,
+      "sha256": "aa8d9f9f63a171c164fe50e4d51016c56306b34ab61e761856878bd8a89b82b1"
+    },
+    "docs/paper-sim/design/fx-49/verify_postgres.py": {
+      "bytes": 7569,
+      "sha256": "d2abb76314ba147ade4be355e7f7895e1f4d484e9fd3b08a4ff058294d63b265"
+    }
+  },
+  "focused_linux": {
+    "frozen_hygiene_workflow_passed": 69,
+    "local_pwsh": "unavailable",
+    "main_fake_transport_passed": 79,
+    "main_runtime_compile": "passed",
+    "retained_receipt": {
+      "bytes": 3149,
+      "sha256": "77597c0ddc0c723ff81b075a6476ffb0788081d4943e04d750b498da53ce9b4d"
+    },
+    "runtime_fake_transport_passed": 79,
+    "runtime_script_behavioral_cases": 0,
+    "runtime_script_static_passed": 3,
+    "session_id": "sess_8f787026-8522-4ffc-a8cb-f8017629bc35",
+    "temporary_postgresql_passed": 19,
+    "window_utc": [
+      "2026-11-24T05:19:37Z",
+      "2026-11-24T05:20:23Z"
+    ]
+  },
+  "full_main_pytest": {
+    "partitioned_continuation": {
+      "groups": 31,
+      "imported_groups": 0,
+      "manifest_sha256": "82c4a7e7c09de437a404ba479e2d0eb986023fcc18ff2681016a7162f614a891",
+      "observed_utc": "2026-11-25T01:12:50+00:00",
+      "prior_dispatch_bash_tool_calls": 0,
+      "prior_dispatch_http_status": 429,
+      "session_id": "sess_1538a33f-539b-4486-a3af-403936562bbf",
+      "status_at_archive": "waiting_for_serial_lock",
+      "tracked_test_files": 3339,
+      "turn_id": "turn_96ed4bea-22d7-4f56-94e8-79d7f3070e57"
+    },
+    "post_restart_attempt": {
+      "exit_code": 1,
+      "retained_receipt": {
+        "bytes": 582,
+        "sha256": "3274d9bf43fd88d99997b1e7ca65cefc9e46f1aaf8b2db2ab3d12d3380009a78"
+      },
+      "runner_timeout_seconds": 1200,
+      "terminal_row": {
+        "category": "TimeoutExpired",
+        "diagnostic": null,
+        "stage": "fixture_error",
+        "status": "failed",
+        "utc": "2026-11-25T01:03:49+00:00"
+      }
+    },
+    "prior_attempts": [
+      {
+        "completion_receipt": false,
+        "detail": "isolated Python fixture import failed before pytest"
+      },
+      {
+        "completion_receipt": false,
+        "detail": "fixture used the predecessor path count and stopped before pytest"
+      },
+      {
+        "completed_preflight": "exact main tree and locked Python environment",
+        "completion_receipt": false,
+        "detail": "host restarted before a terminal result was recorded",
+        "host_restart_utc": "2026-11-24T23:49:13Z",
+        "preflight_utc": "2026-11-24T23:24:42Z"
+      }
+    ],
+    "python": "3.12.3",
+    "session_id": "sess_1538a33f-539b-4486-a3af-403936562bbf",
+    "status": "pending_partitioned_completion"
+  },
+  "hosted_ci": {
+    "current_checkout_and_stage_gate": "pending",
+    "hosted_windows_powershell_5_1_offline": "pending",
+    "status": "pending",
+    "workflows": [
+      "Offline verification",
+      "Native project PostgreSQL",
+      "Research paper bridge"
+    ]
+  },
+  "main_source": {
+    "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "commit": "a9176cc255054ebd74046bdac8fef0d98e715f6e",
+    "tree": "a084981eabd4aa8fa65794de7891da87c71235be"
+  },
+  "offline_reconstruction": {
+    "ephemeral_ref_removed": true,
+    "local_ref_runtime_tree": "matched",
+    "main_commits_checked": 3,
+    "main_merge_tree": "matched",
+    "main_path_count": 30,
+    "missing_ref_verifier_exit": 1,
+    "prior_fixture_failures_before_tests": [
+      "isolated Python sibling import",
+      "incorrect predecessor path count"
+    ],
+    "runtime_history_in_main_pr": false,
+    "session_id": "sess_c94f90d6-9c2e-4e62-af3d-24e49a586323",
+    "window_utc": [
+      "2026-11-24T23:24:36Z",
+      "2026-11-24T23:24:47Z"
+    ]
+  },
+  "prior_archive_review": {
+    "commit": "a4f3b313e02aa65c4da27d4556f51f8b913241c7",
+    "session_id": "sess_35771157-e562-4cd3-97c6-7c62b8fb10e2",
+    "turn_id": "turn_99580308-c519-4a8e-b677-5ef58ec54531",
+    "verdict": "PASS"
+  },
+  "prior_runtime_archive_review": {
+    "archive_commit": "a4f3b313e02aa65c4da27d4556f51f8b913241c7",
+    "finding": "Script digest scope needed a per-review record.",
+    "session_id": "sess_99e9fe00-ea92-475f-b439-5c7f58a88c38",
+    "supplied_archive_blob": {
+      "bytes": 1395,
+      "sha256": "3ef86dded7975dec2c52a409a8358c295afa60fc76acaa160bda0caa9542461d"
+    },
+    "supplied_archive_bytes_match_committed_blob": true,
+    "turn_id": "turn_e4976037-63e4-42f1-b474-b92d934b6977",
+    "verdict": "FAIL"
+  },
+  "production": {
+    "automatic_business_delivery": "pending independent evidence",
+    "earlier_authorized_placement": "stopped by Restricted before file registration",
+    "historical_personal_skill_receipt": "owner confirmed",
+    "target_acceptance": "pending"
+  },
+  "runtime_release": {
+    "commit": "97e9cbcbf510de0f10606ec06380376d627bff50",
+    "designated_ref": "refs/heads/releases/fx49",
+    "parent": "bcce1b17f7263ab89859febfcb56188c295ab371",
+    "script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+    "tree": "1bbf62faec2b0415599da5a4b4243b8da2bf4928"
+  },
+  "version": 1,
+  "visibility_and_protection": {
+    "active_rules_for_designated_ref": 0,
+    "anonymous_classic_query_http_status": 401,
+    "anonymous_git_session_id": "sess_f837c879-3730-44e3-ade3-4ad184683368",
+    "anonymous_preservation_refs": 4,
+    "anonymous_ref_observation_utc": "2026-11-24T23:24:56Z",
+    "authorized_classic_query_confirmed": {
+      "another_page": false,
+      "rules": 0,
+      "source": "coordinator"
+    },
+    "baseline_advertised": true,
+    "changed_paths_prescanned": 15,
+    "designated_release_ref_advertised": false,
+    "existing_release_channel_observation": {
+      "anonymous_commit_head_http": {
+        "baseline": 200,
+        "release": 404
+      },
+      "git_tags": {
+        "advertised_tags": 3,
+        "exit_code": 0,
+        "tags_pointing_at_r": 0
+      },
+      "github_release_catalog": {
+        "catalog_complete": true,
+        "http_status": 200,
+        "immutable_releases": 0,
+        "immutable_releases_at_r": 0,
+        "listed_releases": 2
+      },
+      "session_id": "sess_4ff1921e-76a3-4258-a50f-eb0d6d7a6568"
+    },
+    "new_objects_above_baseline": {
+      "blobs": 15,
+      "commits": 1,
+      "trees": 9
+    },
+    "object_scope_session_id": "sess_5a5f5252-5408-4e5a-b6e9-39a4f045dc17",
+    "protected_publication": "pending",
+    "rules_observation_utc": "2026-11-24T23:28:21Z",
+    "rules_query_session_id": "sess_eaee887f-9b03-48bd-8116-2bc5a29d065d",
+    "rulesets_including_parents": 0
+  }
+}
