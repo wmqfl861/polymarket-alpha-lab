@@ -36,6 +36,26 @@
       "sha256": "3f48d38821f766d7ed97dad3157a366fe7f0512f35da2c3eac19bb801e1628a0"
     },
     {
+      "path": "evidence/integrated-code-review.json",
+      "bytes": 5081,
+      "sha256": "f6e7c3510e92647feaf98a09934d1d4e993af4016e09e887edb126f0cbcff21f"
+    },
+    {
+      "path": "evidence/integrated-path-objects.json",
+      "bytes": 22333,
+      "sha256": "909b93268bacb772f1aba76ca8fa41d6fd45b672f82ff92bf173468a4c7a8499"
+    },
+    {
+      "path": "evidence/integrated-static-results.json",
+      "bytes": 2472,
+      "sha256": "98affe046a8b1ef7dba09ba1837e5b9636022fa045ae1995459050b8c9569339"
+    },
+    {
+      "path": "evidence/integrated-tracked-attribution.json",
+      "bytes": 2168,
+      "sha256": "49cf2251c81de3d0aa5c172f7c57355dd59ec82221c9a6eb2700fade498c4350"
+    },
+    {
       "path": "evidence/native-prepared-scan.json",
       "bytes": 1484,
       "sha256": "89b27107ef93a2bd869ff80a652025dccf898b08a75c76e9b6cfa795d7dd2fec"

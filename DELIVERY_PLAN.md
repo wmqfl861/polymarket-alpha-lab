@@ -4706,15 +4706,23 @@ FX-54 基线不含 `docs/paper-sim/runtime/README.md`。FX-48 草稿 `bcce1b17f7
 
 ### 84.4 FX-40 受管市场准备、恢复与历史对照
 
-FX-47 经 #128 合入的 `a7dbd8a3` 是工程开工父。源码 `11d24be6` 在原审的两项阻塞问题修正后获同一审者签收。原生 PostgreSQL 工作流的收集清单包含新增套件。准备记录和同一批次里的旧式市场包均使用组合全部未结持仓的方向做相关性核对，跨赛事的同方向持仓同样参与判断。#130 整合预检逐件核对了 23 个源码、测试和工作流文件的 Git 对象。[签核计划](docs/paper-sim/design/fx-40/plan-v3.md) · [首审](docs/paper-sim/design/fx-40/evidence/source-review-first.json) · [原审复核](docs/paper-sim/design/fx-40/evidence/source-review-pass.json) · [整合核对](docs/paper-sim/design/fx-40/evidence/source-integration.json)
+FX-47 经 #128 合入的 `a7dbd8a3` 是工程开工父。源码 `11d24be6` 在原审的两项阻塞问题修正后获同一审者签收。原生 PostgreSQL 工作流的收集清单包含新增套件。准备记录和同一批次里的旧式市场包均使用组合全部未结持仓的方向做相关性核对，跨赛事的同方向持仓同样参与判断。在 #130 已合入主线后，整合候选 `fd6db31c` 逐件核对了 23 个源码、测试和工作流文件，工程头与整合候选的 Git 对象全部相同。[签核计划](docs/paper-sim/design/fx-40/plan-v3.md) · [首审](docs/paper-sim/design/fx-40/evidence/source-review-first.json) · [原审复核](docs/paper-sim/design/fx-40/evidence/source-review-pass.json) · [整合预检](docs/paper-sim/design/fx-40/evidence/source-integration.json) · [两父提交的差异及 23 组对象](docs/paper-sim/design/fx-40/evidence/integrated-path-objects.json)
 
 `tools/d1_compare.py capture-inputs --prepare-config` 随发现批次封存准备输入，并返回输入集摘要。受管 `run-scan` 在 `PREPARED` 首次绑定操作键、配置、输入集和当时读到的规格。重试读取首次绑定，检查业务事务和恢复回执。新操作另取当前注册表。原生用例验证了原扫描恢复后连续经过 B2 取价和 B3 结算，以及新操作读到新登记的候选规格。现役出价和晋级切换仍按 FX-39 的分步安排办理。若发现批次先由旧入口封存，复用时缺少模型材料的目标按缺项记录。[原生准备及恢复用例回执](docs/paper-sim/design/fx-40/evidence/native-prepared-scan.json)
 
 验收分别记录受管数据库中执行过的路径和源码核对。隔离 PostgreSQL 的准备套件执行 9 项。共享验证执行 245 项，覆盖四个原生存储套件、重放和 D1 事件日志，共六个测试文件。普通专项执行 749 项，5 项需要启用原生数据库。已对比 v2 批次清单及原始响应的字节，成功回执全文尚缺单独的字节对照。各公开数据适配器的先登记再解析顺序由原审逐处核对，传输层另有登记失败时停止解析的测试。静态可达性检查从 2,442 个不可达模块降为 2,439 个。[逐模块原生及专项目录回执](docs/paper-sim/design/fx-40/evidence/engineering-focused-results.json) · [原审覆盖说明](docs/paper-sim/design/fx-40/evidence/source-review-pass.json) · [静态可达性](docs/paper-sim/design/fx-40/evidence/reachability.json)
 
+按同一批次分别统计足球和加密的可归属候选。候选分母包括有报价的目标以及能从原始市场、买入方向与登记谱系确定身份的构造失败目标。前者沿用 B1 的报价和闸门结果，后者逐个持久化为 `CONSTRUCTION_FAILED`，保留失败原因和重放依据。无法归属的发现另列在该批次的覆盖清单，按出现位置或排除原因计数。操作级完整性错误由操作回执追踪。正式运行的分母、各结论的行数以及覆盖观察数须从同一封存批次回读。
+
+在隔离 PostgreSQL 夹具中，足球一批落库 4 个候选，每个都通过重放。整数盘口的构造失败保留 `construction_value_error`。加密盘口簿龄政策缺失的批次落库 2 个候选，两行都保留 `d1_capture_book_age_policy_unregistered` 并通过重放。市场身份无法绑定的夹具读回 1 个发现位置，候选数为 0。正式运行的覆盖率仍待同批观测。[原生覆盖用例](tests/test_papersim_prepared_scan_native.py) · [候选行及覆盖清单](src/polymarket_alpha_lab/papersim/prepared_scan.py)
+
+原审保留了五项工程限制。跨联赛足球缺少通往构造器的材料生产路径，桥接、投影和新闻文档尚缺生产方。不同快照种类可能出现相同的空数组内容摘要。现存业务数据不足以单独证明提交先后。B2 的区间核对比 B0 宽。旧式受管扫描在组装期间一直持有组合锁。早期隔离库中由 `827dd28a` 或 `812e5f41` 写入的准备绑定不能由 `11d24be6` 恢复，本节点的原生回执均使用本轮的隔离库。[原审复核](docs/paper-sim/design/fx-40/evidence/source-review-pass.json)
+
 原始材料按四个冻结夹具分别归集。七个 Git 提交和首批 19 份本地归档均有清点回执，后续对足球另核七份材料。四场 r23 足球在三份缩略档中各有明确的市场编号。两侧标识逐位一致，第一侧 Over 的均价、成交标记和深度逐场匹配冻结夹具，也取到了盘口来源时钟。四案完整请求的历史验收仍缺受管快照或独立保管依据。r23 足球及 r24 #48 还需逐档卖盘和逐请求收妥时刻，加密触价案例还需覆盖观察时段的报价及原始请求，HOF–LYO 需能绑定目标市场与当时桥接政策的拒绝证据。[Git 清点](docs/paper-sim/design/fx-40/evidence/seven-tree-inventory.json) · [逐件归档清点](docs/paper-sim/design/fx-40/evidence/historical-input-custody.json) · [四场买入侧回读](docs/paper-sim/design/fx-40/evidence/soccer-projections.json)
 
 工程头的原始全树扫描有 9 项待审记录。原执行者按 Git 对象及表达式核对，4 项是已有重放协议标记，2 项是市场参数的变量赋值，3 项是隔离夹具的市场侧标识，未决为 0。工程头 `11d24be6` 的离线全套执行完毕，44,057 项通过，473 项跳过，20 条警告，退出码为 0。[工程头全套回执](docs/paper-sim/design/fx-40/evidence/engineering-full-results.json)
+
+在 #130 上的整合候选 `fd6db31c`，全树敏感内容扫描覆盖 7,902 个不同 Git 对象，原始退出码为 1。11 项命中全部已归因，其中 9 项与工程头的对象及历史相同，另 2 项来自登记文件中原有且逐字相同的行。新增行扫描对 #130 未报命中。两份审核包脚本分别用 #130 和审计锚运行。相对 #130，移除测试、断言减少、新增跳过和新增预期失败均为 0，也没有新出现地址的文件。相对审计锚，帮助测试的那一处历史改名已随 #130 交接。[全树逐项核对](docs/paper-sim/design/fx-40/evidence/integrated-tracked-attribution.json) · [扫描与索引回执](docs/paper-sim/design/fx-40/evidence/integrated-static-results.json)
 
 该节点的完整测试、阶段复审和三条 CI 以合入 PR 绑定的检出为准。[逐项处置](docs/paper-sim/design/fx-40/evidence/source-scan-disposition.json) · [十二份计划及历次判词等本节点原件清单](docs/paper-sim/design/fx-40/MANIFEST.json)
 

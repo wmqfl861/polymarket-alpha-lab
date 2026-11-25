@@ -1,0 +1,63 @@
+{
+  "attributed": 11,
+  "base": "093063000a704727f243c02a7b420c49afa37027",
+  "head": "fd6db31ce469d16722cfee69a92ead1c1c1fab1f",
+  "ledger_line_origins": [
+    {
+      "baseline_blob": "37b822838cf75dbf6b86ac9f8e632f56cfee5933",
+      "blob": "d5f1991e897aee11d7e1dc30b211795b32071efb",
+      "count": 1,
+      "line_bytes_and_git_origin_match": true,
+      "original_line_locations": [
+        [
+          "7157fb486322f7fe335aadcc8cd7d1ccc75e5f61",
+          2724
+        ]
+      ],
+      "path": "DELIVERY_PLAN.md",
+      "revisions": [
+        "fd6db31ce469d16722cfee69a92ead1c1c1fab1f"
+      ],
+      "rule": "possible_personal_email",
+      "section": "target"
+    },
+    {
+      "baseline_blob": "37b822838cf75dbf6b86ac9f8e632f56cfee5933",
+      "blob": "a8b5ef4f31eaeb901132b6b13b2b36aed90f8d76",
+      "count": 1,
+      "line_bytes_and_git_origin_match": true,
+      "original_line_locations": [
+        [
+          "7157fb486322f7fe335aadcc8cd7d1ccc75e5f61",
+          2724
+        ]
+      ],
+      "path": "DELIVERY_PLAN.md",
+      "revisions": [
+        "11d24be68fea3d16d334284a6ca0175a6e25a386",
+        "49172979d4e4cb69dc02f486cbca85a3502f4dd8",
+        "812e5f41c17261ac386085cbe96d434ec4b911f1",
+        "827dd28a5da917b2c574bec741d4bdf47d24b8c2",
+        "a06d8894822ef3a7fc2a89ad27bc1a9b6ec8b626",
+        "b99d9996263fa8e246110b92a31cf8fe755e40f0",
+        "cf5a2b545c060214322861e28c01a2577a83cc7d",
+        "d7f2f92bc21eeca91a59199134725987b6fc734b",
+        "e057b1d6af590f7c8a71b1439ef9053f85286ebb",
+        "efc24364e4950299af937b3f892968413bd4fae9"
+      ],
+      "rule": "possible_personal_email",
+      "section": "history_only"
+    }
+  ],
+  "previously_attributed_source_findings": 9,
+  "raw_exit_code": 1,
+  "raw_receipt_sha256": "42216a18b5e44b950e77a8edab404e8b8bc2b8b4e471e6fa0bc4d19fb0794281",
+  "scanned_unique_blobs": 7902,
+  "source_blob_and_history_matched": [
+    "src/polymarket_alpha_lab/replay.py",
+    "tests/test_papersim_prepare.py"
+  ],
+  "source_semantic_attribution_sha256": "f7c6d61d002021f398b53a86a28ad45ee38bc166ca4a6f4d370f0bc99bec2c68",
+  "tree": "b01c6dc4da7dfc0265a5c96a09993a084f6e95b1",
+  "unresolved": 0
+}
