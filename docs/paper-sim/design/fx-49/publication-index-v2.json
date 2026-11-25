@@ -8,10 +8,10 @@
       "sha256": "30fd22cd82fac43f14f7e168aaba45af9d0727c7ba1721f76dbefb191406d20f"
     },
     ".github/workflows/native-postgres.yml": {
-      "blob": "8c66af0124cfab2d084f4e6bd3c5252edb3a52fb",
-      "bytes": 32138,
+      "blob": "e7f27e8387bd9a29e3d0dd014e38709a5b8be324",
+      "bytes": 32199,
       "mode": "100644",
-      "sha256": "69b86cd0e6d06c9df2b6f6f0ab8f58544a117840712270586dcc8ad09cd76f44"
+      "sha256": "7cdc98f906aacdebf2657e1ae418464e05edf42be3950e8711831a51ddab1450"
     },
     ".github/workflows/offline-verification.yml": {
       "blob": "5f97c6766ddbc6e9262996154c78f9c34ffa24cb",
@@ -200,10 +200,10 @@
       "sha256": "bb4b366ce4b212ee825ef38d6f8b80b010aba67d74b608e06c4608132af666c2"
     },
     "scripts/verify_fx49_publication.py": {
-      "blob": "beaa081ca4365765b845c3b37353aceaaf8fdf4c",
-      "bytes": 60844,
+      "blob": "eb22b0272e6eee1b6d36605d251d18f1bd981cc0",
+      "bytes": 65090,
       "mode": "100644",
-      "sha256": "eef0d509fb568609ca9c35c60aac21d53314e17cfa63728abefbbc941e8bc823"
+      "sha256": "e3c0c52be1ce783a952aa754f4720f13a240bdebd5742c2a789de5da81137d54"
     },
     "tests/test_fx49_weixin_delivery.py": {
       "blob": "2de139130c9fa90c4a9da160d86d23a47ee24db6",
@@ -215,11 +215,14 @@
   "later_receipts": [
     "docs/paper-sim/design/fx-49/2026-11-25-owner-fixed-entry-observation.json",
     "docs/paper-sim/design/fx-49/publication-code-review-v2.json",
+    "docs/paper-sim/design/fx-49/publication-code-review-v3.json",
     "docs/paper-sim/design/fx-49/publication-independent-test-v2.json",
+    "docs/paper-sim/design/fx-49/publication-independent-test-v3.json",
     "docs/paper-sim/design/fx-49/publication-merge-v2.json",
-    "docs/paper-sim/design/fx-49/publication-stage-review-v2.json"
+    "docs/paper-sim/design/fx-49/publication-stage-review-v2.json",
+    "docs/paper-sim/design/fx-49/publication-stage-review-v3.json"
   ],
   "plan_sha256": "343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323",
   "schema_version": 2,
-  "source": "2eec6abd8ffca585ec7842ec1f37621edd43890a"
+  "source": "c54a56495443c1f589c762c3bc9b20d6ada2741c"
 }
