@@ -300,7 +300,7 @@ class _Capture:
         for attempt in requests:
             if attempt.fetched_at is not None:
                 entries.append(journal.capture(attempt.url, attempt.fetched_at, attempt.request_meta, attempt.body))
-            rows.append({"page": attempt.page, "request_meta": attempt.request_meta,
+            rows.append({"sequence": attempt.sequence, "page": attempt.page, "request_meta": attempt.request_meta,
                          "content_sha256": inputs._digest(attempt.body) if attempt.fetched_at is not None else None})
         targets, _ = _targets(self.config, {"markets": list(markets.values()), "requests": rows}, entries)
         cache = {}
