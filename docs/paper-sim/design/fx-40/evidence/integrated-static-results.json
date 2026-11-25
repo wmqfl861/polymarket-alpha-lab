@@ -1,0 +1,62 @@
+{
+  "audit_anchor": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "audit_scripts": {
+    "audit-anchor-added_line_sensitive_scan.txt": {
+      "output_lines": 4,
+      "stdout_sha256": "549e016918b2230fb03034a11d2fa982b0ac56d0860a3faca5cd6b930357d3f1",
+      "summary": [
+        "email: 6",
+        "home_path_generic: 2",
+        "wechat_id: 23"
+      ]
+    },
+    "audit-anchor-address_occurrence_diff.txt": {
+      "new_address_bearing_files": 0,
+      "output_lines": 1,
+      "stdout_sha256": "cc76622fae3bbe9f7d2e3c5bd28e630595632f8c7a73380adbcad1ae810ef936"
+    },
+    "audit-anchor-test_weakening_scan.txt": {
+      "output_lines": 7,
+      "stdout_sha256": "4d1f7f61fd654ae6bd9a20754d0bcb7f4b6cf61e6769f2b6b8207789c76c44ee",
+      "totals": "totals: removed tests=1 tests with fewer checks=0 new skip markers=0 new xfail markers=0"
+    },
+    "opening-added_line_sensitive_scan.txt": {
+      "output_lines": 2,
+      "stdout_sha256": "cab1a4ee13edaac5be4799ce6047a7db0d4677c97b7f4988112c5c2448de9672",
+      "summary": [
+        "(no matches)"
+      ]
+    },
+    "opening-address_occurrence_diff.txt": {
+      "new_address_bearing_files": 0,
+      "output_lines": 1,
+      "stdout_sha256": "afca2f7e9f0cb27651f3b65f8c77c6259175dadf74e269545267dbf6bf4b9a40"
+    },
+    "opening-test_weakening_scan.txt": {
+      "output_lines": 5,
+      "stdout_sha256": "d916e31d121c5c5596afd2ab6e4a95d0d25a8f9169dc7dffd799c4b2bf7a93ef",
+      "totals": "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0"
+    }
+  },
+  "base": "093063000a704727f243c02a7b420c49afa37027",
+  "codegraph": {
+    "candidate": "checkout",
+    "changed_git_blobs_sha256": "cd4e13fa8cdd0334fea45e062fadb408829bf6a5715d77afa6e36a588e643b68",
+    "changed_indexed_files": 23,
+    "changed_unindexed_files": 145,
+    "codegraph_version": "1.6.3",
+    "commit": "fd6db31ce469d16722cfee69a92ead1c1c1fab1f",
+    "files_with_parse_errors": 0,
+    "indexed_content_sha256": "98c992d51f55f2940faa654ede29068f7053becce7324386347e801a94b638df",
+    "reindex_recommended": false,
+    "removed_indexed_files": 0,
+    "result": "pass",
+    "source_index_commit": "631259a22a50ac5d06be7512ed6bbc32c87e3fbf",
+    "tree": "b01c6dc4da7dfc0265a5c96a09993a084f6e95b1",
+    "verified_indexed_files": 6776
+  },
+  "integrated": "fd6db31ce469d16722cfee69a92ead1c1c1fab1f",
+  "source_reachability_new_modules": 0,
+  "static_exit": 0,
+  "tree": "b01c6dc4da7dfc0265a5c96a09993a084f6e95b1"
+}

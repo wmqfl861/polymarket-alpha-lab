@@ -610,6 +610,7 @@ def _d1_buy_book(conn, candidate: dict, decision: dict, token: str, entered_at) 
 
 def _d1_buy_binding(conn, entry: dict, candidate: dict | None) -> dict:
     from polymarket_alpha_lab import replay
+    from polymarket_alpha_lab.papersim import store_psycopg
 
     _d1_require(candidate is not None and candidate["candidate_id"] == entry["candidate_id"]
                 and candidate["scan_id"] == entry["scan_id"] and candidate["team"] == entry["team"]
@@ -617,14 +618,7 @@ def _d1_buy_binding(conn, entry: dict, candidate: dict | None) -> dict:
                 and candidate["market_id"] and candidate["condition_id"]
                 and MarketIdentity.from_row(candidate) == MarketIdentity.from_row(entry),
                 "d1_settlement_candidate_binding_missing")
-    receipts = {row["phase"]: row for row in candidate["scan_receipts"]}
-    started, succeeded = receipts.get("STARTED"), receipts.get("SUCCEEDED")
-    _d1_require(started is not None and succeeded is not None
-                and started["attempt"] == succeeded["attempt"]
-                and started["code_commit"] == succeeded["code_commit"] == candidate["scan_code_commit"]
-                and succeeded["scan_id"] == candidate["scan_id"]
-                and candidate["scan_started_at"] <= started["occurred_at"]
-                <= candidate["scan_finished_at"] <= succeeded["occurred_at"],
+    _d1_require(store_psycopg.d1_scan_receipt_valid(candidate),
                 "d1_settlement_scan_receipt_missing")
 
     yes, no = candidate["yes_token_id"], candidate["no_token_id"]

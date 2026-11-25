@@ -1,0 +1,212 @@
+{
+  "audit_anchor": "093063000a704727f243c02a7b420c49afa37027",
+  "cases": {
+    "BTC-65k": {
+      "asset": "BTC",
+      "barrier": 65000,
+      "later_hourly_aggregate": {
+        "all_overlapping_lows_above_barrier": true,
+        "bar_containing_cutoff_low_above_barrier": true,
+        "bar_count_fully_contained": 60,
+        "bar_count_overlapping": 61,
+        "covers_creation_through_scan_clock": false,
+        "first_open_utc": "2026-10-24T00:00:00+00:00",
+        "fully_contained_lows_at_or_below_barrier": 0,
+        "interval_seconds": 3600,
+        "last_exclusive_utc": "2026-10-26T13:00:00+00:00",
+        "successive_starts_exactly_one_period": true
+      },
+      "later_six_hour_aggregate": {
+        "all_overlapping_lows_above_barrier": true,
+        "bar_containing_cutoff_low_above_barrier": true,
+        "bar_count_fully_contained": 249,
+        "bar_count_overlapping": 251,
+        "covers_creation_through_scan_clock": true,
+        "first_open_utc": "2026-08-25T00:00:00+00:00",
+        "fully_contained_lows_at_or_below_barrier": 0,
+        "interval_seconds": 21600,
+        "last_exclusive_utc": "2026-10-26T18:00:00+00:00",
+        "successive_starts_exactly_one_period": true
+      },
+      "named_public_market_binding": {
+        "later_refresh_occurrences": 1,
+        "later_rule_description_equal": true,
+        "r19_refresh_fields_equal": {
+          "createdAt": true,
+          "description": true,
+          "endDate": true,
+          "question": true,
+          "resolutionSource": true,
+          "startDate": true
+        },
+        "unique_r19_held_market": true
+      },
+      "terms": {
+        "created_at": "2026-08-25T03:42:58.949701Z",
+        "listed_start_at": "2026-08-25T03:43:12Z",
+        "low_rule": "equal or below for downward threshold",
+        "origin_rule": "from market creation",
+        "pair": "BTC/USDT",
+        "provider": "Binance",
+        "reported_market_end": "2027-01-01T05:00:00Z",
+        "resolution_granularity": "one minute",
+        "terms_text_sha256": "8c586a8dc3bdf014dc575f9e2ae0dc8d296849550224d1504b52554299771ceb"
+      }
+    },
+    "ETH-2000": {
+      "asset": "ETH",
+      "barrier": 2000,
+      "later_hourly_aggregate": {
+        "all_overlapping_lows_above_barrier": true,
+        "bar_containing_cutoff_low_above_barrier": true,
+        "bar_count_fully_contained": 60,
+        "bar_count_overlapping": 61,
+        "covers_creation_through_scan_clock": false,
+        "first_open_utc": "2026-10-24T00:00:00+00:00",
+        "fully_contained_lows_at_or_below_barrier": 0,
+        "interval_seconds": 3600,
+        "last_exclusive_utc": "2026-10-26T13:00:00+00:00",
+        "successive_starts_exactly_one_period": true
+      },
+      "later_six_hour_aggregate": {
+        "all_overlapping_lows_above_barrier": true,
+        "bar_containing_cutoff_low_above_barrier": true,
+        "bar_count_fully_contained": 249,
+        "bar_count_overlapping": 251,
+        "covers_creation_through_scan_clock": true,
+        "first_open_utc": "2026-08-25T00:00:00+00:00",
+        "fully_contained_lows_at_or_below_barrier": 0,
+        "interval_seconds": 21600,
+        "last_exclusive_utc": "2026-10-26T18:00:00+00:00",
+        "successive_starts_exactly_one_period": true
+      },
+      "named_public_market_binding": {
+        "later_refresh_occurrences": 1,
+        "later_rule_description_equal": true,
+        "r19_refresh_fields_equal": {
+          "createdAt": true,
+          "description": true,
+          "endDate": true,
+          "question": true,
+          "resolutionSource": true,
+          "startDate": true
+        },
+        "unique_r19_held_market": true
+      },
+      "terms": {
+        "created_at": "2026-08-25T03:53:37.721336Z",
+        "listed_start_at": "2026-08-25T03:53:50Z",
+        "low_rule": "equal or below for downward threshold",
+        "origin_rule": "from market creation",
+        "pair": "ETH/USDT",
+        "provider": "Binance",
+        "reported_market_end": "2027-01-01T05:00:00Z",
+        "resolution_granularity": "one minute",
+        "terms_text_sha256": "27cd3a692945cc68112de9c927b9156ed8df07652c68e6b247083004c61a98ce"
+      }
+    },
+    "ETH-2250": {
+      "asset": "ETH",
+      "barrier": 2250,
+      "later_hourly_aggregate": {
+        "all_overlapping_lows_above_barrier": true,
+        "bar_containing_cutoff_low_above_barrier": true,
+        "bar_count_fully_contained": 60,
+        "bar_count_overlapping": 61,
+        "covers_creation_through_scan_clock": false,
+        "first_open_utc": "2026-10-24T00:00:00+00:00",
+        "fully_contained_lows_at_or_below_barrier": 0,
+        "interval_seconds": 3600,
+        "last_exclusive_utc": "2026-10-26T13:00:00+00:00",
+        "successive_starts_exactly_one_period": true
+      },
+      "later_six_hour_aggregate": {
+        "all_overlapping_lows_above_barrier": true,
+        "bar_containing_cutoff_low_above_barrier": true,
+        "bar_count_fully_contained": 249,
+        "bar_count_overlapping": 251,
+        "covers_creation_through_scan_clock": true,
+        "first_open_utc": "2026-08-25T00:00:00+00:00",
+        "fully_contained_lows_at_or_below_barrier": 0,
+        "interval_seconds": 21600,
+        "last_exclusive_utc": "2026-10-26T18:00:00+00:00",
+        "successive_starts_exactly_one_period": true
+      },
+      "named_public_market_binding": {
+        "later_refresh_occurrences": 0,
+        "later_rule_description_equal": null,
+        "r19_refresh_fields_equal": {
+          "createdAt": true,
+          "description": true,
+          "endDate": true,
+          "question": true,
+          "resolutionSource": true,
+          "startDate": true
+        },
+        "unique_r19_held_market": true
+      },
+      "terms": {
+        "created_at": "2026-08-25T03:53:37.814833Z",
+        "listed_start_at": "2026-08-25T03:53:49Z",
+        "low_rule": "equal or below for downward threshold",
+        "origin_rule": "from market creation",
+        "pair": "ETH/USDT",
+        "provider": "Binance",
+        "reported_market_end": "2027-01-01T05:00:00Z",
+        "resolution_granularity": "one minute",
+        "terms_text_sha256": "27cd3a692945cc68112de9c927b9156ed8df07652c68e6b247083004c61a98ce"
+      }
+    }
+  },
+  "files": {
+    "round19/raw/crypto_scan.json": {
+      "bytes": 17893,
+      "sha256": "55a7c14cce56d3d6c51c3be42d01864306f3cfb1c72f6dc065ef8f4bbb389ebc"
+    },
+    "round19/raw/market_refresh.json": {
+      "bytes": 333209,
+      "sha256": "cd63b5b7aca82b149ee64e205b946b5af74418e2a5ed801e87f592f1d6661394"
+    },
+    "round19/raw/position_markets.json": {
+      "bytes": 12228,
+      "sha256": "c364e9d16430b49815a59d1e446986276e7cfd484ed8322338abce512ea7e827"
+    },
+    "round44/fetch44.py": {
+      "bytes": 7168,
+      "matches_public_mirrored_producer": true,
+      "sha256": "881bc4a0eee9ab83d2cebea5cb640e4efbdf597204c063c4375c91295e6a118d"
+    },
+    "round44/fetch44b.py": {
+      "bytes": 3587,
+      "matches_public_mirrored_producer": true,
+      "sha256": "fefbe53a36a0591e4074db8a74f27ae84afa40e43dc812515b6911b3de34db79"
+    },
+    "round44/raw/btc_1h_oct24.json": {
+      "bytes": 20802,
+      "sha256": "805e2fc62b25fb5793fd0767ef7b0e6ea0bb400e9ad8f69c9d59ced3348859e7"
+    },
+    "round44/raw/btc_candles.json": {
+      "bytes": 34031,
+      "sha256": "04c320c59584f2899a09c4d86abe0ed9cae2a65b8d938d002300dcbb4e02eb74"
+    },
+    "round44/raw/eth_1h_oct24.json": {
+      "bytes": 19365,
+      "sha256": "99fa9269a4b5ca4fd19c45935a69e007cc77b10f22aa9011e0f1aa90bd465bab"
+    },
+    "round44/raw/eth_candles.json": {
+      "bytes": 32302,
+      "sha256": "cd9fe67256d3e7b676d40bfd32f7d7e99fe6b3cc579d45867d065b81a824a5ac"
+    },
+    "round44/raw/market_refresh_dec31.json": {
+      "bytes": 328771,
+      "sha256": "f8fb1820ff4b4ea02614279718a695935b221407eb04f02cbfb2b69d20bc1cc3"
+    }
+  },
+  "historical_input_acceptance": "OPEN",
+  "independent_byte_custody_verified": false,
+  "later_refresh_collection_clock": "2026-11-09T07:18:17+00:00",
+  "optimizer_invocations": 0,
+  "projected_bar_data_scope": "Later collected transformed aggregates may corroborate ranges only. They are not contemporaneous archive receipts or every original one-minute input. The scan report timestamp is a comparison clock, not proof of the historical decision cutoff.",
+  "r19_refresh_collection_clock": "2026-10-26T12:47:05.617685+00:00",
+  "r19_report_clock": "2026-10-26T12:51:40+00:00"
+}

@@ -113,7 +113,7 @@ _EVIDENCE = list[FetchEvidence]
 _Sink = Callable[[str, bytes], None]
 
 
-def _make_sink(source_kind: str, evidence: _EVIDENCE) -> _Sink:
+def _make_sink(source_kind: str, evidence: _EVIDENCE, register_response=None) -> _Sink:
     """Capture one :class:`FetchEvidence` per successful bounded read.
 
     ``fetched_at`` is stamped at observation time; ESPN/FotMob payloads
@@ -122,14 +122,15 @@ def _make_sink(source_kind: str, evidence: _EVIDENCE) -> _Sink:
     """
 
     def sink(url: str, raw_bytes: bytes) -> None:
-        evidence.append(
-            FetchEvidence.from_bytes(
-                source_kind=source_kind,
-                source_reference=url,
-                fetched_at=datetime.now(timezone.utc),
-                raw_bytes=raw_bytes,
-            )
+        observation = FetchEvidence.from_bytes(
+            source_kind=source_kind,
+            source_reference=url,
+            fetched_at=datetime.now(timezone.utc),
+            raw_bytes=raw_bytes,
         )
+        if register_response is not None:
+            register_response(observation)
+        evidence.append(observation)
 
     return sink
 
@@ -193,6 +194,7 @@ def fetch_fotmob_inputs(
     *,
     budget: FetchBudget,
     allow_public_fetch: bool = DEFAULT_ALLOW_PUBLIC_FETCH,
+    register_response=None,
 ) -> AdapterResult:
     """Fetch one FotMob league-season bundle and transform it (bounded).
 
@@ -288,7 +290,7 @@ def fetch_fotmob_inputs(
                     )
                 wanted.add(mid)
 
-        sink = _make_sink(SOURCE_KIND_FOTMOB, evidence)
+        sink = _make_sink(SOURCE_KIND_FOTMOB, evidence, register_response)
         fixtures_payload = fotmob.fetch_fotmob_league(
             league_ref,
             season_wire,

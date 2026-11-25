@@ -1,0 +1,12 @@
+{
+  "exit": 0,
+  "failing_nodes": [],
+  "head": "1286922d7da21625bc1c683e0d4488821d604fd2",
+  "output_bytes": 85937,
+  "output_sha256": "13e8ec93f2fbcc549a33d589eacf65d7c619e5e82edfc7dc11c8267ab8f253f2",
+  "seconds": 3341.816,
+  "summaries": [
+    "44016 passed, 464 skipped, 20 warnings in 3312.00s (0:55:11)"
+  ],
+  "tree": "00cfbeaa8a92acd30a1ab708890d7b872049602f"
+}
