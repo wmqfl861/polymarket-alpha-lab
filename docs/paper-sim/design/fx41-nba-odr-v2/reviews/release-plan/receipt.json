@@ -1,0 +1,24 @@
+{
+  "started": "2026-11-22T00:50:19.513507+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "7ee5184a9e898f7ba448d5c65ca3ab66f6eaa2097a069549d378e600366ed1ec",
+  "purpose": "fx41-nba-v2-post118-managed-release-review",
+  "resume": null,
+  "attachments": {
+    "plan.md": "137a73862e08c75308c467f3f6fcbf64bbb5d5d88d95f87508cf4b20873cbfe0",
+    "approved-managed-seam.md": "e0590ca6c43b2da74b949f920618b3117c1772b23a073bf2ca833a2edf597c7c",
+    "approved-timing-checklist.md": "260a33ebe48747fbae047a5235690fd3d174bb06f1c2b3c55d529cc6bbdae376",
+    "owner-approval.json": "bc33ccee3864a6b33116105f8fc373f0acc614eb34b1148d04ccf69e2dfd4313"
+  },
+  "session_ids": [],
+  "finished": "2026-11-22T00:52:18.575158+00:00",
+  "exit": 0,
+  "stdout_sha256": "b56c792605e6c64fbbeb9f6093f7771b1a3e157eead189508bde2eca86b06a56",
+  "stderr_sha256": "a569c63fef5e141573ae9be5020a02b7dd0916778ae05748ebda383092dcdccf",
+  "stdout_bytes": 7151,
+  "stderr_bytes": 66,
+  "safe_diagnostics": []
+}

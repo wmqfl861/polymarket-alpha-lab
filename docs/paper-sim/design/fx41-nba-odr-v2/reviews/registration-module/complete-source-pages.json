@@ -1,0 +1,21 @@
+[
+  {
+    "path": "src/polymarket_alpha_lab/papersim/nba_odr_registration.py",
+    "bytes": 21021,
+    "sha256": "6ea68cd333030d7bf982c4161c717b2701a5623e7b2a372de154d484bb4722fa",
+    "pages": [
+      "nba_odr_registration-1-200.txt",
+      "nba_odr_registration-201-400.txt",
+      "nba_odr_registration-401-405.txt"
+    ]
+  },
+  {
+    "path": "tests/test_papersim_nba_odr_registration.py",
+    "bytes": 19530,
+    "sha256": "4374ad17544d3ad9444e7df15750f8fff037d09398022358819ea488adc31335",
+    "pages": [
+      "test_papersim_nba_odr_registration-1-200.txt",
+      "test_papersim_nba_odr_registration-201-383.txt"
+    ]
+  }
+]

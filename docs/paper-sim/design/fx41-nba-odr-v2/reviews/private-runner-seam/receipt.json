@@ -1,0 +1,26 @@
+{
+  "started": "2026-11-21T19:58:58.922189+00:00",
+  "client": "zcode",
+  "mode": "guarded",
+  "effort": "max",
+  "workflow_mode": "disabled",
+  "prompt_sha256": "dcd237cb2e995a719a81ce806a5c046dd9fe14edeee42b0d68a4cbc33b5edf22",
+  "purpose": "fx41-nba-runner-private-execution-patch-review",
+  "resume": null,
+  "attachments": {
+    "approved-seam.md": "e0590ca6c43b2da74b949f920618b3117c1772b23a073bf2ca833a2edf597c7c",
+    "patch-0001-0240.txt": "6c07651721f6fb5b9b698330a9220fb7d467359ad0330b7b817b7ebc9ea69d98",
+    "patch-0241-0480.txt": "15193e52dd80b5f8f504781c3259353087a14e93618a416aa55b983c1f89d208",
+    "patch-0481-0720.txt": "b125226490e40b7e80e1fe1db2ab932b90008c151c9739df77d39f7be3703ba9",
+    "patch-0721-0758.txt": "32ce8814e566dc332774607529d2827c848371fe3be2788344193b33291c014e",
+    "patch-pages.json": "5c3dd9ee096dc8d02e99f92b793bf135bb5357f43413e2bf3b54580de78ea73c"
+  },
+  "session_ids": [],
+  "finished": "2026-11-21T20:05:38.342095+00:00",
+  "exit": 0,
+  "stdout_sha256": "024561971d7ff53f3b5b0909d6064a6084b2409f8741d51fcf43f23a23260bd6",
+  "stderr_sha256": "8ca79153c18d86f1c6a1ad5928159944252a33c2fb462ec3193743b3f2038b4e",
+  "stdout_bytes": 7283,
+  "stderr_bytes": 231,
+  "safe_diagnostics": []
+}

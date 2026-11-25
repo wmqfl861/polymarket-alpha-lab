@@ -1,0 +1,107 @@
+No high-priority findings. The candidate is eligible for a PR on the strength of the code and the test evidence for the changed surface. Three mechanical receipts are still missing from the material and should be attached before the PR is opened (item 4). The formal verdict line is at the end.
+
+## Findings
+
+1. **Medium, not blocking for PR eligibility: the single run is fragile at the start of publication.**
+   - Once the claim is consumed, a connection failure at publication is not recovered in-process.
+   - `BEGIN` sits outside the commit-uncertainty guard (`src/polymarket_alpha_lab/papersim/store_psycopg.py:3291`, guard starts at `:3298`). It therefore surfaces as a plain transport failure and the reconnect at `:4062` does not fire.
+   - A connection error inside the guard is treated as indeterminate, but the confirmation path then refuses because no publication was prepared (`:4034`).
+   - Either way the computed result is discarded, the root reads `interrupted`, and no re-run is possible (`tests/test_papersim_optimize_registered_runner_native.py:3314`).
+   - This matches the signed plan, which lists "claimed but no terminal" as a recordable outcome.
+   - Because the run is authorised once, decide before the formal run whether to accept this or to let confirmation republish from `invocation.result`. The latter is a code change needing its own review.
+2. **Low: the claim is an in-process capability, not a security boundary.**
+   - A same-process caller holding the module-private issuer can build `_NBAODRComputeClaim` (`store_psycopg.py:3580`).
+   - The offline test does exactly this (`tests/test_papersim_optimize_runner.py:4637`).
+   - "Only via the managed path" therefore holds for the CLI and ordinary API callers. The handoff should not claim more.
+3. **Low: two registered numbers have no single owner.**
+   - The 60-second reserve is a literal in `src/polymarket_alpha_lab/papersim/optimize/runner.py:2603`. The enforced clock uses a separate constant at `store_psycopg.py:1675`, and nothing links them.
+   - The totals line is a third literal at `src/polymarket_alpha_lab/papersim/optimize/nba_odr.py:29`, beside `runner.py:299` and `runner.py:2581`. The base already had two.
+   - Every other v2 number is derived once and cross-checked, for example the floors at `runner.py:4246` and `:4256`.
+4. **Low, cosmetic: a v2 source-validation failure is sealed as `papersim_optimize_scientific_failure`** (`store_psycopg.py:3838`). The specific reason is only in the artifact (`runner.py:6520`).
+
+## Scope and method
+
+- **Candidate:** `2933a375fdc3c248514968277effb9a699097131`, tree `446be10b502632b3a1acbf3b774aecd65a2ce48e`.
+- **Base:** `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`.
+- **Read:** I counted 146 hunks across the 13 files in the index and read every one on the candidate side, against the replaced base ranges where base content exists.
+- **Not done:** I ran nothing and recomputed no digests. The 13 SHA-256 values agree between the index and `integration-evidence.md`.
+- **Historical reviews:** I did not rely on them. The claim that 11 files are byte-identical to the reviewed draft, with only the store and the native test changed since, is the document's, not something I confirmed.
+- **Interim correction:** I earlier attributed the nine original failures to a missing database. That was wrong and is superseded under item 3.
+
+## 1. The 4,811 bound
+
+- **Only with a claim:** `max_trials` becomes 4,811 only when a claim is present (`runner.py:6481`). The public path keeps `1 <= max_trials <= MAX_TRIALS`.
+- **Public entry closed:** `execute_optimization_run` rejects the v2 schedule ID (`runner.py:6368`), as do `historical_run_arguments` (`:5408`) and the core without a claim (`:6448`).
+- **Claim shape:** exact type, issuer sentinel and single use (`store_psycopg.py:3580`, `runner.py:6235`).
+- **Store:** assembles the 4,811 budget only after registration readback succeeds (`store_psycopg.py:3423`, `:2579`).
+- **CLI:** requires `--managed` (`src/polymarket_alpha_lab/papersim/cli.py:2396`). The store refuses non-managed connections (`store_psycopg.py:3337`, `:4085`) and any external compute callback (`:4245`).
+- **Manifest, source, scope, attempt:**
+  - The manifest must equal the registered bytes (`store_psycopg.py:2590`).
+  - Originals are pinned (`src/polymarket_alpha_lab/papersim/nba_odr_registration.py:95`, `:127`).
+  - The plan is pinned (`runner.py:4319`, `:6283`).
+  - Comparators are rechecked at claim (`store_psycopg.py:3626`, `:3683`).
+  - Attempt must be 1 (`store_psycopg.py:3656`, `:4022`).
+- **Other families and NBA v1 unchanged:**
+  - The non-v2 branch of `_optimize_request` is intact (`store_psycopg.py:2543`), and so is the v1 protocol (`runner.py:2655`).
+  - The `_historical_nba` refactor is behaviour-identical (`runner.py:5578`, `:5608`, `:5617`).
+  - Partition logic is inert when `history_partition` is None (`src/polymarket_alpha_lab/papersim/optimize/search.py:754`, `:1083`), so existing fold digests are unchanged.
+- **Gates, variants, self-checks, fixtures untouched:** the CodeGraph record counts exactly 13 indexed files changed.
+- **Rule-source tests:**
+  - Two assertions follow the rename (`tests/test_papersim_optimize_rule_sources.py:151`, `:274`) with the compared expressions unchanged.
+  - The new test enforces one shared implementation (`:115`).
+- **CLI help test:** base `test_optimize_help_names_the_four_subcommands` checked exit 0 and `families`, `init`, `run`, `status`. The renamed test keeps all of that and adds `register-experiment` (`tests/test_papersim_cli_optimize.py:124`). It is a strict superset.
+
+## 2. Managed CLI path
+
+- **Atomic registration:** nine snapshots plus one event sit in a savepoint inside the caller's transaction (`nba_odr_registration.py:389`). The pointer is exported only after the store returns (`cli.py:2433`, `:2474`).
+- **Chronology and leakage:**
+  - Prefixes are built per season (`search.py:894`).
+  - History is strictly-earlier whole days of the same season (`nba_odr.py:260`).
+  - Holdout runs only for a locked challenger (`runner.py:6977`).
+  - The holdout callback requires the registered folds and one target (`runner.py:5780`).
+- **Statuses:** preview returns `not_run`, `in_progress`, `interrupted`, `sealed_failure` or `sealed_success` (`store_psycopg.py:4113`). It reads metadata only, in a read-only snapshot (`:4215`).
+- **No second run:** an existing root other than the process's own claim is refused (`store_psycopg.py:4027`) under a per-run lock (`:3530`).
+- **Ack loss:**
+  - A lost claim or seal reply reconnects with the same clock and reuses the prepared publication (`store_psycopg.py:4050`, `:3774`).
+  - A lost registration reply keeps the first indeterminate error (`:3499`).
+- **Test defaults:** native helper defaults are unchanged at 25, 15 and 15 seconds (`tests/test_papersim_optimize_registered_runner_native.py:135`).
+
+## 3. Test evidence
+
+| Receipt | What it records |
+|---|---|
+| Original capacity `completed.json`, `capacity-result.json` | `status: failed`, 542 passed / 9 failed / 0 skipped of 551, exit 1, commit `2933a375`. Still on disk. |
+| `focus/completed.json`, `service-result.json` | 9 cases in four arms: 9 failures on base and on candidate under the old harness (same nodes); 9 passed on both under the revised harness. |
+| `full/completed.json`, `verified.json`, `service-result.json` | 551 passed / 0 failed / 0 skipped. Same selection, script, lock, config and wrapper digests as the failed run. |
+| `full/batch-001` to `007` with JUnit | The seven `native_nba_v2` cases, each passed against a disposable PG18. `source_sha256` equals the index's hash of the native test file. |
+| `full/batch-030` with JUnit | Three formerly failing cases pass. |
+| `nba-offline-2933a375.jsonl` | Compile and quick checks at exit 0, then 3340 files, 44016 passed, 444 skipped, no failures. |
+| Weakening scan | One removed test (the rename, 3 checks), none with fewer checks, no new skip or xfail; 227 to 244 functions. |
+| Address and sensitive scans | No address differences; 14 contact-shaped hits in added lines. |
+| `codegraph-gate/result.jsonl` | `pass` for this commit and tree; 13 indexed and 30 unindexed files changed; 0 parse errors. |
+
+- **The nine failures:** all are worker handshake or manifest cases. The harness delta is a loopback handshake with tighter isolation, which fits. Failure text is sanitised, so the cause is consistent with the receipts, not confirmed by them. The seven v2 cases also passed in the original run.
+- **Sensitive hits:** the four in source are the schedule ID and the registration command name.
+- **OOM attempts:** I found no OOM record in the inspected material. If one exists, it is not in these receipts.
+- **Not proven by this evidence:**
+  - No test loads the two real archives or runs real inference on v2. The native fixture substitutes archives, pins and membership digests (`tests/test_papersim_optimize_registered_runner_native.py:2790`).
+  - The clock bound is unproven; the native cases use a refusal-only evaluator.
+  - The wider native partition ran only as the 444 environment skips.
+
+## 4. PR eligibility
+
+Not covered by this review, and needed before the PR is opened:
+- A `git diff --check` receipt. It is asserted in the test packet.
+- A credential and token scan receipt. My own read of the 13 changed files found none, but that covers neither the 30 documentation paths nor a scanner run.
+- The full `audit_static.py` report. Only its summary is asserted in the packet.
+
+Later gates, which I am not asking for now:
+- The three workflows and `CURRENT` on the merge object.
+- Real main ancestry.
+- The post-merge clock bound.
+- Registration, readback and preview.
+- The single formal run.
+
+This verdict authorises none of those, nor merge or release.
+
+VERDICT: PASS

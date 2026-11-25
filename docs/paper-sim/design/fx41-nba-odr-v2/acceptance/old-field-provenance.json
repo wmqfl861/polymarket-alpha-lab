@@ -1,0 +1,34 @@
+{
+  "base_commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "head_commit": "2933a375fdc3c248514968277effb9a699097131",
+  "findings": [
+    {
+      "path": "src/polymarket_alpha_lab/papersim/optimize/runner.py",
+      "base_line": 3706,
+      "head_line": 3795,
+      "line_sha256": {
+        "base": "083daff2085a3006c7aedcc5ddd5d32a0d0530e4427745e0db6d5d5817e37866",
+        "head": "083daff2085a3006c7aedcc5ddd5d32a0d0530e4427745e0db6d5d5817e37866"
+      },
+      "function_sha256": {
+        "base": "2a2598e3d7e128a7bf102c1a7df11295c19d1629ba8cd1311483e96bb5bb69e7",
+        "head": "2a2598e3d7e128a7bf102c1a7df11295c19d1629ba8cd1311483e96bb5bb69e7"
+      },
+      "conclusion": "候选与基线字节相同/新增行未增加命中"
+    },
+    {
+      "path": "tests/test_papersim_optimize_runner.py",
+      "base_line": 3666,
+      "head_line": 3667,
+      "line_sha256": {
+        "base": "24dae2e3bf610675b8cf8ec085cd50af377650fe8f3957120be0b5db78ddf383",
+        "head": "24dae2e3bf610675b8cf8ec085cd50af377650fe8f3957120be0b5db78ddf383"
+      },
+      "function_sha256": {
+        "base": "b284c326a06320bef1d6cf57746973dc8c5b0d94fcb6bf439f8dedc5dc8e72e8",
+        "head": "b284c326a06320bef1d6cf57746973dc8c5b0d94fcb6bf439f8dedc5dc8e72e8"
+      },
+      "conclusion": "候选与基线字节相同/新增行未增加命中"
+    }
+  ]
+}
