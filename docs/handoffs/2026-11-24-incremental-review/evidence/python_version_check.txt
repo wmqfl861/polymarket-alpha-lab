@@ -1,0 +1,6 @@
+pyproject.toml:9:requires-python = ">=3.11"
+# multi-line replacement fields inside f-strings (need Python 3.12) in src/polymarket_alpha_lab/research_strategy_resolution_probability_scenario_ladder_report.py on main: 5
+# commit abcf67dc rewrote them for 3.11; commit 2fbcd0d8 restored the original bytes:
+2fbcd0d8 2026-11-23T10:30:07+00:00 Keep the B1 retirement candidate byte-identical to the audited baseline
+abcf67dc 2026-11-23T07:44:55+00:00 fix: restore Python 3.11 scenario ladder syntax
+917e0a8f 2026-07-08T17:54:39+00:00 Add research strategy resolution probability scenario ladder report

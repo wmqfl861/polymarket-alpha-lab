@@ -1,0 +1,13 @@
+base=2bdc4cccacc925ea8e6569c8865b90c0b0c671e6 head=ab6edff2d64ac8aa5c2831d748b8730b63f8312d
+files ADDED since base (new modules): 1; citing a node plan, review item or ruling: 0 files, 0 lines
+files MODIFIED since base: 11; citing a node plan, review item or ruling: 9 files, 30 lines
+    2  src/polymarket_alpha_lab/papersim/capture.py: 24, 44
+    7  src/polymarket_alpha_lab/papersim/cli.py: 48, 564, 691, 959, 963, 1399, 2442
+    2  src/polymarket_alpha_lab/papersim/optimize/metrics.py: 8, 37
+    5  src/polymarket_alpha_lab/papersim/optimize/policy.py: 22, 32, 154, 257, 622
+    2  src/polymarket_alpha_lab/papersim/optimize/registry.py: 12, 304
+    5  src/polymarket_alpha_lab/papersim/optimize/runner.py: 3, 948, 1030, 1693, 1730
+    1  src/polymarket_alpha_lab/papersim/optimize/scorecard.py: 15
+    1  src/polymarket_alpha_lab/papersim/optimize/search.py: 3
+    5  src/polymarket_alpha_lab/papersim/store_psycopg.py: 630, 1305, 1308, 1509, 2218
+entries under docs/paper-sim/design at head: ['MANIFEST.sha256', 'README.md', 'b1', 'd1-frozen-preflight-plan.md', 'd1-frozen-preflight-same-instance.md', 'd1-operation-recovery-plan.md', 'fx-36', 'fx-38-fx-39-step1', 'fx-39', 'fx-41', 'fx-42', 'mo-2', 'mo-4', 'mo-5a', 'mo-5b', 'o-5-calibration-regression', 'pr-114-final-verification.md', 'pr-114-final', 'pr-114-review.md', 'pr-114', 'pr-118-final-verification.md', 'pr-118-final', 'pr-118-review.md', 'pr-118', 'server-evidence']

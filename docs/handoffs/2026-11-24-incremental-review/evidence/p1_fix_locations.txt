@@ -1,0 +1,25 @@
+# FX-38 / FX-39 step 1 / O-5 on main ab6edff2d64ac8aa5c2831d748b8730b63f8312d (path:line: text)
+src/polymarket_alpha_lab/papersim/cli.py:1297:def _optimize_close_prices(conn, candidate_ids) -> dict:
+src/polymarket_alpha_lab/papersim/cli.py:1314:def _optimize_close_sample(fills, close_prices):
+src/polymarket_alpha_lab/papersim/cli.py:1334:def _optimize_close_deviation(conn, *, shadow_spec_sha256, priced_spec_sha256,
+src/polymarket_alpha_lab/papersim/cli.py:1648:def _optimize_forward_comparison(provider, scan_lineage, active_sha, active_version) -> dict:
+src/polymarket_alpha_lab/papersim/cli.py:1661:        reason = "pricing_spec_mismatch"
+src/polymarket_alpha_lab/papersim/cli.py:1844:_PROMOTION_CONCLUSIONS = frozenset({"PROMOTE", "PROMOTE_PENDING_CONFIRM"})
+src/polymarket_alpha_lab/papersim/cli.py:1845:_PROMOTION_UNAVAILABLE = "papersim_optimize_apply_promotion_unavailable"
+src/polymarket_alpha_lab/papersim/cli.py:1851:    if conclusion in _PROMOTION_CONCLUSIONS:
+src/polymarket_alpha_lab/papersim/cli.py:1852:        raise ValueError(_PROMOTION_UNAVAILABLE)
+src/polymarket_alpha_lab/papersim/cli.py:1934:                if conclusion in _PROMOTION_CONCLUSIONS:
+src/polymarket_alpha_lab/papersim/cli.py:1935:                    raise ValueError(_PROMOTION_UNAVAILABLE)
+src/polymarket_alpha_lab/papersim/optimize/policy.py:146:CLOSE_DEVIATION_MIN_GAP = -0.01
+src/polymarket_alpha_lab/papersim/optimize/policy.py:149:CLOSE_DEVIATION_MIN_MARKETS = 30
+src/polymarket_alpha_lab/papersim/optimize/policy.py:295:class CloseDeviationSample:
+src/polymarket_alpha_lab/papersim/optimize/policy.py:513:def _close_deviation_gap(stats: ForwardStats) -> Fraction | float | None:
+src/polymarket_alpha_lab/papersim/optimize/policy.py:529:def close_deviation_metrics(stats: ForwardStats) -> dict:
+tests/test_papersim_optimize_cli.py:260:def test_apply_pending_confirm_is_unavailable_with_any_actor(monkeypatch, capsys, actor, confirm):
+tests/test_papersim_optimize_cli.py:320:def test_apply_refuses_fresh_and_replayed_promotions(monkeypatch, capsys, tmp_path,
+tests/test_papersim_optimize_policy_native.py:769:def test_native_clv_one_cent_boundary_on_numeric_fills():
+tests/test_papersim_optimize_policy_native.py:860:def test_native_clv_uses_own_side_and_complete_prices_per_population(capsys):
+tests/test_papersim_optimize_runner_native.py:228:def test_native_managed_cli_seals_and_replays_calibration_nonconvergence(
+# decide path still pairs by the registered active's model version:
+src/polymarket_alpha_lab/papersim/cli.py:1584:            priced_model_version=state["active_model_version"],
+src/polymarket_alpha_lab/papersim/cli.py:1618:            priced_model_version=state["active_model_version"],

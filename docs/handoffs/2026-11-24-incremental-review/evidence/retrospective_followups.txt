@@ -1,0 +1,17 @@
+# MO-2 retrospective R-1: readers that still use a bare cursor (no conn.transaction()) on main
+load_optimization_runs at line 2249: wraps conn.transaction() within its first 15 lines: no
+load_promotion_decisions at line 2266: wraps conn.transaction() within its first 15 lines: no
+_registry_controls at line 2282: wraps conn.transaction() within its first 15 lines: no
+# lines in DELIVERY_PLAN.md on main that name these functions: 0
+# the managed connection is opened in psycopg's default mode (not autocommit):
+    src/polymarket_alpha_lab/papersim/store_psycopg.py:153:            connection = psycopg.connect(dsn)
+# call sites of the three readers on main (whether each sits inside a transaction block was read by hand, see the report):
+    src/polymarket_alpha_lab/papersim/cli.py:1207:    freeze = store_psycopg.registry_freeze_state(conn)
+    src/polymarket_alpha_lab/papersim/cli.py:1541:    rows = [row for row in store_psycopg.load_promotion_decisions(conn, lineage)
+    src/polymarket_alpha_lab/papersim/cli.py:1998:                    row for row in store_psycopg.load_promotion_decisions(connection, args.lineage)
+    src/polymarket_alpha_lab/papersim/cli.py:2153:        freeze = store_psycopg.registry_freeze_state(conn)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:2290:    freeze = store_psycopg.registry_freeze_state(conn)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:2298:            runs = store_psycopg.load_optimization_runs(conn, family_id)
+    src/polymarket_alpha_lab/papersim/store_psycopg.py:2311:    return _freeze_state(_registry_controls(conn))
+    src/polymarket_alpha_lab/papersim/store_psycopg.py:2612:    controls = _registry_controls(conn)
+    src/polymarket_alpha_lab/papersim/store_psycopg.py:2846:    for run in load_optimization_runs(conn, family):
