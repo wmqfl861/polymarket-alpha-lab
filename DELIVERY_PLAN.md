@@ -4611,6 +4611,12 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 | [MO-5b F-1、F-2](docs/paper-sim/design/mo-5b/reviews/pr-84-retrospective.md) | 现有深拷贝在 `fit` 后构造，未实际验证输入完整；外部构造的 `ModelSpec` 可使斜率参数与 envelope 中心不一致。 | 国家队模型族小修时，在 `fit` 前留输入副本，之后复核，并以手工构造不一致的规格验证关闭路径。保留默认预测及变体。 |
 | R6-13 | `test_anchor3_wp_p4_paired_comparison` 依赖服务器保存的固定 WP-P4 证据。历次 CI 的既有跳过原因和本机对照见[PR #114](docs/paper-sim/design/pr-114-review.md)。 | 服务器专用。最近一次单独核验为 2026-11-24 00:17:55–00:17:57 UTC，检出 `e65be3e7bfed96d52be1a2c9b392627b0ab2d23b`，1 通过、0 跳过。通过结果涵盖用例对固定输入 SHA-256 `51d7da0e6dd09176b8c6141ba1fd99dc7e63e0995ea4a354f6b5fc1c41ce7899` 的断言。会话 `sess_c476cae6-b029-4241-925a-c8937aed98f8` 记录该用例的执行结果。回执 1,109 字节，SHA-256 `882bf6e65d99ad0763620af7d95fdda35e558f9937b6e1d37388954b0196f786`。[执行回执](docs/paper-sim/design/fx-53/wp-p4-anchor-20261124.txt) |
 
+##### R6-11 后继项 · v1 分发清单的 Python 下限
+
+由原生分发节点维护具名后继项。当前 `src/polymarket_alpha_lab/project_postgres/distribution.py` 的 `build_distribution` 写入 v1 `python_requires='>=3.11'`，`verify_distribution` 仍将该值作为 v1 格式的精确校验；固定清单 `FIXED` 同时打包 `pyproject.toml` 与 `uv.lock`。FX-54 将项目元数据下限登记为 `>=3.12` 后，新造 v1 kit 会同时携带旧清单标签和要求 `>=3.12` 的项目元数据及锁，安装行为受包内项目元数据约束，清单自身的下限标签仍陈旧。
+
+后继验收须明确新发布格式如何表达实际下限，证明旧 v1 包仍可验证，并以真实 kit 构建、清单读回及版本兼容回执关闭。
+
 #### 84.2.4 FX-36 本地清点
 
 2026-11-21 只读查询确认仓库可见性为 public。机主于 2026-11-24 对 OD-O 答复“保持公开，是我有意公开”。11-14 至 11-19 UTC 可用的本机 Codex 执行记录覆盖 45 个会话、3,932 项完成记录，未见本项目可见性写入。11-15、11-16 日的本机 Codex 记录缺失，该时段没有匹配项目目录的本机 ZCode 会话。浏览器、其他主机与未保留的记录无法判定。
@@ -4668,6 +4674,24 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 | NBA，3，事件 5–6 | 2026-11-10 05:00:00，`mo6-nba-espn-november-suffix-v1` | 8/66，对 30/300 | 10/9，1 空试验，1 规格 | `INSUFFICIENT_DATA`，`8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10` |
 
 俱乐部与 NBA 按 OD-R 使用新登记日程重跑后追加两行。国家队保留原 `NO_IMPROVEMENT`。进度审计与原运行登记关于国家队实际开启留出的描述有差异，按原始回执复核并交回。MO-8 的 `touches_season_frozen_params` 和 `guard_validation_gate_regression` 仍固定为假，分别影响冻结参数的换届拦截和验证门回归时的换回判断，由 FX-39 第二步处理。
+
+### 84.3 2026-11-24 R6-11 FX-54 Python 安装下限登记
+
+本轮基线为 PR #123 的 main 合并提交 `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`。§84.2.2 登记的是固定至 `2bdc4ccc` 的历史快照。本节点起，项目安装下限为 Python 3.12，发布解释器为 CPython 3.12.14。历史口径见 §68 的 D-tuple 记录。
+
+| 登记项 | 状态及证据 |
+| --- | --- |
+| 实施与 NBA v2 泳道 | 实施提交 `c00a50e08f56ab0a03ad7d023a28984c4b2ec973` 将 `pyproject.toml`、`uv.lock` 与现行 Linux 安装说明更新为新下限。本机验证和首次代码复审按文档候选 `4818bef8f2e63e06ff0974b0fbdaa5081f6684de` 执行。NBA v2 开工时分支头为 `2933a375fdc3c248514968277effb9a699097131`，以双方共同祖先比较，`pyproject.toml` 与 `uv.lock` 均无写入交集。 |
+| 计划及锁裁定 | 原计划 FAIL、修订计划 PASS 和固定 uv 0.10.0 原生锁差异的增量 PASS 均来自原审者 `sess_26cca700-c1b2-4a11-98ed-21ab96227f36`。锁差异为新下限、移除十一条 cp311 `psycopg-binary` wheel 和三条 `requires-dist` 记录的排列调整。[计划、原回执和锁摘要](docs/paper-sim/design/fx-54/README.md) |
+| 锁前后核验 | 父锁 SHA-256 `114db5230ce1b51130a6f2b246c807f4e142229c5717354edf95c8e44fc22d9f`，原生生成锁 SHA-256 `9ed26c40ee1a48ef98cb6c8183db5202bc308eb5f57c46ffcf9f10a97f012b6c`。三项生成差异见[原审提示词](docs/paper-sim/design/fx-54/fx54-lock-delta-review.prompt)及[同 session 裁定](docs/paper-sim/design/fx-54/fx54-lock-delta-review.json)。 |
+| 正反例与冻结验收 | 2026-11-24，固定 uv 0.10.0 使用 CPython 3.12.14 检查锁，退出 0，锁文件未变。CPython 3.12.14 锁定安装与项目、锁和安装产物的 `>=3.12` 字段读回均退出 0。CPython 3.11.15 在离线且禁下载的独立检出中因版本不符被拒绝，退出 2。独立 ZCode 核对冻结源码及四份夹具，5 项逐个字节一致。[本机验证回执](docs/paper-sim/design/fx-54/evidence/fx54-local-verification.json) |
+| 分发兼容 | 本地合成 v1 清单回归 29 通过、0 跳过，Native PG18 版本切换文件 89 通过、0 跳过，具名用例实际执行且通过。记录这些单项的续跑命令最终退出 1。[节点说明](docs/paper-sim/design/fx-54/README.md)及[核验回执](docs/paper-sim/design/fx-54/evidence/fx54-local-verification.json)。独立 kit 构建待最终 PR 路径核对后登记触发状态。后继事项见 §84.2.3 的“v1 分发清单的 Python 下限”。 |
+| 代码复审与合入 | 首次独立代码复审及补登证据后的复审均判定 `VERDICT: FAIL`；全量收据补齐后，原审者在候选 `974887eb` 判定 `VERDICT: PASS`。第三次全量在干净独立检出完成，pytest 退出 0，43,956 通过、437 跳过、20 条警告。修正后的基线至候选差异扫描无模式命中；CodeGraph 1.6.3 使用私有索引副本核对候选的 6,761 个文件，退出 0。最终 PR 号、PR 头、Offline verification / Research paper bridge / Native project PostgreSQL 三条运行号、`CURRENT` 核验和合并提交待登记。[本机验证回执](docs/paper-sim/design/fx-54/evidence/fx54-local-verification.json) |
+| FX-48 运行层交接 | 由实际引入 README 的 FX-48 PR 一并验证运行解释器和锁定安装。[FX-48 验收登记](#fx-48-运行层-readme-后继验收登记) |
+
+#### FX-48 运行层 README 后继验收登记
+
+FX-54 基线不含 `docs/paper-sim/runtime/README.md`。FX-48 草稿 `bcce1b17f7263ab89859febfcb56188c295ab371` 已有此文件，当前仍写“Python 3.11 及以上版本”。实际引入此文件的 FX-48 PR 应将说明更新为 Python 3.12 及以上，并以真实解释器至少为 3.12 的运行记录和 `uv sync --locked` 回执验收，绑定该批次提交。FX-54 的 3.11 锁定安装拒绝回执是本项的版本依据。
 
 ## 85. MO-6 登记输入、受管写入与 NBA 校准专项
 
