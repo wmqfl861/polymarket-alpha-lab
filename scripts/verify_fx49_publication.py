@@ -41,7 +41,7 @@ MANIFEST_SHA256 = "aa8d9f9f63a171c164fe50e4d51016c56306b34ab61e761856878bd8a89b8
 DELTA_SHA256 = "6b95b29db3d3df06b7d378d33fa1cc54f3b6e9035cb65d584abef930997598ee"
 PLAN_SHA256 = "343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323"
 PUBLIC_PLAN = (19568, "a877a3cdb535d3139f0dc9ea54feef28ec1b97bb08f6330f57c7e56d05cfb48e")
-PUBLIC_PLAN_REVIEW = (969, "57480396b288880d76b42c922957694dcde1762db9caaf4989d4eaf0ef20c856")
+PUBLIC_PLAN_REVIEW = (1698, "e91171113a5480f163f2326a053fd6c45b3d12166f8735a6ab416910915525bf")
 ARCHIVE_EVIDENCE_SHA256 = "597e44ac9d1406cba0971fd02a69e5450106a0f6981e4ce77a1687b8554cc07f"
 RUNTIME = "docs/paper-sim/runtime/"
 DESIGN = "docs/paper-sim/design/fx-49/"
@@ -75,9 +75,17 @@ RUNTIME_DELTA = frozenset(RUNTIME + path for path in (
     "tests/test_football_focus.py", "tests/test_fx49_fixed_script.py", "tests/test_fx49_football_delivery.py",
 ))
 RELEASE_PATHS = DIRECT | RUNTIME_DELTA | {ATTRIBUTES}
-WORKFLOWS = frozenset(".github/workflows/" + path for path in (
-    "offline-verification.yml", "native-postgres.yml", "research-paper.yml",
-))
+WINDOWS_WORKFLOW = ".github/workflows/research-paper.yml"
+NATIVE_WORKFLOW = ".github/workflows/native-postgres.yml"
+PUBLICATION_JOB = {
+    ".github/workflows/offline-verification.yml": b"  offline:",
+    NATIVE_WORKFLOW: b"  linux-native-part:",
+    WINDOWS_WORKFLOW: b"  windows-fx49:",
+}
+WORKFLOWS = frozenset(PUBLICATION_JOB)
+NATIVE_FX49_PATTERNS = frozenset(f"      - '{path}'".encode("ascii") for path in WORKFLOWS | {
+    DESIGN + "**", RUNTIME + "scripts/weixin_delivery.py", WINDOWS + "**", GATE, TESTS, ATTRIBUTES,
+})
 REQUIRED_MAIN = DIRECT | WORKFLOWS | {
     ATTRIBUTES, GATE, MANIFEST, DELTA, POSTGRES_GATE, OBJECT_RECIPE, PLAN, PLAN_REVIEW, PUBLICATION_INDEX,
 }
@@ -90,11 +98,17 @@ EVIDENCE = frozenset(DESIGN + path for path in (
     "release-review.json", "main-review.json", "release-index.json",
 ))
 OPTIONAL_MAIN = EVIDENCE | {"DELIVERY_PLAN.md"}
+LATER_RECEIPTS = frozenset(DESIGN + path for path in (
+    "publication-independent-test-v2.json", "publication-code-review-v2.json",
+    "publication-stage-review-v2.json", "publication-merge-v2.json",
+    "2026-11-25-owner-fixed-entry-observation.json",
+))
 PUBLICATION_INPUTS = REQUIRED_MAIN - {PUBLICATION_INDEX} | EVIDENCE
 MAINTAINABLE_INPUTS = WORKFLOWS | {ATTRIBUTES, GATE, POSTGRES_GATE}
 FROZEN_PUBLICATION = (PUBLICATION_INPUTS - MAINTAINABLE_INPUTS) | {PUBLICATION_INDEX}
-FX49_WORKFLOW_STEP = re.compile(
-    rb"(?m)^      - name: (?:Verify FX-49 |Check out the FX-49 )[^\n]+\n(?:^(?!      - |    [^ ])[^\n]*\n)*",
+SCOPED_MAIN = frozenset(path.casefold() for path in REQUIRED_MAIN | EVIDENCE)
+RECEIPT_IDENTITY = re.compile(
+    r"(?i)\b(?:sess|turn)_[a-f0-9-]{36}\b|\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b"
 )
 RUNTIME_FIXTURES = frozenset(RUNTIME + path for path in (
     "scripts/basketball_bbl.py", "scripts/basketball_college.py", "scripts/basketball_college_forward.py",
@@ -424,11 +438,53 @@ def check_approved_documents(read):
             "historical FX-49 archive bytes differ from independent approval")
 
 
+def workflow_blocks(lines, marker, indent):
+    blocks = []
+    for start, line in enumerate(lines):
+        if not line.startswith(marker):
+            continue
+        last = start
+        for number in range(start + 1, len(lines)):
+            line = lines[number]
+            if line.startswith(indent) and line.strip():
+                last = number
+            elif line.strip() and not line.lstrip().startswith(b"#"):
+                break
+        blocks.append(lines[start:last + 1])
+    return blocks
+
+
+def publication_workflow_blocks(path, raw):
+    lines = raw.splitlines()
+    jobs = workflow_blocks(lines, b"jobs:", b"  ")
+    events = workflow_blocks(lines, b"on:", b"  ")
+    require(len(jobs) == len(events) == 1 and jobs[0][0] == b"jobs:" and events[0][0] == b"on:",
+            "missing or duplicate FX-49 jobs or triggers", path)
+    job = workflow_blocks(jobs[0], PUBLICATION_JOB[path], b"    ")
+    pr_trigger = workflow_blocks(events[0], b"  pull_request:", b"    ")
+    require(len(job) == len(pr_trigger) == 1, "missing or duplicate FX-49 job or PR trigger", path)
+    if path == WINDOWS_WORKFLOW:
+        return job + pr_trigger
+    if path == NATIVE_WORKFLOW:
+        patterns = workflow_blocks(pr_trigger[0], b"    paths:", b"      ")
+        require(len(patterns) == 1 and set(patterns[0]) >= NATIVE_FX49_PATTERNS
+                and not any(b"!" in line for line in patterns[0]),
+                "missing or excluded FX-49 native PR paths", path)
+        # The native workflow can add unrelated positive paths independently.
+        pr_trigger = [[line for line in pr_trigger[0] if len(line) - len(line.lstrip()) <= 4]
+                      + sorted(NATIVE_FX49_PATTERNS)]
+    steps = workflow_blocks(job[0], b"      - name: Verify FX-49 ", b"        ")
+    require(len(steps) == 1, "missing or duplicate mandatory FX-49 workflow step", path)
+    return steps + pr_trigger
+
+
 def verify_publication_index(root, read, checkout, candidate, *, opening=True):
     value = decode_json(read(PUBLICATION_INDEX), PUBLICATION_INDEX)
-    require(isinstance(value, dict) and set(value) == {"schema_version", "source", "archive", "plan_sha256", "inputs"}
+    require(isinstance(value, dict)
+            and set(value) == {"schema_version", "source", "archive", "plan_sha256", "inputs", "later_receipts"}
             and type(value["schema_version"]) is int and value["schema_version"] == 2
-            and value["archive"] == ARCHIVED_EVIDENCE and value["plan_sha256"] == PLAN_SHA256,
+            and value["archive"] == ARCHIVED_EVIDENCE and value["plan_sha256"] == PLAN_SHA256
+            and value["later_receipts"] == sorted(LATER_RECEIPTS),
             "invalid publication index", PUBLICATION_INDEX)
     source = value["source"]
     require(isinstance(source, str) and HEX40.fullmatch(source), "missing source commit", PUBLICATION_INDEX)
@@ -447,9 +503,8 @@ def verify_publication_index(root, read, checkout, candidate, *, opening=True):
             require(candidate.get(path) == entry and read(path) == raw,
                     "publication index differs from tested checkout", path)
         elif path in WORKFLOWS:
-            fixed_steps = FX49_WORKFLOW_STEP.findall(raw)
-            require(fixed_steps and FX49_WORKFLOW_STEP.findall(read(path)) == fixed_steps,
-                    "mandatory FX-49 workflow steps differ", path)
+            require(publication_workflow_blocks(path, read(path)) == publication_workflow_blocks(path, raw),
+                    "mandatory FX-49 workflow blocks differ", path)
     check_approved_documents(read)
     return source
 
@@ -466,21 +521,21 @@ def check_reviewed_history(root, base, head, *, opening=True):
             if opening:
                 require(len(parents) == 2 and len(main_parents) == 1, "unexpected merge in FX-49 publication history")
             elif not main_parents:
-                # The merged side commits are inspected separately. A merge
-                # with no main parent must not invent a frozen input version.
+                # The side commits are inspected separately. Check the new
+                # values introduced by the merge resolution itself.
                 merged = tree(root, item)
                 ancestors = [tree(root, parent) for parent in parents]
-                require(all(any(merged.get(path) == ancestor.get(path) for ancestor in ancestors)
-                            for path in FROZEN_PUBLICATION), "merge introduced unapproved FX-49 material")
+                changes = {
+                    path for path in later_main_paths(changed(ancestors[0], merged))
+                    if all(merged.get(path) != ancestor.get(path) for ancestor in ancestors)
+                }
+                check_main_changes(root, ancestors[0], merged, byte_reader(root, merged, staged=True),
+                                   changes, opening=False)
                 continue
             parents = main_parents
         before, after = tree(root, parents[0]), tree(root, item)
-        changes = changed(before, after)
-        if opening:
-            check_main_paths(changes, opening=False)
-            scan_main_changes(root, before, after, byte_reader(root, after, staged=True), changes)
-        else:
-            require(not changes & FROZEN_PUBLICATION, "intermediate commit changed frozen FX-49 material")
+        check_main_changes(root, before, after, byte_reader(root, after, staged=True),
+                           changed(before, after), opening=opening)
 
 
 def is_ancestor(root, ancestor, descendant):
@@ -491,10 +546,20 @@ def is_ancestor(root, ancestor, descendant):
 def present_as_commit(root, oid):
     return git(root, "cat-file", "--batch-check=%(objecttype)", data=oid.encode("ascii") + b"\n") == b"commit\n"
 
-def check_main_paths(changes, opening):
-    unexpected = changes - REQUIRED_MAIN - OPTIONAL_MAIN
+
+def later_main_paths(changes):
+    scoped = set()
+    for path in changes:
+        folded = path.casefold()
+        if folded in SCOPED_MAIN or folded.startswith((DESIGN, RUNTIME)):
+            scoped.add(path)
+    return scoped
+
+
+def check_main_paths(changes, *, require_publication=False):
+    unexpected = changes - REQUIRED_MAIN - OPTIONAL_MAIN - LATER_RECEIPTS
     require(not unexpected, f"unexpected main PR path ({len(unexpected)} outside the publication inventory)")
-    if opening:
+    if require_publication:
         require(REQUIRED_MAIN <= changes, "main PR omits a required publication file")
 
 
@@ -510,10 +575,7 @@ def main_scope(root, base, checkout, head=None):
 
 
 def choose(changes, *, existing):
-    # Workflow-only and attribute-only changes matter once this gate is installed.
-    return bool(changes & ({GATE, TESTS} | (WORKFLOWS | {ATTRIBUTES} if existing else set()))) or any(
-        path.startswith((DESIGN, RUNTIME)) for path in changes
-    )
+    return bool(later_main_paths(changes if existing else changes - WORKFLOWS - {ATTRIBUTES}))
 
 
 def byte_reader(root, candidate, staged):
@@ -539,19 +601,32 @@ def scan_main_changes(root, before, candidate, read, changes):
                         raise GateError(f"{path}:{change['line'] + offset}: private-data scan ({findings[0][1]})")
         else:
             prescan(path, new)
+        if path in LATER_RECEIPTS:
+            receipt = decode_json(new, path)
+            require(isinstance(receipt, dict), "FX-49 receipt must be a JSON object", path)
+            normalized = json_bytes(receipt)
+            prescan(path, normalized)
+            require(not RECEIPT_IDENTITY.search(normalized.decode("utf-8")),
+                    "private-data scan (receipt identity)", path)
+
+
+def check_main_changes(root, before, candidate, read, changes, *, opening):
+    if not opening:
+        changes = later_main_paths(changes)
+    frozen = LATER_RECEIPTS if opening else FROZEN_PUBLICATION | LATER_RECEIPTS
+    require(not changes & frozen & before.keys(), "previously archived FX-49 evidence was modified")
+    check_main_paths(changes)
+    scan_main_changes(root, before, candidate, read, changes)
 
 
 def check_main(root, before, candidate, read):
     opening = MANIFEST not in before
     changes = changed(before, candidate)
+    check_main_changes(root, before, candidate, read, changes, opening=opening)
     if opening:
-        check_main_paths(changes, opening=True)
-        scan_main_changes(root, before, candidate, read, changes)
+        check_main_paths(changes, require_publication=True)
         previous = content(root, before.get(ATTRIBUTES), ATTRIBUTES)
         require(read(ATTRIBUTES) == previous + ATTRIBUTE_APPEND, "main attributes differ", ATTRIBUTES)
-    else:
-        require(not changes & FROZEN_PUBLICATION & before.keys(), "previously archived FX-49 evidence was modified")
-        scan_main_changes(root, before, candidate, read, changes & MAINTAINABLE_INPUTS)
     require(read(ATTRIBUTES).count(ATTRIBUTE_APPEND) == 1, "reviewed FX-49 attribute rule differs", ATTRIBUTES)
     text = git_text(root, "check-attr", "--cached", "text", "filter", "working-tree-encoding", "ident", "--", SCRIPT)
     expected = [f"{SCRIPT}: {name}: {value}" for name, value in (
@@ -739,12 +814,57 @@ def must_reject(check, reason):
         raise GateError("negative check unexpectedly accepted the change")
 
 
+def verify_later_pr_cases(trial, candidate):
+    receipt = DESIGN + "publication-independent-test-v2.json"
+    candidate = {path: entry for path, entry in candidate.items() if path != receipt}
+    raw = b'{"status":"fixture"}\n'
+    blob = git_text_input(trial, "hash-object", "-w", "--stdin", data=raw)
+    clean_receipt = dict(candidate) | {receipt: Entry("100644", blob)}
+
+    def verify(before, after):
+        check_main_changes(trial, before, after, byte_reader(trial, after, staged=True),
+                           changed(before, after), opening=False)
+
+    verify(candidate, clean_receipt)
+    verify(candidate, clean_receipt | {"unrelated.txt": Entry("100644", blob)})
+    must_reject(lambda: verify(clean_receipt, candidate), "archived FX-49 evidence was modified")
+    for path in (DESIGN + "unlisted-receipt.json", RUNTIME + "unlisted.txt", receipt.upper(), receipt + "/extra.json"):
+        unexpected = dict(candidate) | {path: Entry("100644", blob)}
+        must_reject(lambda: verify(candidate, unexpected), "unexpected main PR path")
+    for raw, reason in (
+        (b'["fixture"]', "receipt must be a JSON object"),
+        (b'{"status":0,"status":1}', "duplicate JSON key"),
+        (rb'{"value":"\u0077xid_fixture"}', "private-data scan (binding)"),
+    ):
+        blob = git_text_input(trial, "hash-object", "-w", "--stdin", data=raw)
+        invalid = dict(candidate) | {receipt: Entry("100644", blob)}
+        must_reject(lambda: verify(candidate, invalid), reason)
+
+    windows = content(trial, candidate[WINDOWS_WORKFLOW], WINDOWS_WORKFLOW)
+    required = publication_workflow_blocks(WINDOWS_WORKFLOW, windows)
+    unrelated_job = b"\n  other:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: exit 0\n"
+    require(publication_workflow_blocks(WINDOWS_WORKFLOW, windows + unrelated_job) == required,
+            "unrelated workflow job changed the FX-49 gate")
+    before, fixed_job = windows.split(b"  windows-fx49:\n", 1)
+    for old, new in (
+        (b"    runs-on: windows-2025", b"    runs-on: ubuntu-24.04"),
+        (b"    timeout-minutes: 10", b"    timeout-minutes: 1"),
+        (b"    if: github.event_name", b"    if: false && github.event_name"),
+    ):
+        changed_job = before + b"  windows-fx49:\n" + fixed_job.replace(old, new, 1)
+        require(publication_workflow_blocks(WINDOWS_WORKFLOW, changed_job) != required,
+                "unreviewed Windows job change matched the FX-49 gate")
+    require(publication_workflow_blocks(WINDOWS_WORKFLOW, windows.replace(b"branches: [main]", b"branches: [other]"))
+            != required, "unreviewed PR trigger matched the FX-49 gate")
+
+
 def verify_negative_cases(root, scratch, workspace, candidate, checkout, manifest, baseline, baseline_payload):
     trial = workspace / "negative"
     trial.mkdir()
     new_checkout(trial)
     import_objects(root, trial, checkout)
     populate(trial, checkout, candidate, {SCRIPT})
+    verify_later_pr_cases(trial, candidate)
 
     script = trial / SCRIPT
     raw = script.read_bytes()
@@ -773,7 +893,7 @@ def verify_negative_cases(root, scratch, workspace, candidate, checkout, manifes
     before_receipt.pop(receipt)
     check_main(trial, before_receipt, candidate, byte_reader(trial, candidate, staged=True))
     for forbidden in (RUNTIME + "scripts/football_daily.py", DESIGN + "unlisted-receipt.json"):
-        must_reject(lambda: check_main_paths({forbidden}, opening=False), "unexpected main PR path")
+        must_reject(lambda: check_main_paths({forbidden}), "unexpected main PR path")
     modified_receipt = dict(candidate) | {receipt: Entry("100644", blob)}
     must_reject(lambda: check_main(trial, candidate, modified_receipt, staged_script), "archived FX-49 evidence was modified")
     must_reject(lambda: prescan(DELTA, b"PAL_PG_PORT=" + bytes([53, 52, 51, 50])), "private-data scan (port)")
@@ -1009,7 +1129,9 @@ def main():
                 print(f"FX-49 paths unchanged in main PR checkout {checkout}")
                 return 0
             if MANIFEST not in before:
-                check_main_paths(head_changes, opening=True)
+                check_main_paths(head_changes, require_publication=True)
+            else:
+                check_main_paths(later_main_paths(head_changes))
             check_reviewed_history(root, base, args.pr_head, opening=MANIFEST not in before)
             require(all(candidate.get(path) == head_tree.get(path) for path in DIRECT),
                     "gate checkout direct file differs from actual PR head")

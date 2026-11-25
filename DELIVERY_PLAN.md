@@ -4566,7 +4566,7 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 固定运行提交为 `97e9cbcbf510de0f10606ec06380376d627bff50`，树为 `1bbf62faec2b0415599da5a4b4243b8da2bf4928`，父为 `bcce1b17f7263ab89859febfcb56188c295ab371`。固定脚本 [Invoke-PaperWeixin.ps1](docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1) 的 SHA-256 为 `e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6`。用已留存基线与普通 PR 的精确输入重建同一个版本，计划原审通过。[发布复现补遗](docs/paper-sim/design/fx-49/publication-addendum-v2.md) · [计划复审](docs/paper-sim/design/fx-49/publication-review-v2.json)
 
-`42080d20` 的原主线及运行侧代码复审均为 FAIL。本次修订把开 PR 的完整源文件核对与日常维护中的冻结材料和 CI 入口核对分开，独立钉住公开计划、回执及既有归档的字节，保留原 Windows 研究桥接试验的检出条件和 10 分钟时限，并另建隔离的 FX-49 检出。实际 PR 和 CI 待登记。
+`42080d20` 的原主线及运行侧代码复审均为 FAIL。`df524c98` 的运行侧源码复审为 PASS，原主线复审为 FAIL，原因是后续 PR 能加入未登记、未扫描的 FX-49 文件。当前修订按发布索引逐项核对后续回执路径和内容，保留原 Windows 研究桥接试验的检出条件和 10 分钟时限，并为独立 FX-49 作业固定 Python 3.12 安装及运行入口。计划审阅回执记录公开投影的精确替换行及摘要。当前修订的独立复审、实际 PR 和 CI 待登记。
 
 此前机主确认收到一次人工微信投递。目标现场的受限账户、固定脚本执行策略及人工六例仍待验。自动自然业务投递验证次数为 0，现场部署提交待登记。
 

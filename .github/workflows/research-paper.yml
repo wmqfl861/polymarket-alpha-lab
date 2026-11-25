@@ -59,11 +59,18 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Install pinned uv for FX-49
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.0'
+          enable-cache: false
+      - name: Install locked FX-49 Python environment
+        run: uv sync --locked --python 3.12
       - name: Verify FX-49 Windows PowerShell 5.1 offline drill
         env:
           FX49_BASE: ${{ github.event.pull_request.base.sha }}
           FX49_HEAD: ${{ github.event.pull_request.head.sha }}
         shell: cmd
         run: >-
-          python -I -B scripts\verify_fx49_publication.py windows
+          .venv\Scripts\python.exe -I -B scripts\verify_fx49_publication.py windows
           --base "%FX49_BASE%" --pr-head "%FX49_HEAD%" --checkout "%GITHUB_SHA%"

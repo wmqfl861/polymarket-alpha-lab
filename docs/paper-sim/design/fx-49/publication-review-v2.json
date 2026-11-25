@@ -14,6 +14,18 @@
   "original_review_sha256": "2e92e557c3740d741bc2287d826c0faa056622402f1c6e82f25722eed582bdc8",
   "plan_bytes": 19559,
   "plan_sha256": "343ed404ca3079ebd7dac8c5503df733b1b7ab38dbcb75b9036c45997da5f323",
+  "public_plan_projection": {
+    "bytes": 19568,
+    "change": "Replace the opening of line 81 containing the two private review identifiers with a redaction notice stating the reviewed byte count and digest. The rest of the line is identical.",
+    "line": 81,
+    "published_line_bytes": 550,
+    "published_line_sha256": "f19edea3c9ad69f0a30791abf581946d42183548f48f3fdd6d52c83249bf3636",
+    "reviewed_line_bytes": 541,
+    "reviewed_line_sha256": "26eeb21d841d1834f6e361cb8e08819e903e77ce7cd6795b0124b00bf3b53875",
+    "sha256": "a877a3cdb535d3139f0dc9ea54feef28ec1b97bb08f6330f57c7e56d05cfb48e",
+    "unchanged_bytes": 19018,
+    "unchanged_sha256": "d3f561600daf189f3e979d4db6fe0e69b877d5b1861307baf81b5bb3c255d848"
+  },
   "review_scope": "replacement mechanism for preserving, restoring and verifying the approved FX-49 release object",
   "same_as_original_publication_reviewer": true,
   "schema_version": 2,
