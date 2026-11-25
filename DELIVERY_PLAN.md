@@ -4546,6 +4546,18 @@ Owner 的审核指示原话为“按照规则，直接进行审核”。
 
 FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件仍缺，逐条状态和可核对的来源见[节点计划与复审索引](docs/paper-sim/design/fx-42/documents.tsv)。
 
+##### FX-52　PR #123 与 11 月 22 日免审指令
+
+| PR | PR 头 | 合并提交 | Offline verification | Research paper bridge | Native project PostgreSQL |
+| --- | --- | --- | --- | --- | --- |
+| #123 | `2fbcd0d858bd1511c454edd65f568394642f08d8` | `ab6edff2d64ac8aa5c2831d748b8730b63f8312d` | `45169585443`（PR） | `45169585610`（PR） | `45170610241`（手动，同一 PR 头） |
+
+三条运行均成功。CI 合并树与 #123 最终合并树相同。Offline 作业检出 `f8fd94ba`，合并基为 `6d880008fc183a259298b6065ff6d5cb19b66fc3`，与 #123 合并提交的第一父相同。合入后的 push 运行 `45173749617`（Offline）和 `45173749622`（Native）均成功。[PR #123](https://github.com/wmqfl861/polymarket-alpha-lab/pull/123)
+
+独立只读 ZCode 会话 `sess_d2f76ce1-9cc3-443d-be64-a6f8a6bf580e` 的首次答复结论为“判定：通过”。当时未核实提交与差异的绑定、B1 的 blob、前序已审树或实际测试结果。该回执为 3,417 字节，SHA-256 `6f38a5a37f7fda98f1da8912d1832d4a2fecbd65c593d97e4478e170420a58bd`。[首次答复](docs/paper-sim/design/fx-52/pr-123-review-initial.txt) 同一会话读回补充材料后签署 `VERDICT: PASS`，3,186 字节，SHA-256 `9bc9fcf3efc94d4c344a591777c48c65624d5e9e132ceb4cccf443b72c3eb431`。[最终答复](docs/paper-sim/design/fx-52/pr-123-review-final.txt) Linux 测试派工会话 `sess_107767cd-51ce-4486-a024-018c16ff0762` 确认两次运行排队。本节的测试通过结果依上列 CI 记录。
+
+11 月 22 日原指令为“修改规则，每次扫描任务，建模任务，下注任务，推荐任务，不需要zcode审核”。#123 中的三处文字覆盖定时及按需的扫描、建模、模拟下注和推荐。运行层源码变更仍经分支、PR、CI 和独立复审。OD-U 尚待 owner 确认完整正文。供确认的 `AGENTS.md` 在上述合并提交中为 Git blob `ee1de5f23f9c39daeaf2b347919205f1504b7288`，27,514 字节，SHA-256 `0f4d79fa1380af4f0750b2b0f306e4c99fd8e643b766fcbfdfc2bf69d003cd20`。收到答复后在此登记原话。OD-U 的范围见本轮[整改清单](docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md)。以后变更根规则时，同一 PR 收入 owner 对完整正文的原话和文件哈希。[固定完整正文](https://github.com/wmqfl861/polymarket-alpha-lab/blob/ab6edff2d64ac8aa5c2831d748b8730b63f8312d/AGENTS.md)
+
 #### 84.2.3 事后复审及隔离复现
 
 §84 的五项均在 2026-11-21 由实际 ZCode 完成独立事后复审。原合入时缺少回执的事实保留在各行。按首次审查或主机资源中断恢复的实际会话入档。
@@ -4553,6 +4565,17 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 [P1-4 第一处实测](docs/paper-sim/design/fx-39/reviews/p1-4-baseline-reproduction.md)中，隔离扫描写入一条原因是 `fit_materials_missing`、概率为空的影子拒绝记录。按实际出价版本 `soccer-r23` 关联到 1 条，按登记现役版本关联到 0 条。两种版本口径下的可评分配对均为 0。扫描和评分期间新增角色事件和判定均为零。另两次记录确认扫描处理市场包的 `variant_quotes` 数组时会在持久化前遇到 `42846`。该缺陷独立留证。
 
 对比 #116 job `136680617790`、#118 job `136739251486` 的 `-rs` 输出及本机回执，两份对应 CI 各多跳过一项，均为 `tests/test_papersim_optimize_metrics.py::test_anchor3_wp_p4_paired_comparison`。原因是托管运行器缺少服务器专用的 WP-P4 证据 JSON。原有测试及条件照审计时的声明保留。
+
+##### FX-53　事后复审小修登记
+
+四项小修与排期对应增量审核的 R6-10 和 R6-13。[审核发现](docs/handoffs/2026-11-24-incremental-review/01-review-report.md)
+
+| 来源 | 已核实的行为 | 排期和验收 |
+| --- | --- | --- |
+| [MO-2 R-1](docs/paper-sim/design/mo-2/reviews/pr-83-retrospective.md) | `load_optimization_runs`、`load_promotion_decisions`、`registry_freeze_state` 及其内部读取会在空闲的受管连接上开启隐式事务。`runner.status_report` 直接读取冻结状态与运行，公开导出。固定主线的 `papersim`、工具和测试中未找到该函数的直接调用。审计核过的四处 CLI 读取位于调用方事务内。 | 在 NBA v2 和 FX-47 交还 `store_psycopg.py` 写权后单独修复。沿 `load_model_spec` 的事务模式，在三个公共入口分别验证初始为空闲和已有调用方事务两种前后状态。 |
+| [MO-4 第 1 条](docs/paper-sim/design/mo-4/reviews/pr-79-retrospective.md) | `from_managed_rows` 在缺少 CLOSE 的记录上缺少 decision 与已结算结果的直接时序校验。 | 在评估输入的小修节点补直接比较；覆盖缺失 CLOSE 时的时间倒置和合法先后两例。 |
+| [MO-5b F-1、F-2](docs/paper-sim/design/mo-5b/reviews/pr-84-retrospective.md) | 现有深拷贝在 `fit` 后构造，未实际验证输入完整；外部构造的 `ModelSpec` 可使斜率参数与 envelope 中心不一致。 | 国家队模型族小修时，在 `fit` 前留输入副本，之后复核，并以手工构造不一致的规格验证关闭路径。保留默认预测及变体。 |
+| R6-13 | `test_anchor3_wp_p4_paired_comparison` 依赖服务器保存的固定 WP-P4 证据。历次 CI 的既有跳过原因和本机对照见[PR #114](docs/paper-sim/design/pr-114-review.md)。 | 服务器专用。最近一次单独核验为 2026-11-24 00:17:55–00:17:57 UTC，检出 `e65be3e7bfed96d52be1a2c9b392627b0ab2d23b`，1 通过、0 跳过。通过结果涵盖用例对固定输入 SHA-256 `51d7da0e6dd09176b8c6141ba1fd99dc7e63e0995ea4a354f6b5fc1c41ce7899` 的断言。会话 `sess_c476cae6-b029-4241-925a-c8937aed98f8` 记录该用例的执行结果。回执 1,109 字节，SHA-256 `882bf6e65d99ad0763620af7d95fdda35e558f9937b6e1d37388954b0196f786`。[执行回执](docs/paper-sim/design/fx-53/wp-p4-anchor-20261124.txt) |
 
 #### 84.2.4 FX-36 本地清点
 
@@ -4682,3 +4705,57 @@ PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并�
 按 #118 实际合并对象复核：`historical_protocol` 的现行俱乐部日程为 `mo6-club-official-round-suffix-v1`，固定截止 2026-11-10 10:33:51 UTC。CLI 在连接前校验该日程时钟，清单和受管存储重新校验，历史适配器要求完整因果后缀和精确登记首界。W41 的西甲 R8 未闭，若把首界移至轮内，搜索侧标签仍晚于首预测。W42 的英冠和西甲两条搜索标签均晚于 10 月 13 日 18:45 UTC 的首预测。按当前证据，各目标的留出上界为 3 个完整比赛周、229 场，离 20 周且 300 场仍至少差 17 周、71 场，满足时点未知。新启动、搜索试验、预测、留出回调与比较均为 0，实际配对场数未测，无新运行 ID、终态或记分卡。独立本机 ZCode `sess_7bc3eeec-b3ad-43ff-96de-efc26b82819b` 于 `2026-11-21T20:39:17.867333+00:00` 通过该处置计划。[预检计划](docs/paper-sim/design/fx-41/club-w45-plan.txt) · [独立复审](docs/paper-sim/design/fx-41/club-w45-review.txt) · [复审回执](docs/paper-sim/design/fx-41/club-w45-review-receipt.json)
 
 §84.2.5 保留三张正式原卡。俱乐部 ID 1 与 NBA ID 3 为 `INSUFFICIENT_DATA`，国家队 ID 2 为 `NO_IMPROVEMENT`，三次原运行的实际留出回调均为 0。owner 于 2026-11-21 批准 NBA 双季日程先登记再执行一次。该日程使用 17 个完整规格和 4,811 次物理试验。受管执行和新卡待交付。O-5 的原生失败路径测试已随 #121 合入，专项 15 项通过。优化线第一阶段交接书待 NBA 执行和终点验收。[O-5 受管测试结果](docs/paper-sim/design/fx-38-fx-39-step1/focused-native.json)
+
+## 88. FX-51 足篮运行层的准入、金额和模型来源
+
+登记依据为运行层交付 `bcce1b17f7263ab89859febfcb56188c295ab371` 和主线 `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`。独立只读 ZCode 会话 `sess_ab4a07b6-49d6-47b5-a71b-904916bb4661` 对初稿 `65b9e09d` 签署 `VERDICT: PASS`。初稿回执 6,863 字节，SHA-256 `a229c00de92e685e4d8fc8afd3bdf5ae9122c71f3dffd589ebca59510a42db1f`。[初稿复审回执](docs/paper-sim/design/fx-51/registration-review-initial.json)
+
+`775c8edb` 按固定源码补齐审者指出的足球时间常量和 NBA 附加条件。同一会话签署 `VERDICT: FAIL`，当时的审阅材料无法核验初稿回执的文件。第二轮回执 4,467 字节，SHA-256 `72816efc16833ec8a991f39506910bded34ca2a52ebc75a5a845896aa6af2c85`，正文、轮次与追踪标识均与本机 ZCode 留存的中文答复一致。结案答复中对第二轮语种的说法与本机留存有差异。[第二轮复审回执](docs/paper-sim/design/fx-51/registration-review-follow-up.json)
+
+`97091184` 登记初稿回执的字节数和摘要，并注明运行层交付 README 是脚本比对数量的来源。同一会话结案复审签署 `VERDICT: PASS`，对象为 `97091184`，基于 `e65be3e7`。结案回执 2,390 字节，SHA-256 `ff14d5857f560f4c45728bad418b4593ec6b86e6fcfb2b55be6efde0c288dfbe`。这三份回执的字节数和摘要均按登记树中的 Git blob 核定。[结案复审回执](docs/paper-sim/design/fx-51/registration-review-final.json)
+
+下列运行层文件名均相对于 `docs/paper-sim/runtime/scripts/`。本次盘点记录交付源码定义的条件。按运行层交付 README 的比对记录，27 个脚本中有 15 个与当时运行源逐字节相同。部署对应的确切提交及其余文件由 FX-48 现场检出回执核定。英冠、荷甲在某一时刻是否已开放须由当时的状态记录证明。[固定运行层源码](https://github.com/wmqfl861/polymarket-alpha-lab/tree/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/scripts)
+
+### 88.1 足球盘口准入
+
+政策版本为 `football-admission-2026-11-19/wp-p3-wp-p4-v1`。作用域以联赛、盘口种类、盘口线、球队侧和模型版本共同确定。`football_admission._approved_domestic` 为 `soccer-r23` 定义七个国内联赛的既有准入，即英超、西甲、意甲、德甲、法甲、英冠和荷甲。七个联赛均包含双方进球、全场总进球 0.5 至 19.5 的半球线和主客队各自的同组球队总进球盘口。前五个联赛另含胜平负。由循环推得 432 个作用域。英冠、荷甲的胜平负另经前瞻准入。
+
+| 英冠和荷甲胜平负的步骤 | 交付代码的实际条件 |
+| --- | --- |
+| 登记样本 | `football_admission._study_plan` 登记一个赛季的两个完整未来轮次。每场的采集开启时间（开球前 30 分钟，即 `forward.FORECAST_OPEN`）须严格晚于登记评估时刻，每队在同轮只出现一次。采用开球顺序最早的两轮。英冠每轮 12 场，荷甲每轮 9 场。Gate E 使用第一轮按开球和赛事键排序的前 12 场或前 8 场，两轮全部比赛进入留出清单。同赛季已用轮次不会重复登记。 |
+| 时间与身份 | 登记早于观测。观测在开球前 30 分钟（含）至 20 分钟（不含）；模型年龄 0–25 分钟（`model.MODEL_AGE`），双边盘口年龄 0–5 分钟（`feed.BOOK_AGE`）。FotMob 赛程和球队身份、直接核验的 Gamma 合约和 CLOB 盘口必须能对应。对同场主胜、平局、客胜的三个 Yes 市场分别核对不同的市场与条件标识、相同的赛程修订、观测时刻、模型时刻与模型摘要。见 `_valid_study_row`、`_fixture_triplet`、`_two_way_midpoint`。 |
+| 市场比较 | 十变体中位数与记录概率通过 `math.isclose` 核对，绝对容差 `1e-12`，同时使用 Python 默认相对容差 `1e-9`。有效盘口须满足 `0 < bid < ask < 1`，中间价与记录的市价一致。将主、平、客中间价归一化后，与模型三项概率逐项比较。受管 `scorecard.gate_e_market` 取全部可比场次、全部结果的平均绝对偏差，要求 `≤ 0.06`，每场最可能结果的翻转总数 `= 0`。样本下限分别为 12 和 8。见 `_model_probability`、`_evaluate_study`、主线 `optimize.metrics.favorite_flips`。 |
+| 留出及生效 | 两轮都须逐场取得有效三元组和已核验的全场（90 分钟加补时）赛果，完整轮数 `≥ 2` 且 Gate E 为 `PASS` 方可开放。留出的 Brier、对数损失和与市价配对数随批次记录。另一项国内滚动再校准研究使用自己的时间折，本准入用前瞻轮次。`_decisions` 优先处理暂停，合格作用域写为 `market_admitted`，`active_scopes` 在同一策略和模型版本下读取。 |
+
+`football_admission._record_decision` 在同一数据库语句内更新作用域并把变更追加到 `football_admission_history`。每次决策摘要变化都有 `evaluated_at`、作用域、状态、原因、研究统计和 `decision_sha256`。英冠、荷甲可用统计里的 `study_key` 回到登记轮次与比赛清单。审阅状态变化时按同作用域的时间排序区分状态改变与统计刷新。篮球的 `basketball_daily_study` 提供逐日研究记录，尚缺等价的逐作用域转换台账。该缺口按 FX-51 第 3 项跟踪，在 FX-48 接入状态输出时保留分列记录。既有足球白名单来自代码常量，原始七联赛准入没有对应的逐场历史行。
+
+### 88.2 模拟金额与两本账的状态
+
+| 账本或报告 | 输入与用途 | 状态口径 |
+| --- | --- | --- |
+| 人民币模拟账户 | `sports_portfolio.status` 从代次期初、已结算盈亏、未结注额计算权益与可用现金 | 默认期初 **10,000 元**，权益为期初加已实现盈亏，可用现金为权益减未结注额。人民币模拟账本的成绩不是正式晋级的证据。 |
+| 受管 PaperSim | 正式晋级只读受管账本。运行号、配对样本、角色事件和记分卡依 §84.2.5、§85 与受管状态报告逐一核对 | 单列运行状态、验证与晋级判定。运行层自有模型不在优化线注册表。其“正式模拟单”专指运行层口径。 |
+| 前瞻研究 | 足球观察与篮球逐日研究登记研究批次、版本与时间窗 | 按作用域列观察数和可比数；零金额关注项单列。 |
+
+`_value_metrics` 以价格加单位费 `费率 × 价格 × (1 − 价格)` 为每份成本。含费十进制赔率为其倒数，保本概率等于成本。预期净回报为模型中位概率除以成本再减 1。保守净回报用中位概率、最弱变体及最差毛／净优势反推概率中的最小值计算，信号中的反推值与精确变体值仅有舍入误差时采用精确值。`_allocate` 先按保守净回报、再按预期净回报降序，检查价格时间窗和现金。同一代次内，同一运动的同场赛事及同一市场各限一注。足球候选清单和每日入场路径均用 `LIST_LIMIT = 5`。
+
+| 保守净回报 | `value_tier` | 应付模拟金额 |
+| --- | --- | --- |
+| `≤ 0` | 无 | 0 |
+| `0 < 回报 < 10%` | 低 | 权益的 0.50% |
+| `10% ≤ 回报 < 20%` | 中 | 权益的 1.00% |
+| `回报 ≥ 20%` | 高 | 权益的 1.50% |
+
+`BASIS_POINTS` 取 50、100、150，按分向下取整，金额再取剩余现金与应付金额的较小值。同一代次的期初只登记一次。上述比例和排名以已提交的 `sports_portfolio.py` 为凭。[金额与结算实现](https://github.com/wmqfl861/polymarket-alpha-lab/blob/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/scripts/sports_portfolio.py)
+
+### 88.3 版本、来源与后续归并
+
+| 模型或研究 | 版本和来源 | 适用范围 |
+| --- | --- | --- |
+| 国内足球基线、历史固定批 | 主线 `papersim.pipeline.MODEL_VERSION_SOCCER = soccer-r23` 和 `soccer_model` 提供十变体，运行层 `football_model` 装配赛程。`soccer-r23-fixed-20261122` 来自 `football_forward.FIXED_MODEL_VERSION` 与 `football_legacy` | 现行来源和既有盘口见 §88.1。固定版对应 11 月 22 日五场历史批次。 |
+| 国内足球再校准和总进球 | `football_domestic_study.REPORT_VERSION = wp-p4-domestic-rolling-v1`，使用主线 `club-soccer-recalib`、`p4r1` 和 `tools/wp_p4_walkforward.py`。运行层另有 `domestic-totals-league-tail-v1-` 加配置摘要、`domestic-totals-logit-v1-` 加参数摘要 | 再校准候选须有独立准入。尾部分布版本处于前瞻研究，对数几率版本为回顾研究，合约线按 `football_totals_calibration.py` 登记。 |
+| 额外联赛足球 | 运行层 `football_research` 的 `football-score-grid-v1` 按联赛和规格摘要派生版本，参考 `football-20261119-score-baseline-v1` | 巴西、乌拉圭、乌兹别克斯坦、哥伦比亚次级和东盟俱乐部赛事按精确作用域取证。欧冠和欧联的条件准入、国家队胜平负的研究限制另见 `football_admission._decisions`。 |
+| NBA | 运行层使用 `wp-nba-v1` 标识主线 `nba_model.fixture_prediction`，门值来自 `tools/wp_nba_validate.py`。`wp-nba-ratings-20261122-v1` 为运行层独立评分模型 | 篮球政策 `basketball-league-admission-20261119-v1`。`_approved_families` 要求报告状态为 `evaluated`，策略版本、当前 NBA 赛季及所选模型版本吻合，观测年龄为 0 至 2 小时。该模型须已准备重测，合格场次数为整数且至少 90，A、C、D 均通过。胜负还要求 E 的 `passed` 和 `polymarket_at_bar` 均为真。大小分还要求 B 通过、同线模型优于抛硬币、严格同线样本 `polymarket_strict_n` 至少 20。两个版本分别判定。 |
+| 欧洲篮球与 NCAA | `europe-basketball-20261119` 源自运行层 `basketball_models._euro_forecast`。`ncaa-elo-margin-v1-20261123` 源自 `basketball_college` | 欧洲九联赛前瞻研究范围中，德国 BBL 和 EuroCup 的总分有受管准入路径。NCAA 男女篮为研究口径；WNBA 和夏季联赛当前无支持模型。 |
+
+OD-Y 按推荐执行。FX-48 先登记运行版本、定时状态和研究与账本的衔接，完善分列输出和状态变化证据。M2 切换后按同一场次、合约、观测时刻、模型和批次核对两套记录，再把准入与运营账并入受管模拟盘。数据库具体采用的路径留给 OD-X。[本轮整改清单和决定项](docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md)

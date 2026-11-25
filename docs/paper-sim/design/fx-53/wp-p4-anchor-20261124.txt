@@ -1,0 +1,18 @@
+The test passed: `1 passed in 1.80s`, with nothing skipped.
+
+| Item | As seen |
+|---|---|
+| UTC start | 2026-11-24T00:17:55Z |
+| UTC end | 2026-11-24T00:17:57Z |
+| HEAD | `e65be3e7bfed96d52be1a2c9b392627b0ab2d23b` |
+| Passed | 1 |
+| Skipped | 0 (the `-rs` section printed nothing) |
+| Failed or errored | 0 |
+| Chain exit | 0 (the closing `date` ran, so pytest exited 0) |
+
+**Evidence boundary**
+- **Scope:** this was one run of the single named case through the installed pytest entrypoint of the existing local Python from the prior run, with plugin autoload, bytecode writing and the cache provider off.
+- **Not done:** there was no rerun, no other suite, no optimizer and no NBA experiment. I ran only the one command.
+- **Fixed hash:** I did not open the test source or evidence files, so the fixed-evidence-hash check rests on your description plus the pass.
+- **Clean checkout:** I did not re-check the worktree state myself; the session's start-of-run git snapshot showed it clean.
+- **Network and credentials:** none appeared in the command or its output, but I did not monitor for network activity.
