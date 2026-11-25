@@ -1,0 +1,30 @@
+{
+  "observed_utc": "2026-11-25T05:20:04.600498+00:00",
+  "operation": "one read-only observation from the previously confirmed HC route to the bound Windows operator context",
+  "operator": "local coordinator following the explicit owner request",
+  "windows_exit": 0,
+  "owner_responses": [
+    {
+      "question": "是否已存在管理员按现行策略批准、可运行固定脚本的受保护入口？",
+      "answer_verbatim": "我不知道，你自己测一下"
+    },
+    {
+      "question": "如果无法将远程能力限制在固定脚本，是否接受通用执行、文件及终端能力后切换？",
+      "answer_verbatim": "按你推荐的来",
+      "recommended_choice": "只在能限制为固定入口时切换"
+    }
+  ],
+  "windows": {
+    "engine": "Windows PowerShell 5.1",
+    "effective_execution_policy": "Restricted",
+    "process_execution_policy": "Undefined",
+    "agreed_rehearsal_script": "absent",
+    "registered_script_path_in_process_user_machine_scopes": "unset",
+    "script_acl": "not available, no registered script file",
+    "fixed_entry_confinement": "not proven",
+    "switch": "held"
+  },
+  "live_delivery_attempts_this_observation": 0,
+  "raw_metadata_receipt_sha256": "53651e10ae6c07eebf07dcac75cac0ba4e722b5028b426b980ff54c7fb308cda",
+  "read_only_query_sha256": "5e0ddd2452c959f56ac8f490c14a382c8281dc415d83633a837fb186d48fbed0"
+}
