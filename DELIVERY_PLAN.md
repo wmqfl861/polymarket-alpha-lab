@@ -4714,19 +4714,30 @@ FX-47 经 #128 合入的 `a7dbd8a3` 是工程开工父。源码 `11d24be6` 在�
 
 按同一批次分别统计足球和加密的可归属候选。候选分母包括有报价的目标以及能从原始市场、买入方向与登记谱系确定身份的构造失败目标。前者沿用 B1 的报价和闸门结果，后者逐个持久化为 `CONSTRUCTION_FAILED`，保留失败原因和重放依据。无法归属的发现另列在该批次的覆盖清单，按出现位置或排除原因计数。操作级完整性错误由操作回执追踪。正式运行的分母、各结论的行数以及覆盖观察数须从同一封存批次回读。
 
-在隔离 PostgreSQL 夹具中，足球一批落库 4 个候选，每个都通过重放。整数盘口的构造失败保留 `construction_value_error`。加密盘口簿龄政策缺失的批次落库 2 个候选，两行都保留 `d1_capture_book_age_policy_unregistered` 并通过重放。市场身份无法绑定的夹具读回 1 个发现位置，候选数为 0。正式运行的覆盖率仍待同批观测。[原生覆盖用例](tests/test_papersim_prepared_scan_native.py) · [候选行及覆盖清单](src/polymarket_alpha_lab/papersim/prepared_scan.py)
+隔离 PostgreSQL 的足球夹具一批落库 4 个候选。2 个有报价，2 个整数盘口构造失败并保留 `construction_value_error`，4 个均通过重放。加密盘口簿龄政策缺失的批次落库 2 个候选，两行都保留 `d1_capture_book_age_policy_unregistered` 并通过重放。市场身份无法绑定的夹具读回 1 个发现位置，候选数为 0。正式运行的覆盖率仍待同批观测。[原生覆盖用例](tests/test_papersim_prepared_scan_native.py) · [候选行及覆盖清单](src/polymarket_alpha_lab/papersim/prepared_scan.py)
 
 原审保留了五项工程限制。跨联赛足球缺少通往构造器的材料生产路径，桥接、投影和新闻文档尚缺生产方。不同快照种类可能出现相同的空数组内容摘要。现存业务数据不足以单独证明提交先后。B2 的区间核对比 B0 宽。旧式受管扫描在组装期间一直持有组合锁。早期隔离库中由 `827dd28a` 或 `812e5f41` 写入的准备绑定不能由 `11d24be6` 恢复，本节点的原生回执均使用本轮的隔离库。[原审复核](docs/paper-sim/design/fx-40/evidence/source-review-pass.json)
 
 原始材料按四个冻结夹具分别归集。七个 Git 提交和首批 19 份本地归档均有清点回执，后续对足球另核七份材料。四场 r23 足球在三份缩略档中各有明确的市场编号。两侧标识逐位一致，第一侧 Over 的均价、成交标记和深度逐场匹配冻结夹具，也取到了盘口来源时钟。四案完整请求的历史验收仍缺受管快照或独立保管依据。r23 足球及 r24 #48 还需逐档卖盘和逐请求收妥时刻，加密触价案例还需覆盖观察时段的报价及原始请求，HOF–LYO 需能绑定目标市场与当时桥接政策的拒绝证据。[Git 清点](docs/paper-sim/design/fx-40/evidence/seven-tree-inventory.json) · [逐件归档清点](docs/paper-sim/design/fx-40/evidence/historical-input-custody.json) · [四场买入侧回读](docs/paper-sim/design/fx-40/evidence/soccer-projections.json)
 
-工程头的原始全树扫描有 9 项待审记录。原执行者按 Git 对象及表达式核对，4 项是已有重放协议标记，2 项是市场参数的变量赋值，3 项是隔离夹具的市场侧标识，未决为 0。工程头 `11d24be6` 的离线全套执行完毕，44,057 项通过，473 项跳过，20 条警告，退出码为 0。[工程头全套回执](docs/paper-sim/design/fx-40/evidence/engineering-full-results.json)
+工程头的原始全树扫描有 9 项待审记录。原执行者签收扫描程序按 Git 对象及表达式给出的分类，4 项是已有重放协议标记，2 项是市场参数的变量赋值，3 项是隔离夹具的市场侧标识，未决为 0。工程头 `11d24be6` 的离线全套执行完毕，44,057 项通过，473 项跳过，20 条警告，退出码为 0。[工程头全套回执](docs/paper-sim/design/fx-40/evidence/engineering-full-results.json)
 
 在 #130 上的整合候选 `fd6db31c`，全树敏感内容扫描覆盖 7,902 个不同 Git 对象，原始退出码为 1。11 项命中全部已归因，其中 9 项与工程头的对象及历史相同，另 2 项来自登记文件中原有且逐字相同的行。新增行扫描对 #130 未报命中。两份审核包脚本分别用 #130 和审计锚运行。相对 #130，移除测试、断言减少、新增跳过和新增预期失败均为 0，也没有新出现地址的文件。相对审计锚，帮助测试的那一处历史改名已随 #130 交接。[全树逐项核对](docs/paper-sim/design/fx-40/evidence/integrated-tracked-attribution.json) · [扫描与索引回执](docs/paper-sim/design/fx-40/evidence/integrated-static-results.json)
 
-该节点的完整测试、阶段复审和三条 CI 以合入 PR 绑定的检出为准。[逐项处置](docs/paper-sim/design/fx-40/evidence/source-scan-disposition.json) · [十二份计划及历次判词等本节点原件清单](docs/paper-sim/design/fx-40/MANIFEST.json)
+文档候选 `c1d0be53` 的全树扫描使用 `scan-tracked.py`，SHA-256 为 `96183c0533c67b0e45a3d7d61c25594952f78590fad77c761d9efed983e7d8f7`。12 项命中全部有归因。该候选相对 #130 的新增行扫描命中 2 处已在主线的离线回执文件名。相对审计锚的分类计数为邮箱 6、用户目录 2、微信标识模式 25。原代码复审核准工程范围，首次阶段复审要求补齐历史验收的处置与计日登记。该节点最终 CI 以合入 PR 绑定的检出为准。[全树归因](docs/paper-sim/design/fx-40/evidence/release-tree-scan-c1d0be53.json) · [新增行归因](docs/paper-sim/design/fx-40/evidence/release-added-line-attribution-c1d0be53.json) · [原代码复审](docs/paper-sim/design/fx-40/evidence/release-code-review-c1d0be53.json) · [首次阶段复审](docs/paper-sim/design/fx-40/evidence/stage-review-c1d0be53.json) · [本节点证据清单](docs/paper-sim/design/fx-40/MANIFEST.json)
 
-正式计日须先取得 FX-40 的实际合并、FX-44 的 OD-P 生效回执、事前登记并适用于各来源的盘口双龄政策，以及 Path L 和 Path N 的同批输入与两侧日结证据。七个完整 UTC 日从满足这些条件的无人值守受管模拟并跑中取证。工程隔离测试、历史重构和人民币模拟账本均不计入。
+**FX-40 历史验收未完成，M2 出口未满足。** 截至本次登记，四个案例中可完成完整规范字节比较的为 0。独立基线和候选的完整请求或拒绝包尚未逐字节对照，实际差异及首个不同字节均待测。工程 PR、缺证时的拒绝回执和十项自检各自只证明其登记范围。各案原件由对应轮次的归档保管人或受管快照持有人提供。协调者按当时的版本、来源钟、收妥钟和独立清单验收。
+
+| 冻结案例 | 取证责任及下一个动作 |
+| --- | --- |
+| r23 足球 | r23 归档保管人补齐四场当时的市场原件和买入侧逐档价量、各次实收证词、xG 采集与完整性记录，并绑定当时的构造器和生效政策。 |
+| r19 加密触价 | r19 市场及行情归档保管人按三份市场条款核实当时使用的观测场所，提交从合约创建至真实决策截点的逐分钟原件、蜡烛采集与收妥证词、所需盘口输入及独立清单。已核到三份条款中的场所、交易对与一分钟触价定义，后采的聚合区间只供对照。[合约与时钟核对](docs/paper-sim/design/fx-40/evidence/r19-contract-and-clock-readback.json) |
+| r23/r24 的 #48 闸门 | 两轮盘口归档保管人各自提供对应市场的买入侧逐档、来源和收妥证词、当轮决策时刻及托管清单。协调者分别重建两轮的输入。 |
+| HOF–LYO 跨联赛守卫 | 该轮市场、规则和桥接表的保管人绑定实际请求的方向和市场，提供当时生效的规则及桥接表，核实当时缺少有效桥接的事实，供独立基线构造规范拒绝包。 |
+
+补证时，协调者通过已授权的只读归档或受管快照核对版本、长度和摘要，再将可核实的材料交给隔离实例。空注册表下由独立基线和候选分别组包，逐案登记参考与实际长度、摘要、逐字节结果和首处差异。若某项原件确定永久缺失，协调者提交逐案影响、可独立验证的替代比较和剩余缺口，提请有权决定者正式裁定，并交本轮审核链复核。授权内可裁定证据等价。变更原四项验收口径须取得明确授权并重新登记。补证或裁定生效前，四案保留待验。[已签核计划的历史验收约定](docs/paper-sim/design/fx-40/plan-v3.md)
+
+正式计日须先取得 FX-40 的实际合并、FX-44 的 OD-P 生效回执、事前登记并适用于各来源的盘口双龄政策，以及 Path L 和 Path N 的同批输入与两侧日结证据。准备器从已成功登记的 D1 区间回执读取 `book_age_policy`。本工程只交付该登记的读取与核对，正式写入双龄政策另行登记。每个无人值守的完整 UTC 日保存实际干净提交、准备路径及生效输入与模型版本、两路回执和现金核对。四案尚待验期间，满足所有计日前置的实际日逐日记为“待确认”。四案验收后，协调者逐日核对准备路径一致、证据完整及日期连续才确认计日。若纠正性合并改变准备路径或行为，从其生效后首个全程使用修正版的完整合格 UTC 日重新计第 1 天。缺日打断连续性，跨版本半日及事后回填均不合并计数。本工程登记贡献 0 个合格日。工程隔离测试、历史重构和人民币模拟账本均不计入。[D1 区间回执读取](src/polymarket_alpha_lab/papersim/prepare_inputs.py)
 
 第一阶段交接书已通过 #130 普通合入，提交 `093063000a704727f243c02a7b420c49afa37027`，三条工作流依次为 Offline `45617549719`、Native PostgreSQL `45617589553`、Research `45617549700`。终点两份脚本的输出已从合并提交核对，唯一旧测试名对应已说明的帮助测试改名。[合并回执](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr130-landed.json) · [实际 CI 检出](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr130-exact-ci.json) · [公开读回及终点审计](docs/paper-sim/design/optimizer-phase1/2026-11-25/handoff-public-landing-and-endpoint.json)
 

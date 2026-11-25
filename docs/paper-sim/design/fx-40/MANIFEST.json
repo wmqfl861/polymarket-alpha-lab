@@ -61,9 +61,29 @@
       "sha256": "89b27107ef93a2bd869ff80a652025dccf898b08a75c76e9b6cfa795d7dd2fec"
     },
     {
+      "path": "evidence/r19-contract-and-clock-readback.json",
+      "bytes": 8419,
+      "sha256": "3ffd412e00f693966c42bfc18cff777eac327f75e6f1beda29d9a0f12fac9cd7"
+    },
+    {
       "path": "evidence/reachability.json",
       "bytes": 320,
       "sha256": "95b1c08a40aa8c8cd63ec28e603e62fd1d137da189ff1c940f74cde9cc89b5ea"
+    },
+    {
+      "path": "evidence/release-added-line-attribution-c1d0be53.json",
+      "bytes": 1422,
+      "sha256": "8961ecda572d507d983ce4f60aa11d867c1866f1702fb8715f58b7b2f144a2ab"
+    },
+    {
+      "path": "evidence/release-code-review-c1d0be53.json",
+      "bytes": 4583,
+      "sha256": "b095428b996adbfa3b15c81997b347a5918c3b1a0c138dde085ff3085840fa71"
+    },
+    {
+      "path": "evidence/release-tree-scan-c1d0be53.json",
+      "bytes": 2692,
+      "sha256": "5777ab0be153a36787be3302d61fea3b72dd1f00b6221905e50f6bbaf23992aa"
     },
     {
       "path": "evidence/seven-tree-inventory.json",
@@ -99,6 +119,11 @@
       "path": "evidence/source-scan-disposition.json",
       "bytes": 2495,
       "sha256": "f7c6d61d002021f398b53a86a28ad45ee38bc166ca4a6f4d370f0bc99bec2c68"
+    },
+    {
+      "path": "evidence/stage-review-c1d0be53.json",
+      "bytes": 6362,
+      "sha256": "0c03166853b74637dfd64ec2a9a141dce1ddbe1eeb863d5c309d66a08be17ec7"
     },
     {
       "path": "historical/market-preparation-plan.md",

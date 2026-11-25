@@ -1,0 +1,31 @@
+{
+  "attributed": 2,
+  "base": "093063000a704727f243c02a7b420c49afa37027",
+  "findings": [
+    {
+      "classification": "existing offline test receipt filename",
+      "index_line": 149,
+      "match_sha256": "1fa8f9195978e5b6c50558de79b4755d1cac48513087f310e99f92256dc1d8a9",
+      "public_reference_path_sha256": "9835eead696e94b52e7252dc586b65dfc8b1874bbc796428344959d0ead275bb",
+      "reference_and_blob_present_in_opening_main": true,
+      "source_git_blob": "1d2e4ba2c9c46b06202b1a16f943413df8ac9a4c"
+    },
+    {
+      "classification": "existing offline test receipt filename",
+      "index_line": 175,
+      "match_sha256": "23ad61f010cb792a2807cd521c39c57815989252e5a1162c009457400e9a1370",
+      "public_reference_path_sha256": "eada486ee39059323e95fda7d7a24c133ba5bdc298fe30aba6ffd9c2285eadc8",
+      "reference_and_blob_present_in_opening_main": true,
+      "source_git_blob": "e2090e7df28b59deaba4b7f795411fd6aa82bd2c"
+    }
+  ],
+  "head": "c1d0be53a5cb8d75def367a2412acb3de0f73c7f",
+  "index_blob": "a767dd0935115ffb3906b70adc6a9317884b68d3",
+  "index_path": "docs/paper-sim/design/fx-40/evidence/integrated-path-objects.json",
+  "raw_category": "wechat_id",
+  "raw_count": 2,
+  "report_path": "opening-added_line_sensitive_scan.txt",
+  "report_sha256": "c1b0b33db1e8366500e4a7e888b23e0e86abe9551cc1be127b79094aba39eeac",
+  "scanner_blob": "8972aba0da4220b08469967f510114804101523e",
+  "unresolved": 0
+}
