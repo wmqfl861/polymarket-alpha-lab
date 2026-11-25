@@ -1,0 +1,20 @@
+{"section": "inventory", "baseline_paths": 7668, "target_paths": 7682, "changed_paths": 18, "baseline_unique_blobs": 7641, "target_unique_blobs": 7655, "target_new_blobs": 18, "history_commits": 7, "history_trees": 7, "history_only_new_blobs": 14, "unique_blobs": 7673, "excluded_blobs": 0}
+{"section": "target", "conclusion": "review_required", "rule": "possible_personal_email", "paths": ["DELIVERY_PLAN.md"], "count": 1}
+{"section": "target", "conclusion": "review_required", "rule": "http_uri_credentials", "paths": ["tests/test_research_process_linux.py"], "count": 1}
+{"section": "history_only", "conclusion": "review_required", "rule": "possible_personal_email", "paths": ["DELIVERY_PLAN.md"], "count": 1}
+{"section": "history_only", "conclusion": "review_required", "rule": "possible_personal_email", "paths": ["DELIVERY_PLAN.md"], "count": 1}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "authorization_literal", "paths": [], "count": 1}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "aws_access_key", "paths": [], "count": 1}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "github_token", "paths": [], "count": 2}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "http_uri_credentials", "paths": [], "count": 7}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "infrastructure_uri_credentials", "paths": [], "count": 834}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "infrastructure_uri_host", "paths": [], "count": 210}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "jwt", "paths": [], "count": 1}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "literal_credential_assignment", "paths": [], "count": 1611}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "literal_ip_endpoint", "paths": [], "count": 7}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "model_provider_key", "paths": [], "count": 1}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "possible_personal_email", "paths": [], "count": 35}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "private_dns_name", "paths": [], "count": 16}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "private_key", "paths": [], "count": 2}
+{"section": "baseline_totals", "conclusion": "unchanged_baseline_finding", "rule": "slack_token", "paths": [], "count": 1}
+{"section": "result", "conclusion": "review_required", "scanned_unique_blobs": 7673, "reviewed_baseline_fixture_findings": 0, "unchanged_baseline_findings": 2729, "review_required_findings": 4}

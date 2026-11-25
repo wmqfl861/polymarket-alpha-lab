@@ -1,0 +1,45 @@
+{
+  "attributed_baseline_findings": 2,
+  "attributions": [
+    {
+      "attribution": "unchanged_baseline",
+      "baseline_blob": "25269b8f1646811991d34d3c37df43583a684e48",
+      "baseline_lines": [
+        2756
+      ],
+      "candidate_blob": "14b5faa5177c1b0b672c098a3f938da13baf02e9",
+      "candidate_lines": [
+        2756
+      ],
+      "path": "DELIVERY_PLAN.md",
+      "rule": "possible_personal_email"
+    },
+    {
+      "attribution": "unchanged_baseline",
+      "baseline_blob": "d19a10b69b751946e83cbaafa3484a84ae854ba1",
+      "baseline_lines": [
+        1332
+      ],
+      "candidate_blob": "d9673af4ffe1dddffd4a142fd1b335bc6a230f62",
+      "candidate_lines": [
+        1398
+      ],
+      "path": "tests/test_research_process_linux.py",
+      "rule": "http_uri_credentials"
+    }
+  ],
+  "base": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "exit_code": 0,
+  "head": "c546f4143bec2540e83bc2445011a3da904867ab",
+  "prior_executor_sha256": "c3c98fc66b89d153f793fb39057f14b676bc08eb64234ce1baeb3cd0b4894ed8",
+  "prior_line_proof_sha256": "d86dfde3026d4c66f9b1d640014d049f561ee9dee72a830b1174abc7a29799f5",
+  "raw_exit_code": 1,
+  "raw_scan_executor_sha256": "e927bb5bea2136740a8ea82cecaa743ba7f65fb1a8c7e0137a965cabb42d13cf",
+  "raw_scan_receipt_sha256": "217cb97567a3564b91fb0c5c075140cebfb07570e1bd694568eef1cd7a4338fd",
+  "raw_scan_wrapper_sha256": "d45979d9bafc3e5005b97fad313810d8d4bfce0d185c050b5099ca1e0350ae72",
+  "result": "unchanged_baseline_only",
+  "scanned_unique_blobs": 7665,
+  "tree": "cf99096a9702f053dc858600cbf9229f0694ee7d",
+  "unchanged_baseline_findings": 2729,
+  "unresolved_findings": 0
+}

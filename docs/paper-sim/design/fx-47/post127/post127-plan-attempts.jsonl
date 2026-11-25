@@ -1,0 +1,4 @@
+{"attempt": 1, "stage": "plan-original", "state": "original_session_resumed", "utc": "2026-11-25T08:12:54+00:00"}
+{"attempt": 1, "client_exit": 1, "next_retry_seconds": 30, "stage": "plan-original", "state": "provider_temporarily_unavailable", "utc": "2026-11-25T08:14:00+00:00"}
+{"attempt": 2, "stage": "plan-original", "state": "original_session_resumed", "utc": "2026-11-25T08:14:30+00:00"}
+{"attempt": 2, "receipt": "post127-plan-original-002.json", "stage": "plan-original", "state": "verdict_received", "utc": "2026-11-25T08:20:01+00:00", "verdict": "PASS"}

@@ -1,0 +1,16 @@
+{
+  "client_exit": 1,
+  "command_matched": true,
+  "completed_launches": 1,
+  "first_gate_event_sha256": "44d36e54c0489d1b56d0acb9878d5d40a2f1d58110a235c3055bf220de33a454",
+  "head": "4eda27f11e2617b07ac9711232c9dc1f72184b2f",
+  "message": "msg_mwvt4kkx_5c968c00-c7d4-4449-b70d-5d567484257a",
+  "prompt_sha256": "c3b125c83308172c63c9c170dc8a1f5f5718abcc9983ea896999ff1ff9c75c0c",
+  "provider_returned_cli_receipt": false,
+  "session": "sess_f372a5d2-d0d7-433a-a716-24df3b3466fd",
+  "tool_completed_utc": "2026-11-25T07:33:54.171000+00:00",
+  "tool_part": "part_mwvt4w97_c0adf161-6f14-49bb-90ed-20d544bd20ac",
+  "tool_started_utc": "2026-11-25T07:33:53.611000+00:00",
+  "tree": "3add36df84f474bb131cd6dcafb30234249b3567",
+  "unit": "pal-fx47-post126-gates"
+}
