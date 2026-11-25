@@ -271,7 +271,7 @@ def _case(monkeypatch, *, soccer=False, repeated=False, policy=True, gamma_updat
         "terms_sha256": terms, "market_kind": kind, "buy_side": "YES" if soccer else "NO",
         "model_side": "over" if soccer else "no", "event_start_at": SOCCER_KICKOFF if soccer else expiry,
         "expires_at": expiry, "line": "2.5" if soccer else "2000",
-        "sources": None if kind == "crypto_touch" else source_selector,
+        "sources": None if kind == "crypto_touch" else source_selector, "news": None,
     }
     config = {"team": "fixture-team", "queues": [_queue(target["queue"], kind)]}
     config_bytes = _json_bytes(config)
@@ -319,7 +319,7 @@ def test_registered_terminal_resolves_no_ladder_and_repeated_bytes_without_netwo
     resolved = _resolve(case)
     assert case.db.transactions == case.db.provider_reads == 1
     assert resolved.book_age_policy == POLICY
-    assert resolved.policy_slot_sha256 == case.doc["interval"]["sha256"]
+    assert resolved.policy_interval_sha256 == case.doc["interval"]["sha256"]
     assert resolved.capture_receipt["occurred_at"] == RECEIPT_AT
     assert resolved.decision_as_of == CUTOFF
     assert [source["sequence"] for source in resolved.model_source_refs["market-34|no|crypto_terminal"]] == [1, 2]
@@ -371,7 +371,7 @@ def test_registered_understat_rebuilds_frozen_soccer(monkeypatch):
 def test_unregistered_policy_returns_batch_and_bought_book_gap(monkeypatch):
     case = _case(monkeypatch, policy=False)
     resolved = _resolve(case)
-    assert resolved.book_age_policy is None and resolved.policy_slot_sha256 is None
+    assert resolved.book_age_policy is None and resolved.policy_interval_sha256 is None
     pack = resolved.prepare_market_pack()
     assert pack.content == b"[]"
     excluded, = pack.excluded

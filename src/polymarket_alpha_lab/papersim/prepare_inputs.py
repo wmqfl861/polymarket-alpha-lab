@@ -45,6 +45,8 @@ SOCCER_BRIDGE_KIND = "papersim_prepare_soccer_bridge"
 SOCCER_BRIDGE_SOURCE = "papersim:prepare-inputs:soccer-bridge:v1"
 SOCCER_NEWS_KIND = "papersim_prepare_soccer_news"
 SOCCER_NEWS_SOURCE = "papersim:prepare-inputs:soccer-news:v1"
+CRYPTO_NEWS_KIND = "papersim_prepare_crypto_news"
+CRYPTO_NEWS_SOURCE = "papersim:prepare-inputs:crypto-news:v1"
 
 _INPUT_FIELDS = {
     "version", "instance_id", "config", "capture", "window_start", "window_end",
@@ -53,7 +55,7 @@ _INPUT_FIELDS = {
 _TARGET_FIELDS = {
     "queue", "condition_id", "market_id", "slug", "gamma_event_id", "tag_slug",
     "terms_sha256", "market_kind", "buy_side", "model_side", "event_start_at",
-    "expires_at", "line", "sources",
+    "expires_at", "line", "sources", "news",
 }
 _RESPONSE_FIELDS = {"sequence", "source_kind", "source_ref", "status", "received_at", "body",
                     "source_observed_at", "source_time_status", "target", "budget", "reason_code"}
@@ -108,7 +110,7 @@ class ResolvedPreparationInputs:
     targets: tuple[prepare.MarketTarget, ...]
     specs: Mapping[str, LineageSpecs]
     book_age_policy: prepare.BookAgePolicy | None
-    policy_slot_sha256: str | None
+    policy_interval_sha256: str | None
     model_source_refs: Mapping[str, tuple[dict, ...]]
     excluded: tuple[prepare.ExcludedTarget, ...]
     unbound_observations: tuple[dict, ...]
@@ -903,6 +905,33 @@ def _soccer_news(row: dict, target: dict, sources: dict, fixture: str, cutoff: d
                            tuple(document["blockers"]), tuple(document["source_refs"])), evidence, lineup
 
 
+def _crypto_news(connection, reference, target, fixture, cutoff):
+    row = _read_reference(connection, reference, kind=CRYPTO_NEWS_KIND, source=CRYPTO_NEWS_SOURCE)
+    code = "papersim_prepare_crypto_news_binding_invalid"
+    document = _document(
+        row["content"], {"version", "condition_id", "terms_sha256", "fixture", "observed_at",
+                         "delta", "news_delta", "blockers", "source_refs"}, code)
+    observed = _utc(document["observed_at"])
+    received = _utc(row["fetched_at"])
+    _require(document["condition_id"] == target["condition_id"]
+             and document["terms_sha256"] == target["terms_sha256"]
+             and document["fixture"] == fixture and observed <= received
+             and _text(document["delta"]) and _text(document["news_delta"])
+             and type(document["blockers"]) is list and all(_text(item) for item in document["blockers"])
+             and type(document["source_refs"]) is list and bool(document["source_refs"]), code)
+    if received > cutoff:
+        raise prepare._Excluded("papersim_prepare_model_evidence_after_cutoff")
+    for digest in document["source_refs"]:
+        source = snapshots.verify_snapshot(connection, snapshots.snapshot_digest_argument(digest))
+        _require(_utc(source["fetched_at"]) <= observed, code)
+    check = gates.check_news(fixture, document["delta"], news_delta=document["news_delta"],
+                             blockers=document["blockers"], sources=document["source_refs"])
+    evidence = contracts.FetchEvidence.from_bytes(
+        source_kind="crypto-news", source_reference=row["source"], fetched_at=received,
+        source_observed_at=observed, raw_bytes=row["content"])
+    return check, evidence
+
+
 def _soccer_materials(sources: dict, selected: tuple[_ModelResponse, ...], view, projected: dict | None,
                       kickoff: datetime, event: dict, bridge: dict | None) -> tuple[prepare.SoccerInputs, str, str]:
     provider, league, season = (sources[key] for key in ("provider", "league", "season"))
@@ -1050,6 +1079,9 @@ def _resolve_target(connection, target: dict, selection: prepare.MarketTarget, q
         asset = contract[0]
         fee_category = "crypto" if market.category in ("crypto", "Crypto") else None
         plan = replace(plan, asset=asset, fee_category=fee_category)
+        if target["news"] is not None:
+            check, evidence = _crypto_news(connection, target["news"], target, plan.fixture, view.cutoff)
+            selection = replace(selection, news=check, news_evidence=(evidence,))
     else:
         kickoff = market.game_start_at
         if kickoff is None or kickoff <= view.cutoff:
@@ -1075,6 +1107,7 @@ def _resolve_target(connection, target: dict, selection: prepare.MarketTarget, q
         fee_category = "sports" if market.category in ("sports", "Sports") else None
         plan = replace(plan, fixture=event["title"], home=home, away=away, league=materials.home_league,
                        line=line, fee_category=fee_category)
+        _require(target["news"] is None, "papersim_prepare_soccer_news_binding_invalid")
         if news is not None:
             check, evidence, lineup = _soccer_news(news, target, sources, plan.fixture, view.cutoff)
             materials = replace(materials, lineup_confirmation=lineup)

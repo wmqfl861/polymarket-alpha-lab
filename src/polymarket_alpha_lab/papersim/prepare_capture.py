@@ -2,6 +2,7 @@
 
 from contextlib import closing
 from datetime import UTC, datetime, timedelta
+import json
 from pathlib import Path
 import re
 
@@ -60,8 +61,6 @@ def _page_rows(manifest, entries):
         if request["page"] is not None:
             pages[request["sequence"]] = journal.decode_public_json(bodies[digest])
     for market in manifest["markets"]:
-        if market["binding_status"] != "explicit_yes_no":
-            continue
         sightings = sorted(market["observations"], key=lambda item: (item["sequence"], item["path"]))
         for sighting in sightings:
             page = pages.get(sighting["sequence"])
@@ -129,8 +128,16 @@ def _targets(config, manifest, entries):
     queues = [queue for queue in config.queues if not queue.pack]
     for market, event, body, tag, sighting in _page_rows(manifest, entries):
         identity = market["condition_id"]
+        if market["binding_status"] != "explicit_yes_no":
+            observations.append({**sighting, "condition_id": identity, "reason_code": market["binding_status"]})
+            continue
         event_id = str(event["id"]) if event.get("id") is not None else None
-        end = prepare._utc(body["endDate"]) if body.get("endDate") is not None else None
+        try:
+            end = prepare._utc(body.get("endDate"))
+        except prepare.PreparationError:
+            observations.append({**sighting, "condition_id": identity,
+                                 "reason_code": "papersim_prepare_target_clock_unavailable"})
+            continue
         category = str(body.get("category", "")).lower()
         matched = False
         for queue in queues:
@@ -143,8 +150,10 @@ def _targets(config, manifest, entries):
                 boundary = end
             elif prefix == "club-soccer" and (category == "sports" or _soccer_scope(tag, event)):
                 proposition = _soccer_proposition(event, body.get("question", ""), kind)
-                stamp = body.get("gameStartTime")
-                boundary = prepare._utc(stamp) if stamp is not None else None
+                try:
+                    boundary = prepare._utc(body.get("gameStartTime"))
+                except prepare.PreparationError:
+                    boundary = None
                 scope = queue_policy.SCOPE_CROSS_LEAGUE if tag in inputs._SOCCER_CROSS_TAGS else queue_policy.SCOPE_DOMESTIC
                 if scope != queue.league_scope:
                     continue
@@ -159,9 +168,9 @@ def _targets(config, manifest, entries):
                 target = {
                     "queue": queue.queue, "condition_id": identity, "market_id": market["market_id"],
                     "slug": market["slug"], "gamma_event_id": event_id, "tag_slug": tag,
-                    "terms_sha256": sighting["terms_sha256"], "market_kind": kind, "buy_side": side,
+                    "terms_sha256": journal._gamma_terms_sha256(body), "market_kind": kind, "buy_side": side,
                     "model_side": model_side, "event_start_at": boundary.isoformat(),
-                    "expires_at": end.isoformat(), "line": line, "sources": None,
+                    "expires_at": end.isoformat(), "line": line, "sources": None, "news": None,
                 }
                 selected = targets.setdefault(key, (target, event, body))
                 if selected[0]["queue"] != queue.queue:
@@ -319,8 +328,21 @@ class _Capture:
             return
         targets, unbound = _targets(self.config, manifest, entries)
         selected = []
+        news = {}
+        if self.interval is not None:
+            bound_interval = inputs._read_reference(
+                conn, self.interval, kind=operations._INTERVAL_KIND, source="d1:operation:interval:v1")
+            interval = json.loads(bound_interval["content"])
+            news = interval.get("preparation_news", {})
+            if type(news) is not dict:
+                raise prepare.PreparationError("papersim_prepare_news_scope_invalid")
         for _, (target, _, _) in sorted(targets.items()):
-            selected.append({**target, "sources": self.target_sources.get(target["condition_id"])})
+            sources = self.target_sources.get(target["condition_id"])
+            reference = news.get(target["condition_id"])
+            if reference is not None and target["market_kind"] in inputs._SOCCER_TYPES and sources:
+                sources = {**sources, "news": reference}
+                reference = None
+            selected.append({**target, "sources": sources, "news": reference})
         at = acquire._now_utc()
         config = _registered(conn, self.config_bytes, inputs.CONFIG_KIND, inputs.CONFIG_SOURCE, at)
         batch = snapshots.verify_snapshot(conn, batch_sha)
