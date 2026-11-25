@@ -3,6 +3,7 @@
 from dataclasses import replace
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing, contextmanager
+from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 import json
@@ -17,16 +18,18 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
-from polymarket_alpha_lab.papersim import capture, prepared_scan, prepare_inputs, snapshots, store
+from polymarket_alpha_lab.papersim import prepared_scan, prepare_inputs, snapshots, store
 from polymarket_alpha_lab.papersim import store_psycopg as pg
-from polymarket_alpha_lab.papersim.adapters import polymarket, prices
+from polymarket_alpha_lab.papersim.adapters import polymarket, prices, understat
 from polymarket_alpha_lab.papersim.d1compare import acquire, frozenrun, journal, operations
 from tests.test_papersim_adapter_polymarket import _response
+from tests.test_papersim_adapter_understat import FIXTURE as UNDERSTAT_FIXTURE
 from tests.test_papersim_capture_marks_native import (
     _D1_NATIVE, _D1_TEAM, _d1_capture_cli, _d1_child, _d1_json_path, _d1_register_binding,
     _d1_register_capture_slot, d1_capture_project,
 )
 from tests.test_papersim_scan_store_native import _seed_initial_cash
+from tests.test_papersim_settle_store_native import _d1_seed_settlement_entry
 
 
 pytestmark = _D1_NATIVE
@@ -47,8 +50,8 @@ def _drive_capture():
         def open(self, url, *, timeout_seconds):
             parsed = urlsplit(url)
             query = parse_qs(parsed.query)
-            if parsed.path == "/events" and query["tag_slug"] == ["crypto"]:
-                body = ([{"id": "fx40-fixture-event", "markets": [fixture["market"]]}]
+            if parsed.path == "/events" and query["tag_slug"] == [fixture["tag"]]:
+                body = ([{"id": "fx40-fixture-event", "title": fixture["title"], "markets": fixture["markets"]}]
                         if query["offset"] == ["0"] else [])
             elif parsed.path == "/book":
                 token, = query["token_id"]
@@ -80,6 +83,24 @@ def _drive_capture():
 
     polymarket.BoundedPublicOpener = PublicFixture
     prices._open_public_json = prices_fixture
+
+    def understat_fixture(league, season, _timeout):
+        body = deepcopy(UNDERSTAT_FIXTURE["leagues"][league]["response"])
+        for row in body["dates"]:
+            row["datetime"] = season + row["datetime"][4:]
+        for team in body["teams"].values():
+            for row in team["history"]:
+                row["date"] = season + row["date"][4:]
+        if league == "EPL" and season == fixture["season"]:
+            kickoff = datetime.fromisoformat(fixture["markets"][0]["gameStartTime"])
+            body["dates"].append({
+                "id": "fx40-soccer-fixture", "datetime": kickoff.strftime("%Y-%m-%d %H:%M:%S"),
+                "h": {"id": "1", "title": "EPL FC 1"}, "a": {"id": "2", "title": "EPL FC 2"},
+                "isResult": False,
+            })
+        return _response(json.dumps(body).encode(), url=f"https://{understat._league_source_reference(league, season)}")
+
+    understat._open_league_response = understat_fixture
 
     @contextmanager
     def managed_fixture(repo_root, *, _read_connection=None):
@@ -154,13 +175,16 @@ def _ref(row):
     return {key: row[source] for key, source in (("sha256", "content_sha256"), ("byte_length", "byte_length"))}
 
 
-def _capture_setup(project, name, *, news=True, rules=True, cash=None):
+def _capture_setup(project, name, *, news=True, rules=True, cash=None, soccer=False):
     directory = project.temporary / name
     directory.mkdir()
-    config = _d1_json_path(directory, "scan.json", {"team": _D1_TEAM, "queues": [{
-        "queue": "fx40-crypto", "lineage": "crypto/terminal", "model_key": "crypto",
-        "market_type": "terminal", "data_source_version": "fx40-native-fixture",
-    }]})
+    queue = ({"queue": "fx40-epl", "lineage": "club-soccer/over_under", "model_key": "soccer",
+              "market_type": "over_under"} if soccer else
+             {"queue": "fx40-crypto", "lineage": "crypto/terminal", "model_key": "crypto",
+              "market_type": "terminal"})
+    config = _d1_json_path(directory, "scan.json", {"team": _D1_TEAM, "queues": [
+        {**queue, "data_source_version": "fx40-native-fixture"},
+    ]})
     condition_id = "0x" + sha256(name.encode()).hexdigest()
     tokens = str(int(condition_id[2:14], 16)), str(int(condition_id[2:14], 16) + 1)
     opening = (datetime.now(UTC) + timedelta(days=1)).replace(hour=12, minute=0, second=0, microsecond=0)
@@ -181,7 +205,33 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None):
                 "bids": [{"price": bid, "size": "5000"}], "asks": [{"price": ask, "size": "5000"}]}
         for token, bid, ask in zip(tokens, ("0.34", "0.59"), ("0.38", "0.63"), strict=True)
     }
-    raw = _d1_json_path(directory, "capture-fixture.json", {"market": market, "books": books})
+    markets = [market]
+    if soccer:
+        news = False
+        title = "EPL FC 1 versus EPL FC 2"
+        kickoff = opening
+        expiry = kickoff + timedelta(hours=2)
+        for index, line in enumerate(("2.5", "2.0")):
+            row = market if index == 0 else {**market}
+            row.update(category="Sports", gameStartTime=kickoff.isoformat(), endDate=expiry.isoformat(),
+                       question=f"Will {title} have more than {line} goals?",
+                       description=f"Yes pays when the match has more than {line} goals in regulation.", line=line)
+            if index == 1:
+                row["id"] += "-integer"
+                row["slug"] += "-integer"
+                row["conditionId"] = "0x" + sha256(row["id"].encode()).hexdigest()
+                shifted = [str(int(token) + 2) for token in tokens]
+                row["clobTokenIds"] = json.dumps(shifted)
+                for source, token in zip(tokens, shifted, strict=True):
+                    books[token] = {**books[source], "asset_id": token, "market": row["conditionId"]}
+                markets.append(row)
+    else:
+        title = name
+    tag = "epl" if soccer else "crypto"
+    raw = _d1_json_path(directory, "capture-fixture.json", {
+        "tag": tag, "title": title, "markets": markets, "books": books,
+        "season": str(opening.year - (opening.month < 7)),
+    })
     with pg.connect_managed(project.root) as conn:
         if cash is not None:
             _seed_initial_cash(conn, amount=cash)
@@ -212,7 +262,7 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None):
         )
     path = project.root / "tools/d1_compare.py"
     argv = [str(raw), str(path), "capture-inputs", "--repo-root", str(project.root),
-            "--tag-slug", "crypto", "--window-start", start.isoformat(), "--window-end", end.isoformat(),
+            "--tag-slug", tag, "--window-start", start.isoformat(), "--window-end", end.isoformat(),
             "--prepare-config", str(config)]
     code = ("from tests.test_papersim_prepared_scan_native import _drive_capture; _drive_capture()")
     remaining = (start - datetime.now(UTC)).total_seconds()
@@ -310,6 +360,9 @@ def _b3(case, entry_id, attempt=1):
 
 
 def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_project):
+    from polymarket_alpha_lab.papersim.optimize.families.crypto import CRYPTO_GBM, spec_with
+    from polymarket_alpha_lab.papersim.optimize.provider import RegistryProvider
+
     case = _capture_setup(d1_capture_project, "fx40-committed", cash=600.0)
     crash = _b1(case, 1, fault="after-business")
     assert crash.returncode == _CRASH, crash.stderr
@@ -321,11 +374,25 @@ def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_pro
             "SELECT c.candidate_id, e.entry_id FROM papersim.candidates c "
             "JOIN papersim.entries e USING (candidate_id) WHERE c.scan_id = %s", (scan_id,),
         ).fetchone()
+    with pg.connect_managed(case.project.root) as writer:
+        time_before_registration = pg.d1_database_time(writer)
+        pg.initialize_registry(writer, families=[CRYPTO_GBM], actor="fixture",
+                               code_commit=case.project.head, effective_at=time_before_registration)
+        changed = spec_with(vol_ew_decay=0.99)
+        pg.register_model_spec(writer, changed, source="optimizer", code_commit=case.project.head)
+        pg.record_role_events(writer, store.RoleEventBatch(events=(store.RoleEventSubmission(
+            lineage="crypto-gbm/terminal", spec_sha256=changed.spec_sha256(), role="CANDIDATE",
+            effective_at=pg.d1_database_time(writer), reason="isolated FX-40 registry change",
+            actor="auto:rules-v1", code_commit=case.project.head,
+            forward_plan={"forward_metric": "log_loss"},
+        ),)))
+        assert RegistryProvider.from_connection(writer).specs_for_lineage("crypto/terminal").candidates == (changed,)
     resumed = _b1(case, 2, path_n=True)
     assert resumed.returncode == 0, resumed.stderr
     result = json.loads(resumed.stdout)
     assert result["recovered"] and result["scan_id"] == scan_id
     assert result["entry_ids"] == {f"{case.market['id']}|no|crypto_terminal": entry_id}
+    assert result["shadow_rows"] == 0
     assert result["bankroll_event_keys"] == [f"entry:{entry_id}:cash"]
     assert result["operation_receipt"]["attempt"] == 2
     duplicate = _b1(case, 3)
@@ -343,9 +410,20 @@ def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_pro
     assert item["cash_event_id"] == final["bankroll_event_id"]
     again = _b3(case, entry_id, attempt=2)
     assert again.returncode == 0, again.stderr
+    repeated, = json.loads(again.stdout)["items"]
+    assert (repeated["settlement_id"], repeated["cash_event_id"]) == (
+        final["settlement_id"], final["bankroll_event_id"],
+    )
     with pg.connect_managed(case.project.root) as reader:
-        assert reader.execute("SELECT entry_id FROM papersim.settlements WHERE settlement_id = %s",
-                              (final["settlement_id"],)).fetchone() == (entry_id,)
+        linked = reader.execute(
+            "SELECT s.entry_id, o.condition_id, o.outcome, b.event_id, b.amount, s.proceeds "
+            "FROM papersim.settlements s JOIN papersim.bankroll_events b ON b.entry_id = s.entry_id "
+            "AND b.reason = 'SETTLE_NATURAL' JOIN papersim.market_outcomes o "
+            "ON o.outcome_id = s.source_outcome_id WHERE s.settlement_id = %s",
+            (final["settlement_id"],),
+        ).fetchone()
+        assert linked[:4] == (entry_id, case.market["conditionId"], "NO", final["bankroll_event_id"])
+        assert linked[4] == linked[5] > 0
         assert reader.execute("SELECT reason FROM papersim.bankroll_events WHERE entry_id = %s ORDER BY event_id",
                               (entry_id,)).fetchall() == [("SCAN_ENTRY",), ("SETTLE_NATURAL",)]
 
@@ -355,12 +433,16 @@ def separate_project(tmp_path_factory):
     yield from d1_capture_project.__wrapped__(tmp_path_factory)
 
 
-@pytest.mark.parametrize(("balance", "reason"), [
-    (300.0, "papersim_prepare_cash_changed"),
-    (1200.0, "papersim_prepare_correlation_changed"),
+@pytest.mark.parametrize(("balance", "prior_entries", "reason"), [
+    (300.0, 0, "papersim_prepare_cash_changed"),
+    (1200.0, 0, "papersim_prepare_correlation_changed"),
+    (3000.0, 6, "papersim_prepare_team_cap_changed"),
 ])
-def test_prepared_scan_rejects_an_unwritten_retry_after_competing_entry(separate_project, balance, reason):
+def test_prepared_scan_rejects_an_unwritten_retry_after_competing_entry(
+        separate_project, balance, prior_entries, reason):
     case = _capture_setup(separate_project, reason.replace("_", "-"), cash=balance)
+    for index in range(prior_entries):
+        _d1_seed_settlement_entry(case.project, f"fx40-team-position-{index}", team=_D1_TEAM)
     crash = _b1(case, 1, fault="before-business")
     assert crash.returncode == _CRASH, crash.stderr
     competing = SimpleNamespace(**{**vars(case), "key": case.key + ":competing"})
@@ -375,10 +457,12 @@ def test_prepared_scan_rejects_an_unwritten_retry_after_competing_entry(separate
         assert [(row["attempt"], row["phase"]) for row in receipts] == [
             (1, "STARTED"), (1, "PREPARED"), (2, "STARTED"), (2, "FAILED")]
         assert receipts[-1]["error_code"] == reason
-        assert reader.execute("SELECT scan_id FROM papersim.scan_runs ORDER BY scan_id").fetchall() == [
-            (original["scan_id"],)]
-        assert reader.execute("SELECT event_key FROM papersim.bankroll_events WHERE reason = 'SCAN_ENTRY'"
-                              ).fetchall() == [(original["bankroll_event_keys"][0],)]
+        scan_rows = reader.execute("SELECT scan_id, operation_key FROM papersim.scan_runs ORDER BY scan_id").fetchall()
+        cash_rows = reader.execute("SELECT event_key FROM papersim.bankroll_events WHERE reason = 'SCAN_ENTRY' "
+                                   "ORDER BY event_id").fetchall()
+        assert len(scan_rows) == len(cash_rows) == prior_entries + 1
+        assert scan_rows[-1] == (original["scan_id"], competing.key)
+        assert cash_rows[-1] == (original["bankroll_event_keys"][0],)
 
 
 def test_direct_scan_and_path_n_share_one_prepared_operation(separate_project):
@@ -415,5 +499,46 @@ def test_unregistered_policy_records_supported_refusals_for_managed_replay(separ
     for candidate_id, conclusion, reasons in rows:
         assert conclusion == "CONSTRUCTION_FAILED" and reasons == ["d1_capture_book_age_policy_unregistered"]
         replayed = _d1_child(case.project, ["replay", str(candidate_id), "--managed", "--repo-root",
+                                            str(case.project.root), "--trusted-commit", case.project.head])
+        assert replayed.returncode == 0 and json.loads(replayed.stdout)["matched"], replayed.stderr
+
+
+def test_prepared_soccer_persists_ordered_quotes_and_replays_constructor_failures(separate_project):
+    from polymarket_alpha_lab import replay
+    from polymarket_alpha_lab.papersim import gates, soccer_model
+
+    case = _capture_setup(separate_project, "fx40-soccer", soccer=True)
+    completed = _b1(case, 1)
+    assert completed.returncode == 0, completed.stderr
+    summary = json.loads(completed.stdout)
+    assert len(summary["candidate_ids"]) == 4
+    with pg.connect_managed(case.project.root) as reader:
+        quotes = reader.execute(
+            "SELECT candidate_id, candidate_key, conclusion, variant_quotes, input_payload, "
+            "rejection_reasons, event_start_at FROM papersim.candidates WHERE scan_id = %s ORDER BY candidate_key",
+            (summary["scan_id"],),
+        ).fetchall()
+        resolved = prepare_inputs.resolve_preparation_inputs(
+            reader, repo_root=case.project.root, config_bytes=case.config.read_bytes(),
+            input_set_sha256=summary["input_set_sha256"],
+        )
+    targets = {target.candidate_key: target for target in resolved.targets}
+    for identifier, key, conclusion, variants, payload, reasons, kickoff in quotes:
+        assert kickoff == datetime.fromisoformat(case.market["gameStartTime"])
+        if "-integer|" in key:
+            assert conclusion == "CONSTRUCTION_FAILED" and reasons == ["construction_value_error"]
+            assert variants == []
+        else:
+            target = targets[key]
+            request = replay.request_from_replay_bundle(payload)
+            materials = target.materials
+            reference = soccer_model.candidate_for_market(
+                materials.xg_snapshot, target.plan.home, materials.home_league,
+                target.plan.away, materials.away_league, target.plan.fixture,
+                target.plan.market_id, gates.walk_book(request.book).vwap,
+                kind="total", side=request.side, line=2.5, season=materials.season,
+            )
+            assert len(variants) == 10 and variants == list(reference.candidate.qs_variants)
+        replayed = _d1_child(case.project, ["replay", str(identifier), "--managed", "--repo-root",
                                             str(case.project.root), "--trusted-commit", case.project.head])
         assert replayed.returncode == 0 and json.loads(replayed.stdout)["matched"], replayed.stderr
