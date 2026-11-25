@@ -958,7 +958,7 @@ def _cmd_run_scan(args) -> int:
                 result = prepared_scan.run_prepared_scan(
                     connection, repo_root=args.repo_root, config_bytes=config_path.read_bytes(),
                     input_set_sha256=args.prepare_from, operation_key=args.operation_key, attempt=args.attempt,
-                    now=lambda: _datetime.datetime.now(_datetime.UTC), evaluation_loader=_evaluation_candidates_from_store,
+                    now=lambda: _datetime.datetime.now(_datetime.UTC), evaluation_loader=_evaluation_candidates_in_snapshot,
                     shadow_budget_seconds=args.shadow_budget_seconds, pack_base_dir=config_path.parent,
                 )
             finally:
