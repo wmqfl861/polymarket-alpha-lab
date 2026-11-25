@@ -1,12 +1,16 @@
 """Managed FX-40 capture, B1 recovery, and same-entry B2/B3 proof."""
 
 from dataclasses import replace
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing, contextmanager
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 import json
 import os
 import runpy
 import sys
+import time
+import traceback
 from types import SimpleNamespace
 from urllib.parse import parse_qs, urlsplit
 
@@ -71,6 +75,22 @@ def _drive_capture():
 
     polymarket.BoundedPublicOpener = PublicFixture
     prices._open_public_json = prices_fixture
+
+    @contextmanager
+    def managed_fixture(repo_root, *, _read_connection=None):
+        if _read_connection is not None:
+            yield _read_connection
+            return
+        with closing(pg.connect_managed(repo_root)) as conn:
+            try:
+                yield conn
+            except Exception as error:
+                frames = traceback.extract_tb(error.__traceback__)
+                locations = " ".join(f"{Path(frame.filename).name}:{frame.lineno}" for frame in frames[-8:])
+                print(f"fixture capture failure {type(error).__name__} {locations}", file=sys.stderr)
+                raise
+
+    acquire._managed = managed_fixture
     script = Path(sys.argv[2])
     sys.argv = [str(script), *sys.argv[3:]]
     runpy.run_path(str(script), run_name="__main__")
@@ -183,8 +203,6 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None):
     code = ("from tests.test_papersim_prepared_scan_native import _drive_capture; _drive_capture()")
     remaining = (start - datetime.now(UTC)).total_seconds()
     if remaining > 0:
-        import time
-
         time.sleep(remaining + 0.02)
     receipt = _d1_child(project, [*argv, "--allow-public-fetch"], code=code)
     assert receipt.returncode == 0, receipt.stderr
@@ -318,3 +336,72 @@ def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_pro
                               (final["settlement_id"],)).fetchone() == (entry_id,)
         assert reader.execute("SELECT reason FROM papersim.bankroll_events WHERE entry_id = %s ORDER BY event_id",
                               (entry_id,)).fetchall() == [("SCAN_ENTRY",), ("SETTLE_NATURAL",)]
+
+
+@pytest.fixture
+def separate_project(tmp_path_factory):
+    yield from d1_capture_project.__wrapped__(tmp_path_factory)
+
+
+@pytest.mark.parametrize(("balance", "reason"), [
+    (300.0, "papersim_prepare_cash_changed"),
+    (1200.0, "papersim_prepare_correlation_changed"),
+])
+def test_prepared_scan_rejects_an_unwritten_retry_after_competing_entry(separate_project, balance, reason):
+    case = _capture_setup(separate_project, reason.replace("_", "-"), cash=balance)
+    crash = _b1(case, 1, fault="before-business")
+    assert crash.returncode == _CRASH, crash.stderr
+    competing = SimpleNamespace(**{**vars(case), "key": case.key + ":competing"})
+    application = _b1(competing, 1)
+    assert application.returncode == 0, application.stderr
+    original = json.loads(application.stdout)
+    assert len(original["entry_ids"]) == 1
+    retry = _b1(case, 2)
+    assert retry.returncode == 1 and reason in retry.stderr
+    with pg.connect_managed(case.project.root) as reader:
+        receipts = pg.d1_operation_receipts(reader, case.key)
+        assert [(row["attempt"], row["phase"]) for row in receipts] == [
+            (1, "STARTED"), (1, "PREPARED"), (2, "STARTED"), (2, "FAILED")]
+        assert receipts[-1]["error_code"] == reason
+        assert reader.execute("SELECT scan_id FROM papersim.scan_runs ORDER BY scan_id").fetchall() == [
+            (original["scan_id"],)]
+        assert reader.execute("SELECT event_key FROM papersim.bankroll_events WHERE reason = 'SCAN_ENTRY'"
+                              ).fetchall() == [(original["bankroll_event_keys"][0],)]
+
+
+def test_direct_scan_and_path_n_share_one_prepared_operation(separate_project):
+    case = _capture_setup(separate_project, "fx40-one-winner", cash=1200.0)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        one = workers.submit(_b1, case, 1)
+        two = workers.submit(_b1, case, 2, path_n=True)
+        results = [task.result() for task in (one, two)]
+    assert all(run.returncode == 0 for run in results), [run.stderr for run in results]
+    first, second = (json.loads(run.stdout) for run in results)
+    assert first["scan_id"] == second["scan_id"]
+    assert first["entry_ids"] == second["entry_ids"]
+    assert len(first["entry_ids"]) == 1
+    with pg.connect_managed(case.project.root) as reader:
+        assert [row["phase"] for row in pg.d1_operation_receipts(reader, case.key)] == [
+            "STARTED", "PREPARED", "SUCCEEDED"]
+        assert reader.execute("SELECT count(*) FROM papersim.bankroll_events WHERE reason = 'SCAN_ENTRY'"
+                              ).fetchone() == (1,)
+
+
+def test_unregistered_policy_records_supported_refusals_for_managed_replay(separate_project):
+    case = _capture_setup(separate_project, "fx40-rule-unavailable", news=False, rules=False)
+    completed = _b1(case, 1)
+    assert completed.returncode == 0, completed.stderr
+    summary = json.loads(completed.stdout)
+    assert summary["entry_ids"] == {} and summary["bankroll_event_keys"] == []
+    with pg.connect_managed(case.project.root) as reader:
+        rows = reader.execute(
+            "SELECT c.candidate_id, c.conclusion, c.rejection_reasons "
+            "FROM papersim.candidates c WHERE c.scan_id = %s ORDER BY c.candidate_id",
+            (summary["scan_id"],),
+        ).fetchall()
+    assert len(rows) == 2
+    for candidate_id, conclusion, reasons in rows:
+        assert conclusion == "CONSTRUCTION_FAILED" and reasons == ["d1_capture_book_age_policy_unregistered"]
+        replayed = _d1_child(case.project, ["replay", str(candidate_id), "--managed", "--repo-root",
+                                            str(case.project.root), "--trusted-commit", case.project.head])
+        assert replayed.returncode == 0 and json.loads(replayed.stdout)["matched"], replayed.stderr

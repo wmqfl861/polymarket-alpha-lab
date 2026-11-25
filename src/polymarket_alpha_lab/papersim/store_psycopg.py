@@ -534,7 +534,7 @@ def _lock_portfolio(cursor) -> None:
 
 
 @contextmanager
-def prepared_scan_write_transaction(conn):
+def scan_write_transaction(conn):
     _require_d1_idle(conn)
     with conn.transaction():
         conn.execute("SET LOCAL lock_timeout = '30s'")
@@ -560,11 +560,14 @@ def committed_prepared_scan(conn, operation_key, expected=None) -> dict | None:
         columns = _columns_of(cursor)
         entries = [dict(zip(columns, item, strict=True)) for item in cursor.fetchall()]
         candidate_ids = _read_back_candidates(cursor, fields['scan_id'])
-        entry_ids = {key: entry['entry_id'] for entry in entries for key, identifier in candidate_ids.items()
-                     if identifier == entry['candidate_id']}
+        candidate_keys = {identifier: key for key, identifier in candidate_ids.items()}
+        entry_ids = {candidate_keys[entry['candidate_id']]: entry['entry_id'] for entry in entries}
         event_keys = _read_back_event_keys(cursor, fields['scan_id'])
         if (list(candidate_ids) != expected['candidate_keys'] or list(entry_ids) != expected['entry_keys']
                 or tuple(f"entry:{entry['entry_id']}:cash" for entry in entries) != event_keys
+                or any((entry['stake'], entry['entry_fee']) != tuple(
+                    Decimal(value) for value in expected['entry_amounts'][candidate_keys[entry['candidate_id']]])
+                       for entry in entries)
                 or any(not isinstance(_opening_cash(cursor, entry), settle.OpeningCash) for entry in entries)):
             raise PapersimStoreError('papersim_prepare_committed_rows_conflict')
         return {'scan_id': fields['scan_id'], 'scan_key': fields['scan_key'], 'inserted': False,
@@ -965,6 +968,7 @@ def d1_candidate_capture_target(conn, *, scan_id=None, scan_operation_key=None,
         candidate['decisions'] = [dict(zip(decision_columns, decision, strict=True))
                                   for decision in cursor.fetchall()]
         if candidate['scan_preparation'] is None:
+            del candidate['scan_preparation']
             candidate['scan_receipts'] = _d1_scan_receipts(conn, candidate)
         else:
             from polymarket_alpha_lab.papersim import prepared_scan

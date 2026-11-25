@@ -22,6 +22,9 @@ _COVERAGE_SOURCE = "papersim:run-scan:coverage:v1"
 _RECOVERY_KIND = "papersim_b1_recovery"
 _RECOVERY_SOURCE = "papersim:run-scan:recovery:v1"
 _CONFLICT = "papersim_prepare_operation_conflict"
+_MATERIAL_FIELDS = (
+    "input_set_sha256", "config_sha256", "pack", "candidate_keys", "batch_sha256", "policy_interval_sha256",
+)
 
 
 def _check(condition, code=_CONFLICT):
@@ -131,14 +134,28 @@ def _verify_base(conn, repo_root, config_bytes, input_set_sha, instance_id, *, p
 
 
 def _assemble(config, records, conn, *, started_at, finished_at, code_commit, key, specs,
-              paused_queues, portfolio, material, shadow_budget_seconds):
-    return scan.assemble_scan(
+              paused_queues, portfolio, material, shadow_budget_seconds, binding=None):
+    assembly = scan.assemble_scan(
         config, records, specs=specs, portfolio=portfolio,
         admissions=scan.AdmissionReport(paused_queues=frozenset(paused_queues)),
         started_at=started_at, finished_at=finished_at, code_commit=code_commit,
         operation_key=key, preparation=material,
-        shadow_source=SnapshotShadowSource(lambda digest: snapshots.read_snapshot(conn, digest)),
+        shadow_source=(SnapshotShadowSource(lambda digest: snapshots.read_snapshot(conn, digest))
+                       if binding is None else None),
         shadow_budget_seconds=shadow_budget_seconds,
+    )
+    if binding is None:
+        return assembly
+    params = json.loads(assembly.submission.scan.params)
+    if binding["shadow_materials"] is not None:
+        params["shadow"] = binding["shadow_materials"]
+    run = replace(assembly.submission.scan, params=json.dumps(params, sort_keys=True, separators=(",", ":")))
+    return replace(
+        assembly, submission=replace(assembly.submission, scan=run),
+        shadows=tuple(scan.ShadowBinding(
+            **{**item, "predicted_at": datetime.fromisoformat(item["predicted_at"]),
+               "variant_quotes": None if item["variant_quotes"] is None else tuple(item["variant_quotes"])}
+        ) for item in binding["shadows"]),
     )
 
 
@@ -327,12 +344,14 @@ def _run_locked(conn, config_bytes, repo_root, input_set_sha, key, attempt, comm
                 shadow_budget_seconds = binding["shadow_budget_seconds"]
         prepared_candidates = [record.candidate_key for record in records if record.prepared_provenance is not None]
         material = {"input_set_sha256": resolved.input_set_sha256, "config_sha256": resolved.config_sha256,
-                    "pack": _pack_reference(pack), "candidate_keys": prepared_candidates}
+                    "pack": _pack_reference(pack), "candidate_keys": prepared_candidates,
+                    "batch_sha256": resolved.batch_sha256, "policy_interval_sha256": resolved.policy_interval_sha256}
         with pg.d1_read_view(conn):
             assembly = _assemble(
                 config, records, conn, started_at=first["occurred_at"], finished_at=ended_at, code_commit=commit,
                 key=key, specs=specs, paused_queues=paused, portfolio=portfolio,
                 material=material, shadow_budget_seconds=shadow_budget_seconds,
+                binding=None if prepared is None else binding,
             )
         submission = pg.canonical_scan_submission(assembly.submission)
         business = operations.canonical_document({
@@ -340,6 +359,8 @@ def _run_locked(conn, config_bytes, repo_root, input_set_sha, key, attempt, comm
             "started_at": first["occurred_at"], "finished_at": ended_at, "team": config.team, "code_commit": commit,
             "candidate_keys": [row.candidate_key for row in submission.candidates],
             "entry_keys": [row.candidate_key for row in submission.candidates if row.entry is not None],
+            "entry_amounts": {row.candidate_key: [str(row.entry.stake), str(row.entry.entry_fee)]
+                              for row in submission.candidates if row.entry is not None},
         })
         if prepared is None:
             at = now()
@@ -353,11 +374,13 @@ def _run_locked(conn, config_bytes, repo_root, input_set_sha, key, attempt, comm
                     "first_start": first["run_event_key"], **material,
                     "config": _prepared_reference(resolved.config_sha256, config_row["byte_length"]),
                     "input_set": _prepared_reference(input_set_sha, input_row["byte_length"]),
-                    "batch_sha256": resolved.batch_sha256, "decision_as_of": resolved.decision_as_of,
+                    "decision_as_of": resolved.decision_as_of,
                     "coverage": coverage, "specs": _specs_document(specs), "portfolio": asdict(portfolio),
                     "paused_queues": paused, "business": business, "model_versions": sorted(set(assembly.model_versions)),
                     "suppressed_entries": list(assembly.suppressed_entries), "shadow_rows": len(assembly.shadows),
                     "shadow_budget_seconds": shadow_budget_seconds,
+                    "shadow_materials": json.loads(submission.scan.params).get("shadow"),
+                    "shadows": [asdict(item) for item in assembly.shadows],
                 })
                 outputs = operations._append_document(conn, _BINDING_KIND, _BINDING_SOURCE, binding, at)
                 prepared = emit("PREPARED", at, outputs=outputs)
@@ -365,7 +388,7 @@ def _run_locked(conn, config_bytes, repo_root, input_set_sha, key, attempt, comm
             _check(binding["business"] == business and binding["pack"] == material["pack"],
                    "papersim_prepare_reconstruction_conflict")
 
-        with pg.prepared_scan_write_transaction(conn):
+        with pg.scan_write_transaction(conn):
             current = scan.pause_admissions(evaluation_loader(conn), config.queues, pg.latched_pauses(conn))
             portfolio = scan.read_portfolio_state(conn, prepared=True)
             _verify_eligibility(assembly, records, portfolio, current, paused)
@@ -409,12 +432,17 @@ def receipt_witness(conn, candidate, receipts):
     """Verify the original successful B1 chain against its actual scan."""
     success = next((row for row in receipts if row["phase"] == "SUCCEEDED"
                     and row["command"] == scan.SCAN_COMMAND and row["scan_id"] == candidate["scan_id"]), None)
+    if success is None:
+        return None
+    receipts = [row for row in receipts if row["run_event_id"] <= success["run_event_id"]]
     preparations = [row for row in receipts if row["phase"] == "PREPARED" and row["command"] == scan.SCAN_COMMAND]
-    if success is None or not preparations:
+    if not preparations:
         return None
     _check(len(preparations) == 1, "papersim_prepare_receipt_invalid")
     prepared = preparations[0]
     binding, _ = _read_bound(conn, prepared)
+    if "scan_preparation" in candidate:
+        _check(candidate["scan_preparation"] == {name: binding[name] for name in _MATERIAL_FIELDS})
     start, _, _ = _inspect(receipts, candidate["scan_operation_key"], candidate["scan_code_commit"],
                             binding["config_sha256"],
                             _binding_refs(binding["input_set_sha256"], binding["config_sha256"]))

@@ -72,6 +72,7 @@ import json
 import subprocess
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -1148,40 +1149,43 @@ def run_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
 
     _receipt("STARTED")
     try:
-        latched = store_psycopg.latched_pauses(conn)
-        admissions = pause_admissions(evaluation_candidates, config.queues, latched)
-        for decision in admissions.escalations:
-            rule = (store.QUEUE_CONTROL_RULE_FX17 if decision.review_reasons
-                    else store.QUEUE_CONTROL_RULE_BLUEPRINT)
-            store_psycopg.record_queue_control_event(conn, store.QueueControlSubmission(
-                queue_id=decision.queue_id,
-                control_kind="PAUSE",
-                rule=rule,
-                rule_version=queue_policy.QUEUE_POLICY_RULES_VERSION,
-                metrics={
-                    "action": decision.action,
-                    "review_reasons": list(decision.review_reasons),
-                    "stop_reasons": list(decision.stop_reasons),
-                    "keeps_latched_pause": decision.keeps_latched_pause,
-                },
-                observed_at=started_at,
-            ))
-        portfolio = read_portfolio_state(conn)
-        specs = consult_provider(provider, records)
-        assembly = assemble_scan(
-            config,
-            records,
-            admissions=admissions,
-            portfolio=portfolio,
-            started_at=started_at,
-            finished_at=now_utc(),
-            code_commit=code_commit,
-            specs=specs,
-            operation_key=receipt_key,
-            shadow_source=shadow_source,
-            shadow_budget_seconds=shadow_budget_seconds,
-        )
-        written = store_psycopg.record_scan(conn, assembly.submission)
+        managed = getattr(conn, "_papersim_managed_root", None) is not None
+        transaction = store_psycopg.scan_write_transaction(conn) if managed else nullcontext()
+        with transaction:
+            latched = store_psycopg.latched_pauses(conn)
+            admissions = pause_admissions(evaluation_candidates, config.queues, latched)
+            for decision in admissions.escalations:
+                rule = (store.QUEUE_CONTROL_RULE_FX17 if decision.review_reasons
+                        else store.QUEUE_CONTROL_RULE_BLUEPRINT)
+                store_psycopg.record_queue_control_event(conn, store.QueueControlSubmission(
+                    queue_id=decision.queue_id,
+                    control_kind="PAUSE",
+                    rule=rule,
+                    rule_version=queue_policy.QUEUE_POLICY_RULES_VERSION,
+                    metrics={
+                        "action": decision.action,
+                        "review_reasons": list(decision.review_reasons),
+                        "stop_reasons": list(decision.stop_reasons),
+                        "keeps_latched_pause": decision.keeps_latched_pause,
+                    },
+                    observed_at=started_at,
+                ))
+            portfolio = read_portfolio_state(conn)
+            specs = consult_provider(provider, records)
+            assembly = assemble_scan(
+                config,
+                records,
+                admissions=admissions,
+                portfolio=portfolio,
+                started_at=started_at,
+                finished_at=now_utc(),
+                code_commit=code_commit,
+                specs=specs,
+                operation_key=receipt_key,
+                shadow_source=shadow_source,
+                shadow_budget_seconds=shadow_budget_seconds,
+            )
+            written = store_psycopg.record_scan(conn, assembly.submission)
         # MO-7 (seam 4, plan review decision 2): the shadow write rides
         # AFTER the scan's own atomic write, in ONE separate
         # transaction; a failure is recorded without failing the scan

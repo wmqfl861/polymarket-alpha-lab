@@ -520,11 +520,12 @@ class _D1BookSources:
     freshness_as_of: datetime.datetime
     max_source_age_seconds: int
     max_receipt_age_seconds: int
+    interval_sha256: str
 
 
 def _d1_book_sources(conn, slot) -> _D1BookSources:
     from polymarket_alpha_lab.papersim import snapshots, store_psycopg
-    from polymarket_alpha_lab.papersim.d1compare import acquire
+    from polymarket_alpha_lab.papersim.d1compare import acquire, operations
 
     digest = slot.scope.get("capture_manifest_sha256")
     policy = slot.scope.get("book_age_policy")
@@ -556,10 +557,18 @@ def _d1_book_sources(conn, slot) -> _D1BookSources:
             or not sealed <= receipt["occurred_at"] <= slot.registered_at < slot.deadline
             or any(receipt[flag] is not True for flag in ("paper_only", "report_only", "readonly"))):
         raise CaptureError("d1_capture_manifest_receipt_invalid")
+    registration, interval = operations._registration(
+        conn, "d1:interval-binding:v1:" + slot.interval_sha256, "d1-register-interval",
+        operations._INTERVAL_KIND, "d1:operation:interval:v1")
+    if interval.get("book_age_policy") is not None and (
+            interval["book_age_policy"] != policy or not registration["occurred_at"] < start
+            or not _pack_datetime(interval["starts_at"], "starts_at") <= start
+            < end <= _pack_datetime(interval["ends_at"], "ends_at")):
+        raise CaptureError("d1_capture_book_age_policy_binding_invalid")
     # An earlier capture can supply a later slot only while its source and
     # receipt remain fresh at that slot's fixed decision point.
     return _D1BookSources(digest, manifest, receipt, cutoff, max(cutoff, slot.scheduled_for),
-                          policy["max_source_age_seconds"], policy["max_receipt_age_seconds"])
+                          policy["max_source_age_seconds"], policy["max_receipt_age_seconds"], slot.interval_sha256)
 
 
 def _d1_candidate_token(candidate: dict, observation: MarkObservation, team: str,
@@ -687,6 +696,11 @@ def _d1_capture_materials(conn, sources: _D1BookSources, target: dict, raw: dict
     if candidate is None:
         raise CaptureError("papersim_capture_candidate_missing")
     token = _d1_candidate_token(candidate, observation, team, allowed_ids)
+    preparation = candidate.get("scan_preparation")
+    if preparation is not None and candidate["candidate_key"] in preparation["candidate_keys"] and (
+            preparation["batch_sha256"] != sources.manifest_sha256
+            or preparation["policy_interval_sha256"] != sources.interval_sha256):
+        raise CaptureError("d1_capture_book_age_policy_binding_invalid")
     prices, received_at = _d1_quote(conn, sources, candidate, observation, token, target["source"])
     target["observed_prices"] = {name: None if value is None else str(value) for name, value in prices.items()}
     claims = {}
