@@ -132,5 +132,36 @@
     "PR native version-switch JUnit",
     "kit path-filter disposition",
     "CURRENT and ordinary merge backfill"
-  ]
+  ],
+  "frozen_fixture_transcription": {
+    "scope": "One omitted character in both recorded blob fields of the retained summary. The fixture bytes and original observed equality are unchanged.",
+    "path": "tests/fixtures/papersim/regression_r23_soccer.json",
+    "retained_summary": {
+      "path": "docs/paper-sim/design/fx-54/evidence/fx54-local-verification.json",
+      "bytes": 9404,
+      "sha256": "77062ef62a3ce5845e467d7b873a2a2c01d53879d09c4fca6a588cdf4ed5e6f8"
+    },
+    "retained_summary_fields": {
+      "base_blob": "4bfccb907890253078e1ee0a39b51ec45f590af",
+      "candidate_blob": "4bfccb907890253078e1ee0a39b51ec45f590af"
+    },
+    "canonical_git_blob": "4bfccb907890253078e1aee0a39b51ec45f590af",
+    "object_probe_commits": [
+      "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+      "6a847a22b39e90087477152d9fe6af28850cca36"
+    ],
+    "original_source_receipts": [
+      {
+        "name": "frozen-blob-results.tsv",
+        "bytes": 712,
+        "sha256": "1110c9b950ea15de0f3a52bc21fdcb51a09625f01b8317e855af4b9846299f67"
+      },
+      {
+        "name": "fx54-frozen-comparison.json",
+        "bytes": 2884,
+        "sha256": "8e7db7dd88db3ade89b665f439ef34da178225d9c929425fd842b1352aabf689"
+      }
+    ]
+  }
 }
