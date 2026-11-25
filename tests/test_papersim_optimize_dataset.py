@@ -265,6 +265,55 @@ def test_managed_rows_time_inversions_fail_closed():
                              evidence_rows=_evidence_rows(), outcome_rows=_outcome_rows())
 
 
+def test_managed_rows_decision_after_outcome_without_close():
+    outcome_rows = _outcome_rows()
+    decision = _evidence_rows()[0]
+    decision["observed_at"] = outcome_rows[0]["observed_at"] + timedelta(seconds=1)
+
+    with pytest.raises(
+        ValueError,
+        match=r"^dataset_time_inversion:decision_after_outcome:0xabc$",
+    ):
+        ds.from_managed_rows(
+            candidate_rows=_candidate_rows(),
+            evidence_rows=[decision],
+            outcome_rows=outcome_rows,
+        )
+
+
+@pytest.mark.parametrize("seconds_before_outcome", [1, 0], ids=["before", "equal"])
+def test_managed_rows_decision_at_or_before_outcome_without_close(
+    seconds_before_outcome,
+):
+    outcome_rows = _outcome_rows()
+    outcome_at = outcome_rows[0]["observed_at"]
+    decision_at = outcome_at - timedelta(seconds=seconds_before_outcome)
+    decision = _evidence_rows()[0]
+    decision["observed_at"] = decision_at
+
+    built = ds.from_managed_rows(
+        candidate_rows=_candidate_rows(),
+        evidence_rows=[decision],
+        outcome_rows=outcome_rows,
+    )
+
+    assert built.observations == (
+        ds.MarketObservation(
+            match_key="0xabc",
+            market_type="1x2",
+            line=None,
+            side="YES",
+            observed_at=decision_at,
+            mid=0.54,
+            source="papersim.candidate_price_evidence",
+            snapshot_sha256="a" * 64,
+        ),
+    )
+    assert built.outcomes == (
+        ds.Outcome("0xabc", "YES", outcome_at, "papersim.market_outcomes:gamma_close"),
+    )
+
+
 def test_managed_rows_missing_duplicate_and_unpriceable_fail_closed():
     evidence = _evidence_rows()
     del evidence[0]["observed_at"]

@@ -843,8 +843,9 @@ def from_managed_rows(*, candidate_rows, evidence_rows, outcome_rows) -> Dataset
     same rows the CLI evaluates.
 
     Leak guards (FX-26 transitional semantics, plan review P2-2):
-    ``DECISION.observed_at <= CLOSE.observed_at <= effective outcome
-    .observed_at`` is enforced and violations are rejected. When the
+    A CLOSE must be observed at or after the DECISION. For an effective
+    ``YES``, ``NO``, or ``YES-basket`` outcome, the DECISION and any CLOSE
+    must be observed at or before the outcome's ``observed_at``. When the
     candidate row carries ``event_start_at`` (post-FX-26 column), the close
     and decision must both precede it. Until that column exists the
     "close before kickoff" judgment CANNOT be made: the observation is
@@ -931,10 +932,10 @@ def from_managed_rows(*, candidate_rows, evidence_rows, outcome_rows) -> Dataset
             exclusions.append(f"dataset_decision_price_invalid:{identity}")
             continue
         close = closes.get(candidate_id)
+        settled = effective_at.get(identity)
         if close is not None:
             if close["observed_at"] < decision["observed_at"]:
                 raise ValueError(f"dataset_time_inversion:decision_after_close:{identity}")
-            settled = effective_at.get(identity)
             if settled is not None and close["observed_at"] > settled:
                 raise ValueError(f"dataset_time_inversion:close_after_outcome:{identity}")
         start = candidate["event_start_at"]
@@ -946,6 +947,8 @@ def from_managed_rows(*, candidate_rows, evidence_rows, outcome_rows) -> Dataset
                 raise ValueError(f"dataset_time_inversion:close_after_kickoff:{identity}")
         elif close is not None:
             pending_barrier.append(identity)
+        if settled is not None and decision["observed_at"] > settled:
+            raise ValueError(f"dataset_time_inversion:decision_after_outcome:{identity}")
         observations.append(MarketObservation(
             match_key=identity, market_type=candidate["market_type"], line=candidate["line"],
             side=candidate["side"], observed_at=decision["observed_at"], mid=mid,
