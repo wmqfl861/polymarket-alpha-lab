@@ -301,7 +301,7 @@ def test_book_ladder_side_validation() -> None:
         journal.book_ladder(snapshot, "middle")
 
 
-def _collect_public_fixture(monkeypatch, fixture, *, clock=lambda: STAMP, tags=("soccer",)):
+def _collect_public_fixture(monkeypatch, fixture, *, clock=lambda: STAMP, tags=("soccer",), preparation=None):
     from polymarket_alpha_lab.papersim.d1compare import acquire
 
     start = STAMP - datetime.timedelta(minutes=1)
@@ -321,7 +321,54 @@ def _collect_public_fixture(monkeypatch, fixture, *, clock=lambda: STAMP, tags=(
     monkeypatch.setattr(acquire, "_now_utc", clock)
     monkeypatch.setattr(acquire, "_register", register)
     scope = {"tag_slugs": tags, "window_start": start.isoformat(), "window_end": end.isoformat()}
-    return acquire._collect(FixtureConnection(), scope, STAMP, start, end), stored
+    return acquire._collect(FixtureConnection(), scope, STAMP, start, end, preparation=preparation), stored
+
+
+def test_capture_preparation_preserves_v2_manifest_and_raw_response_bytes(monkeypatch):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    source_at = STAMP - datetime.timedelta(seconds=3)
+    books = {token: _book_bytes(token, source_at) for token in ("111", "222")}
+    ordinary, ordinary_bytes = _collect_public_fixture(monkeypatch, _PublicFixtureOpener(books))
+    registered = []
+
+    class Preparation:
+        def register_market(self, request):
+            registered.append((request.sequence, request.body, request.read_at))
+
+        def collect_models(self, markets, requests, budget):
+            assert len(markets) == 1
+            assert len(requests) == len(registered)
+            assert budget.requests_used == len(registered)
+
+    document, prepared_bytes = _collect_public_fixture(
+        monkeypatch, _PublicFixtureOpener(books), preparation=Preparation(),
+    )
+    assert document["capture_version"] == 2
+    assert acquire._canonical(document) == acquire._canonical(ordinary)
+    assert prepared_bytes == ordinary_bytes
+    assert registered == [
+        (row["sequence"], ordinary_bytes[row["content_sha256"]], STAMP) for row in ordinary["requests"]
+    ]
+
+
+def test_capture_aborts_before_parsing_an_unregistered_response(monkeypatch):
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    class Preparation:
+        def register_market(self, request):
+            assert request.body == _GAMMA_PAGE
+            assert request.read_at == STAMP
+            raise acquire.AcquisitionError("fixture_registration_failed")
+
+    def refuse_parse(raw):
+        pytest.fail("capture parsed a response after its registration failed")
+
+    monkeypatch.setattr(journal, "decode_public_json", refuse_parse)
+    fixture = _PublicFixtureOpener({})
+    with pytest.raises(acquire.AcquisitionError, match="fixture_registration_failed"):
+        _collect_public_fixture(monkeypatch, fixture, preparation=Preparation())
+    assert len(fixture.calls) == 1
 
 
 def test_capture_distinguishes_http_error_and_missing_source_time(monkeypatch):

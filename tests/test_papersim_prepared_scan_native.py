@@ -18,7 +18,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
-from polymarket_alpha_lab.papersim import prepared_scan, prepare_inputs, snapshots, store
+from polymarket_alpha_lab.papersim import capture, prepared_scan, prepare_inputs, settle, snapshots, store
 from polymarket_alpha_lab.papersim import store_psycopg as pg
 from polymarket_alpha_lab.papersim.adapters import polymarket, prices, understat
 from polymarket_alpha_lab.papersim.d1compare import acquire, frozenrun, journal, operations
@@ -175,7 +175,7 @@ def _ref(row):
     return {key: row[source] for key, source in (("sha256", "content_sha256"), ("byte_length", "byte_length"))}
 
 
-def _capture_setup(project, name, *, news=True, rules=True, cash=None, soccer=False):
+def _capture_setup(project, name, *, news=True, rules=True, cash=None, soccer=False, unbound=False):
     directory = project.temporary / name
     directory.mkdir()
     queue = ({"queue": "fx40-epl", "lineage": "club-soccer/over_under", "model_key": "soccer",
@@ -227,6 +227,8 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None, soccer=Fa
                 markets.append(row)
     else:
         title = name
+    if unbound:
+        markets = [{"question": question}]
     tag = "epl" if soccer else "crypto"
     raw = _d1_json_path(directory, "capture-fixture.json", {
         "tag": tag, "title": title, "markets": markets, "books": books,
@@ -324,6 +326,8 @@ def _b2(case, candidate_id, scan_id):
         candidate = pg.d1_candidate_capture_target(
             reader, scan_id=scan_id, candidate_key=mark["candidate_key"])
         assert candidate["scan_receipt_witness"]["recovery"]["phase"] == "RECOVERY_READ"
+    observation, = capture.observations_from_pack([mark])
+    return observation
 
 
 def _b3(case, entry_id, attempt=1):
@@ -359,7 +363,7 @@ def _b3(case, entry_id, attempt=1):
                      code="from tests.test_papersim_prepared_scan_native import _drive_settle; _drive_settle()")
 
 
-def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_project):
+def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_project, monkeypatch):
     from polymarket_alpha_lab.papersim.optimize.families.crypto import CRYPTO_GBM, spec_with
     from polymarket_alpha_lab.papersim.optimize.provider import RegistryProvider
 
@@ -387,6 +391,17 @@ def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_pro
             forward_plan={"forward_metric": "log_loss"},
         ),)))
         assert RegistryProvider.from_connection(writer).specs_for_lineage("crypto/terminal").candidates == (changed,)
+        handover_at = pg.d1_database_time(writer)
+        baseline = CRYPTO_GBM.baseline_spec()
+        pg.record_role_events(writer, store.RoleEventBatch(events=tuple(
+            store.RoleEventSubmission(
+                lineage="crypto-gbm/terminal", spec_sha256=spec.spec_sha256(), role=role,
+                effective_at=handover_at, reason="isolated FX-40 handover",
+                actor="auto:rules-v1", code_commit=case.project.head,
+            )
+            for spec, role in ((baseline, "GUARD"), (changed, "ACTIVE"))
+        )))
+        assert RegistryProvider.from_connection(writer).specs_for_lineage("crypto/terminal").active == changed
     resumed = _b1(case, 2, path_n=True)
     assert resumed.returncode == 0, resumed.stderr
     result = json.loads(resumed.stdout)
@@ -395,12 +410,59 @@ def test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3(d1_capture_pro
     assert result["shadow_rows"] == 0
     assert result["bankroll_event_keys"] == [f"entry:{entry_id}:cash"]
     assert result["operation_receipt"]["attempt"] == 2
+    assert result["model_versions"] == [baseline.model_version()]
     duplicate = _b1(case, 3)
     assert duplicate.returncode == 0 and json.loads(duplicate.stdout) == result, duplicate.stderr
+    changed_config = case.directory / "changed-scan.json"
+    changed_config.write_bytes(case.config.read_bytes() + b"\n")
+    conflicting_calls = (
+        SimpleNamespace(**{**vars(case), "config": changed_config}),
+        SimpleNamespace(**{**vars(case), "receipt": {
+            **case.receipt, "input_set_sha256": sha256(b"another input set").hexdigest(),
+        }}),
+    )
+    for conflicting in conflicting_calls:
+        repeated = _b1(conflicting, 4)
+        assert repeated.returncode == 1 and "papersim_prepare_operation_conflict" in repeated.stderr
+    with pg.connect_managed(case.project.root) as reader:
+        assert [row["phase"] for row in pg.d1_operation_receipts(reader, case.key)] == [
+            "STARTED", "PREPARED", "STARTED", "RECOVERY_READ", "SUCCEEDED",
+        ]
+    fresh = _b1(SimpleNamespace(**{**vars(case), "key": case.key + ":fresh"}), 1)
+    assert fresh.returncode == 0, fresh.stderr
+    next_scan = json.loads(fresh.stdout)
+    assert next_scan["scan_id"] != scan_id and next_scan["model_versions"] == [changed.model_version()]
+    assert next_scan["entry_ids"] == {}
     replayed = _d1_child(case.project, ["replay", str(candidate_id), "--managed", "--repo-root",
                                         str(case.project.root), "--trusted-commit", case.project.head])
     assert replayed.returncode == 0 and json.loads(replayed.stdout)["matched"], replayed.stderr
-    _b2(case, candidate_id, scan_id)
+    observation = _b2(case, candidate_id, scan_id)
+    original_receipts = pg.d1_operation_receipts
+    with pg.connect_managed(case.project.root) as reader:
+        reader.autocommit = True
+        receipts = original_receipts(reader, case.key)
+        for variant in ("missing", "cross_key", "wrong_digest"):
+            altered = deepcopy(receipts)
+            recovery = next(row for row in altered if row["phase"] == "RECOVERY_READ")
+            if variant == "missing":
+                altered.remove(recovery)
+            elif variant == "cross_key":
+                recovery["operation_key"] = case.key + ":other"
+            else:
+                recovery["output_evidence"][0] = "snapshot_sha256:" + "0" * 64
+            with monkeypatch.context() as scoped:
+                scoped.setattr(pg, "d1_operation_receipts", lambda conn, key: (
+                    altered if key == case.key else original_receipts(conn, key)
+                ))
+                candidate = pg.d1_candidate_capture_target(
+                    reader, scan_id=scan_id, candidate_key=observation.candidate_key)
+                target, = pg.d1_settlement_targets(reader, team=_D1_TEAM, entry_ids=[entry_id])
+                assert candidate["scan_receipt_witness"] is None
+                assert target["candidate"]["scan_receipt_witness"] is None
+                with pytest.raises(capture.CaptureError, match="d1_capture_b1_receipt_missing"):
+                    capture._d1_candidate_token(candidate, observation, _D1_TEAM, {candidate_id})
+                with pytest.raises(settle.SettleError, match="d1_settlement_scan_receipt_missing"):
+                    settle._d1_buy_binding(reader, target["entry"], target["candidate"])
     settled = _b3(case, entry_id)
     assert settled.returncode == 0, settled.stderr
     summary = json.loads(settled.stdout)
@@ -481,6 +543,68 @@ def test_direct_scan_and_path_n_share_one_prepared_operation(separate_project):
             "STARTED", "PREPARED", "SUCCEEDED"]
         assert reader.execute("SELECT count(*) FROM papersim.bankroll_events WHERE reason = 'SCAN_ENTRY'"
                               ).fetchone() == (1,)
+
+
+def test_prepared_scan_resumes_unwritten_entry_after_opposite_position(separate_project):
+    case = _capture_setup(separate_project, "fx40-opposite-position", cash=1200.0)
+    crash = _b1(case, 1, fault="before-business")
+    assert crash.returncode == _CRASH, crash.stderr
+    opposite = _d1_seed_settlement_entry(case.project, "fx40-opposite-entry", side="YES", team=_D1_TEAM)
+    with pg.connect_managed(case.project.root) as reader:
+        assert pg.committed_prepared_scan(reader, case.key) is None
+        initial_receipts = pg.d1_operation_receipts(reader, case.key)
+        assert [row["phase"] for row in initial_receipts] == ["STARTED", "PREPARED"]
+    resumed = _b1(case, 2, path_n=True)
+    assert resumed.returncode == 0, resumed.stderr
+    result = json.loads(resumed.stdout)
+    entry_id, = result["entry_ids"].values()
+    assert result["recovered"] and entry_id != opposite["entry_id"]
+    again = _b1(case, 3)
+    assert again.returncode == 0 and json.loads(again.stdout) == {**result, "inserted": False}, again.stderr
+    assert result["inserted"] is True
+    with pg.connect_managed(case.project.root) as reader:
+        reader.autocommit = True
+        assert pg.d1_operation_receipts(reader, case.key)[:2] == initial_receipts
+        assert reader.execute("SELECT started_at FROM papersim.scan_runs WHERE scan_id = %s",
+                              (result["scan_id"],)).fetchone() == (initial_receipts[0]["occurred_at"],)
+        assert reader.execute("SELECT event_key FROM papersim.bankroll_events WHERE entry_id = %s",
+                              (entry_id,)).fetchall() == [(f"entry:{entry_id}:cash",)]
+        legacy, = pg.d1_settlement_targets(reader, team=_D1_TEAM, entry_ids=[opposite["entry_id"]])
+        candidate = legacy["candidate"]
+        assert [(item["attempt"], item["phase"]) for item in candidate["scan_receipts"]] == [
+            (1, "STARTED"), (1, "SUCCEEDED"),
+        ]
+        observation = capture.MarkObservation(
+            candidate_key=candidate["candidate_key"], scan_id=candidate["scan_id"],
+            market_ref_kind="condition_id", market_ref=opposite["condition_id"],
+            token_ref=opposite["yes_token_id"],
+        )
+        assert capture._d1_candidate_token(
+            candidate, observation, _D1_TEAM, {candidate["candidate_id"]},
+        ) == opposite["yes_token_id"]
+        assert settle._d1_buy_binding(reader, legacy["entry"], candidate)["buy_token_id"] == opposite["yes_token_id"]
+
+
+def test_unbound_capture_appearance_is_covered_without_a_candidate(separate_project):
+    case = _capture_setup(separate_project, "fx40-unbound-appearance", news=False, unbound=True)
+    result = _b1(case, 1)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads(result.stdout)
+    assert summary["candidate_ids"] == {} and summary["entry_ids"] == {}
+    with pg.connect_managed(case.project.root) as reader:
+        reader.autocommit = True
+        _, prepared, _ = pg.d1_operation_receipts(reader, case.key)
+        binding, _ = prepared_scan._read_bound(reader, prepared)
+        assert summary["coverage"] == binding["coverage"]
+        coverage = operations._read_document(
+            reader, binding["coverage"], kind=prepared_scan._COVERAGE_KIND, source=prepared_scan._COVERAGE_SOURCE,
+        )
+        assert coverage["input_set_sha256"] == case.receipt["input_set_sha256"]
+        assert coverage["batch_sha256"] == case.receipt["batch_sha256"]
+        appearance, = coverage["unbound"]
+        assert (appearance["sequence"], appearance["path"]) == (1, "/0/markets/0")
+        assert reader.execute("SELECT count(*) FROM papersim.candidates WHERE scan_id = %s",
+                              (summary["scan_id"],)).fetchone() == (0,)
 
 
 def test_unregistered_policy_records_supported_refusals_for_managed_replay(separate_project):

@@ -562,26 +562,20 @@ class PortfolioState:
     reserved: float = 0.0
     team_committed: Mapping[str, float] = field(default_factory=dict)
     held_sides: tuple[str, ...] = ()
-    held_by_event: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
-    def with_entry(self, *, team: str, side: str, stake: float, fee: float,
-                   event_scope: str | None = None) -> "PortfolioState":
+    def with_entry(self, *, team: str, side: str, stake: float, fee: float) -> "PortfolioState":
         committed = dict(self.team_committed)
         committed[team] = committed.get(team, 0.0) + float(stake)
-        held_by_event = dict(self.held_by_event)
-        if event_scope is not None:
-            held_by_event[event_scope] = (*held_by_event.get(event_scope, ()), side)
         return PortfolioState(
             bankroll=self.bankroll,
             cash=self.cash - float(stake) - float(fee),
             reserved=self.reserved,
             team_committed=committed,
             held_sides=self.held_sides + (side,),
-            held_by_event=held_by_event,
         )
 
 
-def read_portfolio_state(conn, *, prepared: bool = False) -> PortfolioState:
+def read_portfolio_state(conn) -> PortfolioState:
     """Read the current bankroll/cash/open-exposure state (one snapshot).
 
     Same SQL shapes as ``store_psycopg.bankroll_daily_check``: cash is
@@ -607,22 +601,8 @@ def read_portfolio_state(conn, *, prepared: bool = False) -> PortfolioState:
                        'WHERE NOT EXISTS (SELECT 1 FROM papersim.settlements s '
                        'WHERE s.entry_id = e.entry_id) ORDER BY e.entry_id')
         held = tuple(str(side) for (side,) in cursor.fetchall())
-        held_by_event: dict[str, list[str]] = {}
-        if prepared:
-            cursor.execute('SELECT c.event_key, c.market_id, c.input_payload, c.side '
-                           'FROM papersim.entries e JOIN papersim.candidates c USING (candidate_id) '
-                           'WHERE NOT EXISTS (SELECT 1 FROM papersim.settlements s '
-                           'WHERE s.entry_id = e.entry_id) ORDER BY e.entry_id')
-            for event_key, market_id, payload, side in cursor.fetchall():
-                try:
-                    model_side = replay.request_from_replay_bundle(payload).side
-                except replay.PapersimReplayError:
-                    model_side = side
-                scope = event_key or f"market:{market_id}"
-                held_by_event.setdefault(scope, []).append(model_side)
     return PortfolioState(bankroll=cash + deployed, cash=cash, reserved=0.0,
-                          team_committed=committed, held_sides=held,
-                          held_by_event={key: tuple(sides) for key, sides in held_by_event.items()})
+                          team_committed=committed, held_sides=held)
 
 
 # ---------------------------------------------------------------------------
@@ -963,13 +943,12 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
             continue
         request = replay.request_from_replay_bundle(record.request_bundle)
         event_key, event_start_at = bind_event_key(record.events)
-        event_scope = (event_key or f"market:{record.market_id}") if preparation is not None else None
         request = dataclasses.replace(
             request,
             bankroll=portfolio.bankroll,
             cash=portfolio.cash,
             reserved=portfolio.reserved,
-            held_sides=(portfolio.held_by_event.get(event_scope, ()) if event_scope else portfolio.held_sides),
+            held_sides=portfolio.held_sides,
             team=record.team,
             team_committed=portfolio.team_committed.get(record.team, 0.0),
         )
@@ -1037,7 +1016,6 @@ def assemble_scan(config: ScanConfig, records: Sequence[MarketRecord], *,
                     side=request.side,
                     stake=float(entry.stake),
                     fee=float(entry.entry_fee),
-                    event_scope=event_scope,
                 )
     shadow_runner.finish()
     if shadow_runner.materials:

@@ -239,16 +239,14 @@ def _verify_eligibility(assembly, records, portfolio, admissions, paused_before)
             continue
         record = by_key[candidate.candidate_key]
         request = replay.request_from_replay_bundle(candidate.input_payload)
-        event_scope = candidate.event_key or f"market:{candidate.market_id}"
         stake, fee = float(entry.stake), float(entry.entry_fee)
         available = risk_policy.bankroll_available(portfolio.bankroll, portfolio.cash, portfolio.reserved)
         _check(available + 1e-9 >= max(stake, round(stake + fee, 2)), "papersim_prepare_cash_changed")
         _check(risk_policy.team_add_allowed(portfolio.team_committed.get(record.team, 0.0),
                                            stake, cap=request.team_cap), "papersim_prepare_team_cap_changed")
-        _check(risk_policy.held_fixture_add_allowed(portfolio.held_by_event.get(event_scope, ()),
+        _check(risk_policy.held_fixture_add_allowed(portfolio.held_sides,
                                                   request.side).allowed, "papersim_prepare_correlation_changed")
-        portfolio = portfolio.with_entry(team=record.team, side=request.side, stake=stake, fee=fee,
-                                         event_scope=event_scope)
+        portfolio = portfolio.with_entry(team=record.team, side=request.side, stake=stake, fee=fee)
 
 
 def _write_pauses(conn, admissions, at):
@@ -334,7 +332,7 @@ def _run_locked(conn, config_bytes, repo_root, input_set_sha, key, attempt, comm
                 specs.update(scan.consult_provider(
                     inputs.RegistryProvider.from_connection(conn), missing_records) if missing_records else {})
                 admissions = scan.pause_admissions(evaluation_loader(conn), config.queues, pg.latched_pauses(conn))
-                portfolio = scan.read_portfolio_state(conn, prepared=True)
+                portfolio = scan.read_portfolio_state(conn)
                 ended_at = now()
                 paused = sorted(admissions.paused_queues)
             else:
@@ -390,7 +388,7 @@ def _run_locked(conn, config_bytes, repo_root, input_set_sha, key, attempt, comm
 
         with pg.scan_write_transaction(conn):
             current = scan.pause_admissions(evaluation_loader(conn), config.queues, pg.latched_pauses(conn))
-            portfolio = scan.read_portfolio_state(conn, prepared=True)
+            portfolio = scan.read_portfolio_state(conn)
             _verify_eligibility(assembly, records, portfolio, current, paused)
             _write_pauses(conn, current, first["occurred_at"])
             written = pg.record_scan(conn, submission)
@@ -399,13 +397,14 @@ def _run_locked(conn, config_bytes, repo_root, input_set_sha, key, attempt, comm
         committed = pg.committed_prepared_scan(conn, key, _expected(binding))
         _check(committed is not None)
         committed["inserted"] = written["inserted"]
-        if prepared["attempt"] == attempt and first["attempt"] == attempt:
-            outputs = (written["scan_key"], *prepared["output_evidence"])
-        else:
+        recovered = prepared["attempt"] != attempt or first["attempt"] != attempt
+        if recovered:
             recovery = _recover(conn, binding, prepared, started, committed, now, emit)
             outputs = (written["scan_key"], recovery["run_event_key"])
+        else:
+            outputs = (written["scan_key"], *prepared["output_evidence"])
         success = emit("SUCCEEDED", now(), outputs=outputs, scan_id=written["scan_id"])
-        return _result(committed, binding, recovered=False, succeeded=success)
+        return _result(committed, binding, recovered=recovered, succeeded=success)
     except Exception as error:
         if not conn.closed:
             code = operations._error_code(error, "papersim_prepare_scan_failed")

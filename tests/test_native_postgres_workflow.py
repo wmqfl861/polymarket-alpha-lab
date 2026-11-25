@@ -149,6 +149,7 @@ PAPERSIM_FILES = ('tests/test_papersim_ledger.py', 'tests/test_papersim_perf_vie
                    'tests/test_papersim_scan_store_native.py',
                    'tests/test_papersim_capture_marks_native.py',
                    'tests/test_papersim_d1_operations_native.py',
+                   'tests/test_papersim_prepared_scan_native.py',
                    'tests/test_papersim_mo7_shadow_native.py',
                    'tests/test_papersim_mo2_migrations.py',
                    'tests/test_papersim_optimize_registry_native.py',
