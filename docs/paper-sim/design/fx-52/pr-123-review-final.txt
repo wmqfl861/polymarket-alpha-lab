@@ -1,0 +1,22 @@
+跟进已完成——只读，未编辑文件，未启动测试。我阅读了收据以及 `land/docs/paper-sim/design/fx-42/` 下的三个链接文件。以下是交叉检查的结果：
+
+**已在此会话中验证**
+
+- **收据 ↔ 已审核 diff。** `review-object-bindings.json` 中的所有五个代码/测试/规则后映像 blob ID 等于已审核 diff 的 `index` 后映像：AGENTS.md `ee1de5f2`，DELIVERY_PLAN.md `25269b8f`，design README `783b40cc`，settle.py `566824c9`，tests `06e6c4da`。已审核的 diff 文本和声明的 head-tree blob 集描述了相同的内容。
+- **链接文件存在。** `documents.tsv`、`references.tsv` 和 `MANIFEST.sha256` 都存在且内容真实；README §5 / DELIVERY_PLAN §84.2 中的交叉链接指向真实的对象。
+- **清单范围。** `MANIFEST.sha256` 恰好包含 26 个条目——与“26 个哈希”声明和 `FX42_rehashed: 26` 的范围相匹配。
+- **清单 ↔ documents.tsv。** 每一个有 documents.tsv 对应项的清单条目都与记录的 SHA-256 和字节大小完全匹配（26 个中的 23 个；其余三个是 README.tsv 和两个索引文件本身，它们没有 tsv 对应项）。这包括三个新的 D1 原件（`d1-gprep-plan-v3.md` `8d6b2953…aac5`/15909 B；`d1-operational-run-plan-astra-v3.md` `a23ccaae…af6f2`/43965 B；共享评审 JSON `ec11c3b3…69eb`/1199 B）、五个 FX-37 回顾以及 pr-114/pr-118 评审文件。无匹配项。
+- **记录数计算。** documents.tsv 包含 127 行数据，对应 README 中的 36 个原始文件 + 1 个修订版公开文件 + 90 个缺失文件；唯一的一个 `脱敏公开件` 行是 `m1-final-review-rerun-public`。
+- **叙述具体性得到证实。** v2-FAIL (L7–L18) 和 v3-PASS (L19–L24) 行共享同一个具有相同 SHA-256 的 JSON，正如 README 中所述；FX-42 的第一个 FAIL / v2 PASS / 补遗 PASS 行都引用了同一个评审者会话 `sess_e810deb6…`，与“同一原独立 ZCode 会话”相匹配。`references.tsv` 使用与 README 每个范围计数表相同的文档 ID 和行锚点（例如 `d1-gprep-plan-v3` L55–L71，`b1-plan-formal-missing`）来映射源引用。
+- **B1.** 收据记录了基线和候选之间相同的 blob `f409b616…`，这与 diff 不包含 B1 hunks 一致，且 B1 证据行（计划缺失、合并评审缺失、归档的 FX-37 回顾）的注册方式与清单一致。
+- 检查的文件中不含机密或个人数据——仅包含哈希、对象 ID、会话 ID、时间戳。
+
+**未由我重新验证（本地验证者的证明；独立测试/原生测试套件仍为您并行的关口）**：对两次提交和 head 树的 SHA-1 对象头重构，B1 字节级比较本身，针对 exact-head 字节的 26 次 SHA-256 重新计算，以及所有测试执行。
+
+我原始评审中的警告已解决到只读评审者所能解决的范围内：diff、收据、清单、索引表和落地文件之间所有可交叉检查的绑定都已核对无误，其余部分现在已记录并归属明确，而非缺失。代码评审结论未改变；此后续操作中没有任何内容会影响其结果。
+
+```
+VERDICT: PASS
+```
+
+2fbcd0d858bd1511c454edd65f568394642f08d8
