@@ -1,0 +1,25 @@
+{
+  "event": "owner_response_to_preplacement_question",
+  "source": "本次会话中机主发送的结构化答复，按可见文字转录。",
+  "question_item": "call_78e7845fc295430a9cd23bbc6c920a4e",
+  "answer_verbatim": "同意演练、受保护安装、满足门禁后切换并验证一次自然投递",
+  "question_visible_scope": {
+    "candidate": "231e990b",
+    "script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+    "rehearsal_location": "%LOCALAPPDATA%\\PolymarketAlphaLab\\WeixinDeliveryAcceptance",
+    "source": [
+      "source/Invoke-PaperWeixin.ps1",
+      "source/Invoke-PaperWeixin.ps1.sha256",
+      "source/offline-acceptance/Test-PaperWeixinOffline.ps1",
+      "source/offline-acceptance/HermesSubstitute.cs"
+    ],
+    "synthetic_output_location": "scratch/"
+  },
+  "timestamp_utc": null,
+  "chronology": "机主回复在原操作员获派唯一投放尝试之前；派发提示逐字引用该答复。问题末尾在当前回显截断，截断部分未重建。",
+  "operator_instruction_bytes": 1310,
+  "operator_instruction_sha256": "796503781240dd7f193bdc5f50d1d8c82bd9467e6b0c9eff5e91ce8c8f44e424",
+  "placement_receipt": "fx49-windows-placement-original.json",
+  "outcome": "首次放置停在执行策略检查，核验 0 文件。",
+  "source_file_name_note": "问题回显写作“.sha256”，完整文件名与原演练清单一致。"
+}
