@@ -1,0 +1,18 @@
+{
+  "pr": 126,
+  "head": "42908360654c381546fb6652d8319bac098a55f9",
+  "base": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "tree": "06d15719c7f2a846e8dd64baa4a8d29f1eaa10d5",
+  "merge": "5888804c47b0fddaae214374cbbe8353f454c64a",
+  "proof": "ci-observed-attempt1.json",
+  "sha256": "7a7adb7e551d20e96446b3bc2f91c497d5a30e9c90012fdd67cf77f56998a706",
+  "fixed_check": "#126 head 42908360 run 45556953685: CURRENT (merged into 9acfc3ad)",
+  "runs": {
+    "Offline verification": 45556953685,
+    "Native project PostgreSQL": 45557220997,
+    "Research paper bridge": 45556953646
+  },
+  "actual_main": "56a6b59df074a319b57555fdeec334423d012327",
+  "author_committer_noreply": true,
+  "merged_utc": "2026-11-25T06:27:25.725612+00:00"
+}

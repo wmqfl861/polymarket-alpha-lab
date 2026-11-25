@@ -1,0 +1,24 @@
+PASS for the clock-review subject: the addendum implements all four corrections, and the ledger, code basis and route check out. One row of the resource record is still open, CPU load, and it conditions the real-operation GO rather than this verdict.
+
+Hashes are as you supplied them. The text I read has the session reference masked, so I could not confirm either byte count or digest.
+
+## The four corrections
+
+1. **Clock basis.** The ledger is the one specified, and the arithmetic closes from the four raw readings: compute 2,330,283,746,545 and command 2,647,062,230,564, both strictly inside their limits. The recomputation snippet asserts the same values and the receipt digest.
+2. **Code basis.** The three citations hold in the excerpts:
+   - The publication phase encodes the full artifact including `pure`, digests it and re-encodes it on readback.
+   - Compute is called after the claim returns and before the publication transaction.
+   - Unverified required evidence keeps a lineage out of proposals and statistical rejections, so the spec and role writes never run.
+
+   The excerpts do not show the lines that set `statistically_eligible` or enclose the claim transaction; what is shown is consistent with both.
+3. **Route.** The private gate stays untouched, the formal sequence uses the project CLI on the fixed landed tree, module origin is checked, and the five formal-call items from the earlier addendum are carried over.
+
+- **A launch-time reading settles this row only in the favourable direction.** Take it immediately before the single launch: one-minute load at or below 3.9736328125 and five-minute at or below 3.376953125, the timed command's pre-launch values. Archive the fifteen-minute value and the UTC time with them.
+- **A higher reading does not settle it.** Delay only the launch: the registration stays and is not repeated, and repeat the read-only preview after any wait.
+- **The archived sample does not establish that the historical side is materially slower,** so it does not trigger the equivalent-resource measurement. That measurement applies only if the load stays above the baseline and you still want to launch.
+
+ADDENDUM_SHA256: bda2ebe7101e4c8dd7c50236c0c3b7866c3bb7da9ab723d7d2e8f48fd0dfca60
+RESOURCE_ARTIFACT_SHA256: b16866e8c977bd20839c59981f29456689230dc50293a6d2a92d62fecf26c751
+CLOCK_REVIEW_BLOCKERS: 0
+GO_OPEN_ROW: CPU_LOAD_AT_LAUNCH
+VERDICT: PASS

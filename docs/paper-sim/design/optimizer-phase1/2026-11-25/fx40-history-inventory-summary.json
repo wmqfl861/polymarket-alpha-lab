@@ -1,0 +1,59 @@
+{
+  "source_sha256": "d31a4ebdec191c37823b0481351fb01adbbc3fd1fb76cd6b0c40c24e27847cf1",
+  "utc": "2026-11-25T03:12:09+00:00",
+  "scope": "static local Git preflight at reviewed anchor and named retained commits",
+  "checked_commits": {
+    "audit_anchor": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "nov24_handoff": "b3e6f6d3eb3615b74b677658065de43d84147c94",
+    "observed_local_main_only": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+    "retained_fx40_draft": "7f92e0356888785e7b1e1bc88c24ffd1edbe8ac7",
+    "retained_fx41": "256f8491c324b04e5dd9789c012ae84f654853f2",
+    "retained_fx44": "3bc5a234023ee0f322e693e380ed115eb6491547",
+    "retained_runtime": "bcce1b17f7263ab89859febfcb56188c295ab371"
+  },
+  "unverified": [
+    "FX-47 merged launch parent",
+    "FX-40 implementation candidate",
+    "private historical originals",
+    "managed historical snapshot custody",
+    "complete request byte identity"
+  ],
+  "cases": {
+    "banned_cross_league_path": {
+      "blob": "a4cedf029fba95222a411856484e9d98449329a8",
+      "bytes": 2618,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "tests/fixtures/papersim/regression_banned_path.json",
+      "sha256": "0a8acce166cc92d744751b29d3c0a6abb8abb8ac67a4d1b30d2eef584255245d",
+      "type": "blob"
+    },
+    "r19_crypto": {
+      "blob": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+      "bytes": 1902,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "tests/fixtures/papersim/regression_r19_crypto.json",
+      "sha256": "7e07f02424a9c37cfb518c2ad997ecb88efe6d422b5afe558b1be96174b2a2c3",
+      "type": "blob"
+    },
+    "r23_r24_gate_arithmetic": {
+      "blob": "c9841b860f3389bcedcfcb805b9086888a903b26",
+      "bytes": 2763,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "tests/fixtures/papersim/regression_gate_arithmetic.json",
+      "sha256": "4f19389c921444e94e8845d1759d942d9a13c99969362ab49293be40193b83d6",
+      "type": "blob"
+    },
+    "r23_soccer": {
+      "blob": "4bfccb907890253078e1aee0a39b51ec45f590af",
+      "bytes": 38115,
+      "commit": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "mode": "100644",
+      "path": "tests/fixtures/papersim/regression_r23_soccer.json",
+      "sha256": "d9914c23645a54f405ea246aa7ea574afe7515cd176e321d1536db8b60f689f9",
+      "type": "blob"
+    }
+  }
+}

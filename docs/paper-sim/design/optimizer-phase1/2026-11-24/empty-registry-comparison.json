@@ -1,0 +1,319 @@
+{
+  "source_commit": "26dfa2a05357121665009981cd600e23c91e093a",
+  "source_receipt_sha256": "1951b0f62edcbbcc64dda256ee28058d612ef0f70b60daa8ae91e5124f6ad5f7",
+  "source_receipt_bytes": 56675,
+  "supervisor_receipt_sha256": "edc8c8496533f75f457be4992241f26fe56e486b07b03003b50b687cf3763eec",
+  "fixture": "nonempty synthetic paper input on isolated native PostgreSQL",
+  "selfcheck": {
+    "bytes": 1663,
+    "sha256": "a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9"
+  },
+  "frozen_fixture_blobs": {
+    "tests/fixtures/papersim/regression_banned_path.json": "a4cedf029fba95222a411856484e9d98449329a8",
+    "tests/fixtures/papersim/regression_gate_arithmetic.json": "c9841b860f3389bcedcfcb805b9086888a903b26",
+    "tests/fixtures/papersim/regression_r19_crypto.json": "5b1deeab1aa39cd648c71f678ebb1a9f86ce8053",
+    "tests/fixtures/papersim/regression_r23_soccer.json": "4bfccb907890253078e1aee0a39b51ec45f590af"
+  },
+  "comparisons": {
+    "af4ff553262a7ee532e36e1b0d8ba4939522f4ba": {
+      "entries": {
+        "run-scan": {
+          "reference": {
+            "bytes": 578,
+            "sha256": "d057e9cd881dc9f6cfb6840678aa6c030e763acf8f1ee376d03333bc90d995ae"
+          },
+          "target": {
+            "bytes": 578,
+            "sha256": "db1380c39a1a5018a1abde4ce97a91f910cd80a3f677fcb563d37c1a54975549"
+          },
+          "raw_bytes_equal": false,
+          "same_business_projection_bytes": {
+            "bytes": 365,
+            "sha256": "a594c0328f3ce1d623eb925cb99f3518b58fb9c4b268fc5e509582f4985c2271"
+          },
+          "different_json_pointers": [
+            "/code_commit",
+            "/scan_key",
+            "/shadow_seconds"
+          ]
+        },
+        "replay": {
+          "reference": {
+            "bytes": 336,
+            "sha256": "adf7f8aeaceace9405c0085add759f7d7689496cf0205c6a427151ba5994747c"
+          },
+          "target": {
+            "bytes": 336,
+            "sha256": "4f381d3df9319cf5b9a759fb0ef29838709825e019e31dbbdca27f5d3245decf"
+          },
+          "raw_bytes_equal": false,
+          "same_business_projection_bytes": {
+            "bytes": 255,
+            "sha256": "5d318ab5b088f7711414e4ca1f18665dff7e152b12bbbe5ebc3d2bfd3cb28b50"
+          },
+          "different_json_pointers": [
+            "/code_commit"
+          ]
+        },
+        "settle": {
+          "reference": {
+            "bytes": 363,
+            "sha256": "c39a1f37948a40f662de1384197cf17642f4071faa483099df9423fec8632c5b"
+          },
+          "target": {
+            "bytes": 363,
+            "sha256": "02a4ef21dec532e03ea2aa9a78562e9d25147e011333a17f89436a19d07dfbb4"
+          },
+          "raw_bytes_equal": false,
+          "same_business_projection_bytes": {
+            "bytes": 279,
+            "sha256": "6de1743935aaf9cc711bda2049a947d0ce25ac2fde2dd00cedc071ff22377b83"
+          },
+          "different_json_pointers": [
+            "/code_commit"
+          ]
+        },
+        "evaluate": {
+          "reference": {
+            "bytes": 4407,
+            "sha256": "280f12c48d8443d80c31781529851a3ed3a790f2567e3dc2d0884c0b7f328455"
+          },
+          "target": {
+            "bytes": 4407,
+            "sha256": "280f12c48d8443d80c31781529851a3ed3a790f2567e3dc2d0884c0b7f328455"
+          },
+          "raw_bytes_equal": true,
+          "same_business_projection_bytes": {
+            "bytes": 4059,
+            "sha256": "9c18ecbb6b8c69d9ee61574cbc2607da6822619591309e7a8b906c9eb5b880ba"
+          },
+          "different_json_pointers": []
+        },
+        "report": {
+          "reference": {
+            "bytes": 6351,
+            "sha256": "f9a0c7ad211dbdfabc0897d33d253b0430e56fc5dfaba819a08c2f204c9d21ab"
+          },
+          "target": {
+            "bytes": 6351,
+            "sha256": "50c9ab8f56a0edf9bbcb6294ea638a060fb8c15c0653735d455049de70a9ab1f"
+          },
+          "raw_bytes_equal": false,
+          "same_business_projection_bytes": {
+            "bytes": 5838,
+            "sha256": "5568d91bb7d8ca47b579c6cd7b9fac32b140b47d9f5357c5ac7388695bad432a"
+          },
+          "different_json_pointers": [
+            "/as_of",
+            "/receipts/last_phase_by_operation/0/last_occurred_at",
+            "/receipts/last_phase_by_operation/1/last_occurred_at",
+            "/stages/outcomes/as_of",
+            "/stages/scan/as_of",
+            "/stages/scan/last_scan/code_commit",
+            "/stages/scan/last_scan/finished_at",
+            "/stages/scan/last_scan/scan_key",
+            "/stages/scan/last_scan/started_at",
+            "/stages/settle/as_of"
+          ]
+        }
+      },
+      "final_business_rows": {
+        "candidates": {
+          "bytes": 6037,
+          "count": 1,
+          "sha256": "f9c5060e5006917da5a6c33ef01db89f62fa2a6a3847972c4301a02070d36c91"
+        },
+        "candidate_price_evidence": {
+          "bytes": 623,
+          "count": 1,
+          "sha256": "5c2525510c174b747ecab9b77ec3cd40cb2a943023ca0bd69ec4d2128e11520b"
+        },
+        "entries": {
+          "bytes": 354,
+          "count": 1,
+          "sha256": "9119459233d50f5949d92500e8d6f19feb9bfd06138a51475fcc65406a165940"
+        },
+        "bankroll_events": {
+          "bytes": 958,
+          "count": 3,
+          "sha256": "cd61afc434fa73770413e9c686592469702227efe8cff8fb4bf30ee55c06dd5d"
+        },
+        "market_outcomes": {
+          "bytes": 643,
+          "count": 1,
+          "sha256": "326e9db6a93b34a99c0e32d8a67985c18c22d494cd2d79c2d5a1782a259110a2"
+        },
+        "settlements": {
+          "bytes": 507,
+          "count": 1,
+          "sha256": "bacc068b86b96edfccba73813a9b133d2e0333e7f28844236a1f52065cb08d99"
+        },
+        "model_specs": {
+          "bytes": 0,
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "model_role_events": {
+          "bytes": 0,
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shadow_predictions": {
+          "bytes": 0,
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    "e234c3364c204db513cc4fbcdcb6d5eb43c7417b": {
+      "entries": {
+        "run-scan": {
+          "reference": {
+            "bytes": 579,
+            "sha256": "9678839f7e43485c068a7965d63f9d9374b891eae6f62741bfdf42c829e769d8"
+          },
+          "target": {
+            "bytes": 578,
+            "sha256": "db1380c39a1a5018a1abde4ce97a91f910cd80a3f677fcb563d37c1a54975549"
+          },
+          "raw_bytes_equal": false,
+          "same_business_projection_bytes": {
+            "bytes": 365,
+            "sha256": "a594c0328f3ce1d623eb925cb99f3518b58fb9c4b268fc5e509582f4985c2271"
+          },
+          "different_json_pointers": [
+            "/code_commit",
+            "/scan_key",
+            "/shadow_seconds"
+          ]
+        },
+        "replay": {
+          "reference": {
+            "bytes": 336,
+            "sha256": "68bbe495906eae4cc6fe838f5ad76b2fd82105b75c136d70b32837331c7c812b"
+          },
+          "target": {
+            "bytes": 336,
+            "sha256": "4f381d3df9319cf5b9a759fb0ef29838709825e019e31dbbdca27f5d3245decf"
+          },
+          "raw_bytes_equal": false,
+          "same_business_projection_bytes": {
+            "bytes": 255,
+            "sha256": "5d318ab5b088f7711414e4ca1f18665dff7e152b12bbbe5ebc3d2bfd3cb28b50"
+          },
+          "different_json_pointers": [
+            "/code_commit"
+          ]
+        },
+        "settle": {
+          "reference": {
+            "bytes": 363,
+            "sha256": "b19e44752ad58425e5816442bada85df514d6f124b12502ce722a01e088b54ef"
+          },
+          "target": {
+            "bytes": 363,
+            "sha256": "02a4ef21dec532e03ea2aa9a78562e9d25147e011333a17f89436a19d07dfbb4"
+          },
+          "raw_bytes_equal": false,
+          "same_business_projection_bytes": {
+            "bytes": 279,
+            "sha256": "6de1743935aaf9cc711bda2049a947d0ce25ac2fde2dd00cedc071ff22377b83"
+          },
+          "different_json_pointers": [
+            "/code_commit"
+          ]
+        },
+        "evaluate": {
+          "reference": {
+            "bytes": 4407,
+            "sha256": "280f12c48d8443d80c31781529851a3ed3a790f2567e3dc2d0884c0b7f328455"
+          },
+          "target": {
+            "bytes": 4407,
+            "sha256": "280f12c48d8443d80c31781529851a3ed3a790f2567e3dc2d0884c0b7f328455"
+          },
+          "raw_bytes_equal": true,
+          "same_business_projection_bytes": {
+            "bytes": 4059,
+            "sha256": "9c18ecbb6b8c69d9ee61574cbc2607da6822619591309e7a8b906c9eb5b880ba"
+          },
+          "different_json_pointers": []
+        },
+        "report": {
+          "reference": {
+            "bytes": 6351,
+            "sha256": "f917bb16ac9c326bcb33ae1ef779bafab95819e9a995b3a263b5d0180e578646"
+          },
+          "target": {
+            "bytes": 6351,
+            "sha256": "50c9ab8f56a0edf9bbcb6294ea638a060fb8c15c0653735d455049de70a9ab1f"
+          },
+          "raw_bytes_equal": false,
+          "same_business_projection_bytes": {
+            "bytes": 5838,
+            "sha256": "5568d91bb7d8ca47b579c6cd7b9fac32b140b47d9f5357c5ac7388695bad432a"
+          },
+          "different_json_pointers": [
+            "/as_of",
+            "/receipts/last_phase_by_operation/0/last_occurred_at",
+            "/receipts/last_phase_by_operation/1/last_occurred_at",
+            "/stages/outcomes/as_of",
+            "/stages/scan/as_of",
+            "/stages/scan/last_scan/code_commit",
+            "/stages/scan/last_scan/finished_at",
+            "/stages/scan/last_scan/scan_key",
+            "/stages/scan/last_scan/started_at",
+            "/stages/settle/as_of"
+          ]
+        }
+      },
+      "final_business_rows": {
+        "candidates": {
+          "bytes": 6037,
+          "count": 1,
+          "sha256": "f9c5060e5006917da5a6c33ef01db89f62fa2a6a3847972c4301a02070d36c91"
+        },
+        "candidate_price_evidence": {
+          "bytes": 623,
+          "count": 1,
+          "sha256": "5c2525510c174b747ecab9b77ec3cd40cb2a943023ca0bd69ec4d2128e11520b"
+        },
+        "entries": {
+          "bytes": 354,
+          "count": 1,
+          "sha256": "9119459233d50f5949d92500e8d6f19feb9bfd06138a51475fcc65406a165940"
+        },
+        "bankroll_events": {
+          "bytes": 958,
+          "count": 3,
+          "sha256": "cd61afc434fa73770413e9c686592469702227efe8cff8fb4bf30ee55c06dd5d"
+        },
+        "market_outcomes": {
+          "bytes": 643,
+          "count": 1,
+          "sha256": "326e9db6a93b34a99c0e32d8a67985c18c22d494cd2d79c2d5a1782a259110a2"
+        },
+        "settlements": {
+          "bytes": 507,
+          "count": 1,
+          "sha256": "bacc068b86b96edfccba73813a9b133d2e0333e7f28844236a1f52065cb08d99"
+        },
+        "model_specs": {
+          "bytes": 0,
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "model_role_events": {
+          "bytes": 0,
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "shadow_predictions": {
+          "bytes": 0,
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "head": "380ba64c38eb8c8edb6e3f30db879f497b3f9c41",
+  "tree": "cc65222f53a033974c8dc770e44f1b729e7a029f",
+  "base": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+  "mode": "full",
+  "dependency_base_tree": "7d2995ecd30216df6ddcfa69d820367c27186025",
+  "post_clean": true,
+  "steps": [
+    {
+      "command": [
+        "scripts/verify_local.py",
+        "--full"
+      ],
+      "exit": 0,
+      "duration_seconds": 3354.23,
+      "summaries": [
+        "43956 passed, 437 skipped, 20 warnings in 3257.48s (0:54:17)"
+      ],
+      "log_sha256": "54cee6200d4b5c0416965b942681b356308cdda7cdcebe1e231af642e952ad01"
+    }
+  ]
+}

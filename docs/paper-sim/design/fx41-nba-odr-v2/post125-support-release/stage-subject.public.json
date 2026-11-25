@@ -1,0 +1,21 @@
+{
+  "role": "stage",
+  "review_subject": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "review_subject_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+  "common_evidence": {
+    "file": "software-evidence-v1.json",
+    "bytes": 48863,
+    "sha256": "676930e39257149853d1403668a07099a073d68d91d46c07609d73ef682d0f49"
+  },
+  "original_stage_failure": {
+    "file": "nba-support-stage-release.json",
+    "bytes": 8187,
+    "sha256": "3de97824628cb1405e509fccabd6f01d828fce3aa96ef7e3331a8089761d5ab9"
+  },
+  "original_handoff_failure": {
+    "file": "nba-support-handoff-release.json",
+    "bytes": 8786,
+    "sha256": "5b46411b79df057a6a0134b46b370efae4c7d761aaa1400688a29b23bf247a8d"
+  },
+  "additional_signed_receipts": []
+}

@@ -1,0 +1,34 @@
+{
+  "owner_directions": {
+    "source": {
+      "commit": "dda71bb04419426ccb4fa1fd4a4dc5f703058718",
+      "path": "DELIVERY_PLAN.md",
+      "blob": "def088e095a1fe6a0335cfbf120b2b15b78ec8b3",
+      "bytes": 486367,
+      "sha256": "be3d9b489696c0ff787b964416a4bf63b3c06f1af564553e38c0f698880eb8f6"
+    },
+    "section": "84.2.1 and 84.2.4",
+    "quoted_ledger_rows": [
+      "| OD-O 仓库可见性 | 机主随后明确答复“保持公开，是我有意公开”。选择与已观测的可见性一致。 |",
+      "| §84.2.4 未关闭项 | 关于已确认可达的第一个数据库连接池入口和微信链路，机主随后明确答复“授权限制入口，保留微信链路”。此项先核实独立管理通路，再实施并从外部复查。其他可达项另行报告。 |"
+    ]
+  },
+  "first_restriction": {
+    "source": {
+      "commit": "ec87ec9ec75fb5282f190c012cc1f5bb4e4524fc",
+      "path": "DELIVERY_PLAN.md",
+      "blob": "52fe4a2c7342a26f86458640590ba6b54beba6e1",
+      "bytes": 486901,
+      "sha256": "74505ddf94c50c9bd72d118ad0f81e1e67881472dc4850c43b4f919a53159ca5"
+    },
+    "section": "84.2.4",
+    "receipt": {
+      "commit": "ec87ec9ec75fb5282f190c012cc1f5bb4e4524fc",
+      "path": "docs/paper-sim/design/fx-36/2026-11-24-first-restriction-recheck.json",
+      "blob": "f9600af091dd79a7e8e382ac48315d30e2d59c29",
+      "bytes": 439,
+      "sha256": "ca5732640dbc7049ecc9b0f5849e63db398f21b931cf73342d49fa35df617910"
+    },
+    "source_sentence": "2026-11-24 05:23:58 UTC，先核实独立管理登录仍在线，再对机主授权的第一个连接池入口启用持久入站限制。规则只匹配已登记的公网入口。05:24:06 UTC，从原外部测点作一次复查，返回 `UNKNOWN`。变更后规则计数有增长，独立管理通路仍可用，微信远程链路按机主要求保留。公网阻断仍待外部证据；另外三个登记项的本轮外测仍待执行。"
+  }
+}

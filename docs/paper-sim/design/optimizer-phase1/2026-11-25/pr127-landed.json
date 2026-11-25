@@ -1,0 +1,16 @@
+{
+  "utc": "2026-11-25T07:51:22+00:00",
+  "head": "f4f7798583d4227c5376d89c7f87c5e52335db84",
+  "base": "56a6b59df074a319b57555fdeec334423d012327",
+  "pr": 127,
+  "tree": "8df757fc5891a10f088dbf2e6bf47a19c83149ed",
+  "ci_merge": "76f6235362d8eac32eb795aa723e039199615b92",
+  "actual_main": "9ce8290e90d82ae58928cea3eabca96d20d66217",
+  "workflow_runs": {
+    "Offline verification": 45568274535,
+    "Native project PostgreSQL": 45568555979,
+    "Research paper bridge": 45568274603
+  },
+  "fixed_check": "#127 head f4f77985 run 45568274535: CURRENT (merged into 56a6b59d)",
+  "author_committer_noreply": true
+}

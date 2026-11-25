@@ -1,0 +1,60 @@
+{
+  "candidate": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+  "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "local_single_process_full_suite": {
+    "source_receipt_filename": "incremental-package-full-suite.json",
+    "source_receipt_bytes": 2471,
+    "source_receipt_sha256": "a0fcc7744476a3b8202223a63b41feadf315383156cfcf995a8b8a02b20eba62",
+    "source_receipt_archived_in_repository": false,
+    "zcode_session": "sess_3eca21f6-092e-4bcb-8252-487676e71750",
+    "zcode_turn": "turn_07d5cd96-4587-4e98-a0a5-08e44f42e672",
+    "client_disclosed_backend": "GLM-5.4",
+    "command": ".venv/bin/python -m pytest -q",
+    "exit_code": 0,
+    "passed": 43967,
+    "skipped": 426,
+    "failed": 0,
+    "errors": 0,
+    "duration_seconds": 2725.66,
+    "working_tree_clean_before_and_after": true,
+    "candidate_unchanged": true,
+    "added_skip_options": false,
+    "skip_reasons_checked": false,
+    "historical_grouped_run_source": "intake-and-reviews.json"
+  },
+  "publication": {
+    "source": "Coordinator's publication and remote readback",
+    "source_receipt_archived_in_repository": false,
+    "prior_failed_push": "intake-and-reviews.json",
+    "prior_remote_observation": "publication-after-ledger-integration.json",
+    "push_utc": "2026-11-24T20:02:15Z",
+    "transport": "HTTPS",
+    "exit_code": 0,
+    "remote_ref_head": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+    "pull_request": 124,
+    "scope": "November 24 incremental documentation package"
+  },
+  "initial_ci_observation": {
+    "observed_utc_minute": "2026-11-24T20:03Z",
+    "source": "Coordinator's initial workflow observation",
+    "offline_verification": {"run": 45476687574, "status": "in_progress"},
+    "native_project_postgresql": {"run": 45476773572, "status": "in_progress"},
+    "research_paper_bridge": {"run": 45476687554, "status": "in_progress"}
+  },
+  "terminal_ci_observation": {
+    "observed_utc": "2026-11-24T20:24:28Z",
+    "source": "Coordinator's final workflow readback",
+    "offline_verification": {"run": 45476687574, "event": "pull_request", "conclusion": "success"},
+    "native_project_postgresql": {"run": 45476773572, "event": "workflow_dispatch", "conclusion": "success"},
+    "research_paper_bridge": {"run": 45476687554, "event": "pull_request", "conclusion": "success"},
+    "merge_check_results": ["CURRENT", "CURRENT"],
+    "merge_checkout": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+    "merge_checkout_matches_candidate_tree": true
+  },
+  "merge_attempt": {
+    "source": "Coordinator's merge command and follow-up remote readback",
+    "exit_code": 1,
+    "failure_reason": "Invalid email address",
+    "pull_request_state_after": "OPEN"
+  }
+}

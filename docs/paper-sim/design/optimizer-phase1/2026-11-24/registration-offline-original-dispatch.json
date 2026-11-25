@@ -1,0 +1,6 @@
+{
+  "sessionId": "sess_430fbb7e-22e4-4321-9697-6e1d743c25fc",
+  "turnId": "turn_662ec3c5-e38d-4bd5-abfa-d36d1801a948",
+  "traceId": "61e3cba4-cdc3-4390-953e-d672898d7238",
+  "response": "**Candidate `registration-final` at head `97091184db35f4f6fe7d06d0cccb6472bcee7d23`: dispatch confirmed, no test result yet.**\n\nThe launcher accepted the command and returned `\"state\":\"dispatched\"` on the first and only run; I added no other commands.\n\n- **Continuation manifest:** `f8b0e805fbcb73b9209302006d875f021e890fb4277350ae6065393b30bb1aa3`, matching the value you supplied.\n- **Unit:** `pal-nov24-continuation-registration-final-97091184db35-ssl-v2.service`.\n- **State directory:** `offline-continuation/registration-ssl-v2/state` under the coordination directory.\n- **Suite shape:** 3,338 files in 31 groups.\n- **Prior proofs:** 18 groups and 120 scopes were accepted from the earlier suite.\n- **Original failure:** one prior failed attempt is carried forward with its request, inventory, pytest and result hashes.\n- **Focus receipt:** still `null`, so the same-head focus has not produced a receipt yet.\n\nThe job is detached and will queue behind competing test jobs on the shared lock. Whether both guards pass and the remaining full suite runs is not known at this point."
+}

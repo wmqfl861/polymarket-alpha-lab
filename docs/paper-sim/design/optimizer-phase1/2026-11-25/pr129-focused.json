@@ -1,0 +1,14 @@
+{
+  "exit": 0,
+  "failing_nodes": [],
+  "head": "e94756c8a0e5f3cb9265ce36c2fe94869fbb1e2a",
+  "output_bytes": 432,
+  "output_sha256": "3a7ff388dc3aac3d90d35719c7c36cc84329e452f2a17999419ddd240e3b33f8",
+  "seconds": 395.182,
+  "started_utc": "2026-11-25T09:59:20.618060+00:00",
+  "summaries": [
+    "318 passed in 394.24s (0:06:34)"
+  ],
+  "tree": "272f096652696a85868e70082e0874f748c7c295",
+  "uv_failure_category": null
+}

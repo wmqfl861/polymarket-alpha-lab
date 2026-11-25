@@ -1,0 +1,71 @@
+Re-review result: all fifteen of my original items are closed on the shared evidence, and I found no remaining material gap in the stage. One condition still blocks the step-1 release, and it sits at the handoff gate, not here. I used only the bound text: no tools, no writes. Backend disclosed by the client for this session: GLM-5.4.
+
+## Scope
+
+I audit the post-#118 step-1 support-code software stage against my original nine essential items and six record-precision items. I do not audit the handoff gate. Its first result is a FAIL by its own reviewer, and only that reviewer can clear it. This verdict neither waits on that result nor clears it.
+
+## Reviewed objects
+
+| Role | Commit | Tree |
+|---|---|---|
+| Execution HEAD (review subject) | `9acfc3ad07f446415d092153effbc5b81e6b0e77` | `b348aa8af022e430d91ae78ae02143db6c4716aa` |
+| CI-checked merge object | `35d1812e1b13ed5f2fa7e432749420082dff5ff4` | same as above |
+| Reviewed and tested source | `2933a375fdc3c248514968277effb9a699097131` | `446be10b502632b3a1acbf3b774aecd65a2ce48e` |
+
+- **Shared evidence:** SHA-256 `676930e39257149853d1403668a07099a073d68d91d46c07609d73ef682d0f49`, 48,863 bytes.
+- **Role manifest:** SHA-256 `1a64561e51e8a03a1728db6b82f433ee0e7250a3dfe8fbd3dc2d53436d39c315`.
+- **Parents:** the merge object and the landing share both parents, `525d2cbe527c7588eb0ec0e53570dd4f03b1f36c` and `f60a6acf03022acb9c57c964718c2c18c651b68f`. The three hosted workflows therefore tested exactly the landed content.
+
+## Original essential items
+
+| # | Item | Conclusion and basis |
+|---|---|---|
+| 1 | CI tree | Closed. All six jobs of the three workflows checked out the merge object above. |
+| 2 | Blob binding | Closed. The 13-row table matches the blobs I was originally given at the source and is identical at the landing. The full src tree and the full tests tree also carry one object ID each across both revisions. Eight files and five wiring or contract files are labelled. |
+| 3 | Sensitive scan | Closed. The two older hits sit in `optimize/runner.py` (base line 3706, candidate line 3795) and `tests/test_papersim_optimize_runner.py` (3666, 3667). Their line and enclosing-function digests are identical between base and candidate, so they predate this node. The landing-scope scan exited 0. Its 14 hits are the same 9 schedule strings and 5 command strings classified earlier. |
+| 4 | First failure, fix, rerun | Closed. Focused: launcher exit 127 from a mistyped path, no tests ran, corrected on the same source, exit 0. Offline: the first complete suite had no test failure. Native: interrupted before tests, then nine cases failed identically on the prior baseline; the harness was corrected with product source unchanged; nine, then 551 of 551, pass. The code review has no signed failure on this subject. |
+| 5 | Skip reasons and node proof | Closed. See the accounting below. The 2,000 figure is `MAX_TRIALS` in `runner.py`, asserted by `test_locked_budget_and_grid_constants_are_runner_owned`. |
+| 6 | Compile | Closed. `python -m compileall -q src tests scripts`, run through `scripts/verify_local.py --quick`, exit 0 at the source. |
+| 7 | Frozen outputs | Closed. `test_registry_provider_empty_registry_is_bit_identical_to_b1` exited 0 with a JUnit digest. The four fixture blobs and SHA-256 values are bound. |
+| 8 | Interpreter | Closed. Python 3.12.3 for both runs. Tests used a candidate-specific locked uv environment. The formal run uses the designated Linux project virtualenv, with the same psycopg and tzdata versions and a bound binary digest. |
+| 9 | Handoff review | Closed as to dispatch and receipt: an independent reviewer, an 8,786-byte receipt and a stated reviewed object. Its result is a first FAIL that stays with that reviewer. |
+
+## Skip accounting
+
+- **Local totals:** the baseline at `e65be3e7…` has 43,956 passed and 437 skipped over 3,338 files. The candidate has 44,016 passed and 444 skipped over 3,340 files. That is 60 more passes and 7 more skips.
+- **The 7 skips:** these are the native-only NBA cases. Each has a named passing case in the native partition, with a JUnit digest.
+- **The 60 passes:** the retained batches hold 61 passing cases for the new or renamed definitions that are not native-only. One is the rename, which replaces an existing case, so 60 are new. No earlier passing case became a skip.
+- **Hosted totals:** skips went from 438 to 445. The whole increase is in the opt-in native category (397 to 404); the other two categories are unchanged.
+- **Budget functions:** the six runner functions have seven cases, all passed, in `batch-058.json`.
+
+## Original record-precision items
+
+- **Plan digest chain:** closed. The node `plan.md` is `240f6153…`. `plan-review.json` signed it, and `operator-rereview.json` signed it again together with the addendum. `137a7386…` is the separate post-#118 release plan, and `b56c7926…` is its signed result.
+- **Code review object:** closed. Reviewed head `2933a375…`, tree `446be10b…`, identity fields all non-empty.
+- **Unpinned references:** closed. `#118` resolves to `00199b24…`. The PR head and main are given in full. `1321e54e…` is labelled a prior handoff draft, not the execution.
+- **Static audit on the landed tree:** closed. Against its first parent, the landing moves reachable modules from 468 to 470 and leaves unreachable modules at 2,442, under the same script.
+- **Mask proof:** closed for the named reference. The remote manifest readback is 403 bytes and verified 42 entries at `b0807e32…`.
+- **Clean-tree receipt:** closed. The worktree sat at the execution SHA with an empty status.
+
+## Limited points (none blocking)
+
+- **Covering note only:** scripts and dependency objects are said to be identical across the two revisions, but the shared evidence binds object IDs for src and tests only. The native harness correction is described, not digested. Only the formal interpreter's binary digest is bound.
+- **Skip reasons:** they come from hosted job logs because the local log has no reason strings. The one-skip local-versus-hosted difference is the same on both sides and is not individually identified. The local baseline receipt is at `e65be3e7…`, not the node base `ab6edff2…`. The two retained skip-evidence runs exited 1 and are preserved, and the terminal run's exit code is not stated. The second failure was the evidence script's own six-versus-seven case assertion; the seven-module pytest exited 0.
+- **Third revision:** the frozen-output and empty-registry receipt was executed at `b0807e32…`, the evidence commit, not at either bound revision. Its mapping to both rests on that commit being docs-only on top of the source.
+- **CI trigger SHA:** the native workflow reports the merge object as its trigger SHA, and the other two report the PR head. The difference is unexplained and does not touch the checkout object.
+- **Instance identity:** the historical archive and the synthetic timing database carry distinct labels, but their hashes have different inputs. The live identity of the real instance is left for a later managed readback, and is needed at registration.
+- **Commit-message redaction:** no separate bound line covers it. The landing-scope scan covers added lines.
+
+## Remaining blocking condition
+
+Step 1 still needs a passing handoff verdict. The first handoff result is a FAIL (receipt SHA-256 `5b46411b79df057a6a0134b46b370efae4c7d761aaa1400688a29b23bf247a8d`), and it returns to that reviewer with this result attached. The mandate sentence reads: 「代码/阶段及交接各由独立于实施和测试的新派实际只读 ZCode 签 …，记录会话与受审对象，首败交原审核者复审。」 I have elided the literal verdict token inside the quotation so that this reply carries exactly one standalone verdict line.
+
+## What this verdict does not do
+
+- It authorizes no registration, preview, launch or modeled result.
+- The clock ruling, the timing receipts, and registration, preview and attempt stay separate gates. I make no finding on the real-data metadata preflight or the synthetic timing receipt in the evidence.
+- The original FAIL, SHA-256 `3de97824628cb1405e509fccabd6f01d828fce3aa96ef7e3331a8089761d5ab9`, stays on record unchanged. This is its re-review by the original stage reviewer.
+
+Total blocking findings on the stage gate: 0.
+
+VERDICT: PASS

@@ -1,0 +1,52 @@
+{
+  "retained_local_baseline": {
+    "bytes": 129,
+    "sha256": "e199ffd558620311773eb1b50c350c31031d4b45457e1c59b2a6d05f197e4b3e",
+    "result": {
+      "commit": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+      "counts": {
+        "passed": 43956,
+        "skipped": 437
+      },
+      "files": 3338,
+      "groups": 31
+    }
+  },
+  "retained_local_candidate": {
+    "bytes": 129,
+    "sha256": "d5f6e038fb5cad35143c7a9ae46976b614e0a7ff48dd7631a8b579c5b13e22fb",
+    "result": {
+      "commit": "2933a375fdc3c248514968277effb9a699097131",
+      "counts": {
+        "passed": 44016,
+        "skipped": 444
+      },
+      "files": 3340,
+      "groups": 31
+    }
+  },
+  "hosted_baseline": {
+    "job": 138738650157,
+    "skip_count": 438,
+    "reason_counts": {
+      "OS and PowerShell specific": 28,
+      "opt-in native, database or isolated integration": 397,
+      "optional input or fixture": 13
+    },
+    "job_response_sha256": "46bddf6ce5b2fa7a859125de767daa0786f8464d7878a84f6c7b8671a3cdfad6"
+  },
+  "hosted_candidate": {
+    "job": 138935810311,
+    "skip_count": 445,
+    "reason_counts": {
+      "OS and PowerShell specific": 28,
+      "opt-in native, database or isolated integration": 404,
+      "optional input or fixture": 13
+    },
+    "job_response_sha256": "fbdd81d6207f8ce57bac5b4e8bd3086c71f9ba57f0e87cb4aa9768423966ae03"
+  },
+  "utc": "2026-11-25T08:36:48.155639+00:00",
+  "source_commit": "2933a375fdc3c248514968277effb9a699097131",
+  "landed_commit": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "landed_tree": "b348aa8af022e430d91ae78ae02143db6c4716aa"
+}

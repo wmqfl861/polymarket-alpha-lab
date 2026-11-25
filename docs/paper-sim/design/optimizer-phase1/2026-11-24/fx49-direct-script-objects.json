@@ -1,0 +1,8 @@
+{
+  "path": "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1",
+  "runtime": "97e9cbcbf510de0f10606ec06380376d627bff50",
+  "integration": "a9176cc255054ebd74046bdac8fef0d98e715f6e",
+  "bytes": 35487,
+  "sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "both_objects_equal": true
+}

@@ -1,0 +1,189 @@
+{
+  "parent_working_draft": "a40581a36ad17c66809a5b89992ccc816907f1f0",
+  "materialized_utc": "2026-11-25T01:54:27+00:00",
+  "fx47": {
+    "candidate": "fe24776feddcda8bad752c3aaac25ceaf23384ab",
+    "code_and_integration_review": {
+      "verdict": "PASS",
+      "source_receipt_sha256": "39e3f140b8983b753830d8c92a3a2fe9723f5ae5336d8d07868662247e1814fb"
+    },
+    "review_followup_receipt_sha256": "04953d4a0f7ebcdeb483ed75d27a4f0739709811c648cc4a3e42bed3c91271fe",
+    "alternate_archive_names": {
+      "fx47-legacy-probe/proof-v5.jsonl": {
+        "archived_path": "docs/paper-sim/design/fx-47/legacy-empty-list-witness.jsonl",
+        "bytes": 2712,
+        "sha256": "94a1de83e58effcf7a698a66c8bce7ff81b35c4a80163f824ee12fabff1ae919"
+      },
+      "fx47-plan-v2.md": {
+        "archived_path": "docs/paper-sim/design/fx-47/plan.md",
+        "bytes": 9036,
+        "sha256": "1072eb1bb9ed85fc0e4b6bbed53b4dfb3147730bba3614c24a0c7b9c7dba75be"
+      }
+    },
+    "independent_fixture_review_is_distinct_from_product_review": true,
+    "native_final": {
+      "head": "fe24776feddcda8bad752c3aaac25ceaf23384ab",
+      "exit_code": 0,
+      "counts": {
+        "collection_errors": 0,
+        "deselected": 0,
+        "duplicate_receipts": 0,
+        "error": 0,
+        "failed": 0,
+        "missing_receipts": 0,
+        "not_run": 0,
+        "passed": 23,
+        "receipts": 23,
+        "rejected_receipts": 0,
+        "selected": 23,
+        "skipped": 0,
+        "xfailed": 0,
+        "xpassed": 0
+      }
+    },
+    "codegraph": {
+      "commit": "fe24776feddcda8bad752c3aaac25ceaf23384ab",
+      "tree": "c13ef1a3ec14d30cea90b3caef3c9850f58602ea",
+      "result": "pass",
+      "verified_indexed_files": 6761,
+      "files_with_parse_errors": 0
+    },
+    "static_final": {
+      "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "candidate": "fe24776feddcda8bad752c3aaac25ceaf23384ab",
+      "tree": "c13ef1a3ec14d30cea90b3caef3c9850f58602ea",
+      "exit_code": 0,
+      "base_reachable": 468,
+      "candidate_reachable": 468,
+      "base_unreachable": 2442,
+      "candidate_unreachable": 2442
+    },
+    "final_offline_observation": {
+      "head": "fe24776feddcda8bad752c3aaac25ceaf23384ab",
+      "event": "run_started",
+      "utc": "2026-11-25T01:59:44+00:00",
+      "case_count_not_claimed": true,
+      "source_receipt_sha256": "c621e82b5dfee4954bc25037e324dadc5b26f5783ca06c2c3e64787ab6170a78"
+    },
+    "final_offline_prior_waiting_observation": {
+      "utc": "2026-11-25T00:44:50+00:00",
+      "event": "waiting_for_serial_lock",
+      "head": "fe24776feddcda8bad752c3aaac25ceaf23384ab",
+      "source_receipt_sha256": "8d72448163caaea66eb42b1594edee4f9a58048593203c7effa32918dd75c7a3"
+    }
+  },
+  "fx49": {
+    "archive_codegraph": {
+      "commit": "6f177ca8d0fa786fa2950a59c4ab1e6d68c71d67",
+      "tree": "59b750e7d2a4a49f138d31c3cf0f4f09c8a9e36c",
+      "result": "pass",
+      "verified_indexed_files": 6766,
+      "files_with_parse_errors": 0
+    },
+    "source": "a9176cc255054ebd74046bdac8fef0d98e715f6e",
+    "runtime": "97e9cbcbf510de0f10606ec06380376d627bff50",
+    "archive": "6f177ca8d0fa786fa2950a59c4ab1e6d68c71d67",
+    "archive_tree": "59b750e7d2a4a49f138d31c3cf0f4f09c8a9e36c",
+    "archive_inventory": 18,
+    "archive_main_original_rereview": {
+      "verdict": "PASS",
+      "source_receipt_sha256": "1bb1d36183e561fc694ce455717e71e4247987485f7ea93679cc6fef682ff894"
+    },
+    "archive_runtime_original_rereview": {
+      "verdict": "PASS",
+      "source_receipt_sha256": "a92151cd9d30c606f89698276ac319e444ae8bf383f7c25fd716741c40e8cdb6"
+    },
+    "final_offline_observation": {
+      "utc": "2026-11-25T01:12:50+00:00",
+      "event": "waiting_for_serial_lock",
+      "head": "a9176cc255054ebd74046bdac8fef0d98e715f6e",
+      "source_receipt_sha256": "dda76351d47932b88665d5f2b23b7ed99370ce3494b022878269d87ecb10be0e"
+    },
+    "scope": "Retained local source and archive evidence. Automated business delivery, protected runtime ref and hosted CI remain separate.",
+    "retained_full_dispatch_event": {
+      "head": "a9176cc255054ebd74046bdac8fef0d98e715f6e",
+      "event": "waiting_for_serial_lock",
+      "utc": "2026-11-25T01:12:50+00:00"
+    },
+    "local_checkout_rehearsal": {
+      "archive_head": "6f177ca8d0fa786fa2950a59c4ab1e6d68c71d67",
+      "local_merge_fixture": "41937a19de1a477e3950937524ef5cc13a9499be",
+      "runtime": "97e9cbcbf510de0f10606ec06380376d627bff50",
+      "main_tree": "59b750e7d2a4a49f138d31c3cf0f4f09c8a9e36c",
+      "missing_ref_exit": 1,
+      "ephemeral_local_ref_exit": 0,
+      "local_ref_removed": true
+    }
+  },
+  "registration": {
+    "pr_source_candidate": "71564355f44e86e969a34cc83410935379f61391",
+    "local_verification_head": "380ba64c38eb8c8edb6e3f30db879f497b3f9c41",
+    "local_tree": "cc65222f53a033974c8dc770e44f1b729e7a029f",
+    "focus": [
+      {
+        "exit": 0,
+        "summaries": [
+          "133 passed in 11.45s"
+        ],
+        "duration_seconds": 90.57
+      },
+      {
+        "exit": 0,
+        "summaries": [
+          "304 passed in 331.26s (0:05:31)"
+        ],
+        "duration_seconds": 332.01
+      }
+    ],
+    "full_verification": {
+      "commit": "380ba64c38eb8c8edb6e3f30db879f497b3f9c41",
+      "tree": "cc65222f53a033974c8dc770e44f1b729e7a029f",
+      "exit": 0,
+      "clean": true,
+      "passed": 43956,
+      "skipped": 437,
+      "warnings": 20,
+      "pytest_seconds": 3257.48,
+      "verification_wall_seconds": 3354.23,
+      "source_receipt_sha256": "2181fd667db655c82b0d076acb63ca7dcf1d54c2beee0ae8e8d6cda0dea6b6d7"
+    },
+    "shared_fixture_order": {
+      "independent_fixture_head": "6ac6f5cca93c8299567380dec63c633089d7d2d2",
+      "rehearsed_registration_merge_tree": "cc65222f53a033974c8dc770e44f1b729e7a029f"
+    },
+    "fx47_first_rehearsal": {
+      "candidate_head": "fe24776feddcda8bad752c3aaac25ceaf23384ab",
+      "registration_merge_rehearsal": {
+        "exit": 0,
+        "tree": "ec3d59d9e0abfc18ae3aa97e71913762d42eecb9"
+      },
+      "docs_only_scope_matches": true,
+      "registration_ledger_delta_byte_identical": true,
+      "tree_matches_running_full_verification": false,
+      "registration_doc_blobs_match_review": false
+    },
+    "prior_dispatch_observation": "dispatched; terminal receipt not present at this observation"
+  },
+  "fx54": {
+    "test_head": "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+    "test": {
+      "summary": "43956 passed, 437 skipped, 20 warnings in 3201.88s (0:53:21)",
+      "exit_code": 0,
+      "utc": "2026-11-24T21:03:01+00:00",
+      "clean_checkout": true
+    },
+    "source_review": {
+      "head": "974887ebd5b260cae05c6570a7d5b256c3a65aad",
+      "verdict": "PASS",
+      "source_receipt_sha256": "44f65f0cdb85bfc8474889f4af03e3bef1e70c99511fb3225def6a39c707dbe2"
+    },
+    "prior_fail_review_heads": [
+      "4818bef8f2e63e06ff0974b0fbdaa5081f6684de",
+      "e05824c2f1e4acb36a5cd090c72ea0a9e680ae38"
+    ],
+    "local_sibling_evidence_commit": "472fbc1932662bb10ecb51083411b1a38cac6928",
+    "phase_integration": "pending"
+  },
+  "cutoff_for_running_suites": "2026-11-25T02:00:58+00:00",
+  "supplement_materialized_utc": "2026-11-25T02:03:10+00:00"
+}

@@ -1,0 +1,22 @@
+{
+  "utc": "2026-11-25T03:07:29+00:00",
+  "pr": 125,
+  "base": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+  "head": "f60a6acf03022acb9c57c964718c2c18c651b68f",
+  "ci_merge": "35d1812e1b13ed5f2fa7e432749420082dff5ff4",
+  "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+  "actual_main": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+  "parents": [
+    "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+    "f60a6acf03022acb9c57c964718c2c18c651b68f"
+  ],
+  "source_ancestor": "2933a375fdc3c248514968277effb9a699097131",
+  "author_and_committer_noreply": true,
+  "workflow_runs": {
+    "Offline verification": 45533942383,
+    "Native project PostgreSQL": 45534415758,
+    "Research paper bridge": 45533942354
+  },
+  "fixed_check": "#125 head f60a6acf run 45533942383: CURRENT (merged into 525d2cbe)",
+  "formal_attempts_in_merge_operation": 0
+}

@@ -1,0 +1,16 @@
+{
+  "utc": "2026-11-25T03:06:24+00:00",
+  "pr": 125,
+  "head": "f60a6acf03022acb9c57c964718c2c18c651b68f",
+  "base": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+  "merge": "35d1812e1b13ed5f2fa7e432749420082dff5ff4",
+  "tree": "b348aa8af022e430d91ae78ae02143db6c4716aa",
+  "runs": {
+    "Offline verification": 45533942383,
+    "Native project PostgreSQL": 45534415758,
+    "Research paper bridge": 45533942354
+  },
+  "jobs_with_merge_checkout": 6,
+  "fixed_check": "#125 head f60a6acf run 45533942383: CURRENT (merged into 525d2cbe)",
+  "proof_sha256": "9c7fcdf66bccafdfeed897f19d7e1404ed94810b872a88c08b40ab693739ac97"
+}

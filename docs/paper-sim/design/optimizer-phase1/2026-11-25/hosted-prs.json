@@ -1,0 +1,376 @@
+{
+  "parent_working_draft": "a40581a36ad17c66809a5b89992ccc816907f1f0",
+  "main_at_public_observation": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "pull_requests_observed_utc": "2026-11-25T01:24:01+00:00",
+  "note": "Workflow API head_sha and result are metadata. Actual per-run checkout and CURRENT require their own readback.",
+  "opened_normal_pr": {
+    "utc": "2026-11-25T01:16:50+00:00",
+    "number": 125,
+    "head": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+    "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "url": "https://github.com/wmqfl861/polymarket-alpha-lab/pull/125"
+  },
+  "pr124": {
+    "number": 124,
+    "state": "open",
+    "merged": false,
+    "draft": false,
+    "merge_commit_sha": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+    "merged_at": null,
+    "head": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+    "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "base_ref": "main"
+  },
+  "pr125": {
+    "number": 125,
+    "state": "open",
+    "merged": false,
+    "draft": false,
+    "merge_commit_sha": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+    "merged_at": null,
+    "head": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+    "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "base_ref": "main"
+  },
+  "merge_objects": {
+    "124": {
+      "sha": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+      "tree": "6df8bdca837797a09e331d56fae0607b28a9310c",
+      "parents": [
+        "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b"
+      ]
+    },
+    "125": {
+      "sha": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+      "tree": "4e3481541d6f63ea8e5a9782c0c84ab1861daf37",
+      "parents": [
+        "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "b0807e322f8705548e80f3b67ac61a836a5864ef"
+      ]
+    }
+  },
+  "workflows_at_observation": {
+    "124": {
+      "observed_utc": "2026-11-25T01:43:55+00:00",
+      "runs": {
+        "Offline verification": {
+          "id": 45476687574,
+          "event": "pull_request",
+          "head_sha": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        },
+        "Native project PostgreSQL": {
+          "id": 45524997219,
+          "event": "workflow_dispatch",
+          "head_sha": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        },
+        "Research paper bridge": {
+          "id": 45476687554,
+          "event": "pull_request",
+          "head_sha": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        }
+      }
+    },
+    "125": {
+      "observed_utc": "2026-11-25T01:41:29+00:00",
+      "runs": {
+        "Offline verification": {
+          "id": 45524564502,
+          "event": "pull_request",
+          "head_sha": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        },
+        "Native project PostgreSQL": {
+          "id": 45525021707,
+          "event": "workflow_dispatch",
+          "head_sha": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        },
+        "Research paper bridge": {
+          "id": 45524564508,
+          "event": "pull_request",
+          "head_sha": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+          "status": "completed",
+          "conclusion": "success",
+          "run_attempt": 1
+        }
+      }
+    }
+  },
+  "pr124_prior_native_on_pr_head": {
+    "id": 45476773572,
+    "event": "workflow_dispatch",
+    "head_sha": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1
+  },
+  "terminal_ci": {
+    "124": {
+      "utc": "2026-11-25T01:44:35+00:00",
+      "pr": 124,
+      "head": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+      "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "merge": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+      "tree": "6df8bdca837797a09e331d56fae0607b28a9310c",
+      "fixed_check": "#124 head e65be3e7 run 45476687574: CURRENT (merged into ab6edff2)",
+      "proof_sha256": "18f0eee2072eb14f1ff0d1adee9908b2ec8afa30b557293f07b1e3cc015cab8b",
+      "parents": [
+        "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b"
+      ],
+      "workflows": {
+        "Offline verification": {
+          "id": 45476687574,
+          "conclusion": "success",
+          "run_attempt": 1,
+          "event": "pull_request",
+          "head_sha": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+          "checked_jobs": [
+            {
+              "name": "offline",
+              "id": 138738650157,
+              "checkout": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+              "test_counts": [
+                {
+                  "passed": 43955,
+                  "skipped": 438,
+                  "warnings": 20
+                }
+              ]
+            }
+          ]
+        },
+        "Native project PostgreSQL": {
+          "id": 45524997219,
+          "conclusion": "success",
+          "run_attempt": 1,
+          "event": "workflow_dispatch",
+          "head_sha": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+          "checked_jobs": [
+            {
+              "name": "linux-native-storage",
+              "id": 138906026945,
+              "checkout": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+              "test_counts": [
+                {
+                  "passed": 320,
+                  "skipped": 2
+                },
+                {
+                  "passed": 89
+                }
+              ]
+            },
+            {
+              "name": "linux-native-research",
+              "id": 138906026608,
+              "checkout": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+              "test_counts": [
+                {
+                  "passed": 1227,
+                  "skipped": 18
+                }
+              ]
+            },
+            {
+              "name": "linux-native-dispatch",
+              "id": 138906026960,
+              "checkout": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+              "test_counts": [
+                {
+                  "passed": 1933,
+                  "skipped": 15
+                }
+              ]
+            },
+            {
+              "name": "linux-native-papersim",
+              "id": 138906026952,
+              "checkout": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+              "test_counts": [
+                {
+                  "passed": 845
+                }
+              ]
+            }
+          ]
+        },
+        "Research paper bridge": {
+          "id": 45476687554,
+          "conclusion": "success",
+          "run_attempt": 1,
+          "event": "pull_request",
+          "head_sha": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+          "checked_jobs": [
+            {
+              "name": "windows-paper",
+              "id": 138738649444,
+              "checkout": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+              "test_counts": [
+                {
+                  "passed": 357
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "checked_jobs": 6
+    },
+    "125": {
+      "utc": "2026-11-25T01:42:09+00:00",
+      "pr": 125,
+      "head": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+      "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+      "merge": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+      "tree": "4e3481541d6f63ea8e5a9782c0c84ab1861daf37",
+      "fixed_check": "#125 head b0807e32 run 45524564502: CURRENT (merged into ab6edff2)",
+      "proof_sha256": "523ad147f7144386e83207da5900c2b544a117e6c9bc03358429051b9d7c4ec5",
+      "parents": [
+        "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "b0807e322f8705548e80f3b67ac61a836a5864ef"
+      ],
+      "workflows": {
+        "Offline verification": {
+          "id": 45524564502,
+          "conclusion": "success",
+          "run_attempt": 1,
+          "event": "pull_request",
+          "head_sha": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+          "checked_jobs": [
+            {
+              "name": "offline",
+              "id": 138904563965,
+              "checkout": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+              "test_counts": [
+                {
+                  "passed": 44015,
+                  "skipped": 445,
+                  "warnings": 20
+                }
+              ]
+            }
+          ]
+        },
+        "Native project PostgreSQL": {
+          "id": 45525021707,
+          "conclusion": "success",
+          "run_attempt": 1,
+          "event": "workflow_dispatch",
+          "head_sha": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+          "checked_jobs": [
+            {
+              "name": "linux-native-storage",
+              "id": 138906108647,
+              "checkout": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+              "test_counts": [
+                {
+                  "passed": 320,
+                  "skipped": 2
+                },
+                {
+                  "passed": 89
+                }
+              ]
+            },
+            {
+              "name": "linux-native-research",
+              "id": 138906108379,
+              "checkout": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+              "test_counts": [
+                {
+                  "passed": 1227,
+                  "skipped": 18
+                }
+              ]
+            },
+            {
+              "name": "linux-native-dispatch",
+              "id": 138906108704,
+              "checkout": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+              "test_counts": [
+                {
+                  "passed": 1933,
+                  "skipped": 15
+                }
+              ]
+            },
+            {
+              "name": "linux-native-papersim",
+              "id": 138906108924,
+              "checkout": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+              "test_counts": [
+                {
+                  "passed": 852
+                }
+              ]
+            }
+          ]
+        },
+        "Research paper bridge": {
+          "id": 45524564508,
+          "conclusion": "success",
+          "run_attempt": 1,
+          "event": "pull_request",
+          "head_sha": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+          "checked_jobs": [
+            {
+              "name": "windows-paper",
+              "id": 138904563611,
+              "checkout": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+              "test_counts": [
+                {
+                  "passed": 357
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "checked_jobs": 6
+    }
+  },
+  "terminal_note": "CURRENT describes the tested two-parent PR merge object and its base. The reviewed evidence does not record a merge onto main.",
+  "identity_observation": {
+    "observed_utc": "2026-11-25T01:36:09+00:00",
+    "classes_only": [
+      {
+        "pr": 124,
+        "head": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+        "github_test_merge": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+        "pr_head_noreply_author": true,
+        "pr_head_noreply_committer": true,
+        "test_merge_noreply_author": false,
+        "test_merge_noreply_committer": true,
+        "test_merge_author_matches_prior_public_main_merge": true
+      },
+      {
+        "pr": 125,
+        "head": "b0807e322f8705548e80f3b67ac61a836a5864ef",
+        "github_test_merge": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+        "pr_head_noreply_author": true,
+        "pr_head_noreply_committer": true,
+        "test_merge_noreply_author": false,
+        "test_merge_noreply_committer": true,
+        "test_merge_author_matches_prior_public_main_merge": true
+      }
+    ],
+    "temporary_ci_refs_point_to_existing_public_pr_test_merge_objects": true,
+    "ordinary_merge_pending_account_privacy_and_next_merge_identity_verification": true,
+    "preflight_for_later_ci_ref": "check author and committer privacy classes on the exact target Git object before creating the ref"
+  }
+}
