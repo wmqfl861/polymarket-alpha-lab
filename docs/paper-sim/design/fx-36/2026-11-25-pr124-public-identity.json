@@ -1,0 +1,57 @@
+{
+  "pull_request": 124,
+  "account_setting": {
+    "date_utc": "2026-11-25",
+    "setting": "Keep my email addresses private",
+    "owner_reply_verbatim": "已开启"
+  },
+  "explicit_author_attempts": [
+    {
+      "utc": "2026-11-25T02:22:23+00:00",
+      "exit": 1,
+      "diagnostic": "unretained",
+      "merged": false
+    },
+    {
+      "utc": "2026-11-25T02:25:30+00:00",
+      "exit": 1,
+      "diagnostic": "GraphQL: Invalid email address (mergePullRequest)",
+      "merged": false
+    }
+  ],
+  "ordinary_merge": {
+    "observed_utc": "2026-11-25T02:30:09+00:00",
+    "head": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+    "tested_merge": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+    "landed": {
+      "author_noreply": true,
+      "committer_noreply": true,
+      "parents": [
+        "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+        "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b"
+      ],
+      "sha": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+      "tree": "6df8bdca837797a09e331d56fae0607b28a9310c"
+    },
+    "tree_matches_tested_merge": true,
+    "parents_match": true,
+    "workflow_runs": {
+      "Offline verification": 45476687574,
+      "Native project PostgreSQL": 45524997219,
+      "Research paper bridge": 45476687554
+    }
+  },
+  "post_merge_integrity": {
+    "utc": "2026-11-25T02:31:08+00:00",
+    "branch": "main",
+    "head": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+    "delivery": "b3e6f6d3eb3615b74b677658065de43d84147c94",
+    "package_tree_at_delivery": "5b8640f0b83ae67d1015a0e800fc5b69f7d07b4e",
+    "files_at_delivery": 34,
+    "manifest_bytes": 4516,
+    "manifest_entries": 32,
+    "manifest_sha256": "d3054cfe2fef5e3ec321551bafc19bfdbbad5f12bfe3f5d545d895002c109884",
+    "script_last_line": "handoff package verified: b3e6f6d3eb3615b74b677658065de43d84147c94",
+    "verified_after_merge": true
+  }
+}

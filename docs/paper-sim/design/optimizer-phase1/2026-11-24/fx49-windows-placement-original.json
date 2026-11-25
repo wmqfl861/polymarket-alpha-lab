@@ -1,0 +1,6 @@
+{
+  "sessionId": "sess_8f787026-8522-4ffc-a8cb-f8017629bc35",
+  "turnId": "turn_ff9e73a9-4544-4c05-a7b5-7e7a93fa7386",
+  "traceId": "1354e463-a99e-4311-bbe0-e5be080e5261",
+  "response": "**命令已执行一次，退出状态 1：放置被 Windows 侧执行策略拒绝，我已按指令停止，Windows 上没有创建任何文件或目录。**\n\n`place` 的实际输出：\n\n```\n{\"mode\":null,\"phase\":\"execution_policy\",\"protocol\":\"fx49-windows-manual-v1\",\"runner_exit_code\":null,\"runner_report\":null,\"status\":\"failed\",\"verified_files\":0,\"windows_exit_code\":1}\n```\n\n- **走到哪一步：** 两道哈希核对和 `preflight` 均通过（`preflight` 的输出按命令被丢弃）。远程端被调用了一次，Windows 环境核对通过，随后停在 `execution_policy`。\n- **拒绝原因：** 按固定脚本的逻辑，这一步表示生效的 PowerShell 执行策略不是脚本接受的两个值之一，或设置了进程级策略。\n- **未发生的动作：** 请求尚未被读取，路径预检和写入都没有开始。\n- **我没有做的事：** 没有重试，没有改执行策略或权限，没有换方法或绕过策略；没有发微信、触碰绑定、启动安装或演练。\n- **残留状态：** `place.attempt` 标记已写入，只有起始行（16 字节），没有 `placement_verified`。按脚本设计它会阻止再次放置派发；我原样保留，其余四个固定文件未变。\n\n这不是演练结果，不是六例，也不是部署完成。\n\n会话身份：`sess_8f787026-8522-4ffc-a8cb-f8017629bc35`。\n\n执行前我只读了三个固定文件以核对范围。执行后只读列了一次目录；其中查看标记字节的命令误用了 PATH 里的同名 `od`（Open Design CLI），它只打印了帮助并以 2 退出，没有副作用。"
+}

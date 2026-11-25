@@ -1,0 +1,1 @@
+{"disposition":"allow_next_separate_check","entry":"native_postgres","external":{"network_outcome":"timed_out","observer_classification":"TIMED_OUT","observer_format":"valid","outer":"received","remote_envelope":"valid","remote_exit":"zero","remote_timed_out":false,"remote_truncated":false},"utc":"2026-11-24T06:38:28Z"}
