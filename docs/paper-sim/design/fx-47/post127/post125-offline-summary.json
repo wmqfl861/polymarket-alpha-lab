@@ -1,0 +1,4336 @@
+{
+  "candidate": {
+    "approved_initial_plan_sha256": "969126ff22bed38da4aa45923a8d60501582d29115aae25536c4bd7373ad7e1f",
+    "base": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+    "head": "c546f4143bec2540e83bc2445011a3da904867ab",
+    "paths": [
+      "DELIVERY_PLAN.md",
+      "docs/paper-sim/design/fx-47/initial-product-code-review.json",
+      "docs/paper-sim/design/fx-47/legacy-empty-list-code-review.json",
+      "docs/paper-sim/design/fx-47/legacy-empty-list-plan-review.json",
+      "docs/paper-sim/design/fx-47/legacy-empty-list-plan.md",
+      "docs/paper-sim/design/fx-47/legacy-empty-list-witness.jsonl",
+      "docs/paper-sim/design/fx-47/native-scan-replay.jsonl",
+      "docs/paper-sim/design/fx-47/offline-integrated-summary.json",
+      "docs/paper-sim/design/fx-47/plan-original.md",
+      "docs/paper-sim/design/fx-47/plan-review-initial.json",
+      "docs/paper-sim/design/fx-47/plan-review.json",
+      "docs/paper-sim/design/fx-47/plan.md",
+      "docs/paper-sim/design/fx-47/test-fd-ownership-code-review.json",
+      "docs/paper-sim/design/fx-47/test-fd-ownership-plan-review.json",
+      "docs/paper-sim/design/fx-47/test-fd-ownership-plan.md",
+      "src/polymarket_alpha_lab/papersim/store_psycopg.py",
+      "tests/test_papersim_scan_store_native.py",
+      "tests/test_research_process_linux.py"
+    ],
+    "plan": {
+      "bytes": 10231,
+      "path": "fx47-post-nba-preparation/original-plan-review-supplement.md",
+      "sha256": "6fa91660a9d1ba12ff2b8cc596a0a70ce5b3b0218ba1e17914f0217832fa2aae"
+    },
+    "plan_review": {
+      "bytes": 3991,
+      "path": "fx47-post-nba-original-plan-review.json",
+      "sha256": "8dbb051b1d4509f60e4d58d4dfe5003622f56942753655574fdb90157ea50352"
+    },
+    "reviewed_parent": "fe24776feddcda8bad752c3aaac25ceaf23384ab",
+    "scope": {
+      "bytes": 16464,
+      "path": "fx47-post-nba-preparation/landed-scope.json",
+      "sha256": "55b890e635e36e057faa3b3c15ed31d7cf000c32d0c50e38a3151a35231d8bc3"
+    },
+    "shared_store_blob": "c1c67e7b84bbe5b4e93a820fd775f3deb8492ab0",
+    "tree": "cf99096a9702f053dc858600cbf9229f0694ee7d"
+  },
+  "final_independent_verdict": "pending",
+  "gates": {
+    "code_review": {
+      "receipt": {
+        "bytes": 3709,
+        "path": "fx47-post-nba-preparation/c546-review-zcode-008.json",
+        "sha256": "b378b6457c943f93f1d2cb70280d0af979d1843e60acae741a7a7e3c28d85bf9"
+      },
+      "scope": "code_and_integration",
+      "verdict": "PASS"
+    },
+    "codegraph": {
+      "executor": {
+        "bytes": 550,
+        "path": "fx47-post-nba-preparation/c546-codegraph-v3-zcode-001.json",
+        "sha256": "b96d84e2017ff97e16fa36106385a630c52baf5c040a6161c5ef494190328411"
+      },
+      "indexed": 6769,
+      "parse_errors": 0,
+      "receipt": {
+        "bytes": 630,
+        "path": "fx47-post-nba-preparation/graph-post125-v3/receipt.json",
+        "sha256": "031b3d5ef1044f520b008a897c2672d0794b8f5d0d57175d0af97ebb38d9713e"
+      }
+    },
+    "descriptor": {
+      "executor": {
+        "bytes": 1315,
+        "path": "fx47-post-nba-preparation/c546-fd-v2-zcode-006.json",
+        "sha256": "03c3bcdebb693d221ac3bb3baae5490e481637ceb0d0cbab6517a223b121d9de"
+      },
+      "file_counts": {
+        "passed": 119,
+        "skipped": 7
+      },
+      "focused_passed": 1,
+      "receipt": {
+        "bytes": 968,
+        "path": "fx47-post-nba-preparation/fd-post125-v2/receipt.json",
+        "sha256": "ed359a8c057d4cafeead81923fbf949dcfeab4f4f5b49b219381f981cdfa32c5"
+      }
+    },
+    "fast": {
+      "executor": {
+        "bytes": 926,
+        "path": "fx47-post-nba-preparation/c546-local-zcode-003.json",
+        "sha256": "5988722998e5fc808d9d1cc4e33176e171814015f5d1cf672b2cba81047d2380"
+      },
+      "receipt": {
+        "bytes": 471,
+        "path": "fx47-post-nba-preparation/local-post125.jsonl",
+        "sha256": "cd92049278b9141f8466e7ad2c7181ff48a70730647b72d619e7c66dc313f2e1"
+      },
+      "results": {
+        "address_difference": {
+          "exit_code": 0,
+          "head": "c546f4143bec2540e83bc2445011a3da904867ab",
+          "new_occurrence_rows": 0,
+          "stage": "address_difference"
+        },
+        "compile": {
+          "exit_code": 0,
+          "head": "c546f4143bec2540e83bc2445011a3da904867ab",
+          "stage": "compile"
+        },
+        "diff_check": {
+          "exit_code": 0,
+          "head": "c546f4143bec2540e83bc2445011a3da904867ab",
+          "stage": "diff_check"
+        },
+        "test_weakening": {
+          "added_skip": 0,
+          "added_xfail": 0,
+          "exit_code": 0,
+          "fewer_checks": 0,
+          "head": "c546f4143bec2540e83bc2445011a3da904867ab",
+          "removed": 0,
+          "stage": "test_weakening"
+        }
+      }
+    },
+    "native": {
+      "counts": {
+        "collection_errors": 0,
+        "deselected": 0,
+        "duplicate_receipts": 0,
+        "error": 0,
+        "failed": 0,
+        "missing_receipts": 0,
+        "not_run": 0,
+        "passed": 23,
+        "receipts": 23,
+        "rejected_receipts": 0,
+        "selected": 23,
+        "skipped": 0,
+        "xfailed": 0,
+        "xpassed": 0
+      },
+      "direct_cli_response": false,
+      "executor_attribution": {
+        "bytes": 596,
+        "path": "fx47-post-nba-preparation/post125-native-v2-session-attribution.json",
+        "sha256": "958a99490394e0a15f8376ffa286a458e3abc2b6e71d5e0059cac4bfa611ff10"
+      },
+      "receipt": {
+        "bytes": 16518,
+        "path": "fx47-post-nba-preparation/native-post125-v2.jsonl",
+        "sha256": "97bc2db8bea166bdd92c16ff2bcbfbc539f1184b26114eeac995f02e99a469c7"
+      }
+    },
+    "static": {
+      "executor": {
+        "bytes": 1041,
+        "path": "fx47-post-nba-preparation/c546-static-zcode-005.json",
+        "sha256": "03630c65948facfecd0e9cf1d76df6a8d873bb4fb52174ec575a9f69c60f3121"
+      },
+      "new_unreachable": 0,
+      "reachable": 470,
+      "receipt": {
+        "bytes": 545,
+        "path": "fx47-post-nba-preparation/static-post125/receipt.json",
+        "sha256": "3895d30fc6ec6a65c3861c41f749ac647b95ad201ac332c2d6cd959df7db3efc"
+      },
+      "unreachable": 2442
+    },
+    "tracked_scan": {
+      "attribution": {
+        "bytes": 1629,
+        "path": "fx47-post-nba-preparation/tracked-post125-attribution.json",
+        "sha256": "755d6d610811b9cc489371ef613f3994cd48624bee9878ba1e5b37f1afaa2fd3"
+      },
+      "attribution_executor": {
+        "bytes": 951,
+        "path": "fx47-post-nba-preparation/c546-scan-attribution-zcode-001.json",
+        "sha256": "f3f0e4212c4f1b17d3d96c28845fb0050074b3ed735cedd461146f29d935acde"
+      },
+      "attribution_exit": 0,
+      "baseline_hits": 2,
+      "executor": {
+        "bytes": 1874,
+        "path": "fx47-post-nba-preparation/c546-scan-raw-zcode-003.json",
+        "sha256": "e927bb5bea2136740a8ea82cecaa743ba7f65fb1a8c7e0137a965cabb42d13cf"
+      },
+      "raw": {
+        "bytes": 2595,
+        "path": "fx47-post-nba-preparation/tracked-post125-raw.jsonl",
+        "sha256": "217cb97567a3564b91fb0c5c075140cebfb07570e1bd694568eef1cd7a4338fd"
+      },
+      "raw_exit": 1,
+      "scanned_blobs": 7665,
+      "unresolved": 0
+    }
+  },
+  "offline": {
+    "attempts": 188,
+    "completed_utc": "2026-11-25T07:51:43+00:00",
+    "completion": {
+      "bytes": 3360,
+      "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/completed.json",
+      "sha256": "06f18c4c4a9bbda0ee3e2a79b6868ffa1eb724b03b323819126bc15dd8683420"
+    },
+    "counts": {
+      "passed": 44016,
+      "skipped": 464
+    },
+    "executor": {
+      "bytes": 813,
+      "path": "fx47-post-nba-preparation/c546-offline-zcode-001.json",
+      "sha256": "e8ccd8d1a40b1b550fe9ea1f7fee4dc83034c14d4c91fc5bba35f62ff8467012"
+    },
+    "files": 3340,
+    "focus": {
+      "bytes": 519,
+      "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/focus.json",
+      "sha256": "5cc8612b1e27f07e02244776be2539002dbb447be3d7186a6a6b6bb536b30914"
+    },
+    "group_results": [
+      {
+        "counts": {
+          "passed": 1321
+        },
+        "files": 110,
+        "group": 1,
+        "receipt": {
+          "bytes": 8298,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-001.json",
+          "sha256": "300f31c978112a76ce5cc3f7d5661e70e97534afffc89c5c6e661da851fbf93f"
+        }
+      },
+      {
+        "counts": {
+          "passed": 2140,
+          "skipped": 15
+        },
+        "files": 110,
+        "group": 2,
+        "receipt": {
+          "bytes": 8916,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-002.json",
+          "sha256": "ae2a772c8ad7805be7edd8e2c2d857fcbff7c3c85e0e5a50d38ab86dd567fd6d"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1857,
+          "skipped": 19
+        },
+        "files": 110,
+        "group": 3,
+        "receipt": {
+          "bytes": 7381,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-003.json",
+          "sha256": "d5a5cb37158df8ecf84470c44cf0e3af775302e1c40e59cd5f1f7e5aaf3c0175"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1073
+        },
+        "files": 110,
+        "group": 4,
+        "receipt": {
+          "bytes": 8414,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-004.json",
+          "sha256": "d119a584e345c3a863cab7b94b184a9138f29150588625f03c9ece9e4d4f379e"
+        }
+      },
+      {
+        "counts": {
+          "passed": 933
+        },
+        "files": 110,
+        "group": 5,
+        "receipt": {
+          "bytes": 9622,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-005.json",
+          "sha256": "5405f3ca9ffdb0aa706aa9b1b3a5c6ada7ebad9a31d2712f562aa61381e3e2ab"
+        }
+      },
+      {
+        "counts": {
+          "passed": 896
+        },
+        "files": 110,
+        "group": 6,
+        "receipt": {
+          "bytes": 9637,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-006.json",
+          "sha256": "02db36735e6a76e38aa266a1243a0bb41923ccbe80cccb34542b2ef6025f2697"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1022
+        },
+        "files": 110,
+        "group": 7,
+        "receipt": {
+          "bytes": 8950,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-007.json",
+          "sha256": "9b4313a2f19b3bf06773b023abcdf2eefb1a107515f518352eec900a524041f8"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1770
+        },
+        "files": 110,
+        "group": 8,
+        "receipt": {
+          "bytes": 9375,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-008.json",
+          "sha256": "906d28c0eb66de9baaaa1e1734a678b9cd811759e5665f429ee2b86d5928cd0c"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1339
+        },
+        "files": 110,
+        "group": 9,
+        "receipt": {
+          "bytes": 7611,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-009.json",
+          "sha256": "c40e7a1dbde61212af4b7ad104916e31ced0e6556f8a1d1d22af4506cce259db"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1577,
+          "skipped": 1
+        },
+        "files": 110,
+        "group": 10,
+        "receipt": {
+          "bytes": 7872,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-010.json",
+          "sha256": "5060a12831c4fdc319ab2cd8505fbe7b298920a620a2e04626358f841a2e766e"
+        }
+      },
+      {
+        "counts": {
+          "passed": 3343,
+          "skipped": 283
+        },
+        "files": 110,
+        "group": 11,
+        "receipt": {
+          "bytes": 9078,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-011.json",
+          "sha256": "47fe577e5904b5e454e770c6944cf36ac21a46ecce804f0e7d972774a48cba29"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1142,
+          "skipped": 69
+        },
+        "files": 110,
+        "group": 12,
+        "receipt": {
+          "bytes": 9085,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-012.json",
+          "sha256": "3d58ce2add82f608632fc24d98d30ed2d951f2765bd3138cccf49b342361c73c"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1193,
+          "skipped": 26
+        },
+        "files": 110,
+        "group": 13,
+        "receipt": {
+          "bytes": 9125,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-013.json",
+          "sha256": "b51adc18fd9d2da0b5a37f75e2f571bdfaca79982d0efb2577cdb841ae165a1a"
+        }
+      },
+      {
+        "counts": {
+          "passed": 2427,
+          "skipped": 27
+        },
+        "files": 110,
+        "group": 14,
+        "receipt": {
+          "bytes": 7848,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-014.json",
+          "sha256": "88e1b47cf76042deeaa517faaff2ce39b94e0fceb524d96cbc898ff7d5e29b9d"
+        }
+      },
+      {
+        "counts": {
+          "passed": 892
+        },
+        "files": 110,
+        "group": 15,
+        "receipt": {
+          "bytes": 8985,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-015.json",
+          "sha256": "c2d1f84b21eda8583d3b0c9de4e14838932dff752fb0201e5da44fbac608267e"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1407,
+          "skipped": 4
+        },
+        "files": 110,
+        "group": 16,
+        "receipt": {
+          "bytes": 8968,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-016.json",
+          "sha256": "7dde260d39a7eac0111df11d61230595b12f67b4293ca6caf22d8137146f6260"
+        }
+      },
+      {
+        "counts": {
+          "passed": 799
+        },
+        "files": 110,
+        "group": 17,
+        "receipt": {
+          "bytes": 9024,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-017.json",
+          "sha256": "6264d0acb5986933846f393c4b916bd7043b2b8d03cda5595f2a624b3614645f"
+        }
+      },
+      {
+        "counts": {
+          "passed": 902
+        },
+        "files": 110,
+        "group": 18,
+        "receipt": {
+          "bytes": 8906,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-018.json",
+          "sha256": "a0c92b9ab1c56155aa2f86ab3008f2f4bdef45db42d4f36a3070d15de17509b1"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1759,
+          "skipped": 19
+        },
+        "files": 110,
+        "group": 19,
+        "receipt": {
+          "bytes": 8915,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-019.json",
+          "sha256": "6bdf1e7838a9731d3f9e8784487d276248f6e987053000352fd0ff4f55a1abe5"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1131
+        },
+        "files": 110,
+        "group": 20,
+        "receipt": {
+          "bytes": 8651,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-020.json",
+          "sha256": "48a2b7bda19ff2380dff3f9acc78f89037c978a494a3ce45db30f4078a94922a"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1286
+        },
+        "files": 110,
+        "group": 21,
+        "receipt": {
+          "bytes": 9494,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-021.json",
+          "sha256": "87e23fa349b41d33cad2715163b1e9ccd773e7bdfec44d7772bb8a8b376de4e3"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1570
+        },
+        "files": 110,
+        "group": 22,
+        "receipt": {
+          "bytes": 9773,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-022.json",
+          "sha256": "4b1499cda2eb1f8eba56a978204398c44cc5f01da92f30f6aa49b28fe7ac47a8"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1215
+        },
+        "files": 110,
+        "group": 23,
+        "receipt": {
+          "bytes": 9572,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-023.json",
+          "sha256": "673a83230a2aaa381f847ab9a9880f0866d450640aaf59d3e382660e8e98fe62"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1745
+        },
+        "files": 110,
+        "group": 24,
+        "receipt": {
+          "bytes": 9207,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-024.json",
+          "sha256": "123ed40cf820bd9a47f6425f82522ded47ed1afebcb7e49919564f77dac3f1b6"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1102
+        },
+        "files": 110,
+        "group": 25,
+        "receipt": {
+          "bytes": 8481,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-025.json",
+          "sha256": "3e3741625550e9fc011b0dd9d60cb0f47067d34bdef9b67719ca999e37edce2a"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1020
+        },
+        "files": 110,
+        "group": 26,
+        "receipt": {
+          "bytes": 8198,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-026.json",
+          "sha256": "f9fafad767cda99dc35b9b581859a1f2163a2234e6895d6f121c31e583939243"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1247
+        },
+        "files": 110,
+        "group": 27,
+        "receipt": {
+          "bytes": 8536,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-027.json",
+          "sha256": "f0e0a19559030e00ac9268895d854110f1a106a013d32b6fd3acce892889107e"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1225
+        },
+        "files": 110,
+        "group": 28,
+        "receipt": {
+          "bytes": 8184,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-028.json",
+          "sha256": "35df6afb2db4acd6457ff5db065c926967590ab39205177bf241718166d3d1d8"
+        }
+      },
+      {
+        "counts": {
+          "passed": 2581,
+          "skipped": 1
+        },
+        "files": 110,
+        "group": 29,
+        "receipt": {
+          "bytes": 8106,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-029.json",
+          "sha256": "fe9420aa23e4e2ed6723bc84c01554a0c9c0325af151d8fda262992c82eb36a6"
+        }
+      },
+      {
+        "counts": {
+          "passed": 1569
+        },
+        "files": 110,
+        "group": 30,
+        "receipt": {
+          "bytes": 7695,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-030.json",
+          "sha256": "19be49ecb76d487a00b2401b920855e2b0db508fd681f685dd318250d73cccc0"
+        }
+      },
+      {
+        "counts": {
+          "passed": 533
+        },
+        "files": 40,
+        "group": 31,
+        "receipt": {
+          "bytes": 3164,
+          "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/groups/group-031.json",
+          "sha256": "d79a31c98f1ffccf7cba1a092a1a95910b870a4971827708abcf3d7bcc84b3e0"
+        }
+      }
+    ],
+    "groups": 31,
+    "interrupted_or_failed_events": [],
+    "manifest": {
+      "bytes": 202259,
+      "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/manifest.json",
+      "sha256": "5ab629b5e087bf104a8111c81666b3e9ee05b27e3070ff7006d9f2a9ab1cfb5c"
+    },
+    "prior_unsuccessful_attempts": 0,
+    "progress": {
+      "bytes": 102093,
+      "path": "offline-continuation/fx47-post125-candidate-c546f4143bec-ssl-v2/progress.jsonl",
+      "sha256": "f8e0f94caa6aed8fa25d454acdf0f26f287e835df83f4c52088a012cd3177be2"
+    },
+    "reused_groups": 0,
+    "started_utc": "2026-11-25T05:04:15+00:00"
+  },
+  "offline_skips": {
+    "count": 464,
+    "descriptor_matches_prior_and_full_file": 7,
+    "descriptor_skip_conditions": {
+      "native_containment_opt_in": [
+        "test_native_contained_two_phase_round_trip",
+        "test_native_in_flight_replacement_of_vendor_and_dependency_is_ignored",
+        "test_native_pre_admission_tampering_is_refused",
+        "test_native_unsupported_wrapper_option_fails_closed",
+        "test_relay_parent_path_stop_and_driver_loss_native",
+        "test_relay_parent_path_synthetic_exchange_native"
+      ],
+      "non_linux_only": [
+        "test_run_research_process_requires_linux_for_contained_path"
+      ]
+    },
+    "file_outcomes": [
+      {
+        "blob": "32f2ebe3e8000861e8fef269bdf373aeaca04fa8",
+        "file": "tests/test_claude_probe_environment.py",
+        "outcomes": [
+          {
+            "node_sha256": "087eba2d01376d909252e0bb346e48e158946e7cdaee45eb39fbb0b1a47e1b46",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_powershell_queries_never_require_clean_parent_or_uv"
+          },
+          {
+            "node_sha256": "692b6c589a7b68d10f55db6b52fe30e69f90e52b1fb0c8f7c21e4aef5c057a09",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_powershell_queries_never_require_clean_parent_or_uv"
+          },
+          {
+            "node_sha256": "6a44c671007544a38d56c09c34fe4749ffaf6e6a62e43e32ba37b6cec29dfb70",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_powershell_queries_never_require_clean_parent_or_uv"
+          },
+          {
+            "node_sha256": "d630fa38c8e277dba0e051760e1d42ab1e00018311a39503b8d29b290e521dfd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_powershell_queries_never_require_clean_parent_or_uv"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "16fa12619250e0ad392f9b172efe1e75b906bc15",
+        "file": "tests/test_claude_probe_linux_execution.py",
+        "outcomes": [
+          {
+            "node_sha256": "1160cc73143472e8a66f3f98286bfaf75e504fe3deb2afc0f7a85f75d023b759",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_driver_loss_cli"
+          },
+          {
+            "node_sha256": "356b5ad4297630685b11ca3b96eb6b399ae852f9474909f4caa3642b81821645",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_guest_loopback_listener_client"
+          },
+          {
+            "node_sha256": "515c858c5771276231a068c24bb98dca4c9a58e5cc64f1ff2efb9be717aa115f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_escaped_descendant_cleanup"
+          },
+          {
+            "node_sha256": "a0efaa4e46024ec4998474ef46a12d6f3625c30e56545af3b0acde5e798fe047",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_host_loopback_and_external_egress_denied"
+          },
+          {
+            "node_sha256": "a35fc7dac66c30f4e5e32407da69331edb62fefe71af3e879ceeeb9bf3e2aff7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_pids_resource_enforcement"
+          },
+          {
+            "node_sha256": "b7c1eee38001f48dbf6d7e0a79150c07a33e2cb9cb6b4afd956d2c36d6901987",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_deadline_timeout_stop"
+          },
+          {
+            "node_sha256": "c67a806c619e6161fe6f6e15f3e7c8a26a623ec8533c3bb037dc51af5c0a3183",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_bwrap_identity_admission"
+          },
+          {
+            "node_sha256": "d4dd404d2e02fd4ff0a2c03a60f004cb55b7a167fbe0f04441f013c4686656ab",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_official_six_style_export_and_gate"
+          },
+          {
+            "node_sha256": "d5fbcfbc03469bf63e5530487088ce263073ca21361dccc6566bb2352f7149ca",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_qualify_version_banner_gate"
+          },
+          {
+            "node_sha256": "e0662244f92220612dc9dded7c17d13c7552d4d13eedca26da211ba7042334db",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_namespace_separation_and_readonly_bindings"
+          },
+          {
+            "node_sha256": "e68327599965f277a25511d934e2589914e0f0d74cde7b0adf93febcd30e96d4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_supervisor_loss_cli"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "313be5ea6354502ecd7b6824bcc293bd4a3c729f",
+        "file": "tests/test_handoff_download.py",
+        "outcomes": [
+          {
+            "node_sha256": "055f85b94002f0ee773d4837d5e21d032a5c0faa99a40e39099a72308d882aab",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "16f3602364a6223b2917c2463385c60558f9170b2443f92216c72172e9451461",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "2252e6239e7ce16dfdbedb4276b01e1871fccfb619643dff93f4aca2ab43bba4",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "62c078a2705541387ddad438846bc22d95bea4528f51b603cb2f08ce9b35b0d5",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "9002358abeff96e5e31ef4ea7c8badd5fcd22d93fbd67605f4c4a500dd89f809",
+            "phases": [
+              "call"
+            ],
+            "test": "test_dotnet_hash_is_exact_unicode_safe_and_releases_file"
+          },
+          {
+            "node_sha256": "a2418ec86ac856c73bbe17a31ba313c3a04891da89531b038de2dd492e6a9caa",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "ad58fce228df82d1afe0fd14bbfc6cbf706c3a9116f5f1626c3e3c81373798ba",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "b352bfb4c85855a60b0a0bab832ee41c9e1b703187cd5cc07b0d091313b4542e",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "c0978255bdaa5a3288181b7da4248a2c5f0208476445b55ccd0c3259ddb110ea",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "c8f03bd72b312f605ad8afed5cdf27a135325739c40481a459b243f8b897b5d6",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "c9750067d3a923f1b3ce55be6f52fd40e466dd808c9ca94c80c8dadd23c6eba4",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "d2cbf662a2bbf2cee43b3f15cddb744c4734f644c8d7d385575c7a4791f926c5",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "d91464bbcc799b0a4fb7d005a5d132d3800bf11542ef9c8673d86e028029c8de",
+            "phases": [
+              "call"
+            ],
+            "test": "test_dotnet_hash_is_exact_unicode_safe_and_releases_file"
+          },
+          {
+            "node_sha256": "e6900e519b33ee17dbd58a5b3905f4de1db469d642299868f59ef373c7207dbd",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "e71746744e0b05b6e2c7ed603f76b6e9751225b102ecc7bd283f15b552c96989",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "e82936b913e935776658d71b5ebde149d18d9496b9fb43504686d54aa60a137c",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "f6f47c95a8d4e7a2bdf7b7768976572b0aa6e2d28d062a0e3e1aaeae459bbeba",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          },
+          {
+            "node_sha256": "fb2491626d6c9cc86ff53c2636279bed2a545e6bf73438412428fc3e94392670",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_powershell_download_publication"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "5fb0b7c1c92231dc334660fdb501a453f6f33922",
+        "file": "tests/test_handoff_process_probe_windows.py",
+        "outcomes": [
+          {
+            "node_sha256": "caf0b268e8f14e617cab15f9ca07eda7bed89197f5c19977195d1852fc45299f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_real_timeout_preserves_entered_stage"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "50ec6d92b56b7256f17eaf0ab34055640619ec47",
+        "file": "tests/test_paper_recommendation_cycle_snapshot_supabase_smoke.py",
+        "outcomes": [
+          {
+            "node_sha256": "11a03889b4104c21c176fd3ecf9971153729882e3eed70f9d14694fb8c884314",
+            "phases": [
+              "call"
+            ],
+            "test": "test_paper_recommendation_cycle_snapshot_psycopg_supabase_smoke"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "e697537a2493c7a2acba92b0ad96dd279f2b9620",
+        "file": "tests/test_papersim_capture_marks_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "128607bfa72680a021346dc5e28fe2d0c11d3d1337a1a71da69bcd3f1b7136da",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_empty_pack_completes_with_explicit_zero_counts"
+          },
+          {
+            "node_sha256": "13baa5e48bb661fb38b7227961ebbcb326677697fdd4814b571523e57e1b801c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_uses_strict_event_and_receipt_boundaries"
+          },
+          {
+            "node_sha256": "17c6f31adce9587b4698269656f0d942a76e98d28362bae8fb87503d0d29bd0a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_changed_content_and_second_close_are_conflicts_with_failed_receipts"
+          },
+          {
+            "node_sha256": "2a6602e4c22ea079c608e308993d4a438f01ca4b13fa20a2aaa1f3b129f0af47",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_three_original_observations_recover_in_another_cli_process"
+          },
+          {
+            "node_sha256": "51703e13f23527185422d0d5b98bd999754ea4383ef31b9c86ee1d047ed0f154",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_three_original_observations_recover_in_another_cli_process"
+          },
+          {
+            "node_sha256": "93c43cfdc9900ec2f5d70f732d8825dece38917bcc725a908b46ac999e411aea",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_rejects_wrong_identity_stale_books_and_unattributed_existing_rows"
+          },
+          {
+            "node_sha256": "965c9236aa71aae78053d2e7d53e12f39daed94f220dc6d7cc257b43971eb588",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_full_capture_writes_marks_close_evidence_and_receipts"
+          },
+          {
+            "node_sha256": "96ad04a3feca715dba2c29d63d9922a3e7d78c4125b1152ba5e83d78b11b7ed9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_dirty_worktree_refuses_before_any_receipt"
+          },
+          {
+            "node_sha256": "9f14f0a302f60f03142a7234a19eb35685babc6fd3c53f8ae304c88609acff1c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_first_attempt_rebuilds_prices_from_the_sealed_buy_book"
+          },
+          {
+            "node_sha256": "d46425a673bcb4cd6647196ac23bdadc63ff23d07317d66369336d7da322efa6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_three_original_observations_recover_in_another_cli_process"
+          },
+          {
+            "node_sha256": "f51817548b702dd40204e754a09c332ca0e37f769c0d23a68fc4c7045b4fb9c8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_unknown_candidate_fails_loudly_with_a_failed_receipt"
+          },
+          {
+            "node_sha256": "f9a07562c67c34f71f13c3aedc60839e046df2b7e1df4a07ba756828ff521112",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_same_pack_replay_is_idempotent_and_returns_the_identical_summary"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "d09fd5ebc75fb0f6c88c2bdff920100df4e4f1b2",
+        "file": "tests/test_papersim_cli.py",
+        "outcomes": [
+          {
+            "node_sha256": "d4c6e3ee543e1ecf0e23d2cdc7761aa977ce61ca7be928782507649cfeca4736",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_evaluate_and_replay_over_the_managed_store"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "ae5f9ebfeda7bbefa4b6faf84051f9949eaaf651",
+        "file": "tests/test_papersim_d1_operations_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "11b17e639aa7280c1e4f3030e181c277dbf994e819865c7ac5e77da5c9f03c5f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_native_resolution_scope_keeps_empty_markets_and_checks_nominated_entries"
+          },
+          {
+            "node_sha256": "6aecb01f9da0c0bb0281493d24b1a14c28a95202dcd58220aacc677e75e11812",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_native_late_recovery_proves_committed_rows_and_expires_unwritten_rows"
+          },
+          {
+            "node_sha256": "6ba001a920e9300aaff29b40419575cfe7cf11086d701bd6b6fe824b1a4ad6f7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_native_competing_settlement_parents_preserve_one_cash_leg"
+          },
+          {
+            "node_sha256": "7651a6b238255a99ed1697fcb6ba2d119222c8c36750841cd4c617a684c6f0fb",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_native_retries_preserve_atomic_business_and_attempt_evidence"
+          },
+          {
+            "node_sha256": "88d1b1b3582f63b10d735760309937d0ad34f3a19cef289bab58794d94a56723",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_native_concurrent_attempts_keep_the_first_close"
+          },
+          {
+            "node_sha256": "956a9f3d7fef991279ba3a220aec75041cba5b52be4ace74844c195f333b81b3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_native_concurrent_attempts_keep_the_first_close"
+          },
+          {
+            "node_sha256": "a091737b5373c284e539b3062892d13bac08c3fc2a4c121f2daae8b514d6c024",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_native_retries_preserve_atomic_business_and_attempt_evidence"
+          },
+          {
+            "node_sha256": "b0973e552cd7f2e0405791d73163aa207a9517341d77c615106e94741859a1d7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_native_retries_preserve_atomic_business_and_attempt_evidence"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "648e8b3c0568b7073d369a460793cb4fff681eeb",
+        "file": "tests/test_papersim_d1compare_archive_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "01e0c3f9d76cb0fea95c45a8a80c399943cf78ca582c1804a0ec6c1a5c9b309d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_frozen_refuses_before_storage_or_work_creation"
+          },
+          {
+            "node_sha256": "1036d4a7399309cfc106f7f515b6a640605d626b9ba47ab07e405737bd7b279b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_stage_all_rolls_back_both_legs_on_second_leg_or_storage_failure"
+          },
+          {
+            "node_sha256": "272c60a98ae03b8307fdbc72c62c2afc3e49c2b8d20e7a3c7556eff8cc197bb8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_sigterm_unwinds_the_cli_extraction_scope"
+          },
+          {
+            "node_sha256": "2d41a0d7625de4689f4fb666bf3eab2a8ec216284ddadd3c4139a87adb2cc15d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_execution_scope_releases_inputs_on_all_callback_exits"
+          },
+          {
+            "node_sha256": "44c0be6a043a861372eacb3b76af05080b06a482e3ca6ab663cbe9a75637b8b2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_crash_recovery_reaps_only_unleased_work_after_sigkill"
+          },
+          {
+            "node_sha256": "5965604ad9788f8b62142270cf70f3bfafa193ed68f94718ee91c3c0411d6a60",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_execution_scope_releases_inputs_on_all_callback_exits"
+          },
+          {
+            "node_sha256": "770d92778bee772f1dc08324816fbe358f6bff4d0b552639cb350dae784d6e69",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_import_original_preserves_preexisting_stage_v1_bytes_and_metadata"
+          },
+          {
+            "node_sha256": "8e64672bd4c14e79c35fbfd0a763c75bd35d00780a4076b6c976efa801b9728b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_concurrent_stage_reuses_the_same_first_registration"
+          },
+          {
+            "node_sha256": "942d5635098e7d2cc22ed565a470e7b78a1574554d1743910d1af073facd5b50",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_partial_extraction_failure_drops_the_work_tree"
+          },
+          {
+            "node_sha256": "9a47a61637c31a5af36a03bef97350f3c8c09f0ffd52083d3fd1c9a54cc3389a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_restore_refuses_stale_invalid_and_missing_manifests"
+          },
+          {
+            "node_sha256": "a346cee5a6f7e3014bb213ad64997d4e85c2a7099d39c601a67515362f5a839d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_readback_detects_tar_integrity_failures_before_extraction"
+          },
+          {
+            "node_sha256": "a922e90a96e3e1b4ad7bb95b00da51fd9e3a6b65f19ad7bc2431dbcbb2a8508a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_stage_is_reproducible_with_independent_git_configuration_and_attribute_noise"
+          },
+          {
+            "node_sha256": "c72d1288f68874536b42bf8b4b7670316cd6d4e0b00ea0db264398e0604d0c95",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_execution_scope_releases_inputs_on_all_callback_exits"
+          },
+          {
+            "node_sha256": "d9ad4290da3a6e5247df43eb9573c4146e52f6e448afc2791556fd82af69e584",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_stage_and_restore_survive_a_true_postgres_restart"
+          },
+          {
+            "node_sha256": "e7e2475765fb75abc027b62291af53a5f1865f67c2ba8c19cf5e51555f7c9145",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_execution_scope_releases_inputs_on_all_callback_exits"
+          },
+          {
+            "node_sha256": "e83a67ff2c897f3aa71fa987872a70f4121d8533fc221e284e9e0001772b0181",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_import_original_restores_real_stage_v1_after_restart"
+          },
+          {
+            "node_sha256": "eb3934159c6b17f6b6500811f1654fddf38948dd65f784f3d57bd38550bf31e0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_readback_detects_tar_integrity_failures_before_extraction"
+          },
+          {
+            "node_sha256": "ee88e9d6a2930e7b0f4d2f4e7f401869139b9791baf70e328ed491048886c6ef",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_execution_refuses_a_locally_rehashed_mirror_outside_the_sealed_binding"
+          },
+          {
+            "node_sha256": "fa4305a1c1e3a1c44eb57bc091d020aa7e2430abe389225f6d7722869084ad3b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_execution_scope_releases_inputs_on_all_callback_exits"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "c1f564c0b52f5531449410a5aae937cd11500ab5",
+        "file": "tests/test_papersim_d1compare_frozenrun.py",
+        "outcomes": [
+          {
+            "node_sha256": "22e0a49e5aa20fee0a7e4e0697fdf52f8ad0aee598cefa9926037064471ef52f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes"
+          },
+          {
+            "node_sha256": "dcd8964ff0fccafc16298160622e32e695eb8b7ff6c9ae15a3a50bd19776f825",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_preflight_and_borrowed_archives_refuse_cross_instance_inputs"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "08afec8f7a07fef1282857c72505e9ebd638ae7b",
+        "file": "tests/test_papersim_d1compare_journal.py",
+        "outcomes": [
+          {
+            "node_sha256": "2fc9037511a2b09a1bf9f307bdefa79ec07729511650efc9a7d7c2f10ec4b4c6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_capture_cli_native_seals_and_independent_process_reads_exact_bytes"
+          },
+          {
+            "node_sha256": "487f853c0a80f204076de0e9b2cab02dd5db20bbfde013e5a7de957640aba578",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_resolution_capture_cli_seals_atomically_and_recovers_across_processes"
+          },
+          {
+            "node_sha256": "82c0e1d92c22be4fc263494b1d25b0766a158faad38dd22b335b2814ca83d560",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_capture_overlapping_contracts_publish_opposite_observation_orders"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "aaf82041e0c47c4ab02d4fc3c33eaa464f904b86",
+        "file": "tests/test_papersim_fx26_event_keys_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "05f8d9ef85d184ab407f966826e33186e3bf0009bca61ad4d5852415deed363e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_record_scan_idempotency_and_conflict_cover_the_new_fields"
+          },
+          {
+            "node_sha256": "24ad446e2526db9cc297c1b7399e3b7319fa99d8c4e77b655aded69f775d2407",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_keyed_rows_evaluate_clustered_by_the_match_key"
+          },
+          {
+            "node_sha256": "4597e62f6e4d9e5921df052c395eb5513962510101944292689379ba7d1a2eac",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_event_columns_round_trip_through_the_full_binding"
+          },
+          {
+            "node_sha256": "b1d210fd7dc5e5c4aee8b1b77aba5f20424f586335c5d24ab5f5496649cfb3eb",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_unkeyed_rows_evaluate_bit_for_bit_like_the_market_key_behavior"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "c3f496b7d18c4ee85c32a98244fff95918e3e784",
+        "file": "tests/test_papersim_fx26_migrations.py",
+        "outcomes": [
+          {
+            "node_sha256": "01c6f2094f8e99f1c52f938fab91c3214c0d3af166751dcdc5886ae4990376f6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_fx26_columns_and_index_match_the_contract"
+          },
+          {
+            "node_sha256": "65b99eb2c644280664812851dbdad8866cf84ec3d0366ba54b67d07a5899cbbd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_full_catalog_applies_from_an_empty_face"
+          },
+          {
+            "node_sha256": "b2f67a23c80059b334607b3e7db9a35e10493f76702833ad444a7a3395b88087",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_fx26_checks_reject_blank_and_nonfinite_values"
+          },
+          {
+            "node_sha256": "c224adbebd62edbd16c38b983a0d1966dc4994fa806bcec49213f4748fb88d46",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_upgrade_from_the_frozen_four_entry_face_preserves_rows"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "a57500467580f72db79feace45b98d11d1c67b33",
+        "file": "tests/test_papersim_intl_model.py",
+        "outcomes": [
+          {
+            "node_sha256": "6a9d5b6e8d4cbfe26a4e76fdf73e654c490b668c1188e865c215f8074989123e",
+            "phases": [
+              "call"
+            ],
+            "test": "test_k_factor_vocabulary_pinned_to_adapter"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "a60cc35c0d5aa60db87582b8c83c661f2adcf64c",
+        "file": "tests/test_papersim_ledger.py",
+        "outcomes": [
+          {
+            "node_sha256": "94461096505a9e7fd744876239f82ce83d5c65612a624a5431feb2d6d74237f9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_papersim_ledger_integration_relations_exist"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "ebfae0c476e7de4e9e34c5439663aac86883ead9",
+        "file": "tests/test_papersim_m2_migrations.py",
+        "outcomes": [
+          {
+            "node_sha256": "3cd98e0efd0dd8b0d2618baac9a762be1c1fe9a0fdc267a80175c0c087fac26e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_new_tables_reject_mutation_and_duplicate_keys"
+          },
+          {
+            "node_sha256": "55fc7dfc664edc819062c18648be76ec22679b411d94d7083d8f5c3c8d392d78",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_full_catalog_applies_from_an_empty_face"
+          },
+          {
+            "node_sha256": "ba7bdb02cdde6d2d29ebaeeebb562249ceb47d04ea20b98b91197287c04de29a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_m2_drift_stops_and_rolls_back_the_receipt"
+          },
+          {
+            "node_sha256": "d877dbc8f982d72451f6344e4bb22823daead97184b982c5c8b2d962aee810f1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_upgrade_from_the_m1_nine_table_face_preserves_m1_rows"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "1a7499f4965c3524fbc08105eafe5e0f1fa4b959",
+        "file": "tests/test_papersim_m2_store_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "18827e04a78bd0c716825c9d6ded71ad3871f038b0140199bbbe45b2967a4f0f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_exit_settlement_charges_only_the_sell_leg_in_cash"
+          },
+          {
+            "node_sha256": "3ff967f1df0c6e40a792a7cf181362175e4fcfd1c7140926fda6a02ceecc4766",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_close_capture_is_unique_and_binds_close_evidence"
+          },
+          {
+            "node_sha256": "659a305819aac79047b3f25cc01c5cc62ee24816ebf6467f99a4bf0fb3f2c4b1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_daily_check_recomputes_the_identity_and_is_idempotent"
+          },
+          {
+            "node_sha256": "797ee6d81ff763a56b7edfff4e70f61b90a58cbfffaddbdb847a87ce13407c7d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_broken_evidence_reference_rolls_back_settlement_and_cash"
+          },
+          {
+            "node_sha256": "7c5c7841d54572e486f822ed4eb3c704e36902d295898ab105c98137d43bba23",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_periodic_mark_capture_for_an_entryless_candidate"
+          },
+          {
+            "node_sha256": "b138d36ebb852a456f369277eec4c1d5ef647c151b7ea65c9217b647c7dc5437",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_natural_settlement_writes_settlement_and_cash_leg_atomically"
+          },
+          {
+            "node_sha256": "cd08254c6a11f2a0510dffe622ea6bee94ed58ebbf63f29cb997a888688d198c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_mark_capture_with_entry_writes_both_faces_idempotently"
+          },
+          {
+            "node_sha256": "d0c27acfb54f75a21a74f35b37af1e7713c9bf733485b43c52cfc29d92f05f74",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_daily_check_excludes_post_as_of_rows"
+          },
+          {
+            "node_sha256": "d56264f80114ff0702d64e1cb9b287784bbb204604b18071ff646d38ea300275",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_close_capture_refusals_under_fx34"
+          },
+          {
+            "node_sha256": "d8f2278726ce9e744e45a9dfe76c462a190e02b492db05f25071866d928df53c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_close_evidence_before_the_decision_time_rejects_whole_capture"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "4bc43a008a409a693d39f4fffc6c6c77f9963662",
+        "file": "tests/test_papersim_migrations.py",
+        "outcomes": [
+          {
+            "node_sha256": "5e5ddca0c736fe827b04c0fc57a0fca1e9a973793f4d10a9e660969d55683995",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_concurrent_appliers_serialize_under_the_advisory_lock"
+          },
+          {
+            "node_sha256": "7a279bd77f4b8275db38d539517f17f1682f5bf77b3f614a63ec861b081d46e6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_applies_through_a_validated_socket_dsn"
+          },
+          {
+            "node_sha256": "82575c233b5d02940e3ba6377e1172c88700584e1e213e15ec6cda630750dba2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_idempotent_rerun_and_prefix_conflict"
+          },
+          {
+            "node_sha256": "9aea3927ebc2f7dce6ba5d3e412f13058d8e39ae754e4f41018bdd4361d1efdf",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_bootstrap_fails_on_existing_objects"
+          },
+          {
+            "node_sha256": "ac72c1ea8d9fc23d1f338941e61920deddeec52de94da8338c84f3ee5a872261",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_fresh_apply_writes_matching_receipts"
+          },
+          {
+            "node_sha256": "bc68c2a30badad690dc9b1343b036d1f8db489530f779e0604ff758ec275171d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_correction_arrives_as_a_new_migration_only"
+          },
+          {
+            "node_sha256": "cc239f7dd77dc34efd745be36bb1b9c83f6ec79cef72ac6c56862a551da36e13",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_failed_migration_rolls_back_ddl_and_receipt"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "f0669b05905ad86e663f0ee062d4b1986ee41fb9",
+        "file": "tests/test_papersim_mo2_migrations.py",
+        "outcomes": [
+          {
+            "node_sha256": "4bd5d10762dfbb93a6cf816db717f1646ef48e81d803b3ab4822fcba7ea08b4a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_unfreeze_actor_check_and_scope_contract"
+          },
+          {
+            "node_sha256": "4da4c8504cdde22f6a00dac8625a5ca03ea9d280477f18f3726b3d118a66d584",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_model_specs_digest_check_rejects_forged_pairs"
+          },
+          {
+            "node_sha256": "5aa9831412e19b74a51d2f1312e8923c92d81353c74bc0853bf5e24317e69dbf",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_upgrade_from_the_frozen_five_entry_face"
+          },
+          {
+            "node_sha256": "b22c597f9d9a8e90cd9ceffe1de3dbe1b7b40d2ddc71e83842ad0803b4e86731",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_array_checks_outcome_tokens_and_truncate_guards"
+          },
+          {
+            "node_sha256": "e28e5708ce1f9e6d159f4f7696b266371195305192ae277a383398c538f565f7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_candidate_registration_requires_forward_plan"
+          },
+          {
+            "node_sha256": "f5b54ca5cb25b75a1d73911178075fe6470d1e46130dc7c730cc632d5adc8dca",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_full_catalog_applies_from_an_empty_face"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "5739da151bda65af09170b1272c753a77e3c9c1f",
+        "file": "tests/test_papersim_mo7_shadow_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "9d26f033cee93e55b38e54637022890b1c67e396e3badf6b3ee75836b08a4d85",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_scan_retry_is_idempotent_including_the_shadow_rows"
+          },
+          {
+            "node_sha256": "ea6a83e683c676a49620572fad9631eb6f59129d1f848299bfb27b3bf7716265",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_scan_with_registered_candidate_shadows_and_replays"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "8d86a647b89e03b44ca44ba5a21e9e87a2b3e3a7",
+        "file": "tests/test_papersim_optimize_policy_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "12cfbc74c1d6a0e4113793ac953193d6ea7a19876277accdd8e7bba4c10a492b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_clv_uses_own_side_and_complete_prices_per_population"
+          },
+          {
+            "node_sha256": "219ebae676e5606d8befd94772e45a70b9cd4666b0aa6d0b2b140f560580bf13",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_clv_one_cent_boundary_on_numeric_fills"
+          },
+          {
+            "node_sha256": "273b00c708ff7cf32a1aff503a0541b9486cd386c4b1076886da139450be4700",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_club_candidate_without_pairs"
+          },
+          {
+            "node_sha256": "89ddf552a01ca61b6e2f381c7f69406318154f2b54da7b9e1a2ca0beb4e63d04",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_club_candidate_without_pairs"
+          },
+          {
+            "node_sha256": "cb8d6513d2ee052f51e6949f71e3efb0ed2f4dde474ed79fd807ed711c53fccd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_status_and_score_report_scan_identity"
+          },
+          {
+            "node_sha256": "de478e7d90bd6b64ace006b0b66242523831e9a0ca6774f3c3843f45c1468f6b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_full_round_register_shadow_decide_handover_rollback"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "45379e3ecbff9e783fa4678ee44c6d25ffd957ec",
+        "file": "tests/test_papersim_optimize_registered_runner_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "01c41be1c3db29d43c943f33934aac8099c6d03533bc38feebb68538584c8e53",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_distinct_operations_race_for_last_candidate_slot"
+          },
+          {
+            "node_sha256": "05b0acdc835f0fc98c2abfd2e16be3a94d1e64eb22d24f8ebb396f54cab03384",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_normal_managed_cli_seals_real_nba_timeout_and_restarts"
+          },
+          {
+            "node_sha256": "0c3893786ff617ce048270a00c4638ffbfe37969262c85e555857bb90d556405",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources"
+          },
+          {
+            "node_sha256": "0ded106e0a3ad244f3773c6112d2ffe3a2e5f553ba30557204d561736243df0f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_rule_source_cli_and_readback"
+          },
+          {
+            "node_sha256": "0eb1bcb9f9c28741e14f4f7a266f84d9746c578c86d29a7f4d4ea1ba678c34de",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_explicit_handshake_recovers_before_earlier_deadline"
+          },
+          {
+            "node_sha256": "126a54b13a5634a98b0a85d7e0907d186e67cde19af1df257ff2423207331b71",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_wait_uses_hard_deadline"
+          },
+          {
+            "node_sha256": "146f22f9abe6b50fd15185e179d7206c4316486e3d8b7cd274ba75042e216d1e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_same_instant_race_and_exact_older_replay"
+          },
+          {
+            "node_sha256": "1544afee421a2ee830c053ff1b07d0fbd0ccf3a8fbcb7af2b604a21aab476b71",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_rejection_linkage_and_legacy_quarantine"
+          },
+          {
+            "node_sha256": "1db10706ab7c12d5096ac5e0062a2570566ffae6c792b557899830c3ffcc1e93",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair"
+          },
+          {
+            "node_sha256": "1e18fe85a995373b62adfa7aa30d9a83d828ff3ea6bd66b413a09f2f34dd5092",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_wait_uses_hard_deadline"
+          },
+          {
+            "node_sha256": "1ea5b3275333f11b4f28238cebb6aec2f15754bc7dada2d4b7ca6cb5c0c77339",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_manifest_mutations_reject_before_claim_and_inference"
+          },
+          {
+            "node_sha256": "24b153e558846c4984dd53580b9e859ee06f34eb55e55e8afa20ff21889f07e7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_same_key_conflict_is_detected_after_success"
+          },
+          {
+            "node_sha256": "26537e9a0407b5116aadd85ea650f8f114c4c8e62bc9317a4efee0550d50ecc0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_compute_deadline_seals_and_replays_completed_prefix"
+          },
+          {
+            "node_sha256": "2912d87b20e6812ba767e7fec5068102bf74fc6148acf290ee931fa9d0a66140",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_write_failure_rolls_back_every_statement"
+          },
+          {
+            "node_sha256": "2e558e6b532966de82baaa0c05a3daa86ec4c0b2d6c71e6f58a8a1acf3ab615d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_write_failure_rolls_back_every_statement"
+          },
+          {
+            "node_sha256": "315deb64326142502f9b40a60d0cdc75c04d56d57675cc51bfc1c32692996760",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery"
+          },
+          {
+            "node_sha256": "331a17389669087630796823db0624ac00f23793726d2deb4df8eebb67d766c2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_optimizer_handshake_uses_earlier_deadline"
+          },
+          {
+            "node_sha256": "35583fd8d49c754140a38e4914f65acb1addb9fd521659796df8a9f95be003d9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_expiry_after_staging_rolls_back"
+          },
+          {
+            "node_sha256": "37e5025df8a3c4e3f99f776b4ec16d0ff0693edd3851859f3059b0e1eb0f7d46",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_rejects_stale_rollback_judgment"
+          },
+          {
+            "node_sha256": "3f487d00c16ceb69d8ce68b068e0e2425967fe2ed3331b9ca506c906b12dc44b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_managed_outcomes_and_verified_readback"
+          },
+          {
+            "node_sha256": "44c48295e70d1c55bc58e0e0289b6ad087c241eb0b4c158650de802b170c9716",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_mixed_empty_and_corrupt_registry_preserves_declared_scope"
+          },
+          {
+            "node_sha256": "531d2381c5ec683fc7af4f95524b7eb9c97797ece33514052e5bf11769d18be3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_rejection_linkage_and_legacy_quarantine"
+          },
+          {
+            "node_sha256": "535c710023fe801476e9f4650add05d7685b06dda76dafe9fd0fad91188f3c39",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_existing_spec_reuse_keeps_original_provenance"
+          },
+          {
+            "node_sha256": "536fde8c9ea83ff84e5308cd1abfb9ca9e32b08948216b808a80c927367bbc7d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_rule_source_cli_and_readback"
+          },
+          {
+            "node_sha256": "568831ac75421487796d2087cdf3ec2d90182659108fbd298578d2020034fbe1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_process_death_recovers_only_the_original_claim"
+          },
+          {
+            "node_sha256": "594ded35efdc07a28adb03c374271d3254483276ff4a7848505df991178beb7f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_optimizer_handshake_uses_earlier_deadline"
+          },
+          {
+            "node_sha256": "5a0adf99ef670f40e12a3b00f5763830a689c4eaecfeb00874099bd3d98c2aa6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_rechecks_registry_after_search"
+          },
+          {
+            "node_sha256": "5a6da6545b6a96d4a5cd8fd8cdbccb5247ea442c3a8e8df21442ce7aacb6b3b7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_write_failure_rolls_back_every_statement"
+          },
+          {
+            "node_sha256": "5a83bcf50354b5029932536d9a28d5399df9042df11f0aaf3fa604adeca4325e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_expired_optimizer_clock_stops_before_handshake"
+          },
+          {
+            "node_sha256": "5cc4ae9f992ec565c156d435f29e7d8e983455073e2524af075779c08079c430",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_failed_commit_reply_loss_verifies_with_new_connection"
+          },
+          {
+            "node_sha256": "60db06da431b740450981a527f71e98126d2a20b177fb79484581ceb65154e04",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_control_scope_chronology_and_partial_role_replay"
+          },
+          {
+            "node_sha256": "63c94db15471b30abfcc1b660b04981af1e07556b0e6a327fb2e71a6a671f5e4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_wait_uses_hard_deadline"
+          },
+          {
+            "node_sha256": "653038f13ba0c2fdbfc09e532f9195c40609931912acc1e6359c4edef5a27ff4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_expiry_after_staging_rolls_back"
+          },
+          {
+            "node_sha256": "6655e9b1cae5bbb11d43851fa4cd9af0ff20e2b9e61e6174ac54074ad09af8c1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_unavailable_database_does_not_seal_timeout"
+          },
+          {
+            "node_sha256": "6d8c3df4553eb851a15cf78fb554c6c55a7f4c251a82d6e4bd1fc41ccf4339b2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_optimizer_handshake_uses_earlier_deadline"
+          },
+          {
+            "node_sha256": "6f6bf77da3410a44c8519767bc947880a22602fcc9d8873b167c28c01ce1653c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_same_operation_race_replays_terminal"
+          },
+          {
+            "node_sha256": "7148c0ee305ab8e5ca0e6f0cf639d830d82c966d4566217eea135a7d7d57fd41",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_optimizer_handshake_uses_earlier_deadline"
+          },
+          {
+            "node_sha256": "7709763c8027acee613de98b74954d0e676887920d15a31712b8ff02f54f8947",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_exact_rollback_replay_after_later_handover"
+          },
+          {
+            "node_sha256": "79b87d5d1eb11df48fd1bf346b273073433f80c1950776042769ce8b5765e280",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_callback_with_conflicting_budget_seals_only_failure"
+          },
+          {
+            "node_sha256": "7cee8a3eedc053b07445b8890e933f38975e1362613a19dbead0347d4c4b11f1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_rule_source_cli_and_readback"
+          },
+          {
+            "node_sha256": "83016ce5983da5e05760f39f163f0200d471bb97c21c2254615daef78748a8e2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_manifests_accept_exact_absences_and_registered_positive_sources"
+          },
+          {
+            "node_sha256": "851a287e8c103b806d5eb787fb562b00f5663f1f828bd5ee70e240d7569ac89c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_repeatable_read_snapshot_cannot_append_stale_role"
+          },
+          {
+            "node_sha256": "8a77b28ec319716b8ff8731bcf4d276c9d8f2be8e42aea9d04ae3b4ad52fdadd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_managed_outcomes_and_verified_readback"
+          },
+          {
+            "node_sha256": "8b13559ba3b6ec299f491f47d4a81af5617546d6fe914b7bf8308f335291b85f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_wait_uses_hard_deadline"
+          },
+          {
+            "node_sha256": "98788cdf1e904ca0a81d44fb575547a687d5590602c2ea9526eb2fbbb2d0456d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_optimizer_handshake_uses_earlier_deadline"
+          },
+          {
+            "node_sha256": "988ce1f077bde91ac30fd647525e5f93cb4f28ccde6b1183d809bc9d13d72c17",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_preview_requires_a_verified_read_only_snapshot"
+          },
+          {
+            "node_sha256": "98f8df174484ed66273d3c3d231ac0f5dd6f34d761cffc7fa3c6831da30fc8bf",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_completed_handshake_after_deadline_is_closed_without_delivery"
+          },
+          {
+            "node_sha256": "9ce2b812d632e4486b27dffdc9a622237ed2fcee12233f9baa98776ad08aa4f3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline"
+          },
+          {
+            "node_sha256": "a1401631acce37ffd6f6fe80e9110b51f23eb1963d53f6ab0a7cc426a666e826",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair"
+          },
+          {
+            "node_sha256": "a64e29c5f0abd5fb26932387c3b23e0f6727ee61df0513f2da6b10b2dedd4f75",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_v2_store_rejects_forged_sources_callback_and_comparator"
+          },
+          {
+            "node_sha256": "a992aed80d609776555164dc3e9361aab55089ad7fe8a739bafe65f4a818c3a5",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_rechecks_registry_after_search"
+          },
+          {
+            "node_sha256": "abe094758551db0577c197f4ddf591f2a45893d567f5a8d8cc5b83181e0890ce",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_callback_with_conflicting_budget_seals_only_failure"
+          },
+          {
+            "node_sha256": "b2830a05357763d7742eb94e51a28af2e357e9a7d5e44aba9e29804929e24046",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_interrupted_prefix_and_unacknowledged_commit"
+          },
+          {
+            "node_sha256": "b3f539be3d0703b6bd8d54558741b3007280f33ac3280896d89d42e9f53e0557",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_rejects_stale_rollback_judgment"
+          },
+          {
+            "node_sha256": "b7299febe8c1afaa545c4b22fafeb85b785a07ac53ea052478472d3d2797ee23",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_callback_with_conflicting_budget_seals_only_failure"
+          },
+          {
+            "node_sha256": "b852d0a3f289abf80649180b177ca63f2393fd56ee688828260e575aa9b58cec",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_write_failure_rolls_back_every_statement"
+          },
+          {
+            "node_sha256": "bd03147a7205448f203ce1d3ddd917b39d88f4c375a40db9b21651c29e8d20c8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_expiry_after_staging_rolls_back"
+          },
+          {
+            "node_sha256": "bdd23a1b44f1cbd1788eb546174d318bb94a1219637efb85e5e6b23c106e9bf0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_rule_source_cli_and_readback"
+          },
+          {
+            "node_sha256": "bf3ae6b3c71c9dd12d365fc6b559fbd493d0f8acf2ff830e2c849782a8af6bff",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_same_operation_race_replays_terminal"
+          },
+          {
+            "node_sha256": "c2b908d71f3ee2c81c6841d5b857c77d07ca59a60ed0335b0165a44bb6cfbe60",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_public_store_rejects_unregistered_request_before_claim"
+          },
+          {
+            "node_sha256": "c3e5fe769982d3281fee2a769101a645565a08aa7a394af54b241e467ce0151c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_claim_and_session_lock_exhaustion"
+          },
+          {
+            "node_sha256": "c538abea009e326f730c82399558a658a7186d26c568a41093b99689fd31d4c8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_optimizer_commit_confirmation_reuses_earlier_handshake_deadline"
+          },
+          {
+            "node_sha256": "cadb88b1f1dca0d9e84ccd4c1b58c77f514b7ed9846c6d338e5b2c44fc3cd057",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_write_failure_rolls_back_every_statement"
+          },
+          {
+            "node_sha256": "cb3a71b8fa6ca6abc03726befaeaeea3580307dff240cd018e68f48c99050b88",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_rejects_stale_rollback_judgment"
+          },
+          {
+            "node_sha256": "cb4bda0c314e56ce02bee112b09c83937891eda0baaa5e1b9eaa62cca06e5fdc",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_explicit_handshake_recovers_before_earlier_deadline"
+          },
+          {
+            "node_sha256": "cc119e170f5b8930d6ea9684f4c36e0c2483db07c805a3099c9d828506d41103",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_managed_outcomes_and_verified_readback"
+          },
+          {
+            "node_sha256": "ccda19e156a54c3071e9dcb44fc93fa4eb992a96711bf57a803e045da5b1e938",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_process_death_recovers_only_the_original_claim"
+          },
+          {
+            "node_sha256": "da13d08f167c182e65b0d7226752044d4831fd35b3f057322b8e7eba71f50c28",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery"
+          },
+          {
+            "node_sha256": "dcc1981d28a5551d6a4f8102c8ca34aeed193a41423bdb80e6199957e25bf2d8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registered_cli_previews_without_model_calls_or_writes"
+          },
+          {
+            "node_sha256": "dd4c163d572af7119b7c32114f8820ab0eb86d7d670fd03dbd5e962434a6b17f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_v2_once_with_preview_and_acknowledgment_recovery"
+          },
+          {
+            "node_sha256": "de81221c54f914bd4e5fad7dcb11c3ad25270789f43f31d3a9bbf498eb9c4cf8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_concurrent_initialization_reuses_original_baselines"
+          },
+          {
+            "node_sha256": "e38a1b734a196538cbc62f2a1148cbfffbda50be729a46a318542e8e4d308e9e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_managed_outcomes_and_verified_readback"
+          },
+          {
+            "node_sha256": "e47169cf58aef918179d5208fa14c7c44ddf0fede46e5abe90b6d2d2a0f4bb13",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_rechecks_registry_after_search"
+          },
+          {
+            "node_sha256": "e8e1ebafb5920309c8ffa14f2a19e1bf9c16847c6905373fb57f6fb5350e10d5",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_exact_rollback_replay_after_later_handover"
+          },
+          {
+            "node_sha256": "ecc810c4915d753e43962d0a0833aaf4d7739d58746a6be3607595659cac9a4a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_explicit_handshake_recovers_before_earlier_deadline"
+          },
+          {
+            "node_sha256": "f287e7ed9e8e6e8f53896748483db4932a0e7f52cb04528b4d3fb74490cb434a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_publication_rechecks_registry_after_search"
+          },
+          {
+            "node_sha256": "f994706002108a5a2cdb0276ea9bf61e505c3781504f664f18b7baa814db1425",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_v2_interrupted_root_never_allows_a_new_search"
+          },
+          {
+            "node_sha256": "fa18c7cdd5431f900fa35c05377fcdd708ecb5b7262754a7fad6b5b900cbbf6b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_v2_interrupted_root_never_allows_a_new_search"
+          },
+          {
+            "node_sha256": "fbc577065c903055f63326ba6e87794f4d94f0c0e42bd84611a84fa8e3bdc45d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_cannot_apply_decision_to_substituted_or_unproved_pair"
+          },
+          {
+            "node_sha256": "fe620abfecceca52728a874378612d1ae50d939c4a70cbad243d93c343850723",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_nba_v2_registration_is_atomic_and_reentrant"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "d30be0fef339b853a28028427611075ce02de304",
+        "file": "tests/test_papersim_optimize_registry_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "007294e9a10287343c9ea5b9cf85b804b7653f991c9fa8b369f8bed9526176e2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_initialized_registry_folds_to_baseline_active"
+          },
+          {
+            "node_sha256": "031ae83b195be8c718a00ce2459d22d4c6fdf5dc56722694dc77cce3970d6853",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_reads_preserve_caller_transaction"
+          },
+          {
+            "node_sha256": "044b798fdcb90a62e8366daa306b6541d0275899e34156b94021dcc6e81e1d15",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "05e78ab0e3a4d36dc303de7df390a41cdf8e64fb2e302642da7fe663434d2b95",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_optimization_run_and_decision_idempotency"
+          },
+          {
+            "node_sha256": "0782a7e1980f3e28f1bf44980deac1e9d7acba02c7f0bbba625fa1e954bccf4e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_append_only_triggers_reject_update_and_delete"
+          },
+          {
+            "node_sha256": "0f74c411135d7928d9d0c68d9101aca31071654005656b025e7f9693428de676",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_reads_preserve_caller_transaction"
+          },
+          {
+            "node_sha256": "18e30e03d0509be2013efc283529bf2f6c13386484c261a7fa4c54f86b3e3300",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "21a0373e946f37afbca593fd118d9d8a222430fccfad23ee22d8980dbb07ed51",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_control_events_unfreeze_never_automatic"
+          },
+          {
+            "node_sha256": "26ae5e40368c70ce12f9edfe77e76fc526f1ab9f12349ad75a41f1415bda4bc9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_spec_content_failure_releases_idle_transaction"
+          },
+          {
+            "node_sha256": "47b40ae418acce0cab79a365f95ed5247329de91130c44cccc9e8aa7dd99b7e0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "50053921fe033a74b9e58606905ec8d2eb6352fd9c7d0a7825162bb35c549857",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_foreign_keys_hold_shadow_to_candidate_and_specs_to_runs"
+          },
+          {
+            "node_sha256": "507d921fb994bf4ed664851adcfc044947d6add06d13bf849853e0075dfee149",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "5306bfaa97553940f145cffe62992624625b704cb28269ea281cd69fc2271de3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "54bf8ff0f2ab0148df2f43be3dc91af6d8bc745c1e2c5ebc5b461fc2b0a91611",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_reads_preserve_caller_transaction"
+          },
+          {
+            "node_sha256": "5cd30b2b48ec6f421be32d27d930b09be6ddc82006b6e056dde710d0f556f7df",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "6ea61a9b1d3c75a1dd21ab5c134b08a03a3fb1cc8ee1f22ecf8b67a8eb6d1137",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "8c6d7f536f7a19a5027a8c886ce33f2d580568feb229804d86e902fef9c3c789",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "9527fb403177905d3f45be6f37f21dc27d5f17c5722f254bf8782935fcc38374",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "9d38f4b95109f57e2cc730ebacdfc2e90e73d17c81b23092c975a197fa91416d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_initialize_registry_is_idempotent_and_drift_is_conflict"
+          },
+          {
+            "node_sha256": "9fd13c6f8212d046f594948272c01ed4637b6ce874264ee2e68472daf58065c3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_idle_reads_release_transaction"
+          },
+          {
+            "node_sha256": "a7e47a75a69bcb8a5fa656376688ca2ed24e42ce6fe9332cbcdf5a453a48d36c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "a885a6a5601ae74987cccdfb960796d202b2d3a51bea4f50d19a4c3b8896e52d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_idle_reads_release_transaction"
+          },
+          {
+            "node_sha256": "aadff616edeacdfd8026f14eb35ad0712a89e79e3b33ef3f6b5aa88fb0d94e78",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_reads_preserve_caller_transaction"
+          },
+          {
+            "node_sha256": "b1a1e7e7228e4da6b8f93382733415d0bdc272716abd6d14f433276a32ddc1c9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_reads_preserve_caller_transaction"
+          },
+          {
+            "node_sha256": "b1b8f3e6219e56bd1ec3205c4c82f43d724744a04300bcd2443e57ec32330740",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_spec_content_failure_releases_idle_transaction"
+          },
+          {
+            "node_sha256": "c9875223d5a10b22fdef47400a226e75bac06b49b396aa95c08d1271af65f328",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_register_model_spec_idempotent_and_roundtrips"
+          },
+          {
+            "node_sha256": "d266838d95e3a369352c2466fa57c44bb5de7bf19d1400d29cd70fd71fdd734f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_fresh_registry_reads_empty_for_baseline_fallback"
+          },
+          {
+            "node_sha256": "d61e2a53e354ac3179150a351d1e0ed4a82332903803e0813efe24ecf5872eb9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_handover_batch_is_atomic_pair_or_nothing"
+          },
+          {
+            "node_sha256": "d71f93e4625fe8ae4743e26b9195ef71723140a290345436204cf5b306674269",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_reads_preserve_caller_transaction"
+          },
+          {
+            "node_sha256": "d744de26bfed5a41a25d8cb42f308b3c9d42c8ffa0b20b2252ed2af78f9b794d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          },
+          {
+            "node_sha256": "e3aa5fbaee9a1390dcc90c8ab4c270d96f5706711a30a897e516a927af60e824",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registry_sql_failure_releases_read_transaction"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "b782ac74e4ca24a96a1e267e20fdfb0e475986d4",
+        "file": "tests/test_papersim_optimize_runner_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "01c5a59b1d925dde8a39c8df1b9117a35dfc86ac9b5afc9291f50eee5d6629a7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_managed_cli_seals_and_replays_calibration_nonconvergence"
+          },
+          {
+            "node_sha256": "3b160176c2df26293625307cafb01fdcad6e86d9a8da1e26065db4c513247130",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_init_run_receipts_and_idempotent_replay"
+          },
+          {
+            "node_sha256": "593ff89d4dbc342cfc5eb49c172934f58e32d5b9a638fd77b5fa0c1d4611f157",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_seals_three_completed_trials_after_real_deadline"
+          },
+          {
+            "node_sha256": "6469e1272887864c15ba8846ef842bd34709ee83ff378fd8da5b5e1029b9d188",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_registration_write_path_and_status"
+          },
+          {
+            "node_sha256": "b6a65e4e22689335e6ba2fcfb63df79836713e701a6880e9c3edae5342e8b21e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cli_seals_three_completed_trials_after_real_deadline"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "7b5db0d0a6586f8d834295661dacda1de4c31b1f",
+        "file": "tests/test_papersim_perf_view_fix.py",
+        "outcomes": [
+          {
+            "node_sha256": "030a756bc85195d19758e4bd9ac5119b9b73f43673c557a360610d621b2dd159",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_allocation_spans_market_types_and_preserves_loss_and_exit"
+          },
+          {
+            "node_sha256": "0dc7b35498a4fd1a0c70e1bd52e1779720f5111c5573d485e2a31f966397a5ec",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_unknown_allocation_is_not_silently_omitted"
+          },
+          {
+            "node_sha256": "3e8a1bf390ed88201540dbb5136256ed9b763293e2ff1b8227ab5a1903126f72",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_3866000_unique_market_pnl_and_decision_counts"
+          },
+          {
+            "node_sha256": "7cb8ede532a74283b3b6ee0cd299b679ec7785b68811028a8eb2485047942fee",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_unknown_allocation_is_not_silently_omitted"
+          },
+          {
+            "node_sha256": "cd579533f5ffbe81a68314329dd184026f2cd03108ece76919b47a4f2ffce150",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_zero_denominator_remains_unknown"
+          },
+          {
+            "node_sha256": "e5157edf9e9eaed3bf5ec232ba76c161bb0a890e99ac31ce5221a1e06bac52f2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_no_rounding_loss_at_individual_allocations"
+          },
+          {
+            "node_sha256": "f2a5057c43780d17910cc655b1711a2cf33bf853494f7d661fd5d20ce104e6a7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_unknown_allocation_is_not_silently_omitted"
+          },
+          {
+            "node_sha256": "f4c76d0be4ca74f38063777ff61a8b6d0f6ae8f17c52245291034a0561afd760",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_unknown_allocation_is_not_silently_omitted"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "a6d5aa43e2c50bc9c0fbdf61f86a7be0608c52ee",
+        "file": "tests/test_papersim_queue_policy_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "d7b1498f54addc9a5a2c6f08f2fda84a68e41e2ba432d0b99ab4ade61e56b0dd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_store_metrics_to_pause_decision_chain"
+          },
+          {
+            "node_sha256": "fc9f598a152d59d539546228822aa4d75702a16d6a74df659f5d0323f08d2dd6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_store_metrics_to_auto_stop_recommendation"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "84dc9a51619d4ec67dfc223e469e8e41dcde165a",
+        "file": "tests/test_papersim_replay.py",
+        "outcomes": [
+          {
+            "node_sha256": "2e32a03a6a2afdbaba99e062c45b9d7cd45eb55b1fe807ae4d244bbe76b80aec",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_full_record_and_replay_round_trip_writes_nothing"
+          },
+          {
+            "node_sha256": "d7f48845cc68be72dce02c7644c4f8dacacf4a6ecaf22e46b5248b3508ed8473",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_tampered_snapshot_byte_fails_replay"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "ebbf0052a2a85bcbcec1c439b1617608ed60e03a",
+        "file": "tests/test_papersim_report_store_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "0242a2704913fa33dd2262ce95a992e2f67e3fd4b112287191efe1d7b2626797",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_nba_agreement_and_contradiction_are_order_independent"
+          },
+          {
+            "node_sha256": "035fc86d9ef37ef94b3f428aa7634be5f98b0f5adf982d1d802fba5be9252407",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_nba_agreement_and_contradiction_are_order_independent"
+          },
+          {
+            "node_sha256": "12c8fddd650f0ac4eb3f66173271c041dcae94cc59e20bf6c807edb6d1eb4ca6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_nba_agreement_and_contradiction_are_order_independent"
+          },
+          {
+            "node_sha256": "1c03a2372909baa0a603a468d867972ec72613161980d1e8b22cadef48b27b83",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_concurrent_managed_callers_reuse_the_committed_rows"
+          },
+          {
+            "node_sha256": "1d392d354d6728677adbf5ebe799b7c5b84dd9fd331d15779a037d588740c4e2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_rejects_a_contradiction_from_either_verified_nba_source"
+          },
+          {
+            "node_sha256": "1de29d424dc9c57e1aa27b544c65e52c7c0b0fad5e070e86e90ae09070554a71",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_conflict_keeps_exact_prior_rows"
+          },
+          {
+            "node_sha256": "21434ded1577c4bedf1126d6a51101d2569e609f4cdf8225e0d24d0c6a315b2d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_persists_independent_clock_samples_and_later_attempt"
+          },
+          {
+            "node_sha256": "2405075b8acde4b6dc227d31b8b7f5277625c77b89ecdc6cd7149a9e0e4b7cb4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_empty_store_report_renders_all_stages_missing"
+          },
+          {
+            "node_sha256": "26b1e12f45277d17f2d9df201069f34f14df12a4129eede78e136b884459a09d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_keeps_market_scoring_while_natural_pnl_is_pending"
+          },
+          {
+            "node_sha256": "26e41c6b86db4a3fcaf9b323ae786a4fb5327ff1d0e8f877ab923755719441ae",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_keeps_booked_zero_and_a_complete_queue_during_pending_pnl"
+          },
+          {
+            "node_sha256": "366d84b34af5e8f4ec200f972f1a0d3c80dde7701a7a36a620a23ace047d97bd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_agreement_from_the_other_nba_source_advances_the_verified_final"
+          },
+          {
+            "node_sha256": "38ef7df4db5be3c4e2034e5dd4ed7aed1665aa4081bf1791f8729c3b988af88e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_unbound_nba_outcomes_only_advance_the_raw_observation_clock"
+          },
+          {
+            "node_sha256": "3a403e3d748ac66a2326e20504e7123df6c09c46718fdec38b6e99d7d6302b84",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_conflict_keeps_exact_prior_rows"
+          },
+          {
+            "node_sha256": "3b49f198aca94982dfd2f3a31dac6bc00ac562cc8679e35970a2743eea7c03c1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_each_equivalent_nba_source_independently_proves_the_same_game"
+          },
+          {
+            "node_sha256": "3f8eb338040544ce06059e304923100adee654b36bf77fdbe6ab3d4dc3c5089e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_conflict_keeps_exact_prior_rows"
+          },
+          {
+            "node_sha256": "41e5502a3802a4ff9c10a56fd14efa159d02913dffcba5c0e06d41518c6f927e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_conflict_keeps_exact_prior_rows"
+          },
+          {
+            "node_sha256": "429397f3401d83ddfaba926cb15c227c03869e9e93df365fa4de8e7ea1071964",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_rejects_a_contradiction_from_either_verified_nba_source"
+          },
+          {
+            "node_sha256": "42b68c79551a7781730852fb8a8f973749ab4160d07bc94c6544315c549142b3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_keeps_market_scoring_while_natural_pnl_is_pending"
+          },
+          {
+            "node_sha256": "4580d1281b6fc7ac186501afc3919440d70265b24f6c7838baf57bce0489ff22",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_each_equivalent_nba_source_independently_proves_the_same_game"
+          },
+          {
+            "node_sha256": "4b529fdb0941f658079c8a06888a4536f0b4c7b0251203319517eda434f561a7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_nba_agreement_and_contradiction_are_order_independent"
+          },
+          {
+            "node_sha256": "531915ee35860672bdc2818c2fea1d451e0632638f3551269e1aa46455d97eec",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_partial_report_rejects_an_invalid_archive_attempt_through_the_cli"
+          },
+          {
+            "node_sha256": "57455c29fde1ed978607524c24e865bbeee68903bb9b88bf89f1707e3398d974",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_stage_times_follow_source_rows_in_one_snapshot"
+          },
+          {
+            "node_sha256": "63d126be0790ad699385183811fd54c9ec626caec43001022726ec026b2c822f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_client_loss_before_stdout"
+          },
+          {
+            "node_sha256": "68670805817cfb0be021ae41a9c4b95a4d10ef3fdfaa4733a7315d9bb558b348",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_managed_nba_full_game_finals_from_allowed_sources"
+          },
+          {
+            "node_sha256": "72e86dfb81d4997528d4ec14e9a74d20504aae0e03b0b077fd2db2aaf37f9375",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_rejects_a_contradiction_from_either_verified_nba_source"
+          },
+          {
+            "node_sha256": "75ec1be593156737ede38e4e1859459c9b38fb4e2d6d03fb8edc37f946658083",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_rejects_a_contradiction_from_either_verified_nba_source"
+          },
+          {
+            "node_sha256": "7d89c8fa9e98130306a18ff9d5975e3cc85c54d174fab4fd3cabe95747b4a356",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_agreement_from_the_other_nba_source_advances_the_verified_final"
+          },
+          {
+            "node_sha256": "802f71f5a2f2694f0b241cab238e319e1ce2deca7387adc6a3e2aa35039035af",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_client_loss_before_stdout"
+          },
+          {
+            "node_sha256": "8078c8445185be10469a44da88a42c91b2318c48064c481a86fe7cebf0932d90",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_seeded_report_matches_evaluate_command_bit_for_bit"
+          },
+          {
+            "node_sha256": "86456d15854c29e6c712d49ae17e6146ee3182ce7ffadf05f9cf15c30a6bffe4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_reads_observe_one_repeatable_read_snapshot"
+          },
+          {
+            "node_sha256": "8a8ba2c9b71880ffff05e2e451c18ef4430d397f5b2768ef18f4cf0aedc9b338",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_client_loss_before_stdout"
+          },
+          {
+            "node_sha256": "92b1d1e56039d2b1105173b886ec9cc83ed0d99c43ff9fcd7a0d744b1444cd18",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_second_invocation_duplicates_nothing"
+          },
+          {
+            "node_sha256": "98bf4990cd375fbe46f22837ec98df821821b8c348398700da4cc4f6b99f63b7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_an_alternate_nba_source_can_confirm_a_push_but_cannot_prove_a_partial_period"
+          },
+          {
+            "node_sha256": "9a27c20e8b2635c6bad3c017bfb8d21a391c19d5037108053914d3c3c8616fe4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_keeps_market_scoring_while_natural_pnl_is_pending"
+          },
+          {
+            "node_sha256": "a1cd6ec3f882ce197680786bd9eb291ee373b815777a1169a94923f3b7bf7685",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_reads_the_pending_snapshot_when_settlement_commits_under_its_wait"
+          },
+          {
+            "node_sha256": "b62677e13c363fe4bf5da2823e3a7b83671d99215edc490317976ae3266c4eb8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_nba_agreement_and_contradiction_are_order_independent"
+          },
+          {
+            "node_sha256": "b9f27e2563046489216fa46313b9912d086b4abdef4c437ea6a6b135b1ce0941",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_archive_finishes_matching_historical_started"
+          },
+          {
+            "node_sha256": "c8a900fe9ad78319bd99b871467ae2a98004a4db083463771ab231002f1514b7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_managed_espn_cache_cannot_supply_a_raw_summary"
+          },
+          {
+            "node_sha256": "d3b8ba10adb2d739f30600529eb73d128129f745509337508781d63f827081b0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_nba_agreement_and_contradiction_are_order_independent"
+          },
+          {
+            "node_sha256": "d54617f853776f2e631e93503226ef4feae762f316e680ab418b23b09245f013",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_registered_basketball_decision_explicit_mark_and_outcome_bindings"
+          },
+          {
+            "node_sha256": "d5723b2b71b79ee29e1040eec197a7b580d6717e093e8011c2811442478b4ccb",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_report_evaluation_clock_includes_the_outcome_selected_for_a_pending_trade"
+          },
+          {
+            "node_sha256": "fd0a603da9ef46c7010898f5f0e8b2274a7e4d03183af6b19eeaeb5ebb62c22c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_partial_report_rejects_an_invalid_archive_attempt_through_the_cli"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "b7a0732de9e7ed3b28587f1c3508030b03c31ec3",
+        "file": "tests/test_papersim_scan_store_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "03ab5205f0d548e8bb5d7a5d65f61d516239ecf85ccb6af93507f2a4ad77a18b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_replays_legacy_empty_variant_quotes"
+          },
+          {
+            "node_sha256": "2863212116c7c692351f20498500feb74c3f1fc66a624aa608f5c3825cf85378",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_replays_legacy_variant_quotes"
+          },
+          {
+            "node_sha256": "3fd5c1a7966505e6512db9c05b27c4f888b3757a503914b18f311ef76faf4f0e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_replays_legacy_empty_variant_quotes"
+          },
+          {
+            "node_sha256": "45336ff01aa6778137a37a16214c899fbf203fbdebcc7b6be36c5491009cfe5b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_replays_legacy_empty_variant_quotes"
+          },
+          {
+            "node_sha256": "4a982c6b0709ed09287c7b474088f02196151e2c9907c7e18e4c81cc61457d0c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_record_scan_waits_for_legacy_scan_writer"
+          },
+          {
+            "node_sha256": "587a6f181293392fb1f61d30149132bd199d1316512540e089f1e45cf2cb2bb3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_pause_escalation_appends_rows_and_resume_unlatches_per_queue"
+          },
+          {
+            "node_sha256": "5a49ef3fa040e81c5aa259b368970a32c6768daa84802e584bcaed9ae539da9a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_variant_quotes_replays_both_forms"
+          },
+          {
+            "node_sha256": "5b572dffb7fb1f8ae0e7b07fcb1f10d15817b9f9c091d26e25355857b89a689b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_variant_quotes_conflict_preserves_rows"
+          },
+          {
+            "node_sha256": "611ea57b62aad135b6f7acf7e0015b5516e684d63b6ba45c0196a7fb00cfe62f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_variant_quotes_replays_both_forms"
+          },
+          {
+            "node_sha256": "61943f83e6192fe4c09ea316be2520c6345e3477631732a63c586022303721c2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_record_scan_different_key_preserves_operation_key_violation"
+          },
+          {
+            "node_sha256": "6a88ac94dec236e7492b9b13e5fc61f3bee87ab35deabbb694b2c0241379f7a5",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_writes_empty_variant_quotes_as_array"
+          },
+          {
+            "node_sha256": "6b2ccee7e5c5d0b37feb57537e497874b3cab080b584dfb639f7ae771796774b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_replays_legacy_variant_quotes"
+          },
+          {
+            "node_sha256": "6fc33031cea642097ac81f8e97e6373a200efadcb37bd3c83e303c7709ae542b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_writes_empty_variant_quotes_as_array"
+          },
+          {
+            "node_sha256": "7c99d53d5ca40083d54507e545286e73e96bc3546a07767ea6ad1ec283561842",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_replays_legacy_mixed_variant_quotes"
+          },
+          {
+            "node_sha256": "82e107f2453add4d31abdf0905c0067cd571424264b28624472e656fee355798",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_record_scan_concurrent_new_writers_return_same_ids_and_cash_key"
+          },
+          {
+            "node_sha256": "8c46ae54036dc606af8c80660fa9ffe88c4e6eeae7604b40079aee84c313ce86",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_legacy_empty_list_rejects_changed_submission"
+          },
+          {
+            "node_sha256": "968c3db4c87b5429e47979b66a473ad008b369c399ca2d2f0529901035b4f30f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_variant_quotes_conflict_preserves_rows"
+          },
+          {
+            "node_sha256": "b147ff025b0e5100570ecb861e526e6c31ea0c91ddc2e8e489634ff53c8f83e9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_record_scan_waits_for_legacy_scan_writer"
+          },
+          {
+            "node_sha256": "b312b79b348f136af50a35da0f3badfa282af2ab804e403562646009768cbb75",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_record_scan_waits_for_legacy_scan_writer"
+          },
+          {
+            "node_sha256": "e9cf89d299e4525ff81f25db0f21f9e28ae59cc7307d3e12387b3b9335c430a8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_replays_legacy_empty_list_with_equivalent_canonical_quote"
+          },
+          {
+            "node_sha256": "ef412df131cc6f54f40ce83f78605c0f71b7f31854683e0ae6704be3056e37b8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_scan_preserves_precise_variant_quote_text"
+          },
+          {
+            "node_sha256": "effb799fcc832a64998ec56307682b06528386c372a201b4955e67b3ead46b1b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_retry_of_an_unchanged_scan_is_idempotent"
+          },
+          {
+            "node_sha256": "fb08649371b8b26eedd6e48e0627a16434eaec27f6198c3e6fde6be5e66415be",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_full_scan_writes_candidates_entries_cash_receipts_and_replays"
+          }
+        ],
+        "source_parent": "fe24776feddcda8bad752c3aaac25ceaf23384ab"
+      },
+      {
+        "blob": "7f4babbb57af72adbddfa1be80d553a7008e8344",
+        "file": "tests/test_papersim_settle_store_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "032de33f7b248c457e37dbf7dad1bb68c3ee36e77d9fb86f4af50903e7893407",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "05685cb3addd401f8d703cb73ff2b540d4475608651c391509567a08ed977523",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_historical_cash_discrepancy_reports_original_rows_without_repair"
+          },
+          {
+            "node_sha256": "05a56e972f799080636da810926bcc3d7df51b7e37be5f1209e7a459f94fac23",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_automatic_settlement_writers_converge_under_the_unique_key"
+          },
+          {
+            "node_sha256": "240a60b3c010e11341302469e45ef4452019b5cc3ea06a80903181b44f37d485",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_leaves_disputed_opening_debits_open_and_settles_healthy_peer"
+          },
+          {
+            "node_sha256": "2b3f025f5f0882d7eadd5db8ac04a2735ddf57cf7dacf8c95f07d81bf3e10709",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "2ce7894ed619d041186bf76471e4c3eb085451fd0ad1b8f37926a7fd7f124a18",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_fx29_evaluate_loader_reads_one_snapshot_across_a_midflight_commit"
+          },
+          {
+            "node_sha256": "2f74fbf570260d947afeddd7d50124a4c8c45d816320b2bad40e0dc45b702fa5",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "335472f67bbbc3f964602a77ce8d41565dc92bf9146347405682a5261d05eb0e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_settle_validates_opposite_purchases_and_preexisting_source_per_entry"
+          },
+          {
+            "node_sha256": "37841e666df07393cbd4c7988c7a9fde28af0fdc5ebbeee386adaa268807ab57",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_settle_rechecks_each_token_and_opening_cash_after_prepared"
+          },
+          {
+            "node_sha256": "3d1009858daaef9566e7803bc9b30333e56c1d620d78813d6ba30d741cbbe70b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "4354aba97b0375e81d60d3b83e90498c68111477625117901fd69db7e32ab0f0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_fx29_settle_loader_snapshot_races_a_late_capture"
+          },
+          {
+            "node_sha256": "4b18ba650504ecf28c36adc8d823a2060e8da7470ad865144adaae1d9b2d0398",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_historical_cash_discrepancy_reports_original_rows_without_repair"
+          },
+          {
+            "node_sha256": "53f7f8c7722bd7d5042940931497a7999e320bef48842a3218bb1cbaa7bb515e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_historical_cash_discrepancy_reports_original_rows_without_repair"
+          },
+          {
+            "node_sha256": "59862a81275060987171ab5d5891d5dfcf2a34be6e2bd2cb623aa7a82982088e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_reentry_excludes_old_terminals_and_posts_the_new_confirmation"
+          },
+          {
+            "node_sha256": "67cfaeaf20bd611fff0265643d75fdc905e0dcab8b243cf3502d5c102693dd36",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_voided_outcome_refunds_the_stake"
+          },
+          {
+            "node_sha256": "69e7495b69486b7ee9b5b1f88e5c13983bdc83fd9f7692da9e3334a1ffa64799",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_typed_matching_ranks_eligible_observations"
+          },
+          {
+            "node_sha256": "6d9125ad3934a2ada9fb2a7fd2d93274adac91d52414279c58d62741bdaf1796",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_later_cash_insert_failure_rolls_back_its_settlement_and_keeps_receipts"
+          },
+          {
+            "node_sha256": "6dfd2662436db3b3b1506a1c7498b5696d7ca51fe4f5e5de0b6b73dceb8a63d0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_late_capture_settles_a_previously_pending_entry"
+          },
+          {
+            "node_sha256": "7848bb248876c0867acd3a071370246f4628ee60fd4035b15e99bbecfa97d504",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_market_scoring_is_independent_of_unrecorded_and_recorded_trade_results"
+          },
+          {
+            "node_sha256": "83d5c24c27f8fdf19b9d5f26e06d77fc1f75817513f37e0f701804e299efa095",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_historical_cash_discrepancy_reports_original_rows_without_repair"
+          },
+          {
+            "node_sha256": "91a54f0a858e7c8efc76a353d3756bc262c3155b936c77680d04de87751738d0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_guarded_settlement_rejects_wrong_typed_source_token_side_or_time"
+          },
+          {
+            "node_sha256": "9e3159fa624cb50128b6dcf1a26f67d753ef654f44ebb9415decda9739478ab6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_automatic_settlement_writers_converge_under_the_unique_key"
+          },
+          {
+            "node_sha256": "9f47708c1c47256bb2a8921c24685988fbd173b83c58832dc30a15fe0a0ac8d6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_record_scan_checks_the_exact_share_product_before_any_write"
+          },
+          {
+            "node_sha256": "a3fcb852fbcb1e9798628ca2d4aa413058f3e243aac365803c3938ade97f53b3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_fx29_bankroll_check_reads_one_snapshot_across_a_midflight_commit"
+          },
+          {
+            "node_sha256": "accebcfa72cc42b97b8b575e0da74a90e78cdd8d5aee7d9a911a0f23cfbd8e6a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_settle_books_completed_basketball_including_overtime_and_explicit_push"
+          },
+          {
+            "node_sha256": "b84609bc6fd00c998c7dcba6ca7691b247581c1122e6770bc8e253b07961e3ce",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_direct_writes_keep_operator_time_rounding_and_legacy_metadata"
+          },
+          {
+            "node_sha256": "b90c100393e9cb2e26ff13163d742134e657b7ba93eb82581fa4cc7713d0e724",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rerun_with_identical_content_is_a_safe_noop"
+          },
+          {
+            "node_sha256": "b99506b2e5169cb025d144fc12d3b5d4bec066ca371a110aeeb00fa95976ae02",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_automatic_write_rechecks_cash_and_keeps_the_chosen_capture"
+          },
+          {
+            "node_sha256": "bb7b398ba75b363dfe60c7148d24e73d5df2a4a7ff78fe01a05654b7c63e457a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "bfb5064b1e3dd6ed8842b91b17d22202f434fc361d7b604b4ecf11e46a5d7c02",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "c1d2b7b40b002633bcaae1c1185ef3b6440f6eb7a1eb961ca301161e0dd463fc",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_active_cash_enforcement_matches_the_released_migrations"
+          },
+          {
+            "node_sha256": "cc9f0acbe929fb06e5612b205e8bfa79dcc750b0952c8e0dad420bcd55997d66",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_automatic_settlement_writers_converge_under_the_unique_key"
+          },
+          {
+            "node_sha256": "d391be29646bb9d4ce247cd1a00b283bc458a889f20105e83e8795cc082e8564",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "d86e9eaa82ca98c1b0bb58d8edb7ef8e3fe7bd0cc192417952e47dd46498350b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_d1_settle_recovers_committed_pending_and_failed_items_in_a_new_cli"
+          },
+          {
+            "node_sha256": "e1a2943730bab5020308c688ff027085f0b9e6adda57d7a393447036dcb50dbe",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "e290cbd456f4f61f047b1b629d07c05b60aa4e589318c9fdb75ac8604e5f639c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_physical_cash_uses_booked_fees_at_all_as_of_cuts"
+          },
+          {
+            "node_sha256": "f8f3f89eb05c5d9eb40c8489e5b0d0da808a56320fbae8b509eb04e12c665352",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_settle_writes_settlement_and_exactly_one_cash_leg"
+          },
+          {
+            "node_sha256": "fff6dbb50258ded56afa91350647765fc9244d686689372b8449a3520b60a709",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_b3_leaves_disputed_opening_debits_open_and_settles_healthy_peer"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "9e5d73bf657cabfbdf656be8f82b00915e03b41f",
+        "file": "tests/test_papersim_snapshots.py",
+        "outcomes": [
+          {
+            "node_sha256": "486ef1bd58f9e2d69092aaccb54563b1c97f60c5e9b748c746220907b4a8300e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_mutation_is_rejected_by_the_append_only_guard"
+          },
+          {
+            "node_sha256": "ab33d757ff30005c4d2f3a94cc35164ac894a44ee46e1b94902fa866b126b63f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_register_verify_and_no_overwrite"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "577319f11602def0f837d355000f1ccd92eaee87",
+        "file": "tests/test_papersim_store_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "0865fa3d2409970dc4ca337eab7647889e24939eb1e7f932c94903cd6186ef28",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_reporting_views_apply_matrix_incremental_and_idempotent"
+          },
+          {
+            "node_sha256": "15e0fff831ac85a601e4106a0b48817137108d0357d186731e18d9eaaf9c4363",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_time_order_violation_rejects_the_whole_scan"
+          },
+          {
+            "node_sha256": "1e023d24cee782527df78561a41299830b4e13451eb55e71ffd7e8b6f6372b50",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_correction_row_wins_tie_break_and_unknown_never_shadows"
+          },
+          {
+            "node_sha256": "1e2449db3dccb88bacf05d6aee771fc88431b2f4662a1b8939b08c10d5480eba",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_single_direction_fk_and_min_evidence_id_decision_rule"
+          },
+          {
+            "node_sha256": "2287b260e8c584f06be0bc5fbae9ab69e4412a4bae49e24fd7a2a57133bcc4b9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_importer_without_authorization_writes_nothing_on_a_writable_face"
+          },
+          {
+            "node_sha256": "33cc9144f91c13eb198cb1a93affafa0fc6a75390a10eaed649398719582e1b1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_legacy_face_is_unchanged_by_import_and_registration"
+          },
+          {
+            "node_sha256": "4ecfb37623381bc08b446b0a050dbf49f3e62e80a562cd8341963f48daf228f6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rejected_candidates_score_and_coverage_gaps_stay_gaps"
+          },
+          {
+            "node_sha256": "675ebae7d00cc43a7e4129362458998f661eca60d4b23a60b5ecf6d1334a4d17",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_two_entries_one_market_and_outcome_versions_never_double_count"
+          },
+          {
+            "node_sha256": "697868bf3ca7da1650eb85460796df85d080cecb55d35b18b4fc1dd14092af33",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_reporting_views_survive_a_failed_fourth_migration"
+          },
+          {
+            "node_sha256": "6bbf069b93b72ce1a6ecee32ab47874d72d0809a40ae9c2314a89ec7a9557f5d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_register_baseline_appends_observed_evidence_and_stays_private"
+          },
+          {
+            "node_sha256": "797e85c92111ed857dc4f9ecb241ca891bd62720b290680b677c58d40de51441",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_backend_termination_mid_transaction_leaves_no_half_scan"
+          },
+          {
+            "node_sha256": "8284746f933121225bf51640af7e8ca90172c2c5d122924f33ec5ca81cf7e0c3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_win_loss_labels_count_as_natural_settlements"
+          },
+          {
+            "node_sha256": "84fa39ce150ea7d72be33e4f75ebb81b3cd22780223de5df787a3fb3439edfd8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_net_concentration_counterexample_and_undefined_when_negative"
+          },
+          {
+            "node_sha256": "85acd40757bba8df7cf4760792c760a2dcabb6c73c64748eadb8f5fbb7e5d2dd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_views_reconcile_with_ledger_sums_and_the_evaluator"
+          },
+          {
+            "node_sha256": "94e03714fd1ec336bda30abcc6f577d4ad0e788c2c2bc1dfe4b2398e9333d397",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_snapshot_references_must_be_registered_before_the_scan"
+          },
+          {
+            "node_sha256": "b1429b6ea61592532b6a9cddd68cf53aea20f4de13c9ae868e000191b0c1386c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_binding_verify_accepts_the_instance_triple_and_rejects_drift"
+          },
+          {
+            "node_sha256": "b6f0abfa4b3f611ba1eb3c98a7b25b4b72350ee44ce25b306e2fe38db71d20fd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_legacy_gating_and_settlement_classification_negatives"
+          },
+          {
+            "node_sha256": "bf4e360f944e0b63e5e70ed6dbc0b0d71f10ee56d979429f86237777ce2f5803",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_full_scan_write_read_and_idempotent_rerecord"
+          },
+          {
+            "node_sha256": "ca2f1222074a947f39f529334d26691bb8043e8e1032dea55c19a072d1ee38d3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_update_delete_truncate_rejected_on_every_guarded_table"
+          },
+          {
+            "node_sha256": "ca6931e45795116cefae105d361213b0f48403db4c5682693ac8968653bbf62c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_duplicate_entry_and_settlement_are_rejected"
+          },
+          {
+            "node_sha256": "d1461df7fc9d34476cc7209611a0e60f183cdb2b999a6bea5bdee08e8717af4d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_all_rejected_zero_entry_scan_joins_outcomes_and_prices"
+          },
+          {
+            "node_sha256": "d6a5057925600d8ba0158853594d62c4afd77de3f807c7b477c48d1f3a8f6b15",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_market_outcome_idempotency_and_payload_conflict"
+          },
+          {
+            "node_sha256": "d96cd9b0191c5d38aa922334e93783485b9e4791aeeaa0aefddd50c6d8ade75d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_connect_managed_hands_off_idle_and_writes_persist"
+          },
+          {
+            "node_sha256": "e595bbf7c350d61430a94568f697b4cf77510243a16c36719788311410d06172",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_numeric_boundary_negatives_accept_and_reject_correctly"
+          },
+          {
+            "node_sha256": "ee49be9d97cd0b6e98e9d6800661546db536fca313e81de83121c55c2da793ba",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_exit_and_voided_stay_out_of_the_natural_hit_rate"
+          },
+          {
+            "node_sha256": "f344de6b1c9ec5072cd6c65bb523c8d2fffe7e5e273405bfee1a26cca81232ee",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_legacy_import_executes_idempotently_and_conserves"
+          },
+          {
+            "node_sha256": "f8182da8384d7c7b914cd7c84de6691dec4ff132899dacd56b8d81a1706ea42d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_reversal_cash_events_reverse_by_reference_only"
+          },
+          {
+            "node_sha256": "fb3897c139427a992da87a650be8517f7e0feebdf4e353a6abbbcfbfd2ca11d8",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_managed_dsn_is_byte_equal_to_the_v1_construction"
+          },
+          {
+            "node_sha256": "fd0d053ad93d83b24f48b51489fb46c941d07b839ad091b439f07136e1607c24",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_settlement_net_identity_check_rejects_drift"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "2af79ba1d110da0d137ef8371ad79880ce9f0e96",
+        "file": "tests/test_project_postgres_backup_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "b53eb50736bb82ede139de5b8f5f459d43cf2239f76b5788485e4a6ae6d4efef",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_cold_backup_recovery_preserves_prospective_history"
+          },
+          {
+            "node_sha256": "e6b003f006ac8e975b38b45665160174b58eaa86fd6c7800260d5a34f7893a6f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_old_backup_restore_requires_explicit_catalog_extension_and_migration"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "be4d7f1810a64e6b916516a8ad37c128a9e16afd",
+        "file": "tests/test_project_postgres_budget_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "b09883668a1002b09ef6012d134b0b4df15fd30ffb3d40e8f207f43e96ec9528",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_budget_upgrade_shared_cap_replay_and_lost_process"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "6c72ffcf9866bce336566f986657229cd254460d",
+        "file": "tests/test_project_postgres_confirmation_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "c666944b55c1c0bbd21bcdf21dcc000d413bcb6eba91523da1d1f4f8745a9e9d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_original_forecasts_manual_confirmation_replay_restart_and_preservation"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "194181b3fa52ef8134177073dfc62d5f30b77259",
+        "file": "tests/test_project_postgres_crypto_launch_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "db1c203bbd51e7a2104b36f7211e6e5f84bc9d3cb6d61a16e342bd40eeac88a0",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_empty_database_to_captured_research_and_worklist"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "514bd8772e676d0b00e600fdae482d5b4c49083a",
+        "file": "tests/test_project_postgres_dispatch_cli_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "22e3917874dc3fb0a05ed15e4953060fda7cd58296568028a973542b97d95a10",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_operator_rounds_stop_restart_failures_and_process_loss"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "1561c747ad7a8dd23d9ea529dee0d70b311b4f0d",
+        "file": "tests/test_project_postgres_dispatch_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "f8686c0305d0466825dea1d5c38a91d56ad743ae4cc97a674095022fb73fc6b1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_durable_batches_upgrade_stop_restart_and_crash_without_model_replay"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "515b38d81cc439e1e06db56138887e9820aca58c",
+        "file": "tests/test_project_postgres_distribution_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "70207eebc2cd1c8d22461d718fb82f82f88853a1904f55b13f4cd5de34be8046",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_build_and_run_actual_relocatable_kit"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "44cf72345c92376fe1b0bb2245201cdc66b20112",
+        "file": "tests/test_project_postgres_inventory_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "c5bdcde84c9d4abae0a9809ae4e06ff1cbff0bb6ef4919c3e2565a387b2dabf2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_inventory_snapshot_limits_legacy_and_incomplete_visibility"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "1b5ad53d7462c08befd896030d7051eb3139ac98",
+        "file": "tests/test_project_postgres_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "3441af16418824388e9e1ab469773dbdbcb85c1054edbbcf621cc6c27860b5e6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_project_lifecycle_all_migrations_and_real_research"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "ff0b04cbba28c66bb27434510bc13a269f5dedb5",
+        "file": "tests/test_project_postgres_paper_capture_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "800bb24562457cc3bb70371669953acfe548f2c5ce12a69d232c16822bf3d174",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_paper_capture_upgrade_atomic_replay_rejection_and_history_preservation"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "a13775a38d77eb6e279ab5cc9030c30023ae85ac",
+        "file": "tests/test_project_postgres_paper_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "f9e56a637feb11c3c6fc290d4a854717a55dc74de43aa99524cba6f6c7467cb9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_paper_assembly_replays_reads_preserves_failures_and_blocks_incomplete"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "6c72c8c1ed7ded5236c6222e32c5a57c5e92482b",
+        "file": "tests/test_project_postgres_paper_operator_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "254c74dd8ac787a0464048bed8eb4dd603a21fa9f2223ed538db2cee7e74c3c9",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_paper_operator_capture_replay_inspect_and_rejection"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "c58d4f5c93f905fb0fa6e03d51f40353897c7c19",
+        "file": "tests/test_project_postgres_paper_settlement_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "cb12a8023b796336afce6ff163dea7a37420dbf2b8877b01503abeb5285f1442",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_paper_settlement_snapshot_outcomes_denominators_restart_and_no_writes"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "b2be2899bcdc7f4292d4af5e798bb2430984a3eb",
+        "file": "tests/test_project_postgres_publication_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "3a9c40fa1b5a08a572c6b0302c38ac86b6bc9844696cd198b6cf7f61a6d2ad26",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_real_directory_handle_contention"
+          },
+          {
+            "node_sha256": "a29077b924d217a3da7ae9b54a1d4f0b531899aae4efb753fd93c7a2f5a818fb",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_real_directory_handle_contention"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "eaa3acb6a71132fd2d06212ceab89bf82fd5022c",
+        "file": "tests/test_project_postgres_resolution_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "80482e580b6b05be4bef018fd7633f00865af5582c36987da86c50ed7823dfe3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_resolution_review_promotes_atomically_and_preserves_evidence"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "f306a118a2a861e680121ab59cd909ab9b7c7616",
+        "file": "tests/test_project_postgres_resolution_queue_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "4470c16b3c2b3b40599883a45fd57715f529dcc09124117ff920f76a563cfb05",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_queue_selects_collects_and_retains_unconfirmed_evidence"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "1ca0c74a2bd3eb389d6279039580c1877952da08",
+        "file": "tests/test_project_postgres_rotation_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "e433307939a6e7ce45e9ca53f082db0d4330510ba902a59bcd368554233a752a",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rotation_failure_fairness_upgrade_restart_and_no_reclaim"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "939734eba6cc8fa1b226897667262081a23a1ee3",
+        "file": "tests/test_project_postgres_uncapped_audit_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "1922fe1869703b74103a30e3efac985b7b42a327e8893672d23d8b1739d567b4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_audited_uncapped_upgrade_calls_uncertainty_and_process_loss"
+          },
+          {
+            "node_sha256": "be8732ab1306f36bfb154ead78d39a464c748bb1a59e6eb62db4abfc66f17ee4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_contained_driver_loss_preserves_incomplete_claim_and_replays_inert"
+          },
+          {
+            "node_sha256": "c5ad28ee32d2185096cb2ad30b13da8d09e255f975710a7528d7ee3de19cbe9b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_contained_operator_two_by_two_stop_restart_replay_and_audit"
+          },
+          {
+            "node_sha256": "fb74075774976485e51a16c0684ed6dc2d42665cb23bbbde441588c8ff3857f1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_operator_assembly_native_two_team_stop_restart_replay_and_audit"
+          },
+          {
+            "node_sha256": "fc17d73a513d040e083208bd668e62483f5614cb8e2fd9e326a34ae122a1411d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_contained_driver_loss_useful_recovery_fresh_parent_rounds"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "e84860ed16720a69decf2e159b4beb1cabf93e19",
+        "file": "tests/test_project_postgres_uncapped_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "47906aaf397243fb36b527242c0a51afcf151c8d7f1fd5d31bcd1af911771015",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_uncapped_claims_codex_protocol_stop_restart_and_process_loss"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "fc5bf420265bdb1649615948a30022c53af655a7",
+        "file": "tests/test_project_postgres_version_switch_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "8ad06f017cbe953609ec05f15f9600efe99b140c599f748ccc33ebd2d6993554",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_same_root_source_selection_rollback_and_refusals"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "91610dae5947fe3edb5761ac008f76a891e92174",
+        "file": "tests/test_research_capture_disposable.py",
+        "outcomes": [
+          {
+            "node_sha256": "328dbe8b2a13b13367cdb625bbbc0078a95f8c5a24b9356db72f3bb7458f35db",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_prospective_capture_constraints_concurrency_and_readback"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "eb900a8b2503c5f2e6f7702d5ff8eb9ffe57f55a",
+        "file": "tests/test_research_claude_contained_reply.py",
+        "outcomes": [
+          {
+            "node_sha256": "0fb19bbe497b1992ef4996bc770d0422b419749b6652c52813bd3e3d62b1dfe3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rejection_matrix_rejects_without_repair_or_retry"
+          },
+          {
+            "node_sha256": "1950f083dcac46dadd1a74fe352eb4b3d357cd18e3d8c8307ecc598aad465a3b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_contained_factory_decodes_retained_terminal_bytes"
+          },
+          {
+            "node_sha256": "29f2316c946e0b1ae4f07cbc8dc6ab05db22267511cc8baedaea2b86968c4abd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rejection_matrix_rejects_without_repair_or_retry"
+          },
+          {
+            "node_sha256": "41aa794c83fba6b57058fab3da5807140349d6d3ee7c1ca2c18d6fe37169edd2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rejection_matrix_rejects_without_repair_or_retry"
+          },
+          {
+            "node_sha256": "4579be7760d54a755baee2f4c2123c5563dbd68d68e31fd693b1cfbb9c8a02e3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_fragmented_real_process_reply_decodes_exactly"
+          },
+          {
+            "node_sha256": "48b824ffc370744c42a881ef2165136ef4b42cfbf33e06a7872a677b39dccb0b",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_contained_factory_composition_round_trip"
+          },
+          {
+            "node_sha256": "5b35ea16583797b1853dc15f08b2fe99560ef1ea0d68198a34876110f304f48c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_contained_stderr_noise_rejects_at_the_decoder"
+          },
+          {
+            "node_sha256": "61f3c72e327a13c2965a5db6767a8022df41776a6374ca8c3e0c8ceab63f796c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_retained_fixture_is_the_calibrated_terminal_representation"
+          },
+          {
+            "node_sha256": "905db6496563d7976bac9a6d800b3ba03f3fdf87af1315662bacc35a4d1d3cae",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rejection_matrix_rejects_without_repair_or_retry"
+          },
+          {
+            "node_sha256": "960ae8f471dc7dcb0652c328645fe3ce4a1efe0b8a39a594b05c5a6d36b93c5e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_contained_relay_delivers_retained_terminal_bytes"
+          },
+          {
+            "node_sha256": "9dce479b89eae6d85fecd712ff8d5d6ca2e061c39008b1cfd4dbe1ab6d869ae4",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_model_phase_relay_counts_stderr_and_the_decoder_rejects_it"
+          },
+          {
+            "node_sha256": "bc54d2e0a5d9ad6eea7735520336909d7d9eec5d82cbc7639f99e373a0952a42",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rejection_matrix_rejects_without_repair_or_retry"
+          },
+          {
+            "node_sha256": "f0448c8885501770c412733332308c3f48f7b347cd712ce00d0d5ae1c16dadc5",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_model_phase_relay_delivers_terminal_bytes_unmodified"
+          },
+          {
+            "node_sha256": "febdd5bfb4589cd37de5749dd7c0d7c9a3b5fc57a2b94fdaf25414e2c162ff7d",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_rejection_matrix_rejects_without_repair_or_retry"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "eb7c9f3c4eab243143c7628df8b2ea2327d0c952",
+        "file": "tests/test_research_claude_profile_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "1911cc2c9fac2db9c2d120a17360f834d9e66fe699fafc6ad9af7c3e536277a2",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_supplied_claude_profile_loopback_and_surviving_state"
+          },
+          {
+            "node_sha256": "1d2609c947ac0d1813e04abf087edb1c6f620a7365e1eb6445db2ef114039494",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_supplied_claude_profile_loopback_and_surviving_state"
+          },
+          {
+            "node_sha256": "51f9f98ebce75bdb7bc09c51f5f36d56291e89849ed382be4b41dd1b39c60c43",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_supplied_claude_profile_loopback_and_surviving_state"
+          },
+          {
+            "node_sha256": "83edbd563dac154ad4b027bd6d703fb4d237475b1af75ef7734f5a964af7b3f6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_supplied_claude_profile_loopback_and_surviving_state"
+          },
+          {
+            "node_sha256": "a25e062ca38b3ebf0c5d298278f38f3cf0822903b96f890674c3f0b9d63e1f50",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_supplied_claude_profile_loopback_and_surviving_state"
+          },
+          {
+            "node_sha256": "e7371b42481aa604ac5b49e7e72070a826dc55d518573c1b23ed5c063be67175",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_supplied_claude_profile_loopback_and_surviving_state"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "56b621ff44ed6dfe7b0d9d1d5a4edfd021ef3eb5",
+        "file": "tests/test_research_claude_relay_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "5fa9d02ea66ba09a4262108fe729c373fb2abef7b583b0b0fa98a648d473d3e7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_supplied_claude_relay_qualification_native"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "7064e61cbcec96643609ba76ac53e13465fcfcb4",
+        "file": "tests/test_research_codex_profile_native.py",
+        "outcomes": [
+          {
+            "node_sha256": "62c01c5fdaf23eeda65c6b1552f9e6506d38cd01af58ee7571d4928f7e407242",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_pinned_cli_profile_loopback_single_submission"
+          },
+          {
+            "node_sha256": "d9c4a5e437c0c1434db863bd45e765de1c13186e80b31b66ff6a41699453b411",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_pinned_cli_profile_loopback_single_submission"
+          },
+          {
+            "node_sha256": "ed5c4c791ea08e238c1a215ff630f55941ffe335466e41f5afdc00a1af53c5cd",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_pinned_cli_profile_loopback_single_submission"
+          },
+          {
+            "node_sha256": "f747334f8b8d46d8673aa8c8494a37493d4d7294ef2fb8326ced33ba991b1768",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_pinned_cli_profile_loopback_single_submission"
+          },
+          {
+            "node_sha256": "f7b7222184711b3ff1460e1e144d57ab769bd0af726d625a379015b6df78bd59",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_actual_pinned_cli_profile_loopback_single_submission"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "d5ab39dbb17e3aded080d68a0120130c8775f539",
+        "file": "tests/test_research_execution_disposable.py",
+        "outcomes": [
+          {
+            "node_sha256": "325bab79d57d4c68477b69144bb27d8bfebec6c19c0a6e6ffd34dae4cc439cd9",
+            "phases": [
+              "call"
+            ],
+            "test": "test_real_claim_then_execute_concurrency_recovery_and_complete_history"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "4fa33c6dcc5ccd87ad36a4a62d015ea4685000bb",
+        "file": "tests/test_research_linux_relay_helper_gates.py",
+        "outcomes": [
+          {
+            "node_sha256": "213228f07ff20ee18067cb071bac841b5f8d728474f95f244dc77623137d7fc3",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_relay_crossing_positive_byte_round_trip_native"
+          },
+          {
+            "node_sha256": "5bb8a630b8a825be5f937015291ddfc53831d13c998d29e914b6b63496f0fd7e",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_relay_crossing_teardown_normal_and_stopped_native"
+          },
+          {
+            "node_sha256": "e79ac43a46a18f049830475adb70650be85245bff317f34b55f56713c9f4f56f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_relay_crossing_cloexec_negative_control_native"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "66a48616c000c13ae0cf28f7ffa513ffe62e6ebc",
+        "file": "tests/test_research_process.py",
+        "outcomes": [
+          {
+            "node_sha256": "1b4d53fa267ce2e06128469c17d99940d1af7b039754454bf4dea4e37e70fb09",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_windows_64bit_abi_layouts"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "d9673af4ffe1dddffd4a142fd1b335bc6a230f62",
+        "file": "tests/test_research_process_linux.py",
+        "outcomes": [
+          {
+            "node_sha256": "22264d6cb8a48e240ed413516079db75ac958f5baf75ad1639e73a73bdcdcbce",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_run_research_process_requires_linux_for_contained_path"
+          },
+          {
+            "node_sha256": "5e8d13633302a9063564ae0c692ecfed558803c1df5ec86718d1782b7049c082",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_unsupported_wrapper_option_fails_closed"
+          },
+          {
+            "node_sha256": "60e788931b33833965b46353e780ab13d8b6cb6270735e62a034517234ced6e6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_relay_parent_path_stop_and_driver_loss_native"
+          },
+          {
+            "node_sha256": "72687e86ee870005beba21b39dde328998f76a8957a8158d574e76720c183679",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_pre_admission_tampering_is_refused"
+          },
+          {
+            "node_sha256": "871fd6f9ab963247a69984597e1d489a593c018f0fa5a3d25565bc5c2ee39f82",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_in_flight_replacement_of_vendor_and_dependency_is_ignored"
+          },
+          {
+            "node_sha256": "91f3a28f34b84658132fbefa0e30eb2c0020a1d59b31c4d15642a9711920e939",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_contained_two_phase_round_trip"
+          },
+          {
+            "node_sha256": "c1f16f23b2f96f1ab86addddfe1e4bc5e1acd4dc9972c536967e1f265052ed35",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_relay_parent_path_synthetic_exchange_native"
+          }
+        ],
+        "source_parent": "fe24776feddcda8bad752c3aaac25ceaf23384ab"
+      },
+      {
+        "blob": "17de56d46cebe60f8cad0357b59805338227a78f",
+        "file": "tests/test_research_process_review.py",
+        "outcomes": [
+          {
+            "node_sha256": "11fad9d5e1ef570155680bd8cc2ee77af9b40aaf5a06a20defee8351618078cf",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_supervisor_loss_is_covered_by_wrapper_parent_death"
+          },
+          {
+            "node_sha256": "12719874ad1a27e5006c9fa9b17a03eea805c304e5e7e275b4c58f17612e15b1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_parent_sigkill_is_covered_by_the_supervisor"
+          },
+          {
+            "node_sha256": "37e2d53b19fcd4852af2699d42d39341950f8d7c56c05c6b11ea3fe4fc766308",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_containment_normal_exit_and_private_state"
+          },
+          {
+            "node_sha256": "4fff642f00b87516cb0acb393cb317e8472be3b3f6c711b5553cda4075f557ea",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_containment_stop_timeout_and_flood_are_bounded"
+          },
+          {
+            "node_sha256": "56d9b4179311c4e771c86ad829096b1df809d5754d607081abafede902ab2fc7",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_windows_rejection_never_executes_target_or_retries"
+          },
+          {
+            "node_sha256": "848e3438016ef410cc4175bc542758f84761ca4fb117374cc821051625e3d77c",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_containment_enforces_tmpfs_and_scratch_bounds"
+          },
+          {
+            "node_sha256": "ab3fee97ef50120b418eab850b1a02b3a4e872ab7c88fc1ce59db1414d4c1ece",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_containment_kills_setsid_and_double_fork_descendants"
+          },
+          {
+            "node_sha256": "b390521af8723b33704ad4b7c2181dfe2a62bac58412e610099ed76331e62ec6",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_containment_cross_worker_state_is_private"
+          },
+          {
+            "node_sha256": "b7f2ae6a74c6445a284c9805551eb79210bdf766f2d794b140af61a22036fdf1",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_windows_rejection_never_executes_target_or_retries"
+          },
+          {
+            "node_sha256": "c01a510893bdda2895aa9a7fbe841afffcf311c9c72baea89035ee7770a6df7f",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_windows_parent_loss_terminates_owned_job"
+          },
+          {
+            "node_sha256": "f0035bfd1e67b8d9810948841c1d4f7e283b1152518e4440d3266414f3877c18",
+            "phases": [
+              "setup"
+            ],
+            "test": "test_native_containment_denies_host_and_postgres_surfaces"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      },
+      {
+        "blob": "e873040147aab9ed5f1a51b824c7c7639e498cb4",
+        "file": "tests/test_team_evidence_aggregation_attempt_disposable.py",
+        "outcomes": [
+          {
+            "node_sha256": "6d4faee17da7596807e69418bebe7d7ed5f39c551b7aef624f3785ca1e7df3af",
+            "phases": [
+              "call"
+            ],
+            "test": "test_team_evidence_aggregation_attempt_disposable_proof"
+          }
+        ],
+        "source_parent": "9acfc3ad07f446415d092153effbc5b81e6b0e77"
+      }
+    ],
+    "files": 63,
+    "historical_receipt": {
+      "bytes": 3348,
+      "path": "offline-continuation/fx47-reviewed-node-fe24776feddc-ssl-v2/completed.json",
+      "sha256": "cf3e9e36be273e25c9a7b71d756e1e0dce9b09e6af4c377dc27f7e157a922dc7"
+    },
+    "postgresql_matches_native_passed": 23
+  }
+}

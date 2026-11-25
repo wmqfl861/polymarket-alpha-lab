@@ -1,0 +1,1 @@
+{"base": "56a6b59df074a319b57555fdeec334423d012327", "checks": {"address_added_occurrences": 0, "compile": 0, "diff_check": 0, "test_weakening": 0}, "exit_code": 0, "gate": "fast", "head": "4eda27f11e2617b07ac9711232c9dc1f72184b2f", "tree": "3add36df84f474bb131cd6dcafb30234249b3567"}

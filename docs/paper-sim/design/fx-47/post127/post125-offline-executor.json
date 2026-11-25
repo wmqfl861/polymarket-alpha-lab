@@ -1,0 +1,6 @@
+{
+  "sessionId": "sess_0d5ebc3e-d928-4616-afaa-aa54f06b9aa6",
+  "turnId": "turn_c4b1edbd-8390-4bbd-862c-b692bddfb3c6",
+  "traceId": "35035ea2-b082-457d-b94e-9e631af44078",
+  "response": "Launched once, and the launch command exited 0.\n\n- **State:** `dispatched`\n- **Candidate / head:** `fx47-post125-candidate` at `c546f4143bec2540e83bc2445011a3da904867ab`, matching the pin\n- **Harness revision:** `ssl-v2`\n- **Files / groups:** 3340 files, 31 groups, 0 legacy groups\n- **Manifest SHA256:** `5ab629b5e087bf104a8111c81666b3e9ee05b27e3070ff7006d9f2a9ab1cfb5c`\n- **Focus receipt SHA256:** `null` in the dispatch receipt\n- **Unit:** `pal-nov24-continuation-fx47-post125-candidate-c546f4143bec-ssl-v2.service`\n\nI ran nothing else, so the unit was not checked after dispatch and no test result is in yet."
+}
