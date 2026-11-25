@@ -1,0 +1,6 @@
+{
+  "sessionId": "sess_8f787026-8522-4ffc-a8cb-f8017629bc35",
+  "turnId": "turn_9d6e7ac0-c655-4146-b6b4-c1cdf7b10f16",
+  "traceId": "5cbce7e4-0786-464a-b7d7-117470750048",
+  "response": "**命令已执行一次，退出状态 0；读取成功：该 Windows 当前的 PowerShell 生效执行策略为 `Restricted`，五个作用域均为 `Undefined`。**\n\n### 本次读取（policy-observe）\n\n清单核对三个文件均 OK，本地预检通过（`windows_contacted=false`），随后远程读取了一次。`observe` 的实际输出：\n\n```\n{\"effective_policy\":\"Restricted\",\"phase\":\"complete\",\"placement_policy_guard_satisfied\":false,\"protocol\":\"fx49-windows-policy-v1\",\"scopes\":{\"CurrentUser\":\"Undefined\",\"LocalMachine\":\"Undefined\",\"MachinePolicy\":\"Undefined\",\"Process\":\"Undefined\",\"UserPolicy\":\"Undefined\"},\"status\":\"passed\",\"windows_exit_code\":0}\n```\n\nLinux 命令退出码：`0`。\n\n按固定脚本的逻辑，工具给出的 `placement_policy_guard_satisfied=false` 表示：以当前读数，放置守卫要求的有效策略 `RemoteSigned` 或 `Unrestricted` 不满足（`Process=Undefined` 这一条件是满足的）。\n\n### 前一次失败证据（原样，未改动）\n\n```\n{\"mode\":null,\"phase\":\"execution_policy\",\"protocol\":\"fx49-windows-manual-v1\",\"runner_exit_code\":null,\"runner_report\":null,\"status\":\"failed\",\"verified_files\":0,\"windows_exit_code\":1}\n```\n\nLinux 命令退出码：`1`；登记文件数为 0，`place.attempt` 标记仍在，我没有触碰。\n\n前次放置当时的策略值没有任何证据，我不推断两次之间策略是否变化。\n\n本次我没有运行旧的放置或演练，没有替换方法，没有重试。执行前只读了三个固定文件核对范围。\n\n会话身份：`sess_8f787026-8522-4ffc-a8cb-f8017629bc35`。"
+}
