@@ -659,6 +659,16 @@ def test_unregistered_policy_records_supported_refusals_for_managed_replay(separ
         assert replayed.returncode == 0 and json.loads(replayed.stdout)["matched"], replayed.stderr
 
 
+def _assert_one_soccer_source_set(captured, expected_fetches):
+    fetches = captured["coverage"]["model_fetches"]
+    assert len(fetches) == expected_fetches
+    assert all(row["status"] == "success" for row in fetches)
+    sequences = [row["sequence"] for row in captured["model_responses"]]
+    assert sequences and sequences == [seq for row in fetches for seq in row["requests"]]
+    assert len({target["condition_id"] for target in captured["targets"]}) == 2
+    assert all(target["sources"]["responses"] == sequences for target in captured["targets"])
+
+
 def test_prepared_soccer_persists_ordered_quotes_and_replays_constructor_failures(separate_project):
     from polymarket_alpha_lab import replay
     from polymarket_alpha_lab.papersim import gates, soccer_model
@@ -679,6 +689,8 @@ def test_prepared_soccer_persists_ordered_quotes_and_replays_constructor_failure
             reader, repo_root=case.project.root, config_bytes=case.config.read_bytes(),
             input_set_sha256=summary["input_set_sha256"],
         )
+        captured = json.loads(snapshots.read_snapshot(reader, summary["input_set_sha256"])["content"])
+    _assert_one_soccer_source_set(captured, len(understat.UNDERSTAT_LEAGUES) + 1)
     targets = {target.candidate_key: target for target in resolved.targets}
     for identifier, key, conclusion, variants, payload, reasons, kickoff in quotes:
         assert kickoff == datetime.fromisoformat(case.market["gameStartTime"])
@@ -717,6 +729,7 @@ def test_prepared_fotmob_capture_binds_the_kickoff_instant(separate_project, fix
             reader, repo_root=case.project.root, config_bytes=case.config.read_bytes(), input_set_sha256=digest)
     assert len(captured["targets"]) == 4
     if matches_kickoff:
+        _assert_one_soccer_source_set(captured, 2)
         assert all(item["sources"]["fixture_id"] == item["sources"]["season"] + "02" for item in captured["targets"])
         assert len(resolved.targets) == 4 and not resolved.excluded
         assert all(target.plan.home == "Birmingham City" and target.plan.away == "Blackburn Rovers"

@@ -12,6 +12,7 @@ import pytest
 
 from polymarket_alpha_lab import replay
 from polymarket_alpha_lab.papersim import crypto_model, prepare, prepare_inputs, scan, snapshots, soccer_model
+from polymarket_alpha_lab.papersim import prepare_capture
 from polymarket_alpha_lab.papersim import store, store_psycopg
 from polymarket_alpha_lab.papersim.adapters import polymarket, prices, understat
 from polymarket_alpha_lab.papersim.d1compare import acquire, journal, operations
@@ -32,6 +33,42 @@ QUESTION = "Will Ethereum be below $2,000 on December 31, 2026?"
 DESCRIPTION = ('This market will resolve to "Yes" if the Close price of the Binance ETH/USDT '
                '1-minute candle at 12:00 PM UTC on the date in the title is below $2,000. '
                'Otherwise it will resolve to "No".')
+
+
+def test_soccer_capture_only_reuses_complete_sources_for_the_same_fixture(monkeypatch):
+    capture = prepare_capture._Capture(None, None, b"", {}, "fixture", "capture", None)
+    target = {"tag_slug": "epl", "gamma_event_id": "first", "event_start_at": SOCCER_KICKOFF.isoformat()}
+    event = {"title": "Home versus Away"}
+    row = {"id": "scheduled", "isResult": False, "datetime": SOCCER_KICKOFF.isoformat(),
+           "h": {"id": "home", "title": "Home"}, "a": {"id": "away", "title": "Away"}}
+    season = str(SOCCER_KICKOFF.year - (SOCCER_KICKOFF.month < 7))
+    group_size = len(understat.UNDERSTAT_LEAGUES) + 1
+    calls = []
+
+    def fetch(method, league, year, *args, **kwargs):
+        assert method is understat.fetch_league_snapshot
+        calls.append((league, year))
+        # Only the first fixture's prior-season response is missing.
+        success = len(calls) != group_size
+        dates = [row] if (league, year) == ("EPL", season) else []
+        result = SimpleNamespace(is_success=success, value={"data": {"dates": dates}})
+        return result, [len(calls)] if success else []
+
+    monkeypatch.setattr(capture, "_fetch", fetch)
+    verified = {}
+    partial = capture._soccer_sources(event, target, verified)
+    assert len(partial["responses"]) == group_size - 1 and not verified
+    complete = capture._soccer_sources(event, target, verified)
+    assert complete["responses"] == list(range(group_size + 1, 2 * group_size + 1))
+    assert capture._soccer_sources(event, target, verified) == complete
+    assert len(calls) == 2 * group_size
+
+    other_event = capture._soccer_sources(event, {**target, "gamma_event_id": "second"}, verified)
+    assert other_event["responses"] == list(range(2 * group_size + 1, 3 * group_size + 1))
+    later = {**target, "event_start_at": (SOCCER_KICKOFF + timedelta(hours=1)).isoformat()}
+    assert capture._soccer_sources(event, later, verified) is None
+    assert capture._soccer_sources({"title": "Away versus Home"}, target, verified) is None
+    assert len(calls) == 5 * group_size
 
 
 class _ManagedFixture:

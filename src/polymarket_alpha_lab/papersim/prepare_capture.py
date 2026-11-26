@@ -250,19 +250,25 @@ class _Capture:
         return ({"candles": candles, "spot": spot[0], "window_start": start, "window_end": end}
                 if spot else None)
 
-    def _soccer_sources(self, event, target):
+    def _soccer_sources(self, event, target, fixture_sources):
         league = _soccer_scope(target["tag_slug"], event)
         if league is None:
             return None
         kickoff = inputs._utc(target["event_start_at"])
+        title = event.get("title")
+        fixture = league, target["gamma_event_id"], kickoff, title
+        if fixture in fixture_sources:
+            return fixture_sources[fixture]
         season = str(kickoff.year - (kickoff.month < 7))
         prior = xg.prior_season(season)
         self.target = {"league": league, "season": season}
+        complete = True
         if league in understat.UNDERSTAT_LEAGUES:
             current, sequences = [], []
             for block_league, year in [(name, season) for name in understat.UNDERSTAT_LEAGUES] + [(league, prior)]:
                 result, refs = self._fetch(understat.fetch_league_snapshot, block_league, year, None,
                                            now=acquire._now_utc())
+                complete = complete and result.is_success
                 sequences.extend(refs)
                 if (block_league, year) == (league, season) and result.is_success:
                     current = result.value["data"]["dates"]
@@ -274,6 +280,7 @@ class _Capture:
             current, sequences = [], []
             for year in (prior, season):
                 result, refs = self._fetch(sports.fetch_fotmob_inputs, {"league": choice, "season": year})
+                complete = complete and result.is_success
                 sequences.extend(refs)
                 if year == season and result.is_success:
                     first = result.evidence[0]
@@ -284,15 +291,17 @@ class _Capture:
                         for item in fotmob._parse_league_payload(journal.decode_public_json(first.raw_bytes), season)
                     ]
             provider = sports.SOURCE_KIND_FOTMOB
-        title = event.get("title")
         for row in current:
             if row["isResult"] or inputs._soccer_fixture_time(row["datetime"]) != kickoff:
                 continue
             home, away = row["h"]["title"], row["a"]["title"]
             if title in (f"{home} versus {away}", f"{home} vs. {away}", f"{home} vs {away}"):
-                return {"provider": provider, "league": league, "season": season, "fixture_id": str(row["id"]),
-                        "home_team_id": str(row["h"]["id"]), "away_team_id": str(row["a"]["id"]),
-                        "projection_binding": None, "responses": sequences}
+                sources = {"provider": provider, "league": league, "season": season, "fixture_id": str(row["id"]),
+                           "home_team_id": str(row["h"]["id"]), "away_team_id": str(row["a"]["id"]),
+                           "projection_binding": None, "responses": sequences}
+                if complete:
+                    fixture_sources[fixture] = sources
+                return sources
         return None
 
     def collect_models(self, markets, requests, budget):
@@ -304,7 +313,7 @@ class _Capture:
             rows.append({"sequence": attempt.sequence, "page": attempt.page, "request_meta": attempt.request_meta,
                          "content_sha256": inputs._digest(attempt.body) if attempt.fetched_at is not None else None})
         targets, _ = _targets(self.config, {"markets": list(markets.values()), "requests": rows}, entries)
-        cache = {}
+        crypto_sources, soccer_sources = {}, {}
         for _, (target, event, body) in sorted(targets.items()):
             condition = target["condition_id"]
             if condition in self.target_sources:
@@ -314,11 +323,11 @@ class _Capture:
                 rule = inputs._TERMINAL_RULE.fullmatch(_fold(body.get("description") or ""))
                 question = _QUESTION.fullmatch(_fold(body.get("question", "")))
                 key = (rule["venue"], question["asset"]) if rule and question else None
-                if key not in cache:
-                    cache[key] = self._crypto_sources(body)
-                self.target_sources[condition] = cache[key]
+                if key not in crypto_sources:
+                    crypto_sources[key] = self._crypto_sources(body)
+                self.target_sources[condition] = crypto_sources[key]
             elif kind in inputs._SOCCER_TYPES:
-                self.target_sources[condition] = self._soccer_sources(event, target)
+                self.target_sources[condition] = self._soccer_sources(event, target, soccer_sources)
 
     def seal(self, conn, scope, batch_sha, manifest, entries):
         existing = pg.read_command_run_event(conn, self.operation_key, 1, "SUCCEEDED")
