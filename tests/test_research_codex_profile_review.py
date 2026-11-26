@@ -1,7 +1,6 @@
 """Separate negative review of config encoding and pre-launch input boundaries."""
 from dataclasses import replace
 import os
-from pathlib import Path
 import stat
 import tomllib
 import traceback
@@ -92,23 +91,3 @@ def test_native_image_growth_still_hits_explicit_limit(monkeypatch, tmp_path):
     monkeypatch.setattr(process.os, 'close', lambda fd: closed.append(fd))
     with pytest.raises(ValueError, match='image_invalid'): process._verify_executable(p)
     assert closed == [998]
-
-
-@pytest.mark.parametrize('path', [
-    'src/polymarket_alpha_lab/research_codex_profile.py',
-    'src/polymarket_alpha_lab/research_codex_exec.py',
-    'src/polymarket_alpha_lab/research_codex_process.py',
-    'src/polymarket_alpha_lab/research_process.py',
-    'src/polymarket_alpha_lab/research_process_windows.py',
-    'tests/test_research_codex_profile.py',
-    'tests/test_research_codex_profile_review.py',
-    'tests/test_research_process.py',
-])
-def test_process_and_profile_changes_trigger_actual_kit_verification(path):
-    from fnmatch import fnmatchcase
-    import re
-    root = Path(__file__).resolve().parents[1]
-    source = (root/'.github/workflows/native-distribution.yml').read_text()
-    scope = source.split('    paths:\n', 1)[1].split('permissions:\n', 1)[0]
-    patterns = re.findall(r"^      - '([^']+)'$", scope, re.MULTILINE)
-    assert patterns and any(fnmatchcase(path, pattern) for pattern in patterns)

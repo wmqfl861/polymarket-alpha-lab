@@ -64,47 +64,26 @@ original intermittent defect. Source-faithful failing evidence is required befor
 choosing a runtime/environment repair; do not guess at certificate checks or
 module caches and disable them to obtain green.
 
-## Fixed CI experiment
+## Historical CI experiment
 
-`handoff-first-run.yml` declares three independent Windows runner jobs BEFORE
-execution, with fail-fast disabled so one failed trial does not erase the others.
-Each runs the original PS5.1 success test as its FIRST test-controlled PS5.1
-invocation, then the offline probe contracts and a deliberate negative timeout
-fixture. The latter enters its script and sleeps beyond the unchanged 30-second
-limit: the real TimeoutExpired must retain that first marker. This is an injected
-wait AFTER the first trial, not a reproduction or retry of the intermittent defect. They are not retries of a failure.
-No other test-controlled PS5.1 process is launched first. Runner provisioning and
-GitHub action internals are outside this assertion; this is not proof that the
-entire VM has never run PowerShell. Setup uses the same pinned actions and locked
-Python environment as the original native workflow, not a tweaked module path.
+The experiment used three independent Windows runners. Each ran the original
+first-invocation regression with the original timeout. Distinct JUnit artifacts
+recorded each trial. The observations and their limits are recorded below.
+Each runner ran the PS5.1 success test first, followed by the probe contracts
+and an injected timeout. The injected case kept the original 30-second limit
+and its first marker. It was separate from the intermittent failure. The
+native experiment covered the original 18 PS5.1/PS7 cases.
 
-Missing Windows test shells are errors when `PAL_REQUIRE_HANDOFF_SHELLS=1`;
-optional local shell testing otherwise retains its old skip behavior. The normal
-native workflow keeps all existing cases and its original timeout, and also
-requires shells. All original 18 PS5.1/PS7 cases still run there. Helper-only
-changes trigger that workflow as well as the three-trial experiment.
-
-Artifacts contain the synthetic log and JUnit, uploaded even on failure. Record
-all three trial outcomes, their run attempts, the exact head/tree and original
-native regression separately; never select only a successful trial or sum
-repeated test counts. Actions artifacts expire after seven days. Relevant fixed
-review summaries must be retained in GitHub, not described as a permanent Release.
-
-Local offline commands (not Windows execution evidence):
+The offline probe contracts and download tests can be run locally. Actual
+shell tests require Windows. Setting `PAL_REQUIRE_HANDOFF_SHELLS=1` makes a
+missing required shell an error.
 
 ```bash
 python -m pytest -q tests/test_handoff_process_probe.py tests/test_handoff_process_probe_review.py tests/test_handoff_download.py
 ```
 
-The real shell tests skip on non-Windows. This is test infrastructure, not a new
-application report, business persistence layer, user diagnostic script or service.
-No provider, database, credentials, real market call or installed kit is touched.
-
-Primary reference: https://docs.python.org/3/library/subprocess.html
-(`run`, `TimeoutExpired`, process-creation timeout caveat; checked 2026-09-16).
-
-JUnit property/family reference (checked 2026-09-16):
-https://docs.pytest.org/en/stable/_modules/_pytest/junitxml.html
+[Subprocess timeout behavior](https://docs.python.org/3/library/subprocess.html) ·
+[Pytest JUnit properties](https://docs.pytest.org/en/stable/_modules/_pytest/junitxml.html)
 
 ## Coordinator analysis of fixed historical logs, 2026-09-24; not a root-cause finding
 
@@ -207,27 +186,11 @@ older runs outside the window were not enumerated; log availability depends
 on GitHub retention; and no successful-run log was downloaded, as recorded in the
 caveats above.
 
-### Campaign decision: implemented, explicitly NOT executed
+### Campaign decision at the time
 
-Per the node plan's own provision ("if the bounded scan already finds usable
-source-faithful staged failure evidence, preserve and analyse it first; the
-campaign may remain explicitly unexecuted"), the predeclared 30-trial capture
-campaign is implemented and published but NOT dispatched. Campaign state:
-`implemented_not_executed`, 0 of 30 trials run, 0 runner-minutes spent.
-Spending its declared 300-minute budget now would only re-derive a frequency
-bound that existing evidence already provides; the owner may dispatch it
-manually in the future if an independent-trials frequency estimate is ever
-wanted:
-
-```bash
-gh workflow run handoff-first-run-campaign.yml --repo Lordakee/polymarket-alpha-lab --ref <retained-ref>
-```
-
-The deliberate one-shot design is unchanged: workflow_dispatch only;
-`if: github.run_attempt == 1` so UI reruns cannot silently extend the sample;
-fail-fast disabled; all trials retained; failures are the goal. The campaign
-ships with a read-only bounded JUnit summarizer (`tests/handoff_campaign_summary.py`
-and its focused test module) that never infers a root cause.
+The 30-trial campaign was prepared and never dispatched. It produced no
+additional observations. The bounded offline JUnit summarizer is
+`tests/handoff_campaign_summary.py`.
 
 ### Raw log availability
 

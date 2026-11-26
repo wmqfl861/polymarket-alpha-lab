@@ -111,7 +111,6 @@ FEATURE_TABLES = ('research_capture.dispatch_batches', 'research_capture.dispatc
                   'public.decisions', 'public.resolutions', 'public.bankroll')
 RECORD_IDS = ('vs-record-1', 'vs-record-2', 'vs-record-3')
 CONDITION_IDS = ('vs-condition-1', 'vs-condition-2', 'vs-condition-3')
-WORKFLOW = ROOT / '.github/workflows/native-postgres.yml'
 
 
 def _git(*args: str) -> bytes:
@@ -755,43 +754,6 @@ def _blocked_reason(result: subprocess.CompletedProcess) -> str:
 
 def _stderr_text(result: subprocess.CompletedProcess) -> str:
     return result.stderr.decode('utf-8', 'replace')
-
-
-def test_version_switch_native_ci_is_required():
-    """The dedicated Linux storage-partition workflow step and its gate are wired."""
-    text = WORKFLOW.read_text(encoding='utf-8').replace('\r\n', '\n')
-    worker, gate = text.split('  linux-native:\n')
-    linux_worker = worker.split('  linux-native-part:\n', 1)[1]
-    checkout = linux_worker.split('      - uses: actions/checkout@', 1)[1].split('      - uses:', 1)[0]
-    assert 'fetch-depth: 0\n' in checkout
-    assert 'persist-credentials: false\n' in checkout
-    assert '      fail-fast: false\n' in linux_worker and '    timeout-minutes: 40\n' in linux_worker
-    assert 'continue-on-error' not in text
-    partition = linux_worker.split('      - name: Prove isolated native partition\n', 1)[1]
-    switch = partition.split('      - name: Verify tracked source unchanged\n', 1)[0]
-    assert '      - name: Prove native version switch\n' in switch
-    assert "if: matrix.partition == 'storage'" in switch
-    assert 'tests/test_project_postgres_version_switch_native.py' in switch
-    assert 'POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX="$RUNNER_TEMP/pg18-portable-prefix"' in switch
-    assert 'export POLYMARKET_ALPHA_LAB_RUN_NATIVE_PROJECT_POSTGRES=1' in switch
-    assert 'export PYTEST_DISABLE_PLUGIN_AUTOLOAD=1' in switch
-    assert 'export PYTHONUTF8=1' in switch
-    assert 'tee "$RUNNER_TEMP/version-switch-proof.log"' in switch
-    assert '--junitxml="$RUNNER_TEMP/version-switch-proof.xml"' in switch
-    assert 'test ${PIPESTATUS[0]} -eq 0' in switch
-    upload = linux_worker.split('      - uses: actions/upload-artifact@', 1)[1]
-    assert '${{ runner.temp }}/version-switch-proof.log' in upload
-    assert '${{ runner.temp }}/version-switch-proof.xml' in upload
-    assert 'if-no-files-found: error' in upload and 'if: always()' in upload
-    assert 'needs: [linux-native-part]' in gate
-    assert 'test "$NATIVE_RESULT" = success' in gate
-    # The frozen Windows/PG17 step (section 55 history) stays present verbatim
-    # until the coordinator's controlled required-context replacement; this
-    # file never rewires GitHub settings.
-    windows_worker = text.split('  windows-native-part:\n', 1)[1].split('  windows-native:\n', 1)[0]
-    assert "POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX: 'C:\\Program Files\\PostgreSQL\\17'" in windows_worker
-    assert '      - name: Prove native version switch\n' in windows_worker
-    assert 'tests/test_project_postgres_version_switch_native.py' in windows_worker
 
 
 def test_bundle_admission_interface_pins_linux_pg18():

@@ -2,14 +2,11 @@
 import json
 import re
 import shutil
-from pathlib import Path
 
 import pytest
 
 from tests import handoff_campaign_summary as summary
 
-ROOT = Path(__file__).resolve().parents[1]
-CAMPAIGN_WORKFLOW = ROOT / '.github/workflows/handoff-first-run-campaign.yml'
 TARGET_CLASSNAME = summary.TARGET_CLASSNAME
 TARGET_NAME = summary.TARGET_NAME
 RUN = 8831702501
@@ -381,58 +378,3 @@ def test_run_identity_is_mixed_when_run_numbers_differ(tmp_path):
     code, text = run_summary(tmp_path, base)
     assert code == 0
     assert '- run identity: mixed/unknown' in text
-
-
-def campaign_source():
-    return CAMPAIGN_WORKFLOW.read_text(encoding='utf-8')
-
-
-def test_campaign_workflow_is_manual_dispatch_only():
-    source = campaign_source()
-    assert 'workflow_dispatch' in source
-    assert 'push:' not in source
-    assert 'pull_request:' not in source
-    assert 'schedule:' not in source
-
-
-def test_campaign_workflow_timeboxes_capture_and_summary():
-    source = campaign_source()
-    capture = source.split('  capture:', 1)[1].split('  summary:', 1)[0]
-    summary_job = source.split('  summary:', 1)[1]
-    assert 'timeout-minutes: 10' in capture
-    assert 'timeout-minutes: 5' in summary_job
-    assert source.count('timeout-minutes: 10') == 1
-    assert source.count('timeout-minutes: 5') == 1
-
-
-def test_campaign_workflow_runs_30_parallel_first_attempt_trials():
-    source = campaign_source()
-    match = re.search(r'trial:\s*\[([0-9,\s]+)\]', source)
-    assert match is not None
-    numbers = [int(item) for item in match[1].split(',') if item.strip()]
-    assert numbers == list(range(1, 31))
-    assert 'max-parallel: 6' in source
-    assert 'fail-fast: false' in source
-    assert 'if: ${{ github.run_attempt == 1 }}' in source
-    assert 'retention-days: 30' in source
-    capture = source.split('  capture:', 1)[1].split('  summary:', 1)[0]
-    assert 'if: ${{ github.run_attempt == 1 }}' in capture
-    assert 'runs-on: windows-2025' in capture
-
-
-def test_campaign_workflow_pins_action_shas():
-    source = campaign_source()
-    for pinned in ('actions/checkout@11d5960a326750d5838078e36cf38b85af677262',
-                   'astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e',
-                   'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02',
-                   'actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093'):
-        assert pinned in source
-
-
-def test_campaign_workflow_orders_target_first_and_calls_summary_cli():
-    source = campaign_source()
-    target = 'test_real_powershell_download_publication[success-powershell.exe]'
-    assert source.find(target) != -1
-    assert source.find(target) < source.find('tests/test_handoff_process_probe.py')
-    assert 'tests/handoff_campaign_summary.py' in source
-    assert '--artifacts' in source and '--markdown' in source

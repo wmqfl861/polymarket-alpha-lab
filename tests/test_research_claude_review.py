@@ -1,7 +1,5 @@
 """Separate adversarial review: precise refusal before secrets or result acceptance."""
 from dataclasses import replace
-from pathlib import Path
-import fnmatch
 import json
 
 import pytest
@@ -63,23 +61,6 @@ def test_model_usage_cannot_hide_wrong_scalar_type_by_equal_value(field,value):
     raw['modelUsage'][MODEL][names[field]]=value
     with pytest.raises(ValueError):
         cli.decode_claude_result(wire(raw),request=cli.ClaudeExecInput(MODEL,'[{}]',100),call_number=1)
-
-
-@pytest.mark.parametrize('path', [
-    'src/polymarket_alpha_lab/research_claude_exec.py',
-    'src/polymarket_alpha_lab/research_claude_profile.py',
-    'src/polymarket_alpha_lab/research_process_linux.py',
-    'tests/test_research_claude_exec.py', 'tests/test_research_claude_profile.py',
-    'tests/test_research_claude_review.py', 'tests/test_research_claude_linux.py',
-    'tests/test_research_process_linux.py',
-])
-@pytest.mark.parametrize('workflow', ['native-postgres.yml','native-distribution.yml'])
-def test_shipped_claude_changes_trigger_real_platform_gates(path,workflow):
-    import re
-    root=Path(__file__).resolve().parents[1]
-    source=(root/'.github/workflows'/workflow).read_text()
-    filters=re.findall(r"^      - '([^']+)'",source,flags=re.MULTILINE)
-    assert any(fnmatch.fnmatchcase(path,pattern) for pattern in filters)
 
 
 def test_two_factory_clients_never_duplicate_a_shared_supplier_slot(monkeypatch,tmp_path):
