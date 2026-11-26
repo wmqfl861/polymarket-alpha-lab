@@ -4746,6 +4746,8 @@ FX-55 已在 `187019691479746272c47a2fbebd5fe4a13defb7` 合入。足球新闻输
 
 17:33 UTC，独立核对原暂存树和封存件，574 份源码全部一致，89 份编译缓存完全一致，485 份的载荷发生变化。原树已保留。另建候选时，前一次 Windows PowerShell 缺少显式加载的压缩组件，后续两次停在依赖目录的权限检查。18:00:53 UTC 的读回显示，6,493 条额外写权限均授予 Windows 的 `OWNER RIGHTS`，相关对象的所有者是 SYSTEM 或 Administrators。现场尚缺原绑定账户普通令牌的有效权限读回。[逐项数量、时间和现场回执摘要](docs/paper-sim/design/fx-49/2026-11-26-windows-staging-integrity.json)
 
+18:34 UTC，Windows 确认中断前传入的公开清单已完整落盘。首次准备退出 1。独立读回 18 个控制台入口，各自与封存 pip 的生成结果一致，原校验使用了基类模板。修正参考摘要后，18:47:26 UTC 的现场准备通过。10,410 个公开文件在权限调整前后逐一核对一致，574 份源码与 574 份编译缓存均命中封存件。18:48:27 UTC 安装工具选定新候选，旧副本已保留。正式安装等待原绑定账户取得普通交互令牌，六项现场演练为 0/6，固定入口自然投递为 0 次。[Windows 准备、选定与原始回执摘要](docs/paper-sim/design/fx-49/2026-11-26-windows-protected-candidate.json)
+
 #### 84.2.5 历史优化卡
 
 原运行提交 `e234c3364c204db513cc4fbcdcb6d5eb43c7417b`，种子 `20261120`，规则 v1。原档 88,845 字节，登记 SHA-256 为 `03c616e1d94efe5e3a7879e3277645b5d60e4e407bdef6e9d31d9f7eb3366ad5`。卡片按原登记保留，操作员原件的本轮核对另记。
@@ -5035,3 +5037,5 @@ OD-Y 按推荐执行。FX-48 先登记运行版本、定时状态和研究与账
 11 月 26 日 10:05 UTC，官方逐事件字段确认不来梅对门兴一场有 9 个全场总进球盘口。`74f5a80b` 保留可核对的 50-50 特殊兑付和未绑定原因。10:19 UTC，另一份官方响应中有 11 个以太坊终值合约，`01bc86f0` 与旧版用同一份原件核对条款和分钟收盘时钟，分别通过 11 个和 0 个。现有材料仍缺与真实候选绑定、在决策前收到的新闻核对，以及该次正式采集的买入侧原簿。OD-P 的正式生效登记仍待办理，并跑为 0/7 个合格 UTC 日。[德甲赛程与兑付](docs/paper-sim/design/fx-44/2026-11-26-bundesliga-returned-events.json) · [以太坊来源、时钟和模拟入场条件](docs/paper-sim/design/fx-44/2026-11-26-terminal-contract-clock-and-entry.json)
 
 11 月 26 日 15:20–15:31 UTC，两笔公开市场观察取得八份原始响应，已在隔离的项目 PostgreSQL 重启后逐字节复核。11 月 27 日 ETH 到期合约的 YES 和 NO 原簿都早于收盘窗口，缺少原 B1 决策的买入方向。诺丁汉森林对切尔西的开球和三种胜平负条款得到两份官方赛事响应的交叉确认；三种题面都未通过现行足球构造器，主胜两侧原簿也都早于窗口。两次观察新增标准 C 有价行和合格并跑日均为零。[ETH 原件摘要](docs/paper-sim/design/fx-44/2026-11-26-eth-directed-books.json) · [ETH 独立读回](docs/paper-sim/design/fx-44/2026-11-26-eth-directed-books-readback.json) · [英超原件摘要](docs/paper-sim/design/fx-44/2026-11-26-epl-directed-books.json) · [英超独立读回](docs/paper-sim/design/fx-44/2026-11-26-epl-directed-books-readback.json)
+
+`455596de` 合入了研究盘口时效的事前登记入口。该入口按来源时刻和实际收妥时刻分别核对限额，两项秒数及其适用的团队、实例、区间须与事前原件一致。59 个离线用例、3 个隔离 PostgreSQL 用例通过。18:37 UTC，保存 ETH 和英超观察的研究库中有 12 份原始快照，适用政策、D1 区间登记和取价槽回执均为 0。合格并跑日仍为 0/7，四组历史案例原件仍为 0/4。[登记与回归回执](docs/paper-sim/design/fx-44/2026-11-26-book-age-registration.json) · [研究库存读回](docs/paper-sim/design/fx-44/2026-11-26-book-age-policy-custody.json)

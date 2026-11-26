@@ -1,0 +1,137 @@
+{
+  "scope": "FX-49 inactive Windows installation candidate, protected preparation and independent directory selection",
+  "registered_script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "public_staging_only": true,
+  "interrupted_transfer": {
+    "original_last_phase": "index_file_write_requested",
+    "preparation_requests_before_readback": 0,
+    "readback_utc": "2026-11-26T18:34:20+00:00",
+    "protected_index_sha256": "3b52a8f3e3328751e3c4feb2f86713b8bf36fb3bdb717786a06f6dd524e3c982",
+    "index_present_and_verified": true,
+    "index_reuploads": 0
+  },
+  "first_preparation": {
+    "ended_utc": "2026-11-26T18:36:08+00:00",
+    "exit_code": 1,
+    "reason": "generated_console_wrapper_differs"
+  },
+  "independent_wheel_readback": {
+    "observed_utc": "2026-11-26T18:41:55+00:00",
+    "locked_installer": "pip 26.2.2",
+    "wheel_console_entry_points": 18,
+    "possible_paths": 36,
+    "explanation": "The locked pip installer subclasses the vendored script maker and supplies its own entry point template. The earlier reference used the base class template. The alternate directory layouts account for 18 absent paths.",
+    "facts": {
+      "matching_run": 1,
+      "observed": 18,
+      "missing": 18,
+      "stub": 18,
+      "zip_signature": 18,
+      "zip_exact_length": 0,
+      "timestamps_equal": 18,
+      "normalized_zip_hash": 0,
+      "pip_tail_length": 18,
+      "pip_tail_hash": 18,
+      "quoted_lf": 18,
+      "quoted_crlf": 0,
+      "plain_lf": 0,
+      "plain_crlf": 0,
+      "other_line": 0,
+      "win_created_zip": 18
+    }
+  },
+  "independent_linux_checks": {
+    "upstream_generator_matches": 108,
+    "negative_cases_rejected": 6,
+    "files_independently_materialized": 10410,
+    "portable_cases_passed": 9,
+    "preparation_script_only_changed_embedded_console_rules": true
+  },
+  "windows_preparation": {
+    "phase": "PrepareSeparateVerifiedCandidate",
+    "started_utc": "2026-11-26T18:45:00+00:00",
+    "software_script_sha256": "e35b69a39807c56d5bf964e8f79bdf277442c71c6d759eccc9e889051d02072b",
+    "archive_sha256": "4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb",
+    "production_switched": false,
+    "natural_deliveries": 0,
+    "status": "separate_candidate_verified",
+    "public_index_sha256": "3b52a8f3e3328751e3c4feb2f86713b8bf36fb3bdb717786a06f6dd524e3c982",
+    "public_index_bytes": 1591546,
+    "file_write_requests": 1,
+    "preparation_requests": 1,
+    "public_index_readback": true,
+    "protected_script_readback": true,
+    "exit_code": 0,
+    "observed": {
+      "prepared": true,
+      "archive_sha256": "4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb",
+      "sealed_members": 4794,
+      "wheel_hashes": 83,
+      "fixed_script_hash": true,
+      "relay_hash": true,
+      "hermes_hash": true,
+      "runtime_exe_hash": true,
+      "runtime_dll_hash": true,
+      "source_hashes": 574,
+      "cache_hashes": 574,
+      "acl_and_paths_verified": true,
+      "single_new_candidate": true,
+      "public_index_sha256": "3b52a8f3e3328751e3c4feb2f86713b8bf36fb3bdb717786a06f6dd524e3c982",
+      "public_hashes_before": 10410,
+      "public_hashes_after": 10410,
+      "verified_wheel_derivations_unchanged": true,
+      "bound_user_read_execute_only": true,
+      "security_changed_only_on_site_packages": true
+    },
+    "ended_utc": "2026-11-26T18:47:26+00:00"
+  },
+  "windows_selection": {
+    "phase": "SelectVerifiedPublicStaging",
+    "started_utc": "2026-11-26T18:47:40+00:00",
+    "status": "selected_previous_tree_retained",
+    "software_script_sha256": "5badc0cb517e98464ee7787ccbcfd8e64c5708d53fbda776c47f51dfceb83fd0",
+    "verified_candidate_receipt": "field-VerifiedCandidate-v5.json",
+    "verified_candidate_receipt_sha256": "d77f184963d0d597b1d71c906f7cf5ca012868a533cacbf41f90380b6e042402",
+    "production_switched": false,
+    "natural_deliveries": 0,
+    "protected_script_readback": true,
+    "exit_code": 0,
+    "observed": {
+      "selected": true,
+      "archive_sha256": "4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb",
+      "new_source_hashes": 574,
+      "new_cache_hashes": 574,
+      "previous_source_hashes": 574,
+      "previous_exact_cache": 89,
+      "previous_changed_payload": 485,
+      "previous_archive_verified": true,
+      "fixed_software_verified": true,
+      "paths_acl_verified": true,
+      "staging_only": true,
+      "previous_site_package_objects": 6493,
+      "previous_site_package_unsafe_acl": 6493
+    },
+    "ended_utc": "2026-11-26T18:48:27+00:00"
+  },
+  "ordinary_account_readback": {
+    "observed_utc": "2026-11-26T18:50:36+00:00",
+    "facts": {
+      "account_seen": true,
+      "newer_interactive_logon": false,
+      "all_queries_completed": true
+    }
+  },
+  "windows_six_completed": 0,
+  "verified_natural_deliveries": 0,
+  "server_fixed_checkout": null,
+  "production_switched": false,
+  "next": "The next normal interactive logon for the original account must supply a verified standard token. A protected installation, six Windows substitute cases and one scheduled natural delivery follow in order.",
+  "original_sha256": {
+    "field-VerifiedCandidate-v4.json": "66b1acfd7440bf4d41b840d76e75d6c9bacf8a6608a96f00dd55848dd5eb3ff4",
+    "field-VerifiedCandidate-v4-interrupted-readback.json": "1410525ae2787e221258c3af5740315eb94e929d016b1ee67e58b8c64ca6726f",
+    "field-VerifiedCandidate-v4-completion.json": "f886c2d647b21af3ece50168c42e5b0252589b9c302bf67a5e3281a3b86ebd46",
+    "field-v4-wrapper-facts.json": "8b939f5892bf1b0d1f55813f77280b60ccf5ed9e520ef8ad90cdbf703c83bfad",
+    "field-VerifiedCandidate-v5.json": "d77f184963d0d597b1d71c906f7cf5ca012868a533cacbf41f90380b6e042402",
+    "field-SelectedCandidate.json": "7b5aad61093da2d2fdfd19319afce86bec8692259659ce732a5c0b593cc97c99"
+  }
+}
