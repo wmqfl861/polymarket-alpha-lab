@@ -63,7 +63,7 @@ def _capture_event(connection, document: dict, batch: str) -> dict:
     """Verify the public writer's event in this managed instance."""
     scope = document["scope"]
     scope_sha = snapshots.snapshot_content_sha256(acquire._canonical(scope))
-    operation = f"{acquire._OPERATION_PREFIX}:{scope_sha}"
+    operation = acquire.discovery_operation_key(scope)
     key = store.command_run_event_key(operation, 1, "SUCCEEDED")
     row = connection.execute(
         f"SELECT operation_key, {_EVENT_FIELDS} FROM papersim.command_run_events WHERE run_event_key = %s",
@@ -125,6 +125,8 @@ def _source_scalar(value: object):
 
 def _gamma_observations(request: dict, body: journal.JournalEntry,
                         cutoff: datetime | None) -> tuple[dict, list[dict]]:
+    if request.get("reason_code") == acquire.GAMMA_PAGE_SIZE_EXCEEDED:
+        return {"request_sequence": request["sequence"], "page_status": "page_size_exceeded", "events": []}, []
     indexed = journal.gamma_page_index(body.content)
     result = {"request_sequence": request["sequence"], "page_status": "unparseable", "events": []}
     if indexed is None:

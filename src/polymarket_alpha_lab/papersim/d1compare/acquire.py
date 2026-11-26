@@ -58,6 +58,7 @@ _BINDING_ISSUE_ORDER = (
 _GAMMA_TRANSPORT_FAILURES = {
     "public_tls_failed", "public_response_too_large", "public_response_invalid", "public_http_rejected",
 }
+GAMMA_PAGE_SIZE_EXCEEDED = "public_gamma_page_size_exceeded"
 
 
 class AcquisitionError(ValueError):
@@ -347,7 +348,8 @@ def _gamma_ineligible(payload: dict, end_at: datetime, fetched_at: datetime) -> 
     return None
 
 
-def _discovery(tag: str, budget: contracts.FetchBudget, transport: _Transport) -> tuple[dict, tuple]:
+def _discovery(tag: str, budget: contracts.FetchBudget, transport: _Transport, *,
+               page_size: int = polymarket.GAMMA_EVENTS_PAGE_LIMIT) -> tuple[dict, tuple]:
     """Page with the existing A1 limits and retain gaps without losing later offsets."""
     query = polymarket.DiscoveryQuery(tag)
     offset = len(transport.requests)
@@ -366,7 +368,7 @@ def _discovery(tag: str, budget: contracts.FetchBudget, transport: _Transport) -
             break
         url = polymarket.GAMMA_EVENTS_URL + "?" + urlencode({
             "tag_slug": tag, "closed": "true" if query.closed else "false",
-            "limit": polymarket.GAMMA_EVENTS_PAGE_LIMIT, "offset": number * polymarket.GAMMA_EVENTS_PAGE_LIMIT,
+            "limit": page_size, "offset": number * page_size,
         })
         page_offset = len(transport.requests)
         try:
@@ -395,6 +397,13 @@ def _discovery(tag: str, budget: contracts.FetchBudget, transport: _Transport) -
         except journal.JournalError as error:
             page = None
             attempt.reason_code = error.code
+        if page_size < polymarket.GAMMA_EVENTS_PAGE_LIMIT and isinstance(page, list) and len(page) > page_size:
+            # Keep the original body and receipt. Its offsets cannot support
+            # indexing contracts or establishing this tag's coverage.
+            attempt.reason_code = reason = GAMMA_PAGE_SIZE_EXCEEDED
+            status = contracts.AdapterStatus.UPSTREAM_ERROR
+            stopped = status.value
+            break
         attempt.page = journal._gamma_page_index(page)
         if not isinstance(page, list):
             attempt.reason_code = "public_payload_invalid"
@@ -687,7 +696,8 @@ def _collect(connection, scope: dict, started_at: datetime,
     markets: dict[str, dict] = {}
     for tag in scope["tag_slugs"]:
         offset = len(transport.requests)
-        discovery, accepted = _discovery(tag, budget, transport)
+        discovery, accepted = _discovery(
+            tag, budget, transport, page_size=scope.get("gamma_page_size", polymarket.GAMMA_EVENTS_PAGE_LIMIT))
         discoveries.append(discovery)
         attempts = transport.requests[offset:]
         _add_markets(markets, accepted, discovery["rejections"], attempts)
@@ -931,7 +941,18 @@ def _summary(document: dict, digest: str, *, reused: bool, occurred_at: datetime
     }
 
 
-def discovery_scope(window_start: datetime, window_end: datetime, tag_slugs: Sequence[str]) -> dict:
+def valid_gamma_page_size(value: object) -> bool:
+    return type(value) is int and 1 <= value <= polymarket.GAMMA_EVENTS_PAGE_LIMIT
+
+
+def discovery_operation_key(scope: dict) -> str:
+    """One capture per UTC window and tag set, irrespective of the chosen page size."""
+    identity = {key: value for key, value in scope.items() if key != "gamma_page_size"}
+    return f"{_OPERATION_PREFIX}:{_digest(_canonical(identity))}"
+
+
+def discovery_scope(window_start: datetime, window_end: datetime, tag_slugs: Sequence[str],
+                    *, gamma_page_size: int | None = None) -> dict:
     start, end = _utc(window_start), _utc(window_end)
     if start >= end:
         raise AcquisitionError("d1_capture_window_invalid")
@@ -941,7 +962,13 @@ def discovery_scope(window_start: datetime, window_end: datetime, tag_slugs: Seq
         tags = sorted({polymarket.DiscoveryQuery(tag).tag_slug for tag in tag_slugs})
     except ValueError:
         raise AcquisitionError("d1_capture_tags_invalid") from None
-    return {"window_start": _stamp(start), "window_end": _stamp(end), "tag_slugs": tags}
+    scope = {"window_start": _stamp(start), "window_end": _stamp(end), "tag_slugs": tags}
+    if gamma_page_size is not None:
+        if not valid_gamma_page_size(gamma_page_size):
+            raise AcquisitionError("d1_capture_gamma_page_size_invalid")
+        if gamma_page_size != polymarket.GAMMA_EVENTS_PAGE_LIMIT:
+            scope["gamma_page_size"] = gamma_page_size
+    return scope
 
 
 def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datetime,
@@ -957,10 +984,13 @@ def capture_inputs(*, repo_root: Path, window_start: datetime, window_end: datet
             contracts.require_public_fetch(allow_public_fetch)
         except (contracts.FetchPermissionError, ValueError):
             raise AcquisitionError("public_fetch_not_allowed") from None
-    scope = discovery_scope(window_start, window_end, tag_slugs)
+    page_size = _preparation.scope.get("gamma_page_size") if _preparation is not None else None
+    scope = discovery_scope(window_start, window_end, tag_slugs, gamma_page_size=page_size)
+    if _preparation is not None and scope != _preparation.scope:
+        raise AcquisitionError("d1_capture_preparation_scope_invalid")
     start, end = (_utc(window_start), _utc(window_end))
     scope_sha = _digest(_canonical(scope))
-    operation_key = f"{_OPERATION_PREFIX}:{scope_sha}"
+    operation_key = discovery_operation_key(scope)
     sealed_key = store.command_run_event_key(operation_key, 1, "SUCCEEDED")
     with _managed(repo_root) as connection, connection.transaction():
         cursor = connection.cursor()

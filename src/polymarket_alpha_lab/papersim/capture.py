@@ -548,7 +548,7 @@ def _d1_book_sources(conn, slot) -> _D1BookSources:
     except (KeyError, TypeError, ValueError) as error:
         raise CaptureError("d1_capture_manifest_invalid") from error
     receipt = store_psycopg.read_command_run_event(
-        conn, f"{acquire._OPERATION_PREFIX}:{scope_sha}", 1, "SUCCEEDED")
+        conn, acquire.discovery_operation_key(scope), 1, "SUCCEEDED")
     if (manifest["capture_version"] != 2 or window_status != "sealed_inside"
             or not (start <= started <= cutoff == sealed < end)
             or receipt is None or receipt["command"] != "capture-inputs"

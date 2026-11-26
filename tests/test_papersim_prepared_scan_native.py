@@ -79,6 +79,8 @@ def _drive_capture():
             if parsed.path == "/events" and query["tag_slug"] == [fixture["tag"]]:
                 body = ([{"id": "fx40-fixture-event", "title": fixture["title"], "markets": fixture["markets"]}]
                         if query["offset"] == ["0"] else [])
+                if fixture.get("overreturn_gamma_page"):
+                    body = body * 2
             elif parsed.path == "/book":
                 token, = query["token_id"]
                 body = fixture["books"][token]
@@ -203,7 +205,8 @@ def _ref(row):
     return {key: row[source] for key, source in (("sha256", "content_sha256"), ("byte_length", "byte_length"))}
 
 
-def _capture_setup(project, name, *, news=True, rules=True, cash=None, tag="crypto", unbound=False, fotmob_clock=None):
+def _capture_setup(project, name, *, news=True, rules=True, cash=None, tag="crypto", unbound=False,
+                   fotmob_clock=None, gamma_page_size=None, overreturn_gamma_page=False):
     directory = project.temporary / name
     directory.mkdir()
     soccer = tag in ("epl", "championship")
@@ -260,6 +263,7 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None, tag="cryp
         markets = [{"question": question}]
     raw = _d1_json_path(directory, "capture-fixture.json", {
         "tag": tag, "title": title, "markets": markets, "books": books,
+        "overreturn_gamma_page": overreturn_gamma_page,
         "season": str(opening.year - (opening.month < 7)),
         "fotmob_kickoff": f"{opening.date()}T{fotmob_clock}" if fotmob_clock else None,
     })
@@ -295,6 +299,8 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None, tag="cryp
     argv = [str(raw), str(path), "capture-inputs", "--repo-root", str(project.root),
             "--tag-slug", tag, "--window-start", start.isoformat(), "--window-end", end.isoformat(),
             "--prepare-config", str(config)]
+    if gamma_page_size is not None:
+        argv.extend(["--gamma-page-size", str(gamma_page_size)])
     code = ("from tests.test_papersim_prepared_scan_native import _drive_capture; _drive_capture()")
     remaining = (start - datetime.now(UTC)).total_seconds()
     if remaining > 0:

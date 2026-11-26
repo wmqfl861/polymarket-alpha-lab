@@ -395,12 +395,12 @@ def _summary(conn, key, receipt, batch_sha, config_bytes):
 
 
 def capture_preparation_inputs(*, repo_root: Path, config_bytes: bytes, window_start, window_end,
-                               tag_slugs, allow_public_fetch: bool) -> dict:
+                               tag_slugs, allow_public_fetch: bool, gamma_page_size: int | None = None) -> dict:
     """Seal a separately identified input set for the managed capture window."""
     config = inputs._scan_configuration(config_bytes)
     if not any(not queue.pack for queue in config.queues):
         raise prepare.PreparationError("papersim_prepare_queue_scope_invalid")
-    scope = acquire.discovery_scope(window_start, window_end, tag_slugs)
+    scope = acquire.discovery_scope(window_start, window_end, tag_slugs, gamma_page_size=gamma_page_size)
     key = inputs.input_set_operation_key(inputs._digest(config_bytes), scope)
     try:
         with closing(pg.connect_managed(repo_root)) as conn:
