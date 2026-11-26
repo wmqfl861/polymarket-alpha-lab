@@ -372,6 +372,46 @@ def classify_observation(mark_kind: str, observed_at: datetime.datetime,
     return ("CLOSE", None)
 
 
+def _classify_odp_observation(
+    mark_kind: str,
+    observed_at: datetime.datetime,
+    event_start_at: datetime.datetime | None,
+    *,
+    received_at: datetime.datetime | None = None,
+) -> tuple[str, str | None]:
+    """Classify a request using the approved OD-P close window."""
+    if mark_kind == "PERIODIC":
+        return ("PERIODIC", None)
+    if mark_kind != "CLOSE":
+        raise ValueError("unsupported OD-P mark kind")
+    if event_start_at is None or event_start_at.utcoffset() is None:
+        return ("PERIODIC", DOWNGRADE_MISSING_EVENT_START)
+    if observed_at.utcoffset() is None:
+        raise ValueError("observed_at must be timezone-aware")
+
+    utc = datetime.timezone.utc
+    observed_utc = observed_at.astimezone(utc)
+    start_utc = event_start_at.astimezone(utc)
+    received_late = False
+    if received_at is not None:
+        if received_at.utcoffset() is None:
+            raise ValueError("received_at must be timezone-aware")
+        received_utc = received_at.astimezone(utc)
+        if received_utc < observed_utc:
+            raise ValueError("received_at precedes observed_at")
+        received_late = received_utc >= start_utc
+
+    if observed_utc >= start_utc:
+        return ("PERIODIC", DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)
+    if start_utc - observed_utc > datetime.timedelta(minutes=60):
+        if received_late:
+            raise ValueError("OD-P classification is undefined for this early and late pair")
+        return ("PERIODIC", "observed_at_before_close_window")
+    if received_late:
+        return ("PERIODIC", "received_at_after_event_start")
+    return ("CLOSE", None)
+
+
 def _snapshot_citation(observation: MarkObservation, pack_snapshot_sha256: str) -> str:
     return observation.snapshot_sha256 or pack_snapshot_sha256
 
