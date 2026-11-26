@@ -1,0 +1,120 @@
+{
+  "scope": "Field checks on inactive Windows installation materials before the ordinary-account rehearsal. All times are UTC.",
+  "intended_deployment_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+  "sealed_media_sha256": "4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb",
+  "original_prepared_tree": {
+    "started_utc": "2026-11-26T17:33:27+00:00",
+    "finished_utc": "2026-11-26T17:33:37+00:00",
+    "observation": {
+      "archive_pinned": true,
+      "complete": true,
+      "pairs": 574,
+      "sources_exact": 574,
+      "sources_changed": 0,
+      "sources_missing": 0,
+      "unsafe_paths": 0,
+      "exact_cache": 89,
+      "timestamp_only": 0,
+      "pep552_header_only": 0,
+      "marshal_changed": 485,
+      "unsupported_magic_or_flags": 0,
+      "invalid_source_size": 0,
+      "truncated_cache": 0,
+      "missing_cache": 0
+    },
+    "all_full_file_hashes_match": false
+  },
+  "new_preparation_attempts": [
+    {
+      "started_utc": "2026-11-26T17:43:45+00:00",
+      "ended_utc": "2026-11-26T17:43:53+00:00",
+      "software_script_sha256": "f6c02d5ac6ea1e89eb80c5b449d057ead80bbe6e01c776ec7f6dea7c5e2ec5cb",
+      "protected_script_readback": true,
+      "exit_code": 1,
+      "reason": "precondition"
+    },
+    {
+      "started_utc": "2026-11-26T17:48:27+00:00",
+      "ended_utc": "2026-11-26T17:49:03+00:00",
+      "software_script_sha256": "a47553e622fb31f0e2a058b26e9bdd0b3b75b8bf99b90001430e0134c5f8bb04",
+      "protected_script_readback": true,
+      "exit_code": 1,
+      "reason": "unsafe_acl"
+    },
+    {
+      "started_utc": "2026-11-26T17:56:05+00:00",
+      "ended_utc": "2026-11-26T17:56:53+00:00",
+      "software_script_sha256": "a9b3ce4b304eb4007f64e86c63beff83ceead3f80492d9f4c4f3de789c7ad6fb",
+      "protected_script_readback": true,
+      "exit_code": 1,
+      "reason": "unsafe_acl"
+    }
+  ],
+  "first_attempt_field_diagnosis": {
+    "windows5": true,
+    "process_policy": true,
+    "roots_accessors": true,
+    "seed_counts": true,
+    "sealed_media_digest": true,
+    "file_system_assembly": true,
+    "archive_type_before_explicit_compression": false,
+    "archive_open_before_explicit_compression": false,
+    "compression_assembly": true,
+    "archive_open_after_explicit_compression": true,
+    "no_completed_candidate": true,
+    "no_production": true
+  },
+  "second_attempt_field_diagnosis": {
+    "all_measured_non_dependency_paths_with_extra_write_aces": 0,
+    "dependency_objects": 6494,
+    "dependency_objects_with_extra_write_aces": 6493
+  },
+  "third_attempt_field_diagnosis": {
+    "observed_utc": "2026-11-26T18:00:53+00:00",
+    "scope": "only metadata for the third inactive dependency tree",
+    "windows_writes": 0,
+    "facts": {
+      "complete": true,
+      "objects": 6494,
+      "objects_with_extra_write_ace": 6493,
+      "owner_rights_write_aces": 6493,
+      "other_extra_write_aces": 0,
+      "explicit_extra_write_aces": 185,
+      "inherited_extra_write_aces": 6308,
+      "non_admin_or_system_owners": 0,
+      "reparse": 0
+    }
+  },
+  "public_source": {
+    "url": "https://raw.githubusercontent.com/python/cpython/v3.14.9/Modules/posixmodule.c",
+    "sha256": "7ce1b63d0a59122fc768a0a7790c2f51ffc30d5a5881e1e35ec517c598af378e",
+    "line": 5761,
+    "target_pip": "26.2.2"
+  },
+  "interpretation": "The additional write entries address OWNER RIGHTS. All observed owners were SYSTEM or Administrators. This entry is not a direct grant to the bound account. Effective access for its ordinary token still requires field verification.",
+  "original_account_logon_observation": {
+    "observed_utc": "2026-11-26T18:09:37+00:00",
+    "facts": {
+      "account_seen": true,
+      "newer_interactive_logon": false,
+      "all_queries_completed": true
+    }
+  },
+  "windows_acceptance": {
+    "originals_preserved": true,
+    "actual_substitute_cases_passed": 0,
+    "cases_required": 6,
+    "accepted_natural_deliveries": 0,
+    "deployed_server_checkout": null
+  },
+  "source_receipts": {
+    "protected-readback/field-prepared-pyc.json": "7783e47a74ab887b0313ae59fe81ecdc743720e506b1dd39ba71212e925e6b4f",
+    "field-VerifiedCandidate.json": "6a1f0ddb3877ba7ba19804c83f276e7b4fc491717b3365642971098f1a4d3c35",
+    "field-CandidatePreconditions.json": "9239b2b6a3ce95e1c725981fe655d5ce0936b3178f41b828749a625f52c1ba12",
+    "field-VerifiedCandidate-v2.json": "759a5008f538f3027a8f3062b6cc9b13cf1d55f300f8f77848ce5b621dea26ba",
+    "field-CandidateAclReadback.json": "1690dc7363a9b7fc7f5fc27f2b8dbe7ba78c2b7680bc5d4423fe37cca0b1f003",
+    "field-VerifiedCandidate-v3.json": "80cdb53101df13b1095d2a60b5061e459da3745de0d0e2b7ecfcaa255ece1dd0",
+    "field-CandidateAclTypes.json": "c02acddcc5195668d8989f057d4e6eda0147d2f6757e5c7760ddb458c3728023",
+    "candidate-normalization/windows-pip-directory-permissions.json": "ed6c176b60caa3a7ecd6f2eded5249f640596272076ed817fcdd6bab1c79b609"
+  }
+}
