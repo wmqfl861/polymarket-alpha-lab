@@ -414,3 +414,73 @@ def test_odp_uses_utc_instants_across_folds():
     assert capture._classify_odp_observation(
         "CLOSE", first_fold.replace(minute=29), second_fold, received_at=second_fold,
     ) == ("PERIODIC", "observed_at_before_close_window")
+
+
+def test_b2_summary_counts_only_observed_source_window_downgrades(monkeypatch, tmp_path):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+
+    repo = _git_repo(tmp_path / "repo")
+    pack = capture.MarkPack("marks.json", json.dumps([
+        pack_document(sampling_kind="CLOSE",
+                      observed_at=(NOW - datetime.timedelta(minutes=minutes)).isoformat())
+        for minutes in (62, 61, 59)
+    ]).encode())
+    receipts = []
+    writes = []
+    monkeypatch.setattr(snapshots, "register_snapshot",
+                        lambda conn, registration: {"content_sha256": PACK_DIGEST})
+    monkeypatch.setattr(store_psycopg, "candidate_capture_target",
+                        lambda conn, **ref: {"candidate_id": 1, "event_start_at": NOW})
+    monkeypatch.setattr(store_psycopg, "record_command_run_event",
+                        lambda conn, event: receipts.append(event))
+
+    def write_mark(conn, mark, *, close_evidence):
+        writes.append(mark.sampling_kind)
+        return {"close_evidence_id": len(writes) if close_evidence else None}
+
+    def run():
+        return capture.run_capture(capture.CaptureConfig(team="paper-test"), [pack],
+                                   conn=None, repo_root=repo, now_utc=lambda: NOW)
+
+    monkeypatch.setattr(store_psycopg, "mark_capture_upsert", write_mark)
+    previous_reasons = {"missing_event_start": 0, "observed_at_after_event_start": 0}
+    assert run()["downgrade_reasons"] == previous_reasons
+    assert writes == ["CLOSE", "CLOSE", "CLOSE"]
+    writes.clear()
+
+    monkeypatch.setattr(capture, "classify_observation", capture._classify_odp_observation)
+    report = run()
+    assert report["downgrade_reasons"] == {**previous_reasons, "observed_at_before_close_window": 2}
+    assert (report["downgraded_to_periodic"], report["close_evidence_written"]) == (2, 1)
+    assert writes == ["PERIODIC", "PERIODIC", "CLOSE"]
+    assert json.loads(receipts[-1].output_evidence[0]) == report
+
+    monkeypatch.setattr(capture, "classify_observation", lambda *args: ("PERIODIC", "unknown_reason"))
+    with pytest.raises(KeyError, match="unknown_reason"):
+        run()
+    assert receipts[-1].phase == "FAILED"
+
+
+def test_d1_summary_counts_only_ready_source_window_downgrades():
+    early = "observed_at_before_close_window"
+    late = "received_at_after_event_start"
+
+    def summarize(states):
+        targets = []
+        items = []
+        for index, (status, reason) in enumerate(states, 1):
+            targets.append({"identity": {"candidate_id": index}, "candidate": {"event_start_at": NOW},
+                            "status": status, "downgrade": reason, "close": None})
+            items.append({"status": status, "candidate_mark_id": index if status == "READY" else None,
+                          "close_evidence_id": None})
+        return capture._d1_capture_summary(capture.CaptureConfig(team="paper-test"), "",
+                                           [], targets, items)
+
+    states = [("READY", late), ("REJECTED", early), ("MISSING_QUOTE", early)]
+    previous_reasons = {"missing_event_start": 0, "observed_at_after_event_start": 0, late: 1}
+    assert summarize(states)["downgrade_reasons"] == previous_reasons
+    report = summarize([*states, ("READY", early), ("READY", early)])
+    assert report["downgrade_reasons"] == {**previous_reasons, early: 2}
+    assert (report["downgraded_to_periodic"], report["marks_written"]) == (3, 3)
+    with pytest.raises(KeyError, match="unknown_reason"):
+        summarize([("READY", "unknown_reason")])
