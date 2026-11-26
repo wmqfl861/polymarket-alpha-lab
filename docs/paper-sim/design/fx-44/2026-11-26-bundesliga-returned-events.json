@@ -1,0 +1,198 @@
+{
+  "type": "FX-44 public event source diagnostic and managed coverage verification",
+  "code_revision": "74f5a80be278862f7f2912e67b9bab18bf5689e4",
+  "recorded_utc": "2026-11-26T10:16:04+00:00",
+  "official_public_resources": {
+    "catalog": {
+      "path": "/sports",
+      "request_utc": "2026-11-26T09:59:32Z",
+      "response_bytes": 157822,
+      "response_sha256": "ea7dee4f34de0cac1b412019d443b09744216af210e9c7782b1a9352b3277baa",
+      "rows": 497,
+      "league_locator": {
+        "sport": "bun",
+        "series": "10194",
+        "league_specific_tag": "1494"
+      }
+    },
+    "events": {
+      "path": "/events/keyset",
+      "query": {
+        "series_id": "10194",
+        "start_time_min": "2026-11-26T10:00:26Z",
+        "start_time_max": "2026-12-03T10:00:26Z",
+        "closed": "false",
+        "order": "id",
+        "ascending": "true",
+        "limit": "4"
+      },
+      "public_metadata_only": true,
+      "first": {
+        "at": "2026-11-26T10:00:26Z",
+        "bytes": 396368,
+        "sha256": "7626f730155f3fa14f21382e5a798632237df7829ecaf46fa4d256edc1a393d9",
+        "http": 200,
+        "result": "SDK items was read instead of REST events. The digest and length are retained; membership and count are unknown."
+      },
+      "corrected": {
+        "at": "2026-11-26T10:05:48Z",
+        "bytes": 396495,
+        "sha256": "67662d0ef70b94fd432b1258375eb518f7043e4a70368c0bb2b4275f0d6095ab",
+        "http": 200,
+        "result": "A subsequent observation with the same parameters had different response bytes; its own returned fields were projected.",
+        "events": [
+          {
+            "title": "SV Werder Bremen vs. Borussia Mönchengladbach",
+            "event_id": "1426725",
+            "slug": "bun-wer-moe-2026-11-27",
+            "game_id": "90118393",
+            "kickoff_utc": "2026-11-27T19:30:00Z",
+            "actual_series_id": "10194",
+            "actual_tag_slug": "bundesliga",
+            "actual_tag_id": "1494",
+            "raw_market_types": {
+              "moneyline": 3
+            }
+          },
+          {
+            "title": "SV Werder Bremen vs. Borussia Mönchengladbach - More Markets",
+            "event_id": "1426880",
+            "slug": "bun-wer-moe-2026-11-27-more-markets",
+            "game_id": "90118393",
+            "kickoff_utc": "2026-11-27T19:30:00Z",
+            "actual_series_id": "10194",
+            "actual_tag_slug": "bundesliga",
+            "actual_tag_id": "1494",
+            "raw_market_types": {
+              "spreads": 10,
+              "totals": 9,
+              "both_teams_to_score": 1,
+              "both_teams_to_score_first_half": 1,
+              "first_half_totals": 5,
+              "soccer_team_totals": 12,
+              "soccer_first_half_team_totals": 8,
+              "second_half_totals": 5
+            }
+          },
+          {
+            "title": "SV Werder Bremen vs. Borussia Mönchengladbach - Total Corners",
+            "event_id": "1427002",
+            "slug": "bun-wer-moe-2026-11-27-total-corners",
+            "game_id": null,
+            "kickoff_utc": "2026-11-27T19:30:00Z",
+            "actual_series_id": "10194",
+            "actual_tag_slug": "bundesliga",
+            "actual_tag_id": "1494",
+            "raw_market_types": {
+              "total_corners": 7
+            }
+          },
+          {
+            "title": "SV Werder Bremen vs. Borussia Mönchengladbach - Halftime Result",
+            "event_id": "1427117",
+            "slug": "bun-wer-moe-2026-11-27-halftime-result",
+            "game_id": "90118393",
+            "kickoff_utc": "2026-11-27T19:30:00Z",
+            "actual_series_id": "10194",
+            "actual_tag_slug": "bundesliga",
+            "actual_tag_id": "1494",
+            "raw_market_types": {
+              "soccer_halftime_result": 3
+            }
+          }
+        ],
+        "next_cursor_supplied": true,
+        "following_pages_requested": 0
+      }
+    }
+  },
+  "fixture": {
+    "home": "SV Werder Bremen",
+    "away": "Borussia Mönchengladbach",
+    "league": "Bundesliga",
+    "kickoff_utc": "2026-11-27T19:30:00Z",
+    "unique_games": 1,
+    "grouping": {
+      "event_rows": 4,
+      "shared_game_id_rows": 3,
+      "null_game_id_rows": 1,
+      "other_shared_evidence": "All four event titles, compound event slugs, advertised kickoff, tag and series match."
+    },
+    "market_rows": 64
+  },
+  "observed_full_match_totals": {
+    "count": 9,
+    "lines": [
+      "0.5",
+      "1.5",
+      "2.5",
+      "3.5",
+      "4.5",
+      "5.5",
+      "6.5",
+      "7.5",
+      "8.5"
+    ],
+    "each_outcomes": [
+      "Over",
+      "Under"
+    ],
+    "each_distinct_token_count": 2,
+    "period": "first 90 minutes of regular play plus stoppage time",
+    "public_description_sha256": [
+      "404da2c0dcbc1777862f2fb8dc78ac7abbf5f53067281243522da16336c35964",
+      "bc797c1796d8369e3ae07902f9b16d3bf9b6a6f11073f1f19dbacbab0f301bf0",
+      "a6123f741a0f602463dcf7696261a6c0617631526370d39d76d47f778ced68c6",
+      "8f98e43d19d61895f244be68dc09f18e2110b2235ae9e7df86a60e8bf4ce9684",
+      "9d4b4b2246a4974e8f14a03eb42c63edc50e4c84457df14cf137883ce5c6ed1a",
+      "4b2ab6c06356c058268d35fe1943e59b0fff3ffc6c5278660aa654008319bb11",
+      "ba3c072cbf92a050f0ae927a35eab0f35d28bbf5ec2eb10808a6c833b37e0bea",
+      "b79877c2587b042ad271ee73677a638f5ab67ee28871acce9064b1a092e5912d",
+      "8f4e632be44778869002f1fb55fcabb68ddc52b1100b473df7b0cfe375bc2aa0"
+    ],
+    "other_settlement_terms": "When known before abandonment the determination stands. Other outcomes can use the governing body's ruling, a score declared to stand, or a replayed/resumed result. Cancellation, some abandonment cases and missing data can pay 50-50."
+  },
+  "managed_interface": {
+    "admission": "No matching side binding. All nine public contracts remain ineligible.",
+    "specific_reason": "Public labels are Over/Under. The registered A1 adapter assigns sides only from explicit Yes/No. Its sealed B3 acquisition accepts only the exact 0/1 terminal corner. VOIDED returns the original stake; a 0.5 payment per share generally differs.",
+    "change": "For a configured domestic total queue, report independently returned league, regulation period, line, returned outcome labels and explicit split payment on the original unresolved-outcomes observation. No new candidate, entry, price request or settlement rule.",
+    "managed_keyset_fetch": "This was a metadata diagnostic. The managed capture continues using the approved offset-paginated source and raw array evidence locations.",
+    "formal_rounds_this_check": 0,
+    "formal_days_added": 0,
+    "formal_parallel_days": 0,
+    "formal_days_required": 7
+  },
+  "verification": {
+    "field_projection_diagnostic_tests": 8,
+    "existing_preflight_product_tests": 14,
+    "candidate_offline_passed": 201,
+    "offline_native_optins": 3,
+    "optins_run_natively_passed": 3,
+    "additional_native_managed_cases_passed": 2,
+    "synthetic_native_observation": {
+      "source_reason": "unresolved_outcomes",
+      "split_payout_mentioned": true,
+      "candidates": 0,
+      "entries": 0
+    },
+    "test_weakening_since_base": {
+      "removed": 0,
+      "fewer_checks": 0,
+      "new_skips": 0,
+      "new_xfail": 0
+    },
+    "new_address_files": 0,
+    "source_receipts_sha256": {
+      "catalog": "2048b1420594397bacfffe5848535d5e40d373e19fa30b5b21fc9ab6952c906a",
+      "first": "460990b90a5cf129bc73943cb737beb751d63ae20856a518969016b5ec8c3510",
+      "corrected_projection": "f3ccb81e6de06b034adfe556a89e548cd6fa55a9d702543f668a70427ec0445a",
+      "replayed_public_fields": "b833725d396012eeac306312a19da77d3dd410ccf8c167718046d7df809ea628",
+      "projection_tests": "ffb70d0068635b61743e280ed55d469cf09ce5e101e7971bb86c7b0bce8d24ff",
+      "source_suite": "44635e2e82cd5ba27b3a82c6e65d015604a98d74515b7fe62d8476e0d97829a3",
+      "managed_native": "9f3d5f1c777e0235cc0f6dd06a886bd1cbef9a4caf7524a7e643ad579388b428",
+      "journal_native": "4967445a5c353501786d7363ab0fdd794de4f32ce06c3b168769288e22978ae6",
+      "test_delta": "5ccd2d5082124a96a1b0e9dc7c47ac39bf8748d1345295d16c47763a5fccd2e3",
+      "address_delta": "ef7a9089011fac907925047ee5e1dac4af38c88163779fcc0bcee1f9f141025e"
+    }
+  }
+}
