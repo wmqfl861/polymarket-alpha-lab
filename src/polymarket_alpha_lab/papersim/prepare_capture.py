@@ -228,13 +228,7 @@ class _Capture:
                              "response_bytes_charged": self.budget.response_bytes_used})
         return result, sequences
 
-    def _crypto_sources(self, body):
-        rule = inputs._TERMINAL_RULE.fullmatch(_fold(body.get("description") or ""))
-        question = _QUESTION.fullmatch(_fold(body.get("question", "")))
-        if rule is None or question is None:
-            return None
-        asset = "BTC" if question["asset"] in ("bitcoin", "btc") else "ETH"
-        provider = rule["venue"]
+    def _crypto_sources(self, asset, provider):
         self.target = {"asset": asset, "provider": provider}
         now = acquire._now_utc()
         seconds = prices._epoch_seconds(now)
@@ -320,11 +314,13 @@ class _Capture:
                 continue
             kind = target["market_kind"]
             if kind == pipeline.KIND_CRYPTO_TERMINAL:
-                rule = inputs._TERMINAL_RULE.fullmatch(_fold(body.get("description") or ""))
-                question = _QUESTION.fullmatch(_fold(body.get("question", "")))
-                key = (rule["venue"], question["asset"]) if rule and question else None
+                terms = inputs._terminal_terms(body.get("question", ""), body.get("description") or "")
+                if terms is None:
+                    self.target_sources[condition] = None
+                    continue
+                key = (terms.asset, terms.venue)
                 if key not in crypto_sources:
-                    crypto_sources[key] = self._crypto_sources(body)
+                    crypto_sources[key] = self._crypto_sources(*key)
                 self.target_sources[condition] = crypto_sources[key]
             elif kind in inputs._SOCCER_TYPES:
                 self.target_sources[condition] = self._soccer_sources(event, target, soccer_sources)
