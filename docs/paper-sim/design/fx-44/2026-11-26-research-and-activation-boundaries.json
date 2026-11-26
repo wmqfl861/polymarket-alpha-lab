@@ -1,0 +1,158 @@
+{
+  "scope": "Research interval behavior and original FX-44 opening prerequisites",
+  "opened_main": "dfe4acdce8e7b00d0f87c0e7ae192ee92f94e0a7",
+  "candidate_tested": "ccc18c86b268ad0c9137470f7b7c926183ee9be1",
+  "prerequisite_ancestry_verified": {
+    "audit_anchor": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "fx47_pr": 128,
+    "fx47_merge": "a7dbd8a3e14f5f86f9f26e2f05b76a46927cf4ee",
+    "fx40_pr": 132,
+    "fx40_merge": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5"
+  },
+  "signed_plan": {
+    "file": "fx44-node-plan-v2.md",
+    "version": 2,
+    "bytes": 36171,
+    "sha256": "82955f0bba461c8ef7f45363da153fab9765646a33e424ec9f13436ef1ec0846",
+    "signed_verdict": "PASS"
+  },
+  "plan_sections": {
+    "opening_2_and_3": "From the FX-40 merge, prove a managed sports and crypto sample through formal input sealing and run-scan --prepare-from. Show the actual B1 decision and buy side, source and receipt clocks, authoritative market boundary, ordinary B2 and registered D1 capture with verifiable originals. Return each missing input upstream before beginning the formal implementation.",
+    "activation_2_to_4": "The approved production design calls for one prospective activation command, one additive migration, exact pre-activation member identities including eligible pending receipts, one commit for the activation, member digest and success receipt, and serialization with all three close writers. Empty member sets must be sealed explicitly. The research acceptance time does not supply that boundary.",
+    "r6_17": "Keep the registered per-side sample rules for candidate and incumbent. The November plan adds no new minimum count of priced rows on either side."
+  },
+  "opened_tree": {
+    "verified_existing_migrations": 6,
+    "formal_activation_cli_in_tree": false,
+    "formal_registration_relation_in_catalog": false,
+    "exact_legacy_member_relation_in_catalog": false,
+    "candidate_changes_existing_runtime_src_migrations_or_frozen_fixtures": false
+  },
+  "field_originals_in_supplied_records": {
+    "sports_epl": {
+      "pg_verified_original_responses": 5,
+      "full_time_binary_rows_examined": 3,
+      "supported_propositions": 0,
+      "directions_examined": 6,
+      "directed_books": 2,
+      "book_classifications": [
+        "PERIODIC",
+        "PERIODIC"
+      ],
+      "prepared_candidates": 0,
+      "b1_buy_side": null,
+      "formal_close_rows": 0
+    },
+    "crypto_eth": {
+      "pg_verified_original_responses": 3,
+      "verified_directions": [
+        "YES",
+        "NO"
+      ],
+      "both_source_and_receive_times_precede_close_window": true,
+      "b1_buy_side": null,
+      "managed_scan_decisions": 0,
+      "formal_close_rows": 0
+    },
+    "recorded_managed_windows_candidates_and_entries": {
+      "eredivisie": [
+        0,
+        0
+      ],
+      "ethereum": [
+        88,
+        0
+      ]
+    },
+    "next_item_needed_for_each_kind": "A prospective managed prepared B1 decision on a supported target, then a verified candidate/side-bound book in its own registered slot and admissible close window for the ordinary B2 and D1 checks. Fresh public inputs alone do not bind a managed scan or slot."
+  },
+  "synthetic_assertions_verified": [
+    "Two independent ordinary CLI processes use the unmodified database clock and return one immutable future research registration and its original receipt on a disposable PostgreSQL 18 instance.",
+    "A separate native regression pins only the disposable registration's database-acceptance clock through the same CLI parser and handler. The two real capture processes retain their own clocks. Each fixture source and receipt clock falls in the same team's 13-hour research interval and more than 60 minutes before expiry. Both inspections return PERIODIC with observed_at_before_close_window and leave their candidate mark sets empty.",
+    "Ordinary B2 and registered D1 each persist exactly one old-policy CLOSE mark and one matching price-evidence row for their respective candidates, including last=0 and last=1. The existing command receipt payload stays unchanged."
+  ],
+  "disposable_test_receipts": {
+    "native": {
+      "receipt": {
+        "source_commit": "ccc18c86b268ad0c9137470f7b7c926183ee9be1",
+        "collection": "temporary network namespace and unprivileged disposable project",
+        "tests": [
+          "tests/test_papersim_prepared_scan_native.py::test_research_interval_keeps_the_effective_policy_for_both_capture_writers",
+          "tests/test_papersim_capture_marks_native.py::test_register_close_window_through_managed_cli"
+        ],
+        "start_utc": "2026-11-26T17:43:16.934955+00:00",
+        "end_utc": "2026-11-26T17:44:45.384998+00:00",
+        "exit_code": 0,
+        "counts": {
+          "passed": 2,
+          "skipped": 0,
+          "failed": 0,
+          "error": 0,
+          "deselected": 0
+        },
+        "console_sha256": "f91996a8a45ca6517b6a51546ecdd394970953d3f0581e8b91bc16e34e3bde7b",
+        "failure_code_locations": [],
+        "formal_activation_attempted": false,
+        "field_requests": 0,
+        "formal_comparison_days": 0
+      },
+      "receipt_sha256": "04f92ecc1788473b185fecfe9f1045f69b5680d54a3f92edcce755c88c2f9d53"
+    },
+    "offline": {
+      "receipt": {
+        "source_commit": "ccc18c86b268ad0c9137470f7b7c926183ee9be1",
+        "collection": "offline isolated tests",
+        "tests": [
+          "tests/test_papersim_close_registration.py",
+          "tests/test_papersim_capture_marks.py"
+        ],
+        "start_utc": "2026-11-26T17:43:16.992589+00:00",
+        "end_utc": "2026-11-26T17:43:28.142705+00:00",
+        "exit_code": 0,
+        "counts": {
+          "passed": 58,
+          "skipped": 0,
+          "failed": 0,
+          "error": 0,
+          "deselected": 0
+        },
+        "console_sha256": "79b5dc3070e4b0cb5a237d8846f76296b21a9f55231ca36dd3414108e9fa79f5",
+        "failure_code_locations": [],
+        "formal_activation_attempted": false,
+        "field_requests": 0,
+        "formal_comparison_days": 0
+      },
+      "receipt_sha256": "5e76913c6111f781b16a731820bcc03b1964398fe6ee47ce7af623e9b805b702"
+    }
+  },
+  "candidate_diff_checks": {
+    "removed_tests": 0,
+    "tests_with_fewer_assertions": 0,
+    "new_skip_or_xfail_markers": 0,
+    "new_files_reported_by_address_diff": 0,
+    "diff_check": "pass",
+    "test_scan_sha256": "57cbbf089614cab19701baa52ac72c6bdb7c709ceea75c25fcb8ee845540ee6d",
+    "address_scan_sha256": "cf022ea477a00ab0c39d2ca4ab937c58cfa5e9db0f21752e87277fcabb3ec92f"
+  },
+  "field_requests_during_this_check": 0,
+  "formal_activation_utc_in_records": null,
+  "verified_days_in_records": [
+    0,
+    7
+  ],
+  "verified_historical_families_in_records": [
+    0,
+    4
+  ],
+  "git_documents_sha256": {
+    "docs/paper-sim/design/optimizer-phase1/2026-11-24/plan-review-receipts.json": "ee2419af9bc0a257b46ea2aaa63e364caec858a579e86bcfca0c1c20c46cd0f2",
+    "database/papersim/migrations.lock.json": "1e0da108e2335ee5690794b179f3f72a6210286dcb2f28b62a2e270b96c2a50f",
+    "docs/paper-sim/design/fx-44/2026-11-26-epl-directed-books.json": "4638e9fdfd15eab8c60efa849d02c768338fc757bfcd658917bfaf53225f1bfd",
+    "docs/paper-sim/design/fx-44/2026-11-26-epl-directed-books-readback.json": "3b75c290c4bb326dcd294888c01c3d4dc51f9ac3fa79ac7b59a040a6e553af85",
+    "docs/paper-sim/design/fx-44/2026-11-26-eth-directed-books.json": "159ae984b65bc507a2d857a993c499be8e4de373e173f4e3260a529d03056531",
+    "docs/paper-sim/design/fx-44/2026-11-26-eth-directed-books-readback.json": "d4ea9d38a8f14437dc452b4c91bdc238f7725e08ea9b0b7e1e62f1e9fe70ea79",
+    "docs/paper-sim/design/fx-44/2026-11-26-observed-field-inputs.json": "86cc47bbd5b690e9dbe4615c5c62c343fa57e33fa5ee0b19b44feceb048df5cc",
+    "docs/paper-sim/design/fx-44/2026-11-26-prospective-registration.json": "19475ea516983dab82cd68db5463fce33fd0215f8b40f26446d079494f8384e5",
+    "docs/paper-sim/design/fx-44/2026-11-26-prospective-close-verification.json": "8c77a85e7fb391bcfb46e43f89a23f5390c82fd16465d4d35b511a10b6a01ef2"
+  }
+}
