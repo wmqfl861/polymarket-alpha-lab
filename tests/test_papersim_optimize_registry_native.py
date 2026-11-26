@@ -250,6 +250,61 @@ def test_native_optimization_run_and_decision_idempotency():
 
 
 @NATIVE
+def test_native_optimizer_registry_read_results(registry_database):
+    adapter = _adapter()
+    _owner_dsn, dsn = registry_database
+    app, _ = _initialized(dsn)
+    with closing(app):
+        run_ids = []
+        for cutoff, seed in ((AT, 1), (LATER, 7)):
+            run = store.OptimizationRunSubmission(
+                family=SOCCER_FROZEN.family_id, data_cutoff=cutoff,
+                lineages=[LINEAGE], rule_version='rules-v1', random_seed=seed,
+                trial_count=0, outcome='RUN_FAILED', code_commit=COMMIT,
+            )
+            recorded = adapter.record_optimization_run(app, run)
+            run_ids.append(recorded['optimization_id'])
+
+        for lineage in (LINEAGE, MISMATCH_LINEAGE):
+            decision = store.PromotionDecisionSubmission(
+                lineage=lineage, active_spec_sha256=BASELINE,
+                rule_version='rules-v1', decided_by='op', decided_at=LATER,
+                conclusion='HOLD',
+            )
+            adapter.record_promotion_decision(app, decision)
+
+        for scope, lineage in (
+            ('GLOBAL', None),
+            ('LINEAGE', LINEAGE),
+            ('LINEAGE', MISMATCH_LINEAGE),
+        ):
+            event = store.OptimizerControlEventSubmission(
+                scope=scope, lineage=lineage, control_kind='FREEZE',
+                reason='registry read test', actor='op', occurred_at=AT,
+            )
+            adapter.record_optimizer_control_event(app, event)
+
+        runs = adapter.load_optimization_runs(app)
+        assert [row['optimization_id'] for row in runs] == list(reversed(run_ids))
+        assert [row['outcome'] for row in runs] == ['RUN_FAILED', 'RUN_FAILED']
+        assert adapter.load_optimization_runs(app, family=SOCCER_FROZEN.family_id) == runs
+        assert adapter.load_optimization_runs(app, family='club-soccer') == []
+
+        decisions = adapter.load_promotion_decisions(app)
+        assert [(row['lineage'], row['conclusion']) for row in decisions] == [
+            (MISMATCH_LINEAGE, 'HOLD'),
+            (LINEAGE, 'HOLD'),
+        ]
+        assert adapter.load_promotion_decisions(app, lineage=LINEAGE) == [decisions[1]]
+        assert adapter.load_promotion_decisions(app, lineage=SCAN_LINEAGE) == []
+
+        assert adapter.registry_freeze_state(app) == {
+            'global_frozen': True,
+            'frozen_lineages': [MISMATCH_LINEAGE, LINEAGE],
+        }
+
+
+@NATIVE
 def test_native_initialize_registry_is_idempotent_and_drift_is_conflict():
     store_psycopg = _adapter()
     _owner_dsn, dsn = _migrated_app()
@@ -682,6 +737,74 @@ def test_native_registry_reads_preserve_caller_transaction(registry_database, au
             _assert_spec(rebuilt, BASELINE_SPEC)
         assert app.info.transaction_status is TransactionStatus.IDLE
     with _app(dsn) as observer:
+        _assert_snapshot_visible(observer, sentinel, visible=commit)
+
+
+@NATIVE
+@pytest.mark.parametrize(
+    'autocommit,implicit,outcome',
+    [
+        pytest.param(False, False, 'idle', id='idle-default'),
+        pytest.param(True, False, 'idle', id='idle-autocommit'),
+        pytest.param(False, False, 'rollback', id='explicit-default-rollback'),
+        pytest.param(False, False, 'commit', id='explicit-default-commit'),
+        pytest.param(True, False, 'rollback', id='explicit-autocommit-rollback'),
+        pytest.param(True, False, 'commit', id='explicit-autocommit-commit'),
+        pytest.param(False, True, 'rollback', id='implicit-default-rollback'),
+        pytest.param(False, True, 'commit', id='implicit-default-commit'),
+    ],
+)
+def test_native_optimizer_registry_reads_preserve_transaction(
+    registry_database, autocommit, implicit, outcome,
+):
+    from psycopg.errors import LockNotAvailable
+    from psycopg.pq import TransactionStatus
+
+    from polymarket_alpha_lab.papersim.snapshots import register_snapshot
+
+    adapter = _adapter()
+    readers = (
+        ('optimization_runs', adapter.load_optimization_runs, []),
+        ('promotion_decisions', adapter.load_promotion_decisions, []),
+        (
+            'optimizer_control_events',
+            adapter.registry_freeze_state,
+            {'global_frozen': False, 'frozen_lineages': []},
+        ),
+    )
+    owner_dsn, dsn = registry_database
+    sentinel = _snapshot_sentinel()
+    idle = outcome == 'idle'
+    commit = outcome == 'commit'
+    status = TransactionStatus.IDLE if idle else TransactionStatus.INTRANS
+    with closing(_connect(dsn, autocommit=autocommit)) as app, _app(dsn) as observer:
+        with app.transaction():
+            app.execute("SET lock_timeout = '250ms'")
+        assert app.info.transaction_status is TransactionStatus.IDLE
+
+        caller = nullcontext() if idle else _caller_transaction(
+            app, commit=commit, implicit=implicit,
+        )
+        with caller:
+            if not idle:
+                assert register_snapshot(app, sentinel)['inserted'] is True
+                _assert_snapshot_visible(observer, sentinel, visible=False)
+
+            for table, read, expected in readers:
+                with _connect(owner_dsn) as locker, locker.transaction():
+                    locker.execute(f'LOCK TABLE papersim.{table} IN ACCESS EXCLUSIVE MODE')
+                    with _expect_read_transaction(app, status), pytest.raises(
+                        LockNotAvailable,
+                    ) as error:
+                        read(app)
+                    assert error.value.sqlstate == '55P03'
+                with _expect_read_transaction(app, status):
+                    assert read(app) == expected
+
+            if not idle:
+                _assert_snapshot_visible(app, sentinel, visible=True)
+                _assert_snapshot_visible(observer, sentinel, visible=False)
+        assert app.info.transaction_status is TransactionStatus.IDLE
         _assert_snapshot_visible(observer, sentinel, visible=commit)
 
 
