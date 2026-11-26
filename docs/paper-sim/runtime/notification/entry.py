@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.abc
 import importlib.util
 import io
 import os
@@ -112,28 +113,66 @@ def load_verified(name, location, data):
     return module
 
 
+class SiteHelpers(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    """Import registered application helpers at their original data-relative locations."""
+
+    def __init__(self, business_dir, manifest):
+        self.directory = business_dir
+        self.hashes = {}
+        for line in manifest.splitlines():
+            match = re.fullmatch(rb"([0-9a-f]{64})  ([a-z][a-z0-9_]*)\.py", line)
+            if not match:
+                raise EntryError("invalid_helper_manifest")
+            expected, name = (part.decode("ascii") for part in match.groups())
+            if name in self.hashes or name == "weixin_delivery" or f"{name}.py" in CALLERS:
+                raise EntryError("invalid_helper_manifest")
+            self.hashes[name] = expected
+
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname in self.hashes:
+            location = self.directory / f"{fullname}.py"
+            return importlib.util.spec_from_file_location(fullname, location, loader=self)
+        return None
+
+    def exec_module(self, module):
+        data = verify(read_file(Path(module.__file__), MAX_SOURCE), self.hashes[module.__name__])
+        exec(compile(data, module.__file__, "exec", dont_inherit=True), module.__dict__)
+
+
 def run(business_dir, bundle, args):
+    if (Path.cwd() != HERE or not business_dir.is_absolute() or not bundle.is_absolute()
+            or any(Path(item).resolve() == business_dir for item in sys.path)):
+        raise EntryError("unexpected_notification_directory")
+    if not args or args[0] not in {"tick", "worker", "route-check", "--help"}:
+        raise EntryError("unsupported_notification_command")
+    pinned_blob(HERE / "entry.py")
     transport = pinned_blob(TRANSPORT)
+    helpers = SiteHelpers(business_dir, pinned_blob(HERE / "site-helpers.sha256"))
+    if helpers.hashes.keys() & sys.modules.keys():
+        raise EntryError("unexpected_preloaded_helper")
     callers = read_callers(bundle)
     for name, (before, _) in CALLERS.items():
         verify(read_file(business_dir / name, MAX_SOURCE), before)
-    # Existing application helpers stay in the installed business directory. Install all
-    # three verified modules under their original import names in this isolated process.
-    sys.path.append(str(business_dir))
+    # The old scripts directory is never a general module search path. Some helpers
+    # locate existing research inputs relative to their own file, so keep their origins.
+    sys.meta_path.insert(0, helpers)
     load_verified("weixin_delivery", TRANSPORT, transport)
-    load_verified("football_store", business_dir / "football_store.py", callers["football_store.py"])
-    daily = load_verified("football_daily", business_dir / "football_daily.py", callers["football_daily.py"])
-    sys.argv = [str(business_dir / "football_daily.py"), *args]
+    load_verified("football_store", bundle / "football_store.py", callers["football_store.py"])
+    daily = load_verified("football_daily", bundle / "football_daily.py", callers["football_daily.py"])
+    sys.argv = [daily.__file__, *args]
     return daily.main()
 
 
 def main(args):
     try:
-        if len(args) == 3 and args[0] == "stage":
-            stage(Path(args[1]).resolve(strict=True), Path(args[2]))
+        if len(args) < 4 or args[1] != "--business-dir" or not Path(args[2]).is_absolute():
+            raise EntryError("usage_requires_named_business_directory")
+        business_dir, bundle = Path(args[2]).resolve(strict=True), Path(args[3])
+        if len(args) == 4 and args[0] == "stage":
+            stage(business_dir, bundle)
             return 0
-        if len(args) >= 3 and args[0] == "run" and sys.flags.isolated:
-            return run(Path.cwd(), Path(args[1]), args[2:])
+        if len(args) >= 5 and args[0] == "run" and sys.flags.isolated:
+            return run(business_dir, bundle, args[4:])
         raise EntryError("usage_requires_stage_or_isolated_run")
     except (EntryError, OSError, subprocess.TimeoutExpired, zipfile.BadZipFile) as error:
         # This entry does not expose paths, service environment or business data in diagnostics.

@@ -30,8 +30,12 @@ def case(tmp_path, monkeypatch):
     business.mkdir()
     transport = repo / "weixin_delivery.py"
     transport.write_text('ORIGIN = "fixed-main"\n')
+    (repo / "entry.py").write_bytes(ENTRY.read_bytes())
     (business / transport.name).write_text('raise AssertionError("unregistered transport selected")\n')
-    (business / "fixture_feed.py").write_text('VALUE = "existing feed"\n')
+    helper = business / "fixture_feed.py"
+    helper.write_text('VALUE = "existing feed"\n')
+    (business / "unregistered_fixture_module.py").write_text('raise AssertionError("unexpected import")\n')
+    (repo / "site-helpers.sha256").write_text(sha(helper.read_bytes()) + "  fixture_feed.py\n")
     old_store = 'import weixin_delivery\nPROTOCOL = "legacy"\ndef site_only():\n    return "preserved"\n'
     old_daily = (
         'import fixture_feed, football_store, sys, weixin_delivery\nMODE = "legacy"\n'
@@ -55,11 +59,14 @@ def case(tmp_path, monkeypatch):
     git("add", ".")
     git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "fixture")
     monkeypatch.setenv("PAL_WEIXIN_RELEASE_COMMIT", git("rev-parse", "HEAD").decode().strip())
+    monkeypatch.chdir(repo)
+    monkeypatch.setattr(entry, "HERE", repo)
     monkeypatch.setattr(entry, "ROOT", repo)
     monkeypatch.setattr(entry, "PATCH", patch)
     monkeypatch.setattr(entry, "TRANSPORT", transport)
     monkeypatch.setattr(entry, "CALLERS", pins)
     monkeypatch.setattr(sys, "path", list(sys.path))
+    monkeypatch.setattr(sys, "meta_path", list(sys.meta_path))
     monkeypatch.setattr(sys, "argv", list(sys.argv))
     for name in ("weixin_delivery", "football_store", "football_daily", "fixture_feed"):
         monkeypatch.setitem(sys.modules, name, None)
@@ -75,6 +82,11 @@ def test_stage_publishes_once_and_ordinary_worker_uses_verified_modules(case):
         "fixed-main", "fixed-main", "fixed", "fixed", "preserved", "existing feed", ["worker", "3"],
     )
     assert sys.modules["weixin_delivery"].__file__ == str(entry.TRANSPORT)
+    assert sys.modules["football_daily"].__file__ == str(bundle / "football_daily.py")
+    assert sys.modules["football_store"].__file__ == str(bundle / "football_store.py")
+    assert sys.modules["fixture_feed"].__file__ == str(business / "fixture_feed.py")
+    assert str(business) not in sys.path
+    assert importlib.util.find_spec("unregistered_fixture_module") is None
     assert b'"legacy"' in (business / "football_store.py").read_bytes()
 
 
@@ -121,3 +133,32 @@ def test_stage_preserves_a_conflicting_existing_bundle(case):
     with pytest.raises(entry.EntryError, match="different_bundle_already_exists"):
         entry.stage(business, bundle)
     assert bundle.read_bytes() == b"previous release"
+
+
+@pytest.mark.parametrize("changed", ["old_working_directory", "old_search_path", "ambiguous_business_directory",
+                                     "relative_bundle", "command", "entry", "manifest", "helper", "preloaded_helper"])
+def test_run_isolated_from_old_working_directory_and_unregistered_code(case, monkeypatch, changed):
+    business, bundle = case
+    entry.stage(business, bundle)
+    args = ["tick"]
+    if changed == "old_working_directory":
+        monkeypatch.chdir(business)
+    elif changed == "old_search_path":
+        sys.path.append(str(business))
+    elif changed == "ambiguous_business_directory":
+        business = Path(".")
+    elif changed == "relative_bundle":
+        bundle = Path(bundle.name)
+    elif changed == "command":
+        args = ["scan"]
+    elif changed == "entry":
+        (entry.HERE / "entry.py").write_bytes(b"changed")
+    elif changed == "manifest":
+        (entry.HERE / "site-helpers.sha256").write_bytes(b"changed")
+    elif changed == "helper":
+        (business / "fixture_feed.py").write_bytes(b'raise AssertionError("unverified code ran")\n')
+    else:
+        monkeypatch.setitem(sys.modules, "fixture_feed", object())
+    with pytest.raises(entry.EntryError):
+        entry.run(business, bundle, args)
+    assert not hasattr(sys.modules.get("football_daily"), "MODE")

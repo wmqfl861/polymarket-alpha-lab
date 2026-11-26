@@ -26,19 +26,19 @@ Linux 校验三项登记后把固定的中转程序路径传给 HC。中转程�
 
 `notification/entry.py` 只构建两个通知调用文件。输入是原通知服务工作目录里的 `football_daily.py` 和 `football_store.py`。登记的差异来自 `97e9cbcb`。它给提交、回查和入账补上固定回执代际、提交时间、有效窗口及明确拒绝。现场数据库连接、原有授权文件读取方式和所有其他业务函数保留原字节。制品是两个 Python 源文件的 ZIP，输入和输出均有逐文件 SHA-256。构建在临时目录完成，发布采用单文件原子创建。输入漂移、输出校验失败或同名存在不同制品都会停止。
 
-使用最终部署的干净主线检出和已登记的 `PAL_WEIXIN_RELEASE_COMMIT` 来构建。在受保护发布目录为这一版本选一个新文件名，使用原服务 Python 执行以下命令。占位符分别指向已核对的本机路径。
+使用最终部署的干净主线检出和已登记的 `PAL_WEIXIN_RELEASE_COMMIT` 来构建。在受保护发布目录为这一版本选一个新文件名，使用已安装项目包与 psycopg 的原服务 Python 执行以下命令。业务目录和制品均使用已核对的绝对路径。
 
 ```text
-<service-python> -I -B <main-checkout>/docs/paper-sim/runtime/notification/entry.py stage <existing-working-directory> <new-bundle>
+<service-python> -I -B <main-checkout>/docs/paper-sim/runtime/notification/entry.py stage --business-dir <original-business-directory> <new-bundle>
 ```
 
-预备好的制品交给原服务身份只读使用。切换时仅给现有通知调度服务（`tick`）和通知工作进程模板（`worker`）选择新入口，保留原服务身份、工作目录、环境文件和原任务参数。同一版本还可用于手动 `route-check`。定时器、赛事扫描、业务模块和数据库结构沿用现场配置。
+预备好的制品交给原服务身份只读使用。切换时将通知调度服务（`tick`）和通知工作进程模板（`worker`）的 `WorkingDirectory` 设为本次主线检出的 `docs/paper-sim/runtime/notification/`，将 `--business-dir` 指向单元只读访问的原业务目录。两类单元沿用原服务身份、环境文件和任务参数。同一版本还可用于手动 `route-check`。定时器、赛事扫描和数据库结构沿用现场配置。
 
 ```text
-<service-python> -I -B <main-checkout>/docs/paper-sim/runtime/notification/entry.py run <new-bundle> tick
-<service-python> -I -B <main-checkout>/docs/paper-sim/runtime/notification/entry.py run <new-bundle> worker <original-worker-instance>
+<service-python> -I -B <main-checkout>/docs/paper-sim/runtime/notification/entry.py run --business-dir <original-business-directory> <new-bundle> tick
+<service-python> -I -B <main-checkout>/docs/paper-sim/runtime/notification/entry.py run --business-dir <original-business-directory> <new-bundle> worker <original-worker-instance>
 ```
 
-运行入口在加载业务代码前校验主线检出、投递模块、制品中的两个源文件及工作目录里的两个原件。它把实际校验过的投递模块登记为 Python 的 `weixin_delivery`，再加载相同制品的账本和通知调用方。其他业务模块继续从原工作目录导入。工作目录中的旧发送器不参与解析。新旧账本恢复分别依据原有尝试的记录走各自代际。已明确拒绝的记录保持终态。
+运行入口核对当前目录、主线提交、入口自身、投递模块、制品和原业务文件。它直接装入核对后的主线投递模块及制品里的两个调用方。现场业务辅助模块的名称和 SHA-256 登记在同目录的 `site-helpers.sha256`，需要用到的模块逐个校验、按原文件位置装入。这样，按 `__file__` 定位的研究数据继续使用原位置；原业务目录不进入 Python 通用搜索路径。新旧账本恢复按照原有尝试的记录选择对应回执，已明确拒绝的记录保持终态。
 
 切换时登记主线提交、制品摘要和两个单元的有效启动入口。在新旧调度或工作进程仍可能并行时保持原入口；等待在途进程自然退出并核实边界后再让两类单元使用同一代际。主线源码入库和本机替身回归分别登记，正式切换以现场有效配置与自然投递的实际回执为准。
