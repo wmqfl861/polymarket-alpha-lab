@@ -1,0 +1,131 @@
+{
+  "purpose": "Windows public build inputs, protected staging, process-scope policy and first field media comparison before formal installation",
+  "intended_runtime_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+  "media_assembler_commit": "304d3e25a7339c39d9122aec3b5aa428837b2ce0",
+  "fixed_script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "public_software_staging": {
+    "directory": "%ProgramFiles%\\PolymarketAlphaLab\\WeixinDeliverySetup",
+    "protected_directories": 7,
+    "first_write_acknowledgements": 3,
+    "first_ambiguous_write": "seed/PaperWeixinRelay.exe",
+    "ambiguous_write_readback_utc": "2026-11-26T15:34:29+00:00",
+    "matching_files_after_first_transfer": 4,
+    "repeated_writes": 0,
+    "subsequent_file_acknowledgements": 9,
+    "matching_files_verified_admin_owned": 13,
+    "verification_completed_utc": "2026-11-26T15:36:38+00:00",
+    "setup_sha256": "77d241fa468ad16b707d74d9f1875354ee4fe0d12a5f85e39cc4d25e9b65ea63",
+    "process_policy": "RemoteSigned",
+    "setup_path_invocation": {
+      "phase": "VerifySeeds",
+      "status": "ok"
+    },
+    "setup_exit_code": 0,
+    "public_material_inventory_sha256": "21f6001e574a71aeca504112a05cf48fb2ec5d1c9cf36ce4c6b607be27294a05"
+  },
+  "official_public_media_inputs": {
+    "source_archives": 2,
+    "wheels": 83,
+    "all_source_bytes_and_hashes_verified": true,
+    "fetch": {
+      "phase": "FetchPublic",
+      "started_utc": "2026-11-26T15:38:32+00:00",
+      "request_count": 1,
+      "formal_installation": false,
+      "binding_accessed": false,
+      "production_switched": false,
+      "messages_sent": 0,
+      "exit_code": 0,
+      "status": "ok",
+      "ended_utc": "2026-11-26T15:40:45+00:00"
+    }
+  },
+  "first_windows_build": {
+    "receipt": {
+      "phase": "RebuildMedia",
+      "started_utc": "2026-11-26T15:40:45+00:00",
+      "request_count": 1,
+      "formal_installation": false,
+      "binding_accessed": false,
+      "production_switched": false,
+      "messages_sent": 0,
+      "exit_code": 1,
+      "reason": "size_or_digest_mismatch",
+      "status": "stopped",
+      "ended_utc": "2026-11-26T15:41:03+00:00"
+    },
+    "expected_bytes": 132729332,
+    "expected_sha256": "4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb",
+    "observed_bytes": 130294872,
+    "observed_sha256": "7f5af8e0cd7c9b00ea830cd353bc9c0401a09ef5e33f7c5939ac92e106b7e04b",
+    "observed_zlib_runtime": "1.3.1.zlib-ng",
+    "observed_zlib_ng": "2.2.4",
+    "all_4794_member_contents_order_and_header_fields_match": true,
+    "comparison": {
+      "source": {
+        "entries": true,
+        "bytes": true,
+        "compressed_bytes": false,
+        "layout": true,
+        "contents": true,
+        "compressed": false,
+        "lengths": false,
+        "headers": true
+      },
+      "runtime": {
+        "entries": true,
+        "bytes": true,
+        "compressed_bytes": false,
+        "layout": true,
+        "contents": true,
+        "compressed": false,
+        "lengths": false,
+        "headers": true
+      },
+      "wheels": {
+        "entries": true,
+        "bytes": true,
+        "compressed_bytes": true,
+        "layout": true,
+        "contents": true,
+        "compressed": true,
+        "lengths": true,
+        "headers": true
+      },
+      "top": {
+        "entries": true,
+        "bytes": true,
+        "compressed_bytes": false,
+        "layout": true,
+        "contents": true,
+        "compressed": false,
+        "lengths": false,
+        "headers": true
+      }
+    },
+    "approved_archive_published": false
+  },
+  "latest_interactive_logon": {
+    "observed_utc": "2026-11-26T15:40:09+00:00",
+    "facts": {
+      "account_seen": true,
+      "newer_interactive_logon": false,
+      "all_queries_completed": true
+    }
+  },
+  "field_at_observation": {
+    "protected_production_installation_verified": false,
+    "windows_six_cases_passed": 0,
+    "windows_six_cases_required": 6,
+    "fixed_natural_receipts": 0,
+    "production_switched": false
+  },
+  "raw_receipt_sha256": {
+    "staging-placement.json": "4c8adef59025d5e314c5a3f3992400b528260af915aaa273dc69388525da0736",
+    "staging-readback.json": "c8c18598a61bdb28bc1df002b366b1d6052a26fcde8130e107764fcfdf492a79",
+    "staging-completion.json": "5377128f1d25436bb1d01a01ef3c156d7e1803c7062c19171d1d9d388fd90c57",
+    "field-FetchPublic.json": "eb3a7a59917a8f4f1e36848e683db8f8d3a3358e6fb0c4ae2dcb35c89bc04c6c",
+    "field-RebuildMedia.json": "310f094e72b5f91569da0622609da8a0bc7098ae50a4e35d0930a67891e37551",
+    "field-archive-comparison.json": "35d07f918bc5300223bd8c63b56f2062c013d20cbfa59f880f7bdd0d9d1ea89c"
+  }
+}
