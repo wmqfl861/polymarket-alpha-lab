@@ -115,6 +115,34 @@ def _soccer_proposition(event, question, kind):
     return None
 
 
+def _unbound_soccer_total(tag, event, body):
+    """Describe an observed regulation total without assigning tokens or accepting its terms."""
+    if body.get("sportsMarketType") != "totals":
+        return None
+    tags = event.get("tags")
+    if not isinstance(tags, list) or not all(
+            isinstance(item, dict) and isinstance(item.get("slug"), str) for item in tags):
+        return None
+    league = _soccer_scope(None, event)
+    if league is None or (tag != "soccer" and tag not in inputs._SOCCER_TAGS[league]):
+        return None
+    outcomes = journal._gamma_array(body.get("outcomes"))
+    if outcomes not in (["Over", "Under"], ["Under", "Over"]):
+        return None
+    title, description = event.get("title"), body.get("description")
+    if not isinstance(title, str) or not isinstance(description, str):
+        return None
+    fixture = title.removesuffix(" - More Markets")
+    line = str(body.get("line"))
+    if (not re.fullmatch(r"[^:]+ vs\. [^:]+", fixture) or not re.fullmatch(r"[0-9]+\.5", line)
+            or body.get("question") != f"{fixture}: O/U {line}"
+            or "only to the outcome within the first 90 minutes of regular play plus stoppage time." not in description
+            or "will resolve 50-50" not in description):
+        return None
+    return {"league": league, "market_kind": "total", "line": line, "outcomes": outcomes,
+            "period": "regulation_plus_stoppage", "split_payout_mentioned": True}
+
+
 def _crypto_proposition(body, kind):
     question = _fold(body.get("question", ""))
     terminal = _QUESTION.fullmatch(question)
@@ -128,10 +156,20 @@ def _crypto_proposition(body, kind):
 def _targets(config, manifest, entries):
     targets, bound, observations = {}, set(), []
     queues = [queue for queue in config.queues if not queue.pack]
+    domestic_totals = any(
+        (queue.lineage == "club-soccer" or queue.lineage.startswith("club-soccer/"))
+        and queue.league_scope == queue_policy.SCOPE_DOMESTIC and _queue_kind(queue, "club-soccer") == "total"
+        for queue in queues
+    )
     for market, event, body, tag, sighting in _page_rows(manifest, entries):
         identity = market["condition_id"]
         if market["binding_status"] != "explicit_yes_no":
-            observations.append({**sighting, "condition_id": identity, "reason_code": market["binding_status"]})
+            observation = {**sighting, "condition_id": identity, "reason_code": market["binding_status"]}
+            if domestic_totals and market["binding_status"] == "unresolved_outcomes":
+                source_market = _unbound_soccer_total(tag, event, body)
+                if source_market is not None:
+                    observation["source_market"] = source_market
+            observations.append(observation)
             continue
         event_id = str(event["id"]) if event.get("id") is not None else None
         try:

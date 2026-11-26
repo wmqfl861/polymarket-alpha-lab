@@ -79,6 +79,8 @@ def _drive_capture():
             if parsed.path == "/events" and query["tag_slug"] == [fixture["tag"]]:
                 body = ([{"id": "fx40-fixture-event", "title": fixture["title"], "markets": fixture["markets"]}]
                         if query["offset"] == ["0"] else [])
+                if body and "event_tags" in fixture:
+                    body[0]["tags"] = fixture["event_tags"]
                 if fixture.get("overreturn_gamma_page"):
                     body = body * 2
             elif parsed.path == "/book":
@@ -206,7 +208,7 @@ def _ref(row):
 
 
 def _capture_setup(project, name, *, news=True, rules=True, cash=None, tag="crypto", unbound=False,
-                   fotmob_clock=None, gamma_page_size=None, overreturn_gamma_page=False):
+                   fotmob_clock=None, gamma_page_size=None, overreturn_gamma_page=False, official_total=False):
     directory = project.temporary / name
     directory.mkdir()
     soccer = tag in ("epl", "championship")
@@ -261,7 +263,15 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None, tag="cryp
         title = name
     if unbound:
         markets = [{"question": question}]
-    raw = _d1_json_path(directory, "capture-fixture.json", {
+    extras = {}
+    if official_total:
+        title = "Home vs. Away - More Markets"
+        markets = [{**market, "sportsMarketType": "totals", "outcomes": '["Under","Over"]', "line": 2.5,
+                    "question": "Home vs. Away: O/U 2.5",
+                    "description": ("If the match is cancelled, it will resolve 50-50. This market refers only to "
+                                    "the outcome within the first 90 minutes of regular play plus stoppage time.")}]
+        extras["event_tags"] = [{"slug": tag}]
+    raw = _d1_json_path(directory, "capture-fixture.json", {**extras,
         "tag": tag, "title": title, "markets": markets, "books": books,
         "overreturn_gamma_page": overreturn_gamma_page,
         "season": str(opening.year - (opening.month < 7)),
@@ -643,6 +653,25 @@ def test_unbound_capture_appearance_is_covered_without_a_candidate(separate_proj
         assert (appearance["sequence"], appearance["path"]) == (1, "/0/markets/0")
         assert reader.execute("SELECT count(*) FROM papersim.candidates WHERE scan_id = %s",
                               (summary["scan_id"],)).fetchone() == (0,)
+
+
+def test_managed_scan_describes_a_named_total_with_split_terms_and_keeps_it_unbound(separate_project):
+    case = _capture_setup(separate_project, "fx44-named-total", tag="epl", official_total=True)
+    result = _b1(case, 1)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads(result.stdout)
+    assert summary["candidate_ids"] == {} and summary["entry_ids"] == {}
+    with pg.connect_managed(case.project.root) as reader:
+        coverage = operations._read_document(
+            reader, summary["coverage"], kind=prepared_scan._COVERAGE_KIND, source=prepared_scan._COVERAGE_SOURCE,
+        )
+        observation, = coverage["unbound"]
+        assert observation["reason_code"] == "unresolved_outcomes"
+        assert observation["source_market"] == {
+            "league": "EPL", "market_kind": "total", "line": "2.5", "outcomes": ["Under", "Over"],
+            "period": "regulation_plus_stoppage", "split_payout_mentioned": True,
+        }
+        assert (observation["sequence"], observation["path"]) == (1, "/0/markets/0")
 
 
 def test_unregistered_policy_records_supported_refusals_for_managed_replay(separate_project):
