@@ -1,0 +1,109 @@
+{
+  "baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "product_head": "5388b6ab7f63eb29a69fec2d81bf71c0badd8530",
+  "previous_main": "732d5c6e8279ae5594d20a6dcc0911c771df70d6",
+  "this_product_change": {
+    "removed_tests": 0,
+    "fewer_assertions": 0,
+    "new_skip": 0,
+    "new_xfail": 0
+  },
+  "since_audit_baseline": {
+    "deleted_workflow_only_test_files": [
+      "tests/test_claude_probe_environment_workflow.py",
+      "tests/test_codex_node_push_policy_rules.py",
+      "tests/test_native_postgres_workflow.py"
+    ],
+    "removed_or_renamed_test_names_in_surviving_files": [
+      {
+        "file": "tests/test_handoff_campaign_summary.py",
+        "old_name": "test_campaign_workflow_is_manual_dispatch_only",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_handoff_campaign_summary.py",
+        "old_name": "test_campaign_workflow_orders_target_first_and_calls_summary_cli",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_handoff_campaign_summary.py",
+        "old_name": "test_campaign_workflow_pins_action_shas",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_handoff_campaign_summary.py",
+        "old_name": "test_campaign_workflow_runs_30_parallel_first_attempt_trials",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_handoff_campaign_summary.py",
+        "old_name": "test_campaign_workflow_timeboxes_capture_and_summary",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_papersim_cli_optimize.py",
+        "old_name": "test_optimize_help_names_the_four_subcommands",
+        "disposition": "NBA v2 CLI added the registered experiment entry point in #125. Replacement: test_optimize_help_names_the_experiment_subcommands."
+      },
+      {
+        "file": "tests/test_phase1_docs_required_terms.py",
+        "old_name": "test_current_review_documents_reference_the_root_subagent_routing",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_phase1_docs_required_terms.py",
+        "old_name": "test_project_policy_freezes_long_running_review_monitoring",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_phase1_docs_required_terms.py",
+        "old_name": "test_project_policy_freezes_sustained_parallel_development_iron_rule",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_phase1_file_catalog.py",
+        "old_name": "test_phase1_current_node_file_catalog_is_exact_and_directly_tested",
+        "disposition": "File-catalog check renamed with the updated catalog in #138: test_phase1_file_catalog_is_exact_and_directly_tested"
+      },
+      {
+        "file": "tests/test_phase1_file_catalog.py",
+        "old_name": "test_phase1_key_modules_and_their_review_tests_are_present",
+        "disposition": "File-catalog check renamed with the updated catalog in #138: test_phase1_key_modules_and_their_tests_are_present"
+      },
+      {
+        "file": "tests/test_phase1_file_catalog.py",
+        "old_name": "test_phase1_node_manifest_lists_exact_current_node_file_catalog",
+        "disposition": "File-catalog check renamed with the updated catalog in #138: test_phase1_documented_file_catalog_matches_project_inputs"
+      },
+      {
+        "file": "tests/test_project_postgres_version_switch_native.py",
+        "old_name": "test_version_switch_native_ci_is_required",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_research_claude_review.py",
+        "old_name": "test_shipped_claude_changes_trigger_real_platform_gates",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      },
+      {
+        "file": "tests/test_research_codex_profile_review.py",
+        "old_name": "test_process_and_profile_changes_trigger_actual_kit_verification",
+        "disposition": "Owner-confirmed removal of the corresponding development workflow or role requirement (#138)."
+      }
+    ],
+    "fewer_assertions": 0,
+    "new_skip": 0,
+    "new_xfail": 0
+  },
+  "frozen_fixtures": "1d3ed3fab17dd1a73a76f10dd3110ac5822dd5cc",
+  "selfcheck": {
+    "utc": "2026-11-26T06:46:48.105173+00:00",
+    "base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "source_commit": "086888fc22d34897877ac2e051fafde4ac9ace86",
+    "checks": 10,
+    "byte_equal": true,
+    "stdout_sha256": "a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9",
+    "frozen_fixture_tree": "1d3ed3fab17dd1a73a76f10dd3110ac5822dd5cc"
+  },
+  "synthetic_only": true
+}

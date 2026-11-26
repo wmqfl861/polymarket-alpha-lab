@@ -1,0 +1,63 @@
+{
+  "source_commit": "5388b6ab7f63eb29a69fec2d81bf71c0badd8530",
+  "offline": {
+    "utc": "2026-11-26T06:57:16.560754+00:00",
+    "exit": 0,
+    "stages": [],
+    "counts": {
+      "passed": 178
+    },
+    "console_sha256": "ba5611fe3f3b2da8e5e4a9ec2fabba6d87e748bce18a8b6e13d8ac32cf67caf1",
+    "failure_test_names": []
+  },
+  "isolated_native_postgresql": {
+    "source_commit": "5388b6ab7f63eb29a69fec2d81bf71c0badd8530",
+    "utc": "2026-11-26T07:03:03.669214+00:00",
+    "exit": 0,
+    "counts": {
+      "passed": 6
+    },
+    "stages": [
+      {
+        "checks": "passed",
+        "driver": "binary",
+        "managed_roles": 2,
+        "network": "unix",
+        "postgres": "unix",
+        "stage": "isolation"
+      },
+      {
+        "head": "5388b6ab7f63eb29a69fec2d81bf71c0badd8530",
+        "result": "private_test_copy",
+        "stage": "clone"
+      },
+      {
+        "exit_code": 0,
+        "passed": 6,
+        "result": "passed",
+        "stage": "pytest"
+      }
+    ],
+    "scope": "The test uses a private clean copy of the pinned Git commit inside the existing isolated PostgreSQL test environment.",
+    "console_sha256": "45991b0c29c9859eb2a0c4ba44e4b816262e44c651a4f9a38c23bf68bfb7f43a"
+  },
+  "native_test": "tests/test_papersim_optimize_policy_native.py::test_native_clv_uses_own_side_and_complete_prices_per_population",
+  "reference_fixture": {
+    "candidate": {
+      "gate_passing": 30,
+      "complete_pairs": 3,
+      "missing_close": 26,
+      "missing_fill": 26,
+      "missing_both": 25
+    },
+    "active": {
+      "entries": 7,
+      "complete_pairs": 6,
+      "missing_close": 1,
+      "missing_fill": 0,
+      "missing_both": 0
+    },
+    "candidate_mean_minus_active_mean": "-0.01"
+  },
+  "scope": "The operator can request the selected CLOSE and fill rows in the read-only score output. The native cases use isolated synthetic data. No live scoring, OD-P activation, historical replacement, or formal M2 day is attested."
+}

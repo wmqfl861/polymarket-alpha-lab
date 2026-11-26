@@ -1,0 +1,111 @@
+{
+  "timers": {
+    "utc": "2026-11-26T06:41:39.195892+00:00",
+    "scope": "Current activation is a systemd runtime timestamp. Working-directory HEAD alone does not establish the deployed source.",
+    "timers": [
+      {
+        "timer": "pal-football-learning-admission.timer",
+        "unit": "pal-football-learning@admission.service",
+        "configuration": "enabled",
+        "state": "active",
+        "current_activation_utc": "Tue 2026-11-24 23:49:43 UTC",
+        "last_trigger_utc": "Thu 2026-11-26 06:34:00 UTC",
+        "working_directory_git_head": null
+      },
+      {
+        "timer": "pal-football-learning-evidence.timer",
+        "unit": "pal-football-learning@evidence.service",
+        "configuration": "enabled",
+        "state": "active",
+        "current_activation_utc": "Tue 2026-11-24 23:49:43 UTC",
+        "last_trigger_utc": "Thu 2026-11-26 06:41:12 UTC",
+        "working_directory_git_head": null
+      },
+      {
+        "timer": "pal-football-learning-study.timer",
+        "unit": "pal-football-learning@study.service",
+        "configuration": "enabled",
+        "state": "active",
+        "current_activation_utc": "Tue 2026-11-24 23:49:43 UTC",
+        "last_trigger_utc": "Thu 2026-11-26 06:32:00 UTC",
+        "working_directory_git_head": null
+      },
+      {
+        "timer": "pal-football-notify-scan.timer",
+        "unit": "pal-football-notify-scan.service",
+        "configuration": "enabled",
+        "state": "active",
+        "current_activation_utc": "Tue 2026-11-24 23:49:43 UTC",
+        "last_trigger_utc": "Thu 2026-11-26 06:40:00 UTC",
+        "working_directory_git_head": null
+      },
+      {
+        "timer": "pal-football-notify-tick.timer",
+        "unit": "pal-football-notify-tick.service",
+        "configuration": "enabled",
+        "state": "active",
+        "current_activation_utc": "Tue 2026-11-24 23:49:43 UTC",
+        "last_trigger_utc": "Thu 2026-11-26 06:41:00 UTC",
+        "working_directory_git_head": null
+      },
+      {
+        "timer": "pal-sports-paper-scan.timer",
+        "unit": "pal-sports-paper@basketball-scan.service",
+        "configuration": "enabled",
+        "state": "active",
+        "current_activation_utc": "Tue 2026-11-24 23:49:43 UTC",
+        "last_trigger_utc": "Thu 2026-11-26 06:38:00 UTC",
+        "working_directory_git_head": null
+      },
+      {
+        "timer": "pal-sports-paper-settle.timer",
+        "unit": "pal-sports-paper@settle.service",
+        "configuration": "enabled",
+        "state": "active",
+        "current_activation_utc": "Tue 2026-11-24 23:49:43 UTC",
+        "last_trigger_utc": "Thu 2026-11-26 06:40:43 UTC",
+        "working_directory_git_head": null
+      },
+      {
+        "timer": "pal-sports-paper-study.timer",
+        "unit": "pal-sports-paper@basketball-study.service",
+        "configuration": "enabled",
+        "state": "active",
+        "current_activation_utc": "Tue 2026-11-24 23:49:43 UTC",
+        "last_trigger_utc": "Thu 2026-11-26 06:04:20 UTC",
+        "working_directory_git_head": null
+      }
+    ]
+  },
+  "source_comparison": {
+    "utc": "2026-11-26T06:42:19.141344+00:00",
+    "scope": "Only the two source files in the notification service working directory were compared. A match does not identify a checkout for the full runtime.",
+    "reference_commits": {
+      "audited_runtime": "bcce1b17f7263ab89859febfcb56188c295ab371",
+      "fixed_runtime": "97e9cbcbf510de0f10606ec06380376d627bff50"
+    },
+    "observed": {
+      "weixin_delivery.py": {
+        "sha256": "8edf943951d480520f840b0cf238fdf7dc5eab346268f96104010a4ea1f7ddb9",
+        "audited_runtime_bytes_match": false,
+        "fixed_runtime_bytes_match": false
+      },
+      "football_focus.py": {
+        "sha256": "98b5406850bde25d79befaa2427e2bfdde8e78c76421926bf1a1e8bd676aea88",
+        "audited_runtime_bytes_match": true,
+        "fixed_runtime_bytes_match": true
+      }
+    }
+  },
+  "notification_launcher": {
+    "observed_utc": "2026-11-26T06:42:40.990366+00:00",
+    "scope": "static source in the service working directory, with no runtime invocation",
+    "same_syntax_after_masking_string_literals_as_audited": false,
+    "same_syntax_after_masking_string_literals_as_fixed": false,
+    "unrestricted_mode_literal": true,
+    "fixed_script_literal": false,
+    "has_launcher_definition": true
+  },
+  "deployed_commit": null,
+  "first_ever_enablement": null
+}

@@ -1,0 +1,85 @@
+{
+  "source_commit": "086888fc22d34897877ac2e051fafde4ac9ace86",
+  "launcher": "docs/paper-sim/runtime/scripts/weixin_delivery.py",
+  "launcher_sha256": "f7885e8f37351d3b8f3e238a33ab8c2300fa83792c138026e8ffa8f32404508b",
+  "fixed_entry": "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1",
+  "sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "portable_engine": "PowerShell 7.4.22 on Linux",
+  "transport_test": {
+    "path": "tests/test_fx49_weixin_delivery.py",
+    "passed": 79,
+    "skipped": 0,
+    "exit": 0,
+    "finished_utc": "2026-11-26T06:34:06.289382+00:00",
+    "console_sha256": "31cc5a4b218ba04abebab547638919908cbe241c8b0bc8103065cc0407df8e9a"
+  },
+  "script_test": {
+    "path": "tests/test_fx49_fixed_script.py",
+    "passed": 20,
+    "skipped": 0,
+    "exit": 0,
+    "finished_utc": "2026-11-26T06:36:02.417294+00:00",
+    "console_sha256": "a4f8f8a6e04c892e15472c906588be4e0b86a578c44de973964131ae0b31d23f",
+    "send_command": "local synthetic substitute"
+  },
+  "cases": [
+    {
+      "case": "accepted",
+      "expected_and_observed_exit": 0,
+      "total_substitute_sends": 1,
+      "passing_test": "test_success_writes_one_bound_receipt_and_keeps_it_after_cleanup"
+    },
+    {
+      "case": "nonunique_or_group",
+      "expected_and_observed_exit": 24,
+      "total_substitute_sends": 0,
+      "passing_test": "test_nonunique_or_group_cannot_send[multiple]"
+    },
+    {
+      "case": "private_binding_mismatch",
+      "expected_and_observed_exit": 25,
+      "total_substitute_sends": 0,
+      "passing_test": "test_valid_dm_with_wrong_digest_cannot_change_binding"
+    },
+    {
+      "case": "body_digest_mismatch",
+      "expected_and_observed_exit": 26,
+      "total_substitute_sends": 0,
+      "passing_test": "test_changed_note_is_rejected_using_actual_file_bytes"
+    },
+    {
+      "case": "expired_window",
+      "expected_and_observed_exit": 22,
+      "total_substitute_sends": 0,
+      "passing_test": "test_closed_window_cannot_send"
+    },
+    {
+      "case": "native_refusal",
+      "expected_and_observed_exit": 32,
+      "total_substitute_sends": 1,
+      "passing_test": "test_structured_refusal_is_durable_and_never_retried[PLATFORM_DENIED]"
+    }
+  ],
+  "windows_drill": {
+    "path": "docs/paper-sim/runtime/scripts/windows/offline-acceptance/Test-PaperWeixinOffline.ps1",
+    "sha256": "f7c67c5556139b0490372336709c6d440479b48d0798f51f763157bcd9857978",
+    "hosted_diagnosis_pr": 136,
+    "historical_hosted_run": 45744033577,
+    "historical_symptom": "The former rehearsal writer emitted a UTF-8 preamble on Windows PowerShell 5.1; the initial request returned 21. The fixed entry and the rehearsal writer are separate files."
+  },
+  "site": {
+    "six_case_runs_completed": 0,
+    "natural_fixed_entry_deliveries_verified": 0,
+    "deployed_commit": null,
+    "previous_owner_observation": "2026-11-25-owner-fixed-entry-observation.json",
+    "notification_working_directory": {
+      "observed_utc": "2026-11-26T06:42:40.990366+00:00",
+      "scope": "static source in the service working directory, with no runtime invocation",
+      "same_syntax_after_masking_string_literals_as_audited": false,
+      "same_syntax_after_masking_string_literals_as_fixed": false,
+      "unrestricted_mode_literal": true,
+      "fixed_script_literal": false,
+      "has_launcher_definition": true
+    }
+  }
+}

@@ -4685,6 +4685,12 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 2026-11-25 05:20 UTC，协调者经已核实的 HC 路线在 Windows 上查询一次。系统 PowerShell 5.1 的有效策略为 `Restricted`，进程级为 `Undefined`。约定演练位置的脚本缺失，进程、用户和系统三种作用域均未登记运行层的固定脚本路径。现场无可核对的脚本 ACL，通用远程能力是否收窄仍未获证。自动投递切换待具备受保护且强制唯一的入口。此次检查的固定脚本执行数、配置修改数、微信发送数均为 0。[现场核对回执](docs/paper-sim/design/fx-49/2026-11-25-owner-fixed-entry-observation.json)
 
+##### 11 月 26 日固定投递代码与现场状态
+
+固定脚本和 Linux 投递器的产品提交为 `086888fc`。固定脚本的 SHA-256 为 `e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6`。Linux 上的 PowerShell 实际执行了该脚本，使用本地替身完成全部六种情况。成功、目标不唯一、私聊摘要不符、正文摘要不符、超时、发送器拒绝的退出码依次为 0、24、25、26、22、32。收件范围、重试次数与下注规则沿用原登记。沿用 11 月 25 日的现场回执，Windows 演练为 0/6，经固定入口核实的自然投递为 0。11 月 26 日 06:42 UTC 核对到通知服务工作目录的投递代码仍含通用代理启动方式，现场部署提交未知。机主确认的“只在能限制为固定入口时切换”仍适用。[脚本及验收回执](docs/paper-sim/design/fx-49/2026-11-26-linux-fixed-entry-acceptance.json) · [上次 Windows 现场回执](docs/paper-sim/design/fx-49/2026-11-25-owner-fixed-entry-observation.json)
+
+两个连接池的公网限制已分别从独立测点复查。项目原生数据库单次外测为超时。登录入口的现有外测回执为 `NO_OBSERVATION`，认证方法未知。11 月 26 日只读核对 GitHub，`main` 的 `protected` 字段为 `false`。[原生数据库外测](docs/paper-sim/design/fx-36/2026-11-24-native-public-observation.json) · [登录观测原件](docs/paper-sim/design/fx-36/2026-11-24-login-public-observation.json)
+
 #### 84.2.5 历史优化卡
 
 原运行提交 `e234c3364c204db513cc4fbcdcb6d5eb43c7417b`，种子 `20261120`，规则 v1。原档 88,845 字节，登记 SHA-256 为 `03c616e1d94efe5e3a7879e3277645b5d60e4e407bdef6e9d31d9f7eb3366ad5`。卡片按原登记保留，操作员原件的本轮核对另记。
@@ -4937,4 +4943,12 @@ PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并�
 | NBA | 运行层使用 `wp-nba-v1` 标识主线 `nba_model.fixture_prediction`，门值来自 `tools/wp_nba_validate.py`。`wp-nba-ratings-20261122-v1` 为运行层独立评分模型 | 篮球政策 `basketball-league-admission-20261119-v1`。`_approved_families` 要求报告状态为 `evaluated`，策略版本、当前 NBA 赛季及所选模型版本吻合，观测年龄为 0 至 2 小时。该模型须已准备重测，合格场次数为整数且至少 90，A、C、D 均通过。胜负还要求 E 的 `passed` 和 `polymarket_at_bar` 均为真。大小分还要求 B 通过、同线模型优于抛硬币、严格同线样本 `polymarket_strict_n` 至少 20。两个版本分别判定。 |
 | 欧洲篮球与 NCAA | `europe-basketball-20261119` 源自运行层 `basketball_models._euro_forecast`。`ncaa-elo-margin-v1-20261123` 源自 `basketball_college` | 欧洲九联赛前瞻研究范围中，德国 BBL 和 EuroCup 的总分有受管准入路径。NCAA 男女篮为研究口径；WNBA 和夏季联赛当前无支持模型。 |
 
-OD-Y 按推荐执行。FX-48 先登记运行版本、定时状态和研究与账本的衔接，完善分列输出和状态变化证据。M2 切换后按同一场次、合约、观测时刻、模型和批次核对两套记录，再把准入与运营账并入受管模拟盘。数据库具体采用的路径留给 OD-X。[本轮整改清单和决定项](docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md)
+OD-Y 按推荐执行。FX-48 先登记运行版本、定时状态和研究与账本的衔接，完善分列输出和状态变化证据。M2 切换后按同一场次、合约、观测时刻、模型和批次核对两套记录，再把准入与运营账并入受管模拟盘。机主已按 §84.2.1 的 OD-X 选择路 A，实际接管排在 FX-49 部署之后。[本轮整改清单和决定项](docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md)
+
+### 88.4 运行层现状与 FX-44 取价核对（2026-11-26 UTC）
+
+06:41 的现场读数显示八个定时器均为 `enabled` 和 `active`。本次启用中的激活时间同为 11 月 24 日 23:49:43 UTC，最初启用日期未知。逐项名称、服务和最近触发时间见回执。服务工作目录均未取得 Git 提交号。通知模块中，足球重点关注源文件的字节与登记版本相同，微信投递器的字节与原审核版本、固定脚本候选均不同。FX-48 的运行提交、FX-50 的表结构接管继续随 FX-49 的实际部署登记。[运行层逐项现场读数](docs/paper-sim/design/fx-48/2026-11-26-runtime-observation.json)
+
+`5388b6ab` 在受管只读命令 `optimize score --lineage <谱系> --close-price-evidence` 增加了逐行核对选项。每行可核对买入方向、影子成交、现役模拟入场及实际选中的收盘证据。R6-17 的 30 行计数取候选过闸数；候选和现役分别只用收盘价、成交价俱全的本侧行计算均值。两侧沿用现有口径，不增设有价行下限。达到 30 行且两均值之差（候选减现役）小于或等于 −0.01 时拦截。两侧任一均值缺失只作标注。隔离原生用例的首轮数据是候选 30 行中 3 行有价、现役 7 行中 6 行有价，复算差值正好为 −0.01。OD-P 的现场登记和七个连续合格日仍待实测。[原生 PostgreSQL 和离线测试回执](docs/paper-sim/design/fx-44/2026-11-26-price-evidence.json)
+
+与 11 月 24 日审计基线相比，证据脚本列出 3 个删除的工作流专用测试文件及 15 个移除或改名的测试名。逐项列明 #125 的帮助测试改名和 #138 清理开发流程所涉及的工作流、角色及目录检查。本轮产品差异单独比较为移除 0、断言减少 0、新增跳过 0、新增预期失败 0。十项自检和四个冻结夹具的核对值见终点记录。[逐项处置及冻结基线](docs/paper-sim/design/optimizer-phase1/2026-11-26/delta-verification.json)
