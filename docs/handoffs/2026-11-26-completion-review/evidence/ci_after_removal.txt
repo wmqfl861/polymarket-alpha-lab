@@ -1,0 +1,20 @@
+# workflow runs created on or after 2026-11-26T06:00:00Z (any branch, any event): 0
+# the last runs on branch main (id | workflow | event | conclusion | started | head)
+  45749707968 | Offline verification | push | success | 2026-11-26T03:33:46Z | eae037aa
+  45749708010 | Native project PostgreSQL | push | success | 2026-11-26T03:33:46Z | eae037aa
+  45739192847 | Offline verification | push | success | 2026-11-26T01:57:31Z | 07f4bf21
+  45739192848 | Native project PostgreSQL | push | success | 2026-11-26T01:57:31Z | 07f4bf21
+  45718748104 | Offline verification | push | success | 2026-11-25T23:06:37Z | 39477891
+  45718748002 | Native project PostgreSQL | push | success | 2026-11-25T23:06:37Z | 39477891
+  45674688145 | Offline verification | push | success | 2026-11-25T18:23:39Z | 289ed1c2
+  45674687928 | Native project PostgreSQL | push | success | 2026-11-25T18:23:38Z | 289ed1c2
+  45621536267 | Offline verification | push | success | 2026-11-25T13:14:22Z | 09306300
+  45605525449 | Graph Update: uv in /. #1730171134 | dynamic | success | 2026-11-25T11:33:23Z | 631259a2
+  45605509464 | Offline verification | push | success | 2026-11-25T11:33:17Z | 631259a2
+  45586033958 | Offline verification | push | success | 2026-11-25T09:30:22Z | a7dbd8a3
+# pytest summary line of the offline job on the last main commit that had runs
+  run 45749707968 job 139674276090 head eae037aa21bc827ebf0d33ec2f61d1d3d10f17f4
+  + pytest==9.1.1
+  + tzdata==2026.3
+  Python 3.12.3
+  44063 passed, 483 skipped, 20 warnings in 896.60s (0:14:56)

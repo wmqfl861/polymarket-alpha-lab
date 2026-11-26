@@ -1,0 +1,30 @@
+base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=9a64415ae8a191f4c0abc5276c661240e1920e8c
+test python files: added=11 modified=24 deleted=3
+DELETED FILE tests/test_claude_probe_environment_workflow.py
+DELETED FILE tests/test_codex_node_push_policy_rules.py
+DELETED FILE tests/test_native_postgres_workflow.py
+tests/test_handoff_campaign_summary.py: tests 16 -> 11
+    removed test: test_campaign_workflow_is_manual_dispatch_only (had 4 checks)
+    removed test: test_campaign_workflow_orders_target_first_and_calls_summary_cli (had 4 checks)
+    removed test: test_campaign_workflow_pins_action_shas (had 1 checks)
+    removed test: test_campaign_workflow_runs_30_parallel_first_attempt_trials (had 8 checks)
+    removed test: test_campaign_workflow_timeboxes_capture_and_summary (had 4 checks)
+tests/test_papersim_cli_optimize.py: tests 17 -> 21
+    removed test: test_optimize_help_names_the_four_subcommands (had 3 checks)
+tests/test_phase1_docs_required_terms.py: tests 15 -> 13
+    removed test: test_current_review_documents_reference_the_root_subagent_routing (had 7 checks)
+    removed test: test_project_policy_freezes_long_running_review_monitoring (had 18 checks)
+    removed test: test_project_policy_freezes_sustained_parallel_development_iron_rule (had 4 checks)
+tests/test_phase1_file_catalog.py: tests 6 -> 6
+    removed test: test_phase1_current_node_file_catalog_is_exact_and_directly_tested (had 7 checks)
+    removed test: test_phase1_key_modules_and_their_review_tests_are_present (had 3 checks)
+    removed test: test_phase1_node_manifest_lists_exact_current_node_file_catalog (had 2 checks)
+tests/test_project_postgres_version_switch_native.py: tests 50 -> 49
+    removed test: test_version_switch_native_ci_is_required (had 22 checks)
+tests/test_research_claude_review.py: tests 12 -> 11
+    removed test: test_shipped_claude_changes_trigger_real_platform_gates (had 1 checks)
+tests/test_research_codex_profile_review.py: tests 8 -> 7
+    removed test: test_process_and_profile_changes_trigger_actual_kit_verification (had 1 checks)
+modified files: test functions 567 -> 596
+totals: removed tests=15 tests with fewer checks=0 new skip markers=0 new xfail markers=0
+added files: 11 with 114 test functions

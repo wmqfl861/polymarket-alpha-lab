@@ -1,0 +1,73 @@
+# auditor's own run of the repository's offline test suite (pytest), 2026-11-26
+# environment: Python 3.12.3, pytest 9.1.1, no psycopg, no PostgreSQL, no PowerShell
+# tzdata: a stand-in package assembled from the operating system's IANA database (2026e); the lock file pins the PyPI package tzdata 2026.3
+# variables: PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 POLYMARKET_ALPHA_LAB_RUN_SUPABASE_SMOKE=0 PYTHONUTF8=1 PYTHONDONTWRITEBYTECODE=1 (as scripts/verify_local.py sets them), empty environment otherwise
+
+## run A: the last main commit that had workflow runs
+label=base commit=eae037aa21bc827ebf0d33ec2f61d1d3d10f17f4 python=3.12.3 pytest=9.1.1
+start=2026-11-26T11:10:28Z end=2026-11-26T11:28:24Z exit=0
+tracked files changed by the run: 0
+44063 passed, 483 skipped, 38 warnings in 1062.96s (0:17:42)
+CI on the same commit (run 45749707968, job 139674276090): 44063 passed, 483 skipped, 20 warnings in 896.60s (0:14:56)
+
+## run B: the reviewed main
+label=head commit=9a64415ae8a191f4c0abc5276c661240e1920e8c python=3.12.3 pytest=9.1.1
+start=2026-11-26T11:28:40Z end=2026-11-26T11:46:31Z exit=0
+tracked files changed by the run: 0
+44102 passed, 513 skipped, 38 warnings in 1058.90s (0:17:38)
+
+## comparison of the two JUnit files (junit_compare.py)
+base: 44546 cases; passed 44063, skipped 483, failed 0
+head: 44615 cases; passed 44102, skipped 513, failed 0
+cases only at head: 158 ([('passed', 128), ('skipped', 30)])
+cases only at base: 89 ([('passed', 89)])
+cases in both whose outcome changed: 0
+per test file (cases only at head as +outcome, only at base as -outcome):
+    tests/test_claude_probe_environment_workflow.py: -passed 1
+    tests/test_codex_node_push_policy_rules.py: -passed 7
+    tests/test_fx49_fixed_script.py: +passed 3, +skipped 19
+    tests/test_fx49_weixin_delivery.py: +passed 79
+    tests/test_handoff_campaign_summary.py: -passed 5
+    tests/test_native_postgres_workflow.py: -passed 42
+    tests/test_papersim_capture_marks_native.py: +skipped 1
+    tests/test_papersim_close_selection_readback_native.py: +skipped 4
+    tests/test_papersim_prepare_inputs.py: +passed 9
+    tests/test_papersim_prepared_gamma_pages.py: +passed 13
+    tests/test_papersim_prepared_gamma_pages_native.py: +skipped 3
+    tests/test_papersim_prepared_scan_native.py: +skipped 3
+    tests/test_papersim_unbound_soccer_totals.py: +passed 17
+    tests/test_phase1_docs_required_terms.py: +passed 1, -passed 3
+    tests/test_phase1_file_catalog.py: +passed 6
+    tests/test_phase1_merge_readiness_file_set.py: -passed 6
+    tests/test_project_postgres_version_switch_native.py: -passed 1
+    tests/test_research_claude_review.py: -passed 16
+    tests/test_research_codex_profile_review.py: -passed 8
+skipped at head and not skipped at base (file | reason | cases):
+    tests/test_fx49_fixed_script.py | optional Linux script check requires a pre-existing pwsh | 19
+    tests/test_papersim_capture_marks_native.py | explicit Linux native PostgreSQL proof is opt-in | 1
+    tests/test_papersim_close_selection_readback_native.py | explicit native papersim proof is opt-in | 4
+    tests/test_papersim_prepared_gamma_pages_native.py | explicit Linux native PostgreSQL proof is opt-in | 3
+    tests/test_papersim_prepared_scan_native.py | explicit Linux native PostgreSQL proof is opt-in | 3
+all skips at head, grouped by what the reason asks for:
+     442  needs a native PostgreSQL or another opt-in native proof
+      48  needs Windows or PowerShell
+      23  other (server-only fixtures, opt-in host proofs)
+
+## first attempt on the reviewed main, before the environment was completed (kept for the record)
+# no tzdata package and the project not importable from child processes
+label=head commit=9a64415ae8a191f4c0abc5276c661240e1920e8c python=3.12.3 pytest=9.1.1
+start=2026-11-26T10:50:02Z end=2026-11-26T11:08:11Z exit=1
+tracked files changed by the run: 0
+288 failed, 43814 passed, 513 skipped, 38 warnings in 1076.15s (0:17:56)
+first message lines (top 3):
+  179  ModuleNotFoundError: No module named 'tzdata'
+         e.g. tests/test_research_evidence_timezones.py::test_market_context_uses_elapsed_instants[case0]
+   16  polymarket_alpha_lab.research_crypto_launch.CryptoLaunchBlocked: crypto_launch_observation_timezone_unavailable
+         e.g. tests/test_crypto_observation_time.py::test_delayed_submission_keeps_cutoff_for_existing_database_clock_guard
+   14  AssertionError: Traceback (most recent call last):
+         e.g. tests/test_papersim_adapter_contracts.py::test_contracts_import_brings_no_psycopg_into_a_fresh_interpreter
+# the same 33 test files pass in run B
+
+## compile step of scripts/verify_local.py (run_compile_step.sh), run after the test runs
+compileall commit=eae037aa21bc827ebf0d33ec2f61d1d3d10f17f4 exit=0 tracked files changed: 0
+compileall commit=9a64415ae8a191f4c0abc5276c661240e1920e8c exit=0 tracked files changed: 0

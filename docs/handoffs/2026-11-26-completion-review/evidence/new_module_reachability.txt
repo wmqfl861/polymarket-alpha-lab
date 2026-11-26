@@ -1,0 +1,11 @@
+# source modules added between ab6edff2d64ac8aa5c2831d748b8730b63f8312d and 9a64415ae8a191f4c0abc5276c661240e1920e8c, and the non-test files with an import line naming them
+    src/polymarket_alpha_lab/papersim/nba_odr_registration.py (405 lines): papersim/cli.py papersim/optimize/runner.py papersim/store_psycopg.py
+    src/polymarket_alpha_lab/papersim/optimize/nba_odr.py (499 lines): papersim/cli.py papersim/nba_odr_registration.py papersim/optimize/runner.py papersim/store_psycopg.py
+    src/polymarket_alpha_lab/papersim/prepare.py (630 lines): papersim/prepare_capture.py papersim/prepare_inputs.py papersim/prepared_scan.py tools/d1_compare.py
+    src/polymarket_alpha_lab/papersim/prepare_capture.py (455 lines): tools/d1_compare.py
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py (1341 lines): papersim/prepare_capture.py papersim/prepared_scan.py
+    src/polymarket_alpha_lab/papersim/prepared_scan.py (499 lines): papersim/cli.py papersim/store_psycopg.py replay.py
+# command-line entry points that reach them:
+    src/polymarket_alpha_lab/papersim/cli.py:958:                result = prepared_scan.run_prepared_scan(
+    src/polymarket_alpha_lab/papersim/cli.py:2491:                registration = store_psycopg.register_managed_nba_odr_experiment(
+    tools/d1_compare.py:111:                receipt = prepare_capture.capture_preparation_inputs(

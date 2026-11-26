@@ -1,0 +1,10 @@
+# docs/paper-sim/design/optimizer-phase1/2026-11-26/audit-followup.md on main: 61 lines, sha256 4cd22760a27cf94efe1553cc3f1a55526591fc4b70b3514d1c865e3aafa0956a
+# phrases counted in that file:
+    "两条尚未关闭的 P1": 1
+    "0/6": 1
+    "0/7": 1
+    "0/4": 2
+    "部署提交": 2
+    "NO_OBSERVATION": 1
+# docs/paper-sim/design/optimizer-phase1/2026-11-26/field-status.json on main: 1862 bytes, sha256 7f93b736751f2f3a0535ad3600c020ac5c89e398c8721c2bfbd3f46f1a4f2b46
+# FX-44 candidate branch: 4cc5addb0a0cb2015cff4e9c824145854c85c843 (merged into main: no)
