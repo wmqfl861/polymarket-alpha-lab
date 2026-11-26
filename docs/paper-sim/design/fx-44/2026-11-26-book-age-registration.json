@@ -1,0 +1,107 @@
+{
+  "task": "FX-44 research book-age policy registration for the B1/B2/D1 contract",
+  "status": "IMPLEMENTED_AND_VERIFIED_ON_DISPOSABLE_DATA",
+  "tested_source_commit": "013bf7cfdf5f4e4fbd2ac8ef1cf756c4eaae85a2",
+  "plan": {
+    "file": "docs/paper-sim/design/fx-40/plan-v3.md",
+    "section": "盘口时效的正式来源"
+  },
+  "implementation": {
+    "command": "tools/d1_compare.py register-book-age-policy",
+    "required_inputs": [
+      "repo_root",
+      "team",
+      "window_start",
+      "window_end",
+      "max_source_age_seconds",
+      "max_receipt_age_seconds",
+      "basis_sha256"
+    ],
+    "book_source": "polymarket-clob",
+    "research_scope": "All books for the named team and managed instance whose entire capture window fits inside the decision interval. The reader has no per-market or per-queue scope.",
+    "decision_source": {
+      "kind": "papersim_research_book_age_basis",
+      "source": "papersim:research:book-age-policy",
+      "schema_version": 1
+    },
+    "attestation": "An independently preserved canonical decision in the same managed registry binds both explicit ages, the book source, instance, team and UTC bounds. Its original receive time must be no later than registration. Policy provenance and authority belong to the party supplying that decision.",
+    "ledger": "The version-1 interval document binds the verified basis SHA-256 and byte length. The d1-register-interval receipt keeps empty input_evidence and binds the interval digest and length in output_evidence.",
+    "concurrency": "The existing per-instance/team lock and transaction serialize overlapping requests. Exact retries retain the original receipt after the window starts. Separate book-age and OD-P-only intervals may cover the same window.",
+    "scheduled_capture": "The scheduled slot binds the interval digest. A slot referencing this research policy must match its team and both age values. Existing unscoped legacy interval documents retain their original slot behavior.",
+    "formal_values_selected": false,
+    "field_registrations": 0,
+    "formal_comparison_days_added": 0
+  },
+  "verified_cases": [
+    "A real managed CLI concurrently submitted identical requests and obtained byte-identical first receipts. Two conflicting policies raced under the same team and window and only one succeeded.",
+    "Changed policy with the original decision, wrong team, missing decision, a decision received too late and an overlapping older age-only interval were rejected. Close-only and book-age intervals coexisted.",
+    "B1 found the applicable interval from a separate database connection, read both limits and consumed the referenced CLOB body. A different team or a capture window extending beyond the scope found no B1 policy.",
+    "A scheduled capture-marks CLI rejected a slot for another team's research interval and a slot with a changed age. With the matching slot it wrote one simulated mark and its matching CLOSE evidence.",
+    "The original close-only CLI preserved its receipt, concurrent retry, timing, overlap refusal and rollback behavior."
+  ],
+  "test_boundaries": [
+    "Both suites ran in isolated network namespaces. The native suite used a disposable PostgreSQL 18 project and synthetic public bodies. The slot was supplied through the existing managed D1 registration fixture.",
+    "Only the second new native test pinned the decision registration clock to before its synthetic window. Actual capture, slot and writer clocks in that case remained live. The independent registration and concurrency case used the actual database clock.",
+    "The new B1 test exercised the existing interval reader and book-selection path. Its seed scan used fixture input, and the prospective policy has not produced a field B1 or B2 observation."
+  ],
+  "verification": {
+    "native": {
+      "file": "book-age-reg-v2-native-013bf7cf.json",
+      "file_sha256": "baec162d0d2e6304c49f56c43b04ce94d4560f0ed63def4a43e22fa9656a5f2b",
+      "record": {
+        "source_commit": "013bf7cfdf5f4e4fbd2ac8ef1cf756c4eaae85a2",
+        "collection": "temporary network namespace and unprivileged disposable project",
+        "tests": [
+          "tests/test_papersim_capture_marks_native.py::test_register_book_age_policy_through_managed_cli",
+          "tests/test_papersim_capture_marks_native.py::test_registered_book_age_basis_feeds_b1_and_scheduled_b2",
+          "tests/test_papersim_capture_marks_native.py::test_register_close_window_through_managed_cli"
+        ],
+        "start_utc": "2026-11-26T18:26:31.238888+00:00",
+        "end_utc": "2026-11-26T18:27:42.914998+00:00",
+        "exit_code": 0,
+        "counts": {
+          "passed": 3,
+          "skipped": 0,
+          "failed": 0,
+          "error": 0,
+          "deselected": 0
+        },
+        "console_sha256": "5ee968f90fc2de73922d5393e7d02e06c9742e215dbbbd44589343ce656d0499",
+        "failure_code_locations": [],
+        "failure_codes": [],
+        "formal_activation_attempted": false,
+        "field_requests": 0,
+        "formal_comparison_days": 0
+      }
+    },
+    "offline": {
+      "file": "book-age-reg-v2-offline-013bf7cf.json",
+      "file_sha256": "fe13c29a018a84bd2bdecbdb8bdb6f477f7636a80ce040aa64e34cc1505f5570",
+      "record": {
+        "source_commit": "013bf7cfdf5f4e4fbd2ac8ef1cf756c4eaae85a2",
+        "collection": "offline isolated tests",
+        "tests": [
+          "tests/test_papersim_close_registration.py",
+          "tests/test_papersim_capture_marks.py"
+        ],
+        "start_utc": "2026-11-26T18:26:31.231571+00:00",
+        "end_utc": "2026-11-26T18:26:39.989190+00:00",
+        "exit_code": 0,
+        "counts": {
+          "passed": 59,
+          "skipped": 0,
+          "failed": 0,
+          "error": 0,
+          "deselected": 0
+        },
+        "console_sha256": "99a0b20f87d7d1535139a611ea4e181be7b1a7a4f51750341d5e369350dfbed2",
+        "failure_code_locations": [],
+        "failure_codes": [],
+        "formal_activation_attempted": false,
+        "field_requests": 0,
+        "formal_comparison_days": 0
+      }
+    }
+  },
+  "remaining": "Obtain the real independently held decision and both approved values for the intended team, instance and future interval, register before the window, then independently read it back. A real D1 capture slot still needs to bind the resulting interval, capture batch and eligible candidates. The existing plan supplies no formal seconds."
+}

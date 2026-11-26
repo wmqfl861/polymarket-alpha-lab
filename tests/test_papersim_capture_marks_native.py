@@ -1297,3 +1297,169 @@ def test_register_close_window_through_managed_cli(d1_capture_project, monkeypat
         assert snapshots.read_snapshot(connection, rejected) is None
         assert store_psycopg.read_command_run_event(connection, "d1:interval-binding:v1:" + rejected,
                                                      1, "SUCCEEDED") is None
+
+
+def _age_basis(project, team, start, end, policy, recorded_at):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import operations
+
+    doc = {"version": 1, "instance_id": project.instance_id, "team": team, "starts_at": start, "ends_at": end,
+           "book_source": "polymarket-clob", "book_age_policy": policy}
+    with store_psycopg.connect_managed(project.root) as conn:
+        return snapshots.register_snapshot(conn, snapshots.SnapshotRegistration(
+            operations.document_bytes(doc), "papersim_research_book_age_basis", "papersim:research:book-age-policy",
+            recorded_at))["content_sha256"]
+
+
+def _age_args(project, team, start, end, policy, basis):
+    return ["register-book-age-policy", "--repo-root", str(project.root), "--team", team,
+            "--window-start", start.isoformat(), "--window-end", end.isoformat(), "--basis-sha256", basis,
+            "--max-source-age-seconds", str(policy["max_source_age_seconds"]),
+            "--max-receipt-age-seconds", str(policy["max_receipt_age_seconds"])]
+
+
+@_D1_NATIVE
+def test_register_book_age_policy_through_managed_cli(d1_capture_project, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from polymarket_alpha_lab.papersim import prepare_capture, snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import close_registration, operations
+
+    project = d1_capture_project
+    team = "D1 research decision fixture"
+    with store_psycopg.connect_managed(project.root) as conn:
+        now = store_psycopg.d1_database_time(conn)
+    start = now + datetime.timedelta(minutes=10)
+    end = start + datetime.timedelta(hours=2)
+    policy = {"max_source_age_seconds": 37, "max_receipt_age_seconds": 53}
+    digest = _age_basis(project, team, start, end, policy, now)
+
+    def submit(argv):
+        return subprocess.run([sys.executable, str(project.root / "tools/d1_compare.py"), *argv],
+                              cwd=project.root, capture_output=True, text=True, timeout=45)
+
+    argv = _age_args(project, team, start, end, policy, digest)
+    # Unrelated OD-P timing and an age policy may cover the same research team.
+    close = close_registration.register(repo_root=project.root, team=team, starts_at=start, ends_at=end)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first, retry = list(pool.map(submit, [argv, argv]))
+    assert first.returncode == retry.returncode == 0 and first.stdout == retry.stdout
+    receipt = json.loads(first.stdout)
+    assert receipt["book_age_policy"] == policy and receipt["basis_sha256"] == digest
+    assert receipt["book_source"] == "polymarket-clob" and "close_window_policy" not in receipt
+    interval_sha = receipt["interval_sha256"]
+    with store_psycopg.connect_managed(project.root) as conn:
+        registered, interval = operations._registration(conn, "d1:interval-binding:v1:" + interval_sha,
+            "d1-register-interval", operations._INTERVAL_KIND, "d1:operation:interval:v1")
+        assert interval["book_age_policy"] == policy and interval["team"] == team
+        assert interval["book_source"] == "polymarket-clob" and interval["instance_id"] == project.instance_id
+        assert "close_window_policy" not in interval and interval_sha != close["interval_sha256"]
+        assert prepare_capture._interval_reference(conn, project.instance_id, team, start, end) == {
+            "sha256": interval_sha, "byte_length": receipt["byte_length"]}
+        assert prepare_capture._interval_reference(conn, project.instance_id, "another team", start, end) is None
+        assert prepare_capture._interval_reference(conn, project.instance_id, team, start, end + _SECOND) is None
+        original = snapshots.verify_snapshot(conn, digest)
+        assert interval["basis_sha256"] == digest
+        assert receipt["basis_byte_length"] == interval["basis_byte_length"] == original["byte_length"]
+        assert registered["input_evidence"] == []
+        assert original["fetched_at"] <= registered["occurred_at"] < start
+
+    changed = {**policy, "max_source_age_seconds": 38}
+    for bad_args, reason in [
+        (_age_args(project, team, start, end, changed, digest), "d1_book_age_basis_mismatch"),
+        (_age_args(project, "different team", start, end, policy, digest), "d1_book_age_basis_mismatch"),
+        (_age_args(project, team, start, end, policy, "f" * 64), "papersim_snapshot_missing"),
+    ]:
+        refused = submit(bad_args)
+        assert refused.returncode == 2 and refused.stderr.rstrip().endswith(reason)
+    alternative = _age_basis(project, team, start, end, changed, now)
+    overlap = submit(_age_args(project, team, start, end, changed, alternative))
+    assert overlap.returncode == 2 and overlap.stderr.rstrip().endswith("d1_book_age_policy_overlap")
+
+    late_team = "future research receipt"
+    late_basis = _age_basis(project, late_team, start, end, policy, start)
+    refused = submit(_age_args(project, late_team, start, end, policy, late_basis))
+    assert refused.returncode == 2 and refused.stderr.rstrip().endswith("d1_book_age_basis_invalid")
+
+    competing_team = "concurrent research decisions"
+    competing = [_age_args(project, competing_team, start, end, limits,
+                           _age_basis(project, competing_team, start, end, limits, now))
+                 for limits in (policy, changed)]
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(submit, competing))
+    assert sorted(item.returncode for item in results) == [0, 2]
+    winner, = (item for item in results if item.returncode == 0)
+    assert json.loads(winner.stdout)["book_age_policy"] in (policy, changed)
+    loser, = (item for item in results if item.returncode == 2)
+    assert loser.stderr.rstrip().endswith("d1_book_age_policy_overlap")
+
+    # A v1 interval made by another existing source can carry age limits without OD-P metadata.
+    legacy_team = "legacy D1 age interval"
+    with store_psycopg.connect_managed(project.root) as conn:
+        _d1_register_binding(conn, document={"version": 1, "instance_id": project.instance_id, "team": legacy_team,
+            "starts_at": start, "ends_at": end, "book_age_policy": policy}, kind=operations._INTERVAL_KIND,
+            source="d1:operation:interval:v1", command="d1-register-interval",
+            key_for=lambda value: "d1:interval-binding:v1:" + value)
+    legacy_basis = _age_basis(project, legacy_team, start, end, changed, now)
+    overlap = submit(_age_args(project, legacy_team, start, end, changed, legacy_basis))
+    assert overlap.returncode == 2 and overlap.stderr.rstrip().endswith("d1_book_age_policy_overlap")
+    with monkeypatch.context() as advanced:
+        advanced.setattr(store_psycopg, "d1_database_time", lambda _: end + _SECOND)
+        assert close_registration.register_book_age(repo_root=project.root, team=team, starts_at=start, ends_at=end,
+                                                   basis_sha256=digest, **policy) == receipt
+
+
+@_D1_NATIVE
+def test_registered_book_age_basis_feeds_b1_and_scheduled_b2(d1_capture_project, monkeypatch, capsys):
+    import runpy
+    from types import SimpleNamespace
+    from polymarket_alpha_lab.papersim import prepare, prepare_capture, prepare_inputs, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+
+    project = d1_capture_project
+    with store_psycopg.connect_managed(project.root) as conn:
+        now = store_psycopg.d1_database_time(conn)
+    start, end = now - datetime.timedelta(hours=1), now + datetime.timedelta(hours=12)
+    policy = {"max_source_age_seconds": 487, "max_receipt_age_seconds": 509}
+    registration_at = start - datetime.timedelta(hours=1)
+    basis = _age_basis(project, _D1_TEAM, start, end, policy, registration_at - _SECOND)
+    other_team = "different D1 research team"
+    foreign_basis = _age_basis(project, other_team, start, end, policy, registration_at - _SECOND)
+    cli = runpy.run_path(str(project.root / "tools/d1_compare.py"))["main"]
+    # The separate concurrent subprocess case verifies real database registration times.
+    with monkeypatch.context() as pinned:
+        pinned.setattr(store_psycopg, "d1_database_time", lambda _: registration_at)
+        assert cli(_age_args(project, _D1_TEAM, start, end, policy, basis)) == 0
+        receipt = json.loads(capsys.readouterr().out)
+        assert cli(_age_args(project, other_team, start, end, policy, foreign_basis)) == 0
+        foreign = json.loads(capsys.readouterr().out)
+    scoped = replace(project, interval_sha256=receipt["interval_sha256"])
+    case = _d1_seed_capture_case(scoped, "book-age-basis-writers", ("quote",))
+    manifest, entries = acquire.read_capture(repo_root=project.root, batch_sha256=case.capture_manifest_sha256)
+    view = prepare._capture_view(case.capture_manifest_sha256, manifest, entries)
+    upper = datetime.datetime.fromisoformat(manifest["scope"]["window_end"])
+    mark, = case.marks
+    with store_psycopg.connect_managed(project.root) as conn:
+        ref = prepare_capture._interval_reference(conn, project.instance_id, _D1_TEAM, view.start, upper)
+        bound, interval_sha = prepare_inputs._book_age_policy(conn, ref, view.start, upper,
+                                                               instance_id=project.instance_id, team=_D1_TEAM)
+        assert bound == prepare.BookAgePolicy(**policy) and interval_sha == receipt["interval_sha256"]
+        original, asks = prepare._book(view, SimpleNamespace(condition_id=mark["market_ref"]),
+                                       mark["token_ref"], bound, [])
+        assert original.entry.content_sha256 == mark["snapshot_sha256"] and asks
+
+    foreign_project = replace(project, interval_sha256=foreign["interval_sha256"])
+    foreign_slot = _d1_register_capture_slot(replace(case, project=foreign_project), "foreign-team-age", **policy)
+    rejected = _d1_capture_cli(scoped, foreign_slot)
+    assert rejected.returncode == 1 and "d1_operation_binding_conflict" in rejected.stderr
+    wrong = _d1_register_capture_slot(case, "wrong-age", **{**policy, "max_source_age_seconds": 486})
+    rejected = _d1_capture_cli(scoped, wrong)
+    assert rejected.returncode == 1 and "d1_capture_book_age_policy_binding_invalid" in rejected.stderr
+    assert not _d1_capture_rows(scoped, case.candidate_ids)["mark"]
+    slot = _d1_register_capture_slot(case, "registered-age", **policy)
+    accepted = _d1_capture_cli(scoped, slot)
+    assert accepted.returncode == 0, accepted.stderr
+    after = _d1_capture_rows(scoped, case.candidate_ids)
+    written, = after["mark"]
+    evidence, = after["close"]
+    _d1_assert_written(written, mark, expected_kind="CLOSE")
+    _d1_assert_written(evidence, mark, expected_kind="CLOSE")
