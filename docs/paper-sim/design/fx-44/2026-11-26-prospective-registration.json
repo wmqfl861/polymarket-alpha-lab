@@ -1,0 +1,39 @@
+{
+  "main_commit": "48b341a4117847ed39f4c1717a7d5301c449d976",
+  "tested_candidate": "c95c54ccc6e3a4dee687b5e3def6757c6815b36a",
+  "identical_files": [
+    "docs/paper-sim/usage.md",
+    "src/polymarket_alpha_lab/papersim/d1compare/close_registration.py",
+    "tests/test_papersim_capture_marks_native.py",
+    "tests/test_papersim_close_registration.py",
+    "tools/d1_compare.py"
+  ],
+  "command": "tools/d1_compare.py register-close-window --repo-root PROJECT --team TEAM --window-start UTC --window-end UTC",
+  "functional_change": "Publish one immutable, future, team/managed-instance-scoped OD-P interval using the existing d1-register-interval snapshot and success receipt. The database supplies the receipt clock; retry returns the original receipt and commit. Adjacent ranges are allowed, overlap is rejected under a per-team lock. Both evidence records commit or roll back together.",
+  "verifications": {
+    "offline": {
+      "passed": 43,
+      "skipped": 0,
+      "sha256": "eceefbad92d4096546b142c1adb375cfcd230f594e3b19e58a8e2c0fe139c8fa"
+    },
+    "native": {
+      "passed": 1,
+      "skipped": 0,
+      "failed": 0,
+      "isolated": true,
+      "sha256": "c3cd7d856dce4494ee864380a1af0d9ddb8a0815afcca876da1fcaea57cc11f5",
+      "scenarios": [
+        "Concurrent identical official CLI requests return one receipt and original received time/commit.",
+        "Conflicting overlapping ranges fail. Touching ranges succeed. An unregistered interval in the past is refused.",
+        "A retry after the clock passes start returns its original record.",
+        "A failure between snapshot and receipt commits neither row.",
+        "The existing prepared-input selection ignores OD-P-only registrations with no formally registered book-age policy."
+      ]
+    }
+  },
+  "production_registration_performed": false,
+  "formal_od_p_effective_at": null,
+  "verified_parallel_days": 0,
+  "required_parallel_days": 7,
+  "registration_receipt_sha256": "d549027f334878a472b4436885c369556090c41b95355f87ec5b201e233d288b"
+}
