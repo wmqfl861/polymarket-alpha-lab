@@ -1,0 +1,101 @@
+{
+  "scope": "M2 same-store book-age research decision custody and present local scheduler observation",
+  "checked_utc": "2026-11-26T18:37:25.587939+00:00",
+  "published_integration_commit": "455596dedf4d53ae9f84015b3aaca960f69185aa",
+  "remote_main_observed": "455596dedf4d53ae9f84015b3aaca960f69185aa",
+  "registration_implementation": "013bf7cfdf5f4e4fbd2ac8ef1cf756c4eaae85a2",
+  "registration_test_receipt": "docs/paper-sim/design/fx-44/2026-11-26-book-age-registration.json",
+  "completion_standard": "docs/handoffs/2026-11-26-completion-review/02-remediation-and-next-steps.md, M2 和 FX-39 第二步",
+  "archive_readback": {
+    "coordinator_original": "m2-age-policy-research-archive-readonly-20261126.json",
+    "original_sha256": "accbf051bb5d9706b23414ba99048c875f6baaf4fa0d0c943340d6a5872bc554",
+    "record": {
+      "scope": "Stopped disposable project archive that holds ETH and EPL public-source observations, reopened inside a private network namespace",
+      "archive_engine_commit": "c95c54ccc6e3a4dee687b5e3def6757c6815b36a",
+      "started_utc": "2026-11-26T18:33:37.432988+00:00",
+      "finished_utc": "2026-11-26T18:33:42.731039+00:00",
+      "counts": {
+        "all_command_events": 0,
+        "all_managed_snapshots": 12,
+        "all_version1_interval_snapshots": 0,
+        "candidate_marks": 0,
+        "candidates": 0,
+        "research_age_basis_or_source_snapshots": 0,
+        "successful_D1_interval_events": 0,
+        "successful_D1_slot_events": 0,
+        "verified_read_only_transaction": true
+      },
+      "cluster_stopped_and_data_preserved": true,
+      "external_requests": 0,
+      "field_observations_taken": 0
+    }
+  },
+  "policy_source_search": {
+    "tracked_scope": "Current repository decision ledger, docs, src, scripts, tools, database and supabase. Searched literal integer assignments to the two book-age field names and checked the signed FX-40 plan and the existing custody records.",
+    "numeric_assignment_files": [
+      "docs/superpowers/plans/2026-06-23-paper-research-packet-next-phase.md"
+    ],
+    "finding": "The earlier file specifies a source-age limit for PaperResearchPacketQualityConfig. It supplies no receipt-age limit, CLOB decision, managed team scope, prospective window or D1 receipt.",
+    "known_repo_age_decision": null,
+    "unsearched_external_custody": "unknown"
+  },
+  "contemporaneous_local_scope": {
+    "registered_worktrees": 142,
+    "existing_worktrees": 142,
+    "managed_descriptor_presence_in_registered_worktrees": 0,
+    "timers": {
+      "user": {
+        "project_named_timers": 8,
+        "explicit_m2_named_timers": 0,
+        "service_targets": 8,
+        "previously_inspected_sports_service_targets": 8
+      },
+      "system": {
+        "project_named_timers": 0,
+        "explicit_m2_named_timers": 0,
+        "service_targets": 0,
+        "previously_inspected_sports_service_targets": 0
+      }
+    },
+    "matching_active_entrypoint_processes": {
+      "original_capture": 0,
+      "frozen_path_L": 0,
+      "managed_path_N": 0,
+      "comparison": 0,
+      "prepared_B1": 0,
+      "managed_B2": 0
+    },
+    "previous_local_cron_inventory": {
+      "coordinator_original": "managed-field-and-next-window-20261126.json",
+      "original_sha256": "8d49e863d44e8aee8046a13d0728419bb653c5828c661a58950bdb0ab98b96e5",
+      "user_formal_entries": 0,
+      "readable_system_cron_formal_entries": 0
+    },
+    "scope_limit": "Timer names and activated service names, process entry points and descriptor existence are a point-in-time local view. They cannot attest to a separate operator's service or archive."
+  },
+  "field_decision": {
+    "contemporaneous_corrections": "No existing registered collection was available to continue. The latest preserved ETH model response preceded the 18:00 UTC bar rollover. It cannot stand in for the model panel or the spot at a later decision cutoff.",
+    "first_required_input": "An independently held prospective CLOB decision for the designated research instance, team and future capture interval, with its actual source- and receipt-age limits. Its scope must enclose the whole window. Register it and independently read the accepted interval before the window starts.",
+    "afterwards": "Use a supported sports proposition and a supported crypto contract with their actual model inputs. Acquire a current, managed buy-side body and cutoff-bound B1 evidence, then bind the same interval and sides to the ordinary B2 and scheduled D1 samples. For a crypto admission the existing news requirement still applies.",
+    "formal_timing": "The approved FX-44 design separately requires the production activation receipt and exact legacy membership. A research interval or a market close time cannot activate OD-P. Paired Path L and Path N evidence and their accounting identities are required for each complete eligible UTC day.",
+    "registered_formal_collection_window": null,
+    "formal_odp_effective_time": null,
+    "confirmed_consecutive_utc_days": 0,
+    "required_consecutive_utc_days": 7,
+    "complete_original_historical_families": 0,
+    "required_historical_families": 4,
+    "historical_disposition": "The four originals were not recovered from the documented searches. Separate external preservation remains unknown.",
+    "after_day_seven": "FX-45 uses the actual D2. The 30-day criterion F period starts on D2. FX-46 and then FX-39 stage two follow the recorded order.",
+    "known_market_clocks": "The previously observed ETH contract has a potential close between 16:00 and 17:00 UTC on November 27. The observed Bundesliga fixture has a potential close between 18:30 and 19:30 UTC that day. Neither has a registered M2 collection slot in these records."
+  },
+  "prior_evidence": [
+    "docs/paper-sim/design/fx-44/2026-11-26-research-and-activation-boundaries.json",
+    "docs/paper-sim/design/fx-44/2026-11-26-eth-b1-model-sources.json",
+    "docs/paper-sim/design/fx-40/evidence/historical-input-custody.json",
+    "docs/paper-sim/design/fx-40/evidence/2026-11-26-distribution-and-custody-check.json",
+    "docs/paper-sim/design/fx-40/evidence/public-retained-ref-lookup.json"
+  ],
+  "external_data_requests": 0,
+  "registrations_written": 0,
+  "new_formal_days": 0
+}
