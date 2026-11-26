@@ -92,6 +92,46 @@ _TERMINAL_RULE = re.compile(
     r'on the date in the title is (?P<direction>above|below) \$(?P<price>' + _NUMBER +
     r')\. otherwise,? (?:it|this market) will resolve to "no"\.'
 )
+_BINANCE_CLOSING_RULE = re.compile(
+    r'this market will resolve to "yes" if the binance 1 minute candle for (?P<asset>eth|btc)/usdt '
+    r'closing at 12:00 in the et timezone \(noon\) on the date specified in the title has a final '
+    r'"close" price (?P<comparison>higher|lower) than the price specified in the title\. '
+    r'otherwise, this market will resolve to "no"\. '
+    r'the resolution source for this market is binance, specifically the (?P=asset)/usdt "close" prices '
+    r'currently available at https://(?:www\.)?binance\.com/en/trade/(?P=asset)_usdt'
+    r'(?:\?type=spot)? with "1m" and "candles" selected on the top bar\. '
+    r'please note that this market is about the price according to binance (?P=asset)/usdt, '
+    r'not according to other exchanges or trading pairs\. '
+    r'price precision is determined by the number of decimal places in the source\.'
+)
+
+
+@dataclass(frozen=True)
+class _TerminalTerms:
+    asset: str
+    venue: str
+    pair: str
+    direction: str
+    price: str
+    clock_is_close: bool
+
+
+def _terminal_terms(question_text: str, description: str) -> _TerminalTerms | None:
+    question = _QUESTION.fullmatch(_fold(question_text))
+    if question is None:
+        return None
+    asset = "BTC" if question["asset"] in ("bitcoin", "btc") else "ETH"
+    text = _fold(description)
+    rule = _TERMINAL_RULE.fullmatch(text)
+    if rule:
+        return _TerminalTerms(asset, rule["venue"], rule["pair"], rule["direction"], rule["price"], False)
+    closing = _BINANCE_CLOSING_RULE.fullmatch(text)
+    if closing is None or closing["asset"] != asset.lower():
+        return None
+    direction = "above" if closing["comparison"] == "higher" else "below"
+    if direction != question["direction"]:
+        return None
+    return _TerminalTerms(asset, "binance", closing["asset"] + "/usdt", direction, question["price"], True)
 
 
 @dataclass(frozen=True)
@@ -506,18 +546,17 @@ def _compatible_float(number: Decimal) -> float:
 
 def _crypto_contract(target: dict, market: polymarket.PolymarketMarket, raw: dict, cutoff: datetime):
     description = market.description
-    rule = _TERMINAL_RULE.fullmatch(_fold(description)) if description else None
+    terms = _terminal_terms(market.question, description) if description else None
     question = _QUESTION.fullmatch(_fold(market.question))
-    if rule is None or question is None:
+    if terms is None or question is None:
         raise prepare._Excluded("papersim_prepare_crypto_contract_terms_unproved")
-    asset = {"bitcoin": "BTC", "btc": "BTC", "ethereum": "ETH", "eth": "ETH"}[question["asset"]]
-    venue, direction, pair = rule["venue"], rule["direction"], rule["pair"]
-    binding = prices._BINDINGS[venue]
+    asset, direction = terms.asset, terms.direction
+    binding = prices._BINDINGS[terms.venue]
     if target["tag_slug"] not in _CRYPTO_TAGS[asset]:
         raise prepare._Excluded("papersim_prepare_crypto_asset_scope_unproved")
     barrier = _exact_number(question["price"])
-    _require(barrier == _exact_number(rule["price"]) and barrier > 0
-             and pair == f"{asset.lower()}/{binding.currency.lower()}"
+    _require(barrier == _exact_number(terms.price) and barrier > 0
+             and terms.pair == f"{asset.lower()}/{binding.currency.lower()}"
              and direction == question["direction"], "papersim_prepare_crypto_contract_conflict")
     _require(target["model_side"] == target["buy_side"].lower()
              and target["line"] is not None and _exact_number(target["line"]) == barrier
@@ -528,8 +567,12 @@ def _crypto_contract(target: dict, market: polymarket.PolymarketMarket, raw: dic
         team_id=f"crypto_{asset.lower()}", question=market.question, resolution_criteria=description,
         market_slug=market.slug, as_of=cutoff, forecast_cutoff_at=cutoff, scheduled_end_at=market.end_at,
     )
-    opening = observation.candle_open_at
-    if opening is None or not cutoff < opening or market.end_at != opening + timedelta(minutes=1):
+    clock = observation.candle_open_at
+    if clock is None:
+        raise prepare._Excluded("papersim_prepare_crypto_terminal_time_unproved")
+    # The classic "candle at" uses its open; "candle closing at" names its end.
+    opening = clock - timedelta(minutes=1) if terms.clock_is_close else clock
+    if not cutoff < opening or market.end_at != opening + timedelta(minutes=1):
         raise prepare._Excluded("papersim_prepare_crypto_terminal_time_unproved")
     _require(_utc(target["event_start_at"]) == market.end_at, "papersim_prepare_target_clock_conflict")
     return asset, _compatible_float(barrier), direction, binding

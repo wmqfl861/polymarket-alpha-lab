@@ -33,6 +33,16 @@ QUESTION = "Will Ethereum be below $2,000 on December 31, 2026?"
 DESCRIPTION = ('This market will resolve to "Yes" if the Close price of the Binance ETH/USDT '
                '1-minute candle at 12:00 PM UTC on the date in the title is below $2,000. '
                'Otherwise it will resolve to "No".')
+BINANCE_NOON_CLOSE = (
+    'This market will resolve to "Yes" if the Binance 1 minute candle for ETH/USDT closing at '
+    '12:00 in the ET timezone (noon) on the date specified in the title has a final "Close" '
+    'price higher than the price specified in the title. Otherwise, this market will resolve to "No".\n\n'
+    'The resolution source for this market is Binance, specifically the ETH/USDT "Close" prices '
+    'currently available at https://www.binance.com/en/trade/ETH_USDT with "1m" and "Candles" '
+    'selected on the top bar.\n\nPlease note that this market is about the price according to '
+    'Binance ETH/USDT, not according to other exchanges or trading pairs.\n\n'
+    'Price precision is determined by the number of decimal places in the source.'
+)
 
 
 def test_soccer_capture_only_reuses_complete_sources_for_the_same_fixture(monkeypatch):
@@ -377,6 +387,75 @@ def test_registered_terminal_resolves_no_ladder_and_repeated_bytes_without_netwo
     proof = json.loads(pack.content)[0]["prepared_provenance"]
     assert proof["sources"][0]["sequence"] == 5
     assert proof["sources"][0]["path"] == "/0/markets/0"
+
+
+def test_binance_title_price_binds_the_candle_closing_at_noon(monkeypatch):
+    close_at = datetime(2026, 12, 31, 17, 0, tzinfo=UTC)
+    case = _case(monkeypatch, gamma_updates={
+        "question": QUESTION.replace("below", "above"), "description": BINANCE_NOON_CLOSE,
+        "endDate": close_at.isoformat(),
+    })
+    resolved = _resolve(case)
+    assert resolved.excluded == ()
+    record, = scan.records_from_pack(resolved.prepare_market_pack().content)
+    request = replay.request_from_replay_bundle(record.request_bundle)
+    assert request.yes_when == "above" and request.buy_token == "111"
+
+
+@pytest.mark.parametrize(("old", "new"), [
+    ("higher than", "lower than"),
+    ("ETH_USDT", "BTC_USDT"),
+    ("candle for ETH/USDT", "candle for ETH/USD"),
+    ("Binance ETH/USDT, not", "Coinbase ETH/USDT, not"),
+    ("source.", "source. A second candle can qualify."),
+])
+def test_binance_title_price_requires_the_complete_consistent_rule(monkeypatch, old, new):
+    case = _case(monkeypatch, gamma_updates={
+        "question": QUESTION.replace("below", "above"),
+        "description": BINANCE_NOON_CLOSE.replace(old, new),
+        "endDate": datetime(2026, 12, 31, 17, 0, tzinfo=UTC).isoformat(),
+    })
+    excluded, = _resolve(case).excluded
+    assert excluded.reason_code == "papersim_prepare_crypto_contract_terms_unproved"
+
+
+def test_binance_closing_candle_requires_preopen_cutoff_and_matching_listing_end():
+    closing = datetime(2026, 12, 31, 17, tzinfo=UTC)
+    opening = closing - timedelta(minutes=1)
+    market = SimpleNamespace(question=QUESTION.replace("below", "above"), description=BINANCE_NOON_CLOSE,
+                             slug="ethereum-above-2000-on-december-31-2026", end_at=closing)
+    target = {"tag_slug": "ethereum", "model_side": "yes", "buy_side": "YES",
+              "line": "2000", "event_start_at": closing}
+    accepted = prepare_inputs._crypto_contract(target, market, {}, opening - timedelta(microseconds=1))
+    assert accepted[:3] == ("ETH", 2000.0, "above")
+    for cutoff in (opening, closing):
+        with pytest.raises(prepare._Excluded, match="papersim_prepare_crypto_terminal_time_unproved"):
+            prepare_inputs._crypto_contract(target, market, {}, cutoff)
+    market.end_at = closing + timedelta(minutes=1)
+    with pytest.raises(prepare._Excluded, match="papersim_prepare_crypto_terminal_time_unproved"):
+        prepare_inputs._crypto_contract(target, market, {}, opening - timedelta(minutes=2))
+
+
+def test_capture_uses_the_same_binance_terms_and_reuses_the_venue(monkeypatch):
+    driver = prepare_capture._Capture(None, None, b"", {}, "fixture", "capture", None)
+    body = {"question": QUESTION.replace("below", "above"), "description": BINANCE_NOON_CLOSE}
+    targets = {}
+    for condition, description in (("first", BINANCE_NOON_CLOSE), ("second", BINANCE_NOON_CLOSE),
+                                   ("unproved", BINANCE_NOON_CLOSE + " Another venue may be used.")):
+        target = {"condition_id": condition, "market_kind": "crypto_terminal"}
+        targets[condition] = target, {}, {**body, "description": description}
+    monkeypatch.setattr(prepare_capture, "_targets", lambda *_: (targets, []))
+    calls = []
+
+    def model_sources(asset, venue):
+        calls.append((asset, venue))
+        return {"spot": 1, "candles": [2]}
+
+    monkeypatch.setattr(driver, "_crypto_sources", model_sources)
+    driver.collect_models({}, [], None)
+    assert calls == [("ETH", "binance")]
+    assert driver.target_sources["first"] == driver.target_sources["second"] == {"spot": 1, "candles": [2]}
+    assert driver.target_sources["unproved"] is None
 
 
 def test_terminal_contract_refuses_other_venue_with_same_currency(monkeypatch):
