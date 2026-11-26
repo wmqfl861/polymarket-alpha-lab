@@ -1312,21 +1312,33 @@ def _optimize_outcome_for(conn, rows) -> dict:
     return resolved
 
 
-def _optimize_close_prices(conn, candidate_ids) -> dict:
+def _optimize_close_prices(conn, candidate_ids, *, selected_evidence=None) -> dict:
     """Latest usable CLOSE on each candidate's stored buy side."""
     if not candidate_ids:
         return {}
     with conn.transaction():
         cursor = conn.cursor()
+        fields = (", p.evidence_id, p.observed_at, p.source_kind, p.snapshot_sha256, "
+                  "p.last IS NOT NULL" if selected_evidence is not None else "")
         cursor.execute(
-            "SELECT DISTINCT ON (p.candidate_id) p.candidate_id, COALESCE(p.last, p.mid) "
+            "SELECT DISTINCT ON (p.candidate_id) p.candidate_id, COALESCE(p.last, p.mid)"
+            + fields + " "
             "FROM papersim.candidate_price_evidence p "
             "JOIN papersim.candidates c ON c.candidate_id = p.candidate_id "
             "WHERE p.evidence_role = 'CLOSE' AND p.candidate_id = ANY(%s) "
             "AND p.side = c.side AND COALESCE(p.last, p.mid) IS NOT NULL "
             "ORDER BY p.candidate_id, p.observed_at DESC, p.evidence_id DESC",
             (sorted(candidate_ids),))
-        return dict(cursor.fetchall())
+        rows = cursor.fetchall()
+    if selected_evidence is None:
+        return dict(rows)
+    for cid, price, evidence_id, observed_at, source_kind, digest, used_last in rows:
+        selected_evidence[cid] = {
+            "evidence_id": evidence_id, "observed_at": observed_at.isoformat(),
+            "source_kind": source_kind, "snapshot_sha256": digest,
+            "price_field": "last" if used_last else "mid", "price": str(price),
+        }
+    return {row[0]: row[1] for row in rows}
 
 
 def _optimize_close_sample(fills, close_prices):
@@ -1350,19 +1362,19 @@ def _optimize_close_sample(fills, close_prices):
 
 
 def _optimize_close_deviation(conn, *, shadow_spec_sha256, priced_spec_sha256,
-                              priced_model_version, scan_lineage, target, since):
+                              priced_model_version, scan_lineage, target, since, evidence_report=None):
     """The would-bet shadows and the active entries are independent samples."""
     # Legacy scans carry only the stored model version and market type.
     # When present, the provider summary must cite this target and spec.
     with conn.transaction():
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT c.candidate_id, sp.gate_pass, sp.hypothetical_fill_price,
-                   e.entry_id, e.price
+            SELECT c.candidate_id, sp.shadow_prediction_id, sp.hypothetical_fill_price,
+                   e.entry_id, e.price, c.side
             FROM papersim.candidates c
             JOIN papersim.scan_runs r ON r.scan_id = c.scan_id
             LEFT JOIN LATERAL (
-                SELECT gate_pass, hypothetical_fill_price
+                SELECT shadow_prediction_id, gate_pass, hypothetical_fill_price
                 FROM papersim.shadow_predictions
                 WHERE candidate_id = c.candidate_id AND spec_sha256 = %s
                     AND gate_pass IS TRUE
@@ -1379,13 +1391,31 @@ def _optimize_close_deviation(conn, *, shadow_spec_sha256, priced_spec_sha256,
             """, (shadow_spec_sha256, since, priced_model_version, target,
                   scan_lineage, priced_spec_sha256))
         rows = cursor.fetchall()
-    candidate_fills = {candidate_id: fill for candidate_id, gate, fill, _, _ in rows
-                       if gate}
-    active_fills = {candidate_id: price for candidate_id, _, _, entry_id, price in rows
+    candidate_fills = {candidate_id: fill for candidate_id, shadow_id, fill, _, _, _ in rows
+                       if shadow_id is not None}
+    active_fills = {candidate_id: price for candidate_id, _, _, entry_id, price, _ in rows
                     if entry_id is not None}
-    prices = _optimize_close_prices(conn, candidate_fills.keys() | active_fills.keys())
-    return (_optimize_close_sample(candidate_fills, prices),
-            _optimize_close_sample(active_fills, prices))
+    selected = {} if evidence_report is not None else None
+    prices = _optimize_close_prices(conn, candidate_fills.keys() | active_fills.keys(),
+                                    selected_evidence=selected)
+    candidate = _optimize_close_sample(candidate_fills, prices)
+    active = _optimize_close_sample(active_fills, prices)
+    if evidence_report is not None:
+        evidence_report["since"] = since.isoformat()
+        evidence_report["rows"] = [
+            {
+                "candidate_id": cid, "side": side, "close": selected.get(cid),
+                "shadow_prediction_id": shadow_id,
+                "shadow_fill": None if shadow_fill is None else str(shadow_fill),
+                "entry_id": entry_id, "entry_fill": None if entry_fill is None else str(entry_fill),
+            }
+            for cid, shadow_id, shadow_fill, entry_id, entry_fill, side in sorted(rows, key=lambda row: row[0])
+        ]
+        evidence_report["missing_close_and_fill"] = {
+            name: sample.missing_close + sample.missing_fill + sample.n_prices - sample.markets
+            for name, sample in (("candidate", candidate), ("active", active))
+        }
+    return candidate, active
 
 
 def _optimize_logdiff(p_judged, p_other, realized_yes: bool):
@@ -1460,7 +1490,7 @@ def _optimize_stats_dict(stats) -> dict:
 def _optimize_forward_stats(conn, lineage: str, *, shadow_spec_sha256: str,
                             priced_model_version: str, since, judged: str,
                             with_close_deviation: bool, stats_spec: str = "",
-                            stats_comparator: str = ""):
+                            stats_comparator: str = "", close_evidence=None):
     """Assemble one ForwardStats from the store (pure over its rows).
 
     ``judged`` picks the diff direction: "shadow" (FORWARD look -- the
@@ -1485,7 +1515,7 @@ def _optimize_forward_stats(conn, lineage: str, *, shadow_spec_sha256: str,
             priced_spec_sha256=stats_comparator,
             priced_model_version=priced_model_version,
             scan_lineage=_optimize_scan_lineage(family_id, target),
-            target=target, since=since)
+            target=target, since=since, evidence_report=close_evidence)
         gap = candidate_close.gap_from(active_close)
         close_stats = {
             "close_dev_markets": candidate_close.markets,
@@ -1692,7 +1722,8 @@ def _optimize_forward_comparison(provider, scan_lineage, active_sha, active_vers
 
 
 def _optimize_score_lineage(conn, lineage: str, queue_ids, *,
-                            pause_state_known: bool = True, provider=None) -> dict:
+                            pause_state_known: bool = True, provider=None,
+                            with_close_price_evidence: bool = False) -> dict:
     """Descriptive forward statistics only -- no conclusion, ever."""
     from polymarket_alpha_lab.papersim.optimize import policy
     from polymarket_alpha_lab.papersim.optimize.provider import RegistryProvider
@@ -1729,6 +1760,8 @@ def _optimize_score_lineage(conn, lineage: str, queue_ids, *,
         pair = {"pair": "candidate-vs-active", "spec": candidate_sha,
                 "comparator": facts.active_spec, "stats": None, "next_look": None}
         pairs.append(pair)
+        if with_close_price_evidence:
+            pair["close_price_evidence"] = {"rule_version": policy.RULE_VERSION} if comparable else None
         if not comparable:
             continue
         stats = _optimize_forward_stats(
@@ -1736,7 +1769,8 @@ def _optimize_score_lineage(conn, lineage: str, queue_ids, *,
             priced_model_version=priced_version,
             since=facts.candidate_registered_at[candidate_sha],
             judged="shadow", with_close_deviation=True,
-            stats_spec=candidate_sha, stats_comparator=facts.active_spec)
+            stats_spec=candidate_sha, stats_comparator=facts.active_spec,
+            close_evidence=pair.get("close_price_evidence"))
         prior = _optimize_prior_decisions(conn, lineage, "FORWARD",
                                           candidate_sha)
         ordinal = len([row for row in prior if row["conclusion"] != "BLOCKED"])
@@ -1800,6 +1834,7 @@ def _cmd_optimize_score(args) -> int:
     try:
         queue_ids: list[str] = []
         has_config = bool(getattr(args, "config", None))
+        include_rows = getattr(args, "close_price_evidence", False)
         if has_config:
             queue_ids = _optimize_queue_bindings(args.config, args.lineage)
         connection = _open_readonly_connection(
@@ -1809,7 +1844,11 @@ def _cmd_optimize_score(args) -> int:
                 cursor.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
                 report = _optimize_score_lineage(
                     connection, args.lineage, queue_ids,
-                    pause_state_known=has_config)
+                    pause_state_known=has_config,
+                    with_close_price_evidence=include_rows)
+                if include_rows:
+                    cursor.execute("SELECT transaction_timestamp()")
+                    report["read_transaction_started_at"] = cursor.fetchone()[0].isoformat()
         finally:
             connection.close()
     except (ValueError, OSError) as error:
@@ -2945,6 +2984,9 @@ def _build_parser() -> argparse.ArgumentParser:
     ), write=False)
     score_parser.add_argument("--lineage", required=True,
                               help="lineage id family_id/target")
+    score_parser.add_argument(
+        "--close-price-evidence", action="store_true",
+        help="include the selected paper CLOSE, shadow fill and active entry for each forward comparison row")
     score_parser.add_argument(
         "--config", default=None,
         help="scan config JSON (queue->lineage bindings for the pause "

@@ -350,8 +350,9 @@ def test_score_reports_unknown_pause_state_without_config(monkeypatch,
             assert query == "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY"
             self.isolation_checked = True
 
-    def _score(conn, lineage, queue_ids, *, pause_state_known):
+    def _score(conn, lineage, queue_ids, *, pause_state_known, with_close_price_evidence):
         assert conn.isolation_checked
+        assert with_close_price_evidence is False
         report["pause_state_known"] = pause_state_known
         report["lineage_paused_or_stopped"] = (
             False if pause_state_known else None)

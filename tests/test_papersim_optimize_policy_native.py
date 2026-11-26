@@ -996,3 +996,42 @@ def test_native_clv_uses_own_side_and_complete_prices_per_population(capsys):
             assert abs(Fraction(report[f'close_dev_{side}_mean']) - reference_mean) < Fraction(1, 10**60)
         assert stats.close_dev_candidate.gap_from(stats.close_dev_active) == Fraction('-0.01')
         assert report['close_dev_gap'] == '-0.01'
+        expanded = _read_optimizer(capsys, app_dsn, 'score', '--lineage', LINEAGE,
+                                   '--close-price-evidence')
+        assert datetime.fromisoformat(expanded.pop('read_transaction_started_at')).utcoffset() is not None
+        audit = expanded['pairs'][0].pop('close_price_evidence')
+        assert expanded == scored
+        assert audit['rule_version'] == policy.RULE_VERSION
+        assert datetime.fromisoformat(audit['since']) == REGISTERED
+        assert audit['missing_close_and_fill'] == {'candidate': 25, 'active': 0}
+        rows = audit['rows']
+        ids = [row['candidate_id'] for row in rows]
+        assert ids == sorted(set(ids))
+        for member, fill, expected_pairs, truth in (
+                ('shadow_prediction_id', 'shadow_fill', candidate_pairs, candidate_truth),
+                ('entry_id', 'entry_fill', active_pairs, active_truth)):
+            population = [row for row in rows if row[member] is not None]
+            measured = {(r[member], r['close']['evidence_id'] if r['close'] else None)
+                        for r in population}
+            assert measured == set(expected_pairs)
+            priced = [r for r in population if r['close'] is not None and r[fill] is not None]
+            assert (len(population), len(priced)) == truth[:2]
+            assert sum(Fraction(r['close']['price']) - Fraction(r[fill]) for r in priced) == truth[4]
+        selected = {r['close']['evidence_id']: r['close'] for r in rows if r['close']}
+        assert selected[candidate_pairs[0][1]]['price_field'] == 'last'
+        assert Decimal(selected[candidate_pairs[0][1]]['price']) == 0
+        assert selected[candidate_pairs[2][1]]['price_field'] == 'mid'
+        member = next(r for r in rows if r['shadow_prediction_id'] == candidate_pairs[2][0])
+        shared_entry = _seed_entry(owner, member['candidate_id'], Decimal('0.49'), evaluated_at)
+        owner.commit()
+        shared = _read_optimizer(capsys, app_dsn, 'score', '--lineage', LINEAGE,
+                                 '--close-price-evidence')['pairs'][0]
+        shared_rows = shared['close_price_evidence']['rows']
+        shared_row, = [r for r in shared_rows if r['candidate_id'] == member['candidate_id']]
+        assert len(shared_rows) == len(rows)
+        assert shared_row['shadow_prediction_id'] == member['shadow_prediction_id']
+        assert shared_row['entry_id'] == shared_entry
+        assert shared_row['close'] == member['close']
+        assert Decimal(shared_row['entry_fill']) == Decimal('0.49')
+        assert shared['stats']['close_dev_n_candidate'] == candidate_truth[1]
+        assert shared['stats']['close_dev_n_active'] == active_truth[1] + 1
