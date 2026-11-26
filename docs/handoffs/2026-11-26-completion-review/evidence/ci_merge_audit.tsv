@@ -1,0 +1,52 @@
+pr	merge_commit	first_parent	head	workflow	event	run_id	attempt	conclusion	checked_out	base_of_checkout	verdict
+#124	525d2cbe	ab6edff2	e65be3e7	Native project PostgreSQL	workflow_dispatch	45476773572	1	success	-	-	-
+#124	525d2cbe	ab6edff2	e65be3e7	Offline verification	pull_request	45476687574	1	success	86a317b8	ab6edff2	CURRENT
+#124	525d2cbe	ab6edff2	e65be3e7	Research paper bridge	pull_request	45476687554	1	success	86a317b	ab6edff2	CURRENT
+#124	525d2cbe	ab6edff2	(merge commit)	Offline verification	push	45533389914	1	success	-	-	-
+#125	9acfc3ad	525d2cbe	f60a6acf	Offline verification	pull_request	45533942383	1	success	35d1812e	525d2cbe	CURRENT
+#125	9acfc3ad	525d2cbe	f60a6acf	Offline verification	push	45533936476	1	success	-	-	-
+#125	9acfc3ad	525d2cbe	f60a6acf	Research paper bridge	pull_request	45533942354	1	success	35d1812	525d2cbe	CURRENT
+#125	9acfc3ad	525d2cbe	(merge commit)	Native project PostgreSQL	push	45537754681	1	success	-	-	-
+#125	9acfc3ad	525d2cbe	(merge commit)	Offline verification	push	45537754755	1	success	-	-	-
+#126	56a6b59d	9acfc3ad	42908360	Offline verification	pull_request	45556953685	1	success	5888804c	9acfc3ad	CURRENT
+#126	56a6b59d	9acfc3ad	42908360	Research paper bridge	pull_request	45556953646	1	success	5888804	9acfc3ad	CURRENT
+#126	56a6b59d	9acfc3ad	(merge commit)	Offline verification	push	45560727390	1	success	-	-	-
+#127	9ce8290e	56a6b59d	f4f77985	Offline verification	pull_request	45568274535	1	success	76f62353	56a6b59d	CURRENT
+#127	9ce8290e	56a6b59d	f4f77985	Research paper bridge	pull_request	45568274603	1	success	76f6235	56a6b59d	CURRENT
+#127	9ce8290e	56a6b59d	(merge commit)	Offline verification	push	45571398820	1	success	-	-	-
+#128	a7dbd8a3	9ce8290e	fa90c88e	Native project PostgreSQL	pull_request	45581744116	1	success	260c9860	9ce8290e	CURRENT
+#128	a7dbd8a3	9ce8290e	fa90c88e	Native project distribution	pull_request	45581744278	1	success	260c986	9ce8290e	CURRENT
+#128	a7dbd8a3	9ce8290e	fa90c88e	Offline verification	pull_request	45581744123	1	success	260c9860	9ce8290e	CURRENT
+#128	a7dbd8a3	9ce8290e	fa90c88e	Research paper bridge	pull_request	45581744049	1	success	260c986	9ce8290e	CURRENT
+#128	a7dbd8a3	9ce8290e	(merge commit)	Native project PostgreSQL	push	45586034007	1	success	-	-	-
+#128	a7dbd8a3	9ce8290e	(merge commit)	Offline verification	push	45586033958	1	success	-	-	-
+#129	631259a2	a7dbd8a3	e94756c8	Native project PostgreSQL	pull_request	45601610520	1	success	2c46f199	a7dbd8a3	CURRENT
+#129	631259a2	a7dbd8a3	e94756c8	Offline verification	pull_request	45601610469	1	success	2c46f199	a7dbd8a3	CURRENT
+#129	631259a2	a7dbd8a3	e94756c8	Research paper bridge	pull_request	45601610600	1	success	2c46f19	a7dbd8a3	CURRENT
+#129	631259a2	a7dbd8a3	(merge commit)	Graph Update: uv in /. #1730171134	dynamic	45605525449	1	success	-	-	-
+#129	631259a2	a7dbd8a3	(merge commit)	Offline verification	push	45605509464	1	success	-	-	-
+#130	09306300	631259a2	1286922d	Offline verification	pull_request	45617549719	1	success	9469e9d1	631259a2	CURRENT
+#130	09306300	631259a2	1286922d	Research paper bridge	pull_request	45617549700	1	success	9469e9d	631259a2	CURRENT
+#130	09306300	631259a2	(merge commit)	Offline verification	push	45621536267	1	success	-	-	-
+#132	289ed1c2	09306300	979a6abd	Native project PostgreSQL	pull_request	45671167543	1	success	85e757ae	09306300	CURRENT
+#132	289ed1c2	09306300	979a6abd	Offline verification	pull_request	45671167676	1	success	85e757ae	09306300	CURRENT
+#132	289ed1c2	09306300	979a6abd	Research paper bridge	pull_request	45671167901	1	success	85e757a	09306300	CURRENT
+#132	289ed1c2	09306300	(merge commit)	Native project PostgreSQL	push	45674687928	1	success	-	-	-
+#132	289ed1c2	09306300	(merge commit)	Offline verification	push	45674688145	1	success	-	-	-
+#133	39477891	289ed1c2	9b523026	Offline verification	pull_request	45715234047	1	success	15b4f33a	289ed1c2	CURRENT
+#133	39477891	289ed1c2	9b523026	Research paper bridge	pull_request	45715234049	1	success	15b4f33	289ed1c2	CURRENT
+#133	39477891	289ed1c2	(merge commit)	Native project PostgreSQL	push	45718748002	1	success	-	-	-
+#133	39477891	289ed1c2	(merge commit)	Offline verification	push	45718748104	1	success	-	-	-
+#134	07f4bf21	39477891	70039662	Offline verification	pull_request	45726768065	1	success	7fbc5977	39477891	CURRENT
+#134	07f4bf21	39477891	70039662	Research paper bridge	pull_request	45726768058	2	success	7fbc597	39477891	CURRENT
+#134	07f4bf21	39477891	(merge commit)	Native project PostgreSQL	push	45739192848	1	success	-	-	-
+#134	07f4bf21	39477891	(merge commit)	Offline verification	push	45739192847	1	success	-	-	-
+#135	eae037aa	07f4bf21	e2ae0a4c	Offline verification	pull_request	45746414266	1	success	5cae1120	07f4bf21	CURRENT
+#135	eae037aa	07f4bf21	e2ae0a4c	Research paper bridge	pull_request	45746414419	1	success	5cae112	07f4bf21	CURRENT
+#135	eae037aa	07f4bf21	(merge commit)	Native project PostgreSQL	push	45749708010	1	success	-	-	-
+#135	eae037aa	07f4bf21	(merge commit)	Offline verification	push	45749707968	1	success	-	-	-
+-	ca1026df	-	-	(not a PR merge: Remove project development roles and procedures (#138))
+-	732d5c6e	-	-	(not a PR merge: Record FX-40 and FX-53 acceptance evidence (#137))
+-	06048ea9	-	-	(not a PR merge: Integrate bounded Gamma page sizes for prepared paper captures)
+-	0f03f8e3	-	-	(not a PR merge: Handle registered terminal contracts priced at candle close)
+-	79adcfaa	-	-	(not a PR merge: Keep observed football totals and split-payout exclusions in capture evidence)

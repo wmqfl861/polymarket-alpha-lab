@@ -1,0 +1,11 @@
+# src/polymarket_alpha_lab/papersim/prepare_inputs.py on main: the football news record is taken with its own verdict; the crypto one is derived and its sources are registered snapshots
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:948:def _soccer_news(row: dict, target: dict, sources: dict, fixture: str, cutoff: datetime):
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:975:    return gates.NewsCheck(fixture, document["delta"], document["concordant"],
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:979:def _crypto_news(connection, reference, target, fixture, cutoff):
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:996:        source = snapshots.verify_snapshot(connection, snapshots.snapshot_digest_argument(digest))
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:997:        _require(_utc(source["fetched_at"]) <= observed, code)
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:998:    check = gates.check_news(fixture, document["delta"], news_delta=document["news_delta"],
+# how the gate reads the record, and how check_news derives the verdict:
+    src/polymarket_alpha_lab/papersim/gates.py:494:    concordant = news_concordance(classification) and not block
+    src/polymarket_alpha_lab/papersim/gates.py:724:        "news_concordant": news is not None and news.concordant,
+# producers of these two record kinds outside tests (matches in src and tools): src/polymarket_alpha_lab/papersim/prepare_inputs.py

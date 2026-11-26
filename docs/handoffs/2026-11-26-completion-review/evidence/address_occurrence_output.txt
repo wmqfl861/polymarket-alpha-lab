@@ -1,0 +1,10 @@
+##### main: ab6edff2 -> 9a64415a
+base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=9a64415ae8a191f4c0abc5276c661240e1920e8c distinct public IPv4-like values: 4
+##### work/fx44-close-window-and-m2-guide (vs merge-base d6c441b7)
+base=d6c441b7dcbfb8b6d31743c9eabe950005eb7770 head=4cc5addb0a0cb2015cff4e9c824145854c85c843 distinct public IPv4-like values: 4
+##### fix/fx49-release-093063000a70 (vs merge-base 289ed1c2)
+base=289ed1c217cdd97a68da959bfcecdd17db9fc8e5 head=69858354dd3728418095eb5ed5454a3821484299 distinct public IPv4-like values: 4
+##### diagnostic/fx49-hosted-entry21-r2 (vs merge-base 39477891)
+base=39477891394833790c1681c6d9e7b9f24be7744c head=32f89e310657401367d42c54c1403e350d0867f9 distinct public IPv4-like values: 4
+##### refs/tags/evidence/fx48-legacy-integrity-20261126^{commit} (vs merge-base ab6edff2)
+base=ab6edff2d64ac8aa5c2831d748b8730b63f8312d head=7f73a3e5e2cf1519ee1b18104950eabacaf3be26 distinct public IPv4-like values: 4

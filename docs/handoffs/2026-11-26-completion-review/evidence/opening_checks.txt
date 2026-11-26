@@ -1,0 +1,16 @@
+# checked at 2026-11-26T11:30Z through the GitHub API and git ls-remote
+visibility=public private=false forks=1 default_branch=main pushed_at=2026-11-26T10:34:06Z
+main protected=false sha=9a64415ae8a191f4c0abc5276c661240e1920e8c
+repository rulesets: 0; rules in effect on main: 0
+fork: public (owner name omitted here), last pushed 2026-11-19T03:03:24Z
+server refs: heads=263 tags=4 pull_request_heads=138
+open pull requests: #131 #41 #35 #34
+workflow files on main: 0 (GitHub still lists 82 definitions from other branches and from history)
+# checked again at 2026-11-26T12:01Z
+visibility=public private=false forks=1 default_branch=main pushed_at=2026-11-26T10:34:06Z
+main protected=false sha=9a64415ae8a191f4c0abc5276c661240e1920e8c
+repository rulesets: 0; rules in effect on main: 0
+fork: public (owner name omitted here), last pushed 2026-11-19T03:03:24Z
+server refs: heads=263 tags=4 pull_request_heads=138
+open pull requests: #131 #41 #35 #34
+workflow files on main: 0 (GitHub still lists 82 definitions from other branches and from history)

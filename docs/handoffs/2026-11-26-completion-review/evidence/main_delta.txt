@@ -1,0 +1,92 @@
+# range ab6edff2d64ac8aa5c2831d748b8730b63f8312d..9a64415ae8a191f4c0abc5276c661240e1920e8c
+commits: 99; first-parent: 45 (merges 16, non-merge 29)
+by area:
+    .github: 8 files, +0 -1507
+    AGENTS.md: 1 files, +35 -375
+    DELIVERY_PLAN.md: 1 files, +328 -22
+    docs (other): 382 files, +65733 -2267
+    docs/paper-sim/runtime: 7 files, +1948 -0
+    other: 4 files, +12 -25
+    src: 22 files, +6216 -323
+    tests: 41 files, +6756 -1561
+    tools+scripts: 2 files, +39 -7
+    total: 468 files, +81067 -6087
+
+# first-parent commits, oldest first: commit | committer date (UTC) | kind | paths touched (src / tools+scripts / runtime / tests / other) | subject
+525d2cbe | 2026-11-25T02:30:05Z | merge | 0 / 0 / 0 / 0 / 34 | Merge pull request #124 from wmqfl861/integrate/incremental-review-2026-11-24
+9acfc3ad | 2026-11-25T03:07:23Z | merge | 6 / 0 / 0 / 7 / 43 | Merge pull request #125 from wmqfl861/dev/fx41-nba-v2-publication-20261124
+56a6b59d | 2026-11-25T06:27:20Z | merge | 0 / 0 / 0 / 0 / 7 | Merge pull request #126 from wmqfl861/docs/registered-runtime-rules-20261125
+9ce8290e | 2026-11-25T07:51:17Z | merge | 0 / 0 / 0 / 0 / 19 | Merge pull request #127 from wmqfl861/docs/owner-evidence-after-registration-20261125
+a7dbd8a3 | 2026-11-25T09:30:19Z | merge | 1 / 0 / 0 / 2 / 46 | Merge pull request #128 from wmqfl861/fix/fx47-post127-registered
+631259a2 | 2026-11-25T11:33:13Z | merge | 0 / 0 / 0 / 0 / 13 | Merge pull request #129 from wmqfl861/fix/fx54-python-floor-after-a7dbd8a3e14f
+09306300 | 2026-11-25T13:14:19Z | merge | 0 / 0 / 0 / 0 / 110 | Merge pull request #130 from wmqfl861/docs/optimizer-phase1-handoff-post129
+289ed1c2 | 2026-11-25T18:23:35Z | merge | 15 / 1 / 0 / 6 / 46 | Merge pull request #132 from wmqfl861/node/fx40-stage-ledger-followup
+39477891 | 2026-11-25T23:06:33Z | merge | 1 / 0 / 0 / 1 / 3 | Merge pull request #133 from wmqfl861/node/fx53-mo4-post132
+07f4bf21 | 2026-11-26T01:57:28Z | merge | 1 / 0 / 0 / 1 / 0 | Merge pull request #134 from wmqfl861/node/fx53-mo5b-post132
+eae037aa | 2026-11-26T03:33:43Z | merge | 1 / 0 / 0 / 1 / 0 | Merge pull request #135 from wmqfl861/node/fx53-mo2-post132
+128a3680 | 2026-11-26T06:02:49Z | direct after-last-CI | 0 / 0 / 0 / 6 / 9 | Remove the project's development GitHub Actions workflows
+ca1026df | 2026-11-26T06:08:21Z | merge after-last-CI | 0 / 1 / 0 / 7 / 20 | Remove project development roles and procedures (#138)
+c91e1159 | 2026-11-26T06:09:05Z | direct after-last-CI | 0 / 0 / 0 / 0 / 1 | Record the owner's confirmation of the project instructions
+0fddd0ff | 2026-11-26T06:15:34Z | direct after-last-CI | 0 / 0 / 0 / 0 / 5 | Remove stale development instructions from roadmap and CI notes
+732d5c6e | 2026-11-26T06:23:51Z | merge after-last-CI | 0 / 0 / 0 / 0 / 21 | Record FX-40 and FX-53 acceptance evidence (#137)
+086888fc | 2026-11-26T06:46:20Z | direct after-last-CI | 0 / 0 / 7 / 2 / 1 | Ship the fixed paper Weixin transport and substitute acceptance suite
+5388b6ab | 2026-11-26T06:56:39Z | direct after-last-CI | 1 / 0 / 0 / 2 / 0 | Expose the underlying CLOSE and fill rows in read-only paper scoring
+f7061764 | 2026-11-26T07:12:19Z | direct after-last-CI | 0 / 0 / 0 / 0 / 5 | Record fixed-entry acceptance, runtime provenance and close-price evidence
+3cac3f76 | 2026-11-26T07:28:06Z | direct after-last-CI | 0 / 0 / 0 / 0 / 5 | Bind paper transport reviews to shipped files and record measured capture gaps
+8c736e3f | 2026-11-26T07:46:14Z | direct after-last-CI | 0 / 0 / 1 / 2 / 0 | Verify the retained refusal and response types in the Windows delivery rehearsal
+90dc1551 | 2026-11-26T07:50:43Z | direct after-last-CI | 0 / 0 / 1 / 0 / 3 | Document refusal replay evidence and the remaining Windows field acceptance
+974e8c95 | 2026-11-26T07:55:20Z | direct after-last-CI | 2 / 0 / 0 / 1 / 0 | Honor soccer fixture offsets when binding captured markets
+379c0f50 | 2026-11-26T07:59:20Z | direct after-last-CI | 0 / 0 / 0 / 0 / 1 | Document how to stop sports timers and preserve the retired window records
+d6c441b7 | 2026-11-26T08:00:13Z | direct after-last-CI | 0 / 0 / 0 / 0 / 2 | Record the market preparation clock regression against its failing baseline
+9b96720f | 2026-11-26T08:16:09Z | direct after-last-CI | 0 / 0 / 0 / 0 / 2 | Record the retained archive directory and CRC comparisons for FX-40
+e5728995 | 2026-11-26T08:32:33Z | direct after-last-CI | 0 / 0 / 0 / 0 / 6 | Record native close-price behavior, public football observations and open audit items
+8bad2734 | 2026-11-26T08:33:35Z | direct after-last-CI | 0 / 0 / 0 / 0 / 1 | Clarify the unresolved CLI and database count comparison
+29aec9d0 | 2026-11-26T08:45:40Z | direct after-last-CI | 0 / 0 / 0 / 0 / 3 | Register the verified runtime source fixes, field prerequisites and live timer readback
+c8767299 | 2026-11-26T09:07:49Z | direct after-last-CI | 1 / 0 / 0 / 2 / 0 | Reuse verified soccer fixture evidence across markets in the same capture
+41b4ef95 | 2026-11-26T09:07:49Z | direct after-last-CI | 0 / 0 / 1 / 2 / 0 | Verify successful Weixin rehearsal receipts with their JSON wire types
+414d1e6e | 2026-11-26T09:15:50Z | direct after-last-CI | 0 / 0 / 0 / 1 / 1 | Compare stored paper closes with observable window matches in a read-only query
+417f0741 | 2026-11-26T09:18:34Z | direct after-last-CI | 0 / 0 / 0 / 1 / 0 | Exercise repeated sealed quotes through ordinary paper capture before OD-P
+e1371f9f | 2026-11-26T09:23:47Z | direct after-last-CI | 0 / 0 / 1 / 0 / 5 | Record public market, paper capture, rehearsal and timer evidence
+0e705161 | 2026-11-26T09:35:34Z | direct after-last-CI | 0 / 0 / 0 / 0 / 4 | Identify historical distribution contents and bind the baseline test source
+06048ea9 | 2026-11-26T09:36:50Z | merge after-last-CI | 5 / 1 / 0 / 3 / 0 | Integrate bounded Gamma page sizes for prepared paper captures
+601d5127 | 2026-11-26T09:50:23Z | direct after-last-CI | 0 / 0 / 0 / 0 / 6 | Record bounded source capture and historical artifact verification
+37bfcc9e | 2026-11-26T09:59:43Z | direct after-last-CI | 0 / 0 / 0 / 0 / 3 | Verify published merge identities for FX-36
+90dd31d4 | 2026-11-26T10:05:14Z | direct after-last-CI | 0 / 0 / 0 / 0 / 1 | Document managed paper captures, sealed reads and evidence scope
+262a8036 | 2026-11-26T10:07:25Z | direct after-last-CI | 0 / 0 / 0 / 0 / 2 | Attach managed CLI and report checks to the audit handoff
+0f03f8e3 | 2026-11-26T10:15:08Z | merge after-last-CI | 2 / 0 / 0 / 1 / 0 | Handle registered terminal contracts priced at candle close
+79adcfaa | 2026-11-26T10:15:17Z | merge after-last-CI | 1 / 0 / 0 / 2 / 0 | Keep observed football totals and split-payout exclusions in capture evidence
+13f44f48 | 2026-11-26T10:17:42Z | direct after-last-CI | 0 / 0 / 0 / 0 / 1 | Record verified Bundesliga game and named totals settlement limits
+7670b209 | 2026-11-26T10:25:14Z | direct after-last-CI | 0 / 0 / 0 / 0 / 3 | Record public contract reconciliation and paper-entry evidence
+9a64415a | 2026-11-26T10:33:26Z | direct after-last-CI | 0 / 0 / 0 / 0 / 2 | Record effective branch rules, running timers and evidence limits
+
+# after the last commit that had workflow runs (eae037aa21bc827ebf0d33ec2f61d1d3d10f17f4)
+commits: 39; first-parent: 34 (merges 5, non-merge 29)
+first-parent commits that touch src, tools, scripts or the runtime scripts: 12
+direct (non-merge) first-parent commits before that point in this range: 0
+by area:
+    .github: 8 files, +0 -1508
+    AGENTS.md: 1 files, +35 -375
+    DELIVERY_PLAN.md: 1 files, +110 -25
+    docs (other): 70 files, +4664 -2266
+    docs/paper-sim/runtime: 7 files, +1948 -0
+    other: 2 files, +9 -11
+    src: 6 files, +251 -69
+    tests: 26 files, +2207 -1535
+    tools+scripts: 2 files, +7 -3
+    total: 123 files, +9231 -5792
+source and tool files changed after that point:
+    +682 -0 docs/paper-sim/runtime/scripts/weixin_delivery.py
+    +713 -0 docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1
+    +1 -0 docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1.sha256
+    +114 -0 docs/paper-sim/runtime/scripts/windows/offline-acceptance/HermesSubstitute.cs
+    +32 -0 docs/paper-sim/runtime/scripts/windows/offline-acceptance/README.md
+    +402 -0 docs/paper-sim/runtime/scripts/windows/offline-acceptance/Test-PaperWeixinOffline.ps1
+    +4 -0 docs/paper-sim/runtime/scripts/windows/weixin-binding.example.json
+    +1 -1 src/polymarket_alpha_lab/papersim/capture.py
+    +60 -18 src/polymarket_alpha_lab/papersim/cli.py
+    +37 -7 src/polymarket_alpha_lab/papersim/d1compare/acquire.py
+    +3 -1 src/polymarket_alpha_lab/papersim/d1compare/frozenexec.py
+    +67 -25 src/polymarket_alpha_lab/papersim/prepare_capture.py
+    +83 -17 src/polymarket_alpha_lab/papersim/prepare_inputs.py
+    +5 -1 tools/d1_compare.py
+    +2 -2 tools/wp_intl_validate.py

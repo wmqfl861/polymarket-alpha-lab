@@ -1,0 +1,79 @@
+branches: 237 -> 263; pull-request heads: 123 -> 138
+new branches: 26; removed branches: 0; branches whose tip moved: 1
+moved:
+    main: ab6edff2d6 -> 9a64415ae8
+removed:
+new (tip, merged into the reviewed main?):
+    ci/pr-124-merge-86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1: 86a317b8c9 NOT merged
+    ci/pr-125-merge-35d1812e1b13ed5f2fa7e432749420082dff5ff4: 35d1812e1b NOT merged
+    ci/pr-125-merge-5b86834d7cb8842a8fa2324e83073c10146ebb29: 5b86834d7c NOT merged
+    ci/pr-126-merge-5888804c47b0fddaae214374cbbe8353f454c64a: 5888804c47 NOT merged
+    ci/pr-127-merge-76f6235362d8eac32eb795aa723e039199615b92: 76f6235362 NOT merged
+    ci/pr-130-merge-9469e9d151c89b750666ea6527b838dab1869c6f: 9469e9d151 NOT merged
+    ci/pr-133-merge-15b4f33ac9d612eee4627ae85a7207967a4747bf: 15b4f33ac9 NOT merged
+    ci/pr-134-merge-7fbc597725eb08976e81a04917852f7e6068b2ad: 7fbc597725 NOT merged
+    ci/pr-135-merge-5cae11207cdc257821619eda6ff616de54a24745: 5cae11207c NOT merged
+    ci/pr-137-merge-e22c8531653907da60bff48b6ce4f4c888beeff7: e22c853165 NOT merged
+    dev/fx41-nba-v2-publication-20261124: f60a6acf03 merged
+    diagnostic/fx49-hosted-entry21-r2: 32f89e3106 NOT merged
+    docs/optimizer-phase1-handoff-post129: 1286922d7d merged
+    docs/owner-evidence-after-registration-20261125: f4f7798583 merged
+    docs/registered-runtime-rules-20261125: 4290836065 merged
+    fix/audit-fixed-entry-and-observations: f7061764bd merged
+    fix/fx47-post127-registered: fa90c88ed2 merged
+    fix/fx49-release-093063000a70: 69858354dd NOT merged
+    fix/fx54-python-floor-after-a7dbd8a3e14f: e94756c8a0 merged
+    integrate/incremental-review-2026-11-24: e65be3e7bf merged
+    node/fx40-stage-ledger-followup: 979a6abd88 merged
+    node/fx53-mo2-post132: e2ae0a4c4c merged
+    node/fx53-mo4-post132: 9b523026b3 merged
+    node/fx53-mo5b-post132: 7003966253 merged
+    node/post135-audit-ledger: b2e3902e3a merged
+    work/fx44-close-window-and-m2-guide: 4cc5addb0a NOT merged
+new pull-request heads:
+    #124: e65be3e7bf merged
+    #125: f60a6acf03 merged
+    #126: 4290836065 merged
+    #127: f4f7798583 merged
+    #128: fa90c88ed2 merged
+    #129: e94756c8a0 merged
+    #130: 1286922d7d merged
+    #131: 69858354dd NOT merged
+    #132: 979a6abd88 merged
+    #133: 9b523026b3 merged
+    #134: 7003966253 merged
+    #135: e2ae0a4c4c merged
+    #136: 32f89e3106 NOT merged
+    #137: b2e3902e3a merged
+    #138: 868ba6d288 merged
+pull-request heads that changed: none
+handoff/* branches (unchanged unless marked):
+    handoff/audit-2026-11-12: e84c36eac1 unchanged
+    handoff/audit-optimizer-2026-11-19: 27c66cee11 unchanged
+    handoff/incremental-review-2026-11-24: 74467c2272 unchanged
+    handoff/m0-review-2026-11-13: 6687ace944 unchanged
+    handoff/optimizer-review-2026-11-21: 09cf06f8ff unchanged
+    handoff/pr-review-2026-11-21: 24b5882de4 unchanged
+    handoff/progress-review-2026-11-21: 5e4033c4a7 unchanged
+    handoff/prospective-crypto-launch-20260913: 45c7bdc47a unchanged
+    handoff/public-discovery-20260914: ca8944f0f2 unchanged
+    handoff/publish-probe-environment-20260920: c94a137c88 unchanged
+    handoff/resolution-worklist-20260913: a92185887e unchanged
+    handoff/runtime-publication-20260913: a3967144b6 unchanged
+    handoff/rv05-closure-20260922: 420b4efebb unchanged
+    handoff/rv05-linker-safety-20260922: 7ef1f0471d unchanged
+    handoff/sports-fx40-20261123: 7f92e03568 unchanged
+    handoff/sports-fx41-nba-v2-20261123: 256f8491c3 unchanged
+    handoff/sports-fx44-20261123: 3bc5a23402 unchanged
+    handoff/sports-runtime-20261123: bcce1b17f7 unchanged
+    handoff/wp02-claude-cli-probe-20260920: caff22647e unchanged
+    handoff/wp02-claude-cli-probe-final-20260920: 3cf52f0815 unchanged
+    handoff/wp02-corrective-longtask-20260921: c08423704a unchanged
+    handoff/wp02-local-agent-capabilities-20260919: 9779f51d80 unchanged
+    handoff/wp02-parallel-review-20260921: 2d6553194e unchanged
+    handoff/wp02-probe-preparation-final-20260920: 81c7f52b77 unchanged
+    handoff/wp02-rv05-capacity-20260921: 6be24fae58 unchanged
+    handoff/wp02-seven-day-campaign-20260920: 787a6ac586 unchanged
+    handoff/wp03-task-output-20260917: 02bce72387 unchanged
+    handoff/wp05-paper-receipt-binding-20260917: dbc3ecc2b7 unchanged
+    handoff/wp06-backup-catalog-20260916: d80c9321e9 unchanged

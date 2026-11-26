@@ -1,0 +1,31 @@
+# delivery module and fixed script on main 9a64415ae8a191f4c0abc5276c661240e1920e8c
+    docs/paper-sim/runtime/scripts/weixin_delivery.py: 682 lines, sha256 f7885e8f37351d3b8f3e238a33ab8c2300fa83792c138026e8ffa8f32404508b
+    docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1: 713 lines, sha256 e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6
+    docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1.sha256: 1 lines, sha256 6aebd7a1576715e16c19a243120f014bc8d0f6613c35ab90489e6cb81c285d99
+    docs/paper-sim/runtime/scripts/windows/offline-acceptance/HermesSubstitute.cs: 114 lines, sha256 8925eb1f643c5519d37a5a01b43a1afd3b220c087d2fef740c21a79ebcdeb86b
+    docs/paper-sim/runtime/scripts/windows/offline-acceptance/README.md: 32 lines, sha256 594b6b323f090424895847e213aee9f8644fa46dd14fb18ff7a0010e5706d8b8
+    docs/paper-sim/runtime/scripts/windows/offline-acceptance/Test-PaperWeixinOffline.ps1: 402 lines, sha256 cf225ba4d338f04c687741d3619ca2f3b67999cd495ce991d9187b06f46be63f
+    docs/paper-sim/runtime/scripts/windows/weixin-binding.example.json: 4 lines, sha256 bb4b366ce4b212ee825ef38d6f8b80b010aba67d74b608e06c4608132af666c2
+recorded hash file content: e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6  Invoke-PaperWeixin.ps1
+non-ASCII bytes in the fixed script: 0
+first commit of these files on main: 086888fc 2026-11-26T06:46:20Z Ship the fixed paper Weixin transport and substitute acceptance suite
+# the launcher on main (the one process the server asks the Windows host to start):
+    docs/paper-sim/runtime/scripts/weixin_delivery.py:165:def launcher(nonce):
+    docs/paper-sim/runtime/scripts/weixin_delivery.py:176:    return [POWERSHELL_PATH, "-NoProfile", "-NonInteractive", "-File", SCRIPT_PATH, nonce]
+# approval-free mode ("yolo") in the delivery module: main 0, runtime branch 1
+# agent client launch ("zcode.cmd") in the delivery module: main 0, runtime branch 2
+# the one remaining mention of the client's name on main is a failure code kept for reading older receipts:
+    docs/paper-sim/runtime/scripts/weixin_delivery.py:70:    "zcode_tool_permission_denied",
+# execution-policy parameter in the launcher or the fixed script on main (matches): 0
+# the fixed script locates itself by its own file path and compares its own hash with the request:
+    docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1:510:        if (!(Test-ExactString $Request['protocol'] $Protocol) -or !(Test-String $Request['script_sha256
+    docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1:535:        $scriptPath = Get-AbsolutePath $PSCommandPath
+    docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1:540:        $ScriptHash = Get-Sha256 $scriptFile
+
+# runtime files: on main 7; on the runtime branch 60
+# runtime branch tip is unchanged since the previous review: bcce1b17f7263ab89859febfcb56188c295ab371
+# candidate kept only as a tag: 7f73a3e5e2cf1519ee1b18104950eabacaf3be26 (parent bcce1b17f7263ab89859febfcb56188c295ab371)
+     docs/paper-sim/runtime/scripts/football_legacy.py              | 27 ++++++++++-----
+     docs/paper-sim/runtime/tests/test_football_legacy_integrity.py | 91 ++++++++++++++++++++++++++++++++++++++++++++++++++
+     2 files changed, 110 insertions(+), 8 deletions(-)
+# timers defined on the runtime branch: 9

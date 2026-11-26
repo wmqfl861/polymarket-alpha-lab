@@ -1,0 +1,4 @@
+# author-domain committer-domain count, for the 99 commits in ab6edff2d64ac8aa5c2831d748b8730b63f8312d..9a64415ae8a191f4c0abc5276c661240e1920e8c
+    anthropic.com anthropic.com 4
+    users.noreply.github.com github.com 14
+    users.noreply.github.com users.noreply.github.com 81

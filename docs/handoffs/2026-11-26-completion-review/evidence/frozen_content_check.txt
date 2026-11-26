@@ -1,0 +1,20 @@
+# paths that must not change between ab6edff2d64ac8aa5c2831d748b8730b63f8312d and 9a64415ae8a191f4c0abc5276c661240e1920e8c; lines between the markers = changed paths
+# (begin)
+# (end)
+# everything under database/ that changed:
+    +5 -11 database/quickstart.md
+# registered trial caps on main:
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:2353:MAX_TRIALS = 2000
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:2585:NBA_ODR_MAX_TRIALS = 4_811
+# where the larger cap is taken: only after a registered claim, and the schedule refuses to run without one
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:5410:        raise ValueError(_NBA_ODR_REGISTRATION_REQUIRED)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6242:        raise ValueError(_NBA_ODR_REGISTRATION_REQUIRED)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6247:        raise ValueError(_NBA_ODR_REGISTRATION_REQUIRED)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6279:        raise ValueError(_NBA_ODR_REGISTRATION_REQUIRED)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6369:        raise ValueError(_NBA_ODR_REGISTRATION_REQUIRED)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6424:    if nba_odr_claim is not None:
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6432:        claimed, manifest = _take_nba_odr_claim(nba_odr_claim)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6448:    elif schedule_id == NBA_ODR_SCHEDULE_ID:
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6449:        raise ValueError(_NBA_ODR_REGISTRATION_REQUIRED)
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6482:        max_trials = NBA_ODR_MAX_TRIALS
+    src/polymarket_alpha_lab/papersim/optimize/runner.py:6483:    elif type(max_trials) is not int or not 1 <= max_trials <= MAX_TRIALS:

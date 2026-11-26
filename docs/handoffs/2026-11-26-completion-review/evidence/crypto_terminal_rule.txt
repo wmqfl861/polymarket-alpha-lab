@@ -1,0 +1,7 @@
+# src/polymarket_alpha_lab/papersim/prepare_inputs.py on main
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:95:_BINANCE_CLOSING_RULE = re.compile(
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:97:    r'closing at 12:00 in the et timezone \(noon\) on the date specified in the title has a final '
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:116:    clock_is_close: bool
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:574:    opening = clock - timedelta(minutes=1) if terms.clock_is_close else clock
+    src/polymarket_alpha_lab/papersim/prepare_inputs.py:575:    if not cutoff < opening or market.end_at != opening + timedelta(minutes=1):
+# commit that added it: 01bc86f0 2026-11-26T10:10:07Z Bind title-price terminal markets to the Binance candle closing at noon

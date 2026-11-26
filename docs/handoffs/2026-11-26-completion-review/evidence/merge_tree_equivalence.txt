@@ -1,0 +1,17 @@
+# merge commit | head (2nd parent) | head contains first parent | merge tree == head tree | subject
+525d2cbe | e65be3e7 | yes | yes | Merge pull request #124 from wmqfl861/integrate/incremental-review-202
+9acfc3ad | f60a6acf | yes | yes | Merge pull request #125 from wmqfl861/dev/fx41-nba-v2-publication-2026
+56a6b59d | 42908360 | yes | yes | Merge pull request #126 from wmqfl861/docs/registered-runtime-rules-20
+9ce8290e | f4f77985 | yes | yes | Merge pull request #127 from wmqfl861/docs/owner-evidence-after-regist
+a7dbd8a3 | fa90c88e | yes | yes | Merge pull request #128 from wmqfl861/fix/fx47-post127-registered
+631259a2 | e94756c8 | yes | yes | Merge pull request #129 from wmqfl861/fix/fx54-python-floor-after-a7db
+09306300 | 1286922d | yes | yes | Merge pull request #130 from wmqfl861/docs/optimizer-phase1-handoff-po
+289ed1c2 | 979a6abd | yes | yes | Merge pull request #132 from wmqfl861/node/fx40-stage-ledger-followup
+39477891 | 9b523026 | yes | yes | Merge pull request #133 from wmqfl861/node/fx53-mo4-post132
+07f4bf21 | 70039662 | yes | yes | Merge pull request #134 from wmqfl861/node/fx53-mo5b-post132
+eae037aa | e2ae0a4c | yes | yes | Merge pull request #135 from wmqfl861/node/fx53-mo2-post132
+ca1026df | 868ba6d2 | yes | yes | Remove project development roles and procedures (#138)
+732d5c6e | b2e3902e | no | no | Record FX-40 and FX-53 acceptance evidence (#137)
+06048ea9 | fc8ea9e1 | no | no | Integrate bounded Gamma page sizes for prepared paper captures
+0f03f8e3 | 01bc86f0 | no | no | Handle registered terminal contracts priced at candle close
+79adcfaa | 74f5a80b | no | no | Keep observed football totals and split-payout exclusions in capture e

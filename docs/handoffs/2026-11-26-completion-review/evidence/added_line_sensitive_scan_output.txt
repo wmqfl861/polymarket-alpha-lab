@@ -1,0 +1,69 @@
+##### main: ab6edff2 -> 9a64415a
+base=ab6edff2d64a head=9a64415ae8a1
+  email: 12
+  email_benign: 1
+  home_path_generic: 2
+  wechat_id: 36
+    wechat_id	docs/handoffs/2026-11-24-incremental-review/evidence/README.md:47	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	docs/handoffs/2026-11-24-incremental-review/evidence/README.md:47	aaaaaaaaa-aaaaaaaa-aaaa-aaaa
+    email	docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan_output.txt:26	aaa-aaaaaaaa-aaaaaaaa@aaaaaaaaa.aaaaaaa
+    email	docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan_output.txt:27	aaa-aaaaaaaa-aaaaaaaa@aaaaaaaa.aaaaaaa
+    email	docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan_output.txt:28	aaa-aaaaaaaa-aaaaaaaa@aaaaa.aaaaaaa
+    email	docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan_output.txt:29	aaa-aaaaaa-aaaaa@aaaaaaaaaa-aaaa.aaaaaaa
+    email	docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan_output.txt:30	aaa-aaaaaa-aaaaa@aaaaaa.aaaaaaa
+    email	docs/handoffs/2026-11-24-incremental-review/evidence/added_line_sensitive_scan_output.txt:31	aaa-aaaaaa-aaaaa@aaaaaaaaaa-aaaaa.aaaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/2026-11-26-artifact-upload-paths.json:27	aaaaaaaa_aaaaa_aaaaaa_aaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/2026-11-26-artifact-upload-paths.json:40	aaaaaaaa_aaaaa_aaaaaa_aaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/2026-11-26-artifact-upload-paths.json:54	aaaaaaaa_aaaaa_aaaaaa_aaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/2026-11-26-artifact-upload-paths.json:68	aaaaaaaa_aaaaa_aaaaaa_aaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/2026-11-26-artifact-upload-paths.json:81	aaaaaaaa_aaaaa_aaaaaa_aaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/2026-11-26-artifact-upload-paths.json:95	aaaaaaaa_aaaaa_aaaaaa_aaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/2026-11-26-artifact-upload-paths.json:107	aaaaaaaa_aaaaa_aaaaaa_aaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/integrated-path-objects.json:149	aaaaaaa-aaa-a99a99a9-aaaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/integrated-path-objects.json:175	aaaaaaa-aaa-aaaaa99-aaaaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/stage-review-c1d0be53.json:5	aaaaaaa-aaa-a99a99a9-aaaaaaa
+    wechat_id	docs/paper-sim/design/fx-40/evidence/stage-review-c1d0be53.json:5	aaaaaaa-aaa-aaaaa99-aaaaaaaa
+    wechat_id	docs/paper-sim/design/fx-44/2026-11-26-terminal-contract-clock-and-entry.json:148	aaaaaaaa-aaaaaa-aaaaa-aaaaaa
+    email	docs/paper-sim/design/fx-48/2026-11-26-runtime-observation.json:8	aaa-aaaaaaaa-aaaaaaaa@aaaaaaaaa.aaaaaaa
+    email	docs/paper-sim/design/fx-48/2026-11-26-runtime-observation.json:17	aaa-aaaaaaaa-aaaaaaaa@aaaaaaaa.aaaaaaa
+    email	docs/paper-sim/design/fx-48/2026-11-26-runtime-observation.json:26	aaa-aaaaaaaa-aaaaaaaa@aaaaa.aaaaaaa
+    email	docs/paper-sim/design/fx-48/2026-11-26-runtime-observation.json:53	aaa-aaaaaa-aaaaa@aaaaaaaaaa-aaaa.aaaaaaa
+    email	docs/paper-sim/design/fx-48/2026-11-26-runtime-observation.json:62	aaa-aaaaaa-aaaaa@aaaaaa.aaaaaaa
+    email	docs/paper-sim/design/fx-48/2026-11-26-runtime-observation.json:71	aaa-aaaaaa-aaaaa@aaaaaaaaaa-aaaaa.aaaaaaa
+    wechat_id	docs/paper-sim/design/fx-48/2026-11-26-timer-enable-evidence.json:86	aaaaaaaa_aaaaaaa_aaaaaa_aaaa
+    wechat_id	docs/paper-sim/design/fx-54/evidence/fx54-local-verification.json:202	aaaaaaa_aaaaaaa_aaaaaaa_aaaa
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/plan.md:29	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/plan.md:47	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/managed-seam-plan.md:3	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/managed-seam-plan.md:16	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/reviews/managed-binding/result.txt:9	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/approved-timing-checklist.md:16	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/reviews/release-plan/plan.md:42	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/reviews/scientific-plan/approved-scope-plan.md:3	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/paper-sim/design/fx41-nba-odr-v2/reviews/six-variant-addendum/author-correction.md:19	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	docs/paper-sim/design/optimizer-phase1/2026-11-24/fx47-cleanup-current-status.json:128	aaaaaaa-aaa-a99a99a9-aaaaaaa
+    wechat_id	docs/paper-sim/design/optimizer-phase1/2026-11-24/historical-scorecards-projection.json:1156	aaaaaaa_aaaaaaaa_aaa_aaaaaaa
+    wechat_id	docs/paper-sim/design/optimizer-phase1/2026-11-24/historical-scorecards-projection.json:1251	aaaaaaa_aaaaaaaa_aaa_aaaaaaa
+    wechat_id	docs/paper-sim/design/optimizer-phase1/2026-11-25/historical-run-2-scorecard.json:1	aaaaaaa_aaaaaaaa_aaa_aaaaaaa
+    wechat_id	docs/paper-sim/design/optimizer-phase1/2026-11-25/historical-run-2-scorecard.json:1	aaaaaaa_aaaaaaaa_aaa_aaaaaaa
+    wechat_id	docs/paper-sim/design/optimizer-phase1/2026-11-25/nba-v2-terminal.json:1	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	src/polymarket_alpha_lab/papersim/nba_odr_registration.py:32	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	src/polymarket_alpha_lab/papersim/optimize/runner.py:2584	aaa-aaa-aaaaaaa-9999-99-9999
+    wechat_id	src/polymarket_alpha_lab/papersim/store_psycopg.py:3556	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	tests/test_papersim_nba_odr_registration.py:192	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+    wechat_id	tests/test_papersim_nba_odr_registration.py:334	aaaaaaaa-aaaaaaaa-aaaaaaaaaa
+##### work/fx44-close-window-and-m2-guide (vs merge-base d6c441b7)
+base=d6c441b7dcbf head=4cc5addb0a0c
+  (no matches)
+##### fix/fx49-release-093063000a70 (vs merge-base 289ed1c2)
+base=289ed1c217cd head=69858354dd37
+  email_benign: 1
+  wechat_id: 2
+    wechat_id	docs/paper-sim/design/fx-49/publication-independent-test-v2.json:78	aaaaaaa-aaa-a99a99a9-aaaaaaa
+    wechat_id	docs/paper-sim/design/fx-49/publication-independent-test-v2.json:104	aaaaaaa-aaa-aaaaa99-aaaaaaaa
+##### diagnostic/fx49-hosted-entry21-r2 (vs merge-base 39477891)
+base=394778913948 head=32f89e310657
+  (no matches)
+##### tag evidence/fx48-legacy-integrity-20261126: only its new commit (bcce1b17 -> 7f73a3e5; the parent was scanned on 2026-11-24)
+base=bcce1b17f726 head=7f73a3e5e2cf
+  (no matches)

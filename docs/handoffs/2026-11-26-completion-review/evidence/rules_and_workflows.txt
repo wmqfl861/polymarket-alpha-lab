@@ -1,0 +1,51 @@
+AGENTS.md at ab6edff2: blob ee1de5f23f9c39daeaf2b347919205f1504b7288, 27514 bytes, 419 lines, sha256 0f4d79fa1380af4f0750b2b0f306e4c99fd8e643b766fcbfdfc2bf69d003cd20
+AGENTS.md at 9a64415a: blob a8e02a23a0e91fef635534487c2f331b44218fc8, 4710 bytes, 79 lines, sha256 a6ee66f578ac07166838981ba7a21519bfc20815a95e32138d250f3f7bb24115
+sha256 recorded at the head of DELIVERY_PLAN.md on main: a6ee66f578ac07166838981ba7a21519bfc20815a95e32138d250f3f7bb24115
+headings of AGENTS.md on main:
+    # Project Instructions
+    ## 模拟盘主线与 V1 备线
+    ## Scope
+    ## Database persistence
+    ## Data Source Priority
+    ## Research data
+headings of AGENTS.md at the previous review:
+    # Project Instructions
+    ## Project Agent Routing
+    ## 模拟盘主线与 V1 备线
+    ## 协调、复审与授权
+    ## 云端审计交接
+    ## 开发与验收平台
+    ## Current owner override: Linux-only V1 platform (2026-09-27)
+    ## Current owner instruction: freeze V1 and close six work packages (2026-09-14)
+    ## Current owner instruction: complete GitHub-first handoffs (2026-09-14)
+    ## Current owner override: native project-private PostgreSQL (2026-09-12)
+    ## Scope
+    ## Project Iron Rules
+    ## CodeGraph
+    ## Data Source Priority
+    ## Engineering Defaults
+    ## Agent Coordination Defaults
+    ## Model Defaults
+    ## Review / Audit Defaults
+    ## Codex Node Push Policy
+    ## OMO / Sisyphus Session Workflow (historical)
+    ### Authority and handoff
+    ### Git strategy
+    ### Historical model configuration
+    ### Workflow summary per stage
+
+files under .github at the previous review: 8
+files under .github on main: 0
+commit that removed them: 128a3680a650d89581e19f7f451eeafb0b5f820e 2026-11-26T06:02:49Z Remove the project's development GitHub Actions workflows
+     .github/workflows/claude-probe-environment.yml   | 146 ----------------
+     .github/workflows/handoff-first-run-campaign.yml |  96 -----------
+     .github/workflows/handoff-first-run.yml          |  57 -------
+     .github/workflows/native-distribution.yml        | 218 ------------------------
+     .github/workflows/native-postgres.yml            | 587 ---------------------------------------------------------------
+     .github/workflows/offline-verification.yml       |  49 ------
+     .github/workflows/research-paper.yml             |  46 -----
+     .github/workflows/t1-relay-crossing-preview.yml  | 309 ---------------------------------
+     8 files changed, 1508 deletions(-)
+merge that replaced AGENTS.md: ca1026df540d3e81d595f62bb861107aff4a740c 2026-11-26T06:08:21Z Remove project development roles and procedures (#138)
+
+DELIVERY_PLAN.md on main: 4990 lines; change since the previous review: 1 file changed, 328 insertions(+), 22 deletions(-)
