@@ -311,3 +311,95 @@ def test_capture_module_never_imports_the_cli_or_the_driver():
     completed = subprocess.run([sys.executable, "-c", script], capture_output=True,
                                text=True, check=True)
     assert completed.stdout.strip().endswith("ok")
+
+
+_ODP_EVENT_BOUNDARIES = (
+    pytest.param(NOW, id="sport-start"),
+    pytest.param(EXPIRY, id="crypto-expiry"),
+)
+
+
+@pytest.mark.parametrize("event_start_at", _ODP_EVENT_BOUNDARIES)
+def test_odp_legacy_classifier_keeps_close_at_61_minutes(event_start_at):
+    observed_at = event_start_at - datetime.timedelta(minutes=61)
+    assert capture.classify_observation("CLOSE", observed_at, event_start_at) == (
+        "CLOSE", None,
+    )
+
+
+@pytest.mark.parametrize("event_start_at", _ODP_EVENT_BOUNDARIES)
+@pytest.mark.parametrize(
+    ("mark_kind", "observed_minutes", "received_minutes", "expected"),
+    [
+        pytest.param(
+            "CLOSE", -61, None, ("PERIODIC", "observed_at_before_close_window"),
+            id="before-window",
+        ),
+        pytest.param("CLOSE", -60, None, ("CLOSE", None), id="window-start"),
+        pytest.param("CLOSE", -59, None, ("CLOSE", None), id="inside-window"),
+        pytest.param(
+            "CLOSE", 0, None, ("PERIODIC", "observed_at_after_event_start"),
+            id="observed-at-event",
+        ),
+        pytest.param(
+            "CLOSE", 1, None, ("PERIODIC", "observed_at_after_event_start"),
+            id="observed-after-event",
+        ),
+        pytest.param(
+            "CLOSE", 0, 0, ("PERIODIC", "observed_at_after_event_start"),
+            id="observed-and-received-at-event",
+        ),
+        pytest.param(
+            "CLOSE", -59, 0, ("PERIODIC", "received_at_after_event_start"),
+            id="received-at-event",
+        ),
+        pytest.param(
+            "CLOSE", -59, 1, ("PERIODIC", "received_at_after_event_start"),
+            id="received-after-event",
+        ),
+        pytest.param("PERIODIC", 0, None, ("PERIODIC", None), id="requested-periodic"),
+    ],
+)
+def test_odp_observation_timing(
+    event_start_at, mark_kind, observed_minutes, received_minutes, expected,
+):
+    observed_at = event_start_at + datetime.timedelta(minutes=observed_minutes)
+    received_at = (
+        None if received_minutes is None
+        else event_start_at + datetime.timedelta(minutes=received_minutes)
+    )
+    assert capture._classify_odp_observation(
+        mark_kind, observed_at, event_start_at, received_at=received_at,
+    ) == expected
+
+
+@pytest.mark.parametrize("event_start_at", _ODP_EVENT_BOUNDARIES)
+def test_odp_missing_event_start(event_start_at):
+    observed_at = event_start_at - datetime.timedelta(minutes=59)
+    assert capture._classify_odp_observation("CLOSE", observed_at, None) == (
+        "PERIODIC", "missing_event_start",
+    )
+    assert capture._classify_odp_observation(
+        "CLOSE", observed_at, event_start_at.replace(tzinfo=None),
+    ) == ("PERIODIC", "missing_event_start")
+    assert capture._classify_odp_observation("PERIODIC", observed_at, None) == (
+        "PERIODIC", None,
+    )
+
+
+def test_odp_uses_utc_instants_across_folds():
+    class RepeatedHour(datetime.tzinfo):
+        def utcoffset(self, value):
+            if value is None:
+                return None
+            return datetime.timedelta(hours=-4 - value.fold)
+
+    first_fold = datetime.datetime(2026, 11, 1, 1, 30, tzinfo=RepeatedHour(), fold=0)
+    second_fold = first_fold.replace(fold=1)
+    assert capture._classify_odp_observation("CLOSE", first_fold, second_fold) == (
+        "CLOSE", None,
+    )
+    assert capture._classify_odp_observation(
+        "CLOSE", first_fold - datetime.timedelta(minutes=59), first_fold,
+        received_at=first_fold.replace(minute=29, fold=1),
+    ) == ("PERIODIC", "received_at_after_event_start")
