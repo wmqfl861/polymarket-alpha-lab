@@ -1,0 +1,154 @@
+{
+  "draft_base": "bcce1b17f7263ab89859febfcb56188c295ab371",
+  "legacy_loader": {
+    "candidate": "7f73a3e5e2cf1519ee1b18104950eabacaf3be26",
+    "reference": "refs/tags/evidence/fx48-legacy-integrity-20261126",
+    "deployed": false,
+    "original_receipt_sha256": "d50e1386dc81d48944c5e5835553b73658de76579a499357eaea38c107f508c4",
+    "hashes_source": {
+      "_football_fixed_windows": {
+        "path": "docs/paper-sim/runtime/legacy/window_runner.py",
+        "git_blob": "5894567958c3cac1ca90d470653ae4cc0f1d12d9",
+        "bytes": 18929,
+        "sha256": "67f74142cf3c146d18695fae13f37d88a82273151fcd5d4e446a251093a2afc1"
+      },
+      "_football_fixed_assessment": {
+        "path": "docs/paper-sim/runtime/legacy/window_assessment.py",
+        "git_blob": "23f8d11498d299e0d601df79101ca6441e6f2892",
+        "bytes": 26096,
+        "sha256": "f2c1d7bcc8e829b05ab72a3d3c8d1654ddf1a47b4b819d2c94576aa952cdb0d1"
+      }
+    },
+    "candidate_tests": {
+      "baseline": "6 failed, 1 passed in 0.68s",
+      "candidate_full_original_offline_runner": {
+        "passed": 76,
+        "original": 69,
+        "new": 7,
+        "skipped": 0
+      },
+      "scenarios": [
+        "Public archived runner still renders the known synthetic fixture and the approved assessor exposes its original fixture and contract identity.",
+        "For each of both roles, a one-byte same-length change or the other approved component is rejected before the compiler, including when a matching digest was supplied as an environment value.",
+        "Replacing the path immediately after its bytes are read still executes only the previously verified buffer.",
+        "The ordinary football_daily.fetch_review caller returns the existing window_not_open response for the intact out-of-window fixture; a changed runner returns assessment_unavailable and a coverage gap."
+      ],
+      "live_configuration_or_services_accessed": false
+    },
+    "full_runtime_suite": {
+      "utc": "2026-11-26T08:38:44.611595+00:00",
+      "source_commit": "7f73a3e5e2cf1519ee1b18104950eabacaf3be26",
+      "exit": 0,
+      "counts": {
+        "passed": 76
+      },
+      "original_cases": 69,
+      "focused_cases": 7,
+      "stdout_stderr_sha256": "1a008ea880f150b9f10f1e43506f04b48fc1a3d2bdd3716dec0ba14dcac85672",
+      "isolated_environment": true,
+      "allowed_network_calls": 0,
+      "database": "offline disposable PostgreSQL"
+    },
+    "conditional_integration": "After fixed-entry deployment. Check the two files installed at the site against the registered byte lengths and SHA-256."
+  },
+  "source_documentation": {
+    "review_baseline": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+    "referenced_implementation": {
+      "basketball_feed.py": "0878dd7ae5393edaf87c90495cf92054326e5883bf315d6c48995bf1d59f65c4",
+      "basketball_bbl.py": "b0503ad3193bd46b1ed2c6e36d99cba5510f5acf952e01101945f6f09b508e0d",
+      "basketball_models.py": "9eb1da9dc2e56ae41ea69f65070c1139b47e8f42244b7e71ac7c034f2cf9fc5b"
+    },
+    "nba_ledger_correction": {
+      "historical_scorecard": "DELIVERY_PLAN.md section 84.2.5 at pinned line 4565",
+      "approval_for_registered_once_only_v2": "DELIVERY_PLAN.md section 87.2 final paragraph at pinned line 4684"
+    },
+    "bbl_source_scope": {
+      "purpose": "supplement current-season training finals missing from both the frozen historical archive and retained official finals",
+      "processing": "Jina Reader renders BetExplorer season results into Markdown. The parser verifies its stated source and season, a shared event link, ordered teams, a valid date, positive non-tied scores, and carries the AET flag.",
+      "independent_schedule": "Official BBL calendar binds date in Berlin, ordered teams, kickoff and calendar UID. A single matched secondary result is required to supplement a due calendar fixture.",
+      "independent_scores": "Only a retained official final with one matching secondary row triggers comparison of the home and away scores. Discrepancies are recorded and the official final is kept. Frozen archive fixture keys suppress supplements without a new score comparison. A calendar-only match cannot independently attest the score, overtime, or finality.",
+      "hashes": "Hashes describe parsed calendar and score lists. Complete measures age and coverage, and a recorded score discrepancy on an already covered match need not make it false."
+    },
+    "verification": {
+      "patch_applies_to_unchanged_index_at_base": true,
+      "diff_check": true,
+      "source_functions_exercised": [
+        "pinned _bbl_calendar",
+        "pinned _bbl_results",
+        "pinned _bbl_training in fresh-cache mode"
+      ],
+      "offline_cases": [
+        "calendar UTC conversion",
+        "valid secondary final with overtime",
+        "mismatched links refused",
+        "tied score refused",
+        "season mismatch refused",
+        "unique supplemental row",
+        "missing/ambiguous/reversed pairing",
+        "archive covers fixture",
+        "official score discrepancy retained despite complete coverage"
+      ],
+      "external_fetches": 0,
+      "database_connections": 0,
+      "historical_or_scheduled_runs": 0,
+      "publications": 0,
+      "production_changes": 0
+    },
+    "applicability": "Both original documentation files are recorded in the pinned historical handoff hash and length manifests. Use this overlay in successor/adoption documentation; retain the published historical originals, manifests and Git object as evidence. The patch has not been applied to main or to an installed runtime."
+  },
+  "registered_timer_readback": {
+    "observed_utc": "2026-11-26T08:42:40.921242+00:00",
+    "timers": [
+      {
+        "timer": "pal-football-learning-admission.timer",
+        "loaded": "loaded",
+        "active": "active",
+        "enabled": "enabled"
+      },
+      {
+        "timer": "pal-football-learning-evidence.timer",
+        "loaded": "loaded",
+        "active": "active",
+        "enabled": "enabled"
+      },
+      {
+        "timer": "pal-football-learning-study.timer",
+        "loaded": "loaded",
+        "active": "active",
+        "enabled": "enabled"
+      },
+      {
+        "timer": "pal-football-notify-scan.timer",
+        "loaded": "loaded",
+        "active": "active",
+        "enabled": "enabled"
+      },
+      {
+        "timer": "pal-football-notify-tick.timer",
+        "loaded": "loaded",
+        "active": "active",
+        "enabled": "enabled"
+      },
+      {
+        "timer": "pal-sports-paper-scan.timer",
+        "loaded": "loaded",
+        "active": "active",
+        "enabled": "enabled"
+      },
+      {
+        "timer": "pal-sports-paper-settle.timer",
+        "loaded": "loaded",
+        "active": "active",
+        "enabled": "enabled"
+      },
+      {
+        "timer": "pal-sports-paper-study.timer",
+        "loaded": "loaded",
+        "active": "active",
+        "enabled": "enabled"
+      }
+    ],
+    "scope": "read-only systemd user manager status of the eight previously registered product timers",
+    "enabled_and_active": 8
+  }
+}

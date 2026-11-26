@@ -4961,6 +4961,8 @@ OD-Y 按推荐执行。FX-48 先登记运行版本、定时状态和研究与账
 
 **停止运行层调度。** 足篮采集、研究、准入、模拟入账、结算和通知由运行账户的用户级 systemd 调度。§88.1 至 §88.3 登记各模型和两本账的用途。需要停某项时，按上面的现场回执选取该项的 `timer`，先用 `systemctl --user is-enabled "$timer"` 和 `systemctl --user is-active "$timer"` 核对状态。临时暂停用 `systemctl --user stop "$timer"`。需跨重启停用时执行 `systemctl --user disable --now "$timer"`，再核对状态为 `disabled`、`inactive`。整组停用时对回执内原启用的八项逐个操作。已启动的服务会继续运行，可按同一回执的 `unit` 等待本轮结束。足球通知还会异步启动 `pal-football-notify-worker@` 服务实例，整组停用时一并核对它们已经退出。数据库服务独立于这八个定时器。[运行层系统模板](https://github.com/wmqfl861/polymarket-alpha-lab/tree/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/systemd) · [通知任务的启动方式](https://github.com/wmqfl861/polymarket-alpha-lab/blob/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/scripts/football_daily.py#L420)
 
+08:42 UTC 按已登记的八个用户级定时器逐项读回，八项均为已启用、活动中。运行层旧脚本校验修复候选、德国篮球补录的日期与比分核对边界、NBA 历史引用的更正已登记。[逐项核对与源码证据](docs/paper-sim/design/fx-48/2026-11-26-source-and-timer-followup.json)
+
 **固定窗口的遗留文件。** 11 月 22 日固定窗口使用 `legacy/window_runner.py` 的 `write_json` 写入阶段状态。该窗口已结束，既有 JSON 归入只读遗留资料，用于核对当时的记录。后续运行层持久化按 §84.2.1 的路线 A 办理。32 张表的基线接管、迁移台账和接管前后结构比对排在 FX-49 部署之后。[固定窗口源码](https://github.com/wmqfl861/polymarket-alpha-lab/blob/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/legacy/window_runner.py#L373) · [审核发现 R6-4](docs/handoffs/2026-11-24-incremental-review/01-review-report.md)
 
 `5388b6ab` 在受管只读命令 `optimize score --lineage <谱系> --close-price-evidence` 增加了逐行核对选项。每行可核对买入方向、影子成交、现役模拟入场及实际选中的收盘证据。R6-17 的 30 行计数取候选过闸数；候选和现役分别只用收盘价、成交价俱全的本侧行计算均值。两侧沿用现有口径，不增设有价行下限。达到 30 行且两均值之差（候选减现役）小于或等于 −0.01 时拦截。两侧任一均值缺失只作标注。隔离原生用例的首轮数据是候选 30 行中 3 行有价、现役 7 行中 6 行有价，复算差值正好为 −0.01。OD-P 的现场登记和七个连续合格日仍待实测。[原生 PostgreSQL 和离线测试回执](docs/paper-sim/design/fx-44/2026-11-26-price-evidence.json)
