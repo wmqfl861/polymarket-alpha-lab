@@ -1,0 +1,102 @@
+{
+  "scope": "Two causes from the original default offline and native full suites, verified before the next pair of full-suite runs.",
+  "original_test_commit": "206192c50631823fe940783211ad244b3ab70f11",
+  "original_full_result": "docs/paper-sim/design/fx-49/2026-11-26-full-tests-206192c5.json",
+  "corrected_test_commit": "cd02c70f347f704fa8902346d9772ea779559657",
+  "source_size_guard": {
+    "affected_test": "tests/test_team_evidence_aggregation_attempt_psycopg.py",
+    "unchanged_guard": "tests/test_team_evidence_aggregation_attempt_scope.py",
+    "limits": {
+      "adapter_file": 620,
+      "node_5_file_total": 2000
+    },
+    "physical_lines": {
+      "before": {
+        "adapter_file": 624,
+        "node_5_file_total": 2002
+      },
+      "after": {
+        "adapter_file": 616,
+        "node_5_file_total": 1994
+      }
+    },
+    "intervention": "The eight test call sites now use the existing import-blocking helper with the original missing argument. Two functions that forwarded only that argument were removed.",
+    "unchanged_test_functions_with_identical_assertion_asts": 21,
+    "target_modules": [
+      "tests/test_team_evidence_aggregation_attempt_scope.py",
+      "tests/test_team_evidence_aggregation_attempt_psycopg.py",
+      "tests/test_papersim_queue_policy.py"
+    ],
+    "cold_import": {
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0
+    },
+    "preloaded_native_driver": {
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0,
+      "previous_module_object_restored": true
+    }
+  },
+  "self_contained_pg_fixture": {
+    "case": "tests/test_papersim_capture_marks_native.py::test_register_close_window_through_managed_cli",
+    "stage": "setup",
+    "original_reason": "KeyError on POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX. The fixture starts its own temporary database using the installed tools.",
+    "treatment": "Only the pre-existing read-only mounted PostgreSQL software prefix was added to the offline child environment. The shared outer cluster and native opt-ins stayed off. Test and teardown were unchanged.",
+    "control": {
+      "started_utc": "2026-11-26T22:18:37+00:00",
+      "finished_utc": "2026-11-26T22:18:44+00:00",
+      "pytest_exit_code": 1,
+      "counts": {
+        "passed": 0,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 1
+      },
+      "fixture": {
+        "software_available": true,
+        "opt_in_native_suite": false,
+        "outer_cluster_started": false,
+        "software_env_available": false
+      },
+      "original_sha256": "9486294c49f25bc8e662d0f292df765df9b92f440be381ac827e259114dd70e1"
+    },
+    "prefix": {
+      "started_utc": "2026-11-26T22:18:36+00:00",
+      "finished_utc": "2026-11-26T22:19:13+00:00",
+      "pytest_exit_code": 0,
+      "counts": {
+        "passed": 1,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0
+      },
+      "fixture": {
+        "software_available": true,
+        "opt_in_native_suite": false,
+        "outer_cluster_started": false,
+        "software_env_available": true
+      },
+      "original_sha256": "ab966003e6e672a53a49fd198cdacc65786f4283afd7b4026be12a0f20e6d023"
+    },
+    "next_runner_sha256": "8ce3e4bf7fb24064dc4c48c9f149bac0f8a8d0431aec47d47610bf5f831f7611"
+  },
+  "notification_runtime_tree_identical_across_these_commits": true,
+  "comparison_with_audited_main": {
+    "base": "9a64415ae8a191f4c0abc5276c661240e1920e8c",
+    "selfcheck_stdout_and_stderr_match": true,
+    "number_of_selfcheck_items": 10,
+    "selfcheck_stdout_bytes": 1663,
+    "selfcheck_stdout_sha256": "a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9",
+    "four_frozen_fixtures_identical": true,
+    "preexisting_migrations_identical": true,
+    "removed_tests": 0,
+    "tests_with_fewer_checks": 0,
+    "new_skip_markers": 0,
+    "new_xfail_markers": 0,
+    "new_address_file_pairs": 0,
+    "selfcheck_original_sha256": "4f4bf75e4879dbe6adc062e1c9f392d8445221f900b240bccf3f07be8076429e",
+    "comparison_original_sha256": "90cddf22fa3f0b36601e2deed583f143c5d3a0376e85355c0ff4f8d328ab1196"
+  }
+}
