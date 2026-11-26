@@ -25,6 +25,25 @@ python3 prepare_media.py --source-archive "$HERMES_SOURCE_ARCHIVE" \
   --launcher "$BUILD_DIR/hermes.exe" --output "$BUILD_DIR/Protected-Hermes-Windows-x64.zip"
 ```
 
+## Rebuild the archive on Windows
+
+Use the official CPython 3.12.10 x64 embeddable build tool with classic zlib 1.3.1. Its 11,133,606-byte ZIP has SHA-256 `4acbed6dd1c744b0376e3b1cf57ce906f9dc9e95e68824584c8099a63025a3c3`. The field comparison found that zlib-ng in the target runtime produced different compressed streams for identical source files. The target runtime is one of the registered archive inputs. [Official build tool](https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip) · [Windows build and readback](../../../../design/fx-49/2026-11-26-windows-prepared-media.json)
+
+Extract the verified build tool in the protected build directory and set `$BuildPython` to its `python.exe`. Run the assembler from its checked-out source directory. Supply the same verified input archives, wheels and launcher used in the Linux procedure, and a new path for `$OutputArchive`.
+
+```powershell
+& $BuildPython -I -B .\prepare_media.py --source-archive $HermesSourceArchive `
+    --python-archive $TargetPythonArchive --wheel-dir $WheelDirectory `
+    --launcher $HermesLauncher --output $OutputArchive
+if ($LASTEXITCODE -ne 0) { throw 'Archive build failed' }
+if ((Get-Item -LiteralPath $OutputArchive).Length -ne 132729332 -or
+    (Get-FileHash -LiteralPath $OutputArchive -Algorithm SHA256).Hash -ine '4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb') {
+    throw 'Archive differs from the approved release'
+}
+```
+
+## Install the verified archive
+
 The media contains `source`, `runtime`, `wheels`, a hash-locked requirements file, the bootstrap and the executable. The operator verifies the whole archive digest, then stages it in the administrator-controlled release directory. Before activation, the bundled interpreter installs the supplied wheel payload under the protected directory. Run the following command from the verified release directory in the elevated installation session.
 
 ```powershell

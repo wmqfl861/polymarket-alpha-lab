@@ -1,0 +1,96 @@
+{
+  "scope": "Windows field preparation of the approved public release before binding and activation",
+  "intended_production_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+  "media_assembler_commit": "304d3e25a7339c39d9122aec3b5aa428837b2ce0",
+  "first_windows_attempt": "2026-11-26-windows-public-staging.json",
+  "approved_fixed_script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "build_tool": {
+    "publisher": "Python Software Foundation",
+    "version": "3.12.10",
+    "filename": "python-3.12.10-embed-amd64.zip",
+    "url": "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip",
+    "bytes": 11133606,
+    "sha256": "4acbed6dd1c744b0376e3b1cf57ce906f9dc9e95e68824584c8099a63025a3c3"
+  },
+  "published_source_checks": {
+    "spdx_archive_hash_verified": true,
+    "signed_digest_matches_archive": true,
+    "entire_local_archive_compared": true,
+    "local_build_members": 4794,
+    "software_manifest_sha256": "40e969d0e29ee55d2a2f7ff85c8f5e60d7f9573623b21e679b26aa22e41e3c75",
+    "exact_build_readback_sha256": "ea69132b97469f9dbd1fd1d4749d624658f2df484f444a34a5cc44c158a4b00c"
+  },
+  "field_canonical_build": {
+    "started_utc": "2026-11-26T15:55:13+00:00",
+    "phase": "run_build_tool_from_file",
+    "build_tool_sha256": "bf94818512bfbfc49a231a9eb9820dc141de50f4d1ee158dc245b0254a73de72",
+    "runtime_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+    "media_assembler_commit": "304d3e25a7339c39d9122aec3b5aa428837b2ce0",
+    "production_switched": false,
+    "natural_sends": 0,
+    "protected_script_readback": true,
+    "exit_code": 0,
+    "status": "ok",
+    "verified_archive": {
+      "bytes": 132729332,
+      "sha256": "4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb"
+    },
+    "build_python": "3.12.10",
+    "build_zlib": "1.3.1",
+    "ended_utc": "2026-11-26T15:55:39+00:00"
+  },
+  "field_archive_verification": {
+    "phase": "VerifyMedia",
+    "started_utc": "2026-11-26T15:56:31+00:00",
+    "request_count": 1,
+    "formal_installation": false,
+    "binding_accessed": false,
+    "production_switched": false,
+    "messages_sent": 0,
+    "exit_code": 0,
+    "status": "ok",
+    "ended_utc": "2026-11-26T15:56:33+00:00"
+  },
+  "field_dependency_preparation": {
+    "phase": "PrepareSoftware",
+    "started_utc": "2026-11-26T15:56:33+00:00",
+    "request_count": 1,
+    "formal_installation": false,
+    "binding_accessed": false,
+    "production_switched": false,
+    "messages_sent": 0,
+    "exit_code": 0,
+    "status": "ok",
+    "ended_utc": "2026-11-26T15:56:56+00:00"
+  },
+  "independent_public_files_and_interactive_session": {
+    "observed_utc": "2026-11-26T15:58:19+00:00",
+    "facts": {
+      "account_seen": true,
+      "newer_interactive_logon": false,
+      "all_logon_queries_completed": true,
+      "prepared_hashes_match": true,
+      "prepared_files_admin_only": true,
+      "production_directory_present": false,
+      "dependencies_prepared": true
+    }
+  },
+  "prepared_files_compared": [
+    "Invoke-PaperWeixin.ps1",
+    "PaperWeixinRelay.exe",
+    "Hermes/hermes.exe"
+  ],
+  "production": {
+    "final_install_verified": false,
+    "six_substitute_cases_passed": 0,
+    "six_substitute_cases_required": 6,
+    "natural_receipts": 0,
+    "server_checkout_for_new_delivery": null,
+    "switched": false
+  },
+  "field_record_sha256": {
+    "field-CanonicalMedia.json": "81ebdc01b37d8d77de007dd629f930a9426a5739ccdb18afe988f96a99dbdf37",
+    "field-VerifyMedia.json": "d64aa6499ef148e0ec03c7191f1b4bbd82343c1db079b3a1951744e6f2184c9a",
+    "field-PrepareSoftware.json": "bc3eb67ae9510848be59003b1ed69514f32e35983ae0720b10b6bb9dec7283eb"
+  }
+}
