@@ -168,8 +168,8 @@
         "rejected": null
       },
       "cause": "The product serializes candidate_ids and entry_ids as JSON objects keyed by candidate key. The pinned helper counts only lists; its scalar fallback expects optional top-level fields that the prepared scan path does not emit. Without any nonnegative reported integer, agrees returns None for both comparisons. This is the first and sole unmet reconciliation check in this summary; teardown succeeded.",
-      "original_cli_vs_sql_equality": null,
-      "why_no_retroactive_comparison": "The outer wrapper kept only the redacted summary, discarded raw CLI stdout and dismantled the private fixture. Hashes bind inputs and the redacted report; they do not reveal the missing historical identifier maps."
+      "why_no_retroactive_comparison": "The outer wrapper kept only the redacted summary, discarded raw CLI stdout and dismantled the private fixture. Hashes bind inputs and the redacted report; they do not reveal the missing historical identifier maps.",
+      "cli_matches_database": null
     },
     "limits": {
       "b2": {
