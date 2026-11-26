@@ -4697,6 +4697,8 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 两个连接池的公网限制已分别从独立测点复查。项目原生数据库单次外测为超时。登录入口的现有外测回执为 `NO_OBSERVATION`，认证方法未知。11 月 26 日只读核对 GitHub，`main` 的 `protected` 字段为 `false`。[11 月 26 日公开设置与现有回执核对](docs/paper-sim/design/fx-36/2026-11-26-publication-and-login-status.json) · [原生数据库外测](docs/paper-sim/design/fx-36/2026-11-24-native-public-observation.json) · [登录观测原件](docs/paper-sim/design/fx-36/2026-11-24-login-public-observation.json)
 
+从审核锚点 `ab6edff2` 到已公开的 `601d5127`，共核对 25 个新进入历史的合并提交，其中 14 个在第一父链。25 个作者身份全部使用 GitHub 隐私邮箱，提交者中 11 个使用隐私邮箱，14 个使用 GitHub 平台身份。同期公开读回显示 `main` 的分支保护仍未开启。[合并身份及公开分支读数](docs/paper-sim/design/fx-36/2026-11-26-public-merge-identities.json)
+
 `41b4ef95` 修复演练器成功回执的读取。完整合法的成功样本从误拒变为接受，14 个变造样本全部拒绝。Linux PowerShell 固定脚本 22 项、Linux 投递器 79 项均通过。受保护安装时使用的演练器 SHA-256 为 `cf225ba4d338f04c687741d3619ca2f3b67999cd495ce991d9187b06f46be63f`。Windows 现场演练和一次自然投递继续按机主选择验收。[两套测试与组件摘要](docs/paper-sim/design/fx-49/2026-11-26-rehearsal-receipt-types.json)
 
 #### 84.2.5 历史优化卡

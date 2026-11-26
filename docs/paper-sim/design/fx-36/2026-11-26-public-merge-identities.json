@@ -1,0 +1,25 @@
+{
+  "item": "FX-36 / R6-1",
+  "checked_utc": "2026-11-26T09:58:31.335612+00:00",
+  "exclusive_base": "ab6edff2d64ac8aa5c2831d748b8730b63f8312d",
+  "inclusive_tip": "601d512778ef01ce1b9cbaa23130ae2bd15740cb",
+  "method": "Read the author and committer of every merge reachable from the tip and excluded by the base. Classify the exact GitHub platform address and the documented noreply domains. Store counts only.",
+  "merge_commits": 25,
+  "first_parent_merge_commits": 14,
+  "authors": {
+    "privacy": 25
+  },
+  "committers": {
+    "platform": 14,
+    "privacy": 11
+  },
+  "unclassified": 0,
+  "public_branch_readback": {
+    "at_utc": "2026-11-26T09:54:40.501000+00:00",
+    "head": "601d512778ef01ce1b9cbaa23130ae2bd15740cb",
+    "protected": false
+  },
+  "external_login_receipt": "2026-11-24-login-public-observation.json",
+  "external_login_state": "NO_OBSERVATION",
+  "new_login_observations": 0
+}
