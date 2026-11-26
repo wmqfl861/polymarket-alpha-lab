@@ -208,14 +208,6 @@ def _block_psycopg_imports(monkeypatch: pytest.MonkeyPatch, *, missing: bool) ->
     monkeypatch.setattr(sys, "meta_path", [BlockingFinder(), *sys.meta_path])
 
 
-def _forbid_psycopg(monkeypatch: pytest.MonkeyPatch) -> None:
-    _block_psycopg_imports(monkeypatch, missing=False)
-
-
-def _miss_psycopg(monkeypatch: pytest.MonkeyPatch) -> None:
-    _block_psycopg_imports(monkeypatch, missing=True)
-
-
 def _spy_dsn_validator(monkeypatch: pytest.MonkeyPatch, adapter: types.ModuleType,
                        events: list[str]) -> None:
     original = adapter.validate_local_postgres_dsn
@@ -240,7 +232,7 @@ def _ok_writer(events: list[str] | None = None, calls: list[Any] | None = None):
 
 
 def test_public_exports_and_module_import_stay_lazy(monkeypatch: pytest.MonkeyPatch) -> None:
-    _miss_psycopg(monkeypatch)
+    _block_psycopg_imports(monkeypatch, missing=True)
     adapter = _import_adapter(monkeypatch)
     assert adapter.__all__ == (
         "insert_team_evaluation_attempt_with_psycopg",
@@ -271,7 +263,7 @@ def test_orphan_bindings_rejected_before_dsn_validation_and_psycopg_import(
         invalid = replace(envelope, evaluation_scope_payload=dict(payload, run_metadata=123))
     match = {"tea": "tea_id", "tfr": "tfr_id"}.get(orphan, "run_metadata")
     events: list[str] = []
-    _forbid_psycopg(monkeypatch)
+    _block_psycopg_imports(monkeypatch, missing=False)
     adapter = _import_adapter(monkeypatch)
     _spy_dsn_validator(monkeypatch, adapter, events)
     with pytest.raises(ValueError, match=match):
@@ -284,7 +276,7 @@ def test_invalid_batch_shape_rejected_before_dsn_validation_and_psycopg_import(
     monkeypatch: pytest.MonkeyPatch, envelopes: Any,
 ) -> None:
     events: list[str] = []
-    _forbid_psycopg(monkeypatch)
+    _block_psycopg_imports(monkeypatch, missing=False)
     adapter = _import_adapter(monkeypatch)
     _spy_dsn_validator(monkeypatch, adapter, events)
     with pytest.raises(ValueError, match="envelopes"):
@@ -297,7 +289,7 @@ def test_invalid_table_name_rejected_before_dsn_validation_and_psycopg_import(
     monkeypatch: pytest.MonkeyPatch, table_name: Any,
 ) -> None:
     events: list[str] = []
-    _forbid_psycopg(monkeypatch)
+    _block_psycopg_imports(monkeypatch, missing=False)
     adapter = _import_adapter(monkeypatch)
     _spy_dsn_validator(monkeypatch, adapter, events)
     with pytest.raises(ValueError, match="table_name"):
@@ -309,7 +301,7 @@ def test_invalid_table_name_rejected_before_dsn_validation_and_psycopg_import(
 def test_remote_dsn_rejected_before_psycopg_import_without_echoing_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _forbid_psycopg(monkeypatch)
+    _block_psycopg_imports(monkeypatch, missing=False)
     adapter = _import_adapter(monkeypatch)
     with pytest.raises(ValueError) as exc_info:
         adapter.insert_team_evaluation_attempts_with_psycopg(REMOTE_DSN, (make_envelope(),))
@@ -324,7 +316,7 @@ def test_remote_dsn_rejected_before_psycopg_import_without_echoing_secret(
 def test_missing_psycopg_error_mentions_install_extra_without_dsn(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _miss_psycopg(monkeypatch)
+    _block_psycopg_imports(monkeypatch, missing=True)
     adapter = _import_adapter(monkeypatch)
     with pytest.raises(RuntimeError) as exc_info:
         adapter.insert_team_evaluation_attempts_with_psycopg(LOCAL_DSN, (make_envelope(),))
@@ -576,7 +568,7 @@ def test_legacy_insert_rejects_v1_identifiers_before_any_connection_activity(
         tfe_id=v1_prefix + digest("legacy") if field_name == "tfe_id" else None,
         evaluation_scope_payload={"note": "plain"})
     events: list[str] = []
-    _forbid_psycopg(monkeypatch)
+    _block_psycopg_imports(monkeypatch, missing=False)
     adapter = _import_adapter(monkeypatch)  # default fakes raise if any store call happens
     _spy_dsn_validator(monkeypatch, adapter, events)
     with pytest.raises(ValueError, match=v1_prefix):
@@ -591,7 +583,7 @@ def test_legacy_insert_rejects_v1_identifier_inside_legacy_payload_before_connec
         tea_id="legacy-tea", tfr_id="legacy-tfr",
         evaluation_scope_payload={"nested": ["plain", "tfe:v1:" + digest("deep")]})
     events: list[str] = []
-    _forbid_psycopg(monkeypatch)
+    _block_psycopg_imports(monkeypatch, missing=False)
     adapter = _import_adapter(monkeypatch)
     _spy_dsn_validator(monkeypatch, adapter, events)
     with pytest.raises(ValueError, match="tfe:v1:"):
