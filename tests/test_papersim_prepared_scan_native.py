@@ -10,7 +10,6 @@ import json
 import os
 from pathlib import Path
 import runpy
-import subprocess
 import sys
 import time
 import traceback
@@ -808,22 +807,23 @@ def test_prepared_fotmob_capture_binds_the_kickoff_instant(separate_project, fix
         assert {target.reason_code for target in resolved.excluded} == {"papersim_prepare_model_materials_missing"}
 
 
-def test_research_interval_keeps_the_effective_policy_for_both_capture_writers(separate_project):
+def test_research_interval_keeps_the_effective_policy_for_both_capture_writers(separate_project, monkeypatch, capsys):
     project = separate_project
     with pg.connect_managed(project.root) as reader:
-        start = pg.d1_database_time(reader) + timedelta(seconds=4)
-    end = start + timedelta(hours=1)
-    registration = subprocess.run(
-        [sys.executable, str(project.root / "tools/d1_compare.py"), "register-close-window",
-         "--repo-root", str(project.root), "--team", _D1_TEAM, "--window-start", start.isoformat(),
-         "--window-end", end.isoformat()],
-        cwd=project.root, capture_output=True, text=True, timeout=45,
-    )
-    assert registration.returncode == 0, registration.stderr
-    receipt = json.loads(registration.stdout)
+        measured = pg.d1_database_time(reader)
+    start, end = measured - timedelta(hours=1), measured + timedelta(hours=12)
+    registration_time = start - timedelta(hours=1)
+    # Pin only this isolated registration's clock. The ordinary subprocess test
+    # exercises the real database clock. Both capture processes use their own clocks.
+    cli = runpy.run_path(str(project.root / "tools/d1_compare.py"))["main"]
+    with monkeypatch.context() as registration_clock:
+        registration_clock.setattr(pg, "d1_database_time", lambda _conn: registration_time)
+        result = cli(["register-close-window", "--repo-root", str(project.root), "--team", _D1_TEAM,
+                      "--window-start", start.isoformat(), "--window-end", end.isoformat()])
+    assert result == 0
+    receipt = json.loads(capsys.readouterr().out)
     assert receipt["close_window_policy"] == "OD-P"
-    assert datetime.fromisoformat(receipt["registered_at"]) < start
-    time.sleep(max(0, (start - datetime.now(UTC)).total_seconds()))
+    assert datetime.fromisoformat(receipt["registered_at"]) == registration_time < start
 
     # Both source clocks fall inside the registered research interval, more than
     # an hour before expiry. Use distinct candidates so writer ownership is exact.
