@@ -4705,7 +4705,7 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 - OD-Z 同意先切换。通用远程通道可执行的操作比固定入口更宽。机主知悉这一剩余风险。以后可采用专用受限运行身份和只接受固定投递请求的执行入口。
 - OD-AA 使用系统 Windows PowerShell，按文件运行固定脚本，每次调用仅对该进程指定 `RemoteSigned`。脚本固定为 `e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6`。
-- OD-M 由机主本人在仓库 Settings → Rules → Rulesets 为 `main` 和 `handoff/**` 开启禁止删除、禁止强推。登记时对 `main` 生效的托管规则与仓库规则集均为零。
+- OD-M 由机主本人在仓库 Settings → Rules → Rulesets 为 `main` 和 `handoff/**` 开启禁止删除、禁止强推。登记时对 `main` 生效的托管规则与仓库规则集均为零。 17:07:59 UTC，经 GitHub 的分支生效规则接口核实，`main` 和本轮交接分支均返回零条规则。[两条分支的实际读回](docs/paper-sim/design/fx-36/2026-11-26-effective-branch-protection.json)
 - OD-AB 已按机主确认，在根规则末尾补入交接包第 2 节的完整成稿。
 
 北京时间 11 月 26 日 20:59:16，原外部测点只连接一次，登录入口可达。21:00:06，以现有权限读取登录服务生效策略，普通账户可单独用口令登录，特定账户仅允许公钥。已即时报告机主。第二个数据库入口的现有限制依赖容器发布后才能读到的实时清单，服务启动时发布可能早于保护，窗口时长未实测。建议把相同范围的规则独立持久加载，并让发布等待其核验成功，再从原测点复查。[登录可达性](docs/paper-sim/design/fx-36/2026-11-26-login-tcp.json) · [生效策略](docs/paper-sim/design/fx-36/2026-11-26-login-policy.json) · [第二条限制的启动依赖](docs/paper-sim/design/fx-36/2026-11-26-second-restriction-order.json)

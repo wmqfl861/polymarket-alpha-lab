@@ -1,0 +1,23 @@
+{
+  "observed_utc": "2026-11-26T17:07:59+00:00",
+  "settings_mutated": false,
+  "branches": {
+    "main": {
+      "available": true,
+      "effective_rules_count": 0,
+      "deletion_prohibited": false,
+      "force_push_prohibited": false
+    },
+    "review_branch": {
+      "available": true,
+      "effective_rules_count": 0,
+      "deletion_prohibited": false,
+      "force_push_prohibited": false
+    }
+  },
+  "sources": {
+    "main": "main",
+    "review_branch": "handoff/completion-review-2026-11-26"
+  },
+  "lookup": "GitHub public effective rules for each named branch"
+}
