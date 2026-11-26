@@ -1,0 +1,58 @@
+{
+  "build_source": "21d701a38768562af64976ac9c75f9c9d1674c05",
+  "integrated_main": "f84278f6f33126f7ceefcd406c3c7777b6a041ef",
+  "built_utc": "2026-11-26T14:31:12+00:00",
+  "source_sha256": {
+    "docs/paper-sim/runtime/scripts/windows/relay/README.md": "e325406effa99f2a68e35f471d35ee7451b2a4ff22795d889b6896196e01eef5",
+    "docs/paper-sim/runtime/scripts/windows/relay/src/child.cpp": "435e4730e338f9fe7bbc038ad0b44b3f358e3672e7875e7c24961402c08ea5e3",
+    "docs/paper-sim/runtime/scripts/windows/relay/src/identity.cpp": "958dff40938001b4de8e57c068d2b2d9381baeae66ea5a8ce3a65cce1cef239b",
+    "docs/paper-sim/runtime/scripts/windows/relay/src/main.cpp": "8ca7ed3421f51d1925f9a9e2fe75f0021e4318c8b2c2ed0fd527f2fceabbea8f",
+    "docs/paper-sim/runtime/scripts/windows/relay/src/protocol.h": "703c151e2c45130659a5d6bcb3efa6c52a4ac03fe2f42180b96a50bf03c8bf9c",
+    "docs/paper-sim/runtime/scripts/windows/relay/src/relay_win.h": "cfa60946565e461f2072ee484f5c93383fa1c0f134c68b42c65cde9b8043abed",
+    "docs/paper-sim/runtime/scripts/windows/relay/tests/Test-PaperWeixinRelayOffline.ps1": "509efa73a5962e13ad0b931cc5adbc4acb2b7961fee0200230983f89b17c8113",
+    "docs/paper-sim/runtime/scripts/windows/relay/tests/test_protocol.cpp": "7fbf49410ad0a97ed1b0aa10393b1d840549cf4d3cad8d82895914728e400da7"
+  },
+  "original_powershell_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "binary": {
+    "artifact": "relay-artifacts/21d701a38768/PaperWeixinRelay.exe",
+    "bytes": 321536,
+    "sha256": "3c0fc5e201fe517382df30c0e759b4fdbb9cbbe1b888d8872fdfac883196c481",
+    "format": "Native x64 PE32+",
+    "byte_identical_independent_builds": 2,
+    "system_imports": [
+      "ADVAPI32.dll",
+      "AUTHZ.dll",
+      "bcrypt.dll",
+      "KERNEL32.dll",
+      "msvcrt.dll",
+      "ole32.dll",
+      "SHELL32.dll"
+    ],
+    "hardening_flags": [
+      "HIGH_ENTROPY_VA",
+      "DYNAMIC_BASE",
+      "NX_COMPAT"
+    ],
+    "alternate_token_or_impersonation_imports": 0
+  },
+  "tests": {
+    "original_linux_delivery_tests": 79,
+    "original_fixed_script_linux_synthetic": {
+      "passed": 22,
+      "skipped": 0,
+      "failed": 0,
+      "errors": 0,
+      "xfailed": 0,
+      "xpassed": 0
+    },
+    "portable_protocol_and_actual_command_builder_with_ASan_UBSan_exit": 0,
+    "offline_test_powershell_parse_errors": 0
+  },
+  "windows_verification_at_build": {
+    "actual_worker": false,
+    "actual_child_argv_observed": false,
+    "actual_delivery": false,
+    "pending_test": "docs/paper-sim/runtime/scripts/windows/relay/tests/Test-PaperWeixinRelayOffline.ps1",
+    "synthetic_case": "Check-Refusal with -ObserveChild; require genuine original script refusal, executable path and full Windows kernel-reported child command line, original nonce and total elapsed <=8 seconds."
+  }
+}
