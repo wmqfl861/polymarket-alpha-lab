@@ -1,0 +1,69 @@
+{
+  "ordinary_merge": {
+    "utc": "2026-11-25T18:23:40+00:00",
+    "head": "979a6abd8801085a026839d7ab4246584e3ba7e7",
+    "base": "093063000a704727f243c02a7b420c49afa37027",
+    "pr": 132,
+    "tree": "c57103039dd4c924a5f3163a86159b85d9df50f3",
+    "ci_merge": "85e757ae5aee8393e18ca8c1586a0b3bfd847608",
+    "actual_main": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+    "workflow_runs": {
+      "Offline verification": 45671167676,
+      "Native project PostgreSQL": 45671167543,
+      "Research paper bridge": 45671167901
+    },
+    "fixed_check": "#132 head 979a6abd run 45671167676: CURRENT (merged into 09306300)",
+    "author_committer_noreply": true
+  },
+  "checkout_proof_sha256": "b7c2012190975a3047fc7889922ac0b3bcaaee5f98cd370be089ea22f299c686",
+  "workflows": {
+    "Offline verification": {
+      "run": 45671167676,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "offline",
+          "job": 139406522148,
+          "commit": "85e757ae5aee8393e18ca8c1586a0b3bfd847608"
+        }
+      ]
+    },
+    "Native project PostgreSQL": {
+      "run": 45671167543,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "linux-native-storage",
+          "job": 139406520792,
+          "commit": "85e757ae5aee8393e18ca8c1586a0b3bfd847608"
+        },
+        {
+          "name": "linux-native-research",
+          "job": 139406520746,
+          "commit": "85e757ae5aee8393e18ca8c1586a0b3bfd847608"
+        },
+        {
+          "name": "linux-native-dispatch",
+          "job": 139406520391,
+          "commit": "85e757ae5aee8393e18ca8c1586a0b3bfd847608"
+        },
+        {
+          "name": "linux-native-papersim",
+          "job": 139406521062,
+          "commit": "85e757ae5aee8393e18ca8c1586a0b3bfd847608"
+        }
+      ]
+    },
+    "Research paper bridge": {
+      "run": 45671167901,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "windows-paper",
+          "job": 139406522931,
+          "commit": "85e757ae5aee8393e18ca8c1586a0b3bfd847608"
+        }
+      ]
+    }
+  }
+}
