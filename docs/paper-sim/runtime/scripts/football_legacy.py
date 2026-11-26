@@ -1,15 +1,23 @@
 """Read the fixed November 22 assessments for the shared pregame round."""
 
 import os
+import stat
 import time
 from datetime import UTC, date, datetime, timedelta
 from functools import cache
-from importlib.util import module_from_spec, spec_from_file_location
+from hashlib import sha256
 from math import isclose
 from pathlib import Path
+from types import ModuleType
 
 
 RUNNER_PATH = Path(os.environ.get("PAL_LEGACY_RUNNER", ""))
+# Raw byte lengths and SHA-256 of the corresponding files in the fixed
+# docs/paper-sim/runtime/legacy tree at bcce1b17.
+_WINDOW_SOURCES = {
+    "_football_fixed_windows": (18929, "67f74142cf3c146d18695fae13f37d88a82273151fcd5d4e446a251093a2afc1"),
+    "_football_fixed_assessment": (26096, "f2c1d7bcc8e829b05ab72a3d3c8d1654ddf1a47b4b819d2c94576aa952cdb0d1"),
+}
 FIXED_DATE = date(2026, 11, 22)
 # The fixed runner budgets 120 seconds for capture, 100 for news and 65 for assessment.
 COLLECTION_GRACE = timedelta(seconds=295)
@@ -18,13 +26,18 @@ TERMINAL_FAILURES = ("collection_unavailable", "assessment_unavailable", "window
 
 
 def _window_module(name, path):
-    spec = spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
+    if not path.is_absolute() or name not in _WINDOW_SOURCES:
         raise ImportError("fixed_window_profile_unavailable")
-    module = module_from_spec(spec)
-    source = spec.loader.get_source(spec.name)
-    if source is None:
+    length, digest = _WINDOW_SOURCES[name]
+    with open(path, "rb", opener=lambda filename, flags: os.open(filename, flags | os.O_NONBLOCK)) as file:
+        info = os.fstat(file.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_size != length:
+            raise ImportError("fixed_window_profile_unavailable")
+        source = file.read(length + 1)
+    if len(source) != length or sha256(source).hexdigest() != digest:
         raise ImportError("fixed_window_profile_unavailable")
+    module = ModuleType(name)
+    module.__file__ = str(path)
     exec(compile(source, str(path), "exec"), vars(module))
     return module
 
@@ -32,8 +45,6 @@ def _window_module(name, path):
 @cache
 def load_runner():
     """Load the frozen window profile only on demand and without writing bytecode."""
-    if not RUNNER_PATH.is_absolute():
-        raise ImportError("fixed_window_profile_unavailable")
     runner = _window_module("_football_fixed_windows", RUNNER_PATH)
     if not all(callable(getattr(runner, name, None)) for name in ("get_stage", "parse_time", "read_json", "render")):
         raise ImportError("fixed_window_profile_unavailable")
