@@ -1,0 +1,98 @@
+{
+  "managed_windows": [
+    {
+      "tag_slug": "eredivisie",
+      "window": {
+        "end_utc": "2026-11-25T23:33:12.648276+00:00",
+        "start_utc": "2026-11-25T23:17:12.648276+00:00"
+      },
+      "pinned_source_commit": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+      "verified_checkout_head": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+      "verified_decision_cutoff_utc": "2026-11-25T23:17:15.137424+00:00",
+      "formal_days_counted": 0,
+      "candidates": 0,
+      "entries": 0,
+      "conclusions": {
+        "ACCEPTED": 0,
+        "CONSTRUCTED": 0,
+        "CONSTRUCTION_FAILED": 0,
+        "REJECTED": 0
+      },
+      "observed_reasons": null,
+      "b2": {
+        "basis": "public_mark_not_measured",
+        "status": "open"
+      },
+      "input_set": "e2896e28c5d1a4fc1144900f0791b26fcac37194adfc8ffc314d14ccd5e6fedf",
+      "original_receipt_sha256": "abe530dbe0edf7e6fcec596ac05baac250b00bc2883f38a6a03063ab3a29a0f3"
+    },
+    {
+      "tag_slug": "ethereum",
+      "window": {
+        "end_utc": "2026-11-26T00:11:08.289625+00:00",
+        "start_utc": "2026-11-25T23:55:08.289625+00:00"
+      },
+      "pinned_source_commit": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+      "verified_checkout_head": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+      "verified_decision_cutoff_utc": "2026-11-25T23:56:07.002297+00:00",
+      "formal_days_counted": 0,
+      "candidates": 88,
+      "entries": 0,
+      "conclusions": {
+        "ACCEPTED": 0,
+        "CONSTRUCTED": 0,
+        "CONSTRUCTION_FAILED": 88,
+        "REJECTED": 0
+      },
+      "observed_reasons": {
+        "papersim_prepare_book_asks_missing": 14,
+        "papersim_prepare_model_materials_missing": 74
+      },
+      "b2": {
+        "basis": "public_mark_not_measured",
+        "continuation": "An independent B2 collector needs a pre-existing slot/pack in its live fixture with an eligible DECISION-bound candidate before mark capture.",
+        "eligibility": {
+          "decision_candidate_count": null,
+          "decision_count_basis": "native_decision_query_not_supplied",
+          "status": "unverified"
+        },
+        "status": "open"
+      },
+      "input_set": "6fd883e3904fea1f2d20c43ca4e461d40246a04b5d238a27fe4e5d3afb5f97aa",
+      "original_receipt_sha256": "6c4f7ff2c514af3e59e28a4da5f5cc796936e7945f5154d4b16f11b81a68e6f7"
+    }
+  ],
+  "independent_public_page_check": {
+    "checkout_commit": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+    "finished_at_utc": "2026-11-26T06:36:30.207351+00:00",
+    "page": {
+      "closed": "false",
+      "limit": 50,
+      "offset": 0,
+      "tag_slug": "ethereum"
+    },
+    "byte_length": 1345131,
+    "sha256": "4b7bfe4452a7fce66ca46321e5daecc376fc4fe8e72976089570264360eace47",
+    "counts": {
+      "distinct_ethereum_venue_currency_overlap_conditions": 0,
+      "ethereum_asset_direction_price_overlaps": 0,
+      "ethereum_venue_currency_overlaps": 0,
+      "ethereum_venue_currency_overlaps_without_condition_id": 0,
+      "event_objects": 50,
+      "market_objects": 323,
+      "terminal_question_fullmatches": 66,
+      "terminal_question_yes_no_propositions": 66,
+      "terminal_rule_fullmatches": 0
+    },
+    "untested": [
+      "explicit_yes_no_binding",
+      "schedule",
+      "end",
+      "cutoff"
+    ]
+  },
+  "public_receipt_sha256": "be3f0d8d3191c8d30de23e3c24fb83bcaacb30d6b5107069a3b78b417238fde7",
+  "registered_odp_effective_time": null,
+  "complete_forward_comparison_days": 0,
+  "scope": "Two previously measured public windows and a separate first-page diagnostic. No representative active entry or D1 CLOSE in these cases. No retrospective qualification."
+}

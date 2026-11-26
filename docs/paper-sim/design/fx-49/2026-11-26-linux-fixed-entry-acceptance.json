@@ -65,7 +65,8 @@
     "sha256": "f7c67c5556139b0490372336709c6d440479b48d0798f51f763157bcd9857978",
     "hosted_diagnosis_pr": 136,
     "historical_hosted_run": 45744033577,
-    "historical_symptom": "The former rehearsal writer emitted a UTF-8 preamble on Windows PowerShell 5.1; the initial request returned 21. The fixed entry and the rehearsal writer are separate files."
+    "historical_symptom": "The former rehearsal writer emitted a UTF-8 preamble on Windows PowerShell 5.1; the initial request returned 21. The fixed entry and the rehearsal writer are separate files.",
+    "scope": "Newer offline writer than the historical product review. Linux substitute exercise has independent evidence; destination Windows results remain pending."
   },
   "site": {
     "six_case_runs_completed": 0,
@@ -80,6 +81,75 @@
       "unrestricted_mode_literal": true,
       "fixed_script_literal": false,
       "has_launcher_definition": true
+    },
+    "notification_function_comparison": {
+      "utc": "2026-11-26T07:23:59.074602+00:00",
+      "scope": "Static function comparison of the notification service delivery module; literal contents are masked. No invocation of the module or remote transport.",
+      "audited_commit": "bcce1b17f7263ab89859febfcb56188c295ab371",
+      "module_sha256": "8edf943951d480520f840b0cf238fdf7dc5eab346268f96104010a4ea1f7ddb9",
+      "unchanged_functions": 24,
+      "changed_existing_functions": [
+        "on_windows",
+        "route"
+      ],
+      "new_function_count": 0,
+      "removed_functions": [],
+      "recognized_new_process_or_network_calls": {},
+      "new_functions_containing_recognized_calls": 0
     }
-  }
+  },
+  "original_reviews": {
+    "main-review.json": {
+      "source_commit": "69858354dd3728418095eb5ed5454a3821484299",
+      "sha256": "99e2cd0763faf9d7d4609670684ddf674867a19b1d1a85a9990798a90b285f40",
+      "last_reviewed_revision": "a9176cc255054ebd74046bdac8fef0d98e715f6e",
+      "last_verdict": "PASS"
+    },
+    "release-review.json": {
+      "source_commit": "69858354dd3728418095eb5ed5454a3821484299",
+      "sha256": "d3558deaceb8e1cb1b5fef12832dfd0d3876d21e91d113cca7bbce540145e274",
+      "last_reviewed_revision": "97e9cbcbf510de0f10606ec06380376d627bff50",
+      "last_verdict": "PASS"
+    }
+  },
+  "reviewed_product_bytes": {
+    "docs/paper-sim/runtime/scripts/weixin_delivery.py": {
+      "matches_both_original_reviews": true,
+      "sha256": "f7885e8f37351d3b8f3e238a33ab8c2300fa83792c138026e8ffa8f32404508b"
+    },
+    "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1": {
+      "matches_both_original_reviews": true,
+      "sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6"
+    }
+  },
+  "portable_junit": [
+    {
+      "module": "tests/test_fx49_weixin_delivery.py",
+      "source_commit": "f7061764bd9af29e8fe1c090cda5c1062cf35974",
+      "started_utc": "2026-11-26T07:17:51.562458+00:00",
+      "finished_utc": "2026-11-26T07:17:55.404834+00:00",
+      "unique_test_ids": 79,
+      "sorted_test_id_list_sha256": "cee70835440ed821662624c330edc0fbc13bff33569b3c682c13f31ac6fd3e5c",
+      "results": {
+        "passed": 79
+      },
+      "pytest_exit": 0,
+      "engine": "Linux PowerShell, local substitute",
+      "console_sha256": "0a48cdb64e0aef74be4f019d49f1a629ca6b8b4374ae212fe98edc24fcd53def"
+    },
+    {
+      "module": "tests/test_fx49_fixed_script.py",
+      "source_commit": "f7061764bd9af29e8fe1c090cda5c1062cf35974",
+      "started_utc": "2026-11-26T07:17:51.563744+00:00",
+      "finished_utc": "2026-11-26T07:19:52.018412+00:00",
+      "unique_test_ids": 20,
+      "sorted_test_id_list_sha256": "f80bd8fc248e2194c72a2c26f5ac0a953e10a42a465e653e03249f60e5de85d1",
+      "results": {
+        "passed": 20
+      },
+      "pytest_exit": 0,
+      "engine": "Linux PowerShell, local substitute",
+      "console_sha256": "7e5a7c78bf32fc0b0719f1fce88633ad728afc32b36d68197dbf51647856ab5b"
+    }
+  ]
 }

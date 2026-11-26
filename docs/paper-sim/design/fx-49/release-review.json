@@ -1,0 +1,50 @@
+{
+  "archive_draft_session_id": "sess_33396b0e-e140-4c47-9c55-71a5e12255af",
+  "client": "ZCode",
+  "decisions": [
+    {
+      "archived_in": "release-review-initial.json",
+      "commit": "bf52656b322dd26b3820d0189b63ff40c89a3a5d",
+      "recorded_utc": "2026-11-24T02:05:24Z",
+      "reviewed_script": {
+        "bytes": 35156,
+        "sha256": "bdbee89deb47f5ab283413724d2b3bc61cc32da33ca48c85d8ab700376ab796c"
+      },
+      "tree": "fe1898634dc46ac54f91fc2064ac0c8e6f8e8f93",
+      "turn_id": "turn_711f139c-c202-480d-a9fc-bedb5a3751e2",
+      "verdict": "PASS"
+    },
+    {
+      "archived_in": "release-review-framework.json",
+      "commit": "231e990bf98c05701e987452e7fa9e4fe8c6e835",
+      "recorded_utc": "2026-11-24T02:13:09Z",
+      "reviewed_script": {
+        "bytes": 35487,
+        "sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6"
+      },
+      "tree": "eebd629f7b29e45df93930f6145401bd8a0f91a8",
+      "turn_id": "turn_7a6fce66-14f0-419e-8774-eee9982efa72",
+      "verdict": "PASS"
+    },
+    {
+      "commit": "97e9cbcbf510de0f10606ec06380376d627bff50",
+      "recorded_utc": "2026-11-24T05:46:16Z",
+      "reviewed_script": {
+        "bytes": 35487,
+        "sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6"
+      },
+      "tree": "1bbf62faec2b0415599da5a4b4243b8da2bf4928",
+      "turn_id": "turn_b9e9e57f-cf97-4691-8c6f-4e345e47426b",
+      "verdict": "PASS"
+    }
+  ],
+  "runtime_parent": "bcce1b17f7263ab89859febfcb56188c295ab371",
+  "scope": "runtime source code review",
+  "separate_gates": [
+    "independent acceptance",
+    "hosted CI",
+    "deployment acceptance"
+  ],
+  "session_id": "sess_99e9fe00-ea92-475f-b439-5c7f58a88c38",
+  "version": 1
+}
