@@ -1,0 +1,157 @@
+{
+  "scope": "FX-44 / FX-40 prospective ETH model-source intake and B1 eligibility",
+  "source_commit": "dfe4acdce8e7b00d0f87c0e7ae192ee92f94e0a7",
+  "field_contract_reference": "docs/paper-sim/design/fx-44/2026-11-26-eth-directed-books.json",
+  "prescope": {
+    "created_utc": "2026-11-26T17:53:28.061517+00:00",
+    "code_commit": "dfe4acdce8e7b00d0f87c0e7ae192ee92f94e0a7",
+    "contract_evidence_sha256": "159ae984b65bc507a2d857a993c499be8e4de373e173f4e3260a529d03056531",
+    "program_sha256": "203ffbce8cb607321376a17b65142170cd010534324f35ee38aa6ed56924ba9e",
+    "asset": "ETH",
+    "bound_venue": "binance",
+    "pair": "ETHUSDT",
+    "candle_start_inclusive": "2026-08-31T12:00:00+00:00",
+    "candle_end_exclusive": "2026-11-26T12:00:00+00:00",
+    "expected_closed_bars": 348,
+    "bar_hours": 6,
+    "request_limit": 2,
+    "source_order": [
+      "fetch_closed_candles",
+      "fetch_spot"
+    ],
+    "max_live_seconds": 130,
+    "close_window": {
+      "inclusive": "2026-11-27T16:00:00+00:00",
+      "exclusive": "2026-11-27T17:00:00+00:00"
+    },
+    "scope": "Fresh public model source evidence for the selected ETH terminal. No B1 decision, slot, formal interval or pricing activation. An unavailable provider is recorded without another provider or a retry."
+  },
+  "collection": {
+    "prescope_sha256": "65f880e41d8dc18a99c31b8c36774350b2ae95c3f3a5399bd8bea38b079c07da",
+    "started_utc": "2026-11-26T17:53:51.242881+00:00",
+    "finished_utc": "2026-11-26T17:54:12.519874+00:00",
+    "requests_charged": 2,
+    "originals": [
+      {
+        "kind": "crypto-candles-binance",
+        "fetched_at": "2026-11-26T17:53:51.419044+00:00",
+        "byte_length": 62731,
+        "sha256": "bc9118af46a45fe20a5bf6c966f587ff09c20689e6d7469f68dca751d319ef52",
+        "upstream_response_clock": null
+      },
+      {
+        "kind": "crypto-spot-binance",
+        "fetched_at": "2026-11-26T17:53:59.007193+00:00",
+        "byte_length": 44,
+        "sha256": "d18234ce2abf2320f8d0bbdc9af14482f056c304cdcb6df9d5a59c36b2cb4d0a",
+        "upstream_response_clock": null
+      }
+    ],
+    "adapters": [
+      {
+        "adapter": "fetch_closed_candles",
+        "start_utc": "2026-11-26T17:53:51.242961+00:00",
+        "returned_utc": "2026-11-26T17:53:58.812137+00:00",
+        "status": "success",
+        "reason_code": null,
+        "original_sha256s": [
+          "bc9118af46a45fe20a5bf6c966f587ff09c20689e6d7469f68dca751d319ef52"
+        ],
+        "complete_bars": 348,
+        "first_open_utc": "2026-08-31T12:00:00+00:00",
+        "last_close_utc": "2026-11-26T12:00:00+00:00"
+      },
+      {
+        "adapter": "fetch_spot",
+        "start_utc": "2026-11-26T17:53:58.812193+00:00",
+        "returned_utc": "2026-11-26T17:54:05.435930+00:00",
+        "status": "success",
+        "reason_code": null,
+        "original_sha256s": [
+          "d18234ce2abf2320f8d0bbdc9af14482f056c304cdcb6df9d5a59c36b2cb4d0a"
+        ],
+        "spot_price": 1694.82,
+        "venue": "binance",
+        "currency": "USDT"
+      }
+    ],
+    "independent_pg_readback": true,
+    "field_b1_decisions": 0,
+    "official_prepared_input_sets": 0,
+    "formal_days": 0
+  },
+  "source_receipt_sha256": "3b3d1428d0ae0f0f3274f5abe244b63175e3d0382bd1b8714b3519ff9e646c1c",
+  "research_store": "The existing papersim.snapshots API wrote both original bodies before adapter parsing. A new process reopened the private project database. Stored length, SHA-256, source request and receiving time matched both receipts. The ticker reports a price with no separate upstream timestamp. The K-line body includes each closed bar's opening and closing times.",
+  "replay": {
+    "program": "docs/paper-sim/design/fx-44/read_eth_model_sources.py",
+    "inputs": "The retained isolated research database and two immutable snapshot digests in collection.originals. Run via the project Python with that managed database checkout as the only argument. The checker uses a read-only repeatable-read transaction and the project Binance parsers."
+  },
+  "eligibility": {
+    "earliest_decision_time_from_the_two_receipts_alone": "2026-11-26T17:53:59.007193+00:00",
+    "first_model_bar_rollover_exclusive": "2026-11-26T18:00:00+00:00",
+    "why": "For standard B1 the last closed bar must equal floor(decision_as_of / 6h), and every model original must arrive by cutoff. The two times alone do not bind a managed market-input set. A B1 receipt for these external research observations was not obtained.",
+    "next_model_observation": "At or after rollover the standard collector requests a newly closed 6-hour panel and separately observes the venue-matched spot. A later window needs its own contemporary original buy-side book and independently recorded timestamps.",
+    "candidate_odp_close_window": {
+      "inclusive": "2026-11-27T16:00:00+00:00",
+      "exclusive": "2026-11-27T17:00:00+00:00"
+    },
+    "formal_comparison_days": 0
+  },
+  "dual_age_policy": {
+    "scope_checked": "Pinned papersim documents, the November 24 audit, DELIVERY_PLAN.md, tools and the existing research database business receipt count. The previous FX-40 native proofs use isolated test values. A search for numeric JSON assignments to the exact two field names in the listed documentation and tools returned zero files.",
+    "exact_registered_seconds_available": false,
+    "max_source_age_seconds": null,
+    "max_receipt_age_seconds": null,
+    "registered_plan": "docs/paper-sim/design/fx-40/plan-v3.md, 盘口时效的正式来源, lines 34–38",
+    "plan_quote": "固定包没有给出任何正式秒数。本轮不指定生产值",
+    "ledger": "DELIVERY_PLAN.md sections 84.4 and 84.5, including item five and the immediately following status",
+    "ledger_quote": "本工程只交付从 D1 区间回执读取并核对 `book_age_policy`",
+    "required_before_capture": "Same team and managed instance with exactly one SUCCEEDED D1 interval. Its genuine database receiving time precedes its start and its bounds enclose the new capture window. Both age limits come from that interval. An OD-P-only research interval does not supply them. B2 later references the same policy in its own slot.",
+    "first_refusal_for_an_otherwise_usable_book": "d1_capture_book_age_policy_unregistered in prepare._book before model or news eligibility.",
+    "summary": "截至本次核对，登记材料指定了来源龄与收妥龄两个字段、同一实例及团队的适用区间、登记早于区间开始和独立读回。实际两个秒值及相应成功区间回执仍缺。"
+  },
+  "other_field_requirements": {
+    "target_specific_news": "No target-bound, pre-cutoff occurrence from the supplied records. The crypto reader requires condition, terms digest, fixture, assessed delta, blockers and existing source snapshots with verified clocks. Only the native fixture constructs a crypto-news record in the pinned tree. Price or settlement data cannot stand in for that assessment. News is an admission gate. A normal B1 evaluation can itself return a rejection for missing news.",
+    "normal_entry": {
+      "seal": "tools/d1_compare.py capture-inputs --prepare-config CONFIG --allow-public-fetch --repo-root PROJECT --tag-slug ethereum --window-start START_UTC --window-end END_UTC",
+      "decide": "python -m polymarket_alpha_lab.papersim.cli run-scan --managed --repo-root PROJECT --config CONFIG --prepare-from INPUT_SET_SHA --operation-key KEY --attempt 1",
+      "buy_side_source": "The managed scan's original decision evidence binds the actual candidate and buy token."
+    },
+    "untaken": "No production operation, policy selection, notification, entry, B2/D1 close, formal day or additional market fetch occurred."
+  },
+  "source_files_sha256": {
+    "docs/paper-sim/design/fx-40/plan-v3.md": "1589414ec6f81554b2570ad57392046476acb20c1c840515005b7a855c9f941a",
+    "docs/paper-sim/design/fx-40/evidence/pr132-stage-review.json": "68fac375fcfc021b03009dfc1bb4ead774d3b9aa70427822d9be0e809f2caaa4",
+    "src/polymarket_alpha_lab/papersim/prepare.py": "fa68e8f682b8c7396bb46e43a0f785b99827d6f2e147383fef9178744f27f907",
+    "src/polymarket_alpha_lab/papersim/prepare_inputs.py": "56f686587c0640354774f9e25349613630e47bc439270b5d1396e004ba990aec",
+    "src/polymarket_alpha_lab/papersim/prepare_capture.py": "a2c9e13c018d5966a465bab3e0fe36b8b136e69342f9dc013f7e45808c063161",
+    "src/polymarket_alpha_lab/papersim/adapters/prices.py": "a3c263340a05a1632a22e4f412bef6075f8ed47e6af9a02cf095687701238b89"
+  },
+  "independent_pg_reparse": {
+    "original_receipt_sha256": "15c4e12c1cd9ef3b6f27cfd74e5c1229b67cff0b179da6e8075efe3f39fa581f",
+    "receipt": {
+      "readback_utc": "2026-11-26T17:58:15.364562+00:00",
+      "program_sha256": "478c699a0640e88d90c154db22437c0bd0266ee77fcc821e9083deb6a6b9be42",
+      "independent_private_network_namespace": true,
+      "raw_output": {
+        "candles_received_utc": "2026-11-26T17:53:51.419044+00:00",
+        "complete_six_hour_bars": 348,
+        "duplicates": 0,
+        "first_bar_open_utc": "2026-08-31T12:00:00+00:00",
+        "gaps": 0,
+        "isolated_pg_originals_verified": 2,
+        "last_bar_close_utc": "2026-11-26T12:00:00+00:00",
+        "outside_window": 0,
+        "public_fetches": 0,
+        "request_metadata_checked": true,
+        "spot_ethusdt": 1694.82,
+        "spot_received_utc": "2026-11-26T17:53:59.007193+00:00",
+        "unfinished": 0
+      },
+      "stdout_sha256": "0d56f6ab627cf306185c231db2c398b304bd45ba8b1cd6e846c693c6980ee046",
+      "isolated_cluster_stopped_after_readback": true
+    }
+  },
+  "next_close_window_utc": "2026-11-27T16:00:00Z inclusive to 2026-11-27T17:00:00Z exclusive for this contract. A future B1 capture first needs its own applicable double-age policy and bona fide original source records.",
+  "original_storage_engine_checkout": "c95c54ccc6e3a4dee687b5e3def6757c6815b36a"
+}
