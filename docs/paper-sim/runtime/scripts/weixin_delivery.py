@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 from datetime import UTC, datetime, timedelta
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 from typing import NamedTuple
 
 
@@ -27,10 +27,15 @@ WINDOWS_FINGERPRINT = os.environ.get("PAL_HERDR_WINDOWS_FINGERPRINT", "")
 WINDOWS_HOST = os.environ.get("PAL_WINDOWS_HOST", "")
 POWERSHELL_PATH = os.environ.get("PAL_WEIXIN_POWERSHELL_PATH", "")
 SCRIPT_PATH = os.environ.get("PAL_WEIXIN_SCRIPT_PATH", "")
+RELAY_PATH = os.environ.get("PAL_WEIXIN_RELAY_PATH", "")
 RELEASE_COMMIT = os.environ.get("PAL_WEIXIN_RELEASE_COMMIT", "")
 RELEASE_ROOT = Path(__file__).resolve().parents[4]
 SCRIPT_BLOB = "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1"
 CHECKSUM_BLOB = SCRIPT_BLOB + ".sha256"
+SYSTEM_POWERSHELL = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+DELIVERY_DIRECTORY = r"C:\Program Files\PolymarketAlphaLab\WeixinDelivery"
+FIXED_SCRIPT = DELIVERY_DIRECTORY + r"\Invoke-PaperWeixin.ps1"
+FIXED_RELAY = DELIVERY_DIRECTORY + r"\PaperWeixinRelay.exe"
 
 HEX64 = re.compile(r"[a-f0-9]{64}")
 HEX32 = re.compile(r"[a-f0-9]{32}")
@@ -38,7 +43,6 @@ GIT_COMMIT = re.compile(r"[a-f0-9]{40}")
 STAGE_KEY = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}")
 HC_NAME = re.compile(r"[a-z0-9][a-z0-9_.-]{0,31}")
 SESSION_ID = re.compile(r"sess_[A-Za-z0-9-]{1,96}")
-WINDOWS_PATH = re.compile(r"[a-zA-Z]:\\(?:[A-Za-z0-9_ ()-][A-Za-z0-9_. ()-]*\\)*[A-Za-z0-9_ ()-][A-Za-z0-9_. ()-]*")
 UTC_STAMP = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?(?:Z|\+00:00)")
 MAX_BODY_CHARS = 1500
 MAX_PAPER_WINDOW = timedelta(minutes=5)
@@ -156,25 +160,15 @@ def native_budget(cutoff, now):
     return max(0, min(NATIVE_MAX, remaining))
 
 
-def fixed_windows_path(value):
-    return matches(WINDOWS_PATH, value) and all(
-        part == part.strip() and not part.endswith(".") for part in PureWindowsPath(value).parts[1:]
-    )
-
-
 def launcher(nonce):
-    """Return the sole Windows process and argument vector."""
+    """Validate the registered worker paths and dispatch only the fixed relay."""
     if not matches(HEX32, nonce):
         raise HandoffError("invalid_nonce")
-    if (
-        not fixed_windows_path(POWERSHELL_PATH)
-        or not POWERSHELL_PATH.lower().endswith(r"\system32\windowspowershell\v1.0\powershell.exe")
-        or not fixed_windows_path(SCRIPT_PATH)
-        or PureWindowsPath(SCRIPT_PATH).name.lower() != "invoke-paperweixin.ps1"
-    ):
+    paths = ((POWERSHELL_PATH, SYSTEM_POWERSHELL), (SCRIPT_PATH, FIXED_SCRIPT), (RELAY_PATH, FIXED_RELAY))
+    if not all(isinstance(value, str) and value.isascii() and value.lower() == fixed.lower()
+               for value, fixed in paths):
         raise HandoffError("fixed_entry_unconfigured")
-    return [POWERSHELL_PATH, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned",
-            "-File", SCRIPT_PATH, nonce]
+    return [FIXED_RELAY, nonce]
 
 
 def approved_script_sha256():

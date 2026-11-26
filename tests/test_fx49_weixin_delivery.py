@@ -34,7 +34,8 @@ WINDOWS_ID = "2" * 32
 OTHER_ID = "4" * 32
 HOST = "FIXTURE-WINDOWS"
 POWERSHELL = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-SCRIPT = r"C:\Paper Delivery\Invoke-PaperWeixin.ps1"
+SCRIPT = r"C:\Program Files\PolymarketAlphaLab\WeixinDelivery\Invoke-PaperWeixin.ps1"
+RELAY = r"C:\Program Files\PolymarketAlphaLab\WeixinDelivery\PaperWeixinRelay.exe"
 
 
 def encoded(value):
@@ -97,11 +98,10 @@ class FakeHc:
                       "state": "connected" if self.connected else "unreachable"}
             return subprocess.CompletedProcess(argv, self.machine_exit, encoded({"machines": [*self.other_machines, target]}))
 
-        assert len(argv) == 17
+        assert len(argv) == 11
         assert args[:5] == ["exec", "--json", "--on", WINDOWS_ID, "--timeout"]
         assert args[6:8] == ["-i", "--"]
-        assert args[8:-1] == [POWERSHELL, "-NoProfile", "-NonInteractive", "-ExecutionPolicy",
-                              "RemoteSigned", "-File", SCRIPT]
+        assert args[8:-1] == [RELAY]
         assert all(BODY not in argument and TARGET not in argument for argument in argv)
         nonce = args[-1]
         assert delivery.HEX32.fullmatch(nonce)
@@ -203,7 +203,7 @@ def hc(monkeypatch):
     values = {
         "HC_CONTEXT_SHA256": delivery.digest(LOCAL_ID), "_hc_context": lambda: stub.context,
         "WINDOWS_FINGERPRINT": delivery.digest(WINDOWS_ID), "WINDOWS_HOST": HOST,
-        "POWERSHELL_PATH": POWERSHELL, "SCRIPT_PATH": SCRIPT,
+        "POWERSHELL_PATH": POWERSHELL, "SCRIPT_PATH": SCRIPT, "RELAY_PATH": RELAY,
         "approved_script_sha256": lambda: SHA, "utcnow": lambda: stub.now,
         "_socket_identity": lambda *_: stub.socket_identity, "_run_hc": stub,
     }
@@ -508,17 +508,36 @@ def test_legacy_and_fixed_receipts_never_cross(hc):
     assert hc.native_calls == 1
 
 
-@pytest.mark.parametrize("powershell,script", [
-    ("", ""), ("", SCRIPT), (POWERSHELL, ""), ("powershell.exe", SCRIPT),
-    (POWERSHELL, r"C:\Paper\..\Invoke-PaperWeixin.ps1"),
+@pytest.mark.parametrize("powershell,script,relay", [
+    ("", "", RELAY), ("", SCRIPT, RELAY), (POWERSHELL, "", RELAY),
+    ("powershell.exe", SCRIPT, RELAY), (POWERSHELL, r"C:\Paper\..\Invoke-PaperWeixin.ps1", RELAY),
+    (r"C:\Other\System32\WindowsPowerShell\v1.0\powershell.exe", SCRIPT, RELAY),
+    (POWERSHELL, r"C:\Paper Delivery\Invoke-PaperWeixin.ps1", RELAY),
+    (POWERSHELL, SCRIPT, ""), (POWERSHELL, SCRIPT, "PaperWeixinRelay.exe"),
+    (POWERSHELL, SCRIPT, r"C:\Other\PaperWeixinRelay.exe"),
+    (POWERSHELL, SCRIPT, None),
+    (POWERSHELL, SCRIPT, RELAY.replace("Files", "Fileſ")),
+    (POWERSHELL, SCRIPT, SCRIPT), (POWERSHELL, SCRIPT, POWERSHELL),
+    (POWERSHELL, SCRIPT, r"%ProgramFiles%\PolymarketAlphaLab\WeixinDelivery\PaperWeixinRelay.exe"),
+    (POWERSHELL, SCRIPT, r"C:\Program Files\PolymarketAlphaLab\WeixinDelivery\..\PaperWeixinRelay.exe"),
 ])
-def test_protected_paths_are_required_before_any_windows_start(monkeypatch, powershell, script):
+def test_protected_paths_are_required_before_any_windows_start(monkeypatch, powershell, script, relay):
     monkeypatch.setattr(delivery, "utcnow", lambda: NOW)
     monkeypatch.setattr(delivery, "POWERSHELL_PATH", powershell)
     monkeypatch.setattr(delivery, "SCRIPT_PATH", script)
+    monkeypatch.setattr(delivery, "RELAY_PATH", relay)
     monkeypatch.setattr(delivery.subprocess, "run", lambda *_, **__: pytest.fail("an absent release started a process"))
     assert launch()["reason"] == "fixed_entry_unconfigured"
     assert not delivery.check_route(TARGET)["route_verified"]
+
+
+def test_relay_argv_is_canonical_and_nonce_is_opaque(hc, monkeypatch):
+    monkeypatch.setattr(delivery, "RELAY_PATH", RELAY.lower())
+    nonce = "abcd" * 8
+    assert delivery.launcher(nonce) == [RELAY, nonce]
+    for invalid in (nonce + " extra", nonce.upper(), nonce[:-1], nonce + "\n"):
+        with pytest.raises(delivery.HandoffError, match="invalid_nonce"):
+            delivery.launcher(invalid)
 
 
 def test_approved_manifest_and_blob_come_from_the_deployed_git_commit(tmp_path, monkeypatch):
@@ -537,7 +556,8 @@ def test_approved_manifest_and_blob_come_from_the_deployed_git_commit(tmp_path, 
     git("-c", "user.name=Offline Test", "-c", "user.email=offline@example.invalid", "commit", "-qm", "fixture")
     approved = git("rev-parse", "HEAD").decode("ascii").strip()
     for field, value in {"RELEASE_ROOT": tmp_path, "RELEASE_COMMIT": approved,
-                         "POWERSHELL_PATH": POWERSHELL, "SCRIPT_PATH": SCRIPT}.items():
+                         "POWERSHELL_PATH": POWERSHELL, "SCRIPT_PATH": SCRIPT,
+                         "RELAY_PATH": RELAY}.items():
         monkeypatch.setattr(delivery, field, value)
     assert delivery.approved_script_sha256() == checksum
     source.write_bytes(b"exit 0\n")
@@ -562,9 +582,10 @@ def test_local_hc_pipe_bounds_capture_and_keeps_input_bytes(monkeypatch):
     assert delivery._run_hc(command, env=env, stdin=b"x" * 33, deadline=time.monotonic() + 5) is None
 
 
-def test_transport_source_has_only_the_fixed_hc_process_vector():
+def test_transport_source_has_only_the_fixed_hc_process_vector(hc):
     source = RUNTIME_SCRIPT.read_text(encoding="utf-8")
-    forbidden = ('"herdr-core"', '"zcode"', "hermes-wechat-send", "yolo", "-EncodedCommand", "Bypass", "Unrestricted", "Set-ExecutionPolicy")
+    forbidden = ('"herdr-core"', '"zcode"', "hermes-wechat-send", "yolo", "-EncodedCommand", "Bypass",
+                 "Unrestricted", "Set-ExecutionPolicy", "-ExecutionPolicy", "RemoteSigned", '"-File"')
     assert not any(token in source for token in forbidden)
-    assert source.count('"-ExecutionPolicy"') == 1
-    assert source.count('"RemoteSigned"') == 1
+    assert source.count("PaperWeixinRelay.exe") == 1
+    assert delivery.launcher("a" * 32) == [RELAY, "a" * 32]
