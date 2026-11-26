@@ -1,0 +1,114 @@
+{
+  "candidate_tested": "9641de1775665c6596edea6352669380a93d85ad",
+  "published_commit": "68059105535b992e144f05df1a81e45a21243c28",
+  "matching_git_blobs": {
+    "src/polymarket_alpha_lab/papersim/capture.py": "29ca7a14955d3ff631473e3d0ab5d33bfd24deb9",
+    "src/polymarket_alpha_lab/papersim/cli.py": "a6665c6a8662451d5831fef77079d1ffe51a6f2d",
+    "src/polymarket_alpha_lab/papersim/close_window.py": "c9b7d4d8ad6fdad62334691722cc18e8a71cb949",
+    "tests/test_papersim_capture_marks.py": "4da590adebce79e82649d85f0a5894a79ac7f421",
+    "tests/test_papersim_capture_marks_native.py": "f9f2c009263152f7517dd053248ac95a6499f976",
+    "tests/test_papersim_prepared_scan_native.py": "447eea3a17739c6faa499ea0d1883310a88a5644"
+  },
+  "focused_runs": [
+    {
+      "receipt": "native-close-window-final.json",
+      "sha256": "0194d9655724a7d9214c5fa505e9778a736edf26b6ad5129797eaa7021a17961",
+      "tested_commit": "9641de1775665c6596edea6352669380a93d85ad",
+      "passed": 4,
+      "deselected": 23,
+      "skipped": 0,
+      "failed": 0,
+      "exit": 0,
+      "start_utc": "2026-11-26T13:17:47.055153+00:00",
+      "end_utc": "2026-11-26T13:19:54.992406+00:00"
+    },
+    {
+      "receipt": "offline-close-window-final.json",
+      "sha256": "05e50b80b62410e98c83ad7839482616800e928a1298d2cc11b3537987dc5e9b",
+      "tested_commit": "9641de1775665c6596edea6352669380a93d85ad",
+      "passed": 408,
+      "deselected": 0,
+      "skipped": 0,
+      "failed": 0,
+      "exit": 0,
+      "start_utc": "2026-11-26T13:17:47.050289+00:00",
+      "end_utc": "2026-11-26T13:19:40.105914+00:00"
+    }
+  ],
+  "observed_utc": "2026-11-26T13:23:23.772744+00:00",
+  "new_entry_point": "capture-marks --managed --config CONFIG --inspect-close-window BATCH_SHA256 [--operation-key REGISTERED_D1_KEY]",
+  "current_day": {
+    "new_managed_entry_with_bound_close_located": false,
+    "next_registered_managed_collection_utc": null,
+    "new_data_source_fetches": 0,
+    "field_inspect_close_window_runs": 0,
+    "already_captured": {
+      "championship_last_alias": {
+        "last_window": {
+          "end_utc": "2026-11-26T08:45:24.581606+00:00",
+          "start_utc": "2026-11-26T08:29:24.581606+00:00"
+        },
+        "candidate_count": 0,
+        "entry_count": 0,
+        "original_body_check": "original_body_verification",
+        "test_db_torn_down": true
+      },
+      "bundesliga_last_formal_prepare_attempt": {
+        "window": {
+          "end_utc": "2026-11-26T09:53:28.698392+00:00",
+          "start_utc": "2026-11-26T09:37:28.698392+00:00"
+        },
+        "request_count": 214,
+        "candidate_count": 0,
+        "entry_count": 0,
+        "b2_attempted": false,
+        "test_db_torn_down": true
+      },
+      "latest_direct_market_field_capture": {
+        "received_utc": "2026-11-26T10:19:23.779407+00:00",
+        "contracts_bound_to_source_and_expiry": 11,
+        "formal_window_runs": 0,
+        "entry_count": 0
+      },
+      "previous_eth_scan": {
+        "candidates": 88,
+        "entries": 0,
+        "missing_buy_side_book": 14,
+        "missing_model_inputs": 74
+      }
+    },
+    "next_fixture_known": {
+      "kickoff_utc": "2026-11-27T19:30:00Z",
+      "verified_full_match_totals": 9,
+      "qualified_registered_queue_entries": 0,
+      "registered_collection_slot_utc": null
+    },
+    "missing_to_evaluate_any_field_row": [
+      "managed B1 candidate with a matching verified buy-side request and original source book",
+      "the sealed capture manifest, the receipt timestamp of that acquisition and an evidence-bound match kickoff/contract expiry",
+      "for the identified crypto market, genuine contract-bound news input already present by the decision cutoff"
+    ]
+  },
+  "formal_days": {
+    "scope": "M2 Path L and Path N",
+    "confirmed": 0,
+    "required": 7,
+    "type": "consecutive complete UTC days after FX-40 with prospective OD-P and source age registration, paired inputs, candidate differences and cash identities",
+    "provisional_with_gates_in_examined_receipts": 0,
+    "formal_ODP_effective_time": null,
+    "next_utc_slot_registered_in_examined_records": false
+  },
+  "historical_originals": {
+    "scope": "FX-40 frozen request families",
+    "accepted": 0,
+    "required": 4,
+    "required_families": [
+      "r23 soccer",
+      "r19 touch",
+      "r23/r24 #48",
+      "HOF–LYO"
+    ],
+    "requires_contemporaneous_independent_complete_originals": true
+  },
+  "scope": "Existing Git field receipts, prior local coordination records, local timer/service launch metadata, local cron and project instance existence. No remote host was inspected."
+}

@@ -1,0 +1,52 @@
+{
+  "observed_utc": "2026-11-26T13:25:20.300541+00:00",
+  "published_plan": {
+    "commit": "22a4f36917380555220c561289cac0e375be0a46",
+    "path": "docs/paper-sim/design/fx-23/2026-11-26-cleanup-inventory.json",
+    "sha256": "4fd4e40ce6cb142e82cdc16bd9ff7b8a92d8322e8f958adf0f3f64ca0766e599"
+  },
+  "main_after": "22a4f36917380555220c561289cac0e375be0a46",
+  "push": {
+    "started_utc": "2026-11-26T13:25:09.908243+00:00",
+    "ended_utc": "2026-11-26T13:25:17.314806+00:00",
+    "exit": 0,
+    "failure_code": null,
+    "porcelain_sha256": "125c6913d07cf11115547ff62b91efbc4116342a649c01328bc63dbcd79c1f8e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "porcelain_deleted_count": 89
+  },
+  "before": 264,
+  "after": 175,
+  "candidate_count": 89,
+  "eligible": 89,
+  "removed": 89,
+  "held_in_preflight": [],
+  "remote_retained_candidates": [],
+  "unexpected_removed": {},
+  "concurrently_changed_retained": {},
+  "concurrently_added": {},
+  "all_remaining_refs_match_git_and_github": true,
+  "open_prs": {
+    "41": "3056c1526d85e7f9a9fc3e53f6c6c964cb234010",
+    "35": "103e6763112fdc065c56a17682ec0288eaa37499",
+    "34": "ee0a3c07be2b2a3255dbb2c6365731145d218e16"
+  },
+  "pr131": {
+    "state": "CLOSED",
+    "retained_head": "69858354dd3728418095eb5ed5454a3821484299"
+  },
+  "retained_groups": {
+    "handoff/": 30,
+    "audit/": 23,
+    "review/": 80,
+    "evidence/": 2
+  },
+  "ci_public_metadata_confirmed_after_push": 11,
+  "pre_push_hook_checked_old_shas": 89,
+  "ledger_files_sha256": {
+    "actual-deletions.tsv": "dd3dcefb99291a0fecc7a8724ad9758cc52071155749c49f077cade07a376593",
+    "verified-remote-heads.tsv": "abb9153c6775db8941be416439fcd80b5baac091255a1996282c4ed49cd632e9",
+    "retained-ci-runs.json": "f82fba7229b19cc9f1790e54e53a0e1d836586f259521fc193cd432338673a72",
+    "push-receipt.json": "477cffd76fb1383f0b7e3d595d5c5555f184f58c916fb9e09b62aa43e6e5fcb0"
+  }
+}

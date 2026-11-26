@@ -1,0 +1,48 @@
+{
+  "change": {
+    "applied_utc": "2026-11-26T13:24:59+00:00",
+    "owner_authorization_reference": "authorized-management-precondition.json",
+    "before_publication_required": true,
+    "method": "Added a mandatory, fail-closed pre-start to the container engine. It derives the registered pool scope from pre-existing protected publication metadata before the engine starts. Privileged publication and live kernel rule were compared in memory. Both matched. The established after-start guard and first ingress restriction remain active.",
+    "helper_sha256": "edb4d9502268305aecf03d607fe64616cb744f65708d9c6afd675bf845d2f90d",
+    "unit_dropin_sha256": "9b7615748440f7539a5ffa4ea484a2cac51c47167190b235cd79168ccc67e0d5",
+    "checks": {
+      "scope_equals_existing_kernel_and_published_pool": true,
+      "exact_start_precondition_ran_in_steady_state": true,
+      "systemd_unit_verification": true,
+      "same_live_process": true,
+      "start_condition_mandatory": true,
+      "dropin_loaded": true,
+      "required_network_and_ruleset_order": true,
+      "both_existing_rules_verified": true,
+      "established_passwordless_management_active": true,
+      "config_file_root_owned_and_matches_source": true
+    },
+    "service_restart_count": 0,
+    "reload": "systemd manager metadata only",
+    "kernel_rule_flushed": false,
+    "wechat_route_changed": false,
+    "cold_boot_duration_measured": false
+  },
+  "external_recheck": {
+    "observed_utc": "2026-11-26T13:25:24+00:00",
+    "entry": "second-pool",
+    "same_registered_external_observer": true,
+    "same_database_probe_method": true,
+    "remote_dispatch_stage": "machine_exec",
+    "network_observation": {
+      "outer": "received",
+      "remote_envelope": "valid",
+      "remote_timed_out": false,
+      "remote_truncated": false,
+      "remote_exit": "zero",
+      "observer_format": "valid",
+      "observer_classification": "TIMED_OUT",
+      "network_outcome": "timed_out"
+    },
+    "retries": 0,
+    "target_login_attempts": 0,
+    "tcp_attempt_count": 1,
+    "tcp_connection_established": false
+  }
+}
