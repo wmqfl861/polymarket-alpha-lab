@@ -1,0 +1,81 @@
+{
+  "scope": "Optional Linux settings for the fixed notification route and its deployment-only enrollment. The public main tree contains the tested source bytes.",
+  "source_snapshot": "42d704cf61bdd240316862ff91e92b0dcced1d0c",
+  "source_sha256": {
+    "docs/paper-sim/runtime/notification/entry.py": "d6803200fe7102e749de33060d8e189c3411e45de60f8df55b3e003dcc3241d2",
+    "docs/paper-sim/runtime/notification/local_route_registration.py": "9b22b18be8692a248d89a256b65a3aef0781eedd5b531815bda57c7fabf2a414",
+    "docs/paper-sim/runtime/scripts/route-enrollment/Read-PairedController.ps1": "0b897d7aceae4a487c2b704ea85c556e2613e16f8f8e4b6e2acadef2d504ed99",
+    "docs/paper-sim/runtime/scripts/route-enrollment/register_local_route.py": "f1b162f9862aa0da415de5fc5fb9d9249b7df91a172be1ca73b67fc9e99e94ca",
+    "docs/paper-sim/runtime/weixin-delivery.md": "00469ec890e8dac1cfb85bbd410c4775dac74ea9f77dc45aa618dc034b7573b3",
+    "tests/test_fx49_local_route_registration.py": "2194e87db8d39f82615ad4cbecdc6557cb080e7120523b12bbd627592f573a47",
+    "tests/test_fx49_notification_entry.py": "a650fbaf6b7024aa7ef1c8d45ade260bd620e540c2b3ebee313dff95c5939313"
+  },
+  "unchanged_delivery_blobs": {
+    "docs/paper-sim/runtime/scripts/weixin_delivery.py": "f411c0eb146a6f6a6891a99ebe8a2b32b70cfb71",
+    "docs/paper-sim/runtime/notification/site-helpers.sha256": "155d3e6bd7c8ada959d6788d251938620e95781b",
+    "docs/paper-sim/runtime/notification/fixed-receipt.patch": "29c3e3b73b18e5dffc605e813a1bda2a081575c5"
+  },
+  "fixed_powershell_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "known_environment": "Existing deployments continue to use their existing six settings by default. The two units on this site can explicitly select kernel-v1. That mode checks the root-owned volatile deployment record and the running local controller before using the original fixed route. A missing or changed registration produces a refusal.",
+  "independent_control_metadata": {
+    "observed_utc": "2026-11-26T22:34:32.744178+00:00",
+    "original_bound_windows_self_verified": true,
+    "unique_reverse_peer_verified": true,
+    "reverse_peer_connected": true,
+    "private_values_persisted": 0,
+    "delivery_route_checks": 0,
+    "source_receipt_sha256": "40d19cedc1a352f8c8e4ca0832fe45fa5287818fd2e6e3f8e5d92fc71e0d5167"
+  },
+  "focused_verification": {
+    "observed_utc": "2026-11-26T23:14:38.350948+00:00",
+    "pytest_passed": 152,
+    "pytest_skipped": 0,
+    "pytest_failed": 0,
+    "kernel_checks_in_isolated_namespace": 9,
+    "systemd_configuration_checks_in_test_units": 16,
+    "application_cli_comparisons": [
+      {
+        "action": "tick",
+        "controlled_dispatch": true,
+        "database_connections": 0,
+        "fixed_bundle_sha256": "0ff28e23befc5bfa30b38816726c10c32f3d8fd1a8b068a58ba6fa07e7e4bff6",
+        "messages": 0,
+        "network_calls": 0,
+        "real_private_record_lookups": 0,
+        "registered_helpers": 23,
+        "source_callers": 2
+      },
+      {
+        "action": "worker",
+        "controlled_dispatch": true,
+        "database_connections": 0,
+        "fixed_bundle_sha256": "0ff28e23befc5bfa30b38816726c10c32f3d8fd1a8b068a58ba6fa07e7e4bff6",
+        "messages": 0,
+        "network_calls": 0,
+        "real_private_record_lookups": 0,
+        "registered_helpers": 23,
+        "source_callers": 2
+      },
+      {
+        "action": "route-check",
+        "controlled_dispatch": true,
+        "database_connections": 0,
+        "fixed_bundle_sha256": "0ff28e23befc5bfa30b38816726c10c32f3d8fd1a8b068a58ba6fa07e7e4bff6",
+        "messages": 0,
+        "network_calls": 0,
+        "real_private_record_lookups": 0,
+        "registered_helpers": 23,
+        "source_callers": 2
+      }
+    ],
+    "public_results_manifest_sha256": "0aa34cbfb9b202c724f7c64ccaa7356ec87735e2c8b83c4d89b3b25f6f1aa0fd"
+  },
+  "field_status_at_source_publication": {
+    "windows_substitute_cases": 0,
+    "verified_natural_deliveries": 0,
+    "production_kernel_registration": false,
+    "server_fixed_checkout": null,
+    "production_switched": false
+  },
+  "runtime_guide": "docs/paper-sim/runtime/weixin-delivery.md"
+}

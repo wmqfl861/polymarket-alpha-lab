@@ -29,7 +29,8 @@ def case(tmp_path, monkeypatch):
     repo.mkdir()
     business.mkdir()
     transport = repo / "weixin_delivery.py"
-    transport.write_text('ORIGIN = "fixed-main"\n')
+    transport.write_text('ORIGIN = "fixed-main"\ndef route(until):\n    return until\n')
+    (repo / 'local_route_registration.py').write_bytes(ENTRY.with_name('local_route_registration.py').read_bytes())
     (repo / "entry.py").write_bytes(ENTRY.read_bytes())
     (business / transport.name).write_text('raise AssertionError("unregistered transport selected")\n')
     helper = business / "fixture_feed.py"
@@ -104,8 +105,8 @@ def test_changed_input_never_publishes(case, monkeypatch, changed):
     assert not bundle.exists()
 
 
-@pytest.mark.parametrize("changed", ["module", "foreign_file", "transport", "installed_source"])
-def test_run_refuses_drift_before_loading_business_code(case, changed):
+@pytest.mark.parametrize("changed", ["module", "foreign_file", "transport", "installed_source", "registration"])
+def test_run_refuses_drift_before_loading_business_code(case, changed, monkeypatch):
     business, bundle = case
     entry.stage(business, bundle)
     if changed in {"module", "foreign_file"}:
@@ -117,10 +118,14 @@ def test_run_refuses_drift_before_loading_business_code(case, changed):
         with zipfile.ZipFile(bundle, "w") as archive:
             for name, data in orig.items():
                 archive.writestr(zipfile.ZipInfo(name), data)
+    elif changed == "registration":
+        (entry.HERE / "local_route_registration.py").write_bytes(b'raise AssertionError("unverified registration")\n')
     elif changed == "transport":
         entry.TRANSPORT.write_bytes(b'raise AssertionError("unverified transport")\n')
     else:
         (business / "football_daily.py").write_bytes(b"changed")
+    if changed == "registration":
+        monkeypatch.setenv("PAL_WEIXIN_ROUTE_ORIGIN", "kernel-v1")
     with pytest.raises(entry.EntryError):
         entry.run(business, bundle, ["tick"])
     assert "weixin_delivery" not in sys.modules
@@ -162,3 +167,14 @@ def test_run_isolated_from_old_working_directory_and_unregistered_code(case, mon
     with pytest.raises(entry.EntryError):
         entry.run(business, bundle, args)
     assert not hasattr(sys.modules.get("football_daily"), "MODE")
+
+
+def test_unknown_route_origin_refuses_and_legacy_does_not_load_optional_registration(case, monkeypatch):
+    business, bundle = case
+    entry.stage(business, bundle)
+    (entry.HERE / 'local_route_registration.py').write_bytes(b'raise AssertionError("unselected source")\n')
+    monkeypatch.setenv('PAL_WEIXIN_ROUTE_ORIGIN', 'unexpected')
+    with pytest.raises(entry.EntryError, match='unknown_private_route_origin'):
+        entry.run(business, bundle, ['tick'])
+    monkeypatch.delenv('PAL_WEIXIN_ROUTE_ORIGIN')
+    assert entry.run(business, bundle, ['tick'])[-1] == ['tick']

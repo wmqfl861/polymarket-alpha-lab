@@ -147,6 +147,12 @@ def run(business_dir, bundle, args):
         raise EntryError("unsupported_notification_command")
     pinned_blob(HERE / "entry.py")
     transport = pinned_blob(TRANSPORT)
+    origin = os.environ.get("PAL_WEIXIN_ROUTE_ORIGIN", "")
+    if origin not in {"", "kernel-v1"}:
+        raise EntryError("unknown_private_route_origin")
+    if origin:
+        registration_path = HERE / "local_route_registration.py"
+        registration_bytes = pinned_blob(registration_path)
     helpers = SiteHelpers(business_dir, pinned_blob(HERE / "site-helpers.sha256"))
     if helpers.hashes.keys() & sys.modules.keys():
         raise EntryError("unexpected_preloaded_helper")
@@ -156,7 +162,10 @@ def run(business_dir, bundle, args):
     # The old scripts directory is never a general module search path. Some helpers
     # locate existing research inputs relative to their own file, so keep their origins.
     sys.meta_path.insert(0, helpers)
-    load_verified("weixin_delivery", TRANSPORT, transport)
+    fixed = load_verified("weixin_delivery", TRANSPORT, transport)
+    if origin:
+        registration = load_verified("_pal_local_route_registration", registration_path, registration_bytes)
+        fixed.route = registration.RegisteredRoute(fixed, business_dir)
     load_verified("football_store", bundle / "football_store.py", callers["football_store.py"])
     daily = load_verified("football_daily", bundle / "football_daily.py", callers["football_daily.py"])
     sys.argv = [daily.__file__, *args]

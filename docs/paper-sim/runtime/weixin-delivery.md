@@ -16,6 +16,26 @@ Linux 校验三项登记后把固定的中转程序路径传给 HC。中转程�
 
 `PAL_WEIXIN_RELEASE_COMMIT` 必须等于 Linux 部署检出的完整提交号。程序从该提交的 Git 对象和检出文件同时校验固定 PowerShell 脚本及其 SHA-256 清单。变更投递入口时沿用已经登记的 HC 可执行文件、用户、套接字、上下文摘要、Windows 主机绑定和私聊绑定。它们的现场值留在原有私有配置中。
 
+## Linux 通知服务的私有设置来源
+
+已经提供六项私有路由设置的部署沿用原环境。使用内核登记时，在 `tick` 与 `worker@` 两个通知单元的 `[Service]` 中显式加入同一项公开配置。使用 `tick` 服务上下文运行 `route-check` 时也沿用该项。
+
+```ini
+Environment=PAL_WEIXIN_ROUTE_ORIGIN=kernel-v1
+```
+
+内核登记绑定已批准的完整发布提交。部署管理员使用受保护的独立 Git 检出，核对其 `HEAD` 和要启动的登记程序与批准提交的 Git 对象一致。检出、登记源码和上级目录均由 root 保管，普通服务身份只有读取权限。该检出使用自己的 Git 对象库。将下列三个变量设为已核对的发布目录、完整提交号和原通知业务目录后，在部署管理员的 shell 中执行一次。
+
+```sh
+env -i PATH=/usr/bin:/bin LC_ALL=C /usr/bin/python3 -I -B \
+  "$PROTECTED_CHECKOUT/docs/paper-sim/runtime/scripts/route-enrollment/register_local_route.py" \
+  "$APPROVED_COMMIT" "$ORIGINAL_BUSINESS_DIR"
+```
+
+登记子进程降为原服务身份，使用该账户的主目录。它核对正在运行的本机控制器映像与原客户端，并在原配对 Windows 上运行仓库固定的 `Read-PairedController.ps1` 一次。该程序只读取控制器公开的配对元数据。部署进程把随机盐和匹配摘要写入 Linux 内核的专用易失登记项。两类通知服务在需要投递路由时，用本机原软件和 Unix 套接字重建六项设置，与登记、进程映像及监听端点核对。通知进程对 Windows 的请求始终走原固定中转程序。
+
+通知进程或用户管理器重启后，会从内核重新读取登记。内核重启、登记过期、监听身份变更或更换发布提交时，登记模式返回 `route_context_unverified`，即使进程还持有旧环境值。部署管理员核实现场后在批准的检出上重新执行上面的登记命令。两类通知单元保留相同选择，已开始的投递继续遵循原时限和回执规则。
+
 ## 部署回执
 
 安装回执登记构建 relay 和 worker 的源码提交、相对路径、各源码 SHA-256、编译器版本以及最终 Windows 可执行文件的 SHA-256。安装后从受保护目录重新计算文件摘要，并验证普通权限进程无法写入或替换程序、脚本和其依赖。另行核对实际工作进程是原绑定账户的普通权限进程，且 Hermes 使用原配置并只匹配既有私聊。
