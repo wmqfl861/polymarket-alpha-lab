@@ -1,0 +1,121 @@
+{
+  "observed_utc": "2026-11-26T14:52:25+00:00",
+  "runtime_base_commit": "0e2caf36bdfdf53b375766d0c5ff310568d291b4",
+  "hermes_upstream_commit": "ae2a81ccc00e9b7c06301523e5bb09608397149c",
+  "repo_source_directory": "docs/paper-sim/runtime/scripts/windows/hermes",
+  "source_hashes": {
+    "hermes.c": "918e34a65cecd452598add25e4d7817636c497090ae60d983e6c97a32b8c06cf",
+    "fixed_entry.py": "a53279fe653135417292bddf67674ef0876e1fb1b8eccc543da21e396cd0c3dd",
+    "prepare_media.py": "323fe2289049444ff7ef972f00ddf9818c4eafd8c53316c461bc89899434265b",
+    "upstream-inputs.json": "78db88a34771449872f35d20be9261a23043e10b3722bb9e6043a1dd731bc3a8",
+    "windows-requirements.lock": "b6d288692344cd05791b31a23bfb962478cf216d97c2f5a27ab6b3747c42a920",
+    "verify_synthetic.py": "f7a9ab9dd8cbdce2c17c7ec1590790f38464c3bb1006f51a83b07042802f9063"
+  },
+  "windows_x64_pe": {
+    "sha256": "bd8ffb90fd74f0155e4b589daf2cd36e2d7ecda04d60d21099e0e7a849a71c70",
+    "bytes": 40960,
+    "link_time_stamp_zero": true,
+    "dll_imports": [
+      "KERNEL32.dll",
+      "msvcrt.dll"
+    ],
+    "reproducible_separate_binary": true,
+    "embedded_runtime": "Pinned CPython runs in the process observed by the original PowerShell script."
+  },
+  "offline_install_media": {
+    "files": 4794,
+    "bytes": 132729332,
+    "sha256": "4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb",
+    "deterministic_two_builds_compared_byte_for_byte": true,
+    "locked_win64_wheels": 83
+  },
+  "linux_bootstrap_tests": {
+    "platform": "Linux synthetic profiles with isolated instrumented transport",
+    "real_messages": 0,
+    "cases": [
+      {
+        "case": "list",
+        "exit": 0,
+        "wire_substitutions": 0,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "send",
+        "exit": 0,
+        "wire_substitutions": 1,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "upstream-policy-denial",
+        "exit": 1,
+        "wire_substitutions": 0,
+        "policy_substitutions": 1,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "plugin-disabled",
+        "exit": 78,
+        "wire_substitutions": 0,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "external-weixin",
+        "exit": 78,
+        "wire_substitutions": 0,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "external-provider",
+        "exit": 78,
+        "wire_substitutions": 0,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "wrong-note",
+        "exit": 78,
+        "wire_substitutions": 0,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "extra-argument",
+        "exit": 78,
+        "wire_substitutions": 0,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "profile-safe-mode",
+        "exit": 78,
+        "wire_substitutions": 0,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      },
+      {
+        "case": "wrong-recipient",
+        "exit": 78,
+        "wire_substitutions": 0,
+        "policy_substitutions": 0,
+        "network_attempts": 0,
+        "passed": true
+      }
+    ]
+  },
+  "scope": "Only public software and synthetic profiles were used. No Windows executable execution or live delivery is asserted.",
+  "windows_acceptance_cases": 0,
+  "natural_delivery_receipts": 0
+}
