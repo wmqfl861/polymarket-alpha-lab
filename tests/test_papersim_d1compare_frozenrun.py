@@ -771,6 +771,70 @@ def test_run_gates_refuse_without_recorded_authorization() -> None:
     assert error.value.code == "frozen_authorization_field_unknown"
 
 
+@pytest.mark.parametrize(("gate", "value"), [
+    ("b2_b3_b4_merged_commit", None),
+    ("g7_fix_evidence", False),
+    ("d1_lane_reviewed_merge_commit", 42),
+    ("s1_scheduler_install_record", ["offline fixture"]),
+    ("execution_base_commit", {"reference": "offline fixture"}),
+])
+@pytest.mark.parametrize("command", ["run-frozen", "run-new"])
+def test_run_cli_rejects_non_text_gate_evidence(
+    tmp_path: Path, command: str, gate: str, value: object,
+) -> None:
+    document: dict[str, object] = dict.fromkeys(frozenrun.REQUIRED_RUN_GATES, "offline fixture")
+    document[gate] = value
+    authorization = tmp_path / "authorization.json"
+    authorization.write_text(json.dumps(document), encoding="utf-8")
+    staging = tmp_path / "staging"
+    if command == "run-frozen":
+        options = ["--leg", "crypto", "--staging-root", str(staging)]
+    else:
+        options = ["--scan-config", str(tmp_path / "missing-config.json"),
+                   "--prepare-from", "0" * 64, "--operation-key", "offline-example"]
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools/d1_compare.py"), command, *options,
+         "--authorization", str(authorization)],
+        cwd=tmp_path, capture_output=True, text=True, timeout=15,
+    )
+    assert result.returncode == 2
+    assert result.stderr == f"d1_compare: {command} refused: frozen_authorization_field_invalid: {gate}\n"
+    assert result.stdout == ""
+    assert not staging.exists()
+
+
+def test_authorization_preserves_text_and_leaves_missing_facts_unmet() -> None:
+    record = "  archived receipt reference  "
+    authorization = frozenrun.DayRunAuthorization.from_mapping({
+        "g7_fix_evidence": record, "s1_scheduler_install_record": " \t",
+    })
+    assert authorization.g7_fix_evidence == record
+    assert frozenrun.check_run_gates(authorization) == tuple(
+        name for name in frozenrun.REQUIRED_RUN_GATES if name != "g7_fix_evidence"
+    )
+    with pytest.raises(frozenrun.FrozenRunError) as error:
+        frozenrun.DayRunAuthorization(g7_fix_evidence=None)
+    assert error.value.code == "frozen_authorization_field_invalid"
+    assert error.value.detail == "g7_fix_evidence"
+
+
+def test_run_frozen_cli_accepts_text_records_up_to_the_existing_executor_gate(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    from tools import d1_compare
+
+    authorization = tmp_path / "authorization.json"
+    records = {name: f"offline receipt for {name}" for name in frozenrun.REQUIRED_RUN_GATES}
+    authorization.write_text(json.dumps(records), encoding="utf-8")
+    staging = tmp_path / "staging"
+    assert d1_compare.main(["run-frozen", "--leg", "soccer", "--staging-root", str(staging),
+                            "--authorization", str(authorization)]) == 2
+    output = capsys.readouterr()
+    assert "frozen_run_executor_not_wired" in output.err
+    assert output.out == ""
+    assert not staging.exists()
+
+
 def test_execute_designated_chain_refuses_without_gates(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

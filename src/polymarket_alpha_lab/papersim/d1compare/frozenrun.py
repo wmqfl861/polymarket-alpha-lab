@@ -1634,6 +1634,11 @@ class DayRunAuthorization:
     s1_scheduler_install_record: str = ""
     execution_base_commit: str = ""
 
+    def __post_init__(self) -> None:
+        for name, value in self.as_mapping().items():
+            if not isinstance(value, str):
+                raise FrozenRunError("frozen_authorization_field_invalid", name)
+
     def as_mapping(self) -> dict[str, str]:
         return {
             "b2_b3_b4_merged_commit": self.b2_b3_b4_merged_commit,
@@ -1651,8 +1656,7 @@ class DayRunAuthorization:
         if unknown:
             raise FrozenRunError("frozen_authorization_field_unknown",
                                  ",".join(unknown))
-        return cls(**{name: str(document.get(name, "")) for name
-                      in REQUIRED_RUN_GATES})
+        return cls(**document)
 
 
 def check_run_gates(authorization: DayRunAuthorization | None) -> tuple[str, ...]:

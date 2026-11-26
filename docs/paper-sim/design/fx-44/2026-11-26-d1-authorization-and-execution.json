@@ -1,0 +1,102 @@
+{
+  "scope": "D1 authorization input, existing managed preflight and the outstanding operational requirements for the frozen comparison path",
+  "tested_source_commit": "ea06c2034fd5be8e88181652c858ce58add1f8a2",
+  "changes": {
+    "ordinary_cli": [
+      "run-frozen",
+      "run-new"
+    ],
+    "rejects_for_any_of_five_gate_references": [
+      "JSON null",
+      "boolean",
+      "number",
+      "array",
+      "object"
+    ],
+    "before_fix_regressions_reproduced": 11,
+    "valid_text_and_missing_field_behavior_preserved": true
+  },
+  "offline_original": {
+    "commit": "ea06c2034fd5be8e88181652c858ce58add1f8a2",
+    "scope": "All offline cases of the frozenrun module on checkout; the two disposable native PostgreSQL proofs are a separate existing class.",
+    "explicitly_outside_this_offline_selection": [
+      "test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes",
+      "test_preflight_and_borrowed_archives_refuse_cross_instance_inputs"
+    ],
+    "test_module": "tests/test_papersim_d1compare_frozenrun.py",
+    "start_utc": "2026-11-26T22:40:10.123649+00:00",
+    "end_utc": "2026-11-26T22:41:03.485298+00:00",
+    "exit_code": 0,
+    "summary_counts": {
+      "passed": 78,
+      "deselected": 2
+    },
+    "console_sha256": "b15e45f6c2c4a93a40095e8e98d2ec1a8c3ad655651d2313aeb672208c24627d",
+    "frozen_executor_started": false,
+    "field_requests": 0,
+    "formal_days_credited": 0
+  },
+  "native_original": {
+    "commit": "ea06c2034fd5be8e88181652c858ce58add1f8a2",
+    "collection": "Original two native preflight tests in an independent loopback-only network namespace, with separate disposable project PostgreSQL 18 clusters and private temporary directory. No frozen worker is exercised.",
+    "start_utc": "2026-11-26T22:42:46.601370+00:00",
+    "end_utc": "2026-11-26T22:48:17.535308+00:00",
+    "exit_code": 0,
+    "summary_counts": {
+      "passed": 2,
+      "failed": 0,
+      "error": 0,
+      "skipped": 0,
+      "deselected": 0
+    },
+    "test_results": [
+      {
+        "test": "tests/test_papersim_d1compare_frozenrun.py::test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes",
+        "pytest_outcome": "PASSED",
+        "pytest_call_seconds": 172.11
+      },
+      {
+        "test": "tests/test_papersim_d1compare_frozenrun.py::test_preflight_and_borrowed_archives_refuse_cross_instance_inputs",
+        "pytest_outcome": "PASSED",
+        "pytest_call_seconds": 155.77
+      }
+    ],
+    "field_requests": 0,
+    "formal_runs": 0,
+    "formal_days": 0,
+    "console_sha256": "c6c19717617b10f725147df88e93dbfe6d110603b81ff4a699a412cce83d8b06"
+  },
+  "module_total": {
+    "passed": 80,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "formal_execution": {
+    "tool": "tools/d1_compare.py::command_run_frozen",
+    "gate": "frozenrun.execute_designated_chain",
+    "valid_text_evidence_known_result": "frozen_run_executor_not_wired",
+    "caller_supplies_executor": false,
+    "accepts_batch_digest_in_formal_mode": false,
+    "formal_worker_started": false,
+    "formal_days_from_this_check": 0
+  },
+  "field_requirements": {
+    "path_l": "A sanctioned isolated executor must run the registered frozen, cashless algorithms read-only against the actual sealed comparison batch. The recorded prior host denial occurred before worker startup. No field executor, schedule or comparison was exercised in these tests.",
+    "fx44": "At prospective OD-P activation the designated managed instance must seal its actual eligible legacy members, including qualifying pending receipts. A genuinely empty membership can be recorded after that inspection.",
+    "eligible_days": 0,
+    "required_days": 7,
+    "complete_historical_cases": 0,
+    "required_historical_cases": 4
+  },
+  "references": [
+    "docs/paper-sim/design/d1-frozen-preflight-plan.md",
+    "docs/paper-sim/design/fx-42/d1/d1-operational-run-plan-astra-v3.md",
+    "docs/paper-sim/design/fx-44/2026-11-26-research-and-activation-boundaries.json"
+  ],
+  "original_receipt_sha256": {
+    "path-l-authorization-offline-ea06c203.json": "1da268372405d1f750f11d10743672c8ed90cc2e12e9e1155c33bd827462aba8",
+    "path-l-authorization-native-ea06c203.json": "258a185b3197fa7be1f6ef464bcdecbee8eca683358928c2206242d363b968ea",
+    "path-l-entry-and-field-custody.json": "a6c30880beae35a25dfcf827846e14b56b89bb82ad3ff9bae40151526b2a0c7a"
+  }
+}
