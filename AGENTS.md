@@ -77,3 +77,8 @@ Avoid using website scraping as a primary data path unless a needed field is una
 - Keep research outputs reproducible and timestamped.
 - 输入快照的原始字节登记到受管 PostgreSQL 的快照表。清单和引用保存对应的校验值。
 - 主机地址、端口、机器标识和微信收件人标识仅留在本机配置，文件、日志和提交说明须脱敏。
+
+## 云端审计
+
+云端审计方只读，不改项目代码。每轮审核的文档发布在 `handoff/` 开头的保留分支上，这些分支不删除、不强推。
+审核包里提交给 owner 的决定项默认按审计方的推荐执行；owner 另有答复时以 owner 的答复为准。

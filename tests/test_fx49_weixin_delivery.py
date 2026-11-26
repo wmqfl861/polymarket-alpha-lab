@@ -97,10 +97,11 @@ class FakeHc:
                       "state": "connected" if self.connected else "unreachable"}
             return subprocess.CompletedProcess(argv, self.machine_exit, encoded({"machines": [*self.other_machines, target]}))
 
-        assert len(argv) == 15
+        assert len(argv) == 17
         assert args[:5] == ["exec", "--json", "--on", WINDOWS_ID, "--timeout"]
         assert args[6:8] == ["-i", "--"]
-        assert args[8:-1] == [POWERSHELL, "-NoProfile", "-NonInteractive", "-File", SCRIPT]
+        assert args[8:-1] == [POWERSHELL, "-NoProfile", "-NonInteractive", "-ExecutionPolicy",
+                              "RemoteSigned", "-File", SCRIPT]
         assert all(BODY not in argument and TARGET not in argument for argument in argv)
         nonce = args[-1]
         assert delivery.HEX32.fullmatch(nonce)
@@ -563,5 +564,7 @@ def test_local_hc_pipe_bounds_capture_and_keeps_input_bytes(monkeypatch):
 
 def test_transport_source_has_only_the_fixed_hc_process_vector():
     source = RUNTIME_SCRIPT.read_text(encoding="utf-8")
-    forbidden = ('"herdr-core"', '"zcode"', "hermes-wechat-send", "yolo", "-ExecutionPolicy", "-EncodedCommand")
+    forbidden = ('"herdr-core"', '"zcode"', "hermes-wechat-send", "yolo", "-EncodedCommand", "Bypass", "Unrestricted", "Set-ExecutionPolicy")
     assert not any(token in source for token in forbidden)
+    assert source.count('"-ExecutionPolicy"') == 1
+    assert source.count('"RemoteSigned"') == 1

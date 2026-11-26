@@ -10,7 +10,7 @@ $offlineRunner = Join-Path $acceptance 'source\offline-acceptance\Test-PaperWeix
 $scratch = Join-Path $acceptance 'scratch'
 $approvedSha256 = '<SHA-256 from the pinned Git manifest>'
 $engine = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-& $engine -NoProfile -NonInteractive -File $offlineRunner -Workspace $scratch -ApprovedScriptSha256 $approvedSha256
+& $engine -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File $offlineRunner -Workspace $scratch -ApprovedScriptSha256 $approvedSha256
 $LASTEXITCODE
 ```
 
@@ -29,4 +29,4 @@ $LASTEXITCODE
 
 `$scratch\fx49-offline-<随机运行号>\fx49-offline-evidence.json` 保存引擎版本、固定脚本 SHA-256、逐例实测退出码、替身发送次数、回执断言、重调退出码与 UTC 完成时间。完整演练应产生覆盖六类情形的十条逐例记录。以文件中的实测结果和本次 Git 提交号登记 Windows 验收。
 
-现场切换前，Windows 管理员须确认实际运行身份在现行策略下可执行此固定入口，且服务器使用的远程身份只能调用该入口。通用终端、文件写入或任意命令仍可用时，自动投递继续使用现行部署。现场核验只登记能力结论及时间。待约束成立并取得替身验收回执，再从下一次符合条件的自然投递中收取一条固定入口回执。
+现场安装后核对投递身份对固定脚本与绑定文件仅有读取、执行权限，并核对脚本摘要。Windows 演练验证进程作用域和实际生效策略均为 `RemoteSigned`。六类替身用例符合预期后，观察一次符合条件的自然投递。机主已同意先切换，通用远程通道的额外能力在交付计划第 84.2.4 节登记。

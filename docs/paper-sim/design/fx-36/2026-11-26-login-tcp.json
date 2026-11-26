@@ -1,0 +1,22 @@
+{
+  "observed_utc": "2026-11-26T12:59:16+00:00",
+  "entry": "registered login service",
+  "same_physical_observer_and_method_as_database": true,
+  "physical_and_public_uplink_checks": "passed",
+  "remote_dispatch_stage": "machine_exec",
+  "max_target_tcp_connects": 1,
+  "confirmed_target_tcp_connects": 1,
+  "network_observation": {
+    "outer": "received",
+    "remote_envelope": "valid",
+    "remote_timed_out": false,
+    "remote_truncated": false,
+    "remote_exit": "zero",
+    "observer_format": "valid",
+    "observer_classification": "REACHABLE",
+    "network_outcome": "reachable"
+  },
+  "target_authentication_requests": 0,
+  "target_login_attempts": 0,
+  "retries": 0
+}

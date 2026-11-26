@@ -120,7 +120,7 @@ function Invoke-Entry([string]$Profile, [string]$Purpose, $Fields = @{}) {
     }
     foreach ($name in $Fields.Keys) { $request.Add($name, $Fields[$name]) }
     $json = ConvertTo-Json -InputObject $request -Compress
-    $argv = @('-NoProfile', '-NonInteractive', '-File', $StagedScript, $Nonce)
+    $argv = @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'RemoteSigned', '-File', $StagedScript, $Nonce)
     $result = Invoke-LocalProcess $Engine $argv $RunRoot $Profile $json
     $result['reply'] = $null
     if ($result.stdout) {
@@ -328,7 +328,7 @@ $evidence = [ordered]@{
 }
 $RunRoot = $null
 try {
-    if ((Get-ExecutionPolicy -Scope Process) -ne 'Undefined') { throw 'Process execution policy override is present' }
+    if ((Get-ExecutionPolicy -Scope Process) -ne 'RemoteSigned' -or (Get-ExecutionPolicy) -ne 'RemoteSigned') { throw 'The approved RemoteSigned policy is required for this rehearsal' }
     $root = Assert-LocalDirectory $Workspace
     $source = Get-ApprovedSource
     $RunRoot = [IO.Path]::Combine($root, 'fx49-offline-' + [Guid]::NewGuid().ToString('N'))
@@ -359,7 +359,7 @@ try {
         !$preflight.reply.hostname_matches -or !$preflight.reply.target_verified) { throw 'Fixed File entry check failed' }
 
     $evidence.phase = 'cutoff-equality'
-    $boundaryArgs = @('-NoProfile', '-NonInteractive', '-File', $PSCommandPath,
+    $boundaryArgs = @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'RemoteSigned', '-File', $PSCommandPath,
         '-ApprovedScriptSha256', $ApprovedScriptSha256, '-ProbeScript', $StagedScript)
     $boundary = Invoke-LocalProcess $Engine $boundaryArgs $RunRoot
     $evidence.cutoff_equality_exit_code = $boundary.exit_code

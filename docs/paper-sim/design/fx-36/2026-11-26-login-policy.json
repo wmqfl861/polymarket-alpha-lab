@@ -1,0 +1,11 @@
+{
+  "observed_utc": "2026-11-26T13:00:06+00:00",
+  "public_login_accepts_password_authentication": true,
+  "observation": "The running login service configuration permits password-only authentication for an eligible ordinary local account. The separately scoped account has a public-key-only rule.",
+  "method": "Read the native effective configuration in unprivileged configuration-dump and connection-context modes. Evaluated the ordinary local account and each literal account Match clause. No source-address, hostname or port Match condition was present. All parsed configuration files predate the running service start and its active command line carries no alternative configuration or option override.",
+  "scope": "Authentication-method policy. Account secrets, actual password validity and successful authentication were not tested.",
+  "privilege_elevation": false,
+  "authentication_attempts": 0,
+  "secrets_read": false,
+  "configuration_changes": 0
+}

@@ -1,0 +1,40 @@
+{
+  "install-preflight": {
+    "observed_utc": "2026-11-26T13:07:12+00:00",
+    "method": "Read-only inspection through the registered Windows route using the delivery token. No file or policy writes.",
+    "facts": {
+      "administrative_token": true,
+      "programfiles_directory_installed": false,
+      "existing_install_ancestor_allows_create": true,
+      "existing_install_ancestor_allows_change_acl": false,
+      "script_installed": false,
+      "approved_digest_present": false,
+      "binding_installed": false,
+      "rehearsal_sources_present": false,
+      "fixed_windows_powershell_available": true,
+      "native_hermes_application_discoverable": true,
+      "hermes_under_programfiles": false
+    }
+  },
+  "protected-client-check": {
+    "observed_utc": "2026-11-26T13:09:09+00:00",
+    "method": "Read-only inspection through the registered Windows route using the delivery token. No file or policy writes.",
+    "facts": {
+      "administrative_delivery_token": true,
+      "hermes_discoverable": true,
+      "hermes_in_user_profile": true,
+      "current_identity_has_file_write_delete_or_acl_rights": true,
+      "current_identity_has_parent_replace_or_acl_rights": true,
+      "current_identity_owns_existing_client": false,
+      "installation_product_parent_exists": false,
+      "target_directory_exists": false,
+      "registry_applied_machine_policy": false,
+      "registry_applied_user_policy": false
+    }
+  },
+  "status": "protected_installation_pending",
+  "windows_cases_passed": 0,
+  "natural_deliveries": 0,
+  "configuration_writes": 0,
+  "fixed_script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6"
+}

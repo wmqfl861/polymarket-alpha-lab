@@ -173,7 +173,8 @@ def launcher(nonce):
         or PureWindowsPath(SCRIPT_PATH).name.lower() != "invoke-paperweixin.ps1"
     ):
         raise HandoffError("fixed_entry_unconfigured")
-    return [POWERSHELL_PATH, "-NoProfile", "-NonInteractive", "-File", SCRIPT_PATH, nonce]
+    return [POWERSHELL_PATH, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "RemoteSigned",
+            "-File", SCRIPT_PATH, nonce]
 
 
 def approved_script_sha256():

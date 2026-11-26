@@ -1,0 +1,11 @@
+{
+  "observed_utc": "2026-11-26T13:00:06+00:00",
+  "operating_state": "Enabled and active. The completed oneshot retains its active state.",
+  "actual_order": "The guard runs after network-online, the ruleset loader and the container engine. The engine was active when the guard last started. The engine and ruleset loader both want the guard; both propagate stop/restart through PartOf. The ruleset loader also propagates reload.",
+  "input_dependency": "The installed helper matches the recorded implementation. In its active engine-discovery mode, it identifies the registered pool using the live container publication, verifies the selected scope, and then applies the separate ingress restriction. A publication must already be visible for discovery to succeed.",
+  "exposure_window": "Publication can precede protection on startup. No restart or live timing test was performed and no duration is established. The previous blocked external readback applies to steady state.",
+  "proposed_change_for_owner": "Use a root-managed persistent rule for the already registered second ingress scope, independent of Docker runtime inventory. Load it before Docker is allowed to publish, with a fail-closed start dependency and a check of the exact rule. Preserve the separate first restriction and the existing management and messaging routes. Apply ruleset reloads atomically, then validate ordering, scope and steady-state reachability from the same external observer after owner authorization.",
+  "configuration_changes": 0,
+  "restart_or_reload_count": 0,
+  "requires_owner_authorization_to_apply": true
+}
