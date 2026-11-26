@@ -179,10 +179,16 @@ class Entry:
 
 
 @pytest.fixture
-def entry(tmp_path):
+def linux_powershell():
     shell = shutil.which("pwsh") if sys.platform.startswith("linux") else None
     if shell is None:
         pytest.skip("optional Linux script check requires a pre-existing pwsh")
+    return shell
+
+
+@pytest.fixture
+def entry(tmp_path, linux_powershell):
+    shell = linux_powershell
     installed = tmp_path / "protected install"
     profile = tmp_path / "local profile"
     temp = tmp_path / "legacy temp"
@@ -416,3 +422,21 @@ def test_offline_rehearsal_verifies_the_refusal_that_survives_cleanup(entry, tmp
         "retry-with-output": (False, 1, 1),
         "sent-twice": (False, 2, 2),
     }
+
+
+def test_offline_rehearsal_preserves_accepted_receipt_wire_types(linux_powershell, tmp_path):
+    runner = SOURCE.parent / "offline-acceptance" / "Test-PaperWeixinOffline.ps1"
+    check = Path(__file__).with_name("fx49_offline_acceptance_check.ps1")
+    result = subprocess.run(
+        [linux_powershell, "-NoProfile", "-NonInteractive", "-File", str(check), str(runner), str(tmp_path)],
+        cwd=tmp_path, capture_output=True, check=True, timeout=20,
+        env={"HOME": str(tmp_path), "PATH": os.defpath, "POWERSHELL_TELEMETRY_OPTOUT": "1"},
+    )
+    states = json.loads(result.stdout)
+    assert states.pop("intact") == "accepted"
+    invalid = {
+        "number-string", "bool-number", "state-array", "stage-array", "duplicate-state",
+        "fractional-exit", "timestamp-shape", "cutoff-equality", "body-mismatch",
+        "contents-array", "file-mismatch", "missing-flag", "integer-flag", "false-flag",
+    }
+    assert states == {case: "invalid" for case in invalid}

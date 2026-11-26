@@ -150,6 +150,41 @@ function New-Fixture([string]$Name, [string]$Mode) {
     return $profile
 }
 
+# Read the JSON wire types and preserve the six fractional UTC digits on Windows PowerShell and pwsh.
+function Read-AcceptedReceiptFields([byte[]]$Bytes) {
+    if ($PSVersionTable.PSVersion.Major -eq 5) {
+        $framework = [object].Assembly.GetName()
+        $serialization = [Reflection.AssemblyName]::new('System.Runtime.Serialization')
+        $serialization.Version = $framework.Version
+        $serialization.CultureInfo = [Globalization.CultureInfo]::InvariantCulture
+        $serialization.SetPublicKeyToken($framework.GetPublicKeyToken())
+        $null = [Reflection.Assembly]::Load($serialization)
+    }
+    $quotas = [Xml.XmlDictionaryReaderQuotas]::new()
+    $reader = [Runtime.Serialization.Json.JsonReaderWriterFactory]::CreateJsonReader(
+        $Bytes, 0, $Bytes.Length, $Utf8, $quotas, $null)
+    try {
+        $document = [Xml.XmlDocument]::new()
+        $document.XmlResolver = $null
+        $document.Load($reader)
+        $root = $document.PSBase.DocumentElement
+        if ($root.GetAttribute('type') -cne 'object') { throw 'Invalid acceptance receipt' }
+        $fields = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::Ordinal)
+        foreach ($field in $root.PSBase.ChildNodes) {
+            $name = $field.PSBase.LocalName
+            $value = $field.PSBase.InnerText
+            $kind = $field.GetAttribute('type')
+            if ($name -ceq 'native_exit_code') {
+                if ($kind -cne 'number' -or $value -cne '0') { throw 'Invalid native exit code' }
+            } elseif ($name -cin @('target_verified', 'native_success', 'chat_verified')) {
+                if ($kind -cne 'boolean' -or $value -cne 'true') { throw 'Invalid confirmation flag' }
+            } elseif ($kind -cne 'string') { throw 'Invalid text field' }
+            $fields.Add($name, $value)
+        }
+        return ,$fields
+    } finally { $reader.Dispose() }
+}
+
 function Get-ReceiptState($Result, $Job, [string]$ReceiptPath, [string]$ExpectedReason) {
     if (Test-Reply $Result 32 'receipt' @('reason')) {
         if (!$ExpectedReason -or $Result.reply.reason -isnot [string] -or
@@ -162,19 +197,17 @@ function Get-ReceiptState($Result, $Job, [string]$ReceiptPath, [string]$Expected
     if (!(Test-Reply $Result 0 'receipt' @('contents'))) { return 'invalid' }
 
     try {
-        $receipt = ConvertFrom-Json -InputObject ($Utf8.GetString([Convert]::FromBase64String($Result.reply.contents)))
+        if ($Result.reply.contents -isnot [string]) { return 'invalid' }
+        $receipt = Read-AcceptedReceiptFields ([Convert]::FromBase64String($Result.reply.contents))
         $keys = @('protocol', 'script_sha256', 'state', 'platform', 'target_verified', 'native_success',
             'chat_verified', 'native_exit_code', 'message_id_sha256', 'send_started_at', 'confirmed_at', 'stage_key',
             'nonce', 'target_digest', 'body_variant', 'body_digest', 'starts_utc', 'cutoff_utc', 'deadline_utc')
-        if ($null -ne (Compare-Object $keys @($receipt.PSObject.Properties.Name) -CaseSensitive)) { return 'invalid' }
+        if ($null -ne (Compare-Object $keys @($receipt.Keys) -CaseSensitive)) { return 'invalid' }
         if ($Result.reply.contents -cne [Convert]::ToBase64String([IO.File]::ReadAllBytes($ReceiptPath)) -or
             $receipt.state -cne 'accepted' -or $receipt.platform -cne 'weixin' -or $receipt.nonce -cne $Nonce -or
             $receipt.protocol -cne $Protocol -or $receipt.script_sha256 -cne $ApprovedScriptSha256 -or
-            $receipt.target_digest -cne $TargetDigest -or $receipt.native_exit_code -ne 0 -or
+            $receipt.target_digest -cne $TargetDigest -or
             $receipt.message_id_sha256 -cne (Get-TextDigest $FixtureMessage)) { return 'invalid' }
-        foreach ($name in @('target_verified', 'native_success', 'chat_verified')) {
-            if ($receipt.$name -isnot [bool] -or !$receipt.$name) { return 'invalid' }
-        }
         foreach ($name in @('stage_key', 'body_variant', 'body_digest', 'starts_utc', 'cutoff_utc', 'deadline_utc')) {
             if ($receipt.$name -cne $Job[$name]) { return 'invalid' }
         }
