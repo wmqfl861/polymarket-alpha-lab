@@ -1,0 +1,17 @@
+{
+  "opened_utc": "2026-11-26T02:31:01.088332+00:00",
+  "completed_utc": "2026-11-26T02:31:07.492261+00:00",
+  "heads": 257,
+  "tags": 3,
+  "distinct_tips": 260,
+  "remote_snapshot_sha256": "8f326d76d05f1c4988fbc18e5ba6e45ffeb52904d30b77362f3a0fce383f3da8",
+  "closing_snapshot_sha256": "8f326d76d05f1c4988fbc18e5ba6e45ffeb52904d30b77362f3a0fce383f3da8",
+  "same_snapshot_at_close": true,
+  "initially_missing_tips": 1,
+  "reachable_objects": 28854,
+  "promised_ids_counted": 21,
+  "previous_inventory_sha256": "57bb551534229dffd88e7c39c77dff4e09ab8ee90f11d1924119b859ec53b647",
+  "queried_archive_blobs": 26,
+  "exact_matches": [],
+  "scope": "Object identifiers reachable from the advertised branches and tags at the opening snapshot. Later repackaging, differently encoded original data, deleted refs, upstream custody and receipt times are outside this test."
+}

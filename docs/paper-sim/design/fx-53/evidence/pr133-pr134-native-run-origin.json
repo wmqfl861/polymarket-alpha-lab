@@ -1,0 +1,58 @@
+{
+  "utc": "2026-11-26T02:28:51.568369+00:00",
+  "base": "07f4bf21f4e4a45550b91afd64f9e41528be4eed",
+  "candidate": "8574a3a9504b2b6f6c259d3bc3294cfbaea47056",
+  "links_checked": {
+    "docs/paper-sim/design/fx-40/evidence/source-scan-disposition.json": {
+      "bytes": 2495,
+      "sha256": "f7c6d61d002021f398b53a86a28ad45ee38bc166ca4a6f4d370f0bc99bec2c68"
+    },
+    "docs/paper-sim/design/fx-40/evidence/integrated-static-results.json": {
+      "bytes": 2472,
+      "sha256": "98affe046a8b1ef7dba09ba1837e5b9636022fa045ae1995459050b8c9569339"
+    },
+    "docs/paper-sim/design/fx-40/evidence/seven-tree-inventory.json": {
+      "bytes": 21600,
+      "sha256": "d31a4ebdec191c37823b0481351fb01adbbc3fd1fb76cd6b0c40c24e27847cf1"
+    }
+  },
+  "native_workflows": {
+    "133": {
+      "source_head": "9b523026b3b8428aa60e1cd645e71ed71467ad8e",
+      "ci_merge": "15b4f33ac9d612eee4627ae85a7207967a4747bf",
+      "native_by_revision": {
+        "head": [],
+        "ci_merge": [
+          {
+            "attempt": 1,
+            "conclusion": "success",
+            "event": "workflow_dispatch",
+            "head": "15b4f33ac9d612eee4627ae85a7207967a4747bf",
+            "run": 45715787468,
+            "status": "completed"
+          }
+        ]
+      },
+      "registered_native": 45715787468
+    },
+    "134": {
+      "source_head": "7003966253aa75b876d40139f88744ee6ed1274a",
+      "ci_merge": "7fbc597725eb08976e81a04917852f7e6068b2ad",
+      "native_by_revision": {
+        "head": [],
+        "ci_merge": [
+          {
+            "attempt": 1,
+            "conclusion": "success",
+            "event": "workflow_dispatch",
+            "head": "7fbc597725eb08976e81a04917852f7e6068b2ad",
+            "run": 45736790830,
+            "status": "completed"
+          }
+        ]
+      },
+      "registered_native": 45736790830
+    }
+  },
+  "scope": "Existing node verification, ordinary merge and workflow digests assembled by the coordinator. Independent source and stage reviewers are separately identified in the ledger."
+}

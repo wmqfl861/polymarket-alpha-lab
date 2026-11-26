@@ -1,0 +1,92 @@
+{
+  "ordinary_merge": {
+    "utc": "2026-11-26T03:33:46+00:00",
+    "head": "e2ae0a4c4c9f619cc4049238c21e7b7a1d4cf022",
+    "base": "07f4bf21f4e4a45550b91afd64f9e41528be4eed",
+    "pr": 135,
+    "tree": "ee125f002cce8eaa460ec7cdf0fc1cc6a4568a19",
+    "ci_merge": "5cae11207cdc257821619eda6ff616de54a24745",
+    "actual_main": "eae037aa21bc827ebf0d33ec2f61d1d3d10f17f4",
+    "workflow_runs": {
+      "Offline verification": 45746414266,
+      "Native project PostgreSQL": 45746586776,
+      "Research paper bridge": 45746414419
+    },
+    "fixed_check": "#135 head e2ae0a4c run 45746414266: CURRENT (merged into 07f4bf21)",
+    "author_committer_noreply": true
+  },
+  "checkout_proof_sha256": "fa65c3f460106b0bbf6e5c817d33b626e3e67ee3660e20a97e50a388564a71e7",
+  "workflows": {
+    "Offline verification": {
+      "run": 45746414266,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "offline",
+          "job": 139663460686,
+          "commit": "5cae11207cdc257821619eda6ff616de54a24745"
+        }
+      ]
+    },
+    "Native project PostgreSQL": {
+      "run": 45746586776,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "linux-native-storage",
+          "job": 139664035373,
+          "commit": "5cae11207cdc257821619eda6ff616de54a24745"
+        },
+        {
+          "name": "linux-native-research",
+          "job": 139664035578,
+          "commit": "5cae11207cdc257821619eda6ff616de54a24745"
+        },
+        {
+          "name": "linux-native-dispatch",
+          "job": 139664034942,
+          "commit": "5cae11207cdc257821619eda6ff616de54a24745"
+        },
+        {
+          "name": "linux-native-papersim",
+          "job": 139664035361,
+          "commit": "5cae11207cdc257821619eda6ff616de54a24745"
+        }
+      ]
+    },
+    "Research paper bridge": {
+      "run": 45746414419,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "windows-paper",
+          "job": 139663460939,
+          "commit": "5cae11207cdc257821619eda6ff616de54a24745"
+        }
+      ]
+    }
+  },
+  "focus": {
+    "exit": 0,
+    "summaries": [
+      "25 passed in 2.90s"
+    ],
+    "seconds": 4.431,
+    "output_sha256": "276511bf12c6dd0703adee8ab428e8a1dc814dc6fce4b004e72e1864c674f702"
+  },
+  "full": {
+    "exit": 0,
+    "summaries": [
+      "44064 passed, 482 skipped, 20 warnings in 3443.79s (0:57:23)"
+    ],
+    "seconds": 3549.895,
+    "output_sha256": "e15e2fdfa86f001d7967e977f4603b90e16bf9bf96b0b4bba6fefd034bd3a569"
+  },
+  "native": {
+    "collected": 40,
+    "verified": true,
+    "pytest_status": 0,
+    "postgres_stop_status": 0,
+    "source_sha256": "6122acde1128b64949c5efaa8639c6876da62c3716980d568515133cd8f85998"
+  }
+}

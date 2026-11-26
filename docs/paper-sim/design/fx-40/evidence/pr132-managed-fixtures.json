@@ -1,0 +1,98 @@
+{
+  "pr": 132,
+  "head": "979a6abd8801085a026839d7ab4246584e3ba7e7",
+  "merge_checkout": "85e757ae5aee8393e18ca8c1586a0b3bfd847608",
+  "landed": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+  "run": 45671167543,
+  "attempt": 1,
+  "archive_id": 15051511324,
+  "archive_sha256": "09645c73933c7685b50c1bbf2b2d62fec7ce73a71805a368f63ddd524e549897",
+  "junit_sha256": "acd514541c32a87e68be065017b0af62aee14b15a8584b28944ea32359918e0e",
+  "modules": {
+    "tests/test_papersim_prepared_scan_native.py": {
+      "source_sha256": "e66ad1a139b918976ac90244b07bea3e9afc4dae107f692ecb3b46fa6e18c04f",
+      "functions": {
+        "test_direct_scan_and_path_n_share_one_prepared_operation": {
+          "passed": 1
+        },
+        "test_prepared_scan_recovery_uses_the_same_entry_for_b2_and_b3": {
+          "passed": 1
+        },
+        "test_prepared_scan_rejects_an_unwritten_retry_after_competing_entry": {
+          "passed": 3
+        },
+        "test_prepared_scan_resumes_unwritten_entry_after_opposite_position": {
+          "passed": 1
+        },
+        "test_prepared_soccer_persists_ordered_quotes_and_replays_constructor_failures": {
+          "passed": 1
+        },
+        "test_unbound_capture_appearance_is_covered_without_a_candidate": {
+          "passed": 1
+        },
+        "test_unregistered_policy_records_supported_refusals_for_managed_replay": {
+          "passed": 1
+        }
+      },
+      "not_collected": []
+    },
+    "tests/test_papersim_capture_marks_native.py": {
+      "source_sha256": "2bb6307a4e2ee06ade691651ca93400027b7c9bead68ae7b8bb945c59223f4c6",
+      "functions": {
+        "test_changed_content_and_second_close_are_conflicts_with_failed_receipts": {
+          "passed": 1
+        },
+        "test_d1_first_attempt_rebuilds_prices_from_the_sealed_buy_book": {
+          "passed": 1
+        },
+        "test_d1_rejects_wrong_identity_stale_books_and_unattributed_existing_rows": {
+          "passed": 1
+        },
+        "test_d1_three_original_observations_recover_in_another_cli_process": {
+          "passed": 3
+        },
+        "test_d1_uses_strict_event_and_receipt_boundaries": {
+          "passed": 1
+        },
+        "test_dirty_worktree_refuses_before_any_receipt": {
+          "passed": 1
+        },
+        "test_empty_pack_completes_with_explicit_zero_counts": {
+          "passed": 1
+        },
+        "test_full_capture_writes_marks_close_evidence_and_receipts": {
+          "passed": 1
+        },
+        "test_same_pack_replay_is_idempotent_and_returns_the_identical_summary": {
+          "passed": 1
+        },
+        "test_unknown_candidate_fails_loudly_with_a_failed_receipt": {
+          "passed": 1
+        }
+      },
+      "not_collected": []
+    },
+    "tests/test_papersim_d1_operations_native.py": {
+      "source_sha256": "261e833376bd9f102ab20e0d47722d3a54ea14689e90b08464434c681fcfd634",
+      "functions": {
+        "test_d1_native_competing_settlement_parents_preserve_one_cash_leg": {
+          "passed": 1
+        },
+        "test_d1_native_concurrent_attempts_keep_the_first_close": {
+          "passed": 2
+        },
+        "test_d1_native_late_recovery_proves_committed_rows_and_expires_unwritten_rows": {
+          "passed": 1
+        },
+        "test_d1_native_resolution_scope_keeps_empty_markets_and_checks_nominated_entries": {
+          "passed": 1
+        },
+        "test_d1_native_retries_preserve_atomic_business_and_attempt_evidence": {
+          "passed": 3
+        }
+      },
+      "not_collected": []
+    }
+  },
+  "scope": "Hosted Linux Postgres fixtures. Public-source sample provenance and R6-17 operational counts still require actual sources."
+}
