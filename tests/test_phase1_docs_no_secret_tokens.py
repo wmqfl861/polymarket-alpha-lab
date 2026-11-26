@@ -7,29 +7,24 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 PHASE1_CHANGED_DOC_PATHS = (
-    Path("docs/acceptance/phase-1-development-node-acceptance-checklist.md"),
     Path("docs/cli/phase1-report-discovery.md"),
     Path("docs/config/phase-1-strategy-screening-schema.md"),
     Path("docs/contracts/phase1-data-field-contracts.md"),
     Path("docs/data_dictionary/phase1-research-decision-objects.md"),
     Path("docs/index/phase1-module-index.md"),
-    Path("docs/maintenance/phase1-agent-concurrency-and-review-rules.md"),
     Path("docs/operators/phase1-probability-event-go-no-go-runbook.md"),
     Path("docs/operators/phase1-strategy-stack-walkthrough.md"),
     Path("docs/phase1/probability-event-readonly-supabase-principles.md"),
     Path("docs/phases/2026-07-12-phase-1-capability-baseline.md"),
     Path("docs/playbooks/phase1-specialist-team-playbooks.md"),
-    Path("docs/quality/phase-1-development-node-quality-gates.md"),
     Path("docs/recommendations/phase1-recommendation-explainability.md"),
     Path("docs/reports/phase1-report-registry.md"),
     Path("docs/research/source-acquisition-quality-policy.md"),
-    Path("docs/review/2026-07-12-operating-review-rules.md"),
-    Path("docs/review/phase1-claude-review-handoff.md"),
     Path("docs/risk/phase1-risk-capital-settlement-policy.md"),
     Path("docs/roadmap/2026-07-12-project-progress-roadmap.md"),
     Path("docs/strategy/phase1-probability-event-filtering-workflow.md"),
     Path("docs/supabase/local-supabase-operations.md"),
-    Path("docs/testing/phase1-node-test-manifest.md"),
+    Path("docs/testing/phase1-test-catalog.md"),
 )
 EXPECTED_PHASE1_PUBLIC_DOC_OR_CONFIG_PATHS = (
     *PHASE1_CHANGED_DOC_PATHS,
@@ -150,8 +145,8 @@ def test_secret_scanner_allows_explicit_redacted_placeholders() -> None:
 
 
 def test_phase1_docs_and_strategy_example_do_not_contain_secret_like_tokens() -> None:
-    assert len(PHASE1_CHANGED_DOC_PATHS) == 23
-    assert len(PHASE1_PUBLIC_DOC_OR_CONFIG_PATHS) == 24
+    assert len(PHASE1_CHANGED_DOC_PATHS) == 18
+    assert len(PHASE1_PUBLIC_DOC_OR_CONFIG_PATHS) == 19
     assert PHASE1_PUBLIC_DOC_OR_CONFIG_PATHS == EXPECTED_PHASE1_PUBLIC_DOC_OR_CONFIG_PATHS
 
     findings = {

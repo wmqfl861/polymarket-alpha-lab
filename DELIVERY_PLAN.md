@@ -1,5 +1,11 @@
 # V1 交付总计划：BTC／ETH 研究与模拟验证版
 
+## 2026-11-26 机主决定
+
+> 现在取消所有的开发流程规定，包括谁开发谁审核谁计划，这部分规定全部删除。包括流程本身也删除
+
+此前登记的开发分工、节点审批和发布流程已撤销。机主明确清理范围是“只清理 polymarket-alpha-lab”，并要求“连开发相关的 GitHub Actions 工作流文件也删除”。历次交接包、设计、审核回执及下列有日期的决定记录仅反映当时的做法。模型准入、模拟资金、凭据和生产操作继续依各自的授权与数据条件执行。
+
 ## 状态板（2026-11-20）
 
 | 线 | 当前状态 | 剩余工作 |
@@ -43,7 +49,7 @@
 ## 1. 唯一的当前交付口径
 
 本文件是当前 V1 的范围、工作顺序和结束条件的唯一总表；它不是又一个独立报告模块。
-`AGENTS.md` 仍管理工程、安全及授权约束。旧路线图继续作为长期方向和历史依据，
+`AGENTS.md` 记录产品范围、数据和授权约束。旧路线图继续作为长期方向和历史依据，
 但旧的 Supabase 部署要求、外部审核要求、仅 BTC 可运行等描述不能覆盖当前项目规则。
 本计划不授权读取密钥、付费模型调用、用户业务库写入或实盘交易。
 
@@ -181,14 +187,11 @@ D1—D3 不再阻塞离线实现；真实调用仍需所选版本的隔离／输
 先核对允许的发布路径和已有代码；不得把历史未发布工作假定为现成依赖。
 若写入被平台拒绝，记录具体障碍，不换接口、编码或本地代传绕过；可继续不依赖受阻内容的工作包。
 
-每个 PR 开工前写清 `WP-ID + 要关闭的验收缺口 + 最小改动范围 + 所需授权`。
-开发完成后由协调者作单独自审及反例验证，另按 [根规则](AGENTS.md#native-codex-subagent-routing) 取得独立只读复审。
-相关测试和适用的最终 CI 必须通过，同步总表证据，再合并。
 只修首版阻断性问题或本次改动引入的缺陷；其他增强登记在文末延期区，不自动扩大首版。
 发现会改变范围或完成条件的需求时必须重新取得用户同意，不能悄悄降低门槛或增加第七个工作包。
 
 **发布判据：G1—G6 全部有可复核证据，D1—D3 已明确且对应授权受遵守，
-无未解决的首版阻断缺陷，同一发布版本通过最终集成、自审与独立复审。**
+无未解决的首版阻断缺陷，同一发布版本具备集成验证证据。**
 未达到前只能报告“工作包推进／组件完成”，不能报告整个阶段完成。
 到达后冻结 V1；统计样本积累和后续领域扩展使用新的里程碑，不自动变成本期永远做不完的尾项。
 
@@ -2676,8 +2679,6 @@ v0.1.0-linux-preview.1 的发布记录（回执已由 E=a1128a65 补记）。
 >
 > Historical delegation recorded on 2026-09-29: the instruction then
 > authorized Codex consultation on items otherwise requiring owner approval.
-> Current subagent routing is defined in
-> [AGENTS.md](AGENTS.md#native-codex-subagent-routing).
 >
 > Decoder calibration may proceed through source development and offline
 > validation. Official-six reentry requires explicit approval of both
@@ -2786,7 +2787,7 @@ v0.1.0-linux-preview.1 的发布记录（回执已由 E=a1128a65 补记）。
 
 当天的 owner 决定更新了该轮子代理的型号与调用约束。
 原记录见提交 `4f84f264d8d762c298f4623459aa24923aab4bc0` 的本节及英文澄清。
-现行派工见 [AGENTS.md](AGENTS.md#native-codex-subagent-routing)。
+[当时的项目说明](https://github.com/wmqfl861/polymarket-alpha-lab/blob/4f84f264d8d762c298f4623459aa24923aab4bc0/AGENTS.md)。
 
 ## 65. Post-L7 ruling: L8 engineering approved; real activation withheld
 Consult baseline: 4f84f264d8d762c298f4623459aa24923aab4bc0.
@@ -2802,7 +2803,7 @@ no surviving process was demonstrated. Historical acceptance is not rescored.
 The shared production decoder remains authoritative; no second admission
 decoder or relaxed envelope is introduced. The stale probe diagnostic is deferred.
 The ruling recorded the delegation in force under §63 at that time.
-Current scoped approval follows [AGENTS.md](AGENTS.md#native-codex-subagent-routing) and the recorded owner gates. No effective activation is granted here.
+The owner authorization recorded for this decision did not grant effective activation.
 activation_authorized=false; real provider calls remain false.
 Effective activation requires accepted final engineering/native/review evidence,
 delivered contained transport, official-image qualification through actual L5
@@ -2817,7 +2818,7 @@ final G3, G4, G5 and G6 remain open. V1 remains incomplete.
 当天的 owner 决定调整了该轮工程分工，L8 在途工作沿当时流程推进。
 原记录见提交 `df137300c7b293a159588650488996da05f9d68d` 的
 `DELIVERY_PLAN.md` 第 2801、2803 行。
-现行项目派工与独立复审见 [根规则](AGENTS.md#project-agent-routing)。
+[当时的项目说明](https://github.com/wmqfl861/polymarket-alpha-lab/blob/df137300c7b293a159588650488996da05f9d68d/AGENTS.md)。
 
 ### L8 集成门禁状态（2026-10-07，进行中——服务器中断）
 
@@ -3441,8 +3442,7 @@ $150、全部冻结阈值不动。
 
 本任务当时由 owner 单独授权 Codex `gpt-6-astra/max` 实施，基线
 `0dab0bd53d351396a1844ad9c9748b3d7d2774a1`。当时仅交付本地分支，
-最终独立审查、测试、合并和推送当时交由 ZCode 协调者跟进。后续复审按
-[根规则](AGENTS.md#native-codex-subagent-routing)。§73 过门与影子观察条件继续适用。
+最终独立审查、测试、合并和推送当时交由 ZCode 协调者跟进。§73 过门与影子观察条件继续适用。
 
 - **P4-0a 候选实现**：新增迁移
   `supabase/migrations/20261107000000_papersim_perf_view_fix.sql` 及锁清单项；
@@ -3506,7 +3506,7 @@ $150、全部冻结阈值不动。
 完整发现、首次失败与重跑、使用命令、后续观察轮次保存在历史交接
 `docs/paper-sim/wp-p4-optimization-2026-11-07.md`，字节校验清单为
 `docs/paper-sim/wp-p4-evidence-manifest.json`。当时未推送、未写库、未接入扫描。
-晋升仍按 owner 和验收门判定。后续派工按[根规则](AGENTS.md#native-codex-subagent-routing)。
+晋升仍按 owner 和验收门判定。
 
 ## 74. WP-NBA: 篮球影子模型（2026-11-10，未达入场标准）
 
@@ -4523,10 +4523,10 @@ Owner 的审核指示原话为“按照规则，直接进行审核”。
 | §84.2.4 未关闭项 | 关于已确认可达的第一个数据库连接池入口和微信链路，机主随后明确答复“授权限制入口，保留微信链路”。此项先核实独立管理通路，再实施并从外部复查。其他可达项另行报告。 |
 | GitHub 邮箱隐私 | 2026-11-25 机主确认“已开启”。#124 合并后核实作者和提交者均使用 GitHub noreply，见 §84.2.4。 |
 | OD-M 分支保护 | 按推荐经 PR 合入并禁止强推、删除。设置和实际启用状态由机主核实。 |
-| OD-U 四类运行免审 | 沿用 11 月 22 日的原指令。待机主核对 §84.2.2 FX-52 登记的完整文本和哈希，再记正文确认。 |
+| OD-U 四类运行免审 | 11 月 22 日的原指令及当时版本见 §84.2.2。11 月 26 日机主撤销开发流程。 |
 | OD-W 微信范围 | 采用审核包建议的长期范围，向本人原微信私聊持续发送足球和篮球的重点关注及模拟单。运行绑定仍以项目节点完成情况登记。 |
 | OD-X 运行层数据库 | 采用路线 A，在 FX-49 后按 FX-50 登记例外和迁移台账，M2 切换时再评估合并。 |
-| OD-S 复审回执入库 | 采用将复审回执随节点入库的建议。根规则成稿仍须机主过目并明确确认拟合入的完整正文。 |
+| OD-S 复审回执入库 | 11 月 24 日采纳了当时的建议，11 月 26 日机主撤销开发流程。历史回执按原样留存。 |
 
 固定脚本演练前，机主答复“同意演练、受保护安装、满足门禁后切换并验证一次自然投递”。原操作员的首次放置指令已引用这句答复。授权范围及放置结果分别见[机主答复](docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-windows-owner-reply.json)和[放置回执](docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-windows-placement-original.json)。
 
@@ -4575,7 +4575,7 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 独立只读 ZCode 会话 `sess_d2f76ce1-9cc3-443d-be64-a6f8a6bf580e` 的首次答复结论为“判定：通过”。当时未核实提交与差异的绑定、B1 的 blob、前序已审树或实际测试结果。该回执为 3,417 字节，SHA-256 `6f38a5a37f7fda98f1da8912d1832d4a2fecbd65c593d97e4478e170420a58bd`。[首次答复](docs/paper-sim/design/fx-52/pr-123-review-initial.txt) 同一会话读回补充材料后签署 `VERDICT: PASS`，3,186 字节，SHA-256 `9bc9fcf3efc94d4c344a591777c48c65624d5e9e132ceb4cccf443b72c3eb431`。[最终答复](docs/paper-sim/design/fx-52/pr-123-review-final.txt) Linux 测试派工会话 `sess_107767cd-51ce-4486-a024-018c16ff0762` 确认两次运行排队。本节的测试通过结果依上列 CI 记录。
 
-11 月 22 日原指令为“修改规则，每次扫描任务，建模任务，下注任务，推荐任务，不需要zcode审核”。#123 中的三处文字覆盖定时及按需的扫描、建模、模拟下注和推荐。运行层源码变更仍经分支、PR、CI 和独立复审。OD-U 尚待 owner 确认完整正文。供确认的 `AGENTS.md` 在上述合并提交中为 Git blob `ee1de5f23f9c39daeaf2b347919205f1504b7288`，27,514 字节，SHA-256 `0f4d79fa1380af4f0750b2b0f306e4c99fd8e643b766fcbfdfc2bf69d003cd20`。收到答复后在此登记原话。OD-U 的范围见本轮[整改清单](docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md)。以后变更根规则时，同一 PR 收入 owner 对完整正文的原话和文件哈希。[固定完整正文](https://github.com/wmqfl861/polymarket-alpha-lab/blob/ab6edff2d64ac8aa5c2831d748b8730b63f8312d/AGENTS.md)
+11 月 22 日原指令为“修改规则，每次扫描任务，建模任务，下注任务，推荐任务，不需要zcode审核”。#123 中的三处文字覆盖定时及按需的扫描、建模、模拟下注和推荐。当时运行层源码变更仍经分支、PR、CI 和独立复审。该版 `AGENTS.md` 在上述合并提交中为 Git blob `ee1de5f23f9c39daeaf2b347919205f1504b7288`，27,514 字节，SHA-256 `0f4d79fa1380af4f0750b2b0f306e4c99fd8e643b766fcbfdfc2bf69d003cd20`。11 月 26 日的决定见文首。OD-U 的历史范围见本轮[整改清单](docs/handoffs/2026-11-24-incremental-review/02-remediation-and-next-steps.md)。以后变更根规则时，同一 PR 收入 owner 对完整正文的原话和文件哈希。[固定完整正文](https://github.com/wmqfl861/polymarket-alpha-lab/blob/ab6edff2d64ac8aa5c2831d748b8730b63f8312d/AGENTS.md)
 
 2026-11-25 普通 PR 合入登记。下表按实际合并树核对候选、三条工作流及原审。
 

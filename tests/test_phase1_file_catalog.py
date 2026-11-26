@@ -8,7 +8,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PHASE1_CONFIG_PATH = REPO_ROOT / "strategy.example.phase1-screening.json"
-NODE_TEST_MANIFEST_PATH = REPO_ROOT / "docs/testing/phase1-node-test-manifest.md"
+TEST_CATALOG_PATH = REPO_ROOT / "docs/testing/phase1-test-catalog.md"
 
 KEY_PHASE1_MODULE_TEST_PAIRS = (
     (
@@ -97,7 +97,7 @@ PHASE1_META_AND_INTEGRATION_TEST_FILES = (
     "tests/test_phase1_docs_required_terms.py",
     "tests/test_phase1_local_supabase_config_contract.py",
     "tests/test_phase1_manual_packet_no_live_execution_terms.py",
-    "tests/test_phase1_merge_readiness_file_set.py",
+    "tests/test_phase1_file_catalog.py",
     "tests/test_phase1_no_review_scratch_references.py",
     "tests/test_phase1_public_payload_digest_smoke.py",
     "tests/test_phase1_readonly_boundary_scan.py",
@@ -108,29 +108,24 @@ PHASE1_META_AND_INTEGRATION_TEST_FILES = (
 )
 
 KEY_PHASE1_DOC_PATHS = (
-    "docs/acceptance/phase-1-development-node-acceptance-checklist.md",
     "docs/cli/phase1-report-discovery.md",
     "docs/config/phase-1-strategy-screening-schema.md",
     "docs/contracts/phase1-data-field-contracts.md",
     "docs/data_dictionary/phase1-research-decision-objects.md",
     "docs/index/phase1-module-index.md",
-    "docs/maintenance/phase1-agent-concurrency-and-review-rules.md",
     "docs/operators/phase1-probability-event-go-no-go-runbook.md",
     "docs/operators/phase1-strategy-stack-walkthrough.md",
     "docs/phase1/probability-event-readonly-supabase-principles.md",
     "docs/phases/2026-07-12-phase-1-capability-baseline.md",
     "docs/playbooks/phase1-specialist-team-playbooks.md",
-    "docs/quality/phase-1-development-node-quality-gates.md",
     "docs/recommendations/phase1-recommendation-explainability.md",
     "docs/reports/phase1-report-registry.md",
     "docs/research/source-acquisition-quality-policy.md",
-    "docs/review/2026-07-12-operating-review-rules.md",
-    "docs/review/phase1-claude-review-handoff.md",
     "docs/risk/phase1-risk-capital-settlement-policy.md",
     "docs/roadmap/2026-07-12-project-progress-roadmap.md",
     "docs/strategy/phase1-probability-event-filtering-workflow.md",
     "docs/supabase/local-supabase-operations.md",
-    "docs/testing/phase1-node-test-manifest.md",
+    "docs/testing/phase1-test-catalog.md",
 )
 
 PHASE1_CHANGED_TEST_PATHS = tuple(
@@ -214,7 +209,7 @@ def _suspicious_secret_values(config: dict[str, object]) -> tuple[str, ...]:
     return tuple(suspicious)
 
 
-def test_phase1_key_modules_and_their_review_tests_are_present() -> None:
+def test_phase1_key_modules_and_their_tests_are_present() -> None:
     assert len(KEY_PHASE1_MODULE_TEST_PAIRS) == 19
     for module_path, test_path in KEY_PHASE1_MODULE_TEST_PAIRS:
         assert _repo_path(module_path).is_file(), f"{module_path} must exist"
@@ -223,7 +218,7 @@ def test_phase1_key_modules_and_their_review_tests_are_present() -> None:
 
 def test_phase1_guardrail_tests_and_key_docs_are_present() -> None:
     assert len(PHASE1_CHANGED_TEST_PATHS) == 33
-    assert len(KEY_PHASE1_DOC_PATHS) == 23
+    assert len(KEY_PHASE1_DOC_PATHS) == 18
 
     for test_path in PHASE1_META_AND_INTEGRATION_TEST_FILES:
         assert _repo_path(test_path).is_file(), f"{test_path} must exist"
@@ -233,12 +228,12 @@ def test_phase1_guardrail_tests_and_key_docs_are_present() -> None:
         assert _repo_path(doc_path).suffix == ".md", f"{doc_path} must stay Markdown"
 
 
-def test_phase1_current_node_file_catalog_is_exact_and_directly_tested() -> None:
-    assert len(PHASE1_PROJECT_INPUT_PATHS) == 76
-    assert len(set(PHASE1_PROJECT_INPUT_PATHS)) == 76
+def test_phase1_file_catalog_is_exact_and_directly_tested() -> None:
+    assert len(PHASE1_PROJECT_INPUT_PATHS) == 71
+    assert len(set(PHASE1_PROJECT_INPUT_PATHS)) == 71
     assert len(KEY_PHASE1_MODULE_TEST_PAIRS) == 19
     assert len(PHASE1_CHANGED_TEST_PATHS) == 33
-    assert len(KEY_PHASE1_DOC_PATHS) == 23
+    assert len(KEY_PHASE1_DOC_PATHS) == 18
 
     changed_sources = {path for path in PHASE1_PROJECT_INPUT_PATHS if path.startswith("src/")}
     directly_tested_sources = {source for source, _test in KEY_PHASE1_MODULE_TEST_PAIRS}
@@ -246,9 +241,9 @@ def test_phase1_current_node_file_catalog_is_exact_and_directly_tested() -> None
     assert all(test in PHASE1_CHANGED_TEST_PATHS for _source, test in KEY_PHASE1_MODULE_TEST_PAIRS)
 
 
-def test_phase1_node_manifest_lists_exact_current_node_file_catalog() -> None:
-    assert NODE_TEST_MANIFEST_PATH.is_file()
-    listed_paths = _manifest_file_paths(NODE_TEST_MANIFEST_PATH.read_text(encoding="utf-8"))
+def test_phase1_documented_file_catalog_matches_project_inputs() -> None:
+    assert TEST_CATALOG_PATH.is_file()
+    listed_paths = _manifest_file_paths(TEST_CATALOG_PATH.read_text(encoding="utf-8"))
 
     assert listed_paths == tuple(sorted(PHASE1_PROJECT_INPUT_PATHS))
 

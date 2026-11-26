@@ -1,0 +1,88 @@
+# Phase 1 test catalog
+
+The catalog covers the Phase 1 reports, discovery CLI, local PostgreSQL
+configuration, screening example and their tests.
+
+```text
+docs/cli/phase1-report-discovery.md
+docs/config/phase-1-strategy-screening-schema.md
+docs/contracts/phase1-data-field-contracts.md
+docs/data_dictionary/phase1-research-decision-objects.md
+docs/index/phase1-module-index.md
+docs/operators/phase1-probability-event-go-no-go-runbook.md
+docs/operators/phase1-strategy-stack-walkthrough.md
+docs/phase1/probability-event-readonly-supabase-principles.md
+docs/phases/2026-07-12-phase-1-capability-baseline.md
+docs/playbooks/phase1-specialist-team-playbooks.md
+docs/recommendations/phase1-recommendation-explainability.md
+docs/reports/phase1-report-registry.md
+docs/research/source-acquisition-quality-policy.md
+docs/risk/phase1-risk-capital-settlement-policy.md
+docs/roadmap/2026-07-12-project-progress-roadmap.md
+docs/strategy/phase1-probability-event-filtering-workflow.md
+docs/supabase/local-supabase-operations.md
+docs/testing/phase1-test-catalog.md
+src/polymarket_alpha_lab/category_playbook_category_threshold_domain_policy_readiness.py
+src/polymarket_alpha_lab/cli.py
+src/polymarket_alpha_lab/forecast_context_readiness_report.py
+src/polymarket_alpha_lab/information_freshness_refresh_sla_readiness_report.py
+src/polymarket_alpha_lab/input_failure_degradation_readiness_report.py
+src/polymarket_alpha_lab/manual_operator_decision_packet.py
+src/polymarket_alpha_lab/market_discovery_candidate_pool.py
+src/polymarket_alpha_lab/operator_final_go_no_go_packet_readiness_report.py
+src/polymarket_alpha_lab/outcome_resolution_evidence_readiness_report.py
+src/polymarket_alpha_lab/portfolio_probability_event_readiness_report.py
+src/polymarket_alpha_lab/post_settlement_calibration_experience_feedback_report.py
+src/polymarket_alpha_lab/probability_event_cost_adjusted_position_recommendation_report.py
+src/polymarket_alpha_lab/probability_event_market_signal_risk_readiness_report.py
+src/polymarket_alpha_lab/probability_event_recommendation_rank_explainability_report.py
+src/polymarket_alpha_lab/report_discovery.py
+src/polymarket_alpha_lab/source_scraping_tool_coverage_readiness_report.py
+src/polymarket_alpha_lab/specialist_team_routing_taxonomy_readiness_report.py
+src/polymarket_alpha_lab/strategy_phase1_readiness_aggregator.py
+src/polymarket_alpha_lab/supabase_local_dsn.py
+strategy.example.phase1-screening.json
+tests/test_category_playbook_category_threshold_domain_policy_readiness.py
+tests/test_cli_report_discovery.py
+tests/test_forecast_context_readiness_report.py
+tests/test_information_freshness_refresh_sla_readiness_report.py
+tests/test_input_failure_degradation_readiness_report.py
+tests/test_manual_operator_decision_packet.py
+tests/test_market_discovery_candidate_pool.py
+tests/test_operator_final_go_no_go_packet_readiness_report.py
+tests/test_outcome_resolution_evidence_readiness_report.py
+tests/test_phase1_config_no_execution_fields.py
+tests/test_phase1_docs_links_and_terms.py
+tests/test_phase1_docs_module_index_matches_files.py
+tests/test_phase1_docs_no_secret_tokens.py
+tests/test_phase1_docs_required_terms.py
+tests/test_phase1_local_supabase_config_contract.py
+tests/test_phase1_manual_packet_no_live_execution_terms.py
+tests/test_phase1_file_catalog.py
+tests/test_phase1_no_review_scratch_references.py
+tests/test_phase1_public_payload_digest_smoke.py
+tests/test_phase1_readonly_boundary_scan.py
+tests/test_phase1_report_discovery_smoke.py
+tests/test_phase1_report_modules_import_no_io.py
+tests/test_phase1_strategy_stack_smoke.py
+tests/test_phase1_targeted_test_manifest.py
+tests/test_portfolio_probability_event_readiness_report.py
+tests/test_post_settlement_calibration_experience_feedback_report.py
+tests/test_probability_event_cost_adjusted_position_recommendation_report.py
+tests/test_probability_event_market_signal_risk_readiness_report.py
+tests/test_probability_event_recommendation_rank_explainability_report.py
+tests/test_source_scraping_tool_coverage_readiness_report.py
+tests/test_specialist_team_routing_taxonomy_readiness_report.py
+tests/test_strategy_phase1_readiness_aggregator.py
+tests/test_supabase_local_dsn.py
+```
+
+## Smoke tests
+
+```bash
+python3 -m pytest tests/test_phase1_report_discovery_smoke.py
+python3 -m pytest tests/test_phase1_report_modules_import_no_io.py
+python3 -m pytest tests/test_phase1_readonly_boundary_scan.py
+python3 -m pytest tests/test_phase1_local_supabase_config_contract.py
+python3 -m pytest tests/test_strategy_phase1_readiness_aggregator.py
+```

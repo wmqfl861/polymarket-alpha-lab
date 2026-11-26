@@ -114,46 +114,6 @@ and operator-facing research notes. It must not rank investments, approve
 trades, size positions, tune strategy weights, generate live recommendations,
 or authorize execution.
 
-## Operating Rules For Parallel Development
-
-Parallel development is an active project operating constraint, but it must
-preserve quality and avoid write conflicts.
-
-- Use parallel workers only for independent, non-overlapping work.
-- Split write ownership by file, module, or clearly bounded responsibility.
-- Do not assign multiple workers to edit the same files, the same batch of
-  files, or tightly coupled logic at the same time.
-- Keep completed workers closed promptly and redeploy capacity only when the
-  next task is independent.
-- The project sets no fixed subagent concurrency count; discover usable
-  capacity dynamically from the current runtime. Nested depth remains capped
-  at 3, and concurrency should fall when rate limits, memory pressure, shared
-  test resources, or ownership overlap would reduce quality.
-- Every implementation node must preserve the Phase 1 boundary, local
-  Supabase/Postgres persistence rule, and independent review gate.
-
-## Independent Review
-
-This roadmap records the July 2026 priorities. Dispatch each plan, code,
-stage, post-node, and handoff reviewer under Project Iron Rule 4 and
-[Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing).
-
-Reviewers may inspect plans, diffs, files, reports, and test output. Reviewers
-must not modify, create, delete, migrate, backfill, submit orders, mutate
-databases, touch credentials, or alter exchange/account state.
-The gate is blocked if no eligible independent reviewer can be dispatched.
-
-Review subagents must not be wrapped in a fixed elapsed-time
-timeout. Run long reviews in an inspectable session and check them about every
-30 seconds. At each check, observe process/session liveness and, when available,
-stream growth or event count, stderr or terminal events, CPU, and network
-activity. Elapsed time alone or a quiet interval is not evidence of a stall.
-While the review remains alive and no concrete terminal failure or stall is
-proven, do not interrupt, terminate, restart, duplicate, or replace it, and do
-not route around it; keep waiting and monitoring. Act only on an explicit result
-or error, confirmed process/session exit, concrete auth/permission/provider
-failure, proven stall, or a newer user instruction.
-
 ## Local Supabase/Postgres Iron Rule
 
 All durable project data must use the local Supabase/Postgres instance on this
@@ -184,7 +144,7 @@ psycopg wrapper, or reach a persistence adapter.
 
 ## Phase Boundary Checklist
 
-Every future node should explicitly confirm:
+Phase 1 product constraints:
 
 - `paper_only=True`, `report_only=True`, and `readonly=True` are preserved
   wherever those flags exist;
@@ -194,16 +154,13 @@ Every future node should explicitly confirm:
 - no DSN/table CLI flags are added to report-scoped team-memory commands;
 - no alternate durable persistence backend is introduced;
 - no market score, candidate score, assignment, digest, gate, or memory policy
-  is described as a trade instruction;
-- the independent review is read-only and follows the root subagent
-  routing rule.
+  is described as a trade instruction.
 
 ## Audit Source Map
 
 This node summarizes and cross-references the current project documentation:
 
-- `AGENTS.md` for project iron rules, parallel development rules, and review
-  defaults;
+- `AGENTS.md` for the product scope and storage constraints;
 - `README.md` for Phase 1 scope and current report/CLI surfaces;
 - `docs/team-agent-framework.md` for team-agent architecture and `crypto_btc`
   runnable slice;

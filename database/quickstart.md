@@ -17,12 +17,9 @@ for that tuple. No Docker, Supabase service, shared database installation or
 system database service is needed. The engine is imported automatically on
 first explicit run. The packaged-kit path is delivered as a specifically
 identified engineering preview: the immutable GitHub prerelease tagged
-`v0.1.0-linux-preview.1`. That preview is published only by its release
-record — the maintainer runbook `docs/releases/linux-preview-release.md`, the
-retained release metadata under `docs/releases/`, and DELIVERY_PLAN.md
-section 62 — and by no other party or URL. Until that record exists the
-preview is pending and there is no kit download to trust; the operating path
-itself runs from a source installation on Linux today.
+`v0.1.0-linux-preview.1`. The [release handoff](https://github.com/wmqfl861/polymarket-alpha-lab/blob/eae037aa21bc827ebf0d33ec2f61d1d3d10f17f4/docs/releases/v0.1.0-linux-preview.1/handoff.md)
+lists its download, checksums, byte sizes and installation commands. See
+DELIVERY_PLAN.md section 62 for the recorded verification.
 
 **Python is still required.** This is a source + native database distribution,
 not a standalone executable, Python installer, prebuilt venv, or offline wheel
@@ -153,11 +150,8 @@ source commit/tree, target, engine version and file digests. Neither a kit nor a
 passing synthetic test establishes real model forecasting performance. The kit's
 wrong-platform rejection, permissions, integrity, fresh-extraction and actual
 first-start checks are exercised by the existing native distribution acceptance;
-a built ZIP is still not an approved release until that acceptance passes on the
-exact release tuple and the unchanged accepted ZIP is published through the
-maintainer runbook `docs/releases/linux-preview-release.md`. Durable publication
-with SHA256 values and byte sizes is recorded in DELIVERY_PLAN.md section 62 and
-the retained release metadata under `docs/releases/`.
+the retained release metadata identifies the exact published ZIP by checksum
+and byte size. The matching record is in DELIVERY_PLAN.md section 62.
 
 ## One operating path: discovery to retained simulation and settlement
 

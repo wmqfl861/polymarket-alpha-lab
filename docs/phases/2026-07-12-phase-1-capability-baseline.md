@@ -187,7 +187,5 @@ auditable evidence that:
 - memory readiness gates are reliable across teams;
 - local Supabase/Postgres persistence is consistently local-only and DSN
   validated;
-- independent read-only reviews pass for the relevant plan and code surfaces
-  under [Native Codex Subagent Routing](../../AGENTS.md#native-codex-subagent-routing);
 - credential handling, broker boundaries, risk limits, audit logging, rollback,
   and kill-switch design are documented as separate later-phase artifacts.

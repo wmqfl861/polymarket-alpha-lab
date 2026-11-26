@@ -1268,14 +1268,10 @@ stays the only accepted `egress_policy` value in
 [research_process_linux.py](../src/polymarket_alpha_lab/research_process_linux.py),
 there is still no `qualified=True` escape and no host-network fallback.
 
-A **mandatory independent design gate** (fresh read-only review subagent,
-Project Iron Rule 4) must return an explicit `VERDICT: PASS` on this design
-or its reviewed amendment before any transport implementation PR starts.
 Real provider calls and real credential use remain unauthorized here;
 `activation_authorized` stays false. The activation-record template and the
 precise subsequent source/test scope live in
-[research-dispatch.md](research-dispatch.md) so the next design gate can
-approve one bounded package.
+[research-dispatch.md](research-dispatch.md).
 
 ### The bounded fixed-origin relay
 
@@ -1452,8 +1448,7 @@ equivalent requires, in order:
    a fake service first, then through the approved relay with the reviewed
    trust configuration.
 2. An explicit decision approving exactly that demonstrated request set,
-   recorded in the activation record. Follow [Project Agent Routing](../AGENTS.md#project-agent-routing)
-   for independent review and delegated arbitration. Apply the approval boundary in the activation record.
+   recorded in the activation record with the applicable owner authorization.
 3. Relay enforcement of that set with the same fail-closed semantics as the
    Messages entry: zero, extra, duplicated or deviating preflight requests
    fail the call; no request is synthesized, answered locally or retried by

@@ -2867,8 +2867,8 @@ def main(argv: list[str] | None = None) -> int:
         f"(requires A, D and E PASS for confirmation). Entry stays deferred: "
         "earliest March 2027 per the feasibility calendar, and now conditional on the totals family clearing "
         "the 1.5c bar somewhere it currently does not; international 1X2 remains research-only.",
-        "Promotion is NOT decided by this harness: these are the coordinator's gate inputs; "
-        "an independent review (Project Iron Rule 4) precedes any shadow->entry transition.",
+        "This harness supplies the gate inputs. An independent assessment of the shadow results "
+        "precedes any shadow->entry transition.",
     ]
 
     results = {

@@ -637,8 +637,7 @@ Baseline: repository main `db6e2291` (2026-09-30). The post-L7 ruling
 (DELIVERY_PLAN.md §65) withheld effective activation pending a reviewed,
 approved record binding engineering, isolation, the credential procedure,
 and scoped authorization. The section records the **activation record
-template** and **precise subsequent source/test scope** for L8-D. Follow
-[Project Agent Routing](../AGENTS.md#project-agent-routing) for review and delegated arbitration.
+template** and **precise subsequent source/test scope** for L8-D.
 The provider transport and credential-ingress design itself is specified in
 [the L8-D section of the local-agent guide](research-local-agent.md#provider-transport-and-credential-ingress-design-l8-d-design-only);
 the two documents are one reviewed package. Everything here is design only:
@@ -647,10 +646,8 @@ the two documents are one reviewed package. Everything here is design only:
   `activation_authorized` changes only through an explicit activation
   decision after required owner approvals, never automatically when CI turns green.
 - The template is a review schema, not a runnable command, a new persistence
-  table or an API. It is recorded as evidence through the existing
-  documentation/PR path; no migration stores it.
-- Until the design gate passes and every engineering prerequisite has its
-  evidence reference, every field below stays a placeholder.
+  table or an API. No migration stores it.
+- Until every engineering prerequisite has its evidence reference, every field below stays a placeholder.
 
 ### Activation record template
 
@@ -658,7 +655,7 @@ the two documents are one reviewed package. Everything here is design only:
 activation_record_id : <operator-chosen unique ID>
 created_utc          : <UTC>
 status               : blocked | approved-not-yet-effective | effective
-deciding_authority   : <independent read-only arbitration verdict under AGENTS.md + owner confirmations>
+deciding_authority   : <owner authorization for the activation>
 valid_window_utc     : <from>/<to> (must cover the whole intended run)
 
 baseline_pins
@@ -676,9 +673,9 @@ runtime_isolation
                         shared-observer/inspection/sudo check>
 
 engineering_prerequisites   (each field cites its evidence; all mandatory)
-  cleanup_corrections       : <L8-A commit + review verdicts>
-  relay_design_gate         : <this design + independent VERDICT: PASS>
-  relay_implementation      : <relay PR commit + final review verdict>
+  cleanup_corrections       : <L8-A commit and cleanup evidence>
+  relay_design              : <fixed-origin design reference>
+  relay_implementation      : <relay implementation commit and qualification evidence>
   contained_qualification   : <official supplied-image run through the
                               actual contained factory/model path with a
                               fake service and dummy credentials>
@@ -745,15 +742,10 @@ evidence
   commands_results   : <exact commands, outputs, first failures,
                         retries, skipped and unexecuted steps>
 
-sign_off             : <operator, independent arbitration, and required owner approval references>
+sign_off             : <operator and required owner approval references>
 ```
 
-### Precise subsequent source and test scope
-
-A future transport implementation PR may touch exactly the files below.
-Anything outside this list, any relaxation of an offline guard, any online
-constructor added before the design gate, and any scope growth beyond these
-boundaries requires a newly reviewed design amendment first.
+### Transport components and tests
 
 | File | Change | Boundary |
 | --- | --- | --- |
@@ -767,33 +759,10 @@ boundaries requires a newly reviewed design amendment first.
 | `tests/test_research_claude_linux.py` | MODIFIED (additive) | Contained composition through the actual factory/client path against a synthetic loopback upstream with a dummy key. |
 | `tests/test_research_claude_relay_native.py` | NEW (opt-in) | Official supplied-image qualification through the actual contained factory/model path with a fake service and dummy credentials, gated by explicit environment opt-ins exactly like the existing supplied-image probe. |
 
-Ownership boundaries for the implementation phase: the relay module plus its
-new test file form one write scope; the `research_process_linux.py` wiring plus
-its test additions form a second, strictly sequenced after L8-A; the profile
-v3/operator wiring plus its tests form a third; the opt-in native
-qualification is a fourth. No two workers hold the same file; the coordinator
-alone updates `DELIVERY_PLAN.md`. Every scope keeps its focused tests, full
-verification, labeled self-review and a final independent read-only review
-with an explicit verdict. Audit-semantics changes inside
-`tests/test_project_postgres_uncapped_audit_native.py` remain L8-C's owned
-surface and enter only through a separately reviewed amendment.
+### Activation prerequisites
 
-### Scope sequencing note
-
-Scope 1 (`research_linux_relay.py` + its tests) must land before scope 3
-(the v3 digest branch binds the relay trust-configuration record type that
-scope 1 defines), in addition to the stated L8-A dependency of scope 2.
-Scopes 1 and 4 remain parallel-safe.
-
-### Gate ordering
-
-1. This design package (both documents) receives the mandatory independent
-   design gate verdict before any file above changes.
-2. Implementation proceeds only inside the enumerated scope, one owned scope
-   per worker, offline guards untouched.
-3. The relay qualification runs use fake services and dummy credentials first;
-   the official-image composition check is the ruling's new prerequisite, not
-   a repeat of L7 acceptance.
-4. Submit the completed record for independent read-only arbitration under
-   the root routing rule and obtain the required owner approvals. Only the
-   recorded effective-activation decision can authorize real research or credential use.
+The profile binds the relay trust configuration. Containment depends on the
+L8-A cleanup corrections. Qualification uses a fake service and dummy
+credentials through the actual contained factory, including an official-image
+composition check. Only the recorded owner decision can authorize real
+research or credential use.
