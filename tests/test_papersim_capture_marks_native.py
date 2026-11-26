@@ -1226,3 +1226,74 @@ def test_ordinary_and_registered_close_window_evidence_use_the_same_native_clock
     with store_psycopg.connect_managed(project.root) as reader:
         assert reader.execute("SELECT count(*) FROM papersim.command_run_events").fetchone()[0] == event_count[0] + 1
     assert _d1_capture_rows(project, case.candidate_ids) == before
+
+
+def test_register_close_window_through_managed_cli(d1_capture_project, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from polymarket_alpha_lab.papersim import prepare_capture, snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.d1compare import close_registration, operations
+
+    project = d1_capture_project
+    team = "OD-P prospective fixture"
+    with store_psycopg.connect_managed(project.root) as connection:
+        now = store_psycopg.d1_database_time(connection)
+    start = now + datetime.timedelta(minutes=10)
+    end = start + datetime.timedelta(hours=1)
+
+    def submit(a, b):
+        return subprocess.run(
+            [sys.executable, str(project.root / "tools/d1_compare.py"), "register-close-window",
+             "--repo-root", str(project.root), "--team", team, "--window-start", a.isoformat(),
+             "--window-end", b.isoformat()], cwd=project.root, capture_output=True, text=True, timeout=45)
+
+    # Simultaneous, equivalent requests must return the original clock, code and evidence.
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        attempts = list(pool.map(lambda _: submit(start, end), range(2)))
+    assert [result.returncode for result in attempts] == [0, 0]
+    first, second = (json.loads(result.stdout) for result in attempts)
+    assert first == second
+    assert first.keys() == {"interval_sha256", "byte_length", "close_window_policy", "registered_at",
+                            "starts_at", "ends_at", "code_commit"}
+    assert first["close_window_policy"] == "OD-P" and first["code_commit"] == project.head
+    assert now <= datetime.datetime.fromisoformat(first["registered_at"]) < start
+    assert first["starts_at"] == start.isoformat() and first["ends_at"] == end.isoformat()
+    digest = first["interval_sha256"]
+    with store_psycopg.connect_managed(project.root) as connection:
+        refs, doc = operations._registration(connection, "d1:interval-binding:v1:" + digest,
+                                            "d1-register-interval", operations._INTERVAL_KIND,
+                                            "d1:operation:interval:v1")
+        snapshot = snapshots.verify_snapshot(connection, digest)
+        assert snapshot["fetched_at"] == refs["occurred_at"]
+        assert snapshot["byte_length"] == first["byte_length"]
+        assert doc["instance_id"] == project.instance_id and doc["team"] == team
+        # A close-only interval does not change ordinary B0 discovery or the dual age policy.
+        assert prepare_capture._interval_reference(connection, project.instance_id, team, start, end) is None
+
+    overlap = submit(start + _SECOND, end + _SECOND)
+    assert overlap.returncode == 2 and overlap.stdout == ""
+    assert overlap.stderr.rstrip().endswith("d1_close_window_registration_overlap")
+    assert submit(end, end + _SECOND).returncode == 0  # Exclusive end is the next admissible start.
+
+    past = submit(now - _SECOND * 3, now - _SECOND)
+    assert past.returncode == 2 and past.stdout == ""
+    assert past.stderr.rstrip().endswith("d1_close_window_registration_not_prospective")
+
+    # An already registered interval remains readable (without creating another event) after it starts.
+    monkeypatch.setattr(store_psycopg, "d1_database_time", lambda conn: end + _SECOND)
+    assert close_registration.register(repo_root=project.root, team=team, starts_at=start, ends_at=end) == first
+
+    # A mid-transaction exception must not leave an unattested interval snapshot or success receipt.
+    bad_start, bad_end = end + datetime.timedelta(hours=2), end + datetime.timedelta(hours=3)
+    assert bad_start > end + _SECOND
+    def interrupt(*args, **kwargs):
+        raise RuntimeError("synthetic interruption")
+    monkeypatch.setattr(store_psycopg, "record_command_run_event", interrupt)
+    with pytest.raises(RuntimeError, match="synthetic interruption"):
+        close_registration.register(repo_root=project.root, team=team, starts_at=bad_start, ends_at=bad_end)
+    rejected_doc = dict(doc, starts_at=bad_start, ends_at=bad_end)
+    rejected = snapshots.snapshot_content_sha256(operations.document_bytes(rejected_doc))
+    with store_psycopg.connect_managed(project.root) as connection:
+        assert snapshots.read_snapshot(connection, rejected) is None
+        assert store_psycopg.read_command_run_event(connection, "d1:interval-binding:v1:" + rejected,
+                                                     1, "SUCCEEDED") is None

@@ -73,6 +73,10 @@ In the recorded Bundesliga-tagged window, 14 pages at offsets 0 through 13 retur
 
 ### Mark, settle and report
 
+To preserve a prospective OD-P research interval, register an explicitly chosen team and two UTC bounds in the designated managed research database using `tools/d1_compare.py register-close-window --repo-root "$REPO" --team "$TEAM" --window-start "$WINDOW_START" --window-end "$WINDOW_END"`. Use the project Python interpreter. The database clock must precede the start. The returned receipt binds the immutable interval digest, receiving time and code commit. An exact retry returns the original receipt. Intervals for the same team may meet at their endpoints.
+
+This command records the approved OD-P time rule and its intended interval. Capturing a match still requires a registered operation and a sealed, candidate-bound original buy-side book. This registration alone contributes zero observations or formal comparison days.
+
 Use the same shell function and set `MARK_CONFIG` to the config for the observed price packs, `TEAM` to the scheduled settlement team, and `MARK_KEY` and `SETTLE_KEY` to their respective operation keys. For a D1 operation, use the registered slot key.
 
 ```bash

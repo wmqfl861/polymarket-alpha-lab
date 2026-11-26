@@ -89,6 +89,24 @@ def _capture_time(value: str) -> datetime.datetime:
     raise argparse.ArgumentTypeError("expected an ISO 8601 timestamp with a UTC offset")
 
 
+def command_register_close_window(args: argparse.Namespace) -> int:
+    from polymarket_alpha_lab.papersim import scan, store
+    from polymarket_alpha_lab.papersim.d1compare import close_registration
+
+    try:
+        receipt = close_registration.register(repo_root=Path(args.repo_root), team=args.team,
+                                              starts_at=args.window_start, ends_at=args.window_end)
+    except (scan.ScanError, store.PapersimStoreError) as error:
+        print(f"d1_compare: register-close-window refused: {error.code}", file=sys.stderr)
+        return 2
+    except Exception:
+        # Driver and managed-instance diagnostics can contain connection material.
+        print("d1_compare: register-close-window failed: managed registration unavailable", file=sys.stderr)
+        return 2
+    print(json.dumps(receipt, sort_keys=True, allow_nan=False))
+    return 0
+
+
 def command_capture_inputs(args: argparse.Namespace) -> int:
     from polymarket_alpha_lab.papersim import prepare, store
     from polymarket_alpha_lab.papersim.d1compare import acquire
@@ -338,6 +356,13 @@ def build_parser() -> argparse.ArgumentParser:
     restore.add_argument("--staging-root", required=True)
     restore.add_argument("--repo-root", default=".")
     restore.set_defaults(handler=command_restore)
+
+    close_window = subparsers.add_parser("register-close-window", help="record a future OD-P research window")
+    close_window.add_argument("--repo-root", default=".", help="project root with managed PostgreSQL")
+    close_window.add_argument("--team", required=True, help="registered paper research team")
+    close_window.add_argument("--window-start", required=True, type=_capture_time, help="inclusive UTC start")
+    close_window.add_argument("--window-end", required=True, type=_capture_time, help="exclusive UTC end")
+    close_window.set_defaults(handler=command_register_close_window)
 
     capture = subparsers.add_parser(
         "capture-inputs", help="record public Gamma and CLOB responses for a UTC window")
