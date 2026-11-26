@@ -77,6 +77,8 @@ To preserve a prospective OD-P research interval, register an explicitly chosen 
 
 This command records the approved OD-P time rule and its intended interval. Capturing a match still requires a registered operation and a sealed, candidate-bound original buy-side book. This registration alone contributes zero observations or formal comparison days.
 
+The `registered_at` field gives the database time when the research interval was accepted. Formal OD-P pricing requires a separate activation receipt that binds the effective time to the exact legacy members present at activation. During a research interval, `capture-marks --inspect-close-window` reports how the proposed rule classifies a sealed observation. The ordinary B2 and registered D1 writers continue to use the effective pricing policy.
+
 Use the same shell function and set `MARK_CONFIG` to the config for the observed price packs, `TEAM` to the scheduled settlement team, and `MARK_KEY` and `SETTLE_KEY` to their respective operation keys. For a D1 operation, use the registered slot key.
 
 ```bash

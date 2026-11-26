@@ -357,7 +357,10 @@ def build_parser() -> argparse.ArgumentParser:
     restore.add_argument("--repo-root", default=".")
     restore.set_defaults(handler=command_restore)
 
-    close_window = subparsers.add_parser("register-close-window", help="record a future OD-P research window")
+    close_window = subparsers.add_parser(
+        "register-close-window", help="record a future OD-P research window",
+        description="Record a team's intended research interval. The receipt's registered_at is its "
+                    "database acceptance time. Formal OD-P pricing requires a separate activation receipt.")
     close_window.add_argument("--repo-root", default=".", help="project root with managed PostgreSQL")
     close_window.add_argument("--team", required=True, help="registered paper research team")
     close_window.add_argument("--window-start", required=True, type=_capture_time, help="inclusive UTC start")

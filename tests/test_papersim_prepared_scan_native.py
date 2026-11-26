@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import runpy
+import subprocess
 import sys
 import time
 import traceback
@@ -25,8 +26,9 @@ from polymarket_alpha_lab.papersim.d1compare import acquire, frozenrun, journal,
 from tests.test_papersim_adapter_polymarket import _response
 from tests.test_papersim_adapter_understat import FIXTURE as UNDERSTAT_FIXTURE
 from tests.test_papersim_capture_marks_native import (
-    _D1_NATIVE, _D1_TEAM, _d1_capture_cli, _d1_child, _d1_json_path, _d1_register_binding,
-    _d1_register_capture_slot, d1_capture_project,
+    _D1_NATIVE, _D1_TEAM, _d1_assert_written, _d1_capture_cli, _d1_capture_rows, _d1_child,
+    _d1_json_path, _d1_register_binding, _d1_register_capture_slot, _d1_seed_capture_case,
+    d1_capture_project,
 )
 from tests.test_papersim_fotmob import _details, _league_payload, _match
 from tests.test_papersim_scan_store_native import _seed_initial_cash
@@ -804,3 +806,64 @@ def test_prepared_fotmob_capture_binds_the_kickoff_instant(separate_project, fix
         assert all(item["sources"] is None for item in captured["targets"])
         assert not resolved.targets and len(resolved.excluded) == 4
         assert {target.reason_code for target in resolved.excluded} == {"papersim_prepare_model_materials_missing"}
+
+
+def test_research_interval_keeps_the_effective_policy_for_both_capture_writers(separate_project):
+    project = separate_project
+    with pg.connect_managed(project.root) as reader:
+        start = pg.d1_database_time(reader) + timedelta(seconds=4)
+    end = start + timedelta(hours=1)
+    registration = subprocess.run(
+        [sys.executable, str(project.root / "tools/d1_compare.py"), "register-close-window",
+         "--repo-root", str(project.root), "--team", _D1_TEAM, "--window-start", start.isoformat(),
+         "--window-end", end.isoformat()],
+        cwd=project.root, capture_output=True, text=True, timeout=45,
+    )
+    assert registration.returncode == 0, registration.stderr
+    receipt = json.loads(registration.stdout)
+    assert receipt["close_window_policy"] == "OD-P"
+    assert datetime.fromisoformat(receipt["registered_at"]) < start
+    time.sleep(max(0, (start - datetime.now(UTC)).total_seconds()))
+
+    # Both source clocks fall inside the registered research interval, more than
+    # an hour before expiry. Use distinct candidates so writer ownership is exact.
+    case = _d1_seed_capture_case(project, "research-interval-only", ("last-zero", "last-one"))
+    before = _d1_capture_rows(project, case.candidate_ids)
+    assert len(before["decision"]) == 2 and not before["mark"] and not before["close"]
+    ordinary_pack = _d1_json_path(case.directory, "ordinary-marks.json", [case.marks[0]])
+    ordinary_config = _d1_json_path(case.directory, "ordinary-config.json",
+                                    {"team": _D1_TEAM, "packs": [ordinary_pack.name]})
+    slot = _d1_register_capture_slot(case, "d1-slot", [case.marks[1]], candidate_ids=[case.candidate_ids[1]])
+    paths = [
+        ("ordinary_b2", ordinary_config, f"capture-marks|{_D1_TEAM}|research"),
+        ("registered_d1", slot.config, slot.key),
+    ]
+    for index, (path, config, key) in enumerate(paths):
+        mark = case.marks[index]
+        args = ["capture-marks", "--managed", "--repo-root", str(project.root),
+                "--config", str(config), "--operation-key", key]
+        inspected = _d1_child(project, [*args, "--inspect-close-window", case.capture_manifest_sha256])
+        assert inspected.returncode == 0, inspected.stderr
+        report = json.loads(inspected.stdout)
+        assert report["purpose"] == "read_only_close_window_evidence" and report["capture_path"] == path
+        item, = report["rows"]
+        observed = datetime.fromisoformat(item["source_observed_at"])
+        received = datetime.fromisoformat(item["received_at"])
+        assert start <= observed <= received < end
+        assert received < datetime.fromisoformat(item["boundary"]["boundary_utc"]) - timedelta(hours=1)
+        assert (item["sampling_kind"], item["reason"]) == ("PERIODIC", "observed_at_before_close_window")
+        assert item["candidate_id"] == case.candidate_ids[index] and item["book_sha256"] == mark["snapshot_sha256"]
+        assert not _d1_capture_rows(project, [case.candidate_ids[index]])["mark"]
+
+        if path == "registered_d1":
+            written = _d1_capture_cli(project, slot)
+        else:
+            written = _d1_child(project, [*args, "--attempt", "1"])
+        assert written.returncode == 0, written.stderr
+        summary = json.loads(written.stdout)
+        assert summary["marks_written"] == summary["close_evidence_written"] == 1
+        stored = _d1_capture_rows(project, [case.candidate_ids[index]])
+        stored_mark, = stored["mark"]
+        evidence, = stored["close"]
+        _d1_assert_written(stored_mark, mark, expected_kind="CLOSE")
+        _d1_assert_written(evidence, mark, expected_kind="CLOSE")
