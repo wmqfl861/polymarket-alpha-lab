@@ -1,0 +1,31 @@
+{
+  "owner_decision": "授权启用该账户的管理员批准模式并复查，暂不注销",
+  "policy": {
+    "observed_utc": "2026-11-26T14:24:41+00:00",
+    "facts": {
+      "enabled_before": false,
+      "enabled_after": true,
+      "changed_only_target_policy": true,
+      "uac_enabled_before_and_after": true,
+      "session_signed_out": false,
+      "machine_restarted": false
+    }
+  },
+  "postchange_task": {
+    "observed_utc": "2026-11-26T14:25:02+00:00",
+    "facts": {
+      "task_registered": true,
+      "last_scheduler_result": 41,
+      "ever_ran": true,
+      "end_ready": true,
+      "task_started": true,
+      "task_finished": true,
+      "result_is_standard": false,
+      "result_is_elevated": true,
+      "result_is_diagnostic_error": false,
+      "task_removed": true,
+      "interactive_principal_only": true
+    }
+  },
+  "state": "The current interactive logon still has an administrator token. The task has been removed. Production delivery continues on the previous route; a future sign-in can issue a new token."
+}
