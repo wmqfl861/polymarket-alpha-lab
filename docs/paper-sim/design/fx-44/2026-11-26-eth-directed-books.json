@@ -1,0 +1,187 @@
+{
+  "work": "FX-44 original public market and dual outcome books, before formal registration",
+  "source_commit": "c95c54ccc6e3a4dee687b5e3def6757c6815b36a",
+  "november_24_registered_plan_sha256": "82955f0bba461c8ef7f45363da153fab9765646a33e424ec9f13436ef1ec0846",
+  "public_observation_interval_utc": [
+    "2026-11-26T15:20:55.980114+00:00",
+    "2026-11-26T15:20:57.640314+00:00"
+  ],
+  "outcome": "BOTH_PUBLIC_DIRECTED_BOOKS_BOUND",
+  "contract": {
+    "boundary_field": "endDate",
+    "boundary_utc": "2026-11-27T17:00:00+00:00",
+    "official_market_condition_sha256": "9dfbb816541d824cabbd9a7be75b954d5d45ca9404266efe29a270323bb2e2d2",
+    "official_market_id_sha256": "5aaa42b7a9b653d1c5693a9f452ca0944d24956935a026232c8c3303bacdafa6",
+    "public_market_slug": "ethereum-above-1700-on-november-27-2026",
+    "public_question": "Will the price of Ethereum be above $1,700 on November 27?",
+    "source_pointer": "/0/markets/6",
+    "terminal_contract_and_explicit_binding_verified_for": [
+      "YES",
+      "NO"
+    ],
+    "terms_sha256": "ea6bc15244a85dacfb9b4c384cba05a9b053c479f53c99042dac61b75f4cb477"
+  },
+  "page_summary": {
+    "events": 4,
+    "markets": 24,
+    "supported_eth_terminals": 11
+  },
+  "request_sequence": [
+    {
+      "byte_length": 97256,
+      "received_at": "2026-11-26T15:20:56.933822+00:00",
+      "request_sequence": 1,
+      "role": "official_gamma_contract_page",
+      "sha256": "f5e4927cd71676afb5fc7dc8119e7ce1677165d19107408f7e51b46bf213ad18",
+      "started_at": "2026-11-26T15:20:55.980114+00:00"
+    },
+    {
+      "byte_length": 2256,
+      "received_at": "2026-11-26T15:20:57.347084+00:00",
+      "request_sequence": 2,
+      "role": "public_yes_book",
+      "sha256": "6ac5ba6c1cec8b445cc2af86614f25179ab64941c134c3b2830af8fc375e299d",
+      "started_at": "2026-11-26T15:20:57.031606+00:00"
+    },
+    {
+      "byte_length": 2256,
+      "received_at": "2026-11-26T15:20:57.638406+00:00",
+      "request_sequence": 3,
+      "role": "public_no_book",
+      "sha256": "5ca8dddb609399ccece72eaf36bd3957a597fb8cb7780bd6d64502bdc2b5fde3",
+      "started_at": "2026-11-26T15:20:57.349398+00:00"
+    }
+  ],
+  "quotes": [
+    {
+      "original_ask_levels": 38,
+      "original_bid_levels": 23,
+      "original_condition_matches": true,
+      "original_token_matches": true,
+      "prices": {
+        "ask": "0.37",
+        "bid": "0.36",
+        "last": "0.670",
+        "mid": null
+      },
+      "raw_byte_length": 2256,
+      "raw_sha256": "6ac5ba6c1cec8b445cc2af86614f25179ab64941c134c3b2830af8fc375e299d",
+      "read_only_time_classification": "PERIODIC",
+      "received_at": "2026-11-26T15:20:57.347084+00:00",
+      "request_sequence": 2,
+      "side": "YES",
+      "source_observed_at": "2026-11-26T15:20:57.210000+00:00",
+      "time_reason": "observed_at_before_close_window",
+      "token_id_sha256": "5659c97856be947475a32c2e69e2c0fa076dec35db3f088105bfb03212e3dbe1"
+    },
+    {
+      "original_ask_levels": 23,
+      "original_bid_levels": 38,
+      "original_condition_matches": true,
+      "original_token_matches": true,
+      "prices": {
+        "ask": "0.64",
+        "bid": "0.63",
+        "last": "0.670",
+        "mid": null
+      },
+      "raw_byte_length": 2256,
+      "raw_sha256": "5ca8dddb609399ccece72eaf36bd3957a597fb8cb7780bd6d64502bdc2b5fde3",
+      "read_only_time_classification": "PERIODIC",
+      "received_at": "2026-11-26T15:20:57.638406+00:00",
+      "request_sequence": 3,
+      "side": "NO",
+      "source_observed_at": "2026-11-26T15:20:57.210000+00:00",
+      "time_reason": "observed_at_before_close_window",
+      "token_id_sha256": "c02e7efb81a5d24cca88ba2e5ae247849a80a85d792db8b33d4604afd50d03c9"
+    }
+  ],
+  "sample_selection": "First supported active ETH terminal expiring at the fixed UTC instant, nearest published YES reference price to 0.5, tie by original JSON pointer. Both independently bound outcome books, YES followed by NO.",
+  "prospective_close_window_utc": {
+    "inclusive": "2026-11-27T16:00:00+00:00",
+    "exclusive": "2026-11-27T17:00:00+00:00"
+  },
+  "pg_storage": {
+    "backend": "project-managed PostgreSQL 18 snapshots",
+    "independent_read_results": {
+      "original_responses_checked": 3,
+      "documents_checked": 2,
+      "snapshots_read": 5,
+      "source_to_direction_and_dual_clock_comparisons": 2,
+      "raw_bytes_match": true,
+      "read_only_repeatable_read": true,
+      "separate_process": true,
+      "immutable_snapshot_triggers_verified": true,
+      "local_raw_staging_files": 0
+    },
+    "cluster_stopped": true,
+    "three_unique_source_digests": 3,
+    "original_bytes_recoverable_with_snapshot_api": true,
+    "initial_setup_note": "The first local archive initialization refused the sparse checkout because it omitted the locked Supabase migration sources. The original network reads were preserved. The missing tracked source directory was included in that same checkout before initialization succeeded."
+  },
+  "limits": {
+    "public_directions_verified": 2,
+    "identified_actual_B1_buy_side": null,
+    "B2_or_D1_successful_capture_rows": 0,
+    "project_scan_candidate_rows": 0,
+    "criterion_C_eligible_rows": 0,
+    "formal_days": 0,
+    "registered_formal_ODP_effective_at": null,
+    "source_occurrences": "Two actual requests for two different outcome tokens share an upstream source timestamp. Both have their own recorded UTC receipt and original bytes. This pair is distinct from repeated same-side acquisitions.",
+    "quote_interpretation": "The verified raw books report a last of 0.670 and no mid on both sides. Bid and ask stay separate, and neither this price nor the direction determines a B1 choice. Both observations precede the possible close window by over a day.",
+    "missing_for_registered_writer": [
+      "contiguous managed B1 prepared input and original DECISION identifying the side",
+      "independent target-specific decision inputs recorded before cutoff",
+      "registered paired capture slot and age evidence",
+      "formal OD-P barrier"
+    ],
+    "exact_identities_in_tracked_research": {
+      "searched_git_revisions": {
+        "source_checkout": "c95c54ccc6e3a4dee687b5e3def6757c6815b36a",
+        "other_local_main": "304d3e25a7339c39d9122aec3b5aa428837b2ce0"
+      },
+      "searched_tracked_text_tree_prefixes": [
+        "docs/paper-sim/ledger-snapshots",
+        "docs/paper-sim/design",
+        "docs/paper-sim/server-mirror",
+        "docs/paper-sim/research"
+      ],
+      "file_hits": {
+        "source_checkout": {
+          "exact_market_slug": 0,
+          "exact_condition": 0,
+          "exact_terms_digest": 0
+        },
+        "other_local_main": {
+          "exact_market_slug": 0,
+          "exact_condition": 0,
+          "exact_terms_digest": 0
+        }
+      },
+      "limitations": "Exact identities in tracked text only. Private or external collections and binary archives were not queried. A source contract or public reference price would not be an authenticated B1 decision."
+    },
+    "original_outside_time_window": "Neither public quote can become a later eligible closing observation. A fresh real acquisition and a genuine prior decision would be required in its own slot."
+  },
+  "coordination_receipts": {
+    "nov27-eth-public-source-prescope.json": {
+      "sha256": "c3f6eb9980e2436a16f6cc2278c9a85a7501ead3c947655c583211abce0c2cfc",
+      "bytes": 943
+    },
+    "nov27-eth-public-source-result.json": {
+      "sha256": "7e440ac4e9223bdf3853f6f57fb815653ba2b8035769690f54838280fef437ad",
+      "bytes": 4034
+    },
+    "nov27-eth-project-pg-readback.json": {
+      "sha256": "aef2f239acba8c44d9aac70aac4dd0a31f6e32273e4bd346f31530eb61edcedb",
+      "bytes": 967
+    },
+    "nov27-eth-pg-only-verification.json": {
+      "sha256": "d4ea9d38a8f14437dc452b4c91bdc238f7725e08ea9b0b7e1e62f1e9fe70ea79",
+      "bytes": 989
+    },
+    "nov27-eth-available-originals.json": {
+      "sha256": "18f9c77112c4bda0610aeb29cca4d6d7a422c99dc931d85222e251e230c7c084",
+      "bytes": 832
+    }
+  }
+}

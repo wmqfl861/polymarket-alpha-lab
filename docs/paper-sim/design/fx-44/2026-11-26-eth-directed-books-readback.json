@@ -1,0 +1,25 @@
+{
+  "source_result_sha256": "7e440ac4e9223bdf3853f6f57fb815653ba2b8035769690f54838280fef437ad",
+  "initial_readback_sha256": "aef2f239acba8c44d9aac70aac4dd0a31f6e32273e4bd346f31530eb61edcedb",
+  "archive_program_sha256": "1aecf56434920a0782934d37766157bfbcac9f81c41aa063d0c7890101cb038a",
+  "source_commit": "c95c54ccc6e3a4dee687b5e3def6757c6815b36a",
+  "persistent_store": "project-managed PostgreSQL 18 snapshots",
+  "cluster_stopped": true,
+  "reopened_cleanly_in_separate_network_namespace": true,
+  "original_acquisition_requests": 3,
+  "new_requests": 0,
+  "readback": {
+    "original_responses_checked": 3,
+    "documents_checked": 2,
+    "snapshots_read": 5,
+    "source_to_direction_and_dual_clock_comparisons": 2,
+    "raw_bytes_match": true,
+    "read_only_repeatable_read": true,
+    "separate_process": true,
+    "immutable_snapshot_triggers_verified": true,
+    "local_raw_staging_files": 0
+  },
+  "managed_scan_decisions": 0,
+  "managed_close_rows": 0,
+  "formal_days": 0
+}

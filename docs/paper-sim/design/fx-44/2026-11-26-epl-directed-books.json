@@ -1,0 +1,167 @@
+{
+  "scope": "Polymarket public research observations",
+  "acquisition_commit": "304d3e25a7339c39d9122aec3b5aa428837b2ce0",
+  "snapshot_engine_commit": "c95c54ccc6e3a4dee687b5e3def6757c6815b36a",
+  "acquisition_stage_sha256": "831d64c978250acd5ff7cc022fa3016694bdaf5ddd970b0de63b5b1eb21d90fd",
+  "precommitted_acquisition_scope_sha256": "edad30ae54912436e159c3a9da13d90d2d2cb9a286426f940fd16cb47a13e086",
+  "persistent_store": "Isolated project-managed PostgreSQL public research snapshot archive",
+  "reference_scheme": "papersim.snapshots.content_sha256",
+  "source_prefix": "fx44-epl-public-research:",
+  "originals": [
+    {
+      "source": "fx44-epl-public-research:gamma_sports",
+      "sha256": "ea7dee4f34de0cac1b412019d443b09744216af210e9c7782b1a9352b3277baa",
+      "byte_length": 157822,
+      "request_utc": "2026-11-26T15:28:04.944249+00:00",
+      "received_utc": "2026-11-26T15:28:06.358286+00:00"
+    },
+    {
+      "source": "fx44-epl-public-research:gamma_event_keyset",
+      "sha256": "77ac834db65c3e16fe6e4ce5ee0ce11189a294f8731e9b078a43cda8055e025b",
+      "byte_length": 675528,
+      "request_utc": "2026-11-26T15:28:06.388988+00:00",
+      "received_utc": "2026-11-26T15:28:08.748814+00:00"
+    },
+    {
+      "source": "fx44-epl-public-research:gamma_event_slug",
+      "sha256": "863e04d6d1c97f8a1a9d2c610da44272cd3bf77236e50ebf4da5e9797a198019",
+      "byte_length": 23443,
+      "request_utc": "2026-11-26T15:30:51.793383+00:00",
+      "received_utc": "2026-11-26T15:30:55.665457+00:00"
+    },
+    {
+      "source": "fx44-epl-public-research:clob_home_win_yes",
+      "sha256": "12b35368f9e3ffac678de5e07db2dd712a3987c8a0a15de62140c70047b41991",
+      "byte_length": 1910,
+      "request_utc": "2026-11-26T15:30:55.674683+00:00",
+      "received_utc": "2026-11-26T15:30:55.998774+00:00"
+    },
+    {
+      "source": "fx44-epl-public-research:clob_home_win_no",
+      "sha256": "d3f589c500113885a79f0ee944e1441227d2b7e5394443f3f5f82795a14ee2c1",
+      "byte_length": 1910,
+      "request_utc": "2026-11-26T15:30:56.000258+00:00",
+      "received_utc": "2026-11-26T15:30:56.256821+00:00"
+    }
+  ],
+  "fixture": {
+    "league": "Premier League",
+    "series_id": "10188",
+    "home": "Nottingham Forest FC",
+    "away": "Chelsea FC",
+    "slug": "epl-not-che-2026-11-27",
+    "venue_event_id": "1427080",
+    "kickoff_utc": "2026-11-27T20:00:00+00:00",
+    "kickoff_basis": "Two official Polymarket event responses plus their three market clocks. No independently archived league schedule."
+  },
+  "eligibility": {
+    "registered_scope_with_epl_parameter": "EPL",
+    "registered_scope_from_returned_tags_alone": null,
+    "supported_propositions": 0,
+    "supporting_terms": 0,
+    "full_time_binary_rows_examined": 3,
+    "directions_examined": 6
+  },
+  "markets": [
+    {
+      "public_market_id": "7179860",
+      "slug": "epl-not-che-2026-11-27-not",
+      "role": "home",
+      "gamma_event_pointer": "/0/markets/0",
+      "question": "Will Nottingham Forest FC win on 2026-11-27?",
+      "gamma_terms_fingerprint_sha256": "fea8489c1d3092d7da18b780b60d290149d5efcf4caf704b6b09248ab286ac21",
+      "description_utf8_sha256": "5204282f2f65e4e02d024bbddfc1e5330468ae32dffab793bf3a418d4fbcea95",
+      "outcome_labels": [
+        "Yes",
+        "No"
+      ],
+      "unresolved_cancellation_or_abandonment_default": "NO",
+      "no_acceptable_data_in_24h_default": "NO",
+      "constructor_results": {
+        "YES": "papersim_prepare_soccer_contract_terms_unproved",
+        "NO": "papersim_prepare_soccer_contract_terms_unproved"
+      }
+    },
+    {
+      "public_market_id": "7179861",
+      "slug": "epl-not-che-2026-11-27-draw",
+      "role": "draw",
+      "gamma_event_pointer": "/0/markets/1",
+      "question": "Will Nottingham Forest FC vs. Chelsea FC end in a draw?",
+      "gamma_terms_fingerprint_sha256": "e482bc3b41373fcf7107886eae4b9d57014ad7051a4d11e5b54a333475f5121f",
+      "description_utf8_sha256": "02edd04fd7a3af492a531827e92bf70410195a7c7328cae965452c7307063760",
+      "outcome_labels": [
+        "Yes",
+        "No"
+      ],
+      "unresolved_cancellation_or_abandonment_default": "YES",
+      "no_acceptable_data_in_24h_default": "YES",
+      "constructor_results": {
+        "YES": "papersim_prepare_soccer_contract_terms_unproved",
+        "NO": "papersim_prepare_soccer_contract_terms_unproved"
+      }
+    },
+    {
+      "public_market_id": "7179862",
+      "slug": "epl-not-che-2026-11-27-che",
+      "role": "away",
+      "gamma_event_pointer": "/0/markets/2",
+      "question": "Will Chelsea FC win on 2026-11-27?",
+      "gamma_terms_fingerprint_sha256": "48b2c70040f7fe22f79f528eb779f9e0f47c52f75095e484bdbe7f2bc9e1333c",
+      "description_utf8_sha256": "2aadf579a82cf298b404281ba0d219f37c13ae28a51498f51ca50e6ecb4f6da0",
+      "outcome_labels": [
+        "Yes",
+        "No"
+      ],
+      "unresolved_cancellation_or_abandonment_default": "NO",
+      "no_acceptable_data_in_24h_default": "NO",
+      "constructor_results": {
+        "YES": "papersim_prepare_soccer_contract_terms_unproved",
+        "NO": "papersim_prepare_soccer_contract_terms_unproved"
+      }
+    }
+  ],
+  "settlement_scope": "Regulation plus stoppage time. Already determined outcomes stand. Abandoned matches follow the specified official ruling, awarded, standing or completed result clauses before the fallback.",
+  "diagnostic_book_market_slug": "epl-not-che-2026-11-27-not",
+  "directed_books": [
+    {
+      "official_outcome": "YES",
+      "outcome_token_sha256": "cff20fb203f764cdf60135ed6c21bd1aed759bac1e594d05a4c6a80b157f4ad4",
+      "source_at": "2026-11-26T15:30:49.342000+00:00",
+      "received_at": "2026-11-26T15:30:55.998774+00:00",
+      "bid_levels": 18,
+      "ask_levels": 31,
+      "prices": {
+        "bid": "0.38",
+        "ask": "0.39",
+        "mid": null,
+        "last": "0.380"
+      },
+      "diagnostic_close_classification": "PERIODIC",
+      "classification_reason": "observed_at_before_close_window"
+    },
+    {
+      "official_outcome": "NO",
+      "outcome_token_sha256": "7fa84f06c887cbd62301cd290ee0ae56075ac9981d948ca792d9ddf726bddd58",
+      "source_at": "2026-11-26T15:30:49.342000+00:00",
+      "received_at": "2026-11-26T15:30:56.256821+00:00",
+      "bid_levels": 31,
+      "ask_levels": 18,
+      "prices": {
+        "bid": "0.61",
+        "ask": "0.62",
+        "mid": null,
+        "last": "0.380"
+      },
+      "diagnostic_close_classification": "PERIODIC",
+      "classification_reason": "observed_at_before_close_window"
+    }
+  ],
+  "operational_effect": {
+    "official_capture_batches": 0,
+    "prepared_candidates": 0,
+    "persisted_B1_buy_side": null,
+    "formal_close_rows": 0,
+    "formal_comparison_days_added": 0
+  }
+}

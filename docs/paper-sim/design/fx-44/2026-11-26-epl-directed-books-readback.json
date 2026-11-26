@@ -1,0 +1,41 @@
+{
+  "acquisition_stage_sha256": "831d64c978250acd5ff7cc022fa3016694bdaf5ddd970b0de63b5b1eb21d90fd",
+  "public_summary_sha256": "4638e9fdfd15eab8c60efa849d02c768338fc757bfcd658917bfaf53225f1bfd",
+  "initial_independent_verification_sha256": "f027d670c38084e24eac03b82c7c37cff340d57a1f6a71a00901a4a431cca192",
+  "verification_program_sha256": "3ef619d289e17435e4be0cf607e889275a1414ba20961d20bb77492bfcd74d0f",
+  "snapshot_engine_commit": "c95c54ccc6e3a4dee687b5e3def6757c6815b36a",
+  "source_prefix": "fx44-epl-public-research:",
+  "original_requests": 5,
+  "new_public_requests_during_archive": 0,
+  "durable_store": "Existing isolated project-managed PostgreSQL 18 research snapshot relation",
+  "disjoint_existing_eth_namespace_verified_before_and_after": 5,
+  "fresh_process_verified_all_five_against_original_staged_bytes": true,
+  "restarted_in_new_private_network_namespace": true,
+  "staged_epl_originals_removed_after_second_successful_readback": 5,
+  "final_pg_only_readback": {
+    "original_responses_checked": 5,
+    "verified_response_bytes": 860613,
+    "stored_digests_lengths_acquisition_timestamps_matched": true,
+    "immutable_snapshot_triggers": true,
+    "local_raw_staging_files": 0,
+    "read_only_repeatable_read": true,
+    "separate_process": true,
+    "business_rows": {
+      "candidates": 0,
+      "candidate_marks": 0,
+      "command_run_events": 0
+    },
+    "gamma_event_projections": 2,
+    "full_time_binary_rows": 3,
+    "constructor_side_rejections": 6,
+    "directed_book_checks": 2,
+    "directed_book_close_classifications": [
+      "PERIODIC",
+      "PERIODIC"
+    ]
+  },
+  "preexisting_eth_evidence_sha256": "d4ea9d38a8f14437dc452b4c91bdc238f7725e08ea9b0b7e1e62f1e9fe70ea79",
+  "cluster_stopped_and_data_preserved": true,
+  "production_changes": 0,
+  "formal_comparison_days_added": 0
+}
