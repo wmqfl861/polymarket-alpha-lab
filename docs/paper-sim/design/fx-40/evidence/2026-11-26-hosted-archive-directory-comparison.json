@@ -1,0 +1,52 @@
+{
+  "scope_cutoff_utc": "2026-11-26T01:54:41Z",
+  "published_names": {
+    "measured_utc": "2026-11-26T01:55:03.550776+00:00",
+    "actions_artifacts": 709,
+    "release_assets": 4,
+    "actions_case_specific_name_hits": 0,
+    "releases_case_specific_name_hits": 0,
+    "archive_bytes_read": 0,
+    "metadata_sha256": "eed1f540fcc67906d9cbd177b7277bc806c9c27cdcee4788d0634fbdc8c7102a"
+  },
+  "actions_outer_zip_directories": {
+    "measured_utc": "2026-11-26T03:35:47.535251+00:00",
+    "listed": 703,
+    "examined": 703,
+    "member_files": 1497,
+    "known_basename_hits": 0,
+    "case_label_hits": 0,
+    "same_uncompressed_size_hits": 0,
+    "nested_archives": 5,
+    "scope_list_sha256": "681bf0a298529a0f0322061952fb71cccb0e95bff0f34b5b70a1e335b1a6c4c0"
+  },
+  "inner_zip_directories": {
+    "measured_utc": "2026-11-26T05:19:59.175896+00:00",
+    "examined": 5,
+    "member_files": 15012,
+    "known_basename_hits": 0,
+    "case_label_hits": 0,
+    "same_uncompressed_size_hits": 10,
+    "inner_payloads_opened": 0
+  },
+  "crc32_comparison": {
+    "measured_utc": "2026-11-26T05:36:40.814389+00:00",
+    "archives": 5,
+    "retained_reference_files": 2,
+    "matching_size_entries_compared": 10,
+    "equal_size_and_crc32": 0,
+    "inner_payloads_opened": 0,
+    "verified_independent_custody": false
+  },
+  "comparison_scope": [
+    "The publication name inventory and the later frozen central-directory list had different counts. All 703 entries on the latter list were examined.",
+    "Inner ZIP directory headers supplied sizes and CRC32 values. The two retained local reference files were verified by their previously recorded length and SHA-256 before their CRC32 values were computed.",
+    "Different CRC32 values exclude byte identity for the ten specific same-size leads. The four historical cases still lack a full canonical comparison and independent custody. Private or other retained material is outside these observations."
+  ],
+  "original_receipt_sha256": {
+    "publication_name_inventory": "98b481ba52cad37790287baffdba2abcc97d17f462afa34622fa9d0a3156da29",
+    "actions_outer_directories": "5c0fef00eab3c406cc2308060c221bc4d1977d445790fe68f28a38b6d0a3b70a",
+    "inner_directories": "35f61a91a94bf1f818d0728a5d59b5ba1d01b539a2e3b0d7ea8c258e71e38acb",
+    "crc32_comparison": "ff6280c8607de6dd76713511b1a894c2804baada586e30348ed1b3b8a7312dd7"
+  }
+}
