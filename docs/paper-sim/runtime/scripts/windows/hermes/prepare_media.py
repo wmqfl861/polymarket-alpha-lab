@@ -46,8 +46,10 @@ def build(args):
         raise ValueError("wheel manifest count mismatch")
     part = args.output.with_name(args.output.name + ".partial")
     names = set()
-    with part.open("xb") as staging:
-        try:
+    # Only the process that created this staging file may clean it up.
+    staging = part.open("xb")
+    try:
+        with staging:
             with zipfile.ZipFile(staging, "w", allowZip64=True) as media:
                 def add(name, contents, stored=False):
                     keys = name.split("/")
@@ -81,14 +83,14 @@ def build(args):
                 for filename in ("fixed_entry.py", "windows-requirements.lock", "upstream-inputs.json"):
                     add(filename, (HERE / filename).read_bytes())
                 add("hermes.exe", args.launcher.read_bytes())
-            staging.flush()
-            with zipfile.ZipFile(part) as check:
-                if check.testzip() is not None:
-                    raise ValueError("archive CRC failure")
-            # Hard links give the completed file its final name atomically and never overwrite it.
-            args.output.hardlink_to(part)
-        finally:
-            part.unlink(missing_ok=True)
+        # Windows requires the writer to release its handle before publication and cleanup.
+        with zipfile.ZipFile(part) as check:
+            if check.testzip() is not None:
+                raise ValueError("archive CRC failure")
+        # Hard links give the completed file its final name atomically and never overwrite it.
+        args.output.hardlink_to(part)
+    finally:
+        part.unlink(missing_ok=True)
     return {"files":len(names),"bytes":args.output.stat().st_size,"sha256":hash_file(args.output)}
 
 
