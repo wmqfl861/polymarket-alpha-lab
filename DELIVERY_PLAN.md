@@ -8,6 +8,8 @@
 
 机主看过根文件成稿后答复“确认这份成稿，合入 main”。开发用工作流已由 `128a3680` 删除。[PR #138](https://github.com/wmqfl861/polymarket-alpha-lab/pull/138) 合并提交为 `ca1026df`，合入的 `AGENTS.md` 与[确认稿](https://github.com/wmqfl861/polymarket-alpha-lab/blob/868ba6d288622a37f327def9108ec238c4a5c69a/AGENTS.md) 的 SHA-256 均为 `a6ee66f578ac07166838981ba7a21519bfc20815a95e32138d250f3f7bb24115`。
 
+11 月 24 日审核的后续处置、两个 P1 的现场缺项、市场准备原生回归和 M2 实测见[11 月 26 日修复进展](docs/paper-sim/design/optimizer-phase1/2026-11-26/audit-followup.md)。
+
 ## 状态板（2026-11-20）
 
 | 线 | 当前状态 | 剩余工作 |
@@ -4693,7 +4695,7 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 `8c736e3f` 修正了 Windows 替身演练对原生拒绝的核对。初次发送、清理前查回执、清理和重试后再读取，都必须保留同一个字符串拒绝原因；协议、目的、摘要和退出码也须符合约定类型。Linux 对 13 种合成情况的实测显示，原演练误收 7 种错误响应，修订后仅接受 1 种完整结果。传输和固定脚本模块复跑分别为 79/79、21/21。新演练脚本 SHA-256 为 `8b92416529e6fff7c6f0e9fdace061eec27a7d058e7bfee186e164bee7963bde`。历史托管 Windows 失败用的是更早的演练夹具，仍需目标 Windows 的现场回执。现行演练器核对进程级策略为 `Undefined`；放置程序对有效策略的检查与操作系统对签名的要求分属不同环节。[修复前后逐例结果及两次 JUnit](docs/paper-sim/design/fx-49/2026-11-26-linux-fixed-entry-acceptance.json)
 
-两个连接池的公网限制已分别从独立测点复查。项目原生数据库单次外测为超时。登录入口的现有外测回执为 `NO_OBSERVATION`，认证方法未知。11 月 26 日只读核对 GitHub，`main` 的 `protected` 字段为 `false`。[原生数据库外测](docs/paper-sim/design/fx-36/2026-11-24-native-public-observation.json) · [登录观测原件](docs/paper-sim/design/fx-36/2026-11-24-login-public-observation.json)
+两个连接池的公网限制已分别从独立测点复查。项目原生数据库单次外测为超时。登录入口的现有外测回执为 `NO_OBSERVATION`，认证方法未知。11 月 26 日只读核对 GitHub，`main` 的 `protected` 字段为 `false`。[11 月 26 日公开设置与现有回执核对](docs/paper-sim/design/fx-36/2026-11-26-publication-and-login-status.json) · [原生数据库外测](docs/paper-sim/design/fx-36/2026-11-24-native-public-observation.json) · [登录观测原件](docs/paper-sim/design/fx-36/2026-11-24-login-public-observation.json)
 
 #### 84.2.5 历史优化卡
 

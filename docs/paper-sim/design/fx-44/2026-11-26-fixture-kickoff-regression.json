@@ -34,5 +34,36 @@
     }
   },
   "field_scope": "These existing public-window receipts contain no qualifying paper entry. The offset correction is proven in the fixture path. A prospective ordinary B1 paper entry, its own B2 valuation and D1 comparison against qualifying originals are still needed for operational evidence. This work contributes no formal comparison day.",
-  "test_setup_deviation": "The first commit command in the isolated baseline clone had no configured author. Git included a machine-generated local author identifier in its terminal diagnostic. The control subsequently used a fixture-only identity. The isolated baseline clone was removed; this receipt omits the identifier."
+  "test_setup_deviation": "The first commit command in the isolated baseline clone had no configured author. Git included a machine-generated local author identifier in its terminal diagnostic. The control subsequently used a fixture-only identity. The isolated baseline clone was removed; this receipt omits the identifier.",
+  "published_module_verification": {
+    "utc": "2026-11-26T08:17:54.044641+00:00",
+    "commit": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+    "test_module": "tests/test_papersim_prepared_scan_native.py",
+    "isolation": "temporary clean Git clone and separate project-native PostgreSQL with isolated network",
+    "exit_code": 0,
+    "stages": [
+      {
+        "stage": "isolation"
+      },
+      {
+        "counts": {
+          "collection_errors": 0,
+          "deselected": 0,
+          "passed": 11,
+          "receipts": 0,
+          "rejected_receipts": 0,
+          "selected": 11
+        },
+        "exit_code": 0,
+        "result": "passed",
+        "stage": "pytest"
+      }
+    ],
+    "console_sha256": "ad724f403e5ce042a9459693b19516ed745adbdb9e761ec2f3ab94a931b4358f"
+  },
+  "verification_setup": {
+    "first_wrapper_exit": 2,
+    "first_attempt_executed_tests": 0,
+    "change": "Called the existing test wrapper with its supported flags before executing the complete module."
+  }
 }

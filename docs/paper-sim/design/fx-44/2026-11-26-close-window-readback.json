@@ -1,0 +1,227 @@
+{
+  "examined_main": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+  "test_scope": "Ordinary capture-marks handler through capture.run_capture and its store, plus the actual managed evaluation reader and evaluation.evaluate_queues. Synthetic records in disposable native PostgreSQL with isolated Unix sockets; no operational data or optimizer run.",
+  "original_coordinator_receipt_sha256": "2ea29c371465d3d02f19fd5291671613e25bf3f41620dd670687e2890b80b39c",
+  "observations": [
+    {
+      "requirement": "59 分钟可成为 CLOSE；61 分钟只能记为普通观察，标准 C 计为缺失。",
+      "actual": "同一已入场候选，两个独立样例在取价前均为 0/1。单独取 59 或 61 分钟的报价后各有 1 条候选 CLOSE 和 1 条 CLOSE 价格证据，均未降级；标准 C 各变为 1/1。现行普通取价未满足 61 分钟反例。",
+      "tests": "test_current_capture_counts_single_prestart_quote (59 and 61 minutes)",
+      "cases": [
+        {
+          "minutes_before_boundary": 59,
+          "close_rows": 1,
+          "covered": 1,
+          "eligible": 1
+        },
+        {
+          "minutes_before_boundary": 61,
+          "close_rows": 1,
+          "covered": 1,
+          "eligible": 1
+        }
+      ]
+    },
+    {
+      "requirement": "同一候选以开赛或到期前 60 分钟内观察时间最晚的一笔为收盘价；只从带新版本的登记后取价开始生效。",
+      "actual": "普通取价的 candidate_marks 每个候选至多 1 条 CLOSE。两笔入窗报价分两次提交，不论先提交 59 分钟还是 1 分钟，均保留先成功提交的那笔；重复相同包幂等，第二笔不同报价报 papersim_candidate_close_conflict。两笔同包也报 FAILED，但第一笔已提交且进入覆盖。市场价格证据表没有相同的每候选唯一限制，标准 C 按 evidence_id 顺序取最后一条 CLOSE，没有按 observed_at 取最新。",
+      "legacy_evidence_example": "合法的 record_scan 依次提供赛前 1 分钟的 0.82、59 分钟的 0.71，两条证据均存，评估选 0.71；再用普通取价提交赛前 20 分钟的 0.76 后，价格证据共 3 条，候选 CLOSE 标记为 1 条，评估选 0.76。",
+      "current_promotion_rules_version": "odg-registered-2026-11-13+odk",
+      "new_rule_effective": false,
+      "tests": [
+        "test_first_persisted_close_survives_second_run (both ingestion orders)",
+        "test_one_pack_conflict_keeps_first_individually_committed_row",
+        "test_scan_evidence_last_identity_wins_over_later_source_observation"
+      ]
+    }
+  ],
+  "product_git_blobs": {
+    "src/polymarket_alpha_lab/papersim/capture.py": "f8739e81c24bc5d92906dfafeb8bf51be7745fb6",
+    "src/polymarket_alpha_lab/papersim/store_psycopg.py": "c883744c05eea0b288796af7a1d6cfeb1c3e7532",
+    "src/polymarket_alpha_lab/papersim/cli.py": "815cfb0a44a3f7fe942083a4ffbecda9addd24d9",
+    "src/polymarket_alpha_lab/papersim/evaluation.py": "82a61edcee35f6b1895151090f78015e143b4d30",
+    "tests/test_papersim_capture_marks_native.py": "e697537a2493c7a2acba92b0ad96dd279f2b9620",
+    "database/papersim/migrations/20261116000000_papersim_m2_operations.sql": "110da799c692eafe6f1ddb0718474d035bf0c941",
+    "database/papersim/migrations/20261115000100_papersim_v2_core.sql": "b3477f4a6fd801f246aede8dad1300da86259536"
+  },
+  "native_execution": {
+    "utc": "2026-11-26T08:15:19.210589+00:00",
+    "counts": {
+      "passed": 6,
+      "selected": 6,
+      "skipped": 0
+    },
+    "rows": [
+      {
+        "checks": "passed",
+        "driver": "binary",
+        "managed_roles": 2,
+        "network": "unix",
+        "postgres": "unix",
+        "stage": "isolation"
+      },
+      {
+        "cases": [
+          {
+            "case": 1,
+            "outcome": "passed",
+            "test": "tests/test_visible_criterion_c_storage.py::test_current_capture_counts_single_prestart_quote"
+          },
+          {
+            "case": 2,
+            "outcome": "passed",
+            "test": "tests/test_visible_criterion_c_storage.py::test_current_capture_counts_single_prestart_quote"
+          },
+          {
+            "case": 3,
+            "outcome": "passed",
+            "test": "tests/test_visible_criterion_c_storage.py::test_first_persisted_close_survives_secondcapture_pack"
+          },
+          {
+            "case": 4,
+            "outcome": "passed",
+            "test": "tests/test_visible_criterion_c_storage.py::test_first_persisted_close_survives_secondcapture_pack"
+          },
+          {
+            "case": 5,
+            "outcome": "passed",
+            "test": "tests/test_visible_criterion_c_storage.py::test_one_pack_conflict_keeps_first_individually_committed_row"
+          },
+          {
+            "case": 6,
+            "outcome": "passed",
+            "test": "tests/test_visible_criterion_c_storage.py::test_scan_evidence_last_identity_wins_over_later_source_observation"
+          }
+        ],
+        "collection_errors": [],
+        "counts": {
+          "collection_errors": 0,
+          "deselected": 0,
+          "passed": 6,
+          "receipts": 0,
+          "rejected_receipts": 0,
+          "selected": 6
+        },
+        "exit_code": 0,
+        "result": "passed",
+        "stage": "pytest"
+      }
+    ],
+    "original_sha256": "2c9df392279d2367c3c4715e278cf8426eb51e13d99cd96244d2867364426d2a"
+  },
+  "quote_sources": {
+    "tested_commit": "90dc15517de19cb72f47bc5d7d50f80bd5e8e6d0",
+    "matching_capture_store_and_evaluation_blobs_at_examined_main": true,
+    "source_fields": {
+      "prepared_quote_clock": "prepare_capture._targets and prepare._record derive the binding from Gamma gameStartTime for domestic soccer and endDate for crypto. The sealed target has event_start_at and expires_at; prepare_inputs._resolve_target checks the market clock, MarketTarget materialization preserves expiry_at and event_start_at, scan persists the derived boundary in candidates.event_start_at.",
+      "unprepared_pack_clock": "d1compare.packbuild.events_materials derives the same sport/crypto boundary. An older candidate without a proved boundary remains unknown; missing values and unsupported sports must not be reconstructed by assumption.",
+      "ordinary_row": "store_psycopg.candidate_capture_target returns candidate_id and event_start_at only. Mark packs contain observed_at, candidate/scan reference, buy side, token, bid/ask/mid/last, source reference, and optional upstream snapshot digest. Ordinary run_capture registers the pack bytes, includes its hash in the receipt, and persists mark and eligible CLOSE evidence. The timestamp of archive registration is not independently verified provider receipt time.",
+      "d1_quote_witness": "capture._d1_quote validates condition and token, request_sequence, raw book digest and byte length, source timestamp, upstream source status, received_at, as-of cutoff, and both age limits; it reconstructs the raw buy-side quote. The sealed plan records claimed and observed prices and rejection reasons. d1compare.operations._Operation._process_capture binds mark/close rows and write times to first-write evidence, checked on replay. Optional scoring evidence returns selected CLOSE row id, price, side-filtered provenance, time and digest.",
+      "single_close": "mark_capture_upsert plus the existing partial unique index enforce one candidate CLOSE. Later independent observations may be staged as periodic marks at their own observation times; replay of the identical CLOSE is distinct from replacing it with a second observation."
+    },
+    "managed_entry_contracts": {
+      "prepared_d1": "FX-40 plan-v3.md line 126 explicitly requires B0/B2 to share the original capture batch, request sequence and purchased token. Line 119 identifies independent checks on the market, decision, token, book, slot and freshness. For candidates covered by scan_preparation, _d1_capture_materials also verifies the interval digest. A distinct subsequent manifest is correctly refused. This requirement is retained.",
+      "direct_d1": "A directly packed B1 candidate without the preparation binding can consume a later independent, pre-sealed D1 buy-side book in a registered capture slot with its original identifiers and full D1 quote checks. The existing native case uses separate B1 and B2 manifests. This covers the direct mode; changing a prepared candidate into an unprepared one is outside this result.",
+      "ordinary": "The ordinary non-D1 capture-marks --managed interface accepts a conditional subsequent observation as its own pack after decision time and earlier than the stored boundary, persistently linking the pack. A subsequent second CLOSE is correctly refused. This path does not produce the D1 per-item manifest witness and cannot be counted as one."
+    },
+    "native_checks": [
+      {
+        "purpose": "Prepared candidate and two correctly sourced batches; first registered periodic write succeeds, distinct later batch fails with the exact policy binding diagnostic and business rows remain identical.",
+        "receipt_sha256": "7d24e8726e05a71133ae53a4878709859dcc76b49f1d92cd58e81c025ac98994",
+        "result": {
+          "date_utc": "2026-11-26T08:08:03.617090+00:00",
+          "head": "90dc15517de19cb72f47bc5d7d50f80bd5e8e6d0",
+          "lane": "prepared",
+          "exit": 0,
+          "counts": {
+            "passed": 1
+          },
+          "traceback_source_lines": [],
+          "stdout_sha256": "78eb881914c899f07fb9025e24ad7e0a224953671d0b673583345cd18ca1298c",
+          "stdout_bytes": 99
+        }
+      },
+      {
+        "purpose": "Directly packed B1 with separate B2 public-book batch and managed capture slot; two existing normal D1 tests cover quote values, market and buy-side identity, freshness and unattributed writes.",
+        "receipt_sha256": "ed17117c8cb577bedf095d717534652f9f62c5f6a7cec2ce2ec9de759c065e7e",
+        "result": {
+          "date_utc": "2026-11-26T08:08:31.680613+00:00",
+          "head": "90dc15517de19cb72f47bc5d7d50f80bd5e8e6d0",
+          "lane": "direct",
+          "exit": 0,
+          "counts": {
+            "passed": 2
+          },
+          "traceback_source_lines": [],
+          "stdout_sha256": "87a258113e1783f13235eb27b7bbd8cb95f3911ba6a68cdb6504dd259b13403d",
+          "stdout_bytes": 109
+        }
+      },
+      {
+        "purpose": "Ordinary managed CLI writes initial periodic + later CLOSE, reopens both raw packs and mark rows, refuses a second later CLOSE and preserves the first CLOSE.",
+        "receipt_sha256": "0152ed033cde6ff39ffcabbdc71383124fca94dcce25f1ae10aa89f6c5ebf71c",
+        "result": {
+          "date_utc": "2026-11-26T08:12:16.197582+00:00",
+          "head": "90dc15517de19cb72f47bc5d7d50f80bd5e8e6d0",
+          "lane": "ordinary",
+          "exit": 0,
+          "counts": {
+            "passed": 1
+          },
+          "traceback_source_lines": [],
+          "stdout_sha256": "f83e54db4da1c550961d5990eaa4ebdaadd4f9720d146b23a59339ea8bac45a9",
+          "stdout_bytes": 99
+        }
+      }
+    ],
+    "test_setup_deviations": [
+      "Two preliminary pytest processes were stopped to remove the default JUnit XML reporter, which includes an automatic hostname. Both temporary XML metadata outputs were removed; final runs saved only counts and output hashes.",
+      "The first ordinary-pack probe confused the metadata-only verify_snapshot result with the full raw snapshot row. The corrected probe verifies metadata and retrieves bytes with read_snapshot. Its initial aggregate receipt is retained in visible-policy-work/ordinary-probe-before-fix.json."
+    ]
+  },
+  "staged_window_rule": {
+    "branch": "work/fx44-close-window-and-m2-guide",
+    "head": "4cc5addb0a0cb2015cff4e9c824145854c85c843",
+    "registration_in_production": null,
+    "registered_forward_days": 0,
+    "focused_on_staged_head": {
+      "ref": "4cc5addb0a0cb2015cff4e9c824145854c85c843",
+      "base": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+      "tested_at_utc": "2026-11-26T08:19:46.505614+00:00",
+      "focused_passed": 59,
+      "stdout_sha256": "6e55c8d8b83a6929fa81af89eba8f96ee168543ceb4cc83684d493baa4e5914a",
+      "test_delta": "totals: removed tests=0 tests with fewer checks=0 new skip markers=0 new xfail markers=0",
+      "added_sensitive_matches": 0,
+      "production_enabled": false
+    },
+    "window_and_coverage_tests": {
+      "offline": {
+        "passed": 275,
+        "skipped": 5,
+        "skip_reason": "Existing opt-in native PostgreSQL cases, run separately."
+      },
+      "native": {
+        "status": "passed",
+        "selected": 17,
+        "passed": 17,
+        "skipped": 0,
+        "includes_five_offline_optins": true,
+        "isolated_postgresql": true,
+        "prior_launch_failure": "The first temporary checkout directory blocked the test sandbox from entering its working directory; no tests started. A clean checkout in an ordinarily traversable child directory then ran successfully."
+      },
+      "legacy_full_summary_bytes": {
+        "B2_recorded_output_evidence": {
+          "identical_bytes": true,
+          "byte_length": 735,
+          "sha256": "d86701ea26a851adcd91c108a909074d20d7c1d7518dc22a53595d78516746fe"
+        },
+        "D1_canonical_summary": {
+          "identical_bytes": true,
+          "byte_length": 1094,
+          "sha256": "761e16e71af44685ad37e8a085ce5e7e4149296d478267b64cfb9a3b483e7c28"
+        }
+      }
+    },
+    "scope": "The staged B2/D1 summary supports a pre-window downgrade. The proposed classifier has no production callers. Old assessment, policy registration and production routing are unchanged by the staged branch."
+  }
+}

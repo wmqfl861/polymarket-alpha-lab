@@ -1,0 +1,37 @@
+{
+  "public_repository_metadata": {
+    "utc": "2026-11-26T08:21:49.307930+00:00",
+    "main": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+    "protected": false,
+    "source": "GitHub public branch metadata"
+  },
+  "external_results": {
+    "first_pool_external_recheck": {
+      "receipt": "2026-11-24-first-restriction-confirmed.json",
+      "sha256": "9f3ba9a7495fbf44fefecb01956bd248093b2078b5d65e05edb4154af42f6216",
+      "conclusion": "restriction_confirmed_at_external_observer"
+    },
+    "second_pool_external_recheck": {
+      "receipt": "2026-11-24-second-restriction-confirmed.json",
+      "sha256": "478089a00d47f617066b68030cf9ea5a4a3fb3adc9038a6dbf9f88c28621cb5c",
+      "conclusion": "restriction_confirmed_at_external_observer"
+    },
+    "native_database_observation": {
+      "receipt": "2026-11-24-native-public-observation.json",
+      "sha256": "1ac541dd09e8387629071bea92d7fdfe65a425cc866248a9bfb7d2d270743bf3",
+      "conclusion": "timed_out"
+    },
+    "login_observation": {
+      "receipt": "2026-11-24-login-public-observation.json",
+      "sha256": "9a6579739a0acf04e940de48478daab39121157f1f0bf090f375de5004831744",
+      "conclusion": "NO_OBSERVATION"
+    }
+  },
+  "existing_receipts_checked_at_utc": "2026-11-26T07:50:52+00:00",
+  "new_external_observations_found": false,
+  "read_only_inventory_new_target_connections": 0,
+  "external_login_reachability": "unknown",
+  "server_advertised_authentication_methods": null,
+  "status": "open",
+  "observation_scope": "The November 26 inventory read existing sanitized receipts. Only the public GitHub branch metadata was queried online."
+}

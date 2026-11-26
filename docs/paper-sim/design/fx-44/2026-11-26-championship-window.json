@@ -1,0 +1,287 @@
+{
+  "main_commit": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+  "tag": "championship",
+  "first_public_window": {
+    "receipt": {
+      "attempt": 1,
+      "b1": {
+        "conclusion_counts": {
+          "ACCEPTED": 0,
+          "CONSTRUCTED": 0,
+          "CONSTRUCTION_FAILED": 0,
+          "REJECTED": 0
+        },
+        "persisted_candidate_count": 0,
+        "persisted_entry_count": 0,
+        "reported_counts": {
+          "accepted": null,
+          "candidate_count": null,
+          "candidate_ids_count": null,
+          "constructed": null,
+          "entry": null,
+          "entry_ids_count": null,
+          "rejected": null
+        },
+        "scan_binding_verified": true
+      },
+      "b2": {
+        "basis": "public_mark_not_measured",
+        "status": "open"
+      },
+      "capture": {
+        "decision_as_of_status": "valid",
+        "decision_as_of_utc": "2026-11-26T08:14:47.750973+00:00",
+        "exit_code": 0,
+        "finished_utc": "2026-11-26T08:14:47.962323+00:00",
+        "product_status": "sealed",
+        "reason_code": null,
+        "reported_request_count": 1,
+        "started_utc": "2026-11-26T08:14:45.140549+00:00",
+        "status": "json_received"
+      },
+      "category": "incomplete",
+      "collector": {
+        "exit_code": 0,
+        "finished_utc": "2026-11-26T08:14:56.118531+00:00",
+        "started_utc": "2026-11-26T08:14:17.162935+00:00",
+        "status": "json_received"
+      },
+      "comparisons": {
+        "candidate_counts_match": null,
+        "cutoff_matches_cli_when_reported": true,
+        "entry_counts_match": null,
+        "fixture_head_matches": true,
+        "request_count_matches_cli_when_reported": true
+      },
+      "exit_code": 1,
+      "first_missing_phase": "b1_count_comparison",
+      "fixture_teardown_verified": true,
+      "formal_days_counted": 0,
+      "frozen_product_round_seconds": 900,
+      "hashes": {
+        "batch_sha256": "53ee31048dd4d46f573faea2fef4c7c1e7a708df1df662765f767f397f87fc53",
+        "config_sha256": "bedeb963d67e3e53ec9e63825215a0ef0b6ee5caf1b6f913d981caacd37fc55e",
+        "interval_sha256": "185a566a2bb8b74740bea44b510782a5b3543535ec5505baf797f8204031246a",
+        "prepared_input_sha256": "b223ebde8a69c41e8ed6798f8e20a605ac20ce39bb2c10078369dd68ed7d854f",
+        "scan_input_sha256": "b223ebde8a69c41e8ed6798f8e20a605ac20ce39bb2c10078369dd68ed7d854f"
+      },
+      "pinned_source_commit": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+      "prior_helper_sha256": "75e69aa09a3eb0594f7e4ea6115dddeb105332b58cbc203ba975a22b7a2c3955",
+      "readback": {
+        "body_integrity": {
+          "digest_match_unverified_count": 0,
+          "duplicate_verified_byte_pairs": 0,
+          "length_mismatch_count": 0,
+          "manifest_length_unavailable_count": 0,
+          "manifest_retained_body_count": 1,
+          "returned_body_count": 1,
+          "status": "verified",
+          "verified_body_byte_count": 3,
+          "verified_body_count": 1
+        },
+        "decision_as_of_status": "valid",
+        "decision_as_of_utc": "2026-11-26T08:14:47.750973+00:00",
+        "decision_cutoff_utc": "2026-11-26T08:14:47.750973+00:00",
+        "eligible_verified_count": 1,
+        "manifest_request_count": 1,
+        "status": "measured",
+        "status_counts": {
+          "received": 1
+        },
+        "window_status_counts": {
+          "in_window": 1
+        }
+      },
+      "readback_process": {
+        "exit_code": 0,
+        "finished_utc": "2026-11-26T08:14:49.504010+00:00",
+        "started_utc": "2026-11-26T08:14:47.962670+00:00",
+        "status": "json_received"
+      },
+      "scan": {
+        "exit_code": 0,
+        "finished_utc": "2026-11-26T08:14:52.489680+00:00",
+        "started_utc": "2026-11-26T08:14:49.504181+00:00",
+        "status": "json_received"
+      },
+      "scheduled_window_seconds": 960,
+      "schema": "fx44-prospective-960-single-tag-v1",
+      "tag_slug": "championship",
+      "verified_checkout_head": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+      "verified_decision_cutoff_utc": "2026-11-26T08:14:47.750973+00:00",
+      "verified_fixture_head": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+      "window": {
+        "end_utc": "2026-11-26T08:30:45.139938+00:00",
+        "start_utc": "2026-11-26T08:14:45.139938+00:00"
+      },
+      "source_checkout": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+      "diagnostic_only": true,
+      "official_days_counted": 0,
+      "process_exit": 1,
+      "completed_utc": "2026-11-26T08:14:56.148363+00:00",
+      "collector_sha256": "c9cd08ac6a2c2a9a5d20d9fb17f87a5e8dbb491cce3559f35b72c730f23a2efc",
+      "original_receipt_sha256": "c1d85a499c2e878650c7978c3d97f72f6c4c7d573e8a2c95a9c733c54c9d33b9",
+      "scope_note": "Isolated managed fixture. One registered EFL Championship tag and the existing market/queue configuration. Public wire inputs only. No runtime timers or Weixin send."
+    },
+    "original_local_receipt_sha256": "80d37faae1f98c5ba0d31f5b4e3e74ac0a56c60fd90d087d9ef5e87956f21d40",
+    "independent_readback": {
+      "public_capture": "sealed",
+      "capture_exit": 0,
+      "independent_readback_exit": 0,
+      "managed_scan_exit": 0,
+      "collector_exit": 0,
+      "registered_window_utc": {
+        "end_utc": "2026-11-26T08:30:45.139938+00:00",
+        "start_utc": "2026-11-26T08:14:45.139938+00:00"
+      },
+      "decision_cutoff_utc": "2026-11-26T08:14:47.750973+00:00",
+      "received_in_window_requests": 1,
+      "verified_bodies": 1,
+      "total_verified_body_bytes": 3,
+      "candidate_or_match_count_from_body": null,
+      "public_body_content_in_summary": false,
+      "hashes": {
+        "batch_sha256": "53ee31048dd4d46f573faea2fef4c7c1e7a708df1df662765f767f397f87fc53",
+        "config_sha256": "bedeb963d67e3e53ec9e63825215a0ef0b6ee5caf1b6f913d981caacd37fc55e",
+        "interval_sha256": "185a566a2bb8b74740bea44b510782a5b3543535ec5505baf797f8204031246a",
+        "prepared_input_sha256": "b223ebde8a69c41e8ed6798f8e20a605ac20ce39bb2c10078369dd68ed7d854f",
+        "scan_input_sha256": "b223ebde8a69c41e8ed6798f8e20a605ac20ce39bb2c10078369dd68ed7d854f"
+      },
+      "prepared_input_equals_scan_input": true,
+      "positive_scan_id_checked_by_collector": true,
+      "persisted_candidates": 0,
+      "persisted_simulated_entries": 0,
+      "database_count_basis": "A fresh managed read-only transaction grouped candidate rows by this scan ID and counted entries through their candidate foreign key. Both numerical zeros were observed in the independent SQL aggregate.",
+      "fixture_teardown_verified": true
+    },
+    "missing_cli_comparison": {
+      "original_category": "incomplete",
+      "first_missing_phase": "b1_count_comparison",
+      "outer_process_exit": 1,
+      "cli_derived_reported_counts_as_saved": {
+        "accepted": null,
+        "candidate_count": null,
+        "candidate_ids_count": null,
+        "constructed": null,
+        "entry": null,
+        "entry_ids_count": null,
+        "rejected": null
+      },
+      "cause": "The product serializes candidate_ids and entry_ids as JSON objects keyed by candidate key. The pinned helper counts only lists; its scalar fallback expects optional top-level fields that the prepared scan path does not emit. Without any nonnegative reported integer, agrees returns None for both comparisons. This is the first and sole unmet reconciliation check in this summary; teardown succeeded.",
+      "original_cli_vs_sql_equality": null,
+      "why_no_retroactive_comparison": "The outer wrapper kept only the redacted summary, discarded raw CLI stdout and dismantled the private fixture. Hashes bind inputs and the redacted report; they do not reveal the missing historical identifier maps."
+    },
+    "limits": {
+      "b2": {
+        "basis": "public_mark_not_measured",
+        "status": "open"
+      },
+      "formal_forward_days": 0,
+      "official_days": 0,
+      "conclusions_from_this_window": "The feed-response length, observed sample request and scanned candidate totals cannot establish number of real-world Championship fixtures, the exact response body, other tags, or whether a prospective simulation would win."
+    },
+    "future_counter_validation": {
+      "offline_parser_controls": 18,
+      "offline_summary_controls": 4,
+      "original_readback_sha256": "b166966ef77c6ef59973ced6f4031958d3b7361e5ec20137f802acb7acbc2fb9",
+      "applicability": "Future captures only. The first reported counters remain unavailable."
+    }
+  },
+  "complete_forward_comparison_days": 0,
+  "existing_alias_window": {
+    "product_commit": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+    "completed_utc": "2026-11-26T08:31:28.886140+00:00",
+    "alias": "efl-championship",
+    "attempts": 1,
+    "scope": "One public Gamma alias, existing Championship queue, isolated native PostgreSQL; normal prepared product entry points. The previous championship window was not repeated.",
+    "field_evidence": {
+      "registration": {
+        "commit_observed_utc": "2026-11-26T08:29:23.593022+00:00",
+        "end_utc": "2026-11-26T09:45:24.581606+00:00",
+        "sha256": "b510029a79ff5b0f7169eaece2c4caa2b83bf4b26e9fb197280437fa59f10591",
+        "start_utc": "2026-11-26T08:29:24.581606+00:00"
+      },
+      "window": {
+        "end_utc": "2026-11-26T08:45:24.581606+00:00",
+        "start_utc": "2026-11-26T08:29:24.581606+00:00"
+      },
+      "acquisition_cutoff_utc": "2026-11-26T08:29:28.943944+00:00",
+      "hashes": {
+        "batch_sha256": "993a777918b430c8dc16c2fe03fa7bfb37632f8bc9d5c5577beb77e7d5993e3d",
+        "config_sha256": "bedeb963d67e3e53ec9e63825215a0ef0b6ee5caf1b6f913d981caacd37fc55e",
+        "interval_sha256": "b510029a79ff5b0f7169eaece2c4caa2b83bf4b26e9fb197280437fa59f10591",
+        "prepared_input_sha256": "a3b7019121bf52489abab51b3c8defa1e13395f157bc93b4b2b9a8078c649ef7",
+        "scan_input_sha256": "a3b7019121bf52489abab51b3c8defa1e13395f157bc93b4b2b9a8078c649ef7"
+      },
+      "capture_status": "partial",
+      "status_exits": {
+        "capture_cli": 0,
+        "independent_reader": 0,
+        "scan_cli": 0,
+        "count_collector": 0,
+        "overall": 1
+      },
+      "first_unmet_phase": "original_body_verification",
+      "source_requests": 1,
+      "source_request_status_counts": {
+        "failed": 1
+      },
+      "retained_source_bodies": 0,
+      "original_body_check": "no_retained_bodies",
+      "indexed_books": 0,
+      "source_event_rows": null,
+      "source_market_rows": null,
+      "request_error_code": null,
+      "product_partial_manifest_sealed": true,
+      "scan_bound_to_prepared_inputs": true,
+      "cli_candidate_id_count": 0,
+      "cli_entry_id_count": 0,
+      "independent_sql_candidates": 0,
+      "independent_sql_simulated_entries": 0,
+      "comparisons": {
+        "candidate_counts_match": true,
+        "cutoff_matches_cli_when_reported": true,
+        "entry_counts_match": true,
+        "fixture_head_matches": true,
+        "request_count_matches_cli_when_reported": true
+      },
+      "b2": {
+        "attempted": false,
+        "status": "no_persisted_entry",
+        "written": 0
+      },
+      "formal_days": 0,
+      "fixture_teardown_verified": true
+    },
+    "limitations": [
+      "The redacted record retains failed status but omits the underlying per-request cause and HTTP status. The fixture was dismantled; transport-level cause remains unknown.",
+      "The index contained zero captured books. No verified Gamma response can supply the market or match count.",
+      "This one prospective field diagnostic adds zero formal D1 days."
+    ],
+    "offline_only": {
+      "count_parser_and_summary_controls_from_prior": "18 parser controls and four generated full summaries; kept separate from the single field observation.",
+      "six_preflight_controls": "Synthetic page [], one event / one market, invalid page, missing original, no-entry B2, and count-reader empty map.",
+      "preflight_deviation": "The first synthetic preflight was launched without the project test fixture package on Python import path. It stopped before any network call, interval or live attempt. The corrected preflight completed before registration."
+    },
+    "preregistration": {
+      "sha256": "4ea314f1adb565a06e348980c04bb8e42079ebd9b26a7d40b7b1ba4f0abb0304",
+      "plan": {
+        "recorded_utc": "2026-11-26T08:28:45.589532+00:00",
+        "tag_only": "efl-championship",
+        "attempt_limit": 1,
+        "product_commit": "d6c441b7dcbfb8b6d31743c9eabe950005eb7770",
+        "window_seconds": 960,
+        "round_budget_seconds": 900,
+        "prepare_queue": "club-soccer/over_under",
+        "b2": "same previously sealed batch, first actual purchased entry only, product guards and independent mark readback",
+        "official_days": 0,
+        "counter_helper_sha256": "ce9bfff6a467ec38bc6ad3e45ecada9bee696045ad828834dca34f1251886877",
+        "collector_sha256": "f467af82c1c79e9506b1b26f9f9f34602b2e763853274e0697f588589ab3c70c",
+        "field_reader_sha256": "bfdc5b19c069ca424f96b5a3d60205582c7da13f7626f25213d89cef2660bfc7",
+        "offline_controls": 6
+      }
+    },
+    "redacted_result_sha256": "42503d36ea61f634cf09016b4718ea6f167add3837b628b9c76140490444391f",
+    "record_sha256": "455af212e07122511579ebfa8d4e3caccb2100f1a98ff6bf712abb277963f53c"
+  }
+}
