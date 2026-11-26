@@ -500,6 +500,88 @@ def test_registered_understat_rebuilds_frozen_soccer(monkeypatch):
     assert record.median_probability == quote.candidate.model_median
 
 
+def _bind_soccer_news(case, source_refs, **updates):
+    target, sources = case.target, case.target["sources"]
+    document = {
+        "version": prepare_inputs.SOCCER_NEWS_VERSION, "condition_id": target["condition_id"],
+        "gamma_event_id": target["gamma_event_id"], "fixture": "EPL FC 1 versus EPL FC 2",
+        "home_team_id": sources["home_team_id"], "away_team_id": sources["away_team_id"],
+        "kickoff_at": target["event_start_at"], "observed_at": CUTOFF, "delta": "pre-match",
+        "news_delta": "unchanged", "blockers": [], "source_refs": source_refs,
+        "lineup_confirmation": "0.75", **updates,
+    }
+    sources["news"] = case.db.register(operations.document_bytes(document), prepare_inputs.SOCCER_NEWS_KIND,
+                                       prepare_inputs.SOCCER_NEWS_SOURCE, CUTOFF,
+                                       version=prepare_inputs.SOCCER_NEWS_VERSION)
+
+
+@pytest.mark.parametrize(("classification", "blockers", "concordant", "expected_blockers"), [
+    ("unchanged", [], True, ()),
+    ("better", ["lineup_conflict"], False, ("lineup_conflict",)),
+    ("worse", [], False, ("news_worse_than_model",)),
+    ("unknown", [], False, ("news_unknown",)),
+])
+def test_soccer_news_verdict_comes_from_registered_sources_and_classification(
+        monkeypatch, classification, blockers, concordant, expected_blockers):
+    case = _case(monkeypatch, soccer=True)
+    digest = case.db.register(b"original team report", "public_news", "fixture:team-report", CUTOFF)["sha256"]
+    _bind_soccer_news(case, [digest], news_delta=classification, blockers=blockers)
+    target, = _resolve(case).targets
+    assert target.news.concordant is concordant
+    assert target.news.blockers == expected_blockers
+    assert target.news.sources == (digest,)
+    assert target.materials.lineup_confirmation == 0.75
+    assert target.news_evidence[0].source_observed_at == CUTOFF
+
+
+def test_soccer_news_refuses_a_self_reported_verdict_with_a_blocker(monkeypatch):
+    case = _case(monkeypatch, soccer=True)
+    digest = case.db.register(b"original team report", "public_news", "fixture:team-report", CUTOFF)["sha256"]
+    _bind_soccer_news(case, [digest], blockers=["lineup_conflict"], concordant=True)
+    with pytest.raises(prepare.PreparationError, match="papersim_prepare_soccer_news_binding_invalid"):
+        _resolve(case)
+
+
+def test_soccer_news_refuses_a_version_one_registration(monkeypatch):
+    case = _case(monkeypatch, soccer=True)
+    digest = case.db.register(b"original team report", "public_news", "fixture:team-report", CUTOFF)["sha256"]
+    _bind_soccer_news(case, [digest])
+    row = case.db.snapshots[case.target["sources"]["news"]["sha256"]]
+    legacy = json.loads(row["content"])
+    legacy.pop("news_delta")
+    legacy.update(version=1, concordant=True)
+    case.target["sources"]["news"] = case.db.register(
+        operations.document_bytes(legacy), prepare_inputs.SOCCER_NEWS_KIND,
+        "papersim:prepare-inputs:soccer-news:v1", CUTOFF, version=1,
+    )
+    with pytest.raises(prepare.PreparationError, match="papersim_prepare_snapshot_registration_conflict"):
+        _resolve(case)
+
+
+@pytest.mark.parametrize(("problem", "reason"), [
+    ("unregistered", "papersim_snapshot_missing"),
+    ("plain_text", "papersim_snapshot_hash_invalid"),
+    ("modified_original", "papersim_snapshot_digest_mismatch"),
+    ("registered_late", "papersim_prepare_soccer_news_binding_invalid"),
+])
+def test_soccer_news_requires_every_original_registered_by_observation(monkeypatch, problem, reason):
+    case = _case(monkeypatch, soccer=True)
+    observed = CUTOFF - timedelta(seconds=1)
+    first = case.db.register(b"first report", "public_news", "fixture:first", observed)["sha256"]
+    second = case.db.register(b"second report", "public_news", "fixture:second", observed)["sha256"]
+    if problem == "unregistered":
+        del case.db.snapshots[second]
+    elif problem == "plain_text":
+        second = "team bulletin"
+    elif problem == "modified_original":
+        case.db.snapshots[second]["content"] = b"edited report"
+    else:
+        case.db.snapshots[second]["fetched_at"] = CUTOFF
+    _bind_soccer_news(case, [first, second], observed_at=observed)
+    with pytest.raises(prepare.PreparationError, match=reason):
+        _resolve(case)
+
+
 def test_unregistered_policy_returns_batch_and_bought_book_gap(monkeypatch):
     case = _case(monkeypatch, policy=False)
     resolved = _resolve(case)

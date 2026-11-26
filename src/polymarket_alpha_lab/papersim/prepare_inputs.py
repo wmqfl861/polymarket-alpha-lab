@@ -44,7 +44,8 @@ SOCCER_PROJECTION_BINDING_SOURCE = "papersim:prepare-inputs:soccer-projection:v1
 SOCCER_BRIDGE_KIND = "papersim_prepare_soccer_bridge"
 SOCCER_BRIDGE_SOURCE = "papersim:prepare-inputs:soccer-bridge:v1"
 SOCCER_NEWS_KIND = "papersim_prepare_soccer_news"
-SOCCER_NEWS_SOURCE = "papersim:prepare-inputs:soccer-news:v1"
+SOCCER_NEWS_VERSION = 2
+SOCCER_NEWS_SOURCE = f"papersim:prepare-inputs:soccer-news:v{SOCCER_NEWS_VERSION}"
 CRYPTO_NEWS_KIND = "papersim_prepare_crypto_news"
 CRYPTO_NEWS_SOURCE = "papersim:prepare-inputs:crypto-news:v1"
 
@@ -223,10 +224,10 @@ def _read_reference(connection, reference: object, **metadata) -> dict:
     return _read_snapshot(connection, digest, length=length, **metadata)
 
 
-def _document(raw: bytes, fields: set[str], code: str) -> dict:
+def _document(raw: bytes, fields: set[str], code: str, *, version: int = SCHEMA_VERSION) -> dict:
     result = _fields(json.loads(raw), fields, code)
     _require(operations.document_bytes(result) == raw and type(result["version"]) is int
-             and result["version"] == SCHEMA_VERSION, code)
+             and result["version"] == version, code)
     return result
 
 
@@ -945,25 +946,33 @@ def _soccer_source_metadata(connection, sources: dict, target: dict, response_ro
     return _soccer_projection(connection, reference, expected, provider, registered_at)
 
 
-def _soccer_news(row: dict, target: dict, sources: dict, fixture: str, cutoff: datetime):
+def _verified_news_check(connection, document: dict, fixture: str, observed: datetime,
+                         received: datetime, cutoff: datetime, code: str) -> gates.NewsCheck:
+    _require(observed <= received and _text(document["delta"]) and _text(document["news_delta"])
+             and type(document["blockers"]) is list and all(_text(item) for item in document["blockers"])
+             and type(document["source_refs"]) is list and bool(document["source_refs"]), code)
+    if received > cutoff:
+        raise prepare._Excluded("papersim_prepare_model_evidence_after_cutoff")
+    for digest in document["source_refs"]:
+        source = snapshots.verify_snapshot(connection, digest)
+        _require(_utc(source["fetched_at"]) <= observed, code)
+    return gates.check_news(fixture, document["delta"], news_delta=document["news_delta"],
+                            blockers=document["blockers"], sources=document["source_refs"])
+
+
+def _soccer_news(connection, row: dict, target: dict, sources: dict, fixture: str, cutoff: datetime):
     code = "papersim_prepare_soccer_news_binding_invalid"
     document = _document(
         row["content"], {"version", "condition_id", "gamma_event_id", "fixture", "home_team_id",
-                         "away_team_id", "kickoff_at", "observed_at", "delta", "concordant",
-                         "blockers", "source_refs", "lineup_confirmation"}, code,
+                         "away_team_id", "kickoff_at", "observed_at", "delta", "news_delta",
+                         "blockers", "source_refs", "lineup_confirmation"}, code, version=SOCCER_NEWS_VERSION,
     )
     _require((document["condition_id"], document["gamma_event_id"], document["fixture"],
               document["home_team_id"], document["away_team_id"], _utc(document["kickoff_at"]))
              == (target["condition_id"], target["gamma_event_id"], fixture,
                  sources["home_team_id"], sources["away_team_id"], _utc(target["event_start_at"])), code)
     fetched_at, observed_at = _utc(row["fetched_at"]), _utc(document["observed_at"])
-    _require(observed_at <= fetched_at, code)
-    if fetched_at > cutoff:
-        raise prepare._Excluded("papersim_prepare_model_evidence_after_cutoff")
-    _require(_text(document["delta"]) and type(document["concordant"]) is bool
-             and type(document["blockers"]) is list and all(_text(item) for item in document["blockers"])
-             and type(document["source_refs"]) is list and bool(document["source_refs"])
-             and all(_text(item) for item in document["source_refs"]), code)
+    check = _verified_news_check(connection, document, fixture, observed_at, fetched_at, cutoff, code)
     lineup = document["lineup_confirmation"]
     if lineup is not None:
         lineup = _compatible_float(_exact_number(lineup))
@@ -972,8 +981,7 @@ def _soccer_news(row: dict, target: dict, sources: dict, fixture: str, cutoff: d
         source_kind="soccer-news", source_reference=row["source"], fetched_at=fetched_at,
         source_observed_at=observed_at, raw_bytes=row["content"],
     )
-    return gates.NewsCheck(fixture, document["delta"], document["concordant"],
-                           tuple(document["blockers"]), tuple(document["source_refs"])), evidence, lineup
+    return check, evidence, lineup
 
 
 def _crypto_news(connection, reference, target, fixture, cutoff):
@@ -986,17 +994,8 @@ def _crypto_news(connection, reference, target, fixture, cutoff):
     received = _utc(row["fetched_at"])
     _require(document["condition_id"] == target["condition_id"]
              and document["terms_sha256"] == target["terms_sha256"]
-             and document["fixture"] == fixture and observed <= received
-             and _text(document["delta"]) and _text(document["news_delta"])
-             and type(document["blockers"]) is list and all(_text(item) for item in document["blockers"])
-             and type(document["source_refs"]) is list and bool(document["source_refs"]), code)
-    if received > cutoff:
-        raise prepare._Excluded("papersim_prepare_model_evidence_after_cutoff")
-    for digest in document["source_refs"]:
-        source = snapshots.verify_snapshot(connection, snapshots.snapshot_digest_argument(digest))
-        _require(_utc(source["fetched_at"]) <= observed, code)
-    check = gates.check_news(fixture, document["delta"], news_delta=document["news_delta"],
-                             blockers=document["blockers"], sources=document["source_refs"])
+             and document["fixture"] == fixture, code)
+    check = _verified_news_check(connection, document, fixture, observed, received, cutoff, code)
     evidence = contracts.FetchEvidence.from_bytes(
         source_kind="crypto-news", source_reference=row["source"], fetched_at=received,
         source_observed_at=observed, raw_bytes=row["content"])
@@ -1109,7 +1108,8 @@ def _resolve_target(connection, target: dict, selection: prepare.MarketTarget, q
                                          source=SOCCER_BRIDGE_SOURCE)
                 _require(_utc(bridge["fetched_at"]) <= registered_at, "papersim_prepare_soccer_bridge_conflict")
             if sources.get("news") is not None:
-                news = _read_reference(connection, sources["news"], kind=SOCCER_NEWS_KIND, source=SOCCER_NEWS_SOURCE)
+                news = _read_reference(connection, sources["news"], kind=SOCCER_NEWS_KIND,
+                                       source=SOCCER_NEWS_SOURCE, version=SOCCER_NEWS_VERSION)
                 _require(_utc(news["fetched_at"]) <= registered_at, "papersim_prepare_soccer_news_binding_invalid")
             citations.extend(_provenance(row) for row in (projection, bridge, news) if row is not None)
         else:
@@ -1180,7 +1180,7 @@ def _resolve_target(connection, target: dict, selection: prepare.MarketTarget, q
                        line=line, fee_category=fee_category)
         _require(target["news"] is None, "papersim_prepare_soccer_news_binding_invalid")
         if news is not None:
-            check, evidence, lineup = _soccer_news(news, target, sources, plan.fixture, view.cutoff)
+            check, evidence, lineup = _soccer_news(connection, news, target, sources, plan.fixture, view.cutoff)
             materials = replace(materials, lineup_confirmation=lineup)
             selection = replace(selection, news=check, news_evidence=(evidence,))
     sources_used = tuple(item.citation() for item in selected)
