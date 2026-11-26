@@ -136,8 +136,10 @@ function Test-Reply($Result, [int]$Code, [string]$Purpose, [string[]]$Fields) {
     $keys = @('protocol', 'purpose', 'code', 'script_sha256')
     if ($null -ne $Fields) { $keys += $Fields }
     if ($null -ne (Compare-Object $keys @($Result.reply.PSObject.Properties.Name) -CaseSensitive)) { return $false }
-    return ($Result.reply.protocol -ceq $Protocol -and $Result.reply.purpose -ceq $Purpose -and
-        $Result.reply.code -eq $Code -and $Result.reply.script_sha256 -ceq $ApprovedScriptSha256)
+    return ($Result.reply.protocol -is [string] -and $Result.reply.protocol -ceq $Protocol -and
+        $Result.reply.purpose -is [string] -and $Result.reply.purpose -ceq $Purpose -and
+        ($Result.reply.code -is [int] -or $Result.reply.code -is [long]) -and $Result.reply.code -eq $Code -and
+        $Result.reply.script_sha256 -is [string] -and $Result.reply.script_sha256 -ceq $ApprovedScriptSha256)
 }
 
 function New-Fixture([string]$Name, [string]$Mode) {
@@ -148,8 +150,10 @@ function New-Fixture([string]$Name, [string]$Mode) {
     return $profile
 }
 
-function Get-ReceiptState($Result, $Job, [string]$ReceiptPath) {
+function Get-ReceiptState($Result, $Job, [string]$ReceiptPath, [string]$ExpectedReason) {
     if (Test-Reply $Result 32 'receipt' @('reason')) {
+        if (!$ExpectedReason -or $Result.reply.reason -isnot [string] -or
+            $Result.reply.reason -cne $ExpectedReason) { return 'invalid' }
         if (![IO.File]::Exists($ReceiptPath)) { return 'refused' }
         return 'conflict'
     }
@@ -227,14 +231,15 @@ function Test-Case($Case) {
         $send = Invoke-Entry $profile 'send' @{ send_budget_seconds = 12 }
         $record.observed_exit_code = $send.exit_code
         $receipt = Invoke-Entry $profile 'receipt' @{ receipt_generation = 'fixed' }
-        $record.receipt = Get-ReceiptState $receipt $job $receiptPath
+        $expectedReason = $Case['reason']
+        $record.receipt = Get-ReceiptState $receipt $job $receiptPath $expectedReason
         $fields = switch ($Case.code) { 0 { 'sent' } 32 { 'reason' } }
         if (!(Test-Reply $send $Case.code 'send' @($fields)) -or $record.receipt -cne $Case.receipt) { return $record }
         if ($Case.code -eq 0 -and ($send.reply.sent -isnot [bool] -or !$send.reply.sent)) { return $record }
-        if ($Case.code -eq 32 -and ($send.reply.reason -cne $Case.reason -or $receipt.reply.reason -cne $Case.reason)) {
-            return $record
+        if ($Case.code -eq 32) {
+            if ($send.reply.reason -isnot [string] -or $send.reply.reason -cne $expectedReason) { return $record }
+            $record.refusal_reason = $send.reply.reason
         }
-        if ($Case.code -eq 32) { $record.refusal_reason = $Case.reason }
         if ($Case.code -in @(0, 32)) {
             if (!(Test-Reply (Invoke-Entry $profile 'cleanup') 0 'cleanup' @()) -or
                 [IO.File]::Exists([IO.Path]::Combine($dir, 'note.txt')) -or
@@ -243,7 +248,7 @@ function Test-Case($Case) {
             $record.replay_exit_code = $replay.exit_code
             if (!(Test-Reply $replay 29 'send' @())) { return $record }
             $again = Invoke-Entry $profile 'receipt' @{ receipt_generation = 'fixed' }
-            if ((Get-ReceiptState $again $job $receiptPath) -cne $Case.receipt) { return $record }
+            if ((Get-ReceiptState $again $job $receiptPath $expectedReason) -cne $Case.receipt) { return $record }
         }
         $record.passed = $true
         return $record

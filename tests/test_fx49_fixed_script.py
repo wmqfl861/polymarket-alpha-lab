@@ -390,3 +390,29 @@ def test_fixed_receipt_requires_success_publication_and_legacy_paths_do_not_mix(
     old_reply = entry.invoke("receipt", overrides=old_read)
     assert json.loads(base64.b64decode(old_reply["contents"], validate=True)) == legacy
     assert entry.invoke("receipt")["present"] is False
+
+
+def test_offline_rehearsal_verifies_the_refusal_that_survives_cleanup(entry, tmp_path):
+    runner = SOURCE.parent / "offline-acceptance" / "Test-PaperWeixinOffline.ps1"
+    check = Path(__file__).with_name("fx49_offline_refusal_check.ps1")
+    result = subprocess.run(
+        [entry.shell, "-NoProfile", "-NonInteractive", "-File", str(check), str(runner), str(tmp_path)],
+        cwd=tmp_path, env=entry.env, text=True, capture_output=True, check=True, timeout=30,
+    )
+    assert not result.stderr
+    cases = json.loads(result.stdout)
+    assert {name: (case["passed"], case["reads"], case["calls"]) for name, case in cases.items()} == {
+        "intact": (True, 2, 1),
+        "wrong-first-read": (False, 1, 1),
+        "wrong-retained-read": (False, 2, 1),
+        "retained-array": (False, 2, 1),
+        "send-array": (False, 1, 1),
+        "code-as-string": (False, 2, 1),
+        "protocol-array": (False, 2, 1),
+        "purpose-array": (False, 2, 1),
+        "digest-array": (False, 2, 1),
+        "extra-field": (False, 2, 1),
+        "wrong-retry-code": (False, 1, 1),
+        "retry-with-output": (False, 1, 1),
+        "sent-twice": (False, 2, 2),
+    }
