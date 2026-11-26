@@ -1,0 +1,47 @@
+{
+  "interactive-limited-token-field": {
+    "observed_utc": "2026-11-26T14:04:56+00:00",
+    "facts": {
+      "task_registered": true,
+      "task_started": true,
+      "task_finished": false,
+      "result_is_standard": false,
+      "result_is_elevated": false,
+      "result_is_diagnostic_error": false,
+      "task_removed": true,
+      "interactive_principal_only": true
+    }
+  },
+  "interactive-limited-token-followup": {
+    "observed_utc": "2026-11-26T14:06:04+00:00",
+    "facts": {
+      "task_registered": true,
+      "last_scheduler_result": 41,
+      "ever_ran": true,
+      "end_ready": true,
+      "task_started": true,
+      "task_finished": true,
+      "result_is_standard": false,
+      "result_is_elevated": true,
+      "result_is_diagnostic_error": false,
+      "task_removed": true,
+      "interactive_principal_only": true
+    }
+  },
+  "ordinary-token-policy": {
+    "observed_utc": "2026-11-26T14:07:23+00:00",
+    "facts": {
+      "policy_is_readable": true,
+      "uac_enabled": true,
+      "builtin_administrator_identity": true,
+      "builtin_administrator_admin_approval_enabled": false,
+      "task_scheduler_active": true
+    }
+  },
+  "diagnostic_exit_41": "The disposable identity-only task observed an enabled Administrator role. This is a diagnostic code; the fixed delivery script was never invoked.",
+  "first_observation": "The first observer accepted only its configured terminal conditions within its observation interval. A separate diagnostic recorded the completed Windows Task Scheduler result.",
+  "settings_changes": 0,
+  "test_tasks_removed": 2,
+  "messages_sent": 0,
+  "windows_acceptance_cases_completed": 0
+}
