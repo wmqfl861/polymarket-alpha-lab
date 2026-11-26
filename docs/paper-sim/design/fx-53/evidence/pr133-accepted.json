@@ -1,0 +1,85 @@
+{
+  "ordinary_merge": {
+    "utc": "2026-11-25T23:06:39+00:00",
+    "head": "9b523026b3b8428aa60e1cd645e71ed71467ad8e",
+    "base": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+    "pr": 133,
+    "tree": "17fb47533197c264aac32b435dadf6247c02296f",
+    "ci_merge": "15b4f33ac9d612eee4627ae85a7207967a4747bf",
+    "actual_main": "39477891394833790c1681c6d9e7b9f24be7744c",
+    "workflow_runs": {
+      "Offline verification": 45715234047,
+      "Native project PostgreSQL": 45715787468,
+      "Research paper bridge": 45715234049
+    },
+    "fixed_check": "#133 head 9b523026 run 45715234047: CURRENT (merged into 289ed1c2)",
+    "author_committer_noreply": true
+  },
+  "checkout_proof_sha256": "4f44c1a3d8a4ac38513b8db371981b9c58f9619b6353bc62bdea571985eee25c",
+  "workflows": {
+    "Offline verification": {
+      "run": 45715234047,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "offline",
+          "job": 139559492193,
+          "commit": "15b4f33ac9d612eee4627ae85a7207967a4747bf"
+        }
+      ]
+    },
+    "Native project PostgreSQL": {
+      "run": 45715787468,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "linux-native-storage",
+          "job": 139561366343,
+          "commit": "15b4f33ac9d612eee4627ae85a7207967a4747bf"
+        },
+        {
+          "name": "linux-native-research",
+          "job": 139561366740,
+          "commit": "15b4f33ac9d612eee4627ae85a7207967a4747bf"
+        },
+        {
+          "name": "linux-native-dispatch",
+          "job": 139561366678,
+          "commit": "15b4f33ac9d612eee4627ae85a7207967a4747bf"
+        },
+        {
+          "name": "linux-native-papersim",
+          "job": 139561366736,
+          "commit": "15b4f33ac9d612eee4627ae85a7207967a4747bf"
+        }
+      ]
+    },
+    "Research paper bridge": {
+      "run": 45715234049,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "windows-paper",
+          "job": 139559491436,
+          "commit": "15b4f33ac9d612eee4627ae85a7207967a4747bf"
+        }
+      ]
+    }
+  },
+  "full": {
+    "exit": 0,
+    "summaries": [
+      "44060 passed, 473 skipped, 20 warnings in 4071.55s (1:07:51)"
+    ],
+    "seconds": 4193.119,
+    "output_sha256": "c9dfcfd3cf3f8bb75025f0be3f4cccf6d5cb3f6d0b8f0c5ecd4cb06ca084171b"
+  },
+  "focused": {
+    "exit": 0,
+    "summaries": [
+      "22 passed in 3.39s"
+    ],
+    "seconds": 4.607,
+    "output_sha256": "c30a0b36ee4065c957c90dd41821c503e7cd2f3df749a2d39adf363333975e6c"
+  }
+}

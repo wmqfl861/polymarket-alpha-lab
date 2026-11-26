@@ -4628,6 +4628,20 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 后继验收须明确新发布格式如何表达实际下限，证明旧 v1 包仍可验证，并以真实 kit 构建、清单读回及版本兼容回执关闭。
 
+**截至 2026-11-26 的已合入节点回执**
+
+第一阶段交接书经 #130 合入，终点为 `09306300`。NBA 正式运行 4 在一次执行中完成 4,811 个试验，终态为 `NO_IMPROVEMENT`。[交接书](docs/handoffs/2026-11-19-optimizer-phase1.md) · [三条工作流的检出](docs/paper-sim/design/fx-53/evidence/pr130-phase1-accepted.json)
+
+| FX-53 小修 | PR 和合并提交 | Offline / Native PostgreSQL / Research 运行号 | 核验与独立复审回执 |
+| --- | --- | --- | --- |
+| MO-4 时间顺序检查 | #133 · `39477891` | `45715234047` / `45715787468` / `45715234049` | [测试和合并](docs/paper-sim/design/fx-53/evidence/pr133-accepted.json) · [代码复审](docs/paper-sim/design/fx-53/evidence/pr133-code-review.json) · [阶段复审](docs/paper-sim/design/fx-53/evidence/pr133-stage-review.json) |
+| MO-5b 模型参数与输入完整性 | #134 · `07f4bf21` | `45726768065` / `45736790830` / `45726768058` | [测试和合并](docs/paper-sim/design/fx-53/evidence/pr134-accepted.json) · [代码复审](docs/paper-sim/design/fx-53/evidence/pr134-code-review.json) · [阶段复审](docs/paper-sim/design/fx-53/evidence/pr134-stage-review.json) |
+| MO-2 读取后的事务状态 | #135 · `eae037aa` | `45746414266` / `45746586776` / `45746414419` | [测试和合并](docs/paper-sim/design/fx-53/evidence/pr135-accepted.json) · [原代码审](docs/paper-sim/design/fx-53/evidence/pr135-code-review.json) · [原阶段审](docs/paper-sim/design/fx-53/evidence/pr135-stage-review.json) |
+
+#133、#134 的原生 PostgreSQL 工作流分别在对应的合并提交上单独触发，两次均在 attempt 1 通过。[两次运行的触发记录](docs/paper-sim/design/fx-53/evidence/pr133-pr134-native-run-origin.json)
+
+#134 的 Research 工作流首次执行在既有结算夹具比较数据库落库时刻和测试进程取时时失败，同一头提交的第二次执行通过。首次运行缺少两次读数的精确差值。补测和失败用例均可从同一运行查询。[Research 运行](https://github.com/wmqfl861/polymarket-alpha-lab/actions/runs/45726768058)
+
 #### 84.2.4 FX-36 本地清点
 
 2026-11-21 只读查询确认仓库可见性为 public。机主于 2026-11-24 对 OD-O 答复“保持公开，是我有意公开”。11-14 至 11-19 UTC 可用的本机 Codex 执行记录覆盖 45 个会话、3,932 项完成记录，未见本项目可见性写入。11-15、11-16 日的本机 Codex 记录缺失，该时段没有匹配项目目录的本机 ZCode 会话。浏览器、其他主机与未保留的记录无法判定。
@@ -4728,6 +4742,8 @@ FX-47 经 #128 合入的 `a7dbd8a3` 是工程开工父。源码 `11d24be6` 在�
 
 **FX-40 历史验收未完成，M2 出口未满足。** 截至本次登记，四个案例中可完成完整规范字节比较的为 0。独立基线和候选的完整请求或拒绝包尚未逐字节对照，实际差异及首个不同字节均待测。工程 PR、缺证时的拒绝回执和十项自检各自只证明其登记范围。各案原件由对应轮次的归档保管人或受管快照持有人提供。协调者按当时的版本、来源钟、收妥钟和独立清单验收。
 
+2026-11-26，机主对四案是否另有独立留存答复“不知道是否另有留存”。11 月 25 日（UTC），独立执行者将留存的优化器归档快照清单（222 行）与 31 份轮次文件逐件比对。协调者核对了执行脚本，匹配条件为 SHA-256 与字节长度同时相等。该索引实际命中 0 份。其他归档和后续入库的材料仍未知。四案仍待当时的完整原件与独立保管依据。[逐件比对](docs/paper-sim/design/fx-40/evidence/retained-snapshot-index-comparison.json) · [独立执行回执](docs/paper-sim/design/fx-40/evidence/retained-snapshot-index-run.json)
+
 | 冻结案例 | 取证责任及下一个动作 |
 | --- | --- |
 | r23 足球 | r23 归档保管人补齐四场当时的市场原件和买入侧逐档价量、各次实收证词、xG 采集与完整性记录，并绑定当时的构造器和生效政策。 |
@@ -4740,6 +4756,28 @@ FX-47 经 #128 合入的 `a7dbd8a3` 是工程开工父。源码 `11d24be6` 在�
 正式计日须先取得 FX-40 的实际合并、FX-44 的 OD-P 生效回执、事前登记并适用于各来源的盘口双龄政策，以及 Path L 和 Path N 的同批输入与两侧日结证据。准备器从已成功登记的 D1 区间回执读取 `book_age_policy`。本工程只交付该登记的读取与核对，正式写入双龄政策另行登记。每个无人值守的完整 UTC 日保存实际干净提交、准备路径及生效输入与模型版本、两路回执和现金核对。四案尚待验期间，满足所有计日前置的实际日逐日记为“待确认”。四案验收后，协调者逐日核对准备路径一致、证据完整及日期连续才确认计日。若纠正性合并改变准备路径或行为，从其生效后首个全程使用修正版的完整合格 UTC 日重新计第 1 天。缺日打断连续性，跨版本半日及事后回填均不合并计数。本工程登记贡献 0 个合格日。工程隔离测试、历史重构和人民币模拟账本均不计入。[D1 区间回执读取](src/polymarket_alpha_lab/papersim/prepare_inputs.py)
 
 第一阶段交接书已通过 #130 普通合入，提交 `093063000a704727f243c02a7b420c49afa37027`，三条工作流依次为 Offline `45617549719`、Native PostgreSQL `45617589553`、Research `45617549700`。终点两份脚本的输出已从合并提交核对，唯一旧测试名对应已说明的帮助测试改名。[合并回执](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr130-landed.json) · [实际 CI 检出](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr130-exact-ci.json) · [公开读回及终点审计](docs/paper-sim/design/optimizer-phase1/2026-11-25/handoff-public-landing-and-endpoint.json)
+
+### 84.5 FX-40 #132 合入登记与五项非阻塞保留项补记（2026-11-25 UTC）
+
+FX-40 经 #132 普通两父合入主线。头 `979a6abd8801085a026839d7ab4246584e3ba7e7`，基线 #130 的 `093063000a704727f243c02a7b420c49afa37027`，树 `c57103039dd4c924a5f3163a86159b85d9df50f3`，CI 合并提交 `85e757ae5aee8393e18ca8c1586a0b3bfd847608`，主线合入提交 `289ed1c217cdd97a68da959bfcecdd17db9fc8e5`，合入回执时间 2026-11-25 18:23:40 UTC。三条工作流依次为 Offline verification `45671167676`、Native project PostgreSQL `45671167543`、Research paper bridge `45671167901`。固定检查确认头 `979a6abd` 的运行 `45671167676` 为 CURRENT。协调者核对了工作流检出与登记树一致、固定运行 CURRENT 和普通两父合并。作者与提交者均为不回复邮箱。[合并回执](docs/paper-sim/design/fx-40/evidence/pr132-landed.json) · [实际 CI 检出](docs/paper-sim/design/fx-40/evidence/pr132-exact-ci.json)
+
+该头的聚焦用例 749 项通过，5 项因环境跳过。精确头全套 44,057 项通过，473 项为既有环境跳过，20 条警告，退出码 0，用时 3,486.82 秒。合入树上托管原生夹具的样本覆盖为准备扫描 9 项、采集标记 12 项、D1 操作 8 项，失败、错误、跳过均为 0。[本头测试回执](docs/paper-sim/design/fx-40/evidence/pr132-local-tests.json) · [受管夹具回执](docs/paper-sim/design/fx-40/evidence/pr132-managed-fixtures.json)
+
+原源审者和原阶段复审者对 `979a6abd` 均为 PASS，两份结论只覆盖登记与证据，代码复审不替阶段门禁签核。首次阶段复审对 `c1d0be53` 的 FAIL 原文保留，不改写。[代码复审](docs/paper-sim/design/fx-40/evidence/pr132-code-review.json) · [阶段复审](docs/paper-sim/design/fx-40/evidence/pr132-stage-review.json) · [首次阶段复审](docs/paper-sim/design/fx-40/evidence/stage-review-c1d0be53.json)
+
+原阶段复审留下五项非阻塞保留项，处置如下：
+
+| 保留项 | 事实与处置 | 证据 |
+| --- | --- | --- |
+| 一、扫描句被收窄 | §84.4 的扫描句只把最终 CI 绑定到 PR 检出。本节恢复为完整测试、阶段复审和最终 CI 均以合入 PR 绑定的检出为准，并重新链接逐项处置回执。工程头的全套跑在 #129 之前的依赖锁上，候选自己的运行才作数。 | [逐项处置](docs/paper-sim/design/fx-40/evidence/source-scan-disposition.json) |
+| 二、键名标错 | `r19-contract-and-clock-readback.json` 第 2 行在 `audit_anchor` 下存的是 #130 提交，而该键在其他证据文件的顶层是审计锚 `ab6edff2d64ac8aa5c2831d748b8730b63f8312d`。含义更正为主线基线，等同其他文件的 `base`，不是审计锚。合入树中该文件保持原样。 | [合约与时钟核对](docs/paper-sim/design/fx-40/evidence/r19-contract-and-clock-readback.json) · [扫描与索引回执](docs/paper-sim/design/fx-40/evidence/integrated-static-results.json) · [Git 清点](docs/paper-sim/design/fx-40/evidence/seven-tree-inventory.json) |
+| 三、扫描脚本未入库 | `scan-tracked.py` 不在仓库里，摘要只记在逐项处置回执的 `scanner_sha256` 字段，两份原始跟踪回执都不含，对照不了入库文件。该头全树命中 13 项、新增行命中 4 处，未决 0，归因与 `c1d0be53` 相同，依据是回执和两份复审。 | [逐项处置](docs/paper-sim/design/fx-40/evidence/source-scan-disposition.json) · [全树归因](docs/paper-sim/design/fx-40/evidence/release-tree-scan-c1d0be53.json) |
+| 四、实施模型与档位 | 工程实施（`a7dbd8a3` 至 `11d24be6`）所用代理的模型与推理档位未核实。签核计划 `plan-v3.md` 第 141 行只是指派，没有同期的角色记录，本节不填。 | [首次阶段复审](docs/paper-sim/design/fx-40/evidence/stage-review-c1d0be53.json) |
+| 五、计日句措辞 | §84.4 的“正式写入双龄政策另行登记”不表示已有登记。本工程只交付从 D1 区间回执读取并核对 `book_age_policy`（`src/polymarket_alpha_lab/papersim/prepare_inputs.py`），不含写入该登记的命令。政策缺失时候选保留 `d1_capture_book_age_policy_unregistered`。 | [阶段复审](docs/paper-sim/design/fx-40/evidence/pr132-stage-review.json) |
+
+托管原生夹具的计数只说明夹具本身，不代表正式运行的覆盖率。四个历史案例的完整规范请求仍缺独立保管和验收，四案待验，M2 出口未满足。计日前置中 FX-40 的实际合并已发生，正式盘口双龄政策的写入仍未登记：本工程不含写入该登记的命令，#132 合入后这一点没有变化。其余前置和计日规则沿用 §84.4，四案待验期间前置齐备的实际日也只记为待确认。本工程合格日为 0。
+
+2026-11-26，将已清点的 26 份文件逐个与仓库公开的 257 个分支和 3 个标签作 Git 对象比对。两次读取的引用清单一致，在 28,854 个可达对象中找到 0 个相同对象。四案的原始请求和当时的收妥时刻仍缺独立保管证据。[公开分支与标签的对象比对](docs/paper-sim/design/fx-40/evidence/public-retained-ref-lookup.json)
 
 ## 85. MO-6 登记输入、受管写入与 NBA 校准专项
 

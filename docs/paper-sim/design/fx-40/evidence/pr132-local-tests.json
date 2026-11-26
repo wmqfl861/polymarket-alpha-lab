@@ -1,0 +1,20 @@
+{
+  "head": "979a6abd8801085a026839d7ab4246584e3ba7e7",
+  "exits": {
+    "frozen": 0,
+    "patch": 0,
+    "install": 0,
+    "compile": 0,
+    "selfcheck": 0,
+    "focused": 0,
+    "full": 0
+  },
+  "focused": {
+    "summary": "749 passed, 5 skipped in 40.63s",
+    "output_sha256": "8b4bf598ade0a8a9dfd061f3ccae0120f84f5fa9243e1e5f810dce6f2e1be807"
+  },
+  "full": {
+    "summary": "44057 passed, 473 skipped, 20 warnings in 3486.82s",
+    "output_sha256": "16c0e9cff90eda060c3be8beb4c1f495c4ddf7a3386f7b69c9d655d1664028d1"
+  }
+}

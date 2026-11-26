@@ -1,0 +1,275 @@
+{
+  "database_connections": 0,
+  "history_qualification": "a content match is evidence of stored bytes only; custody, receipt clock and decision context require separate evidence",
+  "index": {
+    "bytes": 119016,
+    "sha256": "e701a32f8ef1b5cfe58d952f29baa24059a9f25e51a8dae0b86bfff8ba501993"
+  },
+  "index_rows": 222,
+  "input_inventory_commit": "289ed1c217cdd97a68da959bfcecdd17db9fc8e5",
+  "inventory_sources": {
+    "docs/paper-sim/design/fx-40/evidence/additional-soccer-inventory.json": "eb933cc1fc3d515902f4171e273fba15c6c81c1acb1a8cb871261896bcbc5f3c",
+    "docs/paper-sim/design/fx-40/evidence/historical-input-custody.json": "8442044f6bb7e4827d5f75884e8c29ce65086bb7de8db17ef3202aa45c4f03b0",
+    "docs/paper-sim/design/fx-40/evidence/r19-contract-and-clock-readback.json": "3ffd412e00f693966c42bfc18cff777eac327f75e6f1beda29d9a0f12fac9cd7"
+  },
+  "optimizer_invocations": 0,
+  "per_artifact": {
+    "round10/raw/fixt_markets10.json": {
+      "bytes": 77155,
+      "matching_snapshot_families": [],
+      "sha256": "c769aa5e8cf11a80b69452ed3caf5284677d4cf190bdf7339df3d1dd3fee836e",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round10/raw/model_round10.json": {
+      "bytes": 48938,
+      "matching_snapshot_families": [],
+      "sha256": "9c776db3a58a6137ef0e53f46f96b5ccf99228f7d19cd6f4fc8093c4087fe35c",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round10/raw/xg_understat_10.json": {
+      "bytes": 4424569,
+      "matching_snapshot_families": [],
+      "sha256": "d4de955223b18583151ec7b14cdd31f9e8018c04bb9fa17c4592d4975a81baf3",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round19/crypto_recommendations.json": {
+      "bytes": 10861,
+      "matching_snapshot_families": [],
+      "sha256": "605e117f81e0e7c3a49aa099697e5d5c8299e0952196bfe41f7bebeb26f94e3c",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round19/raw/btc_candles.json": {
+      "bytes": 38205,
+      "matching_snapshot_families": [],
+      "sha256": "402c77e95b62e63f6aa2ab0f9eac7187457be0cef2465381100d019d750dd525",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round19/raw/crypto_scan.json": {
+      "bytes": 17893,
+      "matching_snapshot_families": [],
+      "sha256": "55a7c14cce56d3d6c51c3be42d01864306f3cfb1c72f6dc065ef8f4bbb389ebc",
+      "sources": [
+        "historical-input-custody.json",
+        "r19-contract-and-clock-readback.json"
+      ]
+    },
+    "round19/raw/eth_1m_weekend.json": {
+      "bytes": 180311,
+      "matching_snapshot_families": [],
+      "sha256": "e29eb8058de0ede1b129670921030f651dc2f3507c447d8bfb3d2b32482b7304",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round19/raw/eth_candles.json": {
+      "bytes": 36326,
+      "matching_snapshot_families": [],
+      "sha256": "7ec47d23e33fe98b0adc32a68139c66e78f7d79f1b1cfa0fba8c0619b2018ebf",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round19/raw/market_refresh.json": {
+      "bytes": 333209,
+      "matching_snapshot_families": [],
+      "sha256": "cd63b5b7aca82b149ee64e205b946b5af74418e2a5ed801e87f592f1d6661394",
+      "sources": [
+        "historical-input-custody.json",
+        "r19-contract-and-clock-readback.json"
+      ]
+    },
+    "round19/raw/position_books.json": {
+      "bytes": 13823,
+      "matching_snapshot_families": [],
+      "sha256": "0f664b07cc64055b3b66073fea7a3092f4a5f354f8a45dc10d10ad52e434666b",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round19/raw/position_markets.json": {
+      "bytes": 12228,
+      "matching_snapshot_families": [],
+      "sha256": "c364e9d16430b49815a59d1e446986276e7cfd484ed8322338abce512ea7e827",
+      "sources": [
+        "historical-input-custody.json",
+        "r19-contract-and-clock-readback.json"
+      ]
+    },
+    "round23/epl_candidates.json": {
+      "bytes": 30487,
+      "matching_snapshot_families": [],
+      "sha256": "cc6cc47dc7e6bd9556aa994f5e373a857201813ac3ee14a307107a8d3d8c4cf9",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round23/raw/clob_books23.json": {
+      "bytes": 16780,
+      "matching_snapshot_families": [],
+      "sha256": "91d5084c26743c34dff8f4a80014310e60aa41d82a2caa9d974d31d32464a589",
+      "sources": [
+        "additional-soccer-inventory.json"
+      ]
+    },
+    "round23/raw/epl_scan.json": {
+      "bytes": 43550,
+      "matching_snapshot_families": [],
+      "sha256": "f12c0c3a6c9815ebe9e5724884739b21be5c83fea8dcc0f26a523920c6c160dd",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round23/raw/events_window.json": {
+      "bytes": 1112950,
+      "matching_snapshot_families": [],
+      "sha256": "eca62c5dc5adc73d6c161494aebad934d00b45ea0c181e69324af9662ce2bc5b",
+      "sources": [
+        "additional-soccer-inventory.json"
+      ]
+    },
+    "round23/raw/events_window23.json": {
+      "bytes": 5485127,
+      "matching_snapshot_families": [],
+      "sha256": "34fa0bc19f204762f9f81f4911d74179ff7a88208aa5ac013176670aae2cc4f7",
+      "sources": [
+        "additional-soccer-inventory.json"
+      ]
+    },
+    "round23/raw/gamma_sweep23.json": {
+      "bytes": 1091513,
+      "matching_snapshot_families": [],
+      "sha256": "93d040324d9cd4ea20daf24fcb7ff16d35617b76af3d260034673ceb97d3d359",
+      "sources": [
+        "additional-soccer-inventory.json"
+      ]
+    },
+    "round23/raw/ligue_books23.json": {
+      "bytes": 10846,
+      "matching_snapshot_families": [],
+      "sha256": "b4c8d9b9a23b88cff29be4f57d14a9c0bc4f266ce86d47f67a45bf29f7b67c19",
+      "sources": [
+        "additional-soccer-inventory.json"
+      ]
+    },
+    "round23/raw/shortlist_books23.json": {
+      "bytes": 39897,
+      "matching_snapshot_families": [],
+      "sha256": "e490b63ad86cc31d61e1c1a7533406f7e32d056230e7eb4265da06b332af75cc",
+      "sources": [
+        "additional-soccer-inventory.json"
+      ]
+    },
+    "round23/raw/xg_epl_23.json": {
+      "bytes": 928715,
+      "matching_snapshot_families": [],
+      "sha256": "194d23da8b20128b466da22e9500f66f226c9d0880361d85cdac03c7fc287ad4",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round24/epl_candidates.json": {
+      "bytes": 23998,
+      "matching_snapshot_families": [],
+      "sha256": "7150e925295de653d293f6101a14750fe4b0e18a55b8790685709da62e9efd49",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round24/raw/books24.json": {
+      "bytes": 86887,
+      "matching_snapshot_families": [],
+      "sha256": "abe262c7b17d6708d21eb9c0e23f822481f8c9bf1e99e58134177ae51be98faf",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round24/raw/epl_model24.json": {
+      "bytes": 210348,
+      "matching_snapshot_families": [],
+      "sha256": "3a668c4f30d82e6578aa691db590d0686f063478d031d5f85990e0706a9cb086",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round24/raw/epl_scan.json": {
+      "bytes": 102166,
+      "matching_snapshot_families": [],
+      "sha256": "1fa24377d5ff2dea2a60292a568868010226330dbef076676e1f08c0b732ddeb",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round24/raw/events_window.json": {
+      "bytes": 1114063,
+      "matching_snapshot_families": [],
+      "sha256": "f58d7f645e7b0410a026c5e11cc4ddf4e4586c944510e1355ca44dc9773ff379",
+      "sources": [
+        "additional-soccer-inventory.json"
+      ]
+    },
+    "round24/raw/shortlist24.json": {
+      "bytes": 38243,
+      "matching_snapshot_families": [],
+      "sha256": "e1444279e85fb6d875d7a60aaabfa9881fbc1faa3b7ab086338a2c4d1b0af33a",
+      "sources": [
+        "historical-input-custody.json"
+      ]
+    },
+    "round44/raw/btc_1h_oct24.json": {
+      "bytes": 20802,
+      "matching_snapshot_families": [],
+      "sha256": "805e2fc62b25fb5793fd0767ef7b0e6ea0bb400e9ad8f69c9d59ced3348859e7",
+      "sources": [
+        "r19-contract-and-clock-readback.json"
+      ]
+    },
+    "round44/raw/btc_candles.json": {
+      "bytes": 34031,
+      "matching_snapshot_families": [],
+      "sha256": "04c320c59584f2899a09c4d86abe0ed9cae2a65b8d938d002300dcbb4e02eb74",
+      "sources": [
+        "r19-contract-and-clock-readback.json"
+      ]
+    },
+    "round44/raw/eth_1h_oct24.json": {
+      "bytes": 19365,
+      "matching_snapshot_families": [],
+      "sha256": "99fa9269a4b5ca4fd19c45935a69e007cc77b10f22aa9011e0f1aa90bd465bab",
+      "sources": [
+        "r19-contract-and-clock-readback.json"
+      ]
+    },
+    "round44/raw/eth_candles.json": {
+      "bytes": 32302,
+      "matching_snapshot_families": [],
+      "sha256": "cd9fe67256d3e7b676d40bfd32f7d7e99fe6b3cc579d45867d065b81a824a5ac",
+      "sources": [
+        "r19-contract-and-clock-readback.json"
+      ]
+    },
+    "round44/raw/market_refresh_dec31.json": {
+      "bytes": 328771,
+      "matching_snapshot_families": [],
+      "sha256": "f8fb1820ff4b4ea02614279718a695935b221407eb04f02cbfb2b69d20bc1cc3",
+      "sources": [
+        "r19-contract-and-clock-readback.json"
+      ]
+    }
+  },
+  "round_artifacts": 31,
+  "round_artifacts_with_matching_indexed_bytes": 0,
+  "scope": "retained optimizer archive snapshot index at the time of its independent historical readback",
+  "scope_limit": "does not enumerate all project databases, original capture manifests, or later additions",
+  "unique_index_digest_lengths": 222,
+  "utc": "2026-11-25T23:27:34+00:00"
+}

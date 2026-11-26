@@ -1,0 +1,95 @@
+{
+  "ordinary_merge": {
+    "utc": "2026-11-26T01:57:33+00:00",
+    "pr": 134,
+    "head": "7003966253aa75b876d40139f88744ee6ed1274a",
+    "base": "39477891394833790c1681c6d9e7b9f24be7744c",
+    "tree": "59b174e57bfbf784c4165e50af044fa50b2f288f",
+    "ci_merge": "7fbc597725eb08976e81a04917852f7e6068b2ad",
+    "actual_main": "07f4bf21f4e4a45550b91afd64f9e41528be4eed",
+    "workflow_runs": {
+      "Offline verification": 45726768065,
+      "Native project PostgreSQL": 45736790830,
+      "Research paper bridge": 45726768058
+    },
+    "fixed_check": "#134 head 70039662 run 45726768065: CURRENT (merged into 39477891)",
+    "author_committer_noreply": true
+  },
+  "checkout_proof_sha256": "986e616dff38b62aa79f97dcfa7eba98af99f702c2d20832fc3b0aa5f63aef77",
+  "workflows": {
+    "Offline verification": {
+      "run": 45726768065,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "offline",
+          "job": 139598479231,
+          "commit": "7fbc597725eb08976e81a04917852f7e6068b2ad"
+        }
+      ]
+    },
+    "Native project PostgreSQL": {
+      "run": 45736790830,
+      "attempt": 1,
+      "checkouts": [
+        {
+          "name": "linux-native-storage",
+          "job": 139631850153,
+          "commit": "7fbc597725eb08976e81a04917852f7e6068b2ad"
+        },
+        {
+          "name": "linux-native-research",
+          "job": 139631849802,
+          "commit": "7fbc597725eb08976e81a04917852f7e6068b2ad"
+        },
+        {
+          "name": "linux-native-dispatch",
+          "job": 139631850176,
+          "commit": "7fbc597725eb08976e81a04917852f7e6068b2ad"
+        },
+        {
+          "name": "linux-native-papersim",
+          "job": 139631850441,
+          "commit": "7fbc597725eb08976e81a04917852f7e6068b2ad"
+        }
+      ]
+    },
+    "Research paper bridge": {
+      "run": 45726768058,
+      "attempt": 2,
+      "checkouts": [
+        {
+          "name": "windows-paper",
+          "job": 139633143547,
+          "commit": "7fbc597725eb08976e81a04917852f7e6068b2ad"
+        }
+      ]
+    }
+  },
+  "full": {
+    "exit": 0,
+    "summaries": [
+      "44064 passed, 473 skipped, 20 warnings in 3218.32s (0:53:38)"
+    ],
+    "seconds": 3320.236,
+    "output_sha256": "dce538a5766139de2fa8b5b405c8c87e03dbb5aa7023f982ed31e3e21b684643"
+  },
+  "focused": {
+    "exit": 0,
+    "summaries": [
+      "25 passed in 3.07s"
+    ],
+    "seconds": 4.444,
+    "output_sha256": "d5e285dc7e0722e343604be92e1644994e6a6718ee19fe4e37de3d81d3e7e8bd"
+  },
+  "first_research_attempt": {
+    "run": 45726768058,
+    "attempt": 1,
+    "job": 139598479196,
+    "conclusion": "failure",
+    "condition": "settlement_confirmation_time_mismatch",
+    "passed": 356,
+    "failed": 1,
+    "investigation_sha256": "5ff20deee0fe65b3b653eaa1a11e811e3fff4ddf15143c2bc9a7cae6b099f369"
+  }
+}
