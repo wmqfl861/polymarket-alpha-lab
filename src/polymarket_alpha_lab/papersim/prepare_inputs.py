@@ -220,8 +220,14 @@ def _read_capture(connection, repo_root: Path, document: dict, registered_at: da
     _fields(manifest, _CAPTURE_FIELDS, "papersim_prepare_capture_manifest_invalid")
     _require(acquire._canonical(manifest) == batch_row["content"], "papersim_prepare_capture_manifest_invalid")
     view = prepare._capture_view(digest, manifest, entries)
-    scope = _fields(manifest["scope"], {"window_start", "window_end", "tag_slugs"},
-                    "papersim_prepare_capture_scope_invalid")
+    scope = manifest["scope"]
+    fields = {"window_start", "window_end", "tag_slugs"}
+    if isinstance(scope, dict) and "gamma_page_size" in scope:
+        page_size = scope["gamma_page_size"]
+        _require(acquire.valid_gamma_page_size(page_size) and page_size < polymarket.GAMMA_EVENTS_PAGE_LIMIT,
+                 "papersim_prepare_capture_scope_invalid")
+        fields.add("gamma_page_size")
+    _fields(scope, fields, "papersim_prepare_capture_scope_invalid")
     start, end, cutoff = (_utc(document[key]) for key in ("window_start", "window_end", "decision_as_of"))
     tags = scope["tag_slugs"]
     _require((start, end, cutoff) == (view.start, _utc(scope["window_end"]), view.cutoff)
@@ -229,7 +235,7 @@ def _read_capture(connection, repo_root: Path, document: dict, registered_at: da
              and tags == sorted({polymarket.DiscoveryQuery(tag).tag_slug for tag in tags}),
              "papersim_prepare_capture_scope_invalid")
     scope_sha = _digest(acquire._canonical(scope))
-    receipt = _success_receipt(connection, f"{acquire._OPERATION_PREFIX}:{scope_sha}", acquire._COMMAND,
+    receipt = _success_receipt(connection, acquire.discovery_operation_key(scope), acquire._COMMAND,
                                code="d1_capture_manifest_receipt_invalid")
     _require(receipt["config_digest"] == scope_sha and receipt["scheduled_for"] == start
              and receipt["code_commit"] is None
@@ -243,20 +249,34 @@ def _read_capture(connection, repo_root: Path, document: dict, registered_at: da
 def _verify_capture_requests(connection, view, end: datetime, tags: list[str]) -> None:
     """Check each attempt and its deduplicated body registration."""
     registrations = {}
+    scope = view.manifest["scope"]
+    limit = scope.get("gamma_page_size", polymarket.GAMMA_EVENTS_PAGE_LIMIT)
+    next_offsets = dict.fromkeys(tags, 0)
     for row in view.manifest["requests"]:
         source = row["source_kind"]
         fields = _REQUEST_FIELDS | ({"freshness"} if source == polymarket.SOURCE_KIND_CLOB else set())
         _fields(row, fields, "papersim_prepare_capture_request_invalid")
         query = row["request_meta"]["query"]
         if source == polymarket.SOURCE_KIND_GAMMA:
-            limit = polymarket.GAMMA_EVENTS_PAGE_LIMIT
             _require(query["tag_slug"] in tags and query["closed"] == "false"
                      and query["limit"] == str(limit) and re.fullmatch(r"[0-9]+", query["offset"])
                      and int(query["offset"]) % limit == 0, "papersim_prepare_capture_request_invalid")
+            if "gamma_page_size" in scope:
+                tag = query["tag_slug"]
+                _require(query["offset"] == str(next_offsets[tag]), "papersim_prepare_capture_request_invalid")
+                next_offsets[tag] += limit
         else:
             _require(acquire._TOKEN_ID.fullmatch(query["token_id"]) is not None,
                      "papersim_prepare_capture_request_invalid")
         response = view.responses.get(row["sequence"])
+        if source == polymarket.SOURCE_KIND_GAMMA and "gamma_page_size" in scope:
+            try:
+                page = journal.decode_public_json(response.entry.content) if response is not None else None
+            except journal.JournalError:
+                page = None
+            oversized = isinstance(page, list) and len(page) > limit
+            _require(oversized == (row["reason_code"] == acquire.GAMMA_PAGE_SIZE_EXCEEDED)
+                     and (not oversized or row["page"] is None), "papersim_prepare_capture_request_invalid")
         fetched = None if response is None else response.entry.utc_fetched_at
         observed = None if row["source_observed_at"] is None else _utc(row["source_observed_at"])
         started, finished = _utc(row["started_at"]), _utc(row["finished_at"])

@@ -98,6 +98,8 @@ def command_capture_inputs(args: argparse.Namespace) -> int:
         "window_end": args.window_end, "allow_public_fetch": args.allow_public_fetch,
     }
     try:
+        if args.gamma_page_size is not None and args.prepare_config is None:
+            raise acquire.AcquisitionError("d1_capture_gamma_page_size_requires_preparation")
         if args.resolution_slot is None:
             if args.operation_key is not None or args.attempt is not None:
                 raise acquire.AcquisitionError("d1_resolution_flags_require_slot")
@@ -108,7 +110,7 @@ def command_capture_inputs(args: argparse.Namespace) -> int:
 
                 receipt = prepare_capture.capture_preparation_inputs(
                     config_bytes=Path(args.prepare_config).read_bytes(),
-                    tag_slugs=tuple(args.tag_slug), **parameters,
+                    tag_slugs=tuple(args.tag_slug), gamma_page_size=args.gamma_page_size, **parameters,
                 )
         else:
             from polymarket_alpha_lab.papersim.d1compare import operations
@@ -357,6 +359,8 @@ def build_parser() -> argparse.ArgumentParser:
                          help="enable the public market data adapters")
     capture.add_argument("--prepare-config", metavar="PATH",
                          help="seal separate managed preparation inputs for this scan config")
+    capture.add_argument("--gamma-page-size", type=int, metavar="N",
+                         help="set the Gamma events per page for this prepared capture")
     capture.set_defaults(handler=command_capture_inputs)
 
     run_frozen = subparsers.add_parser(
