@@ -1,0 +1,118 @@
+{
+  "scope": "Pre-deployment verification of the specified main revision. Service configuration and natural-delivery scenarios use isolated test fixtures.",
+  "product_commit": "1a74b5429f84ed4d38dc065294b89987f5a0949f",
+  "reviewed_base": "9a64415ae8a191f4c0abc5276c661240e1920e8c",
+  "fixed_windows_script": {
+    "path": "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1",
+    "sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6"
+  },
+  "selfcheck": {
+    "passing_checks_per_revision": 10,
+    "exit_codes": [
+      0,
+      0
+    ],
+    "stdout_and_stderr_compared_byte_for_byte": true,
+    "stdout_bytes": 1663,
+    "stdout_sha256": "a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9",
+    "stderr_bytes": 0,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "test_changes": {
+    "exit_code": 0,
+    "removed_tests": 0,
+    "tests_with_fewer_checks": 0,
+    "new_skip_markers": 0,
+    "new_xfail_markers": 0,
+    "parse_errors": 0
+  },
+  "address_changes": {
+    "exit_code": 0,
+    "new_file_total_reported": 0,
+    "new_address_file_pairs_including_rare_values": 0
+  },
+  "git_objects": {
+    "four_frozen_fixtures": {
+      "base_files": 4,
+      "head_files": 4,
+      "removed": 0,
+      "added": 0,
+      "changed_mode_or_object": 0,
+      "byte_and_mode_identical": true
+    },
+    "existing_migrations": {
+      "base_files": 76,
+      "head_files": 76,
+      "removed": 0,
+      "added": 0,
+      "changed_mode_or_object": 0,
+      "byte_and_mode_identical": true
+    }
+  },
+  "normal_notification_services": {
+    "verified_release_materials": 19,
+    "release_materials_manifest_sha256": "8b107209afd3369994ed3e78eee9699411d919354ba515348c16ab299a936a58",
+    "evaluated_systemd_settings": 16,
+    "separate_read_only_check_service_context": [
+      "all_execution_fields_exist_on_exact_service_interface",
+      "manager_unit_fields_exist_on_exact_unit_interface",
+      "registered_public_tick_source_hash_matches",
+      "registered_original_execution_context_can_be_mirrored",
+      "matching_original_context_and_verified_public_command_accepted",
+      "EnvironmentFiles_drift_blocks_probe_only",
+      "User_drift_blocks_probe_only",
+      "NoNewPrivileges_drift_blocks_probe_only",
+      "OnFailure_drift_blocks_probe_only",
+      "ExecStartPost_drift_blocks_probe_only",
+      "NeedDaemonReload_drift_blocks_probe_only",
+      "inactive_original_dependency_does_not_trigger_job",
+      "changed_check_override_refused"
+    ],
+    "original_tick_during_check_and_atomic_cutover": [
+      "original_exact_bundle_check_and_render",
+      "prepared_pair_matches_validated_rendering",
+      "empty_generation_preserves_both_existing_commands",
+      "independent_await-tick_single_check_and_ordinary_tick_runs",
+      "independent_refused_single_check_and_ordinary_tick_runs",
+      "independent_interrupted_single_check_and_ordinary_tick_runs",
+      "concurrent_commit_has_one_winner",
+      "single_pointer_selects_both_exact_release_files",
+      "effective_release_has_two_normal_business_commands",
+      "first_real_cli_tick_after_release_reaches_business",
+      "single_pointer_rollback_restores_both_original_commands",
+      "switch_has_no_timer_units"
+    ],
+    "caller_bundle_sha256": "0ff28e23befc5bfa30b38816726c10c32f3d8fd1a8b068a58ba6fa07e7e4bff6"
+  },
+  "natural_receipt_observer": {
+    "passed": 45,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "by_receipt": {
+      "official-entry": 27,
+      "bridge": 14,
+      "native": 4
+    },
+    "bootstrap_separate": true
+  },
+  "verified_windows_media": {
+    "archive_bytes": 132729332,
+    "archive_sha256": "4a6f14e05c94b7d9e865d639dadf5ec4172bc055f4b3fc36323763d9eba10abb",
+    "archive_members": 4794,
+    "every_member_crc_read": true
+  },
+  "field_activity_of_these_checks": {
+    "windows_rehearsals": 0,
+    "production_service_changes": 0,
+    "natural_deliveries": 0
+  },
+  "original_receipt_sha256": {
+    "acceptance-evidence-1a74b5429f84.json": "b4e0363bba21f16f2eaf19be99fb233d4a19fbffcbf1f32fe64ed99445b89999",
+    "acceptance-selfcheck-1a74b5429f84.json": "eb8be80547383221073752a44d5fcb634e2c04faf76727ef9150132221a3e4f3",
+    "summary.json": "e4961ff74e8b48a491fc85564a14980a44bf1fd0ec69e567d0f5c35259e87fb2",
+    "independent-acceptance.json": "97c5e278a09807ec21d64de52c2e141f1fc22b7cb50f81d3ad29bfd7092ec882",
+    "context-verification.json": "d0dee7d28338db4325874d2936a5f4859d430243c1e86da8d439e3ecbeeec212",
+    "unit-argv-verification.json": "c3cfd87bb05404fdd9ec3532db00fff3a2fdbb4d9c75a8ba539d4db3eb5f9ca4"
+  }
+}
