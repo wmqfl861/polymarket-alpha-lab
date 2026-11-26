@@ -1,0 +1,23 @@
+{
+  "item": "FX-46 managed CLI guide",
+  "source_commit": "9040c34fcfe6bb4470ffced51f4a054768f09508",
+  "integrated_commit": "90dd31d4673611c5d1309cbe602a26bd0f101326",
+  "verified_utc": "2026-11-26T10:03:19.005348+00:00",
+  "file": "docs/paper-sim/usage.md",
+  "file_sha256": "ab357765ef59263d4a6e40702d24404c34f53b469e1652326e5afc67d136a04c",
+  "argument_parser_cases": 17,
+  "verified_cli_help_pages": 16,
+  "shell_examples_syntax_checked": 3,
+  "all_optimizer_subcommands_included": true,
+  "local_reference_checks": 4,
+  "original_receipt_sha256": "c15c627121579f9e8652c3d4788ea5899475b2f6e7bcd8436348a2407e70bbb8",
+  "offline_report_suite": {
+    "module": "tests/test_papersim_report.py",
+    "module_content_sha256": "3fb6341e7cf786aee5a0c01261334a886e8f316587428c4d64d188ddddf472a2",
+    "result": "56 passed in 18.02s",
+    "exit": 0,
+    "production_sessions": 0
+  },
+  "d2_activation_recorded": false,
+  "production_database_sessions_in_this_check": 0
+}
