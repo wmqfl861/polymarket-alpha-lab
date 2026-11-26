@@ -1,0 +1,110 @@
+{
+  "owner_authorization": "授权配置独立低权限投递入口及受保护 Hermes，沿用既有微信绑定",
+  "windows_observations": [
+    {
+      "observed_utc": "2026-11-26T13:24:54+00:00",
+      "facts": {
+        "dedicated_low_privilege_service_present": false,
+        "limited_delivery_task_present": false,
+        "registered_local_delivery_account_present": false,
+        "native_client_under_programfiles": false,
+        "hermes_locatable": true,
+        "hermes_packaged_python_launcher": true,
+        "hermes_alongside_venv": false,
+        "hermes_under_current_user": true,
+        "machine_wide_hermes_uninstall_registration": false,
+        "existing_identity_has_interactive_session": true,
+        "controller_is_child_of_ssh": false,
+        "query_completed": true
+      }
+    },
+    {
+      "observed_utc": "2026-11-26T13:33:11+00:00",
+      "facts": {
+        "registered_runtime_present": true,
+        "runtime_in_program_files": false,
+        "runtime_under_owner_profile": true,
+        "registered_protected_wheel_set_available": false
+      }
+    }
+  ],
+  "hc_installed_version": "0.1.21",
+  "hc_machine_exec_supported_parameters": [
+    "argv",
+    "cwd",
+    "env",
+    "input",
+    "line",
+    "on",
+    "timeout"
+  ],
+  "hc_execution_identity": "Uses the identity of the registered Windows core. The installed interface has no per-call Windows identity selector.",
+  "site_program_source_commit": "ae2a81ccc00e9b7c06301523e5bb09608397149c",
+  "site_program_public_commit": "https://github.com/NousResearch/hermes-agent/commit/ae2a81ccc00e9b7c06301523e5bb09608397149c",
+  "site_program_observed_utc": "2026-11-26T13:37:53+00:00",
+  "verified_public_files": [
+    {
+      "path": "hermes_cli/send_cmd.py",
+      "git_blob": "404b34129ddfd8a2aee4409a5200e3322ed8d4a3",
+      "sha256": "1d5613ee115d0afccb6497cb4c1e9773ba1fd12eacb98275551af2f4cf1fdb9f",
+      "bytes": 15146,
+      "site_sha256": "1d5613ee115d0afccb6497cb4c1e9773ba1fd12eacb98275551af2f4cf1fdb9f",
+      "byte_identical_to_site": true
+    },
+    {
+      "path": "gateway/outbound/senders.py",
+      "git_blob": "a0e320df7304ecdab593f4ef48f65c0c493289a6",
+      "sha256": "dd9459c6d667dcb32ac5c0e104e1a41c7e7ddf9de14e248a92c34bbd19550cda",
+      "bytes": 14195,
+      "site_sha256": "dd9459c6d667dcb32ac5c0e104e1a41c7e7ddf9de14e248a92c34bbd19550cda",
+      "byte_identical_to_site": true
+    },
+    {
+      "path": "gateway/outbound/send.py",
+      "git_blob": "049b86a31baac4917d031e97d0bf3329363a791d",
+      "sha256": "85041da268aae64ccf98caf703473be9ea0cad8bcf439d8ee5b1da27b84cfc53",
+      "bytes": 41557,
+      "site_sha256": "85041da268aae64ccf98caf703473be9ea0cad8bcf439d8ee5b1da27b84cfc53",
+      "byte_identical_to_site": true
+    },
+    {
+      "path": "plugins/platforms/weixin/adapter.py",
+      "git_blob": "998c7108e855a53af08c6905c75e199d244a4e4e",
+      "sha256": "9b68183eb37cbcc1eda8187bc34fa62028004b5917cdf027a815c9fcff4da299",
+      "bytes": 84171,
+      "site_sha256": "9b68183eb37cbcc1eda8187bc34fa62028004b5917cdf027a815c9fcff4da299",
+      "byte_identical_to_site": true
+    },
+    {
+      "path": "pyproject.toml",
+      "git_blob": "eec3ab6d5cc1f0be24e056f307f9d4861e5e11bc",
+      "sha256": "6cb17aeeb63c8ecd78b748990598d05a8fe87e74f89fb2013a344d378a55bf1a",
+      "bytes": 44616,
+      "site_sha256": "6cb17aeeb63c8ecd78b748990598d05a8fe87e74f89fb2013a344d378a55bf1a",
+      "byte_identical_to_site": true
+    },
+    {
+      "path": "uv.lock",
+      "git_blob": "8cfa6999910a61b06b73d67e104ccf03d953a7db",
+      "sha256": "d0ae8bfd20db7a8ca0e75418df718315c58088b120366227cc62ee8fe25d4274",
+      "bytes": 1251312,
+      "site_sha256": "d0ae8bfd20db7a8ca0e75418df718315c58088b120366227cc62ee8fe25d4274",
+      "byte_identical_to_site": true
+    }
+  ],
+  "site_program_comparison_scope": "Source bytes only. Actual interpreter, effective runtime, plugins and directory permissions require installed-process verification.",
+  "existing_profile_standard_token": {
+    "finding": "FEASIBLE_IN_SOURCE; RUNTIME_ACCEPTANCE_PENDING",
+    "basis": "Windows UAC can give the same signed-in account a standard filtered token. It preserves the Windows user identity. If the protected launcher resolves exactly the same Hermes profile, original authorization and conversation context are accessible to Hermes, so the normal send/list path can reuse the existing personal binding without registering a second account, copying credentials or adding recipients. Same user identity by itself does not guarantee the same selected Hermes profile, PATH, home, usable context or permissions.",
+    "required_local_proof": "A non-elevated token for the existing interactive user, the same effective profile, a single expected private recipient checked inside the fixed wrapper, and immutable code/dependencies under that token. Existing HC observation did not prove a non-elevated launch. Ordinary UAC still allows modification of user-owned code by the same user, so the current writable installation cannot supply the protected-program proof. Only the one previously authorized natural send can validate production delivery.",
+    "uac_public_reference": "https://learn.microsoft.com/en-us/windows/security/application-security/application-control/user-account-control/how-it-works"
+  },
+  "separate_windows_account": {
+    "finding": "NO_SUPPORTED_CROSS_USER_HANDOFF_IDENTIFIED_FOR_THIS_CLI",
+    "basis": "Separate user profiles do not automatically expose the existing user’s permitted recipient, platform authorization or conversation context. Same-process runner reuse gives no cross-account authority. Upstream interactive QR login is a new account-specific authorization operation. It does not establish that the original binding and active owner session will remain intact and was not attempted.",
+    "verification": "An actual distinct user reusing the existing personal binding without credential copying or a new authorization is unproved."
+  },
+  "field_exercise_completed": 0,
+  "natural_deliveries": 0,
+  "production_cutover": false
+}
