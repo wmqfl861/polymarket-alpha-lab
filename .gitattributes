@@ -14,3 +14,7 @@ docs/paper-sim/research/league-admission-20261119/**/*.csv whitespace=trailing-s
 # FX-28 surviving server evidence is a verbatim archive (hash-pinned by
 # docs/paper-sim/design/MANIFEST.sha256): no EOL conversion, no whitespace checks.
 docs/paper-sim/design/server-evidence/** -text -whitespace
+
+# The fixed entry and its manifest are verified byte-for-byte on both platforms.
+docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1 -text
+docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1.sha256 -text
