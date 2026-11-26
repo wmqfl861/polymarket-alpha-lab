@@ -1,4 +1,3 @@
-import ast
 import ctypes
 import hashlib
 import json
@@ -59,7 +58,6 @@ _WRITER_FIELDS = {
     'stdin_failed': {'yes', 'no', 'unknown'},
 }
 _SOURCE_FAILURE = 'FX-49 pinned source validation failed'
-_HANDLE_FAILURE = 'FX-49 verifier standard handles could not be confirmed'
 _REPORT_FAILURE = 'FX-49 observation report is invalid'
 
 
@@ -141,51 +139,6 @@ def _computer_name():
     return buffer.value
 
 
-def _verifier_stdin(checkout):
-    # The verifier delegates its handle setup to run(). Read the tracked options without importing it.
-    source = _git('cat-file', 'blob', f'{checkout}:scripts/verify_fx49_publication.py')
-    _require(0 < len(source) <= 1_000_000, _HANDLE_FAILURE)
-    try:
-        tree = ast.parse(source)
-    except (SyntaxError, ValueError):
-        raise _DiagnosticFailure(_HANDLE_FAILURE) from None
-    wrappers = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'run']
-    _require(len(wrappers) == 1, _HANDLE_FAILURE)
-    calls = [
-        node for node in ast.walk(wrappers[0])
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
-        and isinstance(node.func.value, ast.Name) and node.func.value.id == 'subprocess'
-        and node.func.attr == 'run'
-    ]
-    _require(len(calls) == 1, _HANDLE_FAILURE)
-    call = calls[0]
-    _require(len(call.args) <= 1 and all(not isinstance(arg, ast.Starred) for arg in call.args), _HANDLE_FAILURE)
-    options = {keyword.arg: ast.unparse(keyword.value) for keyword in call.keywords}
-    _require(None not in options and len(options) == len(call.keywords), _HANDLE_FAILURE)
-    capture = options.get('capture_output', 'False')
-    stdout = options.get('stdout', 'None')
-    stderr = options.get('stderr', 'None')
-    _require(
-        (capture == 'True' and stdout == stderr == 'None')
-        or (capture == 'False' and stdout == stderr == 'subprocess.PIPE'),
-        _HANDLE_FAILURE,
-    )
-    _require(
-        options.get('shell', 'False') == 'False'
-        and options.get('startupinfo', 'None') == 'None'
-        and options.get('creationflags', '0') == '0'
-        and options.get('start_new_session', 'False') == 'False',
-        _HANDLE_FAILURE,
-    )
-    stdin = options.get('stdin', 'None')
-    input_arg = options.get('input', 'None')
-    if stdin == 'None' and input_arg in ("b''", "''"):
-        return subprocess.PIPE
-    choices = {'None': None, 'subprocess.DEVNULL': subprocess.DEVNULL, 'subprocess.PIPE': subprocess.PIPE}
-    _require(input_arg == 'None' and stdin in choices, _HANDLE_FAILURE)
-    return choices[stdin]
-
-
 def _unique_object(pairs):
     value = {}
     seen = set()
@@ -255,9 +208,16 @@ def _windows_check(checkout, sources, record):
              'FX-49 system Windows PowerShell 5.1 is unavailable')
     engine = system_root / 'System32' / 'WindowsPowerShell' / 'v1.0' / 'powershell.exe'
     _require(engine.is_file(), 'FX-49 system Windows PowerShell 5.1 is unavailable')
-    stdin = _verifier_stdin(checkout)
     expected = _frame(_computer_name())
-    env = {**os.environ, 'PAL_FX49_FRAME_LENGTH': str(len(expected)), 'PAL_FX49_FRAME_SHA256': _sha256(expected)}
+    # Mirror clean_env() and retain SystemRoot and PATH for child processes.
+    env = {
+        key: os.environ[key]
+        for key in os.environ
+        if not key.startswith(('GIT_', 'PG', 'PAL_', 'PAPERSIM_', 'SUPABASE_', 'PYTEST_', 'PYTHON'))
+        and key not in {'DATABASE_URL', 'DATABASE_DSN'}
+    }
+    env['PAL_FX49_FRAME_LENGTH'] = str(len(expected))
+    env['PAL_FX49_FRAME_SHA256'] = _sha256(expected)
     with tempfile.TemporaryDirectory(prefix='fx49-hosted-') as directory:
         scratch = Path(directory)
         workspace = scratch / 'workspace'
@@ -268,10 +228,15 @@ def _windows_check(checkout, sources, record):
             helper = _git('cat-file', 'blob', f'{checkout}:tests/fx49_hosted_entry_{role}.ps1')
             _require(helper and helper.isascii() and b'\0' not in helper, 'FX-49 static helper is invalid')
             (scratch / name).write_bytes(helper)
+        # PR #131 verifier revision 69858354dd3728418095eb5ed5454a3821484299
+        # Blob eb22b0272e6eee1b6d36605d251d18f1bd981cc0
+        # SHA-256 e3c0c52be1ce783a952aa754f4720f13a240bdebd5742c2a789de5da81137d54
+        # verify_windows() omits data, so run() passes input=None and inherits stdin.
+        # Keep stdout and stderr piped and scratch as the working directory.
         result = subprocess.run(
             [str(engine), '-NoProfile', '-NonInteractive', '-File', str(scratch / _DRILL),
              '-Workspace', str(workspace), '-ApprovedScriptSha256', _ENTRY_SHA],
-            cwd=scratch, env=env, stdin=stdin, capture_output=True, timeout=240, check=False,
+            cwd=scratch, env=env, capture_output=True, timeout=240, check=False,
         )
     _check_report(result, record)
 
