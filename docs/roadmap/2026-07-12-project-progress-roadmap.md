@@ -1,15 +1,12 @@
 # Project Progress Roadmap Node
 
 Date: 2026-07-12
-Status: current project progress and next-phase roadmap checkpoint
+Status: historical July 2026 roadmap checkpoint
 Scope: documentation-only roadmap node
 
 ## Purpose
 
-This node records the current project phase, the Phase 1 capability baseline,
-the next priorities, and the operating rules that future implementation nodes
-must preserve. It is intended to be auditable by reviewers without reading the
-full project history.
+This checkpoint records the Phase 1 capabilities, priorities and research boundaries as of July 12.
 
 This document does not authorize implementation outside the current boundary.
 It is not a live-trading design, not a credential-handling design, not an order
@@ -70,8 +67,7 @@ evidence gates justify a separate later-phase design. Priorities are:
    spread/liquidity, fee/cost drag, cash lockup, settlement lag, and team
    memory policy.
 4. Expand team-agent capability without fragmenting ownership: keep the 10-team
-   taxonomy, keep `crypto_btc` as the only current runnable slice, and add
-   other runnable workflows only through reviewed, non-overlapping nodes.
+   taxonomy. At this checkpoint `crypto_btc` was the only runnable slice.
 5. Improve long-term team memory quality before broad use: require diagnostics
    history, memory readiness gates, source freshness, settled calibration
    deltas, and assignment-history readback before memory can affect research

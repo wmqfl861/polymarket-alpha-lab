@@ -48,16 +48,10 @@ session: **100 passed**. New cases are delivered separately as
 network or database connections. Source blob `22ac63ee17ba910d21017dc6f691c8010e89d549`
 is byte-identical to the locally tested candidate.
 
-This module result is not the full-suite result. Before merging, inspect the
-successful GitHub Actions run for the exact final PR revision. The workflow
-installs the existing lockfile with Python 3.12 and runs
-`scripts/verify_local.py --full`, including editable-install checks, CLI
-checks, compile verification, sanitized pytest, and tracked-file diff checks.
-The runner has read-only repository permission, no stored checkout credentials,
-no production DSN, no database service, and Supabase smoke explicitly disabled
-by the existing verifier. Action revisions and uv are pinned; the dependency
-lockfile is unchanged. Actual run IDs, counts and final self-review outcome
-belong in the PR's merge evidence, not a speculative PASS in this document.
+The archived CI configuration for this revision used Python 3.12 and the locked
+dependencies. It ran `scripts/verify_local.py --full`, which checks the editable
+install, CLI, compilation, sanitized pytest and tracked files. The 100 cases
+above are the parser-specific result.
 
 ## Limits
 

@@ -18,7 +18,7 @@ failure mechanism; it does not prove all possible interpreter bugs eliminated.
 
 ## Explicit replacement, unchanged acceptance
 
-The three Windows workflows now invoke:
+The three Windows workflows used this pytest invocation in September 2026:
 
 ```
 python -m pytest -p no:faulthandler -p tests.ci_thread_dump -o faulthandler_timeout=120 ...
@@ -36,18 +36,17 @@ fatal-handler state is restored at teardown, within the same stream-restoration
 limitations as pytest's original handler (there is no getter for its prior file).
 
 All old test paths, assertions, ordinary subprocess limits, lock/permission checks
-and CI job deadlines remain. The120/180second settings are diagnostic triggers,
+and CI job deadlines applied to that experiment. The120/180second settings are diagnostic triggers,
 not the test process's hard exit policy: the previous workflows did NOT enable
 `faulthandler_exit_on_timeout`. The new plugin refuses a nonpositive/nonfinite
 trigger, simultaneous built-in plugin, or a requested hard-exit mode rather than
 silently weakening those settings. It does not alter test collection, reports,
 results, skip conditions or retries. Fatal exception reporting remains enabled.
-The Linux full verification keeps its previous configuration.
+The Linux verification used its existing configuration at the time.
 
 Important tradeoff: the Python diagnostic thread must acquire the GIL. If a native
 extension holds it indefinitely, this trigger cannot produce a stack dump. The
-unchanged outer CI20/10minute job deadlines still bound execution and fail the
-run. This is not identical diagnostic coverage, deadlock recovery, a real-time
+outer 20- and 10-minute CI deadlines bounded the original experiment. This is not identical diagnostic coverage, deadlock recovery, a real-time
 guarantee, or permission to mark a missing report successful. No test timeout or
 assertion is removed to get a passing gate.
 
@@ -56,8 +55,7 @@ failure and interrupt exit codes, configuration refusal, fatal-handler state,
 owned descriptor lifetime, constructor/close errors, and actual Python/pathlib
 churn without the unsafe C watchdog. Separately designed review tests first
 exposed two descriptor/error-propagation defects in the replacement; both initial
-failures and their corrections are retained. The revised candidate must pass ALL
-applicable final-head workflows with real logs/JUnit inspected before merging.
+failures and their corrections are retained.
 
 No product module, SQL migration, interpreter version or dependency was changed
 for this correction. It does not close the older PR30PowerShell5.1 first-run

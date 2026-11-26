@@ -1358,14 +1358,9 @@ polymarket-alpha-lab 的 native-postgres.yml 上共确认三例
   2026-09-24）。
 - campaign 决定：按节点计划自身条款（有界扫描已找到可用且忠实于源的分段失败证据时，
   先保全并分析，campaign 可保持显式未执行），预声明的 30 试验捕获 workflow 已实现并
-  发布但**未派发**：状态 `implemented_not_executed`，0/30 试验，0 runner 分钟花费。现在
-  花掉其声明的 300 分钟预算只会重新推导既有证据已提供的频率界；将来若需独立试验频率
-  估计，owner 可手动派发（`gh workflow run handoff-first-run-campaign.yml --repo
-  Lordakee/polymarket-alpha-lab --ref <保留引用>`）。一次性设计不变：仅 workflow_dispatch、
-  `if: github.run_attempt == 1` 使 UI 重跑不能悄悄扩大样本、fail-fast 关闭、全部试验
-  保留、失败即目标；随附只读汇总器永不推断根因。
+  发布但**未派发**：状态 `implemented_not_executed`，0/30 试验，0 runner 分钟花费。当时保留已有频率界，随附只读汇总器。2026-11-26 已移除这条工作流。
 - 既有约束不变：30 秒子进程契约、无预热、无重试、生产 `scripts/download_handoff.ps1`
-  字节不变；后续修复必须走独立评审节点，本节不据此关闭缺陷或 G6。
+  字节不变。本节未关闭缺陷或 G6。
 
 **WP-06 仍 PARTIAL，G6 未关闭，V1 仍 1／6。** 本节是失败证据保全、有界频率界与预声明
 捕获工具发布，不是根因修复、campaign 执行或业务验收；原始日志仍可在 GitHub 保留期内从
