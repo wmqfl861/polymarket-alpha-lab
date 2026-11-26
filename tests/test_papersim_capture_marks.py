@@ -311,3 +311,176 @@ def test_capture_module_never_imports_the_cli_or_the_driver():
     completed = subprocess.run([sys.executable, "-c", script], capture_output=True,
                                text=True, check=True)
     assert completed.stdout.strip().endswith("ok")
+
+
+_ODP_EVENT_BOUNDARIES = (
+    pytest.param(NOW, id="sport-start"),
+    pytest.param(EXPIRY, id="crypto-expiry"),
+)
+
+
+@pytest.mark.parametrize("event_start_at", _ODP_EVENT_BOUNDARIES)
+def test_odp_legacy_classifier_keeps_close_at_61_minutes(event_start_at):
+    observed_at = event_start_at - datetime.timedelta(minutes=61)
+    assert capture.classify_observation("CLOSE", observed_at, event_start_at) == (
+        "CLOSE", None,
+    )
+
+
+@pytest.mark.parametrize("event_start_at", _ODP_EVENT_BOUNDARIES)
+@pytest.mark.parametrize(
+    ("mark_kind", "observed_minutes", "received_minutes", "expected"),
+    [
+        pytest.param(
+            "CLOSE", -61, None, ("PERIODIC", "observed_at_before_close_window"),
+            id="before-window",
+        ),
+        pytest.param(
+            "CLOSE", -61, 0, ("PERIODIC", "observed_at_before_close_window"),
+            id="before-window-received-at-event",
+        ),
+        pytest.param(
+            "CLOSE", -61, 1, ("PERIODIC", "observed_at_before_close_window"),
+            id="before-window-received-after-event",
+        ),
+        pytest.param("CLOSE", -60, None, ("CLOSE", None), id="window-start"),
+        pytest.param("CLOSE", -59, None, ("CLOSE", None), id="inside-window"),
+        pytest.param(
+            "CLOSE", 0, None, ("PERIODIC", "observed_at_after_event_start"),
+            id="observed-at-event",
+        ),
+        pytest.param(
+            "CLOSE", 1, None, ("PERIODIC", "observed_at_after_event_start"),
+            id="observed-after-event",
+        ),
+        pytest.param(
+            "CLOSE", 0, 0, ("PERIODIC", "observed_at_after_event_start"),
+            id="observed-and-received-at-event",
+        ),
+        pytest.param(
+            "CLOSE", -59, 0, ("PERIODIC", "received_at_after_event_start"),
+            id="received-at-event",
+        ),
+        pytest.param(
+            "CLOSE", -59, 1, ("PERIODIC", "received_at_after_event_start"),
+            id="received-after-event",
+        ),
+        pytest.param("PERIODIC", 0, None, ("PERIODIC", None), id="requested-periodic"),
+    ],
+)
+def test_odp_observation_timing(
+    event_start_at, mark_kind, observed_minutes, received_minutes, expected,
+):
+    observed_at = event_start_at + datetime.timedelta(minutes=observed_minutes)
+    received_at = (
+        None if received_minutes is None
+        else event_start_at + datetime.timedelta(minutes=received_minutes)
+    )
+    assert capture._classify_odp_observation(
+        mark_kind, observed_at, event_start_at, received_at=received_at,
+    ) == expected
+
+
+@pytest.mark.parametrize("event_start_at", _ODP_EVENT_BOUNDARIES)
+def test_odp_missing_event_start(event_start_at):
+    observed_at = event_start_at - datetime.timedelta(minutes=59)
+    assert capture._classify_odp_observation("CLOSE", observed_at, None) == (
+        "PERIODIC", "missing_event_start",
+    )
+    assert capture._classify_odp_observation(
+        "CLOSE", observed_at, event_start_at.replace(tzinfo=None),
+    ) == ("PERIODIC", "missing_event_start")
+    assert capture._classify_odp_observation("PERIODIC", observed_at, None) == (
+        "PERIODIC", None,
+    )
+
+
+def test_odp_uses_utc_instants_across_folds():
+    class RepeatedHour(datetime.tzinfo):
+        def utcoffset(self, value):
+            if value is None:
+                return None
+            return datetime.timedelta(hours=-4 - value.fold)
+
+    first_fold = datetime.datetime(2026, 11, 1, 1, 30, tzinfo=RepeatedHour(), fold=0)
+    second_fold = first_fold.replace(fold=1)
+    assert capture._classify_odp_observation("CLOSE", first_fold, second_fold) == (
+        "CLOSE", None,
+    )
+    assert capture._classify_odp_observation(
+        "CLOSE", first_fold - datetime.timedelta(minutes=59), first_fold,
+        received_at=first_fold.replace(minute=29, fold=1),
+    ) == ("PERIODIC", "received_at_after_event_start")
+    assert capture._classify_odp_observation(
+        "CLOSE", first_fold.replace(minute=29), second_fold, received_at=second_fold,
+    ) == ("PERIODIC", "observed_at_before_close_window")
+
+
+def test_b2_summary_counts_only_observed_source_window_downgrades(monkeypatch, tmp_path):
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+
+    repo = _git_repo(tmp_path / "repo")
+    pack = capture.MarkPack("marks.json", json.dumps([
+        pack_document(sampling_kind="CLOSE",
+                      observed_at=(NOW - datetime.timedelta(minutes=minutes)).isoformat())
+        for minutes in (62, 61, 59)
+    ]).encode())
+    receipts = []
+    writes = []
+    monkeypatch.setattr(snapshots, "register_snapshot",
+                        lambda conn, registration: {"content_sha256": PACK_DIGEST})
+    monkeypatch.setattr(store_psycopg, "candidate_capture_target",
+                        lambda conn, **ref: {"candidate_id": 1, "event_start_at": NOW})
+    monkeypatch.setattr(store_psycopg, "record_command_run_event",
+                        lambda conn, event: receipts.append(event))
+
+    def write_mark(conn, mark, *, close_evidence):
+        writes.append(mark.sampling_kind)
+        return {"close_evidence_id": len(writes) if close_evidence else None}
+
+    def run():
+        return capture.run_capture(capture.CaptureConfig(team="paper-test"), [pack],
+                                   conn=None, repo_root=repo, now_utc=lambda: NOW)
+
+    monkeypatch.setattr(store_psycopg, "mark_capture_upsert", write_mark)
+    previous_reasons = {"missing_event_start": 0, "observed_at_after_event_start": 0}
+    assert run()["downgrade_reasons"] == previous_reasons
+    assert writes == ["CLOSE", "CLOSE", "CLOSE"]
+    writes.clear()
+
+    monkeypatch.setattr(capture, "classify_observation", capture._classify_odp_observation)
+    report = run()
+    assert report["downgrade_reasons"] == {**previous_reasons, "observed_at_before_close_window": 2}
+    assert (report["downgraded_to_periodic"], report["close_evidence_written"]) == (2, 1)
+    assert writes == ["PERIODIC", "PERIODIC", "CLOSE"]
+    assert json.loads(receipts[-1].output_evidence[0]) == report
+
+    monkeypatch.setattr(capture, "classify_observation", lambda *args: ("PERIODIC", "unknown_reason"))
+    with pytest.raises(KeyError, match="unknown_reason"):
+        run()
+    assert receipts[-1].phase == "FAILED"
+
+
+def test_d1_summary_counts_only_ready_source_window_downgrades():
+    early = "observed_at_before_close_window"
+    late = "received_at_after_event_start"
+
+    def summarize(states):
+        targets = []
+        items = []
+        for index, (status, reason) in enumerate(states, 1):
+            targets.append({"identity": {"candidate_id": index}, "candidate": {"event_start_at": NOW},
+                            "status": status, "downgrade": reason, "close": None})
+            items.append({"status": status, "candidate_mark_id": index if status == "READY" else None,
+                          "close_evidence_id": None})
+        return capture._d1_capture_summary(capture.CaptureConfig(team="paper-test"), "",
+                                           [], targets, items)
+
+    states = [("READY", late), ("REJECTED", early), ("MISSING_QUOTE", early)]
+    previous_reasons = {"missing_event_start": 0, "observed_at_after_event_start": 0, late: 1}
+    assert summarize(states)["downgrade_reasons"] == previous_reasons
+    report = summarize([*states, ("READY", early), ("READY", early)])
+    assert report["downgrade_reasons"] == {**previous_reasons, early: 2}
+    assert (report["downgraded_to_periodic"], report["marks_written"]) == (3, 3)
+    with pytest.raises(KeyError, match="unknown_reason"):
+        summarize([("READY", "unknown_reason")])

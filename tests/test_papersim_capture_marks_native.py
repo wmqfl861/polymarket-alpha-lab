@@ -625,7 +625,8 @@ def _d1_scan_candidate_ids(scan, candidate_keys):
     return candidate_ids
 
 
-def _d1_seed_capture_case(project, label, variants=("quote", "bid-only", "empty"), *, boundary_cases=False):
+def _d1_seed_capture_case(project, label, variants=("quote", "bid-only", "empty"), *, boundary_cases=False,
+                          time_to_expiry=datetime.timedelta(days=2)):
     from polymarket_alpha_lab import replay
     from polymarket_alpha_lab.papersim import snapshots, store_psycopg
     from polymarket_alpha_lab.papersim.d1compare import journal
@@ -633,7 +634,7 @@ def _d1_seed_capture_case(project, label, variants=("quote", "bid-only", "empty"
 
     case_dir = project.temporary / label
     case_dir.mkdir()
-    expiry = datetime.datetime.now(_UTC) + datetime.timedelta(days=2)
+    expiry = datetime.datetime.now(_UTC) + time_to_expiry
     b1_books, b2_books, markets = {}, {}, []
 
     def book(token, condition, bids, asks, *, last=None):
@@ -1145,3 +1146,83 @@ def test_legacy_ordinary_capture_replays_one_mark_for_two_identical_sealed_quote
     stored_evidence, = rows["close"]
     assert stored_mark[4] == stored_evidence[4] == datetime.datetime.fromisoformat(mark["observed_at"])
     assert stored_mark[15] == stored_evidence[15] == first.content_sha256
+
+    # The body digest and upstream quote clock are identical. The manifest and
+    # request sequence select the actual receipt, including on a sealed replay.
+    inspected = []
+    for digest in (first_batch, second_batch, second_batch):
+        result = _d1_child(project, ["capture-marks", "--managed", "--repo-root", str(project.root),
+                                     "--config", str(config), "--inspect-close-window", digest])
+        assert result.returncode == 0, result.stderr
+        item, = json.loads(result.stdout)["rows"]
+        assert item["sampling_kind"] == "PERIODIC" and item["reason"] == "observed_at_before_close_window"
+        assert item["book_sha256"] == first.content_sha256
+        assert item["request_sequence"] == first.request_meta["sequence"]
+        inspected.append(datetime.datetime.fromisoformat(item["received_at"]))
+    assert inspected == [first.utc_fetched_at, second.utc_fetched_at, second.utc_fetched_at]
+    assert _d1_capture_rows(project, case.candidate_ids) == rows
+
+
+@_D1_NATIVE
+def test_ordinary_and_registered_close_window_evidence_use_the_same_native_clocks(d1_capture_project):
+    from polymarket_alpha_lab.papersim import store_psycopg
+
+    project = d1_capture_project
+    case = _d1_seed_capture_case(project, "close-window-readback", ("quote", "empty"),
+                                 time_to_expiry=datetime.timedelta(minutes=40))
+    slot = _d1_register_capture_slot(case, "inspect")
+    with store_psycopg.connect_managed(project.root) as reader:
+        event_count = reader.execute("SELECT count(*) FROM papersim.command_run_events").fetchone()
+    before = _d1_capture_rows(project, case.candidate_ids)
+    args = ["capture-marks", "--managed", "--repo-root", str(project.root), "--config", str(slot.config),
+            "--inspect-close-window", case.capture_manifest_sha256]
+    ordinary = _d1_child(project, args)
+    registered = _d1_child(project, [*args, "--operation-key", slot.key])
+    assert ordinary.returncode == registered.returncode == 0, (ordinary.stderr, registered.stderr)
+    ordinary_report, registered_report = map(json.loads, (ordinary.stdout, registered.stdout))
+    assert ordinary_report["capture_path"] == "ordinary_b2"
+    assert registered_report["capture_path"] == "registered_d1"
+    assert ordinary_report["rows"] == registered_report["rows"]
+    observed, missing = ordinary_report["rows"]
+    assert (observed["sampling_kind"], observed["reason"]) == ("CLOSE", None)
+    assert observed["token_id"] == case.marks[0]["token_ref"]
+    assert observed["book_sha256"] == case.marks[0]["snapshot_sha256"]
+    assert datetime.datetime.fromisoformat(observed["source_observed_at"]) <= datetime.datetime.fromisoformat(observed["received_at"])
+    assert observed["boundary"]["field"] == "endDate" and observed["boundary"]["sources"]
+    assert missing["sampling_kind"] == "PERIODIC" and missing["reason"] == "d1_capture_no_quote"
+
+    # Re-read the same bound Gamma entry as a sports request: the only
+    # supplied clock here is the contract expiry, so kickoff stays missing.
+    from types import SimpleNamespace
+    from polymarket_alpha_lab.papersim import close_window, prepare
+    from polymarket_alpha_lab.papersim.d1compare import acquire
+    manifest, entries = acquire.read_capture(repo_root=project.root, batch_sha256=case.capture_manifest_sha256)
+    view = prepare._capture_view(case.capture_manifest_sha256, manifest, entries)
+    with store_psycopg.connect_managed(project.root) as reader:
+        candidate = store_psycopg.d1_candidate_capture_target(
+            reader, scan_id=case.scan_id, candidate_key=case.marks[0]["candidate_key"])
+    request = SimpleNamespace(market_kind="match_winner", market_id=candidate["market_id"],
+                              question="Will Ethereum be below 2,000 on the settlement date?")
+    with pytest.raises(capture.CaptureError, match="close_window_boundary_missing"):
+        close_window._market_boundary(view, candidate, request)
+
+    mismatch = _d1_child(project, [*args[:-1], "0" * 64, "--operation-key", slot.key])
+    assert mismatch.returncode == 1 and "d1_capture_manifest_binding_mismatch" in mismatch.stderr
+    with store_psycopg.connect_managed(project.root) as reader:
+        assert reader.execute("SELECT count(*) FROM papersim.command_run_events").fetchone() == event_count
+    wrong_side = _d1_register_capture_slot(case, "wrong-side-readback", [case.marks[0] | {"side": "NO"}])
+    invalid = _d1_child(project, ["capture-marks", "--managed", "--repo-root", str(project.root),
+                                  "--config", str(wrong_side.config), "--inspect-close-window", case.capture_manifest_sha256])
+    assert invalid.returncode == 0, invalid.stderr
+    invalid_row, = json.loads(invalid.stdout)["rows"]
+    assert (invalid_row["sampling_kind"], invalid_row["reason"]) == ("PERIODIC", "d1_capture_candidate_side_invalid")
+    rounded = json.dumps([case.marks[0]]).replace('"ask": 0.58', '"ask": 0.58000000000000000001')
+    wrong_side.pack.write_text(rounded)
+    invalid_price = _d1_child(project, ["capture-marks", "--managed", "--repo-root", str(project.root),
+                                        "--config", str(wrong_side.config), "--inspect-close-window", case.capture_manifest_sha256])
+    assert invalid_price.returncode == 0, invalid_price.stderr
+    precise_row, = json.loads(invalid_price.stdout)["rows"]
+    assert (precise_row["sampling_kind"], precise_row["reason"]) == ("PERIODIC", "d1_capture_quote_mismatch")
+    with store_psycopg.connect_managed(project.root) as reader:
+        assert reader.execute("SELECT count(*) FROM papersim.command_run_events").fetchone()[0] == event_count[0] + 1
+    assert _d1_capture_rows(project, case.candidate_ids) == before

@@ -748,6 +748,37 @@ def test_prepared_soccer_persists_ordered_quotes_and_replays_constructor_failure
         assert replayed.returncode == 0 and json.loads(replayed.stdout)["matched"], replayed.stderr
 
 
+def test_prepared_soccer_close_window_binds_kickoff_and_the_no_side(separate_project):
+    case = _capture_setup(separate_project, "fx44-soccer-window", tag="epl")
+    scanned = _b1(case, 1)
+    assert scanned.returncode == 0, scanned.stderr
+    scan = json.loads(scanned.stdout)
+    key, = (k for k in scan["candidate_ids"] if k.startswith(f"{case.market['id']}|no|"))
+    batch = case.receipt["batch_sha256"]
+    manifest, _ = acquire.read_capture(repo_root=case.project.root, batch_sha256=batch)
+    token = case.tokens[0]
+    book, = (row for row in manifest["books"] if row["token_id"] == token)
+    source = manifest["requests"][book["request_sequence"] - 1]
+    mark = {"scan_operation_key": case.key, "candidate_key": key, "sampling_kind": "CLOSE",
+            "observed_at": source["source_observed_at"], "market_ref_kind": "condition_id",
+            "market_ref": case.market["conditionId"], "token_ref": token, "side": "NO",
+            "bid": 0.34, "ask": 0.38, "source_kind": "clob_book",
+            "source_ref": f"{source['url']}#{source['content_sha256']}", "snapshot_sha256": source["content_sha256"]}
+    fixture = SimpleNamespace(project=case.project, directory=case.directory, marks=[mark],
+                              candidate_ids=(scan["candidate_ids"][key],), capture_manifest_sha256=batch)
+    slot = _d1_register_capture_slot(fixture, "inspect", **_BOOK_AGE)
+    for operation in ([], ["--operation-key", slot.key]):
+        result = _d1_child(case.project, ["capture-marks", "--managed", "--repo-root", str(case.project.root),
+                                         "--config", str(slot.config), "--inspect-close-window", batch, *operation])
+        assert result.returncode == 0, result.stderr
+        item, = json.loads(result.stdout)["rows"]
+        assert (item["sampling_kind"], item["reason"]) == ("PERIODIC", "observed_at_before_close_window")
+        assert item["side"] == "NO" and item["token_id"] == token
+        assert item["boundary"]["field"] == "gameStartTime"
+        assert datetime.fromisoformat(item["boundary"]["boundary_utc"]) == datetime.fromisoformat(case.market["gameStartTime"])
+        assert datetime.fromisoformat(item["received_at"]) == datetime.fromisoformat(source["utc_fetched_at"])
+
+
 @pytest.mark.parametrize(("fixture_clock", "matches_kickoff"), [
     ("14:00:00+02:00", True), ("12:00:00+02:00", False),
 ])

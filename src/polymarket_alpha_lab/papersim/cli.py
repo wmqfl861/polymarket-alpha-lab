@@ -1029,17 +1029,21 @@ def _cmd_capture_marks(args) -> int:
             raise ValueError(f"papersim_capture_config_unreadable: {config_path}") from error
         config = capture.config_from_mapping(document)
         packs = capture.load_mark_packs(config, base_dir=config_path.parent)
+        window_batch = getattr(args, "inspect_close_window", None)
+        if window_batch is not None and not args.managed:
+            raise ValueError("d1_operation_managed_required")
         connection = _open_readonly_connection(args, label="PAPERSIM_CAPTURE_PG_DSN")
         try:
-            result = capture.run_capture(
-                config,
-                packs,
-                conn=connection,
-                repo_root=args.repo_root,
-                now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
-                operation_key=args.operation_key,
-                attempt=args.attempt,
-            )
+            if window_batch is not None:
+                from polymarket_alpha_lab.papersim import close_window
+
+                result = close_window.inspect(config, packs, conn=connection, repo_root=args.repo_root,
+                                              batch_digest=window_batch, operation_key=args.operation_key)
+            else:
+                result = capture.run_capture(
+                    config, packs, conn=connection, repo_root=args.repo_root,
+                    now_utc=lambda: _datetime.datetime.now(_datetime.UTC),
+                    operation_key=args.operation_key, attempt=args.attempt)
         finally:
             connection.close()
     except (ValueError, OSError) as error:
@@ -2868,6 +2872,11 @@ def _build_parser() -> argparse.ArgumentParser:
     capture_parser.add_argument(
         "--attempt", type=int, default=1,
         help="attempt number of this operation for the run receipts (default: 1)",
+    )
+    capture_parser.add_argument(
+        "--inspect-close-window", metavar="BATCH_SHA256",
+        help="read-only comparison against the original quote receipt, bought side and "
+             "market boundary in this sealed managed batch; write the evidence JSON to stdout",
     )
     settle_parser = subparsers.add_parser(
         "settle",

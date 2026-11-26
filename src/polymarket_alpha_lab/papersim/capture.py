@@ -347,6 +347,14 @@ def load_mark_packs(config: CaptureConfig, *, base_dir) -> tuple[MarkPack, ...]:
 #: Downgrade reasons reported in the coverage summary (fixed vocabulary).
 DOWNGRADE_MISSING_EVENT_START = "missing_event_start"
 DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START = "observed_at_after_event_start"
+_DOWNGRADE_BEFORE_CLOSE_WINDOW = "observed_at_before_close_window"
+
+
+def _count_downgrade(counts: dict[str, int], reason: str) -> None:
+    """Include the OD-P counter only in summaries that actually use it."""
+    if reason == _DOWNGRADE_BEFORE_CLOSE_WINDOW:
+        counts.setdefault(reason, 0)
+    counts[reason] += 1
 
 
 def classify_observation(mark_kind: str, observed_at: datetime.datetime,
@@ -369,6 +377,45 @@ def classify_observation(mark_kind: str, observed_at: datetime.datetime,
         return ("PERIODIC", DOWNGRADE_MISSING_EVENT_START)
     if observed_at >= event_start_at:
         return ("PERIODIC", DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)
+    return ("CLOSE", None)
+
+
+def _classify_odp_observation(
+    mark_kind: str,
+    observed_at: datetime.datetime,
+    event_start_at: datetime.datetime | None,
+    *,
+    received_at: datetime.datetime | None = None,
+) -> tuple[str, str | None]:
+    """Classify a request using the approved OD-P close window."""
+    if mark_kind == "PERIODIC":
+        return ("PERIODIC", None)
+    if mark_kind != "CLOSE":
+        raise ValueError("unsupported OD-P mark kind")
+    if event_start_at is None or event_start_at.utcoffset() is None:
+        return ("PERIODIC", DOWNGRADE_MISSING_EVENT_START)
+    if observed_at.utcoffset() is None:
+        raise ValueError("observed_at must be timezone-aware")
+
+    utc = datetime.timezone.utc
+    observed_utc = observed_at.astimezone(utc)
+    start_utc = event_start_at.astimezone(utc)
+    received_late = False
+    if received_at is not None:
+        if received_at.utcoffset() is None:
+            raise ValueError("received_at must be timezone-aware")
+        received_utc = received_at.astimezone(utc)
+        if received_utc < observed_utc:
+            raise ValueError("received_at precedes observed_at")
+        received_late = received_utc >= start_utc
+
+    if observed_utc >= start_utc:
+        return ("PERIODIC", DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)
+    # A receipt cutoff only downgrades a source observation still eligible for CLOSE.
+    if start_utc - observed_utc > datetime.timedelta(minutes=60):
+        return ("PERIODIC", _DOWNGRADE_BEFORE_CLOSE_WINDOW)
+    if received_late:
+        return ("PERIODIC", "received_at_after_event_start")
     return ("CLOSE", None)
 
 
@@ -572,11 +619,11 @@ def _d1_book_sources(conn, slot) -> _D1BookSources:
 
 
 def _d1_candidate_token(candidate: dict, observation: MarkObservation, team: str,
-                        allowed_ids: set[int]) -> str:
+                        allowed_ids: set[int] | None) -> str:
     from polymarket_alpha_lab import replay
     from polymarket_alpha_lab.papersim import store_psycopg
 
-    if candidate["candidate_id"] not in allowed_ids:
+    if allowed_ids is not None and candidate["candidate_id"] not in allowed_ids:
         raise CaptureError("d1_capture_candidate_outside_slot")
     if candidate["is_legacy"] or candidate["team"] != team:
         raise CaptureError("d1_capture_candidate_team_invalid")
@@ -626,25 +673,25 @@ def _d1_book_clock(value: Any) -> datetime.datetime:
         raise CaptureError("d1_capture_book_source_time_invalid") from error
 
 
-def _d1_quote(conn, sources: _D1BookSources, candidate: dict,
-              observation: MarkObservation, token: str, evidence: dict) -> tuple[dict, datetime.datetime]:
+def _verified_buy_quote(conn, manifest: dict, cutoff: datetime.datetime, candidate: dict,
+                        observation: MarkObservation, token: str, evidence: dict) -> tuple[dict, datetime.datetime]:
     from polymarket_alpha_lab.papersim.adapters import polymarket
     from polymarket_alpha_lab.papersim.d1compare import acquire, journal
 
-    markets = [market for market in sources.manifest["markets"]
+    markets = [market for market in manifest["markets"]
                if all(candidate[key] in (None, market[field]) for key, field in (
                    ("condition_id", "condition_id"), ("market_id", "market_id"), ("market_slug", "slug")))
                and market["side_tokens"] == {"YES": candidate["yes_token_id"], "NO": candidate["no_token_id"]}]
     if len(markets) != 1:
         raise CaptureError("d1_capture_source_market_mismatch")
     condition = markets[0]["condition_id"]
-    books = [book for book in sources.manifest["books"]
+    books = [book for book in manifest["books"]
              if book["token_id"] == token and book["condition_id"] == condition]
     if len(books) != 1 or books[0]["request_sequence"] is None:
         raise CaptureError("d1_capture_source_book_missing")
     book = books[0]
     sequence = book["request_sequence"]
-    requests = sources.manifest["requests"]
+    requests = manifest["requests"]
     if type(sequence) is not int or not 1 <= sequence <= len(requests):
         raise CaptureError("d1_capture_manifest_request_invalid")
     row = requests[sequence - 1]
@@ -681,13 +728,20 @@ def _d1_quote(conn, sources: _D1BookSources, candidate: dict,
     observed_at = _d1_book_clock(body.get("timestamp"))
     received_at = _pack_datetime(row["utc_fetched_at"], "received_at")
     if (observed_at != _pack_datetime(row["source_observed_at"], "source_observed_at")
-            or observed_at != observation.observed_at or not observed_at <= received_at <= sources.cutoff):
+            or observed_at != observation.observed_at or not observed_at <= received_at <= cutoff):
         raise CaptureError("d1_capture_book_time_mismatch")
-    for stamp, limit in ((observed_at, sources.max_source_age_seconds),
+    return _d1_book_prices(body), received_at
+
+
+def _d1_quote(conn, sources: _D1BookSources, candidate: dict,
+              observation: MarkObservation, token: str, evidence: dict) -> tuple[dict, datetime.datetime]:
+    prices, received_at = _verified_buy_quote(
+        conn, sources.manifest, sources.cutoff, candidate, observation, token, evidence)
+    for stamp, limit in ((observation.observed_at, sources.max_source_age_seconds),
                          (received_at, sources.max_receipt_age_seconds)):
         if (sources.freshness_as_of - stamp) // _MICROSECOND > limit * 1_000_000:
             raise CaptureError("d1_capture_book_stale")
-    return _d1_book_prices(body), received_at
+    return prices, received_at
 
 
 def _d1_capture_materials(conn, sources: _D1BookSources, target: dict, raw: dict,
@@ -831,7 +885,7 @@ def _d1_capture_summary(config: CaptureConfig, code_commit: str, input_evidence,
             source = observation["source_kind"]
             source_kinds[source] = source_kinds.get(source, 0) + 1
         if target["status"] == "READY" and target.get("downgrade") is not None:
-            downgrades[target["downgrade"]] += 1
+            _count_downgrade(downgrades, target["downgrade"])
     return {
         "command": CAPTURE_COMMAND, "team": config.team, "operator": config.operator, "code_commit": code_commit,
         "packs": [{"pack": item["pack"], "snapshot_sha256": item["snapshot_sha256"]} for item in input_evidence],
@@ -994,7 +1048,7 @@ def run_capture(config: CaptureConfig, packs: Sequence[MarkPack], *,
                 observation.sampling_kind, observation.observed_at,
                 target["event_start_at"])
             if downgrade is not None:
-                downgrade_reasons[downgrade] += 1
+                _count_downgrade(downgrade_reasons, downgrade)
             capture = capture_from_observation(
                 observation, candidate_id=target["candidate_id"],
                 sampling_kind=stored_kind, pack_snapshot_sha256=digest)
