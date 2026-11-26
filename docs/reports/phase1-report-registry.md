@@ -57,10 +57,7 @@ flags.
 | `paper-research-packet-quality` | Quality-check the current paper research packet before operator review. | `PaperResearchPacketQualityReport` built from a paper research packet source. | `quality_status` with check counts and pass/watch/blocked counts. | `reason_code_counts` and row-level `reason_codes` drive manual triage; no separate next-step field is exposed. | `tests/test_paper_research_packet_quality.py`; `tests/test_cli_paper_research_packet_quality.py`; `tests/test_cli_paper_research_packet_quality_scope.py`; `tests/test_paper_research_packet_quality_db_row.py`. | Pure quality reducer is paper-only/report-only/readonly. CLI persistence is optional and env-only; no live trading, auth, wallet/account/private-key handling, order path, or exchange mutation. |
 | `paper-research-packet-operator-flow-db-history-gate` | Decide whether persisted operator-flow history is stable enough for downstream paper screening. | Persisted operator-flow DB-history reports reduced into a history report, then `PaperResearchPacketOperatorFlowDbHistoryGateReport`. | `gate_status` (`pass`, `watch`, `blocked`). | `recommended_next_step`. | `tests/test_cli_paper_research_packet_operator_flow_db_history_gate.py`; `tests/test_paper_research_packet_operator_flow_db_history_gate_load.py`; `tests/test_paper_autonomous_screening_decision_support_gate_db_history_health.py`. | Env-only, read-only, paper-only/report-only/readonly. Accepts only `--limit`; does not accept DSN/table/persist flags, write reports, place orders, sign messages, read wallets/accounts, or mutate exchange state. |
 
-## Review Notes
-
-Follow [Project Agent Routing](../../AGENTS.md#project-agent-routing)
-for current registry changes.
+## Registry contract
 
 - `tests/test_cli_report_discovery.py` is the registry contract: it asserts the
   three discovery categories, the exposed commands, category filtering, help

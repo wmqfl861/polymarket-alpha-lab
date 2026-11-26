@@ -6,7 +6,6 @@ from pathlib import Path
 
 
 PHASE1_NEW_DOC_PATHS = (
-    Path("docs/acceptance/phase-1-development-node-acceptance-checklist.md"),
     Path("docs/config/phase-1-strategy-screening-schema.md"),
     Path("docs/contracts/phase1-data-field-contracts.md"),
     Path("docs/data_dictionary/phase1-research-decision-objects.md"),
@@ -14,9 +13,7 @@ PHASE1_NEW_DOC_PATHS = (
     Path("docs/phase1/probability-event-readonly-supabase-principles.md"),
     Path("docs/phases/2026-07-12-phase-1-capability-baseline.md"),
     Path("docs/playbooks/phase1-specialist-team-playbooks.md"),
-    Path("docs/quality/phase-1-development-node-quality-gates.md"),
     Path("docs/research/source-acquisition-quality-policy.md"),
-    Path("docs/review/2026-07-12-operating-review-rules.md"),
     Path("docs/risk/phase1-risk-capital-settlement-policy.md"),
     Path("docs/roadmap/2026-07-12-project-progress-roadmap.md"),
     Path("docs/strategy/phase1-probability-event-filtering-workflow.md"),
@@ -85,30 +82,6 @@ CRITICAL_BOUNDARY_DOC_PATHS = (
 DATA_FIELD_CONTRACT_PATH = Path("docs/contracts/phase1-data-field-contracts.md")
 SCREENING_SCHEMA_PATH = Path("docs/config/phase-1-strategy-screening-schema.md")
 RISK_POLICY_PATH = Path("docs/risk/phase1-risk-capital-settlement-policy.md")
-AGENT_POLICY_PATH = Path("AGENTS.md")
-AGENT_CONCURRENCY_PATH = Path(
-    "docs/maintenance/phase1-agent-concurrency-and-review-rules.md",
-)
-REVIEW_MONITORING_PATHS = (
-    AGENT_POLICY_PATH,
-    AGENT_CONCURRENCY_PATH,
-    Path("docs/review/2026-07-12-operating-review-rules.md"),
-    Path("docs/roadmap/2026-07-12-project-progress-roadmap.md"),
-)
-
-PROJECT_REVIEW_PATHS = (
-    AGENT_CONCURRENCY_PATH,
-    Path("docs/review/2026-07-12-operating-review-rules.md"),
-    Path("docs/review/phase1-claude-review-handoff.md"),
-    Path("docs/quality/phase-1-development-node-quality-gates.md"),
-    Path("docs/acceptance/phase-1-development-node-acceptance-checklist.md"),
-    Path("docs/phase-1-multi-team-operating-model.md"),
-    Path("docs/reports/phase1-report-registry.md"),
-)
-HISTORICAL_PROJECT_REVIEW_PATHS = (
-    Path("docs/phases/2026-07-12-phase-1-capability-baseline.md"),
-    Path("docs/roadmap/2026-07-12-project-progress-roadmap.md"),
-)
 ACTIVATION_REVIEW_PATHS = (
     Path("docs/research-dispatch.md"),
     Path("docs/research-local-agent.md"),
@@ -210,7 +183,7 @@ def test_probability_event_docs_freeze_canonical_pyes_orientation() -> None:
 
 
 def test_phase1_new_docs_exist_and_are_markdown() -> None:
-    assert len(PHASE1_NEW_DOC_PATHS) == 15
+    assert len(PHASE1_NEW_DOC_PATHS) == 12
 
     for path in PHASE1_NEW_DOC_PATHS:
         assert path.suffix == ".md", path
@@ -303,122 +276,14 @@ def test_phase1_risk_policy_freezes_portfolio_watch_reason_rollup() -> None:
     assert "block reasons plus `low_exit_liquidity_watch` only" in text
 
 
-def test_project_policy_freezes_sustained_parallel_development_iron_rule() -> None:
-    agents_text = _normalized(_read(AGENT_POLICY_PATH))
-    concurrency_text = _normalized(_read(AGENT_CONCURRENCY_PATH))
-
-    for required_text in (
-        "Sustained parallel development is a project iron rule",
-        "The project sets no fixed subagent concurrency count",
-        "Nested subagent depth remains capped at **3**",
-        "discover usable capacity dynamically",
-        "Use fewer threads whenever",
-        "multiple modules and multiple development nodes",
-        "Reclaim agents immediately",
-    ):
-        assert required_text in agents_text
-
-    for required_text in (
-        "implements Project Iron Rule 6",
-        "project defines no fixed subagent-thread count",
-        "discover usable capacity dynamically",
-        "Nested depth remains capped at **3**",
-        "may run fewer active threads",
-        "multiple modules and multiple development nodes",
-        "Failed or blocked agents must also be reclaimed promptly",
-        "primary Codex coordinator follows the `AGENTS.md` Codex Node Push Policy",
-        "Subagents must not create commits or push branches",
-    ):
-        assert required_text in concurrency_text
-
-    for stale_text in (
-        "64 active subagent threads",
-        "nested subagent depth cap of **4**",
-        "nested depth **4**",
-    ):
-        assert stale_text not in agents_text
-        assert stale_text not in concurrency_text
-
-
-def test_project_policy_freezes_long_running_review_monitoring() -> None:
-    for path in REVIEW_MONITORING_PATHS:
-        text = _normalized(_read(path))
-
-        if path == AGENT_POLICY_PATH:
-            # The monitoring protections apply to the current review sessions.
-            assert (
-                "Do not impose a fixed elapsed-time deadline on a review"
-                " session"
-            ) in text
-            assert "Let it run to an explicit conclusion" in text
-            assert (
-                "do not interrupt, duplicate, or replace it while it is still"
-                " working"
-            ) in text
-            continue
-        assert "must not be wrapped in a fixed elapsed-time timeout" in text
-        assert "inspectable session" in text
-        assert "check them about every 30 seconds" in text
-        assert "process/session liveness" in text
-        assert "when available, stream growth or event count" in text
-        assert "stderr or terminal events, CPU, and network activity" in text
-        assert (
-            "Elapsed time alone or a quiet interval is not evidence of a stall"
-            in text
-        )
-        assert "do not interrupt, terminate, restart, duplicate, or replace it" in text
-        assert "do not route around" in text
-        assert "keep waiting and monitoring" in text
-        assert "Act only on an explicit result or error" in text
-        assert "confirmed process/session exit" in text
-        assert "concrete auth/permission/provider failure" in text
-        assert "proven stall" in text
-        assert "newer user instruction" in text
-
-
-
-def test_current_review_documents_reference_the_root_subagent_routing() -> None:
-    root_policy = AGENT_POLICY_PATH.resolve()
-    root_text = _read(AGENT_POLICY_PATH)
-    # GitHub derives the new fragment from this heading. The named anchor
-    # points historical links to the same section.
-    legacy_anchor = '<a name="native-codex-subagent-routing"></a>'
-    assert root_text.count(legacy_anchor) == 1
-    assert re.search(
-        rf"(?m)^{re.escape(legacy_anchor)}\n\n## Project Agent Routing$",
-        root_text,
-    )
-
-    active_paths = PROJECT_REVIEW_PATHS + ACTIVATION_REVIEW_PATHS + (REUSABLE_HANDOFF_PATH,)
-    for paths, label, fragment in (
-        (active_paths, "Project Agent Routing", "project-agent-routing"),
-        (
-            HISTORICAL_PROJECT_REVIEW_PATHS,
-            "Native Codex Subagent Routing",
-            "native-codex-subagent-routing",
-        ),
-    ):
-        for path in paths:
-            markdown_links = re.findall(
-                r"\[([^\]\n]+)\]\(([^)#\s]+)#([^)#\s]+)\)",
-                _read(path),
-            )
-            links = [
-                (link_label, target, link_fragment)
-                for link_label, target, link_fragment in markdown_links
-                if Path(target).name == AGENT_POLICY_PATH.name
-                or link_fragment in ("project-agent-routing", "native-codex-subagent-routing")
-            ]
-            assert links, path
-            if path == REUSABLE_HANDOFF_PATH:
-                assert len(links) == 4, path
-            for actual_label, target, actual_fragment in links:
-                assert (path.parent / target).resolve() == root_policy, path
-                assert (actual_label, actual_fragment) == (label, fragment), path
-
-    for path in PROJECT_REVIEW_PATHS + HISTORICAL_PROJECT_REVIEW_PATHS:
-        text = _read(path).lower()
-        assert not re.search(r"\b(?:gpt-\d[\w.-]*|claude-opus-[\w.-]+|zcode)\b", text), path
+def test_project_scope_preserves_research_clients_and_owner_funds_boundary() -> None:
+    scope = _normalized(_read(Path("AGENTS.md")))
+    clients = scope.split("The D1 research adapter choices are ", 1)[1].split(".", 1)[0]
+    for client in ("Codex", "Claude Code", "OpenCode", "Grok CLI", "ZCode CLI"):
+        assert client in clients
+    assert "Only the owner can authorize real funds, credential use or live orders separately." in scope
+    for flag in ("paper_only", "report_only", "readonly"):
+        assert f"`{flag}=True`" in scope
 
 
 def test_activation_templates_do_not_dispatch_through_retired_approval_rules() -> None:
@@ -447,14 +312,12 @@ def _numbered_section(text: str, heading: str, number: str) -> str:
 def test_reusable_dispatch_receipts_reference_historical_commits() -> None:
     delivery = _read(Path("DELIVERY_PLAN.md"))
     handoff = _read(REUSABLE_HANDOFF_PATH)
-    for number, section, date, commit, fragment in (
+    for number, section, date, commit in (
         (
             "64.", "3.3", "2026-09-30", "4f84f264d8d762c298f4623459aa24923aab4bc0",
-            "native-codex-subagent-routing",
         ),
         (
             "66.", "3.6", "2026-10-07", "df137300c7b293a159588650488996da05f9d68d",
-            "project-agent-routing",
         ),
     ):
         receipt = _numbered_section(delivery, "##", number)
@@ -470,12 +333,11 @@ def test_reusable_dispatch_receipts_reference_historical_commits() -> None:
                 source,
                 flags=re.IGNORECASE,
             ), section
-        for source, link in (
-            (receipt, f"(AGENTS.md#{fragment})"),
-            (handoff_receipt, "[Project Agent Routing](../../AGENTS.md#project-agent-routing)"),
-        ):
+        for source in (receipt, handoff_receipt):
             assert date in source and commit in source, section
-            assert link in source, section
+        assert f"/blob/{commit}/AGENTS.md)" in receipt
+        # The handoff retains its original references at its published revision.
+        assert "[Project Agent Routing](../../AGENTS.md#project-agent-routing)" in handoff_receipt
 
 
 def test_incident_receipt_preserves_evidence_without_legacy_identity_commands() -> None:

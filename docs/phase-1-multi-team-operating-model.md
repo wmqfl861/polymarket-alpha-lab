@@ -125,30 +125,10 @@ market metadata and read-only evidence
   -> central cost and fee research-factor checks, paper-only scoring inputs, and report assembly
   -> local Supabase/Postgres paper/report persistence
   -> diagnostics, memory readiness, outcome scoring, and operator reports
-  -> read-only review gate and redacted handoff
+  -> redacted evidence for the operator
 ```
 
 Teams should produce structured research packets with source references, confidence, failure modes, memory references, and paper/report/readonly flags. They must consume central market and cost context as supplied inputs rather than independently creating execution or exchange-integration paths.
-
-## Review Workflow
-
-Apply [Project Agent Routing](../AGENTS.md#project-agent-routing)
-to project planning and dispatch a fresh, independent reviewer for each
-plan, code, stage, post-node, and handoff review under Project Iron Rule 4.
-
-Review prompts are read-only. Reviewers may inspect plans, diffs, files, reports, and test output, but must not modify, create, delete, migrate, backfill, submit orders, mutate databases, mutate exchange state, or alter account state.
-
-The gate is blocked when no eligible independent reviewer can be dispatched.
-There is no fallback reviewer under the current project rules.
-
-Review packets should include:
-
-- the intended scope and disjoint write ownership;
-- the Phase 1 boundary assertions;
-- changed paths and focused tests;
-- local Supabase/Postgres durable-only implications;
-- redaction checks;
-- open risks and operator follow-ups.
 
 ## Redaction Rules
 
@@ -183,6 +163,4 @@ The docs contract tests for this file guard the following constraints:
 - alternate durable stores and durable file substitutes remain forbidden;
 - Phase 1 stays paper-only, report-only, and readonly;
 - the document forbids automated investing and live order placement rather than promising them;
-- planning and the independent review gate follow the root subagent routing rule;
-- review prompts are read-only;
 - redaction rules cover DSNs, secrets, credentials, wallet material, and account/order-sensitive values.

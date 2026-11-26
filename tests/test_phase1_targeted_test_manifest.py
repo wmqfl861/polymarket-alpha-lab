@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-MANIFEST_PATH = REPO_ROOT / "docs" / "testing" / "phase1-node-test-manifest.md"
+MANIFEST_PATH = REPO_ROOT / "docs" / "testing" / "phase1-test-catalog.md"
 TEST_FILE_PATTERN = re.compile(r"(?<![\w/.-])(tests/test_[A-Za-z0-9_./-]+\.py)(?![\w/.-])")
 
 EXPECTED_CHANGED_TEST_PATHS = tuple(
@@ -27,7 +27,7 @@ EXPECTED_CHANGED_TEST_PATHS = tuple(
             "tests/test_phase1_docs_required_terms.py",
             "tests/test_phase1_local_supabase_config_contract.py",
             "tests/test_phase1_manual_packet_no_live_execution_terms.py",
-            "tests/test_phase1_merge_readiness_file_set.py",
+            "tests/test_phase1_file_catalog.py",
             "tests/test_phase1_no_review_scratch_references.py",
             "tests/test_phase1_public_payload_digest_smoke.py",
             "tests/test_phase1_readonly_boundary_scan.py",

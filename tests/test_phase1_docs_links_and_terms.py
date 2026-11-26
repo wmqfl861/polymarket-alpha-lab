@@ -5,7 +5,6 @@ from pathlib import Path
 
 
 PHASE1_DOC_PATHS = (
-    Path("docs/acceptance/phase-1-development-node-acceptance-checklist.md"),
     Path("docs/config/phase-1-strategy-screening-schema.md"),
     Path("docs/contracts/phase1-data-field-contracts.md"),
     Path("docs/data_dictionary/phase1-research-decision-objects.md"),
@@ -14,7 +13,6 @@ PHASE1_DOC_PATHS = (
     Path("docs/phase-1-team-memory.md"),
     Path("docs/phase1/probability-event-readonly-supabase-principles.md"),
     Path("docs/phases/2026-07-12-phase-1-capability-baseline.md"),
-    Path("docs/quality/phase-1-development-node-quality-gates.md"),
     Path("docs/strategy/phase1-probability-event-filtering-workflow.md"),
 )
 
@@ -159,7 +157,7 @@ def _is_boundary_context(text: str) -> bool:
 
 
 def test_phase1_docs_paths_exist_and_cover_expected_nodes() -> None:
-    assert len(PHASE1_DOC_PATHS) == 11
+    assert len(PHASE1_DOC_PATHS) == 9
 
     for path in PHASE1_DOC_PATHS:
         assert path.exists(), f"{path} must exist"
