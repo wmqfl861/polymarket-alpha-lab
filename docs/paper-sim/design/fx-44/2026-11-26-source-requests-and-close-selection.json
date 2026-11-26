@@ -75,7 +75,13 @@
       ],
       "console_sha256": "ad724f403e5ce042a9459693b19516ed745adbdb9e761ec2f3ab94a931b4358f"
     },
-    "offline_preparation_and_adapter_cases_passed": 159
+    "offline_preparation_and_adapter_cases_passed": 159,
+    "baseline_reproduction": {
+      "product_commit": "29aec9d0688dc0743c784bef7aec61ef359c4497",
+      "test_file": "tests/test_papersim_prepared_scan_native.py",
+      "test_git_blob": "b9ee3fc0368057db79f2edf91783659646d35fa5",
+      "test_source_commit": "c87672996552c96cea2f0edb782b03f600014997"
+    }
   },
   "close_observation": {
     "readback_code_commit": "414d1e6e482cbf297d9aa2fc5c054d034691e1cd",

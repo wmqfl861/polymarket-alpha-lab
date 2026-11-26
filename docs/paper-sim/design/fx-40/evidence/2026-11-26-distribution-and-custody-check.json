@@ -1,0 +1,121 @@
+{
+  "item": "FX-40 historical source custody",
+  "recorded_utc": "2026-11-26T09:31:55Z",
+  "result": "PUBLIC_SOFTWARE_KITS_AND_SCOPED_MIRROR_PATHS_EXCLUDED__FOUR_CASES_REMAIN_UNVERIFIED",
+  "previous_evidence": {
+    "hashed_prior_custody_receipts_matched": {
+      "publication_name_inventory": true,
+      "actions_outer_directories": true,
+      "inner_directories": true,
+      "crc32_comparison": true
+    },
+    "public_evidence_artifact": "docs/paper-sim/design/fx-40/evidence/2026-11-26-hosted-archive-directory-comparison.json",
+    "public_evidence_sha256": "40aed25ed883fac7ec62e11b889cca108250611ec53d70865b27dafbfdc9640d",
+    "local_historical_manifest_names_previously_checked": 6,
+    "local_historical_manifest_names_absent": 6,
+    "retained_optimizer_index_records": 222,
+    "round_inputs_compared_to_index": 31,
+    "exact_indexed_round_inputs": 0,
+    "previous_hosted_method": "Five nested directories and 703 outer directories were scored by known basename, round/case label and byte length. CRC32 was compared only for the ten equal-length candidates. Those checks did not classify every recorded directory entry by its function or look up arbitrary content by purpose."
+  },
+  "outer_artifacts": {
+    "examined_previously": 703,
+    "members": 1497,
+    "families": {
+      "native-postgres-linux-proof-papersim": 120,
+      "native-postgres-linux-proof-storage": 120,
+      "native-postgres-linux-proof-research": 119,
+      "offline-verification": 138,
+      "native-postgres-linux-proof-dispatch": 119,
+      "research-paper-proof": 77,
+      "distribution-linux-proof": 5,
+      "linux-native-kit": 5
+    },
+    "declared_proof_outputs_at_reviewed_commit": "At ab6edff2, the seven proof-artifact families publish CI test logs or XML. The five linux-native-kit artifacts contain a single public project distribution ZIP. The prior records for the other 698 retained per-artifact counts, not their complete filename lists. Their individual payloads were not examined."
+  },
+  "five_native_kits": {
+    "binding": "Five public artifact metadata records matched their previously pinned artifact SHA-256 and kit name. For the build commit in each name the workflow and packaging recipe were identified from four public Git trees and one retained local full tree. The caller permits committed source, explicit project documentation/configuration and SQL migrations, plus the generated software-file manifest and a PostgreSQL runtime bundle.",
+    "historical_workflow_git_blob": "4abfe6eb2e12dbe14d5e78720c60992c8b6f0e24",
+    "historical_packager_git_blob": "1abf2315550f886c290ed98fd006fdd635381baa",
+    "artifact_commits": [
+      {
+        "ci_artifact_id": 14570207708,
+        "build_commit": "f2cc7bd819ea9c92c55bcc5cd6cc0fd39be070b5",
+        "expected_and_observed_directory_members": 2987,
+        "inner_zip_sha256": "f09e7285d6e35ef1264cfc5dc87d7afe2e2d789b01dcfeed1b9db3c7b93d2848"
+      },
+      {
+        "ci_artifact_id": 14581684703,
+        "build_commit": "f82d2e319461323844060d739f5201878c609783",
+        "expected_and_observed_directory_members": 2993,
+        "inner_zip_sha256": "eebe12f3e6dafffc7ae8f2665a9209ba23436d3855fc5ab31d04b674f0a13431"
+      },
+      {
+        "ci_artifact_id": 14610955629,
+        "build_commit": "34d19ff91e524dfac09881e0ed848a48ce479f33",
+        "expected_and_observed_directory_members": 3001,
+        "inner_zip_sha256": "14ba9f637661b4c102017deda9b8096ca56531583ef5dc0fddecc63069e843a7"
+      },
+      {
+        "ci_artifact_id": 14688352668,
+        "build_commit": "a364013879fe0ccea5710f07e9e98e2bc16cead5",
+        "expected_and_observed_directory_members": 3014,
+        "inner_zip_sha256": "600255f17f1b308ab77065d912aa759d70fd22321bc79fb12e18347367d72fcf"
+      },
+      {
+        "ci_artifact_id": 15007002162,
+        "build_commit": "260c986035ac81f5ac9e93b3710d9501feaf1794",
+        "expected_and_observed_directory_members": 3017,
+        "inner_zip_sha256": "6c15fa744071427a08a34fd438f9b25da1832990510cc59fc2a6016e90af8d57"
+      }
+    ],
+    "totals_by_build_recipe_input_class": {
+      "fixed_project_configuration_and_entrypoints": 45,
+      "explicit_public_project_entrypoints_and_docs": 115,
+      "tracked_python_source": 14492,
+      "tracked_sql_migrations": 350,
+      "generated_software_kit_manifest": 5,
+      "postgres_runtime_bundle": 5
+    },
+    "total_expected_and_observed": 15012,
+    "equal_size_hints": 10,
+    "distinct_equal_size_member_paths": 2,
+    "equal_size_members_identified_as_project_Python_source_by_retained_member_path_sha256": 10,
+    "generic_kit_manifest": "PROJECT-BUNDLE.json binds software source files and the packaged PostgreSQL runtime. It contains no historical acquisition or per-request receipt data.",
+    "boundary": "Reconstructing the allowlisted recipe and matching each directory count is type and provenance evidence, not a byte-by-byte re-download or a generic content search of the kits."
+  },
+  "scoped_public_mirror": {
+    "git_trees": 7,
+    "distinct_name_blob_pairs_compared": 77,
+    "scope": "top-level public server mirror, the five rounds named in the prior four-case inventory (5, 10, 19, 23, 24), review, and any top-level folder named for provenance or collection",
+    "name_rules": "English and Chinese collection, capture, send/receive/request/response, provenance, manifests and checksums, index/catalog/inventory, sidecars, common archives and request-stream file extensions. Blob names and identities only.",
+    "retained_manifest_classes": [
+      "server-mirror SHA-256 copy inventory",
+      "server-mirror exclusion inventory"
+    ],
+    "other_matching_data_sources": 0,
+    "blob_contents_opened": 0,
+    "boundary": "Unlabelled files outside this scope, unpublished custody records, and files under arbitrary unrelated names are outside this result."
+  },
+  "case_acceptances": {
+    "r23_soccer": false,
+    "r19_touch": false,
+    "r23_r24_48": false,
+    "hof_lyo": false
+  },
+  "remaining": "None of the four has acquired its original independently held capture listing, request receipt or source-bound sidecar. A full original request plus contemporaneous independent custody and decision-time evidence is still required for each.",
+  "coordination_evidence_sha256": {
+    "fx40-kit-type-source-measurement.json": "9d8cd25d2299d41a83eceb5e1aea837c380b5dbc611cf3a02da6656dff969df8",
+    "fx40-same-length-member-classes.json": "46233e62dd84bcb24c9623588466e775beccbc0ff41ddfa862f312e48dc57647",
+    "fx40-public-referenced-mirror-sidecar-types.json": "7b4199968bb887a6689b3eea500c8a5613a5bd86fad30fef066350ee4365ae40"
+  },
+  "this_followup": {
+    "public_artifact_metadata_requests": 5,
+    "public_Git_tree_metadata_requests": 4,
+    "archive_downloads": 0,
+    "payloads_opened": 0,
+    "database_or_optimizer_calls": 0,
+    "configuration_changes": 0,
+    "repository_changes": 0
+  }
+}
