@@ -335,6 +335,14 @@ def test_odp_legacy_classifier_keeps_close_at_61_minutes(event_start_at):
             "CLOSE", -61, None, ("PERIODIC", "observed_at_before_close_window"),
             id="before-window",
         ),
+        pytest.param(
+            "CLOSE", -61, 0, ("PERIODIC", "observed_at_before_close_window"),
+            id="before-window-received-at-event",
+        ),
+        pytest.param(
+            "CLOSE", -61, 1, ("PERIODIC", "observed_at_before_close_window"),
+            id="before-window-received-after-event",
+        ),
         pytest.param("CLOSE", -60, None, ("CLOSE", None), id="window-start"),
         pytest.param("CLOSE", -59, None, ("CLOSE", None), id="inside-window"),
         pytest.param(
@@ -403,3 +411,6 @@ def test_odp_uses_utc_instants_across_folds():
         "CLOSE", first_fold - datetime.timedelta(minutes=59), first_fold,
         received_at=first_fold.replace(minute=29, fold=1),
     ) == ("PERIODIC", "received_at_after_event_start")
+    assert capture._classify_odp_observation(
+        "CLOSE", first_fold.replace(minute=29), second_fold, received_at=second_fold,
+    ) == ("PERIODIC", "observed_at_before_close_window")

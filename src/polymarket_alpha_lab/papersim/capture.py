@@ -403,9 +403,8 @@ def _classify_odp_observation(
 
     if observed_utc >= start_utc:
         return ("PERIODIC", DOWNGRADE_OBSERVED_AT_AFTER_EVENT_START)
+    # A receipt cutoff only downgrades a source observation still eligible for CLOSE.
     if start_utc - observed_utc > datetime.timedelta(minutes=60):
-        if received_late:
-            raise ValueError("OD-P classification is undefined for this early and late pair")
         return ("PERIODIC", "observed_at_before_close_window")
     if received_late:
         return ("PERIODIC", "received_at_after_event_start")
