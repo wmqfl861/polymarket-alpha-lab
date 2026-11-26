@@ -1,0 +1,189 @@
+{
+  "item": "FX-40 hosted CI producers",
+  "recorded_utc": "2026-11-26T09:37:40+00:00",
+  "scope": "The 698 non-kit artifacts on the frozen list. No archive downloads or payload inspections. Each directory file count was reused; no member contents were read.",
+  "matched_public_metadata": 693,
+  "public_batched_metadata_pages": 8,
+  "binding_definition": {
+    "local_exact_build_tree": "The published artifact name identifies its build commit. All upload-artifact definitions in that local Git tree were checked for the family name and input paths.",
+    "exact_build_workflow_previously_pinned": "The actual native-distribution workflow blob at this named build commit was already pinned by the five-kit public tree check.",
+    "run_head_only": "The public index binds the prior artifact identity to the run head. Its tree was checked; the synthetic build tree was not locally available.",
+    "current_index_missing": "Retained family, original digest and member count only; the artifact was not returned by this eight-page index."
+  },
+  "bindings": {
+    "current_index_missing": 5,
+    "local_exact_build_tree": 507,
+    "run_head_only": 182,
+    "exact_build_workflow_previously_pinned": 4
+  },
+  "groups": [
+    {
+      "family": "distribution-linux-proof",
+      "artifacts": 5,
+      "bindings": {
+        "exact_build_workflow_previously_pinned": 4,
+        "local_exact_build_tree": 1
+      },
+      "observed_outer_member_counts": {
+        "2": 5
+      },
+      "workflow": ".github/workflows/native-distribution.yml"
+    },
+    {
+      "family": "native-postgres-linux-proof-dispatch",
+      "artifacts": 119,
+      "bindings": {
+        "current_index_missing": 1,
+        "local_exact_build_tree": 100,
+        "run_head_only": 18
+      },
+      "observed_outer_member_counts": {
+        "1": 1,
+        "2": 118
+      },
+      "workflow": ".github/workflows/native-postgres.yml"
+    },
+    {
+      "family": "native-postgres-linux-proof-papersim",
+      "artifacts": 120,
+      "bindings": {
+        "current_index_missing": 1,
+        "local_exact_build_tree": 101,
+        "run_head_only": 18
+      },
+      "observed_outer_member_counts": {
+        "1": 2,
+        "2": 118
+      },
+      "workflow": ".github/workflows/native-postgres.yml"
+    },
+    {
+      "family": "native-postgres-linux-proof-research",
+      "artifacts": 119,
+      "bindings": {
+        "current_index_missing": 1,
+        "local_exact_build_tree": 100,
+        "run_head_only": 18
+      },
+      "observed_outer_member_counts": {
+        "2": 119
+      },
+      "workflow": ".github/workflows/native-postgres.yml"
+    },
+    {
+      "family": "native-postgres-linux-proof-storage",
+      "artifacts": 120,
+      "bindings": {
+        "current_index_missing": 1,
+        "local_exact_build_tree": 101,
+        "run_head_only": 18
+      },
+      "observed_outer_member_counts": {
+        "1": 1,
+        "4": 119
+      },
+      "workflow": ".github/workflows/native-postgres.yml"
+    },
+    {
+      "family": "offline-verification",
+      "artifacts": 138,
+      "bindings": {
+        "current_index_missing": 1,
+        "run_head_only": 55,
+        "local_exact_build_tree": 82
+      },
+      "observed_outer_member_counts": {
+        "1": 138
+      },
+      "workflow": ".github/workflows/offline-verification.yml"
+    },
+    {
+      "family": "research-paper-proof",
+      "artifacts": 77,
+      "bindings": {
+        "run_head_only": 55,
+        "local_exact_build_tree": 22
+      },
+      "observed_outer_member_counts": {
+        "2": 77
+      },
+      "workflow": ".github/workflows/research-paper.yml"
+    }
+  ],
+  "unique_workflow_blobs_checked_for_matched_uploads": 26,
+  "no_single_named_definition": {},
+  "other_or_unbounded_upload_inputs": {},
+  "observed_count_above_allowed_fixed_paths": {},
+  "limitations": "Static upload declarations apply at the recorded evidence level. A CI log or XML test report can contain incidental text. No inspection of log bodies, unpublished sidecars or arbitrary raw member contents was performed. Family and counts alone do not identify the actual filenames of an unmatched artifact.",
+  "retained_outer_directory_readback_sha256": "5c0fef00eab3c406cc2308060c221bc4d1977d445790fe68f28a38b6d0a3b70a",
+  "frozen_artifact_list_sha256": "681bf0a298529a0f0322061952fb71cccb0e95bff0f34b5b70a1e335b1a6c4c0",
+  "scoped_public_metadata_sha256": "10ccdc7779a9434e119205f45db76ba0d478a68838e52949ec3870feb4d84069",
+  "compact_per_artifact_binding_sha256": "66252f57b6f392f51b853f29512e0f08787495d2ad066048840ed2ecf7018e90",
+  "archive_downloads": 0,
+  "archive_payload_reads": 0,
+  "case_acceptances": 0,
+  "workflow_upload_definitions": {
+    ".github/workflows/native-distribution.yml": {
+      "declared_paths_in_runner_temp": [
+        "distribution-proof.log",
+        "distribution-proof.xml"
+      ],
+      "known_workflow_blob_ids": [
+        "4abfe6eb2e12dbe14d5e78720c60992c8b6f0e24"
+      ]
+    },
+    ".github/workflows/native-postgres.yml": {
+      "declared_paths_in_runner_temp": [
+        "native-proof.log",
+        "native-proof.xml",
+        "version-switch-proof.log",
+        "version-switch-proof.xml"
+      ],
+      "known_workflow_blob_ids": [
+        "2c22d0c31ed31d41d1c462895ad695ac24e161f7",
+        "3856b1f167d4e5b14bec7b9adfe42b1c36e5fbcb",
+        "479e0a19e627df7d9e41fdd8a7fea014d1d2fbae",
+        "493c3e05b29f8d46b2c4b0719b5800a57cc07adc",
+        "4a863e66cfb4796ddc168497e154bbe6b1ce6678",
+        "517d9f90046f66c65c016d8e568afc9859645da6",
+        "594b5daf7b31a918ad5355c86cce67f52300715f",
+        "675b8c5c340af37315290eb7d67809e9aa5f4705",
+        "753f6838f44a41640fbc5514656b975f071a1361",
+        "7ec1ad94a62ebe36f68a085cc423229e6b4bfebd",
+        "8c66af0124cfab2d084f4e6bd3c5252edb3a52fb",
+        "8ef28d9999f5f5200262ebf6b7dcfc87c8abc7d6",
+        "9f96f2eeadcc9c32f8b7a9fea086d37a8b061ada",
+        "a76867f82701d1c060bb07812037e4e9395c694f",
+        "b6ae19957fedad4a5fec484fcd2ef2c6a4cf4281",
+        "c82da1b4a46814320d424a51581140419880bee4",
+        "d6a0b271f80e72027f54a4c8debe38cea2d8a3ba",
+        "e7f27e8387bd9a29e3d0dd014e38709a5b8be324",
+        "e8f43770b14f279be77353f46118c515343fb5ee",
+        "f393ab007b7deb84d019137ec0944e4bc219fafe"
+      ]
+    },
+    ".github/workflows/offline-verification.yml": {
+      "declared_paths_in_runner_temp": [
+        "offline-verification.log"
+      ],
+      "known_workflow_blob_ids": [
+        "5f97c6766ddbc6e9262996154c78f9c34ffa24cb",
+        "9288cd3e35d202ba2be220064a58cb7766ae373f",
+        "c8e42e2e817313eb96c49c440b02d655e5ea350f"
+      ]
+    },
+    ".github/workflows/research-paper.yml": {
+      "declared_paths_in_runner_temp": [
+        "research-paper.log",
+        "research-paper.xml"
+      ],
+      "known_workflow_blob_ids": [
+        "024a28f7104a50c56c1404479c30829acb2c2aab",
+        "7edadbc37b2c2633e0e959ff51e9bb52f5708c71"
+      ]
+    }
+  },
+  "result": "The evidenced upload definitions name fixed CI log or JUnit XML files only. No identified producer names a raw market dataset, an independent acquisition manifest, a per-request receipt, a data directory or a wildcard path. 511 are bound to actual build definitions, 182 only to the associated run head, and five retain only family-level evidence.",
+  "exact_build_definitions": 511,
+  "workflow_source_files": 4
+}

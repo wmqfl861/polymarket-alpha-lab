@@ -1,0 +1,48 @@
+{
+  "tested_source_commit": "fc8ea9e12afaec58ef72b3263f5d47a7b174ddf7",
+  "integration_commit": "06048ea9a69073d54dbd90cf7fed04b8425f5f33",
+  "base": "41b4ef955539c9f75d849644e617a0909b53fbe0",
+  "evidence_utc": "2026-11-26T09:44:53.303868+00:00",
+  "wire_contract": "The option is restricted to prepared tag discovery. Omitted and explicit historical page sizes normalize to the same old scope, operation key, and payload. An explicit smaller value signs the scope and prepared input-set identity. The raw window/tag key remains unique, so competing layouts conflict before public fetch. Each tag requests offsets zero, N, 2N with the unchanged pagination, byte, request, market and time caps.",
+  "response_larger_than_requested_page": "With a one-event limit and a successful body containing two events, the fixture preserved equal raw bytes and SHA-256. The tag stayed incomplete and the page supplied no markets, book requests, preparation targets or frozen-script contracts. The replay reader checks event count against the original body for every explicit small page.",
+  "offline_cases_passed": 336,
+  "native": {
+    "new": 3,
+    "previous_opt_in": 5,
+    "remaining": 0
+  },
+  "exact_integration_offline": {
+    "commit": "06048ea9a69073d54dbd90cf7fed04b8425f5f33",
+    "tested_source": "fc8ea9e12afaec58ef72b3263f5d47a7b174ddf7",
+    "matching_paths": [
+      "src/polymarket_alpha_lab/papersim/capture.py",
+      "src/polymarket_alpha_lab/papersim/d1compare/acquire.py",
+      "src/polymarket_alpha_lab/papersim/d1compare/frozenexec.py",
+      "src/polymarket_alpha_lab/papersim/prepare_capture.py",
+      "src/polymarket_alpha_lab/papersim/prepare_inputs.py",
+      "tests/test_papersim_prepared_gamma_pages.py",
+      "tests/test_papersim_prepared_gamma_pages_native.py",
+      "tests/test_papersim_prepared_scan_native.py",
+      "tools/d1_compare.py"
+    ],
+    "modules": [
+      "tests/test_papersim_prepared_gamma_pages.py",
+      "tests/test_papersim_prepare_inputs.py",
+      "tests/test_papersim_prepare.py",
+      "tests/test_papersim_optimize_policy_numbers.py",
+      "tests/test_papersim_evaluation.py::test_frozen_version_constants_are_pinned",
+      "tests/test_papersim_evaluation_f.py::test_frozen_regression_unchanged"
+    ],
+    "passed": 56,
+    "exit": 0,
+    "utc": "2026-11-26T09:37:59.308151+00:00",
+    "console_sha256": "65052a582c4ce9e694e342996db4caf21d4a32428ada45b84a537dd9ed8d537c"
+  },
+  "intermediate_test_setup": [
+    "The first offline selector referenced a nonexistent test module; no test was collected. Corrected to the existing frozenrun module.",
+    "Two new fixture assertions on the first local candidate called the papersim CLI instead of the capture tool. They were corrected to exercise the real capture command and both passed.",
+    "A depth-one clone lacked both frozen historical Git objects, and two historical native preflights failed there. A clean full-object candidate clone verified both required objects and both exact tests passed."
+  ],
+  "local_source_verification_sha256": "e26618f6f97d5038625335de2ada1d52971b2c18b42c7b68b67e4a0844d4e4bb",
+  "field_receipt": "docs/paper-sim/design/fx-44/2026-11-26-bundesliga-small-page-window.json"
+}

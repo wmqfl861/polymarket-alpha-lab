@@ -1,0 +1,75 @@
+{
+  "utc": "2026-11-26T09:46:02.823692+00:00",
+  "source_commit": "fc8ea9e12afaec58ef72b3263f5d47a7b174ddf7",
+  "official_contract": {
+    "version": "1.0.0",
+    "operation": "listEvents",
+    "path": "GET /events",
+    "query_parameters": {
+      "tag_slug": {
+        "location": "query",
+        "type": "string"
+      },
+      "tag_id": {
+        "location": "query",
+        "type": "integer"
+      },
+      "related_tags": {
+        "location": "query",
+        "type": "boolean"
+      },
+      "exclude_tag_id": {
+        "location": "query",
+        "type": "array"
+      }
+    },
+    "other_supported_GET_mechanisms": {
+      "/tags/slug/{slug}": "getTagBySlug",
+      "/events/{id}/tags": "getEventTags",
+      "/sports": "getSportsMetadata"
+    },
+    "response_event_tags": {
+      "is_array_of_tag": true,
+      "required": false,
+      "slug_type": "string",
+      "id_type": "string"
+    },
+    "finding": "The existing tag_slug filter is documented on the offset-paginated events endpoint. Numeric tag_id is also supported; the discovery guide uses it in its keyset examples. Contract support alone does not establish whether a particular server response contained the requested tag."
+  },
+  "request_shape": "GET /events with the tag_slug query parameter set to bundesliga",
+  "window_receipt_sha256": "e85cc80c717b367d469574353c0701c7872a7101cb525ec5e297a16b2eb946c0",
+  "per_event_tag_verification": null,
+  "reason": "The retained measurement counted public events, markets and fields. It did not retain per-event returned tags. The resolver includes the request slug in its league selection. The number of returned markets cannot establish league membership for each event.",
+  "offline_counterexamples": 7,
+  "official_documents": {
+    "indexed-events": {
+      "source": "https://docs.polymarket.com/api-reference/events/list-events.md",
+      "final_url": "https://docs.polymarket.com/api-reference/events/list-events.md",
+      "sha256": "ecc74f53ff54d84c2eb64e49e264d8e09a88b069732179f07d63bb447ff20f6e",
+      "length": 31191,
+      "http": 200
+    },
+    "tag-by-slug": {
+      "source": "https://docs.polymarket.com/api-reference/tags/get-tag-by-slug.md",
+      "final_url": "https://docs.polymarket.com/api-reference/tags/get-tag-by-slug.md",
+      "sha256": "c339244e80a90c3cd4340b887a57253cc60398eafb51343c141252923f83db47",
+      "length": 2972,
+      "http": 200
+    },
+    "discovery-guide": {
+      "source": "https://docs.polymarket.com/market-data/fetching-markets.md",
+      "final_url": "https://docs.polymarket.com/market-data/discover-markets.md",
+      "sha256": "174ba66a6e5f8cb81a819c7b8b13d97390086a193e2343d0bd241be9af4d10ac",
+      "length": 59598,
+      "http": 200
+    },
+    "gamma-openapi": {
+      "source": "https://docs.polymarket.com/api-spec/gamma-openapi.yaml",
+      "final_url": "https://docs.polymarket.com/api-spec/gamma-openapi.yaml",
+      "sha256": "838a2bb0518142d6531c7c49ec961766cbc0fe1ba3f04ec01842d39ab7706405",
+      "length": 94023,
+      "http": 200
+    }
+  },
+  "original_summary_sha256": "1011a579a7b0d0b9f2c46b09ea1708958a8d0d537a06de82e2d8da2fdf582a08"
+}
