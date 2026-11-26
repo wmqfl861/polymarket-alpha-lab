@@ -1,0 +1,38 @@
+{
+  "source_commit": "7e9d48e519e530c2b09d51a6004e0711b5280f0b",
+  "integrated_product_commit": "974e8c95181634b72a15d58b0ac4141071e74aa7",
+  "baseline": "f7061764bd9af29e8fe1c090cda5c1062cf35974",
+  "test_scope": "Offline public-wire fixtures; normal adapter, capture storage and scan in isolated project-native PostgreSQL 18",
+  "normal_entry_points": "capture-inputs --prepare-config -> capture reuse -> run-scan --managed --prepare-from -> resolve_preparation_inputs",
+  "cases": {
+    "same_instant": "Gamma 12:00Z and Championship FotMob 14:00+02 matched across four target sides; both teams checked after readback.",
+    "different_instant": "Gamma 12:00Z and Championship FotMob 12:00+02 left all four target sides without a source; resolution excluded all four with papersim_prepare_model_materials_missing.",
+    "legacy": "Existing EPL/Understat unzoned-UTC capture, stored quotes and replay passed."
+  },
+  "results": {
+    "native_fixed": {
+      "file": "tests/test_papersim_prepared_scan_native.py",
+      "pytest_filter": "prepared_fotmob_capture or prepared_soccer_persists",
+      "passed": 3,
+      "deselected": 8,
+      "elapsed_seconds": 132.19
+    },
+    "native_baseline_with_same_regression_tests": {
+      "product_commit": "f7061764bd9af29e8fe1c090cda5c1062cf35974",
+      "pytest_filter": "prepared_fotmob_capture",
+      "failed_as_expected": 2,
+      "deselected": 9,
+      "elapsed_seconds": 89.78
+    },
+    "existing_sports_adapter_and_fotmob": {
+      "files": [
+        "tests/test_papersim_adapter_sports.py",
+        "tests/test_papersim_fotmob.py"
+      ],
+      "passed": 75,
+      "elapsed_seconds": 5.39
+    }
+  },
+  "field_scope": "These existing public-window receipts contain no qualifying paper entry. The offset correction is proven in the fixture path. A prospective ordinary B1 paper entry, its own B2 valuation and D1 comparison against qualifying originals are still needed for operational evidence. This work contributes no formal comparison day.",
+  "test_setup_deviation": "The first commit command in the isolated baseline clone had no configured author. Git included a machine-generated local author identifier in its terminal diagnostic. The control subsequently used a fixture-only identity. The isolated baseline clone was removed; this receipt omits the identifier."
+}

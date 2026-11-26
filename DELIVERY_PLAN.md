@@ -4764,6 +4764,8 @@ FX-47 经 #128 合入的 `a7dbd8a3` 是工程开工父。源码 `11d24be6` 在�
 
 第一阶段交接书已通过 #130 普通合入，提交 `093063000a704727f243c02a7b420c49afa37027`，三条工作流依次为 Offline `45617549719`、Native PostgreSQL `45617589553`、Research `45617549700`。终点两份脚本的输出已从合并提交核对，唯一旧测试名对应已说明的帮助测试改名。[合并回执](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr130-landed.json) · [实际 CI 检出](docs/paper-sim/design/optimizer-phase1/2026-11-25/pr130-exact-ci.json) · [公开读回及终点审计](docs/paper-sim/design/optimizer-phase1/2026-11-25/handoff-public-landing-and-endpoint.json)
 
+2026-11-26，`974e8c95` 修正了足球准备阶段按开球时刻绑定盘口的逻辑。FotMob 提供带时区偏移的赛历时，采集与读回均按同一瞬间匹配。英冠正例中四个买入方向都绑定到正确比赛，反例中四个方向全部排除。两个用例在旧版均失败。隔离 PostgreSQL 上两项回归和已有 Understat 用例均通过，另有 75 项适配器测试通过。既有荷甲实采窗口的入场数仍为 0。[足球时区回归](docs/paper-sim/design/fx-44/2026-11-26-fixture-kickoff-regression.json)
+
 ### 84.5 FX-40 #132 合入登记与五项非阻塞保留项补记（2026-11-25 UTC）
 
 FX-40 经 #132 普通两父合入主线。头 `979a6abd8801085a026839d7ab4246584e3ba7e7`，基线 #130 的 `093063000a704727f243c02a7b420c49afa37027`，树 `c57103039dd4c924a5f3163a86159b85d9df50f3`，CI 合并提交 `85e757ae5aee8393e18ca8c1586a0b3bfd847608`，主线合入提交 `289ed1c217cdd97a68da959bfcecdd17db9fc8e5`，合入回执时间 2026-11-25 18:23:40 UTC。三条工作流依次为 Offline verification `45671167676`、Native project PostgreSQL `45671167543`、Research paper bridge `45671167901`。固定检查确认头 `979a6abd` 的运行 `45671167676` 为 CURRENT。协调者核对了工作流检出与登记树一致、固定运行 CURRENT 和普通两父合并。作者与提交者均为不回复邮箱。[合并回执](docs/paper-sim/design/fx-40/evidence/pr132-landed.json) · [实际 CI 检出](docs/paper-sim/design/fx-40/evidence/pr132-exact-ci.json)
