@@ -1,0 +1,53 @@
+{
+  "authorized-management-precondition": {
+    "observed_utc": "2026-11-26T13:12:37+00:00",
+    "owner_authorization": "授权两项，先核实独立免口令通路，保留微信链路",
+    "independent_key_only_management_confirmed": true,
+    "active_management_sessions_matched": 4,
+    "proof": "Matched active remote management sessions to existing successful public-key authentication records by session leader, local account, remote peer and session start. Verified the same administrative account can perform a non-interactive privileged identity check. No new login or authentication exchange.",
+    "secret_material_read_or_submitted": false
+  },
+  "login-policy-failure": {
+    "utc": "2026-11-26T13:12:37+00:00",
+    "category": "AssertionError",
+    "rolled_back_own_change": true,
+    "daemon_reload_completed_before_error": true
+  },
+  "login-policy-change": {
+    "applied_utc": "2026-11-26T13:15:59+00:00",
+    "configuration_change": "Root-owned global drop-in disables password and keyboard-interactive. Native parser read back every present user-scoped Match and ordinary administration context after in-place service reload.",
+    "verification": {
+      "all_password_disabled": true,
+      "all_keyboard_interactive_disabled": true,
+      "all_pubkey_policies_preserved": true,
+      "all_authentication_combinations_preserved": true,
+      "admin_publickey_enabled": true,
+      "service_active": true,
+      "reload_success": true,
+      "same_independent_admin_shell_still_connected": true
+    },
+    "target_login_attempts": 0,
+    "credential_reads": 0,
+    "wechat_route_changed": false
+  },
+  "login-postchange-result": {
+    "observed_utc": "2026-11-26T13:16:44+00:00",
+    "entry": "login",
+    "same_registered_external_observer": true,
+    "same_database_probe_method": true,
+    "remote_dispatch_stage": "machine_exec",
+    "network_observation": {
+      "outer": "received",
+      "remote_envelope": "valid",
+      "remote_timed_out": false,
+      "remote_truncated": false,
+      "remote_exit": "zero",
+      "observer_format": "valid",
+      "observer_classification": "REACHABLE",
+      "network_outcome": "reachable"
+    },
+    "confirmed_target_tcp_connects": 1,
+    "retries": 0,
+    "target_login_attempts": 0
+  }
+}

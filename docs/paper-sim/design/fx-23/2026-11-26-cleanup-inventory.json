@@ -1,0 +1,849 @@
+{
+  "item": "FX-23",
+  "snapshot_utc": "2026-11-26T13:16:14.387087+00:00",
+  "snapshot_main": "187019691479746272c47a2fbebd5fe4a13defb7",
+  "remote_branch_count_before_cleanup": 264,
+  "retained_in_snapshot": 175,
+  "candidate_counts": {
+    "feature_over_60_days": 24,
+    "other_exact_pr_head_in_main": 54,
+    "registered_ci_matching_landed_tree_and_parents": 11
+  },
+  "complete_ref_list_sha256": "1f9eb66c1a3331796b7ebca7ecb226cf91d84643a6ba5662a24538acb79bcaf6",
+  "source_candidate_tsv_sha256": "ee9d7c3a3ef29768128147a52be4b315ea5705926efcd23adefba65fd63683a6",
+  "feature_age_days_range": [
+    66,
+    71
+  ],
+  "retained_evidence": [
+    {
+      "pr": 120,
+      "tip": "3045f00d58db7862bf813cb96396e0077f85aff4",
+      "associated_run_ids": [
+        44922849415
+      ],
+      "in_main_registration_found": false,
+      "tree_and_parents_both_match_landed": false
+    },
+    {
+      "pr": 125,
+      "tip": "5b86834d7cb8842a8fa2324e83073c10146ebb29",
+      "associated_run_ids": [
+        45525021707
+      ],
+      "in_main_registration_found": true,
+      "tree_and_parents_both_match_landed": false
+    },
+    {
+      "pr": 137,
+      "tip": "e22c8531653907da60bff48b6ce4f4c888beeff7",
+      "associated_run_ids": [
+        45761322160
+      ],
+      "in_main_registration_found": false,
+      "tree_and_parents_both_match_landed": false
+    }
+  ],
+  "legacy_prs": [
+    {
+      "number": 34,
+      "disposition": "KEEP_OPEN",
+      "tip": "ee0a3c07be2b2a3255dbb2c6365731145d218e16",
+      "files_compared": 12,
+      "reason": "Retain the open PR head. Main contains an independent managed paper evaluation with original-record checks, both original book sides and explicit costs, followed by audited capture and settlement. The branch-specific --paper-stdin input and independent rational-cost oracle are absent from the main implementation. This branch ended without its final native proof.",
+      "review": {
+        "path": "docs/handoffs/m3-cleanup/pr-34-content-review.md",
+        "base": "4c8bec2fdce31fec3a8ec06a6ab93a25e4d7fc69",
+        "sha256": "d4594bdfbd71ad30e33c57cce65394e8adf52df2bb807762a2731ce39949bca1"
+      }
+    },
+    {
+      "number": 35,
+      "disposition": "KEEP_OPEN",
+      "tip": "103e6763112fdc065c56a17682ec0288eaa37499",
+      "files_compared": 11,
+      "reason": "Retain the open PR head. The independently rewritten main path contains the validated history, typed receipt and explicit-cost replay. The branch's --paper-scenarios decoder and Fraction assertions are distinct evidence. They remain accessible on this PR head.",
+      "review": {
+        "path": "docs/handoffs/m3-cleanup/pr-35-content-review.md",
+        "base": "4c8bec2fdce31fec3a8ec06a6ab93a25e4d7fc69",
+        "sha256": "38a3e266434bb589bad00b9cdcad84d58a5490cb0c2a1a97d36586b0e95cea09"
+      }
+    },
+    {
+      "number": 41,
+      "disposition": "KEEP_OPEN",
+      "tip": "3056c1526d85e7f9a9fc3e53f6c6c964cb234010",
+      "files_compared": 8,
+      "reason": "Retain the open PR head. The main history contains the alternative stage probe, 30-second process contract and failure-evidence work. The retired hosted campaign survives in Git history. The Win32 PowerShell first-invocation timeout root cause remains open in the main handoff document.",
+      "review": {
+        "path": "docs/handoffs/m3-cleanup/pr-41-content-review.md",
+        "base": "4c8bec2fdce31fec3a8ec06a6ab93a25e4d7fc69",
+        "sha256": "cc7cce0748e375407c6f2bc61b1b520c938c2dfcd89a2ba8ad60287334f7287b"
+      }
+    }
+  ],
+  "archived_pr_131": {
+    "remote_state": "CLOSED",
+    "closed_utc": "2026-11-26T13:13:51Z",
+    "retained_head": "69858354dd3728418095eb5ed5454a3821484299",
+    "owner_of_closure": "coordinator"
+  },
+  "candidates": [
+    {
+      "branch": "b1/run-scan",
+      "tip": "2f6f2683ceb2f119acf1895acf21449eb0aba872",
+      "basis": "merged_pr",
+      "pr": 81,
+      "merge": "8ca60c2781fc4806ca14c468ab9f14656e8dd999",
+      "merged_utc": "2026-11-19T22:32:28Z"
+    },
+    {
+      "branch": "ci/pr-120-merge-a73fb3d3780cba679b126c5f46fc8ac7d5cdced6",
+      "tip": "a73fb3d3780cba679b126c5f46fc8ac7d5cdced6",
+      "basis": "registered_ci",
+      "pr": 120,
+      "merge": "0c64a98946dcbdb5ed550c5a57c0f6127837fb76",
+      "merged_utc": "2026-11-21T19:50:22Z",
+      "registered_run_ids": [
+        44941382116
+      ],
+      "run_evidence": "DELIVERY_PLAN.md:4891"
+    },
+    {
+      "branch": "ci/pr-121-merge-550f399cb843aade53c102c239ea55dd7a0ce951",
+      "tip": "550f399cb843aade53c102c239ea55dd7a0ce951",
+      "basis": "registered_ci",
+      "pr": 121,
+      "merge": "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+      "merged_utc": "2026-11-21T21:09:44Z",
+      "registered_run_ids": [
+        44947987844
+      ],
+      "run_evidence": "docs/handoffs/2026-11-19-optimizer-phase1.md:41"
+    },
+    {
+      "branch": "ci/pr-122-merge-a0ee4de05bb3e3c0479ee32a22437875d0ad2171",
+      "tip": "a0ee4de05bb3e3c0479ee32a22437875d0ad2171",
+      "basis": "registered_ci",
+      "pr": 122,
+      "merge": "6d880008fc183a259298b6065ff6d5cb19b66fc3",
+      "merged_utc": "2026-11-22T03:43:08Z",
+      "registered_run_ids": [
+        44980585979
+      ],
+      "run_evidence": "docs/handoffs/2026-11-19-optimizer-phase1.md:46"
+    },
+    {
+      "branch": "ci/pr-124-merge-86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+      "tip": "86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1",
+      "basis": "registered_ci",
+      "pr": 124,
+      "merge": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+      "merged_utc": "2026-11-25T02:30:05Z",
+      "registered_run_ids": [
+        45524997219
+      ],
+      "run_evidence": "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr124-exact.json:52"
+    },
+    {
+      "branch": "ci/pr-125-merge-35d1812e1b13ed5f2fa7e432749420082dff5ff4",
+      "tip": "35d1812e1b13ed5f2fa7e432749420082dff5ff4",
+      "basis": "registered_ci",
+      "pr": 125,
+      "merge": "9acfc3ad07f446415d092153effbc5b81e6b0e77",
+      "merged_utc": "2026-11-25T03:07:24Z",
+      "registered_run_ids": [
+        45534415758
+      ],
+      "run_evidence": "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr125-post124-exact.json:52"
+    },
+    {
+      "branch": "ci/pr-126-merge-5888804c47b0fddaae214374cbbe8353f454c64a",
+      "tip": "5888804c47b0fddaae214374cbbe8353f454c64a",
+      "basis": "registered_ci",
+      "pr": 126,
+      "merge": "56a6b59df074a319b57555fdeec334423d012327",
+      "merged_utc": "2026-11-25T06:27:20Z",
+      "registered_run_ids": [
+        45557220997
+      ],
+      "run_evidence": "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr126-exact-ci.json:52"
+    },
+    {
+      "branch": "ci/pr-127-merge-76f6235362d8eac32eb795aa723e039199615b92",
+      "tip": "76f6235362d8eac32eb795aa723e039199615b92",
+      "basis": "registered_ci",
+      "pr": 127,
+      "merge": "9ce8290e90d82ae58928cea3eabca96d20d66217",
+      "merged_utc": "2026-11-25T07:51:18Z",
+      "registered_run_ids": [
+        45568555979
+      ],
+      "run_evidence": "docs/paper-sim/design/optimizer-phase1/2026-11-25/pr127-exact-ci.json:52"
+    },
+    {
+      "branch": "ci/pr-130-merge-9469e9d151c89b750666ea6527b838dab1869c6f",
+      "tip": "9469e9d151c89b750666ea6527b838dab1869c6f",
+      "basis": "registered_ci",
+      "pr": 130,
+      "merge": "093063000a704727f243c02a7b420c49afa37027",
+      "merged_utc": "2026-11-25T13:14:20Z",
+      "registered_run_ids": [
+        45617589553
+      ],
+      "run_evidence": "docs/paper-sim/design/fx-53/evidence/pr130-phase1-accepted.json:12"
+    },
+    {
+      "branch": "ci/pr-133-merge-15b4f33ac9d612eee4627ae85a7207967a4747bf",
+      "tip": "15b4f33ac9d612eee4627ae85a7207967a4747bf",
+      "basis": "registered_ci",
+      "pr": 133,
+      "merge": "39477891394833790c1681c6d9e7b9f24be7744c",
+      "merged_utc": "2026-11-25T23:06:34Z",
+      "registered_run_ids": [
+        45715787468
+      ],
+      "run_evidence": "docs/paper-sim/design/fx-53/evidence/pr133-accepted.json:12"
+    },
+    {
+      "branch": "ci/pr-134-merge-7fbc597725eb08976e81a04917852f7e6068b2ad",
+      "tip": "7fbc597725eb08976e81a04917852f7e6068b2ad",
+      "basis": "registered_ci",
+      "pr": 134,
+      "merge": "07f4bf21f4e4a45550b91afd64f9e41528be4eed",
+      "merged_utc": "2026-11-26T01:57:28Z",
+      "registered_run_ids": [
+        45736790830
+      ],
+      "run_evidence": "docs/paper-sim/design/fx-53/evidence/pr134-accepted.json:12"
+    },
+    {
+      "branch": "ci/pr-135-merge-5cae11207cdc257821619eda6ff616de54a24745",
+      "tip": "5cae11207cdc257821619eda6ff616de54a24745",
+      "basis": "registered_ci",
+      "pr": 135,
+      "merge": "eae037aa21bc827ebf0d33ec2f61d1d3d10f17f4",
+      "merged_utc": "2026-11-26T03:33:43Z",
+      "registered_run_ids": [
+        45746586776
+      ],
+      "run_evidence": "docs/paper-sim/design/fx-53/evidence/pr135-accepted.json:12"
+    },
+    {
+      "branch": "coord/node-registrations-1",
+      "tip": "8a59516769dd649b390ee9f0bde82c28e506adc5",
+      "basis": "merged_pr",
+      "pr": 78,
+      "merge": "a17d1fe2b3160511077272951bf6f952a08d82a3",
+      "merged_utc": "2026-11-19T20:48:13Z"
+    },
+    {
+      "branch": "docs/pr118-evidence-and-fx41-w45",
+      "tip": "8bb0dce7cff89d162b0aed8ab8498c73cd5fd328",
+      "basis": "merged_pr",
+      "pr": 122,
+      "merge": "6d880008fc183a259298b6065ff6d5cb19b66fc3",
+      "merged_utc": "2026-11-22T03:43:08Z"
+    },
+    {
+      "branch": "feature/wp02-activation-contract-20260919",
+      "tip": "89a3b61f73385464177e55fcde0afa216b2d6c28",
+      "basis": "merged_feature",
+      "pr": 58,
+      "merge": "a0fffde24d547cd70c950a39a3fada5f7e29cf92",
+      "merged_utc": "2026-09-18T17:34:04Z"
+    },
+    {
+      "branch": "feature/wp02-claude-cli-probe-20260920",
+      "tip": "b0bd04a246b664a0be4e79fe259a964d6ff32c3a",
+      "basis": "merged_feature",
+      "pr": 65,
+      "merge": "96c706503902630a829a12421205e7e7ccfac2b3",
+      "merged_utc": "2026-09-20T11:30:33Z"
+    },
+    {
+      "branch": "feature/wp02-claude-no-session-20260920",
+      "tip": "092ab98542ac3e485bb6734fc647bc59c81fc301",
+      "basis": "merged_feature",
+      "pr": 64,
+      "merge": "cbf2d3b1baff46c1a9b1e5f2983984837c8e6786",
+      "merged_utc": "2026-09-20T00:22:38Z"
+    },
+    {
+      "branch": "feature/wp02-codex-profile-20260919",
+      "tip": "bdbcfe4f95cff0dce1f86649bd7c77b1952482b1",
+      "basis": "merged_feature",
+      "pr": 63,
+      "merge": "3548f016ef153fcb577d8e5e8306a80e29eacfcb",
+      "merged_utc": "2026-09-19T15:29:47Z"
+    },
+    {
+      "branch": "feature/wp02-durable-call-audit-20260919",
+      "tip": "f7547cbcffa62526edcf85bf7ecb51ae9b416a43",
+      "basis": "merged_feature",
+      "pr": 61,
+      "merge": "86d8b705404e3537c506eb495d0c897d7c849db4",
+      "merged_utc": "2026-09-19T10:34:54Z"
+    },
+    {
+      "branch": "feature/wp02-message-preflight-20260917",
+      "tip": "c16a8208d27db144bd001196255e636aa525c0a3",
+      "basis": "merged_feature",
+      "pr": 53,
+      "merge": "a71ae4d716e8a73bd3614f080f42e5a6968d76f8",
+      "merged_utc": "2026-09-17T06:03:29Z"
+    },
+    {
+      "branch": "feature/wp02-output-preflight-20260917",
+      "tip": "948a1ad03b3e120d943a929dc20e2beac158cac9",
+      "basis": "merged_feature",
+      "pr": 52,
+      "merge": "a1284c41db411281b666211c6a9ce4b6930ca8ec",
+      "merged_utc": "2026-09-17T04:53:10Z"
+    },
+    {
+      "branch": "feature/wp02-probe-preparation-20260920",
+      "tip": "faa915887dff4222b9457087cc6d532ee8bd61b6",
+      "basis": "merged_feature",
+      "pr": 66,
+      "merge": "199f5a4f629466467f638d7f4a383e4bead19120",
+      "merged_utc": "2026-09-20T13:43:10Z"
+    },
+    {
+      "branch": "feature/wp02-process-host-20260919",
+      "tip": "e6116cf8f3bc26723c62c711dbc2e994243993f2",
+      "basis": "merged_feature",
+      "pr": 62,
+      "merge": "82f5ffc0b892714614d3e547745597bc35e721e6",
+      "merged_utc": "2026-09-19T13:27:55Z"
+    },
+    {
+      "branch": "feature/wp02-uncapped-protocol-20260919",
+      "tip": "b0f70b079c77c3bb01f919188e2ad3d40f2c06df",
+      "basis": "merged_feature",
+      "pr": 60,
+      "merge": "2eb86fa90d143195d771347eb7ac0bb24d010c0e",
+      "merged_utc": "2026-09-19T08:29:49Z"
+    },
+    {
+      "branch": "feature/wp03-reviewed-admission-20260916",
+      "tip": "11f7540bfe556c6243b03e64d7246c3c1312576b",
+      "basis": "merged_feature",
+      "pr": 47,
+      "merge": "41cc131d154a8a134d46608f5c5da1ca1e4ddaa6",
+      "merged_utc": "2026-09-17T01:16:03Z"
+    },
+    {
+      "branch": "feature/wp03-session-drain-20260917",
+      "tip": "772bef3d2507a061fa2834323c13d7519dc42cd3",
+      "basis": "merged_feature",
+      "pr": 50,
+      "merge": "2a0e881a2057ce6cba33c1a6885dcd099d4a5b52",
+      "merged_utc": "2026-09-17T00:16:04Z"
+    },
+    {
+      "branch": "feature/wp03-task-output-20260917",
+      "tip": "dab4884e235ec4be1aba54724765870d7a51e922",
+      "basis": "merged_feature",
+      "pr": 51,
+      "merge": "839d4039406d1113676e0b474680e6d4061f289b",
+      "merged_utc": "2026-09-16T23:35:32Z"
+    },
+    {
+      "branch": "feature/wp04-confirmation-input-binding-20260918",
+      "tip": "b240637fdc437f3d3beb742eec4dbb2ec742edbf",
+      "basis": "merged_feature",
+      "pr": 57,
+      "merge": "e1e47df60a59207575b7a266902e0a99ced9d283",
+      "merged_utc": "2026-09-18T08:22:15Z"
+    },
+    {
+      "branch": "feature/wp05-paper-receipt-binding-20260917",
+      "tip": "14cb6d83c3ef3bb9aa34e798cdbf59d09dc588be",
+      "basis": "merged_feature",
+      "pr": 56,
+      "merge": "0adfadaccb4e310c67fcd3a78455f38d2e39d97b",
+      "merged_utc": "2026-09-17T14:34:49Z"
+    },
+    {
+      "branch": "feature/wp05-readonly-output-20260917",
+      "tip": "ea77326362c5f00c411eb83694aba5797fcc0c46",
+      "basis": "merged_feature",
+      "pr": 55,
+      "merge": "8ed1903c6e1f08ed2f89d74d7ceaeb4e9bd3d0e9",
+      "merged_utc": "2026-09-18T03:45:16Z"
+    },
+    {
+      "branch": "feature/wp06-backup-catalog-20260916",
+      "tip": "e8e3119a9bad43829af512d3bb2548958438da03",
+      "basis": "merged_feature",
+      "pr": 48,
+      "merge": "3a987bc6c1a5df608ff8f0668b866aaf87842c04",
+      "merged_utc": "2026-09-16T13:32:03Z"
+    },
+    {
+      "branch": "feature/wp06-handoff-first-run-20260916",
+      "tip": "15c920a394e8462b19abe8bf143a149dfb81b24a",
+      "basis": "merged_feature",
+      "pr": 42,
+      "merge": "0c438098bab4d7c0a4f626664af43a31d96d8b08",
+      "merged_utc": "2026-09-15T17:30:38Z"
+    },
+    {
+      "branch": "feature/wp06-lookup-output-20260917",
+      "tip": "8ed1903c6e1f08ed2f89d74d7ceaeb4e9bd3d0e9",
+      "basis": "merged_feature",
+      "pr": 54,
+      "merge": "80d64b6b081caee385aca64dbf2e086144b016f8",
+      "merged_utc": "2026-09-18T03:45:14Z"
+    },
+    {
+      "branch": "feature/wp06-operator-guide-20260916",
+      "tip": "673c022fd715b845c7a5c4ce054ff3e612df93f5",
+      "basis": "merged_feature",
+      "pr": 43,
+      "merge": "1ac3ec6b1ec0de18faa1e0227076b14075525ec7",
+      "merged_utc": "2026-09-16T00:39:01Z"
+    },
+    {
+      "branch": "feature/wp06-packaged-cold-recovery-20260916",
+      "tip": "44cfc3c088c95337bfb5718de84286764b3f329a",
+      "basis": "merged_feature",
+      "pr": 46,
+      "merge": "34e9f3bf7d08650714754c757a9e4a9dff16be92",
+      "merged_utc": "2026-09-17T03:16:46Z"
+    },
+    {
+      "branch": "feature/wp06-packaged-flow-20260916",
+      "tip": "1290d79935f2a5f343d217017bee2bc261efd47f",
+      "basis": "merged_feature",
+      "pr": 44,
+      "merge": "4df08873f4b9b8f1378913c0d00ca6bb183e51e2",
+      "merged_utc": "2026-09-16T03:59:43Z"
+    },
+    {
+      "branch": "feature/wp06-resolution-output-20260916",
+      "tip": "f04f0b8cd9131e6cff0bf2ff2213020dc25f1b79",
+      "basis": "merged_feature",
+      "pr": 45,
+      "merge": "fff21287c0e3bfab2d679d7ac47bd8044f808ea9",
+      "merged_utc": "2026-09-16T02:13:02Z"
+    },
+    {
+      "branch": "feature/wp06-session-bundle-integrity-20260916",
+      "tip": "4fd33cc209230b7c2960a3e2f2acbd830c72a360",
+      "basis": "merged_feature",
+      "pr": 49,
+      "merge": "8ae414ad56146facdcf7e1369ca40730b69476e6",
+      "merged_utc": "2026-09-18T15:15:23Z"
+    },
+    {
+      "branch": "fix/d1-preflight-receipts-20261120",
+      "tip": "39c6c2e6fa5096dd0442301ef519a66fd244f0b0",
+      "basis": "merged_pr",
+      "pr": 115,
+      "merge": "8cba9d37bab50baaf777104cccfdf3a9afd628cd",
+      "merged_utc": "2026-11-21T01:32:46Z"
+    },
+    {
+      "branch": "fix/empty-club-forward-release-20261120",
+      "tip": "6bd9e7702f69e6b2e23ffa1048c98afbdcbea6eb",
+      "basis": "merged_pr",
+      "pr": 109,
+      "merge": "77acea8ca8f525b74ba7e5a37feb371a1047c2d8",
+      "merged_utc": "2026-11-20T17:25:00Z"
+    },
+    {
+      "branch": "fix/fx35-settlement-read-order-20261120",
+      "tip": "919234b61f8e23d7e7140ebc09497031d0200aaa",
+      "basis": "merged_pr",
+      "pr": 111,
+      "merge": "af4ff553262a7ee532e36e1b0d8ba4939522f4ba",
+      "merged_utc": "2026-11-20T20:56:56Z"
+    },
+    {
+      "branch": "fix/fx54-python-floor-after-a7dbd8a3e14f",
+      "tip": "e94756c8a0e5f3cb9265ce36c2fe94869fbb1e2a",
+      "basis": "merged_pr",
+      "pr": 129,
+      "merge": "631259a22a50ac5d06be7512ed6bbc32c87e3fbf",
+      "merged_utc": "2026-11-25T11:33:14Z"
+    },
+    {
+      "branch": "fix/managed-cli-autocommit",
+      "tip": "a0cf0aa02678f707c24af572622f11e8b533ff9d",
+      "basis": "merged_pr",
+      "pr": 100,
+      "merge": "a066e965179901b99b4ef6f71e47080dcc12c5c4",
+      "merged_utc": "2026-11-20T11:19:25Z"
+    },
+    {
+      "branch": "fix/managed-transaction-publish-20261120",
+      "tip": "7b98692b2c4d71cb23da237c3f675a63d8adf4d7",
+      "basis": "merged_pr",
+      "pr": 93,
+      "merge": "e77e9075dc1affd2249c08f7184ca7f4c01a4859",
+      "merged_utc": "2026-11-20T07:28:32Z"
+    },
+    {
+      "branch": "fix/mo6-native-evidence-fixtures-20261120",
+      "tip": "9647a3ef68c18e5fd5356aeb81bf8df06976a433",
+      "basis": "merged_pr",
+      "pr": 114,
+      "merge": "d216059339dba9c3ca34d65813e9cf2ba98a0dd5",
+      "merged_utc": "2026-11-21T18:36:29Z"
+    },
+    {
+      "branch": "fix/mo6-run-boundary-lookup",
+      "tip": "ce5d3dda95882735361f7349934f284c97e2df6c",
+      "basis": "merged_pr",
+      "pr": 107,
+      "merge": "4323b62b9da64dbc2f4ab02c7722e83ebbea2805",
+      "merged_utc": "2026-11-20T15:38:38Z"
+    },
+    {
+      "branch": "fix/nov21-fx38-fx39-step1",
+      "tip": "d362b51067f58f7ec3416ccea702859f63cf3c57",
+      "basis": "merged_pr",
+      "pr": 121,
+      "merge": "01a3d6d208fb7a22886f3cc0b54f4b6499d83400",
+      "merged_utc": "2026-11-21T21:09:44Z"
+    },
+    {
+      "branch": "fix/registered-model-read-txn-20261120",
+      "tip": "cf12b1c7f1145f37332e38b254a3adb11997bd01",
+      "basis": "merged_pr",
+      "pr": 102,
+      "merge": "dfd28e47624c703f427b56e058dc0da08be59d73",
+      "merged_utc": "2026-11-20T12:22:53Z"
+    },
+    {
+      "branch": "fix/settlement-cash-registered-20261120",
+      "tip": "692495af7f8add1019a5d7a586e9082db7fc78db",
+      "basis": "merged_pr",
+      "pr": 104,
+      "merge": "a666759d6fc3b0a44c04b9fc148a39b80efade2b",
+      "merged_utc": "2026-11-20T13:53:28Z"
+    },
+    {
+      "branch": "fix/wp02-model-boundaries-20260919",
+      "tip": "db2bf7bca5161099bb6b24b821d04bce165b3a2d",
+      "basis": "merged_pr",
+      "pr": 59,
+      "merge": "8ae2933a843c554b0f4391b4faeb572b2f6b952c",
+      "merged_utc": "2026-09-19T02:01:47Z"
+    },
+    {
+      "branch": "fix/wp4-anchor-skipif-eaccess",
+      "tip": "621085de60594eefb805ce6fc2a4c88ff76f6509",
+      "basis": "merged_pr",
+      "pr": 90,
+      "merge": "8ca119802d0a08333a0022aaa65b0cfce418eb15",
+      "merged_utc": "2026-11-20T04:25:59Z"
+    },
+    {
+      "branch": "fix/wpp4-evidence-read-failures-py311-20261120",
+      "tip": "bbedc0eaf212adb2f34d4b893de07127a8ff1cec",
+      "basis": "merged_pr",
+      "pr": 95,
+      "merge": "bb1e056a5ddaed1b2f366b7260bef1808d5cc24a",
+      "merged_utc": "2026-11-20T07:42:55Z"
+    },
+    {
+      "branch": "fx18/b1-marking-11fb457c-20261120",
+      "tip": "8c7b536514eda6dfc772bf7fc6a4fc597892a294",
+      "basis": "merged_pr",
+      "pr": 116,
+      "merge": "cd53ce25f65716e6151238beba253618caca7e98",
+      "merged_utc": "2026-11-21T14:07:37Z"
+    },
+    {
+      "branch": "fx26/candidate-event-keys-v3",
+      "tip": "a3a14e91ebbd0d056243aa43a72cad46c56cf695",
+      "basis": "merged_pr",
+      "pr": 77,
+      "merge": "d37650ca5daccacf71ace4e42f18615d70b32bea",
+      "merged_utc": "2026-11-19T20:23:04Z"
+    },
+    {
+      "branch": "fx2730/promotion-coverage",
+      "tip": "ae7b675b8b56a68ca5cf010871d47bf79e858e6e",
+      "basis": "merged_pr",
+      "pr": 71,
+      "merge": "7a2605e7402491dceb41839bc4a1d2fc31a47b78",
+      "merged_utc": "2026-11-19T18:47:17Z"
+    },
+    {
+      "branch": "fx28/design-references-v2",
+      "tip": "f182e48d41ecf0178e1a63e0b9894d09458e92d4",
+      "basis": "merged_pr",
+      "pr": 74,
+      "merge": "9bfafeda670211192669320c11f65529a3e8e030",
+      "merged_utc": "2026-11-19T19:39:08Z"
+    },
+    {
+      "branch": "fx35/criterion-f-fix",
+      "tip": "9f0c28a5a5deecee71c311de6431f1835c9fc442",
+      "basis": "merged_pr",
+      "pr": 106,
+      "merge": "fd23a76b0e5a0adf6d784dff43b20b39482e7d76",
+      "merged_utc": "2026-11-20T15:24:13Z"
+    },
+    {
+      "branch": "fx35/registered-replay-integer-report-20261120",
+      "tip": "8dc40d09d1c0591489dfcc77bcebadbc137cc3ae",
+      "basis": "merged_pr",
+      "pr": 113,
+      "merge": "11fb457c6e714844ec2ee1c0eb3c90dbd145eaa7",
+      "merged_utc": "2026-11-20T23:16:09Z"
+    },
+    {
+      "branch": "gov/codex-role-routing-20261120",
+      "tip": "825bee041fc1064ff952917baa8303c675e7ce60",
+      "basis": "merged_pr",
+      "pr": 94,
+      "merge": "3f2142ff233d75238ec749736182898431f57109",
+      "merged_utc": "2026-11-20T07:39:44Z"
+    },
+    {
+      "branch": "gov/fx25-adopt-linux-20261120",
+      "tip": "2f176304d1e61a61e7e3b044e4ff21bc23c1cf72",
+      "basis": "merged_pr",
+      "pr": 101,
+      "merge": "e899408813881698069218cd9b1537d2bc5e4821",
+      "merged_utc": "2026-11-20T12:20:39Z"
+    },
+    {
+      "branch": "gov/fx31-address-hygiene-20261120",
+      "tip": "11e030c72bc4485420b2f04b0eec39e8bf4e783a",
+      "basis": "merged_pr",
+      "pr": 88,
+      "merge": "ed5eabbd4ff01b1d10a4798e34f505d6186cc57b",
+      "merged_utc": "2026-11-20T05:00:10Z"
+    },
+    {
+      "branch": "gov/fx33-reviewed-receipts-20261120",
+      "tip": "c06f5e2bb0d93e58e72009268ee8f359513bce23",
+      "basis": "merged_pr",
+      "pr": 89,
+      "merge": "fe5ae538420e3fe060cd1fed2c12121cbd8301ba",
+      "merged_utc": "2026-11-20T05:00:15Z"
+    },
+    {
+      "branch": "gov/ledger-wave-two-latest-20261120",
+      "tip": "e48ebed8b3f8ee2654c030fd228845f5b3956490",
+      "basis": "merged_pr",
+      "pr": 97,
+      "merge": "033481b57ac334d63c516090522e216d077f0031",
+      "merged_utc": "2026-11-20T09:47:21Z"
+    },
+    {
+      "branch": "gov/nov21-audit-registration",
+      "tip": "50267f7e46e44295c7d5613c125e81a0befd0bd0",
+      "basis": "merged_pr",
+      "pr": 120,
+      "merge": "0c64a98946dcbdb5ed550c5a57c0f6127837fb76",
+      "merged_utc": "2026-11-21T19:50:22Z"
+    },
+    {
+      "branch": "gov/record-fx25-adoption-20261120",
+      "tip": "fa0847eb435fadfe881afaa9ce110e7478778480",
+      "basis": "merged_pr",
+      "pr": 103,
+      "merge": "3cd9a354966ba10142fbe4a186eb3166a4875d4f",
+      "merged_utc": "2026-11-20T13:24:48Z"
+    },
+    {
+      "branch": "governance/project-agent-assignment-20261121",
+      "tip": "8d41cba5504b0737bd2af457584ac520ff8e7c45",
+      "basis": "merged_pr",
+      "pr": 117,
+      "merge": "2bdc4cccacc925ea8e6569c8865b90c0b0c671e6",
+      "merged_utc": "2026-11-21T02:57:05Z"
+    },
+    {
+      "branch": "integrate/audit-optimizer-2026-11-19",
+      "tip": "cffc38631bd4df4d9f52073b5b4593066c973e00",
+      "basis": "merged_pr",
+      "pr": 69,
+      "merge": "e25103155015a73b0584eba58b1ffa6d001672cc",
+      "merged_utc": "2026-11-19T16:41:41Z"
+    },
+    {
+      "branch": "integrate/incremental-review-2026-11-24",
+      "tip": "e65be3e7bfed96d52be1a2c9b392627b0ab2d23b",
+      "basis": "merged_pr",
+      "pr": 124,
+      "merge": "525d2cbe527c7588eb0ec0e53570dd4f03b1f36c",
+      "merged_utc": "2026-11-25T02:30:05Z"
+    },
+    {
+      "branch": "integrate/nov21-audit-packages",
+      "tip": "9a38b62827d35d524e05d71f0d2f780c16baa86c",
+      "basis": "merged_pr",
+      "pr": 119,
+      "merge": "a3492ea66d3d9e18d62d1e8c4919582710124416",
+      "merged_utc": "2026-11-21T14:06:17Z"
+    },
+    {
+      "branch": "m2/b2-closing-marks-20261120",
+      "tip": "2ed0c948cf7681e99c3e0b52513aa175abe85330",
+      "basis": "merged_pr",
+      "pr": 91,
+      "merge": "6c549f267edd9cd915476e572e6f3547df68aefb",
+      "merged_utc": "2026-11-20T04:59:42Z"
+    },
+    {
+      "branch": "m2/b3-settlement-20261120-fix",
+      "tip": "3f6fd68dd6978dd1d361307716284e46a269e8d0",
+      "basis": "merged_pr",
+      "pr": 92,
+      "merge": "f83567eac1f3476e8ccdc8249afda1d23daf9f13",
+      "merged_utc": "2026-11-20T07:20:33Z"
+    },
+    {
+      "branch": "m2/d1-managed-archive-release-20261120",
+      "tip": "3d65f64199bcfafc2f23d8bfa4020d98026df450",
+      "basis": "merged_pr",
+      "pr": 110,
+      "merge": "5d49666757d520ff55832338f856a91dd761affe",
+      "merged_utc": "2026-11-20T19:58:03Z"
+    },
+    {
+      "branch": "m2/d1-public-market-settlement-recovery-20261121",
+      "tip": "b89120f2fa79c6ecf5f371376fc00f1ccd10809c",
+      "basis": "merged_pr",
+      "pr": 118,
+      "merge": "00199b24d38d5d9334ec7eb07ca8141db33852da",
+      "merged_utc": "2026-11-22T02:07:39Z"
+    },
+    {
+      "branch": "m2/d1-public-source-edge-coverage-20261120",
+      "tip": "a7c70ba2a15ac90586cd329f7655c12a7d6fc201",
+      "basis": "merged_pr",
+      "pr": 112,
+      "merge": "63506df2e2470e548e100041cdacf9db6f401fc8",
+      "merged_utc": "2026-11-20T23:11:55Z"
+    },
+    {
+      "branch": "m2/report-on-pr105-20261120",
+      "tip": "f30361c00583019309e6c09ad1fe7dae11fb7b42",
+      "basis": "merged_pr",
+      "pr": 108,
+      "merge": "026035e6f668a0c72c43990008be75fc7420adb8",
+      "merged_utc": "2026-11-20T16:02:35Z"
+    },
+    {
+      "branch": "mo0/registration",
+      "tip": "7649ad1416c3bf1fafa9cce6e92cc83a277dd9b6",
+      "basis": "merged_pr",
+      "pr": 70,
+      "merge": "81eb20e3566e0ded57589814b2f57b460991dfb7",
+      "merged_utc": "2026-11-19T17:19:26Z"
+    },
+    {
+      "branch": "mo1/optimize-spec-families",
+      "tip": "24ccf040b91be08086e34910428247fc235fdc2e",
+      "basis": "merged_pr",
+      "pr": 76,
+      "merge": "e5c8ae8a875dece6169c6491eece90bdafc5451a",
+      "merged_utc": "2026-11-19T20:05:56Z"
+    },
+    {
+      "branch": "mo2/model-registry-v2",
+      "tip": "b8fa5d2ad790beee6277813869f7664ec461212f",
+      "basis": "merged_pr",
+      "pr": 83,
+      "merge": "d95fadecac6da0ce1e18d96234cd89b45565ab63",
+      "merged_utc": "2026-11-19T23:16:34Z"
+    },
+    {
+      "branch": "mo3/evaluation-kernel-v2",
+      "tip": "c47f2105c3baaa7d7144408ada576a54fb538c76",
+      "basis": "merged_pr",
+      "pr": 86,
+      "merge": "fa01be0b6b7cc0d01886f5aee40456c4d3b726bd",
+      "merged_utc": "2026-11-20T03:32:09Z"
+    },
+    {
+      "branch": "mo4/dataset-layer",
+      "tip": "2f2cd5b3bd3ed577fd76b9c2a8f0432f2dbf0243",
+      "basis": "merged_pr",
+      "pr": 79,
+      "merge": "4e6ffa871e9a0062e3b752855c6515dcffb8575c",
+      "merged_utc": "2026-11-19T21:30:53Z"
+    },
+    {
+      "branch": "mo5a/soccer-recalib-family",
+      "tip": "905b0c881b11b8c584356840c9fb01afa9601e2b",
+      "basis": "merged_pr",
+      "pr": 80,
+      "merge": "d148e91a8091e8b8f5569ded340c9bdce3bd73c7",
+      "merged_utc": "2026-11-19T22:05:16Z"
+    },
+    {
+      "branch": "mo5b/intl-family-v2",
+      "tip": "21a5870cdfdd8144ad70f1958d83a63f17ac5bd4",
+      "basis": "merged_pr",
+      "pr": 84,
+      "merge": "3e52516f71fdadeb86ef0d521521e6384ad9bb68",
+      "merged_utc": "2026-11-19T23:44:48Z"
+    },
+    {
+      "branch": "mo5c/nba-family-v2",
+      "tip": "3d4b8fda00e008ff5aa4723de75fe69e24cb5bd8",
+      "basis": "merged_pr",
+      "pr": 82,
+      "merge": "647b81784465b6ce3352f601b5a8124dec0c8b26",
+      "merged_utc": "2026-11-19T23:05:26Z"
+    },
+    {
+      "branch": "mo5d/crypto-family",
+      "tip": "dd1b8f36da1b46805632c398dd6fc36f1247c19d",
+      "basis": "merged_pr",
+      "pr": 85,
+      "merge": "86feaf1ad88be3f9c262a26cdac650cb26c1a573",
+      "merged_utc": "2026-11-20T00:56:54Z"
+    },
+    {
+      "branch": "mo5e/league-bridge-family",
+      "tip": "a13a9682767408612e1395e62bfdcbb7146792be",
+      "basis": "merged_pr",
+      "pr": 87,
+      "merge": "82f6e32c5cadf43b747df2aac56ff2f30ab310ac",
+      "merged_utc": "2026-11-20T05:00:05Z"
+    },
+    {
+      "branch": "mo6/search-runner-cli",
+      "tip": "9de2ce65d1f94a27238c295933b028a16f5eae68",
+      "basis": "merged_pr",
+      "pr": 105,
+      "merge": "193205fd773e8e551aa51d2310914da3cc8df5ab",
+      "merged_utc": "2026-11-20T14:39:56Z"
+    },
+    {
+      "branch": "mo7/shadow-parallel-v2",
+      "tip": "8b72f470fc1d546fae53b25dbd5ba49b2341c4ac",
+      "basis": "merged_pr",
+      "pr": 96,
+      "merge": "ad381fb5ca6f5903d4b7b6619a85bff888a649a1",
+      "merged_utc": "2026-11-20T08:11:04Z"
+    },
+    {
+      "branch": "mo8/policy-decide-v2",
+      "tip": "7afe487ebf74e651ad72c82533966ae55835a737",
+      "basis": "merged_pr",
+      "pr": 99,
+      "merge": "f3f86ae5cffde2ec11bd51e543b2c470a635ad1b",
+      "merged_utc": "2026-11-20T10:56:24Z"
+    },
+    {
+      "branch": "node/post135-audit-ledger",
+      "tip": "b2e3902e3ade5ca8e695eaddc0a178f5175bbd0b",
+      "basis": "merged_pr",
+      "pr": 137,
+      "merge": "732d5c6e8279ae5594d20a6dcc0911c771df70d6",
+      "merged_utc": "2026-11-26T06:23:51Z"
+    }
+  ]
+}
