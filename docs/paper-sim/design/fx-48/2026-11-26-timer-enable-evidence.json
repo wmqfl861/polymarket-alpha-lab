@@ -1,0 +1,87 @@
+{
+  "module": "FX-48",
+  "compiled_utc": "2026-11-26T09:21:49Z",
+  "scope": "The eight registered systemd user timers only. Existing activation/status receipts, one contemporaneous structured operator receipt and a read-only filesystem metadata observation.",
+  "result": "KNOWN_LINK_CREATION_AND_EXPLICIT_SNAPSHOTS__FIRST_EVER_ENABLE_UNPROVEN",
+  "existing_evidence": "The registered status snapshots retained configuration state, current activation and last trigger. Neither carried first enable nor the persistent enable-link creation metadata.",
+  "filesystem_observation": "All eight currently installed timers.target.wants entries were symlinks resolving to the corresponding registered installed unit. The recorded times are the filesystem birth times of those surviving link objects, at whole-second precision. Birth time is evidence of the object’s existence. It cannot establish when an entry first held that name, earlier removal or recreation, or uninterrupted enablement.",
+  "historical_observation": {
+    "local_source": "daily-football-alerts-ops-20261122/pinned-activation.json",
+    "source_sha256": "36f8e7f46596526b433bcc7d5e67bd6ed51e2668d02abc0c0edec36e76cfda2c",
+    "start_utc": "2026-11-22T09:47:19Z",
+    "completion_utc": "2026-11-22T09:47:40Z",
+    "matching_registered_units": [
+      "pal-football-notify-scan.timer",
+      "pal-football-notify-tick.timer"
+    ],
+    "explicit_state": "enabled and active",
+    "scope": "The structured completion receipt records observed state for those two timers. It contains no initial installation or previous absence attestation for either."
+  },
+  "snapshot_semantics": "Explicit enabled snapshot is a dated observation found in the compared receipts. Current activation is the start of the activation still reported in the reused runtime readback. Neither dates the first-ever enable command.",
+  "timers": [
+    {
+      "timer": "pal-football-learning-admission.timer",
+      "current_enable_link_inode_created_utc": "2026-11-22T15:35:13Z",
+      "explicit_enabled_snapshot_by_utc": "2026-11-26T06:41:39.195892Z",
+      "current_activation_utc": "2026-11-24T23:49:43Z",
+      "first_ever_enabled_utc": null
+    },
+    {
+      "timer": "pal-football-learning-evidence.timer",
+      "current_enable_link_inode_created_utc": "2026-11-22T15:35:13Z",
+      "explicit_enabled_snapshot_by_utc": "2026-11-26T06:41:39.195892Z",
+      "current_activation_utc": "2026-11-24T23:49:43Z",
+      "first_ever_enabled_utc": null
+    },
+    {
+      "timer": "pal-football-learning-study.timer",
+      "current_enable_link_inode_created_utc": "2026-11-22T15:35:13Z",
+      "explicit_enabled_snapshot_by_utc": "2026-11-26T06:41:39.195892Z",
+      "current_activation_utc": "2026-11-24T23:49:43Z",
+      "first_ever_enabled_utc": null
+    },
+    {
+      "timer": "pal-football-notify-scan.timer",
+      "current_enable_link_inode_created_utc": "2026-11-22T08:41:48Z",
+      "explicit_enabled_snapshot_by_utc": "2026-11-22T09:47:40Z",
+      "current_activation_utc": "2026-11-24T23:49:43Z",
+      "first_ever_enabled_utc": null
+    },
+    {
+      "timer": "pal-football-notify-tick.timer",
+      "current_enable_link_inode_created_utc": "2026-11-22T08:41:48Z",
+      "explicit_enabled_snapshot_by_utc": "2026-11-22T09:47:40Z",
+      "current_activation_utc": "2026-11-24T23:49:43Z",
+      "first_ever_enabled_utc": null
+    },
+    {
+      "timer": "pal-sports-paper-scan.timer",
+      "current_enable_link_inode_created_utc": "2026-11-22T16:30:47Z",
+      "explicit_enabled_snapshot_by_utc": "2026-11-26T06:41:39.195892Z",
+      "current_activation_utc": "2026-11-24T23:49:43Z",
+      "first_ever_enabled_utc": null
+    },
+    {
+      "timer": "pal-sports-paper-settle.timer",
+      "current_enable_link_inode_created_utc": "2026-11-22T16:20:15Z",
+      "explicit_enabled_snapshot_by_utc": "2026-11-26T06:41:39.195892Z",
+      "current_activation_utc": "2026-11-24T23:49:43Z",
+      "first_ever_enabled_utc": null
+    },
+    {
+      "timer": "pal-sports-paper-study.timer",
+      "current_enable_link_inode_created_utc": "2026-11-22T16:30:47Z",
+      "explicit_enabled_snapshot_by_utc": "2026-11-26T06:41:39.195892Z",
+      "current_activation_utc": "2026-11-24T23:49:43Z",
+      "first_ever_enabled_utc": null
+    }
+  ],
+  "published_sources": {
+    "docs/paper-sim/design/fx-48/2026-11-26-runtime-observation.json": "74845517feeb2a578c11e80541bbeaa53656b9b7de3d659219a1cb3ee999fa88",
+    "docs/paper-sim/design/fx-48/2026-11-26-source-and-timer-followup.json": "d48515bf835a637c10359e19f4fc64e193b240f5f8eafb803a7854d123a5c442"
+  },
+  "outstanding": "An original, attributable first-install/first-enable record, or a complete history from original installation, remains necessary to establish first-ever enablement. The existing activation queries were not repeated.",
+  "config_writes": 0,
+  "remote_queries": 0,
+  "original_journal_bodies_read": 0
+}

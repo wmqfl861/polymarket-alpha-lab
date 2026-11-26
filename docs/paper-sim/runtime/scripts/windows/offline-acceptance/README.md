@@ -1,6 +1,6 @@
 # FX-49 Windows 离线演练
 
-各环境的实测结果见[投递回执](../../../../design/fx-49/2026-11-26-linux-fixed-entry-acceptance.json)。截至 2026-11-26，六种情况已在 Linux 使用替身验证。目标 Windows 的现场回执仍为 0/6。
+2026-11-26，Linux 替身已覆盖六种情况。演练器随后修正成功回执的 JSON 读取，保留原始 UTC 文字和字段类型。完整有效回执获接受，14 个变造回执均被拒绝。目标 Windows 的现场回执仍为 0/6。[六种投递结果](../../../../design/fx-49/2026-11-26-linux-fixed-entry-acceptance.json) · [修订后两套测试](../../../../design/fx-49/2026-11-26-rehearsal-receipt-types.json)
 
 在获准接触 Windows、放置文件及执行替身验收之后，使用与部署场景一致的系统 Windows PowerShell 5.1 和已固定的运行层提交。独立的试验账号或试验目录由放置方保护。将同一提交的 `Invoke-PaperWeixin.ps1` 和 `Invoke-PaperWeixin.ps1.sha256` 放在试验源目录，把本目录保留在其下的 `offline-acceptance`。从该 Git 提交取得预期 SHA-256。准备一个位于本机固定卷的空试验目录，例如 `%LOCALAPPDATA%\PolymarketAlphaLab\WeixinDeliveryAcceptance\scratch`，避开原业务的 `WeixinDelivery\jobs`。
 

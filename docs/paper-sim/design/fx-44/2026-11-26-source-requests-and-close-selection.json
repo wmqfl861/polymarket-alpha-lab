@@ -1,0 +1,226 @@
+{
+  "soccer_preparation": {
+    "code_commit": "c87672996552c96cea2f0edb782b03f600014997",
+    "entry_points": [
+      "capture-inputs --prepare-config",
+      "run-scan --managed --prepare-from"
+    ],
+    "source_scope": "One managed capture batch, league, Gamma event, exact kickoff instant and fixture title. Only a complete successful source group is reusable.",
+    "synthetic_native_fixture": "Two market conditions for one match, two buy sides per condition. Both markets reference the same sealed model response sequences. The four candidate constructions, exclusions and replay follow the original rules.",
+    "high_level_model_fetches_for_two_conditions": {
+      "EPL_Understat": 6,
+      "Championship_FotMob": 2
+    },
+    "baseline_with_regression_assertions": {
+      "commit": "34db8d25153ac8e009c5ef59e4b63892fa6c842b",
+      "modules": [
+        "tests/test_papersim_prepared_scan_native.py",
+        "-k",
+        "prepared_fotmob_capture or prepared_soccer_persists"
+      ],
+      "started_utc": "2026-11-26T09:04:11.467132+00:00",
+      "ended_utc": "2026-11-26T09:07:05.309502+00:00",
+      "process_exit": 1,
+      "stages": [
+        {
+          "stage": "isolation"
+        },
+        {
+          "counts": {
+            "collection_errors": 0,
+            "deselected": 8,
+            "failed": 2,
+            "passed": 1,
+            "receipts": 0,
+            "rejected_receipts": 0,
+            "selected": 3
+          },
+          "exit_code": 1,
+          "result": "failed",
+          "stage": "pytest"
+        },
+        {
+          "exit_code": 1,
+          "result": "nonzero",
+          "stage": "wrapper"
+        }
+      ],
+      "console_sha256": "370ed6adc300e566f1ec93bbcdf303af13ae287b79e2327a56a7c93fd454d24c"
+    },
+    "integrated_full_native_module": {
+      "commit": "41b4ef955539c9f75d849644e617a0909b53fbe0",
+      "modules": [
+        "tests/test_papersim_prepared_scan_native.py"
+      ],
+      "started_utc": "2026-11-26T09:08:18.180120+00:00",
+      "ended_utc": "2026-11-26T09:17:17.864135+00:00",
+      "process_exit": 0,
+      "stages": [
+        {
+          "stage": "isolation"
+        },
+        {
+          "counts": {
+            "collection_errors": 0,
+            "deselected": 0,
+            "passed": 11,
+            "receipts": 0,
+            "rejected_receipts": 0,
+            "selected": 11
+          },
+          "exit_code": 0,
+          "result": "passed",
+          "stage": "pytest"
+        }
+      ],
+      "console_sha256": "ad724f403e5ce042a9459693b19516ed745adbdb9e761ec2f3ab94a931b4358f"
+    },
+    "offline_preparation_and_adapter_cases_passed": 159
+  },
+  "close_observation": {
+    "readback_code_commit": "414d1e6e482cbf297d9aa2fc5c054d034691e1cd",
+    "sql": "docs/paper-sim/design/fx-44/close-selection-readback.sql",
+    "report_checks": {
+      "readers": "The SQL ran in a repeatable-read, read-only PostgreSQL snapshot alongside the same loader as B4. Independent calls to the standalone managed evaluator and B4 pipeline reader selected the known historical price and timestamp.",
+      "reversed_writes": "The latest usable source observation was five minutes before the event; two observations shared that instant. On both insertion orders the match had the larger tied evidence ID and last=0, mid=0.62. When an older observation arrived last, the legacy evaluator and B4 instead used its mid=0.61 and its time 58 minutes before the event.",
+      "synthetic_cohort": {
+        "entered": 8,
+        "existing_closes_for_criterion_c": 4,
+        "existing_coverage": "4/8",
+        "existing_verdict_c": "NOT_ASSESSABLE",
+        "unverified_window_matches": 2,
+        "registered_qualification": null
+      },
+      "boundaries": "The sample matched 59 minutes and exactly 60 minutes; 61 minutes, opposite-side data, bid-only data, PERIODIC-only marks and absence of evidence contributed no match. A missing boundary was distinguished. A separately seeded NO-side purchase excluded opposite-side prices and even raw historical rows exactly at or one second beyond the boundary. A rejected candidate without an entry was excluded from the denominator.",
+      "inputs": "Synthetic ordinary scan and capture rows and two intentionally seeded historical-shape CLOSE rows on disposable PostgreSQL. No operational database, new formal scoring run, or qualifying day used."
+    },
+    "native_checks": {
+      "receipt_counts": [
+        {
+          "collection_errors": 0,
+          "deselected": 0,
+          "passed": 6,
+          "receipts": 0,
+          "rejected_receipts": 0,
+          "selected": 6
+        },
+        {
+          "collection_errors": 0,
+          "deselected": 0,
+          "passed": 1,
+          "receipts": 0,
+          "rejected_receipts": 0,
+          "selected": 1
+        }
+      ],
+      "passed": 7,
+      "skipped": 0,
+      "new_cases": 4,
+      "existing_capture_cases": 2,
+      "existing_evaluate_replay_case": 1
+    },
+    "reader_receipt_sha256": "d653b60a37c6ff5ee7c8f4cf671ec14b35aa61fd58a8d3c853ba861e7ba63227",
+    "writer_test_commit": "417f07413f0d6e156512023b0647e3b8b000fde0",
+    "writer_test": "tests/test_papersim_capture_marks_native.py",
+    "writer_native_suite": {
+      "status": "passed",
+      "counts": {
+        "collection_errors": 0,
+        "deselected": 0,
+        "passed": 13,
+        "receipts": 0,
+        "rejected_receipts": 0,
+        "selected": 13
+      },
+      "source": "edc89a9a510dd560cfec9c4827e7a5c623b6a2fe"
+    },
+    "older_writer_contract": {
+      "distinct_seals": 2,
+      "same_source_bytes": true,
+      "same_source_observed_at": true,
+      "distinct_real_request_receipts": true,
+      "rereading_sealed_scope_reuses_occurrence": true,
+      "unchanged_ordinary_mark_pairs": 1,
+      "success_summary_means": "one pair ensured for the operation, not a second source occurrence inserted",
+      "changed_price_same_natural_key": "papersim_candidate_mark_conflict, original rows identical",
+      "old_pack_apparent_clock": "observed_at and a URL+body citation. The parser currently rejects manifest and request sequence fields even when correct. The envelope snapshot and raw book snapshot are distinct and neither carries a unique later fetch time."
+    },
+    "two_seals_proof": {
+      "batches": [
+        "f6b6d66729ea02267310600e2ba9f600735562a99187dd2e8351693f47e3230f",
+        "2317574107e26a55bee4559fa320ecd30289ee4dbefe8c95f21adf1b4fb98db7"
+      ],
+      "book_bytes": 424,
+      "book_sha256": "88c0bf6396f574a9f0a385dfb8f2b4cce733fc48317d32ad936924f6a37ff302",
+      "boundary_at": "2026-11-28T09:06:23.614886+00:00",
+      "conflict_kept_rows": true,
+      "first_snapshot_at": "2026-11-26T09:06:30.523011+00:00",
+      "gamma_path": "/0/markets/0",
+      "gamma_sequence": 1,
+      "gamma_sha256": "4d24c0ad68e1a75de4456efe54a30b7725fba80754c29180b82080eb74d403ba",
+      "ordinary_close_rows": 1,
+      "ordinary_mark_rows": 1,
+      "ordinary_succeeded_keys": 2,
+      "receipts_at": [
+        "2026-11-26T09:06:30.523011+00:00",
+        "2026-11-26T09:06:33.383966+00:00"
+      ],
+      "replay_reused": true,
+      "request_sequences": [
+        4,
+        4
+      ],
+      "source_observed_at": "2026-11-26T09:06:30.422000+00:00"
+    },
+    "supplemental_writer_probe": "An extra synthetic intake probe failed without a diagnostic business result. It contributes no assertion to this finding.",
+    "writer_receipt_sha256": "6e4476afd45472ad2c6d2fcc93080edf6fcee3f634883650957952425f7bd015"
+  },
+  "bundesliga_public_measurement": {
+    "commit": "41b4ef955539c9f75d849644e617a0909b53fbe0",
+    "tag": "bundesliga",
+    "attempts": 1,
+    "window": {
+      "end_utc": "2026-11-26T09:27:55.488139+00:00",
+      "start_utc": "2026-11-26T09:11:55.488139+00:00"
+    },
+    "capture": {
+      "decision_as_of_status": "valid",
+      "decision_as_of_utc": "2026-11-26T09:11:59.923127+00:00",
+      "exit_code": 0,
+      "finished_utc": "2026-11-26T09:12:00.200562+00:00",
+      "product_status": "partial",
+      "reason_code": null,
+      "reported_request_count": 1,
+      "started_utc": "2026-11-26T09:11:55.488932+00:00",
+      "status": "json_received"
+    },
+    "public_page": {
+      "all_pages_verified": false,
+      "event_rows": null,
+      "market_rows": null,
+      "pages": [
+        {
+          "http_status": 200,
+          "request_reason": "public_response_too_large",
+          "verified": false
+        }
+      ],
+      "raw_books_indexed": 0,
+      "tag": "bundesliga"
+    },
+    "verified_bodies": 0,
+    "cli_candidates": 0,
+    "cli_entries": 0,
+    "database_candidates": 0,
+    "database_entries": 0,
+    "B2": {
+      "attempted": false,
+      "status": "no_persisted_entry",
+      "written": 0
+    },
+    "formal_days": 0,
+    "registration_sha256": "27c8d0fc67cef3bb44dcb27e2c901c4eda17ba6d9f5170ac897f6c4acabcb657",
+    "original_receipt_sha256": "29beb0778ed25e70ff58269f150cac25c27d6d32eb2b4a213ab23e2d9939be32"
+  },
+  "status": "Pre-registration diagnostic. Production OD-P effective time and formal forward comparison are pending."
+}

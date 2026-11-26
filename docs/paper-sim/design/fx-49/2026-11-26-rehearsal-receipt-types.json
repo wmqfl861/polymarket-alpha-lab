@@ -1,0 +1,55 @@
+{
+  "source_commit": "74cc9e456681eb285eb52db58b11dc8c13ede510",
+  "prior_commit": "29aec9d0688dc0743c784bef7aec61ef359c4497",
+  "observed_utc": "2026-11-26T09:13:19+00:00",
+  "scope": "Offline Linux verification",
+  "defect": "The rehearsal converted ISO UTC text while decoding an accepted receipt. A complete, correctly typed receipt was classified as invalid.",
+  "success_receipt": {
+    "prior_intact_result": "invalid",
+    "corrected_intact_result": "accepted",
+    "malformed_variants_rejected": 14
+  },
+  "refusal_receipt": {
+    "expected_intact_sequence_accepted": 1,
+    "incorrect_sequences_or_replies_rejected": 12
+  },
+  "tests": {
+    "actual_powershell_on_linux": "7.4.22",
+    "fixed_script_module": {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0
+    },
+    "linux_transport_module": {
+      "passed": 79,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "components": {
+    "docs/paper-sim/runtime/scripts/windows/Invoke-PaperWeixin.ps1": {
+      "before_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+      "after_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6"
+    },
+    "docs/paper-sim/runtime/scripts/weixin_delivery.py": {
+      "before_sha256": "f7885e8f37351d3b8f3e238a33ab8c2300fa83792c138026e8ffa8f32404508b",
+      "after_sha256": "f7885e8f37351d3b8f3e238a33ab8c2300fa83792c138026e8ffa8f32404508b"
+    },
+    "docs/paper-sim/runtime/scripts/windows/offline-acceptance/Test-PaperWeixinOffline.ps1": {
+      "before_sha256": "8b92416529e6fff7c6f0e9fdace061eec27a7d058e7bfee186e164bee7963bde",
+      "after_sha256": "cf225ba4d338f04c687741d3619ca2f3b67999cd495ce991d9187b06f46be63f"
+    }
+  },
+  "previous_linux_six_case_evidence": "docs/paper-sim/design/fx-49/2026-11-26-linux-fixed-entry-acceptance.json",
+  "last_target_observation": "docs/paper-sim/design/fx-49/2026-11-25-owner-fixed-entry-observation.json",
+  "site_requirements": [
+    "Verify ordinary fixed-file execution under the effective Windows policy and the deployed identity.",
+    "Verify protection for the entry, parent directory, binding and Hermes, and effective access restricted to the fixed entry.",
+    "Complete the six substitute acceptance categories on that Windows installation.",
+    "After cutover, register the running server main commit and retain the receipt of one naturally scheduled notification."
+  ],
+  "target_site_cases_observed": 0,
+  "natural_delivery_receipts_observed": 0,
+  "integrated_code_commit": "41b4ef955539c9f75d849644e617a0909b53fbe0",
+  "individual_test_receipt_sha256": "336e096288a59de6367440cb6074e2079c5732603f18bfcaf212671325324042"
+}

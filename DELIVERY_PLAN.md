@@ -4697,6 +4697,8 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 两个连接池的公网限制已分别从独立测点复查。项目原生数据库单次外测为超时。登录入口的现有外测回执为 `NO_OBSERVATION`，认证方法未知。11 月 26 日只读核对 GitHub，`main` 的 `protected` 字段为 `false`。[11 月 26 日公开设置与现有回执核对](docs/paper-sim/design/fx-36/2026-11-26-publication-and-login-status.json) · [原生数据库外测](docs/paper-sim/design/fx-36/2026-11-24-native-public-observation.json) · [登录观测原件](docs/paper-sim/design/fx-36/2026-11-24-login-public-observation.json)
 
+`41b4ef95` 修复演练器成功回执的读取。完整合法的成功样本从误拒变为接受，14 个变造样本全部拒绝。Linux PowerShell 固定脚本 22 项、Linux 投递器 79 项均通过。受保护安装时使用的演练器 SHA-256 为 `cf225ba4d338f04c687741d3619ca2f3b67999cd495ce991d9187b06f46be63f`。Windows 现场演练和一次自然投递继续按机主选择验收。[两套测试与组件摘要](docs/paper-sim/design/fx-49/2026-11-26-rehearsal-receipt-types.json)
+
 #### 84.2.5 历史优化卡
 
 原运行提交 `e234c3364c204db513cc4fbcdcb6d5eb43c7417b`，种子 `20261120`，规则 v1。原档 88,845 字节，登记 SHA-256 为 `03c616e1d94efe5e3a7879e3277645b5d60e4e407bdef6e9d31d9f7eb3366ad5`。卡片按原登记保留，操作员原件的本轮核对另记。
@@ -4962,6 +4964,10 @@ OD-Y 按推荐执行。FX-48 先登记运行版本、定时状态和研究与账
 **停止运行层调度。** 足篮采集、研究、准入、模拟入账、结算和通知由运行账户的用户级 systemd 调度。§88.1 至 §88.3 登记各模型和两本账的用途。需要停某项时，按上面的现场回执选取该项的 `timer`，先用 `systemctl --user is-enabled "$timer"` 和 `systemctl --user is-active "$timer"` 核对状态。临时暂停用 `systemctl --user stop "$timer"`。需跨重启停用时执行 `systemctl --user disable --now "$timer"`，再核对状态为 `disabled`、`inactive`。整组停用时对回执内原启用的八项逐个操作。已启动的服务会继续运行，可按同一回执的 `unit` 等待本轮结束。足球通知还会异步启动 `pal-football-notify-worker@` 服务实例，整组停用时一并核对它们已经退出。数据库服务独立于这八个定时器。[运行层系统模板](https://github.com/wmqfl861/polymarket-alpha-lab/tree/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/systemd) · [通知任务的启动方式](https://github.com/wmqfl861/polymarket-alpha-lab/blob/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/scripts/football_daily.py#L420)
 
 08:42 UTC 按已登记的八个用户级定时器逐项读回，八项均为已启用、活动中。运行层旧脚本校验修复候选、德国篮球补录的日期与比分核对边界、NBA 历史引用的更正已登记。[逐项核对与源码证据](docs/paper-sim/design/fx-48/2026-11-26-source-and-timer-followup.json)
+
+11 月 22 日 09:47:40 UTC 的投运回执已记录两个通知定时器为已启用、活动中。八个现存启用链接的创建时间也在 11 月 22 日。链接创建、本次激活、历史状态分别记录，最初启用日期仍缺原始安装记录。[逐项时间及投运回执摘要](docs/paper-sim/design/fx-48/2026-11-26-timer-enable-evidence.json)
+
+11 月 26 日，`c8767299` 修复同一受管批次内同场足球多盘口重复收集赛季资料的问题。两盘口可引用同一组原始请求、收妥时刻和摘要。隔离 PostgreSQL 的准备模块 11 项通过。`414d1e6e` 的只读 SQL 可逐笔对照标准 C 现有代表与观察窗口候选。`417f0741` 的原生回归区分不同批次收妥的相同报价与原请求重读。09:11 UTC 德甲实采首个 Gamma 请求返回 HTTP 200 且正文超限，CLI 和数据库均为零笔入场。OD-P 正式生效时刻仍待取得，正式并跑为 0/7 个合格 UTC 日。[来源、实采和收盘价回执](docs/paper-sim/design/fx-44/2026-11-26-source-requests-and-close-selection.json)
 
 **固定窗口的遗留文件。** 11 月 22 日固定窗口使用 `legacy/window_runner.py` 的 `write_json` 写入阶段状态。该窗口已结束，既有 JSON 归入只读遗留资料，用于核对当时的记录。后续运行层持久化按 §84.2.1 的路线 A 办理。32 张表的基线接管、迁移台账和接管前后结构比对排在 FX-49 部署之后。[固定窗口源码](https://github.com/wmqfl861/polymarket-alpha-lab/blob/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/legacy/window_runner.py#L373) · [审核发现 R6-4](docs/handoffs/2026-11-24-incremental-review/01-review-report.md)
 
