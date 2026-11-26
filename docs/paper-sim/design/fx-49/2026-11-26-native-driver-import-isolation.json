@@ -1,0 +1,55 @@
+{
+  "scope": "Four failures in the full native suite caused by a loaded driver bypassing import checks",
+  "source_of_first_full_run": "2026-11-26-full-tests-6b8d0223.json",
+  "first_full_run_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+  "corrected_test_commit": "052b1988dcd857e30ee5bba1b569bca91bf4213e",
+  "method": "Use the real psycopg module preloaded in a new Python process. Refuse every database connect call. Run the same nodes before and after the fixture change, and verify that the original module object is restored after pytest.",
+  "before": {
+    "source_commit": "58450c7ef10f2b5da07d174e2dd8b4e9f123e017",
+    "started_utc": "2026-11-26T18:21:21+00:00",
+    "ended_utc": "2026-11-26T18:21:24+00:00",
+    "preload_real_driver": true,
+    "connect_replaced_with_refusal": true,
+    "test_nodes": [
+      "tests/test_papersim_queue_policy.py::test_evaluate_pause_is_pure_no_io",
+      "tests/test_team_evidence_aggregation_attempt_psycopg.py::test_public_exports_and_module_import_stay_lazy",
+      "tests/test_team_evidence_aggregation_attempt_psycopg.py::test_remote_dsn_rejected_before_psycopg_import_without_echoing_secret",
+      "tests/test_team_evidence_aggregation_attempt_psycopg.py::test_missing_psycopg_error_mentions_install_extra_without_dsn"
+    ],
+    "exit_code": 1,
+    "summary": [
+      "4 failed in 2.66s",
+      "preloaded_driver_restored True"
+    ],
+    "output_sha256": "71eabf6e94b7cda5ebf5441a1b22267a36f7875d3286ce4fa25298015797bd57"
+  },
+  "after_targeted": {
+    "start_utc": "2026-11-26T18:21:59+00:00",
+    "end_utc": "2026-11-26T18:22:03+00:00",
+    "four_public_tests_passed": 4,
+    "preloaded_driver_restored": true,
+    "connection_attempts_possible": false,
+    "exit_code": 0,
+    "stdout_sha256": "1b387521bb466a1446523efcee68066df2be07e1cb8a818cd4130080f3576788"
+  },
+  "after_both_complete_modules": {
+    "start_utc": "2026-11-26T18:21:58+00:00",
+    "end_utc": "2026-11-26T18:22:07+00:00",
+    "complete_module_tests_passed": 76,
+    "preloaded_driver_restored": true,
+    "connection_attempts_possible": false,
+    "exit_code": 0,
+    "stdout_sha256": "df9282402cd5684e21cd5dc8665937b7e89fac77d6c2762c251f6f51ceac8fa2"
+  },
+  "runtime": {
+    "python": "3.12.3",
+    "pytest": "9.1.1",
+    "psycopg": "3.3.4"
+  },
+  "other_full_suite_failures_covered_by_this_receipt": 0,
+  "source_receipt_sha256": {
+    "driver-isolation-repro-before.json": "dcc908a79ca13ca485399a3e155073523d448480801c189a9478a13115f8ddb4",
+    "driver-isolation-four-after.json": "c4b01ccce6f73f6516163a036cb52c1227f7d84cdf8dc6ed7696c3bbaa223b93",
+    "driver-isolation-modules-after.json": "ec19e35f0c8b70a324640806d494fa9de9f38883e51fc0ef3657760d4ae5f0c6"
+  }
+}
