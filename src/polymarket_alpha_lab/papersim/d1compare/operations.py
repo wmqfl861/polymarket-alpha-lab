@@ -185,6 +185,7 @@ def _load_slot(conn, context: dict, input_evidence: list, *, registration=None) 
     write_deadline = _utc(slot.get("write_deadline"))
     if (registered["output_evidence"][0] != _refs(digest, 0)[0]
             or interval.get("instance_id") != context["instance_id"]
+            or ("basis_sha256" in interval and "book_age_policy" in interval and interval.get("team") != context["team"])
             or slot_operation_key(slot) != operation_key
             or (receipt["scheduled_for"], receipt["code_commit"], receipt["config_digest"])
             != (scheduled_for, slot["code_commit"], slot["config_digest"])

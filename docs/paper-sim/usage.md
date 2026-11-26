@@ -79,6 +79,16 @@ This command records the approved OD-P time rule and its intended interval. Capt
 
 The `registered_at` field gives the database time when the research interval was accepted. Formal OD-P pricing requires a separate activation receipt that binds the effective time to the exact legacy members present at activation. During a research interval, `capture-marks --inspect-close-window` reports how the proposed rule classifies a sealed observation. The ordinary B2 and registered D1 writers continue to use the effective pricing policy.
 
+A research decision for Polymarket CLOB books can supply both age limits to the existing D1 interval ledger. Keep its canonical version-1 JSON in the managed snapshots registry with kind `papersim_research_book_age_basis` and source `papersim:research:book-age-policy`. The document binds `instance_id`, `team`, `starts_at`, `ends_at`, `book_source` (`polymarket-clob`), and `book_age_policy`, which contains both explicitly approved integer limits. The ledger uses the exact scope of this previously stored decision. It applies to all CLOB books for the same team and managed instance whose capture window is wholly inside that interval. Use a designated research team and database when registering research values.
+
+```bash
+.venv/bin/python tools/d1_compare.py register-book-age-policy --repo-root "$REPO" --team "$TEAM" \
+  --window-start "$START_UTC" --window-end "$END_UTC" --basis-sha256 "$DECISION_SHA256" \
+  --max-source-age-seconds "$SOURCE_AGE_SECONDS" --max-receipt-age-seconds "$RECEIPT_AGE_SECONDS"
+```
+
+The interval document binds the original decision's digest and byte length. The existing success receipt binds the interval digest and byte length. The D1 capture slot must reference that interval for the same team and match both age limits. OD-P research timing can be registered independently for the same window.
+
 Use the same shell function and set `MARK_CONFIG` to the config for the observed price packs, `TEAM` to the scheduled settlement team, and `MARK_KEY` and `SETTLE_KEY` to their respective operation keys. For a D1 operation, use the registered slot key.
 
 ```bash

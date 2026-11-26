@@ -107,6 +107,26 @@ def command_register_close_window(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_register_book_age_policy(args: argparse.Namespace) -> int:
+    from polymarket_alpha_lab.papersim import prepare, scan, store
+    from polymarket_alpha_lab.papersim.d1compare import close_registration
+
+    try:
+        receipt = close_registration.register_book_age(
+            repo_root=Path(args.repo_root), team=args.team, starts_at=args.window_start, ends_at=args.window_end,
+            max_source_age_seconds=args.max_source_age_seconds, max_receipt_age_seconds=args.max_receipt_age_seconds,
+            basis_sha256=args.basis_sha256,
+        )
+    except (prepare.PreparationError, scan.ScanError, store.PapersimStoreError) as error:
+        print(f"d1_compare: register-book-age-policy refused: {error.code}", file=sys.stderr)
+        return 2
+    except Exception:
+        print("d1_compare: register-book-age-policy failed: managed registration unavailable", file=sys.stderr)
+        return 2
+    print(json.dumps(receipt, sort_keys=True, allow_nan=False))
+    return 0
+
+
 def command_capture_inputs(args: argparse.Namespace) -> int:
     from polymarket_alpha_lab.papersim import prepare, store
     from polymarket_alpha_lab.papersim.d1compare import acquire
@@ -366,6 +386,21 @@ def build_parser() -> argparse.ArgumentParser:
     close_window.add_argument("--window-start", required=True, type=_capture_time, help="inclusive UTC start")
     close_window.add_argument("--window-end", required=True, type=_capture_time, help="exclusive UTC end")
     close_window.set_defaults(handler=command_register_close_window)
+
+    book_age = subparsers.add_parser(
+        "register-book-age-policy",
+        help="record a future D1 interval with explicitly supplied source and receipt age limits",
+        description="Register the existing d1-register-interval contract with a fixed source scope. "
+                    "Both age limits are required and have no production default.",
+    )
+    book_age.add_argument("--repo-root", required=True, help="designated managed research checkout")
+    book_age.add_argument("--team", required=True)
+    book_age.add_argument("--window-start", required=True, type=_capture_time)
+    book_age.add_argument("--window-end", required=True, type=_capture_time)
+    book_age.add_argument("--max-source-age-seconds", required=True, type=int)
+    book_age.add_argument("--max-receipt-age-seconds", required=True, type=int)
+    book_age.add_argument("--basis-sha256", required=True, help="digest of the independently stored research decision")
+    book_age.set_defaults(handler=command_register_book_age_policy)
 
     capture = subparsers.add_parser(
         "capture-inputs", help="record public Gamma and CLOB responses for a UTC window")
