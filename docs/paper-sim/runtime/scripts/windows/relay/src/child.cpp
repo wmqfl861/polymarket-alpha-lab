@@ -14,6 +14,13 @@ std::vector<wchar_t> child_environment(const Installation& installed) {
     const auto local = folder(FOLDERID_LocalAppData);
     const auto windows = folder(FOLDERID_Windows);
     const auto shell = installed.system + L"\\WindowsPowerShell\\v1.0";
+    // GetTempPath is also what the original script uses to find legacy receipts.
+    // The registered worker's local account supplies the path; no request field transports it.
+    wchar_t storage[32768];
+    DWORD count = GetTempPathW(32768, storage);
+    require(count > 3 && count < 32768);
+    std::wstring temp(storage, count);
+    require(temp[1] == L':' && temp[2] == L'\\' && GetDriveTypeW(temp.substr(0, 3).c_str()) == DRIVE_FIXED);
     append(result, L"APPDATA", folder(FOLDERID_RoamingAppData));
     append(result, L"ComSpec", installed.system + L"\\cmd.exe");
     append(result, L"LOCALAPPDATA", local);
@@ -22,8 +29,8 @@ std::vector<wchar_t> child_environment(const Installation& installed) {
     append(result, L"ProgramFiles", folder(FOLDERID_ProgramFiles));
     append(result, L"PSModulePath", shell + L"\\Modules");
     append(result, L"SystemRoot", windows);
-    append(result, L"TEMP", local + L"\\Temp");
-    append(result, L"TMP", local + L"\\Temp");
+    append(result, L"TEMP", temp);
+    append(result, L"TMP", temp);
     append(result, L"USERPROFILE", folder(FOLDERID_Profile));
     append(result, L"WINDIR", windows);
     result.push_back(0);

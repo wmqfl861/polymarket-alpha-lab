@@ -47,7 +47,10 @@ function Check-Refusal([string]$Arguments, [string]$Body, [int]$Expected, [switc
             if (!$observed) { throw 'Actual fixed PowerShell process was not observed' }
         }
         $left = [Math]::Max(0, 8000 - [int]$clock.ElapsedMilliseconds)
-        if (!$process.WaitForExit($left)) { $process.Kill(); throw 'Relay exceeded the shortest existing HC deadline' }
+        if (!$process.WaitForExit($left) -or $clock.ElapsedMilliseconds -gt 8000) {
+            if (!$process.HasExited) { $process.Kill() }
+            throw 'Relay exceeded the shortest existing HC deadline'
+        }
         if ($process.ExitCode -ne $Expected -or $out.Result.Length -ne 0 -or $err.Result.Length -ne 0) {
             throw 'Unexpected fixed relay result'
         }

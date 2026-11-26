@@ -24,7 +24,7 @@ A request contains the nonce and up to 20,480 original input bytes. The worker e
 -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File <protected original script> <nonce>
 ```
 
-The original script owns schema checks, claim creation, send, cleanup, and receipt recovery. Its normal exit codes and up to 8,192 bytes of stdout pass back unchanged. A relay failure returns 70 with empty stdout. The existing Linux caller decides how to treat that unconfirmed outcome. A busy or disconnected pipe fails the invocation immediately. The relay starts at most one PowerShell invocation per accepted connection.
+The original script owns schema checks, claim creation, send, cleanup, and receipt recovery. The worker preserves the account’s existing local Windows temporary directory for legacy receipts. Verify that the ordinary task and original bound account resolve the same location. Normal script exit codes and up to 8,192 bytes of stdout pass back unchanged. A relay failure returns 70 with empty stdout. The existing Linux caller decides how to treat that unconfirmed outcome. A busy or disconnected pipe fails the invocation immediately. The relay starts at most one PowerShell invocation per accepted connection.
 
 The child and descendants join a kill-on-close job at process creation. A disconnected client or expired request cancels its job. A durable claim that the original script already wrote remains available to its existing recovery path. Each transfer uses the original 575-second maximum, the HC caller’s shorter per-purpose deadline, bounded local framing and the original script deadlines. The client watchdog closes stalled invocation output. The on-machine rehearsal checks the eight-second cleanup/receipt-class budget with a synthetic refusal.
 
