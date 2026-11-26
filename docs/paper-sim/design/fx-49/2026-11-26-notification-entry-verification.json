@@ -1,0 +1,57 @@
+{
+  "source_candidate": "121d6dbd9bc4de69098ae66d725f8e2f36160b0f",
+  "integrated_main": "0e2caf36bdfdf53b375766d0c5ff310568d291b4",
+  "observed_utc": "2026-11-26T14:39:44.755601+00:00",
+  "business_modules_registered": 25,
+  "unregistered_statically_imported_site_modules": 0,
+  "working_directory": {
+    "required_for_tick_worker": "docs/paper-sim/runtime/notification",
+    "old_working_directory_and_pythonpath_refused": true,
+    "business_source_action": "read-only, explicit --business-dir",
+    "site_access": "only program sources, unit WorkingDirectory and ActiveState"
+  },
+  "verification": {
+    "worker_regressions": 8,
+    "entry_and_transport_regressions": 109,
+    "unchanged_original_fixed_script_cases": 22,
+    "skipped": 0,
+    "removed_reduced_added_skip_added_xfail": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "new_public_address_files": 0,
+    "added_line_scan": "one benign, reserved example-domain email in the synthetic Git fixture; no sensitive category",
+    "windows_actual_full_worker_command_line": "field rehearsal pending; reference independent Windows evidence"
+  },
+  "native_worker_regressions": {
+    "runs": 8,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "real_entry_help": {
+    "exit": 0,
+    "stdout_sha256": "f916cd7bd0e9d5160681d9ac0dd77ccd2a1d3da35f7ae75c13e41eba8dfa51b6",
+    "contains_worker_tick": true
+  },
+  "deployment_status": "Source candidate only. Site service definitions, scheduling, application database, remote binding, and actual messaging were untouched.",
+  "profile_code_presence": {
+    "observed_utc": "2026-11-26T14:36:55+00:00",
+    "facts": {
+      "profile_directory_found": true,
+      "inaccessible_or_reparse": false,
+      "candidate_user_plugin": false,
+      "candidate_user_model_provider": false,
+      "candidate_user_weixin_override": false,
+      "credential_files_read": false,
+      "plugin_content_read": false
+    }
+  },
+  "original_evidence_sha256": {
+    "caller-site-readonly.json": "1036216fd5ffc708d638fa958cdbfb016830c596bcc7e01ee9ac38f06198d994",
+    "linux-caller-compatibility.json": "444e0dfd674463194a1f0bf179af7424b4269366d113ed734f18612ab9ca07c2",
+    "caller-and-transport-tests-121d6dbd.txt": "34d67e136f16d88b464830974a5101077c2a453d6670c74ae64ee7d5de9215fa"
+  }
+}
