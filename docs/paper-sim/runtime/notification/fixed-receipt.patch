@@ -1,0 +1,247 @@
+diff --git a/football_daily.py b/football_daily.py
+index dd1ea071..3a9987a7 100644
+--- a/football_daily.py
++++ b/football_daily.py
+@@ -894,11 +894,20 @@ def verify_claim_quotes(connection, selection, token, decisions, now):
+ def recover_receipt(connection, attempt, target, session):
+-    from weixin_delivery import recover
+-
+-    native = {}
+-    if attempt["native_session_digest"] is not None:
++    from weixin_delivery import FIXED_RECOVERABLE, recover
++
++    if attempt["state"] != "unknown" or attempt["reason"] in store.EXPLICIT_REFUSALS:
++        return "unknown"
++    evidence = {}
++    if attempt["reason"] in FIXED_RECOVERABLE:
++        window = store.fixed_attempt_window(connection, attempt, session)
++        if window is None:
++            return "unknown"
++        evidence = {"receipt_generation": "fixed", "starts_at": window["opens"],
++                    "submitted_at": attempt["submitted_at"],
++                    "cutoff_at": attempt["deadline"] if window["focus"] else None}
++    elif attempt["native_session_digest"] is not None:
+         if attempt["native_session_digest"] != store.digest(session) or not attempt["native_session_verified"]:
+             return "unknown"
+-        native = {"native_session": session, "native_session_verified": True}
++        evidence = {"native_session": session, "native_session_verified": True}
+     result = recover(stage_key=attempt["stage_key"], attempt_key=attempt["key"], body_variant=attempt["body_variant"],
+-                     deadline=attempt["deadline"], target_digest=target, body_digest=attempt["body_digest"], **native)
++                     deadline=attempt["deadline"], target_digest=target, body_digest=attempt["body_digest"], **evidence)
+     with connection.transaction():
+@@ -995,3 +1004,3 @@ def run_worker(connection, worker_id):
+ def deliver_pregame_round(connection, rows, token, key, target, session, claimed_at):
+-    from weixin_delivery import deliver
++    from weixin_delivery import FIXED_INTERRUPTED, deliver
+
+@@ -1018,2 +1027,3 @@ def deliver_pregame_round(connection, rows, token, key, target, session, claimed
+
++        delivery_deadline = min(valid_until, *(row["deadline"] for row in selected))
+         claimed = False
+@@ -1042,3 +1052,3 @@ def deliver_pregame_round(connection, rows, token, key, target, session, claimed
+                     verify_claim_quotes(connection, current, token, decisions, at)
+-                    if not store.submit(connection, current.rows, token, target, key, valid_until, attempt_key=attempt_key,
++                    if not store.submit(connection, current.rows, token, target, key, delivery_deadline, attempt_key=attempt_key,
+                                         body_variant=body_variant, body_digest=body_digest, session=session):
+@@ -1055,7 +1065,7 @@ def deliver_pregame_round(connection, rows, token, key, target, session, claimed
+             result = deliver(body, stage_key=key, starts_at=max(row["starts_at"] for row in selected),
+-                             deadline=min(row["deadline"] for row in selected), target_digest=target,
++                             deadline=delivery_deadline, target_digest=target,
+                              on_submit=on_submit, valid_until=valid_until, native_session=session)
+         except Exception:
+-            result = {"state": "unconfirmed", "reason": "handoff_interrupted"}
+-        if not claimed:
++            result = {"state": "unconfirmed", "reason": FIXED_INTERRUPTED if claimed else "handoff_interrupted"}
++        if not claimed and result.get("reason") not in store.EXPLICIT_REFUSALS:
+             with connection.transaction():
+@@ -1075,3 +1085,3 @@ def focus_stage_key(job_key):
+ def deliver_focus(connection, row, token, target, session):
+-    from weixin_delivery import deliver
++    from weixin_delivery import FIXED_INTERRUPTED, deliver
+
+@@ -1121,3 +1131,3 @@ def deliver_focus(connection, row, token, target, session):
+     except Exception:
+-        result = {"state": "unconfirmed", "reason": "handoff_interrupted"}
++        result = {"state": "unconfirmed", "reason": FIXED_INTERRUPTED}
+     if withdrawn:
+diff --git a/football_store.py b/football_store.py
+index acd99b52..8f257118 100644
+--- a/football_store.py
++++ b/football_store.py
+@@ -18,2 +18,4 @@ from psycopg.types.json import Jsonb
+
++import weixin_delivery as delivery
++
+
+@@ -37,3 +39,4 @@ NATIVE_SESSION = re.compile(r"sess_[A-Za-z0-9-]{1,96}\Z")
+ REASON = re.compile(r"[a-z][a-z0-9_]{0,79}\Z")
+-EXPLICIT_REFUSALS = ["zcode_tool_permission_denied", "hermes_platform_write_denied"]
++EXPLICIT_REFUSALS = sorted(delivery.NATIVE_REFUSALS | delivery.FIXED_REFUSALS)
++FIXED_RECOVERABLE = sorted(delivery.FIXED_RECOVERABLE)
+ PREFLIGHT_LEASE_LENGTH = timedelta(minutes=6)
+@@ -674,6 +677,7 @@ def sweep(connection, now, *, reclaim_round=False):
+         """
+-        UPDATE attempt SET state = 'unknown', reason = 'worker_interrupted_after_submit'
++        UPDATE attempt SET state = 'unknown', reason = CASE
++            WHEN reason = %s THEN %s ELSE 'worker_interrupted_after_submit' END
+         WHERE state = 'submitted' AND lease_until <= %s
+         """,
+-        (now,),
++        (delivery.FIXED_CLAIMED, delivery.FIXED_INTERRUPTED, now),
+     )
+@@ -681,5 +685,7 @@ def sweep(connection, now, *, reclaim_round=False):
+         """
+-        UPDATE job SET state = 'unknown', reason = 'worker_interrupted_after_submit',
+-                       lease_token = NULL, lease_until = NULL
+-        WHERE state = 'submitted' AND lease_until <= %s
++        UPDATE job j SET state = 'unknown',
++            reason = coalesce((SELECT a.reason FROM attempt a WHERE a.key = j.attempt_key),
++                              'worker_interrupted_after_submit'),
++            lease_token = NULL, lease_until = NULL
++        WHERE j.state = 'submitted' AND j.lease_until <= %s
+         """,
+@@ -815,6 +821,7 @@ def submit(connection, rows, token, target, stage_key, deadline, *, attempt_key,
+             INSERT INTO attempt (key, stage_key, body_variant, body_digest, submitted_at, deadline, lease_until,
+-                                 state, native_session_digest)
+-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'submitted', %s) ON CONFLICT DO NOTHING
++                                 state, native_session_digest, reason)
++            VALUES (%s, %s, %s, %s, %s, %s, %s, 'submitted', %s, %s) ON CONFLICT DO NOTHING
+             """,
+-            (attempt_key, stage_key, body_variant, body_digest, now, deadline, lease_until, digest(session)),
++            (attempt_key, stage_key, body_variant, body_digest, now, deadline, lease_until, digest(session),
++             delivery.FIXED_CLAIMED),
+         )
+@@ -831,3 +838,41 @@ def submit(connection, rows, token, target, stage_key, deadline, *, attempt_key,
+
+-def accepted_receipt(result, attempt, now):
++def fixed_attempt_window(connection, attempt, session):
++    if (attempt["reason"] not in delivery.FIXED_RECOVERABLE or attempt["native_session_verified"] is not False
++            or not is_hex(session, NATIVE_SESSION) or attempt["native_session_digest"] != digest(session)):
++        return None
++    window = connection.execute(
++        """SELECT max(starts_at) AS opens, min(deadline) AS closes, bool_and(stage = 'note') AS focus
++           FROM job WHERE attempt_key = %s""",
++        (attempt["key"],),
++    ).fetchone()
++    if not window or window["opens"] is None or not (
++        window["opens"] <= attempt["submitted_at"] < attempt["deadline"] <= window["closes"]
++    ):
++        return None
++    if window["focus"] and window["closes"] != attempt["deadline"]:
++        return None
++    return window
++
++
++def accepted_receipt(result, attempt, now, *, fixed_window=None, target=None):
++    if attempt["reason"] in EXPLICIT_REFUSALS:
++        return None
++    if attempt["reason"] in delivery.FIXED_RECOVERABLE:
++        if fixed_window is None or not is_hex(target):
++            return None
++        try:
++            sha = delivery.approved_script_sha256()
++        except delivery.HandoffError:
++            return None
++        job = {"stage_key": attempt["stage_key"], "nonce": attempt["key"], "target_digest": target,
++               "body_variant": attempt["body_variant"], "body_digest": attempt["body_digest"],
++               "starts_utc": fixed_window["opens"].isoformat()}
++        if fixed_window["focus"]:
++            job["cutoff_utc"] = attempt["deadline"].isoformat()
++        result = delivery.verify_receipt(result.get("fixed_receipt"), job, attempt["deadline"],
++                                         script_sha=sha, submitted_at=attempt["submitted_at"])
++        if result is None:
++            return None
++    elif "fixed_receipt" in result:
++        return None
+     if (
+@@ -850,7 +895,32 @@ def accepted_receipt(result, attempt, now):
+ def finish_attempt(connection, attempt, result, now):
+-    if attempt["state"] == "accepted":
++    state, prior_reason = attempt["state"], attempt["reason"]
++    if state == "accepted":
+         return "accepted"
++    if prior_reason in EXPLICIT_REFUSALS:
++        return "unknown"
+     pinned = attempt["native_session_digest"] is not None
+-    verified = attempt["native_session_verified"] or (pinned and result.get("native_session_verified") is True)
+-    receipt = accepted_receipt(result, attempt, now) if not pinned or verified else None
++    fixed = prior_reason in delivery.FIXED_RECOVERABLE
++    verified = attempt["native_session_verified"]
++    stopped = False
++    reason = safe_reason(result.get("reason"), "platform_acceptance_unconfirmed")
++    if fixed:
++        window = fixed_attempt_window(connection, attempt, native_session(connection)) if "fixed_receipt" in result else None
++        receipt = accepted_receipt(result, attempt, now, fixed_window=window,
++                                   target=binding(connection)["target_digest"] if window else None)
++        if reason in delivery.FIXED_REFUSALS:
++            receipt = None
++            stopped = reason != delivery.UNVERIFIED_REFUSAL
++        elif state == "unknown":
++            reason = prior_reason
++        elif reason != delivery.FIXED_INTERRUPTED:
++            reason = delivery.FIXED_UNCONFIRMED
++    else:
++        legacy_result = "fixed_receipt" not in result and reason not in delivery.FIXED_REASONS
++        verified = verified or (legacy_result and pinned and result.get("native_session_verified") is True)
++        receipt = accepted_receipt(result, attempt, now) if legacy_result and (not pinned or verified) else None
++        stopped = legacy_result and pinned and result.get("native_turn_finished") is True
++        if not legacy_result:
++            reason = "platform_acceptance_unconfirmed"
++        if state == "unknown" and reason == "receipt_unconfirmed" and prior_reason:
++            reason = prior_reason
+     if receipt:
+@@ -869,6 +939,2 @@ def finish_attempt(connection, attempt, result, now):
+         return "accepted"
+-    reason = safe_reason(result.get("reason"), "platform_acceptance_unconfirmed")
+-    if attempt["state"] == "unknown" and reason == "receipt_unconfirmed" and attempt["reason"]:
+-        reason = attempt["reason"]
+-    stopped = pinned and result.get("native_turn_finished") is True
+     connection.execute(
+@@ -900,2 +966,10 @@ def finish_delivery(connection, rows, token, result, *, retry_seconds=None):
+         reason = safe_reason(result.get("reason"), "handoff_not_submitted")
++        if reason in delivery.FIXED_REFUSALS:
++            connection.execute(
++                """UPDATE job SET state = 'suppressed', reason = %s, lease_token = NULL, lease_until = NULL,
++                                  detail = CASE WHEN stage = 'note' THEN detail - 'body' ELSE detail END
++                   WHERE key = ANY(%s) AND state = 'leased' AND lease_token = %s""",
++                (reason, keys, token),
++            )
++            return "suppressed"
+         connection.execute(
+@@ -914,2 +988,12 @@ def finish_delivery(connection, rows, token, result, *, retry_seconds=None):
+
++RECOVERY_ELIGIBLE = """
++    state = 'unknown' AND recovered_at IS NULL
++    AND CASE WHEN coalesce(reason, '') = ANY(%s::text[])
++        THEN native_session_digest IS NOT NULL AND NOT native_session_verified
++        ELSE native_session_digest IS NULL OR native_session_verified END
++    AND NOT (coalesce(reason, '') = ANY(%s::text[]))
++    AND submitted_at BETWEEN %s AND %s
++"""
++
++
+ def reserve_recovery(connection, now):
+@@ -917,9 +1001,4 @@ def reserve_recovery(connection, now):
+     row = connection.execute(
+-        """
+-        SELECT * FROM attempt WHERE state = 'unknown' AND recovered_at IS NULL
+-         AND (native_session_digest IS NULL OR native_session_verified)
+-         AND NOT (coalesce(reason, '') = ANY(%s::text[]))
+-         AND submitted_at BETWEEN %s AND %s ORDER BY deadline LIMIT 1
+-        """,
+-        (EXPLICIT_REFUSALS, now - timedelta(hours=24), now - timedelta(seconds=20)),
++        f"SELECT * FROM attempt WHERE {RECOVERY_ELIGIBLE} ORDER BY deadline LIMIT 1",
++        (FIXED_RECOVERABLE, EXPLICIT_REFUSALS, now - timedelta(hours=24), now - timedelta(seconds=20)),
+     ).fetchone()
+@@ -932,9 +1011,4 @@ def recoverable(connection, now):
+     return connection.execute(
+-        """
+-        SELECT count(*) AS count FROM attempt WHERE state = 'unknown' AND recovered_at IS NULL
+-          AND (native_session_digest IS NULL OR native_session_verified)
+-          AND NOT (coalesce(reason, '') = ANY(%s::text[]))
+-          AND submitted_at BETWEEN %s AND %s
+-        """,
+-        (EXPLICIT_REFUSALS, now - timedelta(hours=24), now - timedelta(seconds=20)),
++        f"SELECT count(*) AS count FROM attempt WHERE {RECOVERY_ELIGIBLE}",
++        (FIXED_RECOVERABLE, EXPLICIT_REFUSALS, now - timedelta(hours=24), now - timedelta(seconds=20)),
+     ).fetchone()["count"]
