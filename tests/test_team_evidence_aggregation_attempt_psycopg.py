@@ -193,6 +193,11 @@ def _import_adapter(monkeypatch: pytest.MonkeyPatch, *, atomic: Any | None = Non
 
 
 def _block_psycopg_imports(monkeypatch: pytest.MonkeyPatch, *, missing: bool) -> None:
+    # Cached modules bypass find_spec. Restore them at teardown for other tests.
+    for name in tuple(sys.modules):
+        if name == "psycopg" or name.startswith("psycopg."):
+            monkeypatch.delitem(sys.modules, name)
+
     class BlockingFinder:
         def find_spec(self, fullname: str, path: Any = None, target: Any = None) -> None:
             if fullname == "psycopg" and missing:

@@ -537,6 +537,11 @@ def test_queue_pause_input_rejects_invalid_scope():
 
 
 def test_evaluate_pause_is_pure_no_io(monkeypatch):
+    # Earlier native tests can leave the driver loaded before evaluate_pause runs.
+    for name in tuple(sys.modules):
+        if name == "psycopg" or name.startswith("psycopg."):
+            monkeypatch.delitem(sys.modules, name)
+
     def refuse(*args, **kwargs):
         raise AssertionError("queue_policy must not touch the filesystem")
 
