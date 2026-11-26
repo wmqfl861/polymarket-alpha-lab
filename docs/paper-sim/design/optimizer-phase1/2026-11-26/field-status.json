@@ -1,0 +1,41 @@
+{
+  "at_utc": "2026-11-26T10:32:56.796208+00:00",
+  "public_head_observed": "7670b2094a30ad08ce4d8467aaec929a66f7df1a",
+  "public_branch": {
+    "observed_utc": "2026-11-26T10:29:30.403141+00:00",
+    "public_branch_protected": false,
+    "effective_branch_rules_http": 200,
+    "effective_branch_rules": 0,
+    "publication_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "runtime": {
+    "observed_utc": "2026-11-26T10:32:16.695395+00:00",
+    "checked": 8,
+    "enabled_and_active": 8,
+    "scope": "Registered user timers, read-only load/active/enabled fields"
+  },
+  "fixed_delivery": {
+    "last_target_observation_utc": "2026-11-25T05:20:04.600498+00:00",
+    "effective_policy": "Restricted",
+    "owner_windows_acceptance_cases_passed": 0,
+    "required_cases": 6,
+    "verified_natural_deliveries": 0,
+    "deployment_commit": null
+  },
+  "crypto_news": {
+    "source_document": "docs/paper-sim/design/fx-42/d1/d1-gprep-plan-v3.md",
+    "source_sha256": "8d6b29536ff7b95707700686b35e6658b6306cecb4a77f7e2f78b1a91811aac5",
+    "source_lines": [
+      35,
+      68
+    ],
+    "current_target_news": "UNKNOWN",
+    "historical_policy": "Manual historical news inputs are recorded as unknown/unloadable and do not count as agreement. Historical coverage of a prior touch event cannot establish a contemporary terminal-market assessment."
+  },
+  "receipt_digests": {
+    "main-effective-rules-7670b209.json": "6c3837f97549e8d34b15718e18fedc6a181bd9949cf76a128fb5747ff1f81f89",
+    "eight-timers-current-7670b209.json": "24f3d805228ca56791b313ebdc5d6b9da07e56d6730147f8ca53fe515a6f2dec",
+    "eth-historical-news-method-source-lines.json": "a3af57bef4f3fc8aaea401b06e57a494905c5ea7c0eae85166bf53eba9c730f7",
+    "fx49-field-completion-current.json": "f1d6e2439319f9fcea9911f280b67440fcd4d1849883be617b9045286452e8c4"
+  }
+}
