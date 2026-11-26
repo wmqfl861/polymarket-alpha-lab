@@ -6,6 +6,8 @@
 
 此前登记的开发分工、节点审批和发布流程已撤销。机主明确清理范围是“只清理 polymarket-alpha-lab”，并要求“连开发相关的 GitHub Actions 工作流文件也删除”。历次交接包、设计、审核回执及下列有日期的决定记录仅反映当时的做法。模型准入、模拟资金、凭据和生产操作继续依各自的授权与数据条件执行。
 
+机主看过根文件成稿后答复“确认这份成稿，合入 main”。开发用工作流已由 `128a3680` 删除。[PR #138](https://github.com/wmqfl861/polymarket-alpha-lab/pull/138) 合并提交为 `ca1026df`，合入的 `AGENTS.md` 与[确认稿](https://github.com/wmqfl861/polymarket-alpha-lab/blob/868ba6d288622a37f327def9108ec238c4a5c69a/AGENTS.md) 的 SHA-256 均为 `a6ee66f578ac07166838981ba7a21519bfc20815a95e32138d250f3f7bb24115`。
+
 ## 状态板（2026-11-20）
 
 | 线 | 当前状态 | 剩余工作 |
