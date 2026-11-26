@@ -35,6 +35,70 @@ Run inside the project virtualenv from the repository root:
   opens a connection, never reads the password file, and never prints
   the DSN value.
 
+## Managed paper cycle from discovery to report
+
+Use a clean project checkout with its virtualenv and the project-managed PostgreSQL instance. The cycle below is for the managed research ledger. The football/basketball notification timers use a separate RMB ledger. [DELIVERY_PLAN §88](../../DELIVERY_PLAN.md)
+
+Run each stage when its inputs become available. Set `WINDOW_START` and `WINDOW_END` to the registered UTC discovery interval (start inclusive, end exclusive), `TAG_SLUG` to its public Gamma tag, and `SCAN_CONFIG` to the same scan configuration for preparation and B1. It supplies the team and queue definitions. At least one queue must use prepared input (its `pack` is empty). `MARK_CONFIG` names the team, operator and mark-pack files, resolved relative to that config. Set `TEAM` from the scheduled settlement and `SCAN_KEY`, `MARK_KEY`, `SETTLE_KEY` to the three respective stable operation keys. A formal D1 operation uses its registered slot key. Keep these inputs and captured JSON outside the clean checkout when they are local operator files.
+
+```bash
+set -euo pipefail
+paper() { .venv/bin/python -m polymarket_alpha_lab.papersim.cli "$@"; }
+
+preparation=$(.venv/bin/python tools/d1_compare.py capture-inputs \
+  --window-start "$WINDOW_START" --window-end "$WINDOW_END" --tag-slug "$TAG_SLUG" \
+  --prepare-config "$SCAN_CONFIG" --allow-public-fetch)
+input_set=$(.venv/bin/python -c 'import json, sys; print(json.load(sys.stdin)["input_set_sha256"])' <<<"$preparation")
+paper run-scan --managed --config "$SCAN_CONFIG" --prepare-from "$input_set" \
+  --operation-key "$SCAN_KEY" --attempt 1
+```
+
+Repeat `--tag-slug` for additional registered tags. Discovery derives its own identity from the scope and configuration. `--operation-key` and `--attempt` on **capture-inputs** belong to its separate terminal-source mode. B1 uses `input_set_sha256` from the successful discovery response. On recovery keep the same operation key, config bytes and input digest, and use the applicable attempt number. The first `PREPARED` receipt binds the input and the model specification used by the operation.
+
+```bash
+# Run when the scheduled mark packs contain their observed prices.
+paper capture-marks --managed --config "$MARK_CONFIG" --operation-key "$MARK_KEY" --attempt 1
+
+# Run after terminal evidence is available. An unresolved entry stays open.
+paper settle --managed --team "$TEAM" --operation-key "$SETTLE_KEY" --attempt 1
+paper report --managed --scope '*' --attempt 1
+```
+
+| Stage | Reads | Writes and operator output |
+| --- | --- | --- |
+| Prepare markets | Registered observation window, tag scope and scan config, public discovery responses, books and available model inputs. `--allow-public-fetch` enables the public adapters. | Managed raw snapshots, capture manifest, sealed preparation input set and receipts. Stdout includes `input_set_sha256`. Missing material remains visible in coverage. |
+| B1 `run-scan` | Sealed preparation input, queue config, model registry roles and evaluation state. | Managed scan, candidates and any admitted paper entries and cash legs. The JSON result and receipts identify the operation. A window may yield zero entries. |
+| B2 `capture-marks` | Stored candidates and prepared mark packs. For D1 the operation also uses its registered observations. | Raw pack snapshots, candidate marks, eligible CLOSE evidence and a coverage receipt. Schedule price collection before kickoff or crypto expiry. A later observation cannot repair a missed pre-event CLOSE. |
+| B3 `settle` | Open entries and effective, identity-matched terminal outcome evidence. Where the D1 binding specifies a terminal capture slot, use `tools/d1_compare.py capture-inputs --resolution-slot SLOT_SHA256 --operation-key KEY --attempt N --window-start START --window-end END --allow-public-fetch` with the registered values. | Idempotent settlement and cash leg for each settled entry. A void refunds the stake. Missing evidence produces a pending reason. The terminal capture receipt and the booked settlement have distinct identities. |
+| B4 `report` | Pipeline receipts, scans, queue controls, bankroll checks, coverage and evaluation evidence in a repeatable-read snapshot. `--scope` labels the report and its operation key. | Canonical report JSON on stdout and as a `papersim-report` snapshot with its own run receipts. Missing or unwired stages remain visible. |
+
+For a registered D1 comparison, `tools/d1_compare.py run-new --authorization FILE --scan-config CONFIG --prepare-from SHA256 --operation-key KEY --attempt N` invokes the same B1 path after checking the day gates. Pick the direct B1 command or this wrapper for the new leg of a given slot. The fixed leg and the daily difference/ledger reconciliation are additional D1 evidence. The archived isolated tests exercise B1 recovery through B2 and B3 and exercise B4 against stored evidence. As of the 26 November 2026 registration, the project has recorded zero qualifying D1 days and no D2 date. [FX-40 native evidence](design/fx-40/evidence/native-prepared-scan.json) · [Report integration tests](../../tests/test_papersim_report_store_native.py) · [M2 conditions in DELIVERY_PLAN](../../DELIVERY_PLAN.md)
+
+### Optimizer commands and scheduled work
+
+Use `paper optimize SUBCOMMAND --help` to inspect a subcommand. `LINEAGE` is a registered family/target. Replace uppercase arguments below with the values from the applicable registration. NBA v2 already completed its only registered attempt. Club football remains at its registered preflight.
+
+| Command after `paper optimize` | Reads and writes |
+| --- | --- |
+| `families` | Prints the built-in family and search-space catalog. |
+| `status --managed --lineage LINEAGE` and `score --managed --lineage LINEAGE --config CONFIG` | Read registered roles, linked results and forward evidence. `score --close-price-evidence` also emits the per-row CLOSE and fill inputs. Both print JSON. |
+| `init --managed` | Initializes the registered baselines in PostgreSQL. Run at initialization. |
+| `register-experiment --managed --approval-file APPROVAL --source-inventory-file INVENTORY` | Registers the original approved NBA experiment and source inventory, then returns its manifest pointer. Optional `--write-pointer PATH` exports that pointer outside the worktree. |
+| `run --managed --family FAMILY --as-of UTC --input-manifest POINTER` | Reads the registered manifest and archived inputs, checks the protocol, and seals the run and its result. `--dry-run` previews the request or reads a sealed result. The pointer is a JSON document path. |
+| `decide --managed --lineage LINEAGE --config CONFIG` | Reads the registered evidence and queue bindings, and records the decision at a due look. |
+| `apply --managed --decision-id ID --config CONFIG` | Applies or replays an eligible rollback or retirement. Promotion application remains unavailable at this stage. |
+| `rollback --managed --lineage LINEAGE --reason REASON --actor ACTOR` | Records the human rollback decision and the resulting role events. |
+| `freeze --managed --lineage LINEAGE --reason REASON --actor ACTOR` and `unfreeze --managed --lineage LINEAGE --reason REASON --actor ACTOR` | Record optimizer control events. Omitting `--lineage` selects global scope. Unfreeze requires a human actor. |
+
+| Scheduling entry | Trigger and scope |
+| --- | --- |
+| Discovery → B1 | Start within the registered discovery window. Consume the successful preparation receipt for that slot. |
+| B2 | Run for each scheduled observation once its pack is available, including any pre-event closing observation. Preserve the actual observation time. |
+| B3 → B4 | Settle from the available terminal evidence. Produce the report after the cycle, even when entries remain pending. |
+| Optimizer research | The registered design calls for daily shadow statistics, decisions only at due sample sizes, and a Tuesday review after the weekend settlements. A new historical run requires a registered experiment for that schedule. Use `optimize status` and `optimize score` for weekly optimizer evidence. B4 `report` is the pipeline report. |
+
+Server scheduling for this managed cycle belongs to the D2 cutover. These entries describe dependencies and timing for that future installation. [Optimizer design §10](../handoffs/2026-11-19-audit-optimizer/04-optimizer-design.md) · [Development plan MO-9](../handoffs/2026-11-19-audit-optimizer/05-development-plan.md)
+
 ## International soccer inputs and totals research
 
 `intl_data` refreshes the history CSV, validates the Elo directories, and
