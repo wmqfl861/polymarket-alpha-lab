@@ -105,5 +105,55 @@
     "stdout_sha256": "a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9",
     "frozen_fixture_tree": "1d3ed3fab17dd1a73a76f10dd3110ac5822dd5cc"
   },
-  "synthetic_only": true
+  "synthetic_only": true,
+  "additional_component_regressions": [
+    {
+      "commit": "3cac3f76382912a3b79e9ed4bc7938e7d6710156",
+      "utc": "2026-11-26T07:29:29.846894+00:00",
+      "files": [
+        "test_papersim_prepare.py",
+        "test_papersim_prepare_inputs.py",
+        "test_papersim_capture_marks.py",
+        "test_papersim_settle.py"
+      ],
+      "exit": 0,
+      "counts": {
+        "passed": 125
+      },
+      "console_sha256": "a1485019219089eff41df409b61e916b5fdc2a6f703c53021e983daa2ebe9c3d",
+      "failed_functions": []
+    },
+    {
+      "commit": "3cac3f76382912a3b79e9ed4bc7938e7d6710156",
+      "utc": "2026-11-26T07:33:55.791498+00:00",
+      "files": [
+        "test_papersim_evaluation.py",
+        "test_papersim_evaluation_f.py",
+        "test_papersim_report.py"
+      ],
+      "exit": 0,
+      "counts": {
+        "passed": 479
+      },
+      "console_sha256": "8af6d8790a8f2e3d851225cb48ca70a92e8fcae7834fa31e30e789b9a7baa11c",
+      "failed_functions": []
+    },
+    {
+      "commit": "3cac3f76382912a3b79e9ed4bc7938e7d6710156",
+      "utc": "2026-11-26T07:29:31.703328+00:00",
+      "files": [
+        "test_papersim_optimize_cli.py",
+        "test_papersim_cli_optimize.py",
+        "test_papersim_optimize_policy.py",
+        "test_phase1_live_surface_guard.py",
+        "test_phase1_file_catalog.py"
+      ],
+      "exit": 0,
+      "counts": {
+        "passed": 159
+      },
+      "console_sha256": "d044b0af83fccef9182890063215a5196f84a661b85d190e3ba3eb34b576064b",
+      "failed_functions": []
+    }
+  ]
 }

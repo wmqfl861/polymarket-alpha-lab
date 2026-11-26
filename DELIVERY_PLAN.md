@@ -4669,7 +4669,7 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 06:48:42 UTC，原 Windows 验收测试员只读取得当前 PowerShell 生效策略 `Restricted`，五个作用域均为 `Undefined`。该环境下固定脚本无法执行，单独给脚本签名仍不足以满足 `Restricted`。前次演练登记文件数为 0，新读数仅说明本次读取时的策略。六种 Windows 替身验收与自然投递待完成。[策略读数与旧放置回执对照](docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-windows-policy-original.json)
 
-随后原 FX-49 计划审者对执行策略补遗签署 `PASS`。现有业务固定脚本与演练放置程序分别校验。管理员若提供覆盖原目标及实际运行身份的组织签名策略，须先核实它准许的调用。当前演练器本身也会拒绝 `AllSigned`；实际签名或调整演练器会形成新字节，需按正常节点固定与复审。已确认的个人微信直达和四类日常运行继续。补遗逐字原件中的相对路径按当次演练目录解读。策略与放置的原始结果分别见上一段与本轮交接证据。[受审补遗原件](docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-windows-policy-reviewed-input.txt) · [同一原审回执](docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-windows-policy-original-plan-review.json)
+随后原 FX-49 计划审者对执行策略补遗签署 `PASS`。现有业务固定脚本与演练放置程序分别校验。管理员若提供覆盖原目标及实际运行身份的组织签名策略，须先核实它准许的调用。该次放置程序本身会拒绝 `AllSigned`；实际签名或调整演练器会形成新字节，需按正常节点固定与复审。已确认的个人微信直达和四类日常运行继续。补遗逐字原件中的相对路径按当次演练目录解读。策略与放置的原始结果分别见上一段与本轮交接证据。[受审补遗原件](docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-windows-policy-reviewed-input.txt) · [同一原审回执](docs/paper-sim/design/optimizer-phase1/2026-11-24/fx49-windows-policy-original-plan-review.json)
 
 07:25:48 UTC，原测点的登录测量前置检查确认任务正常执行，停在本机 SSH 库路径核对。此前所选 IPv4 路由虽比默认路由更具体，实际物理接口和默认网关相同。此次检查未向项目登录入口建立 TCP 连接。对外提供的认证方式仍待取得现场回执。[登录测量前置检查](docs/paper-sim/design/fx-36/2026-11-24-login-observer-prerequisite.json)
 
@@ -4690,6 +4690,8 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 固定脚本和 Linux 投递器的产品提交为 `086888fc`。固定脚本的 SHA-256 为 `e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6`。Linux 上的 PowerShell 实际执行了该脚本，使用本地替身完成全部六种情况。成功、目标不唯一、私聊摘要不符、正文摘要不符、超时、发送器拒绝的退出码依次为 0、24、25、26、22、32。收件范围、重试次数与下注规则沿用原登记。沿用 11 月 25 日的现场回执，Windows 演练为 0/6，经固定入口核实的自然投递为 0。11 月 26 日 06:42 UTC 核对到通知服务工作目录的投递代码仍含通用代理启动方式，现场部署提交未知。机主确认的“只在能限制为固定入口时切换”仍适用。[脚本及验收回执](docs/paper-sim/design/fx-49/2026-11-26-linux-fixed-entry-acceptance.json) · [上次 Windows 现场回执](docs/paper-sim/design/fx-49/2026-11-25-owner-fixed-entry-observation.json)
 
 已把两份历史源码复审回执的原始字节归档。现行 Linux 投递器和固定脚本逐字节匹配两份回执各自签收的源码；后续调整过的 Windows 替身演练程序单列。对主线产品又跑了一次 JUnit，确认有 79 个传输测试与 20 个固定脚本测试，各自的测试标识全部唯一。现场通知模块与审核版对比，在遮去文字与字节字面量后，有 24 个函数结构相同，另两个是 `route` 和 `on_windows`。该对比只覆盖此模块。[主线源码原审](docs/paper-sim/design/fx-49/main-review.json) · [运行层源码原审](docs/paper-sim/design/fx-49/release-review.json)
+
+`8c736e3f` 修正了 Windows 替身演练对原生拒绝的核对。初次发送、清理前查回执、清理和重试后再读取，都必须保留同一个字符串拒绝原因；协议、目的、摘要和退出码也须符合约定类型。Linux 对 13 种合成情况的实测显示，原演练误收 7 种错误响应，修订后仅接受 1 种完整结果。传输和固定脚本模块复跑分别为 79/79、21/21。新演练脚本 SHA-256 为 `8b92416529e6fff7c6f0e9fdace061eec27a7d058e7bfee186e164bee7963bde`。历史托管 Windows 失败用的是更早的演练夹具，仍需目标 Windows 的现场回执。现行演练器核对进程级策略为 `Undefined`；放置程序对有效策略的检查与操作系统对签名的要求分属不同环节。[修复前后逐例结果及两次 JUnit](docs/paper-sim/design/fx-49/2026-11-26-linux-fixed-entry-acceptance.json)
 
 两个连接池的公网限制已分别从独立测点复查。项目原生数据库单次外测为超时。登录入口的现有外测回执为 `NO_OBSERVATION`，认证方法未知。11 月 26 日只读核对 GitHub，`main` 的 `protected` 字段为 `false`。[原生数据库外测](docs/paper-sim/design/fx-36/2026-11-24-native-public-observation.json) · [登录观测原件](docs/paper-sim/design/fx-36/2026-11-24-login-public-observation.json)
 

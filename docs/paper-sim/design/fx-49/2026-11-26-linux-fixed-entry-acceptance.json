@@ -62,11 +62,221 @@
   ],
   "windows_drill": {
     "path": "docs/paper-sim/runtime/scripts/windows/offline-acceptance/Test-PaperWeixinOffline.ps1",
-    "sha256": "f7c67c5556139b0490372336709c6d440479b48d0798f51f763157bcd9857978",
+    "sha256": "8b92416529e6fff7c6f0e9fdace061eec27a7d058e7bfee186e164bee7963bde",
     "hosted_diagnosis_pr": 136,
     "historical_hosted_run": 45744033577,
     "historical_symptom": "The former rehearsal writer emitted a UTF-8 preamble on Windows PowerShell 5.1; the initial request returned 21. The fixed entry and the rehearsal writer are separate files.",
-    "scope": "Newer offline writer than the historical product review. Linux substitute exercise has independent evidence; destination Windows results remain pending."
+    "scope": "Newer offline writer than the historical product review. Linux substitute exercise has independent evidence; destination Windows results remain pending.",
+    "previous_local_sha256": "f7c67c5556139b0490372336709c6d440479b48d0798f51f763157bcd9857978",
+    "refusal_verification": {
+      "source_commit": "8c736e3f1e9f2cd3e1cca95e946aef0c050e14a3",
+      "cases_tested": 13,
+      "old_false_passes": [
+        "code-as-string",
+        "digest-array",
+        "protocol-array",
+        "purpose-array",
+        "retained-array",
+        "send-array",
+        "wrong-retained-read"
+      ],
+      "new_false_passes": [],
+      "results_before": {
+        "intact": {
+          "calls": 1,
+          "passed": true,
+          "reads": 2
+        },
+        "wrong-first-read": {
+          "calls": 1,
+          "passed": false,
+          "reads": 1
+        },
+        "wrong-retained-read": {
+          "calls": 1,
+          "passed": true,
+          "reads": 2
+        },
+        "retained-array": {
+          "calls": 1,
+          "passed": true,
+          "reads": 2
+        },
+        "send-array": {
+          "calls": 1,
+          "passed": true,
+          "reads": 2
+        },
+        "code-as-string": {
+          "calls": 1,
+          "passed": true,
+          "reads": 2
+        },
+        "protocol-array": {
+          "calls": 1,
+          "passed": true,
+          "reads": 2
+        },
+        "purpose-array": {
+          "calls": 1,
+          "passed": true,
+          "reads": 2
+        },
+        "digest-array": {
+          "calls": 1,
+          "passed": true,
+          "reads": 2
+        },
+        "extra-field": {
+          "calls": 1,
+          "passed": false,
+          "reads": 2
+        },
+        "wrong-retry-code": {
+          "calls": 1,
+          "passed": false,
+          "reads": 1
+        },
+        "retry-with-output": {
+          "calls": 1,
+          "passed": false,
+          "reads": 1
+        },
+        "sent-twice": {
+          "calls": 2,
+          "passed": false,
+          "reads": 2
+        }
+      },
+      "results_after": {
+        "intact": {
+          "passed": true,
+          "calls": 1,
+          "reads": 2
+        },
+        "wrong-first-read": {
+          "passed": false,
+          "calls": 1,
+          "reads": 1
+        },
+        "wrong-retained-read": {
+          "passed": false,
+          "calls": 1,
+          "reads": 2
+        },
+        "retained-array": {
+          "passed": false,
+          "calls": 1,
+          "reads": 2
+        },
+        "send-array": {
+          "passed": false,
+          "calls": 1,
+          "reads": 1
+        },
+        "code-as-string": {
+          "passed": false,
+          "calls": 1,
+          "reads": 2
+        },
+        "protocol-array": {
+          "passed": false,
+          "calls": 1,
+          "reads": 2
+        },
+        "purpose-array": {
+          "passed": false,
+          "calls": 1,
+          "reads": 2
+        },
+        "digest-array": {
+          "passed": false,
+          "calls": 1,
+          "reads": 2
+        },
+        "extra-field": {
+          "passed": false,
+          "calls": 1,
+          "reads": 2
+        },
+        "wrong-retry-code": {
+          "passed": false,
+          "calls": 1,
+          "reads": 1
+        },
+        "retry-with-output": {
+          "passed": false,
+          "calls": 1,
+          "reads": 1
+        },
+        "sent-twice": {
+          "passed": false,
+          "calls": 2,
+          "reads": 2
+        }
+      },
+      "engine": "PowerShell 7 on Linux with a substitute",
+      "hosted_windows_evidence": {
+        "pr_131": {
+          "head": "69858354dd3728418095eb5ed5454a3821484299",
+          "run": 45702610544,
+          "rehearsal_sha256": "ef0f816c51b7dbd8ebb47231230b02ecb45f60fab61dd8dd0b4f7a4f563dd0c6"
+        },
+        "pr_136": {
+          "head": "32f89e310657401367d42c54c1403e350d0867f9",
+          "run": 45744033577,
+          "same_older_runner_fixture_sha256": "ef0f816c51b7dbd8ebb47231230b02ecb45f60fab61dd8dd0b4f7a4f563dd0c6",
+          "engine_family": "Windows PowerShell 5.1",
+          "diagnostic_observed_exit": "21",
+          "input_prefix": "utf8-bom",
+          "actual_flat_object": "fail",
+          "control": "pass",
+          "hosted_result_receipt_sha256": "6585c609f7b15bf559b7ff12c6be2780d951c6701ffd09079dc85f21acca9d05"
+        },
+        "current_input_writer": "The later f7061764 writer sets the parent console input encoding to its BOM-free UTF-8 only around process start, then restores it. Neither historical hosted run proves the new writer or the current result checker on the destination."
+      },
+      "execution_policy_scope": {
+        "older_placement_helper_sha256": "24c7b614c915ae0eaa63d6e2848292aac26923ef863d5768fa99f25358c26997",
+        "historical_effective_policy_allowlist": [
+          "RemoteSigned",
+          "Unrestricted"
+        ],
+        "checked_in_rehearsal_process_policy_requirement": "Undefined",
+        "checked_in_rehearsal_separate_effective_policy_check": false,
+        "business_and_rehearsal_embedded_authenticode_signature_blocks": false,
+        "interpretation": "The archived placement guard rejects an effective AllSigned policy. The checked-in Windows drill has no AllSigned-specific check beyond rejecting a process-scope override. A host enforcing AllSigned still applies its trust policy before running a script. The exact current files carry no embedded signatures."
+      }
+    },
+    "corrected_product_tests": [
+      {
+        "module": "tests/test_fx49_weixin_delivery.py",
+        "source_commit": "8c736e3f1e9f2cd3e1cca95e946aef0c050e14a3",
+        "started_utc": "2026-11-26T07:46:43.781789+00:00",
+        "finished_utc": "2026-11-26T07:46:47.865850+00:00",
+        "unique_test_ids": 79,
+        "sorted_test_id_list_sha256": "cee70835440ed821662624c330edc0fbc13bff33569b3c682c13f31ac6fd3e5c",
+        "results": {
+          "passed": 79
+        },
+        "pytest_exit": 0,
+        "engine": "Linux PowerShell, local substitute",
+        "console_sha256": "5d209fe015c5821fee7272a48c0878280a4c49ad0e16ba7032222eecc74481d9"
+      },
+      {
+        "module": "tests/test_fx49_fixed_script.py",
+        "source_commit": "8c736e3f1e9f2cd3e1cca95e946aef0c050e14a3",
+        "started_utc": "2026-11-26T07:46:43.783651+00:00",
+        "finished_utc": "2026-11-26T07:48:41.452763+00:00",
+        "unique_test_ids": 21,
+        "sorted_test_id_list_sha256": "2bc3bb599b43116651b0e36cd93a9098b74df0c1c2564d7d658abae582f54bc3",
+        "results": {
+          "passed": 21
+        },
+        "pytest_exit": 0,
+        "engine": "Linux PowerShell, local substitute",
+        "console_sha256": "d2f7370c4fafa3669d503cd785217a49a824d27ad65ef69cc0d8815af678fcc8"
+      }
+    ]
   },
   "site": {
     "six_case_runs_completed": 0,
