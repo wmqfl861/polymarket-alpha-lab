@@ -730,6 +730,12 @@ def _soccer_leagues(sources: dict) -> tuple[str, str]:
     return home, sources.get("away_league", home)
 
 
+def _soccer_fixture_time(value: str) -> datetime:
+    """Understat's unzoned schedule uses UTC. Preserve explicit provider offsets."""
+    stamp = datetime.fromisoformat(value)
+    return stamp.replace(tzinfo=UTC) if stamp.tzinfo is None else stamp
+
+
 def _soccer_clubs(sources: dict, snapshot: dict, fixtures: dict, kickoff: datetime, event: dict) -> tuple[str, str]:
     leagues, season = _soccer_leagues(sources), sources["season"]
     rosters = []
@@ -759,10 +765,7 @@ def _soccer_clubs(sources: dict, snapshot: dict, fixtures: dict, kickoff: dateti
         raise prepare._Excluded("papersim_prepare_soccer_fixture_inputs_missing")
     _require(len(matches) == 1, "papersim_prepare_soccer_fixture_conflict")
     fixture = matches[0]
-    fixture_clock = datetime.fromisoformat(fixture["datetime"])
-    if fixture_clock.tzinfo is None:
-        fixture_clock = fixture_clock.replace(tzinfo=UTC)
-    _require(fixture_clock == kickoff and fixture["isResult"] is not True,
+    _require(_soccer_fixture_time(fixture["datetime"]) == kickoff and fixture["isResult"] is not True,
              "papersim_prepare_soccer_fixture_clock_conflict")
     _require(team_ids == (str(fixture["h"]["id"]), str(fixture["a"]["id"])),
              "papersim_prepare_soccer_fixture_conflict")

@@ -18,7 +18,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
-from polymarket_alpha_lab.papersim import capture, prepared_scan, prepare_inputs, settle, snapshots, store
+from polymarket_alpha_lab.papersim import capture, fotmob, prepared_scan, prepare_inputs, settle, snapshots, store
 from polymarket_alpha_lab.papersim import store_psycopg as pg
 from polymarket_alpha_lab.papersim.adapters import polymarket, prices, understat
 from polymarket_alpha_lab.papersim.d1compare import acquire, frozenrun, journal, operations
@@ -28,6 +28,7 @@ from tests.test_papersim_capture_marks_native import (
     _D1_NATIVE, _D1_TEAM, _d1_capture_cli, _d1_child, _d1_json_path, _d1_register_binding,
     _d1_register_capture_slot, d1_capture_project,
 )
+from tests.test_papersim_fotmob import _details, _league_payload, _match
 from tests.test_papersim_scan_store_native import _seed_initial_cash
 from tests.test_papersim_settle_store_native import _d1_seed_settlement_entry
 
@@ -41,6 +42,31 @@ def _print_exception_location(error):
     frames = traceback.extract_tb(error.__traceback__)
     locations = " ".join(f"{Path(frame.filename).name}:{frame.lineno}" for frame in frames[-8:])
     print(f"fixture failure {type(error).__name__} {locations}", file=sys.stderr)
+
+
+def _championship_response(url, fixture):
+    parsed = urlsplit(url)
+    query = parse_qs(parsed.query)
+    if parsed.path == "/api/data/leagues":
+        selected, = query["season"]
+        year = selected.split("/")[0]
+        kickoff = datetime.fromisoformat(fixture["fotmob_kickoff"]) - timedelta(
+            days=365 * (int(fixture["season"]) - int(year)))
+        played = (kickoff - timedelta(days=2)).astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        matches = [_match(year + "01", "1", "t1", "t2", played),
+                   _match(year + "02", "2", "t1", "t2", kickoff.isoformat(), finished=False)]
+        # Include the rest of the registered 24-club league in the schedule.
+        for number in range(3, fotmob.FotMobLeague.CHAMPIONSHIP.team_count, 2):
+            matches.append({**matches[1], "id": f"{year}{number:02}",
+                            "home": {"id": f"t{number}", "name": f"Club {number}"},
+                            "away": {"id": f"t{number + 1}", "name": f"Club {number + 1}"}})
+        body = _league_payload(matches, selected)
+    else:
+        assert parsed.path == "/api/data/matchDetails"
+        match_id, = query["matchId"]
+        assert match_id.endswith("01")
+        body = {**_details(2, 1, "1.50", "0.75"), "general": {"matchId": match_id}}
+    return _response(json.dumps(body).encode(), url=url)
 
 
 def _drive_capture():
@@ -83,6 +109,8 @@ def _drive_capture():
 
     polymarket.BoundedPublicOpener = PublicFixture
     prices._open_public_json = prices_fixture
+    if fixture["tag"] == "championship":
+        fotmob.urllib.request.urlopen = lambda request, timeout: _championship_response(request.full_url, fixture)
 
     def understat_fixture(league, season, _timeout):
         body = deepcopy(UNDERSTAT_FIXTURE["leagues"][league]["response"])
@@ -175,10 +203,11 @@ def _ref(row):
     return {key: row[source] for key, source in (("sha256", "content_sha256"), ("byte_length", "byte_length"))}
 
 
-def _capture_setup(project, name, *, news=True, rules=True, cash=None, soccer=False, unbound=False):
+def _capture_setup(project, name, *, news=True, rules=True, cash=None, tag="crypto", unbound=False, fotmob_clock=None):
     directory = project.temporary / name
     directory.mkdir()
-    queue = ({"queue": "fx40-epl", "lineage": "club-soccer/over_under", "model_key": "soccer",
+    soccer = tag in ("epl", "championship")
+    queue = ({"queue": f"fx40-{tag}", "lineage": "club-soccer/over_under", "model_key": "soccer",
               "market_type": "over_under"} if soccer else
              {"queue": "fx40-crypto", "lineage": "crypto/terminal", "model_key": "crypto",
               "market_type": "terminal"})
@@ -208,7 +237,7 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None, soccer=Fa
     markets = [market]
     if soccer:
         news = False
-        title = "EPL FC 1 versus EPL FC 2"
+        title = "Birmingham City versus Blackburn Rovers" if tag == "championship" else "EPL FC 1 versus EPL FC 2"
         kickoff = opening
         expiry = kickoff + timedelta(hours=2)
         for index, line in enumerate(("2.5", "2.0")):
@@ -229,10 +258,10 @@ def _capture_setup(project, name, *, news=True, rules=True, cash=None, soccer=Fa
         title = name
     if unbound:
         markets = [{"question": question}]
-    tag = "epl" if soccer else "crypto"
     raw = _d1_json_path(directory, "capture-fixture.json", {
         "tag": tag, "title": title, "markets": markets, "books": books,
         "season": str(opening.year - (opening.month < 7)),
+        "fotmob_kickoff": f"{opening.date()}T{fotmob_clock}" if fotmob_clock else None,
     })
     with pg.connect_managed(project.root) as conn:
         if cash is not None:
@@ -634,7 +663,7 @@ def test_prepared_soccer_persists_ordered_quotes_and_replays_constructor_failure
     from polymarket_alpha_lab import replay
     from polymarket_alpha_lab.papersim import gates, soccer_model
 
-    case = _capture_setup(separate_project, "fx40-soccer", soccer=True)
+    case = _capture_setup(separate_project, "fx40-soccer", tag="epl")
     completed = _b1(case, 1)
     assert completed.returncode == 0, completed.stderr
     summary = json.loads(completed.stdout)
@@ -670,3 +699,29 @@ def test_prepared_soccer_persists_ordered_quotes_and_replays_constructor_failure
         replayed = _d1_child(case.project, ["replay", str(identifier), "--managed", "--repo-root",
                                             str(case.project.root), "--trusted-commit", case.project.head])
         assert replayed.returncode == 0 and json.loads(replayed.stdout)["matched"], replayed.stderr
+
+
+@pytest.mark.parametrize(("fixture_clock", "matches_kickoff"), [
+    ("14:00:00+02:00", True), ("12:00:00+02:00", False),
+])
+def test_prepared_fotmob_capture_binds_the_kickoff_instant(separate_project, fixture_clock, matches_kickoff):
+    case = _capture_setup(separate_project, "fx44-fotmob-offset", tag="championship", fotmob_clock=fixture_clock)
+    completed = _b1(case, 1)
+    assert completed.returncode == 0, completed.stderr
+    assert len(json.loads(completed.stdout)["candidate_ids"]) == 4
+    with pg.connect_managed(case.project.root) as reader:
+        reader.autocommit = True
+        digest = case.receipt["input_set_sha256"]
+        captured = json.loads(snapshots.read_snapshot(reader, digest)["content"])
+        resolved = prepare_inputs.resolve_preparation_inputs(
+            reader, repo_root=case.project.root, config_bytes=case.config.read_bytes(), input_set_sha256=digest)
+    assert len(captured["targets"]) == 4
+    if matches_kickoff:
+        assert all(item["sources"]["fixture_id"] == item["sources"]["season"] + "02" for item in captured["targets"])
+        assert len(resolved.targets) == 4 and not resolved.excluded
+        assert all(target.plan.home == "Birmingham City" and target.plan.away == "Blackburn Rovers"
+                   for target in resolved.targets)
+    else:
+        assert all(item["sources"] is None for item in captured["targets"])
+        assert not resolved.targets and len(resolved.excluded) == 4
+        assert {target.reason_code for target in resolved.excluded} == {"papersim_prepare_model_materials_missing"}

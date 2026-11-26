@@ -286,8 +286,7 @@ class _Capture:
             provider = sports.SOURCE_KIND_FOTMOB
         title = event.get("title")
         for row in current:
-            if row["isResult"] or target["event_start_at"] != datetime.fromisoformat(
-                    row["datetime"]).replace(tzinfo=UTC).isoformat():
+            if row["isResult"] or inputs._soccer_fixture_time(row["datetime"]) != kickoff:
                 continue
             home, away = row["h"]["title"], row["a"]["title"]
             if title in (f"{home} versus {away}", f"{home} vs. {away}", f"{home} vs {away}"):
