@@ -1,0 +1,35 @@
+{
+  "item": "FX-23",
+  "pull_request": 131,
+  "state": "CLOSED",
+  "merged": false,
+  "closed_utc": "2026-11-26T13:13:51Z",
+  "checked_head": "69858354dd3728418095eb5ed5454a3821484299",
+  "retained_branch": "fix/fx49-release-093063000a70",
+  "receipt_subject": "5bf015221f93ab4471250cb08829497864f88ea8",
+  "receipt_scope": "Repository implementation and local testing. Windows evidence is tracked separately.",
+  "reason": "The fixed delivery code is on main. Subsequent commits corrected the rehearsal and added the selected process policy. The archived branch also carries obsolete development workflows.",
+  "receipts": [
+    {
+      "path": "docs/paper-sim/design/fx-49/publication-code-review-v3.json",
+      "sha256": "91eef95d45fdb65cffed5beb7ea958317803505e2169a8d38f3d541b801db0d6",
+      "bytes": 54351,
+      "verdict": "PASS",
+      "permalink": "https://github.com/wmqfl861/polymarket-alpha-lab/blob/69858354dd3728418095eb5ed5454a3821484299/docs/paper-sim/design/fx-49/publication-code-review-v3.json"
+    },
+    {
+      "path": "docs/paper-sim/design/fx-49/publication-independent-test-v3.json",
+      "sha256": "f39e6a8318366d83f154c9e8cf0ad51502cb790de64f43b6b20b7c585479e9e1",
+      "bytes": 10006,
+      "verdict": "PASS",
+      "permalink": "https://github.com/wmqfl861/polymarket-alpha-lab/blob/69858354dd3728418095eb5ed5454a3821484299/docs/paper-sim/design/fx-49/publication-independent-test-v3.json"
+    },
+    {
+      "path": "docs/paper-sim/design/fx-49/publication-stage-review-v3.json",
+      "sha256": "b59daa8789bc9e9d121696da659de5eaae83806e788ccee317daa37fa4e6636a",
+      "bytes": 2448,
+      "verdict": "PASS",
+      "permalink": "https://github.com/wmqfl861/polymarket-alpha-lab/blob/69858354dd3728418095eb5ed5454a3821484299/docs/paper-sim/design/fx-49/publication-stage-review-v3.json"
+    }
+  ]
+}
