@@ -1065,3 +1065,83 @@ def test_d1_rejects_wrong_identity_stale_books_and_unattributed_existing_rows(d1
     assert _d1_capture_receipt(project, slot, "FAILED") is not None
     assert _d1_capture_receipt(project, slot, "SUCCEEDED") is None
     assert _d1_capture_rows(project, case.candidate_ids) == orphan
+
+
+@_D1_NATIVE
+def test_legacy_ordinary_capture_replays_one_mark_for_two_identical_sealed_quotes(
+    d1_capture_project, monkeypatch,
+):
+    """Before OD-P registration, both acquisition receipts survive the old B2 key."""
+    from polymarket_alpha_lab.papersim import snapshots, store_psycopg
+    from polymarket_alpha_lab.papersim.adapters import polymarket
+    from polymarket_alpha_lab.papersim.d1compare import acquire, journal
+
+    project = d1_capture_project
+    case = _d1_seed_capture_case(project, "ordinary-repeat-book", variants=("quote",))
+    mark, = case.marks
+    token = mark["token_ref"]
+
+    def read_buy_request(batch_sha):
+        manifest, entries = acquire.read_capture(repo_root=project.root, batch_sha256=batch_sha)
+        book, = (book for book in manifest["books"] if book["token_id"] == token)
+        sequence = book["request_sequence"]
+        row = manifest["requests"][sequence - 1]
+        entry, = (entry for entry in entries if entry.request_meta["sequence"] == sequence)
+        assert row["sequence"] == sequence and row["status"] == "received"
+        assert row["source_time_status"] == "upstream" and row["window_status"] == "in_window"
+        assert row["byte_length"] == len(entry.content)
+        assert row["content_sha256"] == hashlib.sha256(entry.content).hexdigest()
+        assert entry.request_meta["query"]["token_id"] == token
+        assert datetime.datetime.fromisoformat(row["utc_fetched_at"]) == entry.utc_fetched_at
+        return manifest, entry
+
+    first_batch = case.capture_manifest_sha256
+    first_manifest, first = read_buy_request(first_batch)
+    fixture = json.loads((case.directory / "b2-public.json").read_bytes())
+    fixture["books"][token]["fixture_source_at"] = first.request_meta["source_observed_at"]
+    repeated_fixture = _d1_json_path(case.directory, "repeat-source.json", fixture)
+    second_receipt, _ = _d1_seal_fixture(
+        project, repeated_fixture, datetime.datetime.fromisoformat(first_manifest["scope"]["window_start"]),
+    )
+    second_batch = second_receipt["batch_sha256"]
+    second_manifest, second = read_buy_request(second_batch)
+    assert first_batch != second_batch and first.request_meta["sequence"] == second.request_meta["sequence"]
+    assert first.content == second.content and first.content_sha256 == second.content_sha256 == mark["snapshot_sha256"]
+    assert first.request_meta["source_observed_at"] == second.request_meta["source_observed_at"] == mark["observed_at"]
+    assert first.utc_fetched_at < second.utc_fetched_at
+    assert journal.entry_source_ref(first) == journal.entry_source_ref(second) == mark["source_ref"]
+    with store_psycopg.connect_managed(project.root) as conn:
+        saved = snapshots.read_snapshot(conn, first.content_sha256)
+        assert saved["fetched_at"] == first.utc_fetched_at
+
+    scope = second_manifest["scope"]
+
+    def no_transport(*args, **kwargs):
+        pytest.fail("sealed retry reached public transport")
+
+    monkeypatch.setattr(polymarket, "BoundedPublicOpener", no_transport)
+    replay = acquire.capture_inputs(
+        repo_root=project.root, window_start=datetime.datetime.fromisoformat(scope["window_start"]),
+        window_end=datetime.datetime.fromisoformat(scope["window_end"]), tag_slugs=scope["tag_slugs"],
+        allow_public_fetch=True,
+    )
+    assert replay["reused"] is True and replay["batch_sha256"] == second_batch
+    _, original = read_buy_request(replay["batch_sha256"])
+    assert original == second
+
+    pack = _d1_json_path(case.directory, "ordinary-marks.json", [mark])
+    config = _d1_json_path(case.directory, "ordinary-config.json", {"team": _D1_TEAM, "packs": [pack.name]})
+    outputs = []
+    for key in ("ordinary-first", "ordinary-first", "ordinary-second"):
+        run = _d1_child(project, ["capture-marks", "--managed", "--repo-root", str(project.root),
+                                 "--config", str(config), "--operation-key", f"capture-marks|{_D1_TEAM}|{key}",
+                                 "--attempt", "1"])
+        assert run.returncode == 0, run.stderr
+        outputs.append(run.stdout)
+    assert outputs[0] == outputs[1] == outputs[2]
+    assert json.loads(outputs[0])["close_evidence_written"] == 1
+    rows = _d1_capture_rows(project, case.candidate_ids)
+    stored_mark, = rows["mark"]
+    stored_evidence, = rows["close"]
+    assert stored_mark[4] == stored_evidence[4] == datetime.datetime.fromisoformat(mark["observed_at"])
+    assert stored_mark[15] == stored_evidence[15] == first.content_sha256
