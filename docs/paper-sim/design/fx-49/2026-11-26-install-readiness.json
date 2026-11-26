@@ -1,0 +1,35 @@
+{
+  "tested_main_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+  "protected_software_evidence": "2026-11-26-protected-hermes-materials.json",
+  "token_policy_evidence": "2026-11-26-admin-approval-readback.json",
+  "interactive_logon_observation": {
+    "observed_utc": "2026-11-26T14:59:20+00:00",
+    "facts": {
+      "account_seen": true,
+      "newer_interactive_logon": false,
+      "all_queries_completed": true
+    },
+    "raw_sha256": "f3e326843ebb4dcaaaf0142f0a08a07e812678ab27bad54efafa953b33c86224"
+  },
+  "field_state_at_observation": {
+    "protected_installation_verified": false,
+    "windows_substitute_cases_passed": 0,
+    "windows_substitute_cases_required": 6,
+    "verified_natural_deliveries": 0,
+    "production_sender_switched": false
+  },
+  "baseline": "9a64415ae8a191f4c0abc5276c661240e1920e8c",
+  "fixed_script_sha256": "e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6",
+  "comparison": {
+    "selfcheck_passed": 10,
+    "selfcheck_output_identical_to_baseline": true,
+    "selfcheck_stdout_sha256": "a4aa971fed26553474e0b69a285bc2937c44789bbeb1ac6c70bb0d827610fcb9",
+    "removed_tests": 0,
+    "tests_with_fewer_checks": 0,
+    "new_skip_markers": 0,
+    "new_xfail_markers": 0,
+    "new_address_file_pairs": 0,
+    "frozen_fixture_files_identical": true,
+    "existing_migrations_identical": true
+  }
+}
