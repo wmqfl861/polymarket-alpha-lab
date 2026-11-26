@@ -1,0 +1,98 @@
+{
+  "tested_main_commit": "206192c50631823fe940783211ad244b3ab70f11",
+  "runner_sha256": "7d8fc5d33820fd9b390d0c7445fab381c02bc6349caf05b269cf557ae2f195fe",
+  "scope": "full default collection; no file filter, deselection or xfail override",
+  "execution": "Separate disposable checkouts with private network namespaces. PostgreSQL was local to the native namespace and admitted only Unix-socket and private loopback connections.",
+  "previous_full_runs": {
+    "source_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+    "runner_sha256": "059d51c1fcaff654cf573045fcce7383ab9fa0781f678f54deda8c5621c13f08",
+    "publication_commit": "804310a17e29b7227e6792153688fd6f8cd7a39a",
+    "evidence_path": "docs/paper-sim/design/fx-49/2026-11-26-full-tests-6b8d0223.json",
+    "both_passed": false
+  },
+  "seven_case_database_transport_qualification_on_previous_commit": {
+    "socket_only": {
+      "passed": 0,
+      "failed": 7,
+      "skipped": 0,
+      "errors": 0,
+      "raw_sha256": "8cebb039befb73eeb2478339c5af40052b43dba72a66cc7867a9baebe483f379"
+    },
+    "both_private_transports": {
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "errors": 0,
+      "raw_sha256": "43e2ba7a2551524ee8a788556e26da76eba57b792df80d874174d056bf31d2da"
+    }
+  },
+  "import_isolation_fix_commit": "052b1988",
+  "both_passed": false,
+  "runs": [
+    {
+      "profile": "offline",
+      "pytest_started_utc": "2026-11-26T18:25:53+00:00",
+      "pytest_finished_utc": "2026-11-26T19:39:03+00:00",
+      "collected": 44694,
+      "counts": {
+        "passed": 44195,
+        "skipped": 497,
+        "failed": 1,
+        "errors": 1
+      },
+      "exit_code": 1,
+      "harness_exit": 1,
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "postgres_version": null,
+      "raw_sha256": "a40f4b352052e250de24e4477dc156ae87ae0d8d56ffdec0c909e2c9f59b9f76",
+      "passed": false,
+      "failed_by_public_function": {
+        "test_papersim_capture_marks_native.test_register_close_window_through_managed_cli": 1,
+        "test_team_evidence_aggregation_attempt_scope.test_node_5_real_modules_module_set_line_ceilings_and_class_shape_gate": 1
+      },
+      "error_categories": {
+        "test_assertion_or_runtime_error": 2
+      }
+    },
+    {
+      "profile": "native",
+      "pytest_started_utc": "2026-11-26T18:25:57+00:00",
+      "pytest_finished_utc": "2026-11-26T21:42:36+00:00",
+      "collected": 44694,
+      "counts": {
+        "passed": 44600,
+        "skipped": 93,
+        "failed": 1,
+        "errors": 0
+      },
+      "exit_code": 1,
+      "harness_exit": 1,
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "postgres_version": "postgres (PostgreSQL) 18.6 (Ubuntu 18.6-1.pgdg24.04+2)",
+      "raw_sha256": "f558acf6e612e48678e18686c3a71d3dfce8c1a83f653f8cdac428c032461d05",
+      "passed": false,
+      "failed_by_public_function": {
+        "test_team_evidence_aggregation_attempt_scope.test_node_5_real_modules_module_set_line_ceilings_and_class_shape_gate": 1
+      },
+      "error_categories": {
+        "test_assertion_or_runtime_error": 1
+      },
+      "native_proof_status": "verified executed test cases",
+      "passing_database_module_examples": {
+        "test_papersim_report_store_native": 42,
+        "test_papersim_store_native": 38,
+        "test_project_postgres_backup_native": 2,
+        "test_project_postgres_distribution_native": 1,
+        "test_project_postgres_native": 1
+      },
+      "native_named_module_counts": {
+        "passed": 486,
+        "skipped": 17,
+        "failed": 0,
+        "errors": 0
+      }
+    }
+  ]
+}
