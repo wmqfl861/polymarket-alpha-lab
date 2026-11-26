@@ -35,6 +35,76 @@ Run inside the project virtualenv from the repository root:
   opens a connection, never reads the password file, and never prints
   the DSN value.
 
+## Managed paper cycle
+
+Use the project virtual environment, a clean checkout and the project-managed PostgreSQL instance. Before requesting a new window, record the source commit, scan configuration, UTC start (inclusive) and end (exclusive), Gamma tag set and requested page size. For a registered D1 interval, use its effective dates and policy. Keep local inputs outside the checkout. The managed research ledger and the RMB sports notification ledger have separate registrations. [Delivery plan](../../DELIVERY_PLAN.md)
+
+### Prepare and scan
+
+Set `WINDOW_START`, `WINDOW_END`, `TAG_SLUG` and `SCAN_CONFIG` from the recorded scope. The scan config identifies the team and queues. A queue that consumes the prepared input has an empty `pack`. Choose a stable `SCAN_KEY` for this scan.
+
+```bash
+set -euo pipefail
+paper() { .venv/bin/python -m polymarket_alpha_lab.papersim.cli "$@"; }
+
+preparation=$(.venv/bin/python tools/d1_compare.py capture-inputs \
+  --window-start "$WINDOW_START" --window-end "$WINDOW_END" --tag-slug "$TAG_SLUG" \
+  --prepare-config "$SCAN_CONFIG" --gamma-page-size 1 --allow-public-fetch)
+input_set=$(.venv/bin/python -c 'import json, sys; print(json.load(sys.stdin)["input_set_sha256"])' <<<"$preparation")
+paper run-scan --managed --config "$SCAN_CONFIG" --prepare-from "$input_set" \
+  --operation-key "$SCAN_KEY" --attempt 1
+```
+
+`--gamma-page-size` takes an integer from 1 to 50 with `--prepare-config`. Omitting it uses 50. A page contains **events**. One event can contain several markets. Smaller pages use the same request, byte, time and market limits. Repeat `--tag-slug` for each tag in the registered set.
+
+To read a sealed capture, use the original UTC window, tag set, effective page size and scan configuration as shown below. The JSON response has three top-level fields of interest. `reused` is true when discovery read an existing raw batch, `batch_sha256` identifies that batch, and `input_set_sha256` identifies the prepared input that B1 reads. Changing the effective page size for the same sealed window and tag set returns `d1_capture_receipt_conflict` before any fetch. Record a fresh prospective window to collect with a different layout.
+
+```bash
+.venv/bin/python tools/d1_compare.py capture-inputs \
+  --window-start "$WINDOW_START" --window-end "$WINDOW_END" --tag-slug "$TAG_SLUG" \
+  --prepare-config "$SCAN_CONFIG" --gamma-page-size 1
+```
+
+For a B1 retry, keep the operation key, config bytes and input digest from the same scan so its first `PREPARED` receipt still binds the input and model specification.
+
+Read `coverage.tags` for the stopping reason and coverage of each tag. A response over the byte limit can report `public_response_too_large` even with HTTP 200. An original body that returns more events than the requested smaller page size is retained with `public_gamma_page_size_exceeded` and excluded from market discovery. Compare the scan's `candidate_ids` and `entry_ids` counts with the candidate and entry rows for the same scan.
+
+In the recorded Bundesliga-tagged window, 14 pages at offsets 0 through 13 returned 14 events containing 411 markets. Discovery stopped at `accumulation_cap`. The scan and ledger both recorded zero candidates and zero entries. The saved receipt records the requested tag and per-page digests. Individual event membership in the league remains unverified. [Capture and scan receipt](design/fx-44/2026-11-26-bundesliga-small-page-window.json) · [Event tag verification](design/fx-44/2026-11-26-gamma-event-scope.json)
+
+### Mark, settle and report
+
+Use the same shell function and set `MARK_CONFIG` to the config for the observed price packs, `TEAM` to the scheduled settlement team, and `MARK_KEY` and `SETTLE_KEY` to their respective operation keys. For a D1 operation, use the registered slot key.
+
+```bash
+paper capture-marks --managed --config "$MARK_CONFIG" --operation-key "$MARK_KEY" --attempt 1
+paper settle --managed --team "$TEAM" --operation-key "$SETTLE_KEY" --attempt 1
+paper report --managed --scope '*' --attempt 1
+```
+
+| Stage | When to run and what it records |
+| --- | --- |
+| Prepare and scan (B1) | Start capture within the recorded window. Preparation seals public responses and model inputs. The scan reads the sealed input and model roles, then stores candidates, admitted paper entries and their cash movements. |
+| Mark (B2) | Once the scheduled observations are available, supply the price packs for the stored candidates. Capture records the pack snapshots, candidate marks, applicable CLOSE evidence and its receipt. |
+| Settle (B3) | Once terminal evidence is available, settlement matches it to open entries for the team and records settlements and cash movements. An entry with missing evidence stays pending. |
+| Report (B4) | Read the pipeline and evaluation state in one database snapshot. B4 derives its operation key from the scope, the evidence-derived `as_of` (or `no-data`), and the report content SHA-256. It archives the canonical JSON in PostgreSQL with operation receipts, then prints that JSON. |
+
+### Optimizer commands
+
+Run the following subcommands after `paper optimize`. Use the registered lineage, family, files and actors applicable to the operation. NBA v2's single registered run is already sealed. [Optimizer handoff](../handoffs/2026-11-19-optimizer-phase1.md)
+
+| Subcommand | Effect |
+| --- | --- |
+| `families` | Prints the family and search-space catalog. |
+| `status --managed --lineage LINEAGE` | Reads roles and forward-evidence status. |
+| `score --managed --lineage LINEAGE --config CONFIG --close-price-evidence` | Reads paired evidence, including the prices used in the close-price comparison. |
+| `init --managed` | Initializes baseline registrations in the managed database. |
+| `register-experiment --managed --approval-file APPROVAL --source-inventory-file INVENTORY` | Records the approved NBA experiment and source inventory and returns its manifest pointer. |
+| `run --managed --family FAMILY --as-of UTC --input-manifest POINTER` | Uses the registered manifest and archived inputs to execute or read back that research run. The pointer is a JSON document path. |
+| `decide --managed --lineage LINEAGE --config CONFIG` | Evaluates registered evidence and records the decision when a review is due. |
+| `apply --managed --decision-id ID --config CONFIG` | Applies or replays an eligible paper rollback or retirement. Promotion application is blocked at this stage. |
+| `rollback --managed --lineage LINEAGE --reason REASON --actor ACTOR` | Records a manual rollback decision and its role events. |
+| `freeze --managed --lineage LINEAGE --reason REASON --actor ACTOR` and `unfreeze --managed --lineage LINEAGE --reason REASON --actor ACTOR` | Record optimizer control events. Unfreezing requires a human actor. |
+
 ## International soccer inputs and totals research
 
 `intl_data` refreshes the history CSV, validates the Elo directories, and
