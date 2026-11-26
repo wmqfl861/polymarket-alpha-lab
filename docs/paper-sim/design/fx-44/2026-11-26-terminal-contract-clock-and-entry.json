@@ -1,0 +1,172 @@
+{
+  "item": "FX-44 field prerequisites / FX-40 preparation",
+  "source_comparison": {
+    "prescope_sha256": "aa7cd285683771abd3a7e2b99e5ac3b283d921ad28d67383e493623869007ee6",
+    "prior_commit": "601d512778ef01ce1b9cbaa23130ae2bd15740cb",
+    "candidate_commit": "01bc86f0754fc25617bd93278138b0b136ff0e90",
+    "request_count": 1,
+    "formal_window_runs": 0,
+    "simulated_or_real_entries": 0,
+    "fetched_utc": "2026-11-26T10:19:23.779407+00:00",
+    "private_snapshot": {
+      "digest": "c964ce1cd7fc4e962b2722b6cb6f075f925dae81c18635982c25d236db1d5a06",
+      "bytes": 117564,
+      "registered_and_exact_readback": true,
+      "backend": "private local PostgreSQL 18 using the project snapshots API and original table constraints",
+      "running_after_check": false
+    },
+    "observed_counts": {
+      "events": 7,
+      "market_objects": 27,
+      "terminal_eth_questions": 11,
+      "eligible_for_contract_comparison": 11,
+      "old_strict_full_rule": 0,
+      "candidate_strict_full_rule": 11,
+      "candidate_checked_contract_and_clock": 11,
+      "quoted_time_equals_listing_end": 11,
+      "seen_before_candle_open": 11
+    },
+    "full_contract_reasons": {
+      "prior": {
+        "papersim_prepare_crypto_contract_terms_unproved": 11
+      },
+      "candidate": {}
+    },
+    "actual_url_classifications": {
+      "official_source_with_matching_ETH_USDT_path": 11,
+      "query_absent": 11
+    },
+    "status": "measured"
+  },
+  "comparison_selected_at_utc": "2026-11-26T10:17:48.016353+00:00",
+  "field_scope": "One public Gamma response, checked against the complete prior and revised terms and decision time. This comparison requested no books, did not fit a model, and opened no entry.",
+  "historical_ethereum_window": {
+    "scan_candidates": 88,
+    "entries": 0,
+    "reasons": {
+      "papersim_prepare_book_asks_missing": 14,
+      "papersim_prepare_model_materials_missing": 74
+    },
+    "reruns": 0,
+    "limitation": "The 74 rows retain an aggregate missing-materials reason. A pre-existing independent first-page read counted 66 matching terminal questions and zero exact rules. The historical records do not bind the later compatibility finding to all 74."
+  },
+  "candidate_test_results": {
+    "preparation_and_contract_modules": [
+      160,
+      0,
+      0
+    ],
+    "model_and_price_adapter_modules": [
+      100,
+      0,
+      0
+    ],
+    "isolated_native_postgres_existing_B2_B3": [
+      1,
+      0,
+      0
+    ],
+    "count_order": [
+      "passed",
+      "failed",
+      "skipped"
+    ],
+    "baseline_positive_regression_failure": 1,
+    "test_weakening": {
+      "removed": 0,
+      "fewer_assertions": 0,
+      "new_skips": 0,
+      "new_xfails": 0
+    },
+    "address_diff_new_files": 0,
+    "diff_check": "pass"
+  },
+  "combined_source_commit": "79adcfaa599dc41c62e59e2c1cc5068112cf7aef",
+  "isolated_postgresql": {
+    "existing_baseline_passed": 7,
+    "crypto_candidate_cross_passed": 2,
+    "integrated_cross_passed": 4,
+    "quote_boundaries_verified": [
+      "prepared input digest",
+      "captured batch digest",
+      "candidate and entry IDs independently read in SQL",
+      "one-based sequence and original response SHA-256",
+      "same condition and bought token",
+      "source observation",
+      "receipt time for that exact request",
+      "decision cutoff",
+      "event boundary",
+      "bid and ask values",
+      "persisted candidate mark"
+    ],
+    "crypto_with_synthetic_news": {
+      "candidates": 2,
+      "entries": 1,
+      "marks": 1,
+      "buy_side": "NO",
+      "source_sequence": 3,
+      "bid": 0.34,
+      "ask": 0.38
+    },
+    "crypto_without_news": {
+      "candidates": 2,
+      "entries": 0,
+      "missing_news": 2
+    },
+    "soccer_registered_fixture": {
+      "candidates": 4,
+      "entries": 0
+    },
+    "soccer_named_split_outcomes": {
+      "candidates": 0,
+      "entries": 0,
+      "coverage_verified_from_original": true
+    }
+  },
+  "real_entry_inputs_outstanding": "Eleven later observations established live contract wording and future clocks. No target-bound genuine news assessment and source snapshots registered by cutoff were available. The managed reader supports this evidence, while the sole in-tree record producer is the synthetic fixture. Public books, allowable ages and price history still require checking on the eventual formal window.",
+  "other_football_markets": {
+    "queue_in_prior_prospective_sports_window": "club-soccer/over_under",
+    "other_market_rows": 55,
+    "other_rows_with_label_projection": 37,
+    "other_rows_without_contract_fields": 18,
+    "other_rows_confirmed_eligible": 0,
+    "raw_market_types_overlapping_other_product_families_with_missing_terms": {
+      "moneyline": 3,
+      "spreads": 10,
+      "both_teams_to_score": 1
+    }
+  },
+  "measurement_correction": "A preliminary harness hashed its source after the subprocess completed and reported the subsequent probe revision. The exact-source rerun in crypto-cross-confirmed-01bc86f0.json and the four integrated tests hash the copied program before launch. The preliminary receipt is excluded from the cited check results.",
+  "formal_utc_days_contributed": 0,
+  "original_receipt_sha256": {
+    "fx44-crypto-source-clock-prescope.json": "aa7cd285683771abd3a7e2b99e5ac3b283d921ad28d67383e493623869007ee6",
+    "fx44-crypto-source-clock-live-next.json": "e9f76d5d1ff98974821e916d76bc6d1d8f1c0495df29dbb5826bfbd5973d2c6a",
+    "fx44-crypto-preparation-next.json": "2c566afda2ba70ecd09efaead11ce629b47e0991d0bf42a7d669f52a7cf716be",
+    "cross-integrated-79adcfaa.json": "f07992f60a765c88d5449dd57a3d56649645ed3c2b0b70a4cbf5972604e749f1",
+    "cross-market-acceptance-reconciliation.json": "0ff36d855e22c167d3716ae2626253962db69acff2f8bc3ca10d27a6ea82941e",
+    "crypto-live-window-preconditions-01bc86f0.json": "98c7ef0b8394ad72dbcedb706d8798a0e156c8ee13eb912df6be4de6e01f6ae7",
+    "official-league-other-market-readback.json": "5e54d91c8d085f69699581edc0701bfb65cace8d8422e0091017df69d164bc03",
+    "integrated-contract-preparation-native.json": "9e5481b42f6d53f07d4598e43ef2f7304d41827567345310a5679901ea304dd9",
+    "integrated-contract-preparation-offline.json": "f3b9465b0859d94b17454883f0e3781cfe3a9dc75752755f7ed47ca169e85e41"
+  },
+  "integrated_regression": {
+    "exact_source": "79adcfaa599dc41c62e59e2c1cc5068112cf7aef",
+    "native_module": [
+      "tests/test_papersim_prepared_scan_native.py"
+    ],
+    "native_counts": {
+      "collection_errors": 0,
+      "deselected": 0,
+      "passed": 12,
+      "receipts": 0,
+      "rejected_receipts": 0,
+      "selected": 12
+    },
+    "offline_modules": [
+      "tests/test_papersim_prepare_inputs.py",
+      "tests/test_papersim_unbound_soccer_totals.py"
+    ],
+    "offline_result": "49 passed in 6.98s",
+    "cross_module_fixture_cases": 4
+  }
+}
