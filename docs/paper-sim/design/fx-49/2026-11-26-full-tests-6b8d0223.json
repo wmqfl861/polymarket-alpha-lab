@@ -1,0 +1,53 @@
+{
+  "tested_main_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+  "runner_sha256": "059d51c1fcaff654cf573045fcce7383ab9fa0781f678f54deda8c5621c13f08",
+  "scope": "full default collection; no file filter, deselection or xfail override",
+  "execution": "Separate clean checkouts with isolated networking. The native run used a disposable project PostgreSQL cluster.",
+  "both_passed": false,
+  "runs": [
+    {
+      "profile": "offline",
+      "source_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "postgres_version": null,
+      "pytest_started_utc": "2026-11-26T14:56:40+00:00",
+      "pytest_finished_utc": "2026-11-26T16:02:48+00:00",
+      "counts": {
+        "passed": 44190,
+        "skipped": 496,
+        "failed": 0,
+        "errors": 0
+      },
+      "collected": 44686,
+      "exit_code": 0,
+      "harness_exit": 0,
+      "receipt_sha256": "8eecc785133b0cd65f53ce59e69bef1112685613239d0242ac585ef0010386bc"
+    },
+    {
+      "profile": "native",
+      "source_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "postgres_version": "postgres (PostgreSQL) 18.6 (Ubuntu 18.6-1.pgdg24.04+2)",
+      "pytest_started_utc": "2026-11-26T14:56:44+00:00",
+      "pytest_finished_utc": "2026-11-26T18:16:40+00:00",
+      "counts": {
+        "passed": 44582,
+        "skipped": 93,
+        "failed": 11,
+        "errors": 0
+      },
+      "collected": 44686,
+      "exit_code": 1,
+      "harness_exit": 1,
+      "receipt_sha256": "ab9873cae221ac7d29e1b96805d4884c316596dd52bb61ab7a4dc18a9beb769a",
+      "native_module_counts": {
+        "passed": 477,
+        "skipped": 17,
+        "failed": 7,
+        "errors": 0
+      }
+    }
+  ]
+}
