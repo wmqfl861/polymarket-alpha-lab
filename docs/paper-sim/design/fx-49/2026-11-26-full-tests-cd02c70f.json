@@ -1,0 +1,133 @@
+{
+  "tested_main_commit": "cd02c70f347f704fa8902346d9772ea779559657",
+  "runner_sha256": "8ce3e4bf7fb24064dc4c48c9f149bac0f8a8d0431aec47d47610bf5f831f7611",
+  "scope": "full default collection; no file filter, deselection or xfail override",
+  "pytest_argv_template": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "--tb=no",
+    "-o",
+    "cache_dir=<temporary-cache>",
+    "--junitxml=<temporary-file>"
+  ],
+  "reproduction": {
+    "common": "Run in two independent clean checkouts of the recorded commit using the recorded Python and pytest versions. The runner installs the package editable, exposes the two frozen Git objects, and verifies OpenSSL public configuration. Each process has its own disposable network, process and mount namespaces with private loopback only; no production database is used.",
+    "offline": "Supply the installed PostgreSQL 18 software directory via POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX so unmarked tests may start and stop their own isolated cluster. Leave native-suite opt-ins unset and do not start a shared outer database.",
+    "native": "Supply the same software, start a fresh project PostgreSQL cluster in the private network namespace, verify private loopback TCP and Unix-socket transports, and prepare the sealed project/legacy schema. Enable the existing native PostgreSQL, backup and distribution suite opt-ins.",
+    "reported_skips": "Counts are taken from the original pytest reports under the established profile opt-ins."
+  },
+  "previous_evidence": {
+    "source_commit": "206192c50631823fe940783211ad244b3ab70f11",
+    "runner_sha256": "7d8fc5d33820fd9b390d0c7445fab381c02bc6349caf05b269cf557ae2f195fe",
+    "publication": "d95d971ce855d69247af1a3be06e91b11b1450f7",
+    "repository_path": "docs/paper-sim/design/fx-49/2026-11-26-full-tests-206192c5.json",
+    "sha256": "67ec881f6989917055f60a596e97c0da08be281585902273f92171c3cbc334d8",
+    "both_passed": false,
+    "earlier_full_runs": {
+      "source_commit": "6b8d02236aa70578e620ae34d06f52f2e433bda9",
+      "runner_sha256": "059d51c1fcaff654cf573045fcce7383ab9fa0781f678f54deda8c5621c13f08",
+      "publication_commit": "804310a17e29b7227e6792153688fd6f8cd7a39a",
+      "evidence_path": "docs/paper-sim/design/fx-49/2026-11-26-full-tests-6b8d0223.json",
+      "both_passed": false
+    }
+  },
+  "offline_local_cluster_qualification": {
+    "source_commit": "206192c50631823fe940783211ad244b3ab70f11",
+    "test_name": "tests/test_papersim_capture_marks_native.py::test_register_close_window_through_managed_cli",
+    "cases": [
+      {
+        "profile": "control",
+        "counts": {
+          "passed": 0,
+          "skipped": 0,
+          "failed": 0,
+          "errors": 1
+        },
+        "raw_sha256": "9486294c49f25bc8e662d0f292df765df9b92f440be381ac827e259114dd70e1"
+      },
+      {
+        "profile": "prefix",
+        "counts": {
+          "passed": 1,
+          "skipped": 0,
+          "failed": 0,
+          "errors": 0
+        },
+        "raw_sha256": "ab966003e6e672a53a49fd198cdacc65786f4283afd7b4026be12a0f20e6d023"
+      }
+    ],
+    "change": "The offline process now receives the mounted PostgreSQL software directory. The test starts and stops its own disposable cluster. The shared outer database and native opt-in flags remain disabled in this profile."
+  },
+  "both_passed": true,
+  "runs": [
+    {
+      "profile": "offline",
+      "pytest_started_utc": "2026-11-26T22:20:18+00:00",
+      "pytest_finished_utc": "2026-11-26T23:28:14+00:00",
+      "collected": 44697,
+      "counts": {
+        "passed": 44198,
+        "skipped": 499,
+        "failed": 0,
+        "errors": 0
+      },
+      "exit_code": 0,
+      "harness_exit": 0,
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "postgres_version": null,
+      "passed": true,
+      "raw_sha256": "cb9ca493a4bcaab12dc2b6759a6c4c8bbd0a96a1d0bb43bbca5903a9ef3e516b",
+      "offline_fixture_software": {
+        "binary_prefix_available": true,
+        "external_network": false,
+        "shared_outer_cluster": false,
+        "native_suite_opt_in": false
+      }
+    },
+    {
+      "profile": "native",
+      "pytest_started_utc": "2026-11-26T22:20:22+00:00",
+      "pytest_finished_utc": "2026-11-27T01:38:20+00:00",
+      "collected": 44697,
+      "counts": {
+        "passed": 44604,
+        "skipped": 93,
+        "failed": 0,
+        "errors": 0
+      },
+      "exit_code": 0,
+      "harness_exit": 0,
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "postgres_version": "postgres (PostgreSQL) 18.6 (Ubuntu 18.6-1.pgdg24.04+2)",
+      "passed": true,
+      "raw_sha256": "039e4142490a1007e7f6ff588d3276c7485b1a5d5598c58d95657270c83aab2e",
+      "native_environment": {
+        "new_empty_cluster": true,
+        "only_loopback_interface": true,
+        "unix_socket_verified": true,
+        "private_loopback_tcp_verified": true,
+        "native_project_opt_in": true,
+        "backup_opt_in": true,
+        "distribution_opt_in": true
+      },
+      "native_named_module_counts": {
+        "passed": 488,
+        "skipped": 17,
+        "failed": 0,
+        "errors": 0
+      },
+      "native_proof_status": "verified executed test cases",
+      "passing_database_module_examples": {
+        "test_papersim_report_store_native": 42,
+        "test_papersim_store_native": 38,
+        "test_project_postgres_backup_native": 2,
+        "test_project_postgres_distribution_native": 1,
+        "test_project_postgres_native": 1
+      }
+    }
+  ]
+}
