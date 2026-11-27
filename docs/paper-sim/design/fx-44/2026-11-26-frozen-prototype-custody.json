@@ -1,0 +1,39 @@
+{
+  "checked_utc": "2026-11-26T23:43:48+00:00",
+  "registered_public_prototype": {
+    "sha256": "3b86ee3ae8d8e9de0becaa360004405337db9c3b19742be72ba7d1954d56f145",
+    "lines": 1081
+  },
+  "custody_search": {
+    "retained_remote_heads_and_tags": 179,
+    "local_worktrees_with_index_checked": 143,
+    "file_versions_in_retained_refs": 3,
+    "file_versions_including_local_reflogs": 4,
+    "separate_project_verification_volume_examined": true,
+    "registered_prototype_matched_in_scope": false
+  },
+  "recovered_preflight_test_receipts": [
+    {
+      "test": "tests/test_papersim_d1compare_frozenrun.py::test_managed_frozen_preflight_cli_receipts_replay_faults_and_zero_writes",
+      "tested_commit": "39c6c2e6fa5096dd0442301ef519a66fd244f0b0",
+      "at_utc": "2026-11-21T00:39:12.280306+00:00",
+      "result": "passed",
+      "sha256": "6692dbb3ba59e23e74817082257e90b0f3c694487fa745936c9049d098f64f6c"
+    },
+    {
+      "test": "tests/test_papersim_d1compare_frozenrun.py::test_preflight_and_borrowed_archives_refuse_cross_instance_inputs",
+      "tested_commit": "39c6c2e6fa5096dd0442301ef519a66fd244f0b0",
+      "at_utc": "2026-11-21T00:41:29.310932+00:00",
+      "result": "passed",
+      "sha256": "f18857bc8029759329a3559152357aec555a5e0cddf95c46bd0f4b555d7b20aa"
+    }
+  ],
+  "formal_credit": {
+    "eligible_days": 0,
+    "required_days": 7,
+    "complete_historical_cases": 0,
+    "required_cases": 4
+  },
+  "scope": "Only project public-source custody and original preflight test records were examined. Formal execution needs the registered isolated executor, the designated project instance, its actual queue and a prospective schedule.",
+  "detailed_search_receipt_sha256": "a2912296cf67d63cd40fce0da07b601cdc977613b8ac904be43fd6baa4a20100"
+}

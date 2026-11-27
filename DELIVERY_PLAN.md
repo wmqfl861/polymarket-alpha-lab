@@ -4705,7 +4705,7 @@ FX-42 已登记 36 条原件和 1 条脱敏公开件。另有 90 条具名原件
 
 - OD-Z 同意先切换。通用远程通道可执行的操作比固定入口更宽。机主知悉这一剩余风险。以后可采用专用受限运行身份和只接受固定投递请求的执行入口。
 - OD-AA 使用系统 Windows PowerShell，按文件运行固定脚本，每次调用仅对该进程指定 `RemoteSigned`。脚本固定为 `e86beca8f4073da75a8bc1cd3aeef3e85230417c0b19f9424432e79baa7998c6`。
-- OD-M 由机主本人在仓库 Settings → Rules → Rulesets 为 `main` 和 `handoff/**` 开启禁止删除、禁止强推。17:07:59 UTC，GitHub 的分支生效规则接口对 `main` 和本轮交接分支均返回零条规则。22:34:47 UTC 再次只读查询，两条分支仍各为零条。[首次读回](docs/paper-sim/design/fx-36/2026-11-26-effective-branch-protection.json) · [GitHub 设置入口](https://github.com/wmqfl861/polymarket-alpha-lab/settings/rules)
+- OD-M 由机主本人在仓库 Settings → Rules → Rulesets 为 `main` 和 `handoff/**` 开启禁止删除、禁止强推。17:07:59 UTC，GitHub 的分支生效规则接口对 `main` 和本轮交接分支均返回零条规则。22:34:47 UTC 再次只读查询，两条分支仍各为零条。23:52:55 UTC，GitHub 分支信息同时显示两条分支均为未保护，生效规则数仍为零。[首次读回](docs/paper-sim/design/fx-36/2026-11-26-effective-branch-protection.json) · [GitHub 设置入口](https://github.com/wmqfl861/polymarket-alpha-lab/settings/rules)
 - OD-AB 已按机主确认，在根规则末尾补入交接包第 2 节的完整成稿。
 
 北京时间 11 月 26 日 20:59:16，原外部测点只连接一次，登录入口可达。21:00:06，以现有权限读取登录服务生效策略，普通账户可单独用口令登录，特定账户仅允许公钥。已即时报告机主。第二个数据库入口的现有限制依赖容器发布后才能读到的实时清单，服务启动时发布可能早于保护，窗口时长未实测。建议把相同范围的规则独立持久加载，并让发布等待其核验成功，再从原测点复查。[登录可达性](docs/paper-sim/design/fx-36/2026-11-26-login-tcp.json) · [生效策略](docs/paper-sim/design/fx-36/2026-11-26-login-policy.json) · [第二条限制的启动依赖](docs/paper-sim/design/fx-36/2026-11-26-second-restriction-order.json)
@@ -5047,3 +5047,5 @@ OD-Y 按推荐执行。FX-48 先登记运行版本、定时状态和研究与账
 FX-40 计划已授权协调者在现有研究范围内制定新限额并登记理由。现有 ETH、英超盘口可以算出数据从来源到收妥经历的时间。要测出使用时的两种报价年龄，还需要当次 B1 决策或 D1 取价截点。正式计日须能核实项目实例和自然 D1 调度。19:03 UTC 核对本机七处常见项目及部署位置，只匹配到已清点的一个检出，未发现另一套带受管数据库标记的项目检出。[FX-40 已登记的取值权限和依据](docs/paper-sim/design/fx-40/plan-v3.md) · [已有队列与调度清点](docs/paper-sim/design/fx-44/2026-11-26-book-age-policy-custody.json)
 
 `ea06c203` 修复 `run-frozen` 和 `run-new` 对五个授权字段的读取。原先 JSON 的 `null`、布尔值、数字、数组和对象会被转成非空文本。现在这些值在执行前被拒绝，原来的合法文本和缺项行为均已复核。该模块 78 项离线用例及 2 项隔离 PostgreSQL 预检全部通过。冻结旧侧 Path L 的算法只读运行，本身不记现金。即使字段齐全，正式入口目前仍返回 `frozen_run_executor_not_wired`。FX-44 要求封存的是正式生效时受管实例中实际存在的旧成员，包含符合条件的待处理回执。[修复、逐项测试和执行边界](docs/paper-sim/design/fx-44/2026-11-26-d1-authorization-and-execution.json)
+
+登记的 1,081 行冻结执行原型在本项目 179 个留存分支和标签、143 个工作树及其索引、Git 本地引用日志和两处项目验证卷内均未找到。另找回 `39c6c2e6` 的两份 PostgreSQL 预检通过原件。正式运行仍待已验证的隔离执行入口、指定实例及其真实队列和排程。[查找范围与原件摘要](docs/paper-sim/design/fx-44/2026-11-26-frozen-prototype-custody.json)
