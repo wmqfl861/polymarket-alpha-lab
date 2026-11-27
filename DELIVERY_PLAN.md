@@ -5002,6 +5002,8 @@ PR #114 最终头 `9647a3ef68c18e5fd5356aeb81bf8df06976a433` 的 GitHub 合并�
 
 `BASIS_POINTS` 取 50、100、150，按分向下取整，金额再取剩余现金与应付金额的较小值。同一代次的期初只登记一次。上述比例和排名以已提交的 `sports_portfolio.py` 为凭。[金额与结算实现](https://github.com/wmqfl861/polymarket-alpha-lab/blob/bcce1b17f7263ab89859febfcb56188c295ab371/docs/paper-sim/runtime/scripts/sports_portfolio.py)
 
+2026-11-27 起，足球、篮球的人民币正式模拟单和零元关注按有正数挂量的最低有效卖价取价，记录 `price_basis=best_ask`，用含费成本估算整笔份额。盘口深度退出日常模拟定价，前向研究及正式晋级沿用已登记口径。源码基线、八个调用端、校验值、复跑命令与已知测试缺口见[小额模拟定价交接](docs/handoffs/2026-11-27-sports-paper-pricing.md)。
+
 ### 88.3 版本、来源与后续归并
 
 | 模型或研究 | 版本和来源 | 适用范围 |
