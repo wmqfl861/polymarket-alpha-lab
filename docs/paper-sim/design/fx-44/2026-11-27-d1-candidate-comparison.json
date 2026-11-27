@@ -1,0 +1,251 @@
+{
+  "started_utc": "2026-11-27T02:01:39.081244+00:00",
+  "finished_utc": "2026-11-27T02:02:33.041198+00:00",
+  "commits": {
+    "baseline": "33ede2bfd9aa6e07842ecdd410f36728586428bf",
+    "candidate": "dfd43b473865dfbf25415d130b6b75177626387c"
+  },
+  "cases": {
+    "baseline": {
+      "gate_absent": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 2,
+        "compared_fields": 2,
+        "identical_rows": 1,
+        "report_sha256": "276ba57a83f81a94bf90daddc7bd24ff68bb9308673beaf4617a5fe46e55aa6b",
+        "nonfinite_in_json": false
+      },
+      "gate_null": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 1,
+        "compared_fields": 1,
+        "identical_rows": 1,
+        "report_sha256": "7a8670250fa3c2c0b2dd3f76952baba0541cf025b3d604233dad0abe01d329ab",
+        "nonfinite_in_json": false
+      },
+      "gate_empty_object": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 1,
+        "compared_fields": 1,
+        "identical_rows": 1,
+        "report_sha256": "a2648453b0eb95a67f806709d7a18649d44d863205c828597c621535a325400a",
+        "nonfinite_in_json": false
+      },
+      "gate_known_values": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 2,
+        "compared_fields": 2,
+        "identical_rows": 1,
+        "report_sha256": "c672857b11f2a0273c65016ffda22adebca6e077b6352f62af2f6096592905fc",
+        "nonfinite_in_json": false
+      },
+      "gate_empty_array": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 0,
+        "identical_rows": 0,
+        "report_sha256": "d5f61575c4772d5edc9849da7c33b1ddc4f143711d7eee074b9177e107ea76db",
+        "nonfinite_in_json": false
+      },
+      "gate_false": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 0,
+        "identical_rows": 0,
+        "report_sha256": "d5f61575c4772d5edc9849da7c33b1ddc4f143711d7eee074b9177e107ea76db",
+        "nonfinite_in_json": false
+      },
+      "gate_zero": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 0,
+        "identical_rows": 0,
+        "report_sha256": "d5f61575c4772d5edc9849da7c33b1ddc4f143711d7eee074b9177e107ea76db",
+        "nonfinite_in_json": false
+      },
+      "gate_empty_string": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 0,
+        "identical_rows": 0,
+        "report_sha256": "d5f61575c4772d5edc9849da7c33b1ddc4f143711d7eee074b9177e107ea76db",
+        "nonfinite_in_json": false
+      },
+      "exponent_overflow": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 2,
+        "compared_fields": 2,
+        "identical_rows": 1,
+        "report_sha256": "db49534e6e53edd00be4d4f1ae2afa8932f6a4df3cc5797631a6f20a14009c9b",
+        "nonfinite_in_json": true
+      },
+      "integer_overflow": {
+        "exit": 1,
+        "report_emitted": false,
+        "gate_shape_refusal": false
+      },
+      "signed_infinity": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 2,
+        "compared_fields": 2,
+        "identical_rows": 1,
+        "report_sha256": "ee249e9a64c92f6d74a7a211f631a387b0a91b1e7a7a1e256602841bbe708d96",
+        "nonfinite_in_json": true
+      },
+      "nan": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 2,
+        "identical_rows": 0,
+        "report_sha256": "354751a1bbfa23e1600e652e2929f485b567083c5d72b3da48609dda6517ccaa",
+        "nonfinite_in_json": true
+      }
+    },
+    "candidate": {
+      "gate_absent": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 2,
+        "compared_fields": 2,
+        "identical_rows": 1,
+        "report_sha256": "276ba57a83f81a94bf90daddc7bd24ff68bb9308673beaf4617a5fe46e55aa6b",
+        "nonfinite_in_json": false
+      },
+      "gate_null": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 1,
+        "compared_fields": 1,
+        "identical_rows": 1,
+        "report_sha256": "7a8670250fa3c2c0b2dd3f76952baba0541cf025b3d604233dad0abe01d329ab",
+        "nonfinite_in_json": false
+      },
+      "gate_empty_object": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 1,
+        "compared_fields": 1,
+        "identical_rows": 1,
+        "report_sha256": "a2648453b0eb95a67f806709d7a18649d44d863205c828597c621535a325400a",
+        "nonfinite_in_json": false
+      },
+      "gate_known_values": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 2,
+        "compared_fields": 2,
+        "identical_rows": 1,
+        "report_sha256": "c672857b11f2a0273c65016ffda22adebca6e077b6352f62af2f6096592905fc",
+        "nonfinite_in_json": false
+      },
+      "gate_empty_array": {
+        "exit": 2,
+        "report_emitted": false,
+        "gate_shape_refusal": true
+      },
+      "gate_false": {
+        "exit": 2,
+        "report_emitted": false,
+        "gate_shape_refusal": true
+      },
+      "gate_zero": {
+        "exit": 2,
+        "report_emitted": false,
+        "gate_shape_refusal": true
+      },
+      "gate_empty_string": {
+        "exit": 2,
+        "report_emitted": false,
+        "gate_shape_refusal": true
+      },
+      "exponent_overflow": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 0,
+        "identical_rows": 0,
+        "report_sha256": "d5f61575c4772d5edc9849da7c33b1ddc4f143711d7eee074b9177e107ea76db",
+        "nonfinite_in_json": false
+      },
+      "integer_overflow": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 0,
+        "identical_rows": 0,
+        "report_sha256": "d5f61575c4772d5edc9849da7c33b1ddc4f143711d7eee074b9177e107ea76db",
+        "nonfinite_in_json": false
+      },
+      "signed_infinity": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 0,
+        "identical_rows": 0,
+        "report_sha256": "d5f61575c4772d5edc9849da7c33b1ddc4f143711d7eee074b9177e107ea76db",
+        "nonfinite_in_json": false
+      },
+      "nan": {
+        "exit": 0,
+        "report_emitted": true,
+        "agreement_fields": 0,
+        "compared_fields": 0,
+        "identical_rows": 0,
+        "report_sha256": "d5f61575c4772d5edc9849da7c33b1ddc4f143711d7eee074b9177e107ea76db",
+        "nonfinite_in_json": false
+      }
+    }
+  },
+  "byte_identical_valid_cli_cases": 4,
+  "cli_cases_per_source": 12,
+  "baseline_regression_pytest": {
+    "passed": 13,
+    "failed": 9,
+    "errors": 0,
+    "skipped": 0,
+    "exit": 1
+  },
+  "candidate_pytest": {
+    "selectors": [
+      "tests/test_papersim_d1compare_diff.py",
+      "tests/test_papersim_d1compare_frozenrun.py::test_operator_parser_accepts_documented_shapes",
+      "tests/test_papersim_d1compare_frozenrun.py::test_run_cli_rejects_non_text_gate_evidence",
+      "tests/test_papersim_d1compare_frozenrun.py::test_run_frozen_cli_accepts_text_records_up_to_the_existing_executor_gate"
+    ],
+    "passed": 35,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "exit": 0,
+    "python": "Python 3.12.3",
+    "pytest": "pytest 9.1.1"
+  },
+  "database_connections": 0,
+  "frozen_worker_executions": 0,
+  "formal_days": 0,
+  "source_receipt_sha256": "ecd6983e001e829186a9425485e423401f3502a297e401fdda5c2eab52584645",
+  "coordinator_offline_regression": {
+    "modules": [
+      "tests/test_papersim_d1compare_diff.py",
+      "tests/test_papersim_d1compare_journal.py",
+      "tests/test_papersim_d1compare_packbuild.py",
+      "tests/test_papersim_d1compare_frozenrun.py"
+    ],
+    "passed": 241,
+    "skipped": 5,
+    "failed": 0,
+    "errors": 0,
+    "exit_code": 0
+  }
+}
