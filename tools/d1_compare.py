@@ -486,7 +486,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return args.handler(args)
-    except d1_frozenrun.FrozenRunError as error:
+    except (d1_frozenrun.FrozenRunError, d1_diff.DiffError) as error:
         print(f"d1_compare: {args.command} refused: {error}", file=sys.stderr)
         return 2
     except OSError as error:

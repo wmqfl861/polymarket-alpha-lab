@@ -10,6 +10,8 @@ construction; comparator equality is never fabricated.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from polymarket_alpha_lab.papersim.d1compare import diff
@@ -67,6 +69,53 @@ def test_row_from_mapping_is_strict_about_gate_values() -> None:
              "gate_outcomes": {"a": "maybe"}}, provenance="x")
     with pytest.raises(diff.DiffError):
         diff.row_from_mapping({"side": "no", "kind": "ml"}, provenance="x")
+
+
+@pytest.mark.parametrize("outcomes", [False, 0, "", []])
+def test_row_from_mapping_refuses_non_object_gate_evidence(outcomes) -> None:
+    with pytest.raises(diff.DiffError, match="gate_outcomes must be an object"):
+        diff.row_from_mapping({"market_id": "m", "side": "no", "kind": "ml",
+                               "gate_outcomes": outcomes}, provenance="left")
+
+
+@pytest.mark.parametrize("value", ["NaN", "Infinity", "-Infinity", "1e400", 10**400])
+def test_unrepresentable_numbers_do_not_contribute_agreement(value) -> None:
+    raw = {"market_id": "m", "side": "no", "kind": "ml",
+           "stake_usd": value, "quote": value}
+    left = diff.row_from_mapping(raw, provenance="left")
+    right = diff.row_from_mapping(raw, provenance="right")
+    report = diff.diff_day([left], [right])
+    assert left.stake_usd is None
+    assert left.quote is None
+    assert {"stake_usd", "quote"} <= set(report.rows[0].unknown_fields)
+    assert report.compared_fields == 0
+    assert report.identical_rows == 0
+
+
+def test_diff_cli_refuses_invalid_gate_shape_without_writing_report(tmp_path, capsys) -> None:
+    from tools import d1_compare
+
+    source = tmp_path / "candidates.json"
+    source.write_text(json.dumps([{"market_id": "m", "side": "no", "kind": "ml",
+                                   "gate_outcomes": []}]), encoding="utf-8")
+    target = tmp_path / "report.json"
+    result = d1_compare.main(["diff", "--path-l", str(source), "--path-n", str(source),
+                              "--out", str(target)])
+    assert result == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "diff refused: diff_row_invalid" in captured.err
+    assert not target.exists()
+
+
+def test_row_from_mapping_keeps_zero_and_nullable_gate_evidence() -> None:
+    raw = {"market_id": "m", "side": "no", "kind": "ml", "stake_usd": 0,
+           "quote": "0.0", "gate_outcomes": None}
+    left = diff.row_from_mapping(raw, provenance="left")
+    right = diff.row_from_mapping(raw, provenance="right")
+    report = diff.diff_day([left], [right])
+    assert left.gate_outcomes == {}
+    assert report.compared_fields == report.agreement_fields == 2
 
 
 # ---------------------------------------------------------------------------

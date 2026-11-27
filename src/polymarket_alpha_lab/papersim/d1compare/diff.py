@@ -34,6 +34,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+import math
 from typing import Any
 
 __all__ = [
@@ -150,7 +151,9 @@ def row_from_mapping(raw: Mapping[str, Any], *, provenance: str) -> ComparatorCa
     """
     if not isinstance(raw, Mapping):
         raise DiffError("diff_row_invalid", "object required")
-    gates_raw = raw.get("gate_outcomes") or {}
+    gates_raw = raw.get("gate_outcomes")
+    if gates_raw is None:
+        gates_raw = {}
     if not isinstance(gates_raw, Mapping):
         raise DiffError("diff_row_invalid", "gate_outcomes must be an object")
     gates: dict[str, bool | None] = {}
@@ -164,9 +167,10 @@ def row_from_mapping(raw: Mapping[str, Any], *, provenance: str) -> ComparatorCa
         if value is None or isinstance(value, bool):
             return None
         try:
-            return float(value)
-        except (TypeError, ValueError):
+            parsed = float(value)
+        except (TypeError, ValueError, OverflowError):
             return None
+        return parsed if math.isfinite(parsed) else None
 
     def _text(value: Any) -> str | None:
         if value is None:
