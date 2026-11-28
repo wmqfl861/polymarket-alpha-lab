@@ -1,0 +1,44 @@
+{
+  "tested_commit": "b041e7ef7df9cbbd0e389ccfde71571157ece73c",
+  "selector": "tests/test_papersim_capture_marks_native.py::test_register_close_window_through_managed_cli",
+  "change": "Applied the same opt-in condition as the other eight uses of the fixture. Assertions and test body are unchanged.",
+  "runs": {
+    "offline": {
+      "pytest_started_utc": "2026-11-28T08:03:57+00:00",
+      "pytest_finished_utc": "2026-11-28T08:04:00+00:00",
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "postgres_version": null,
+      "postgres_software_directory_provided": false,
+      "counts": {
+        "passed": 0,
+        "skipped": 1,
+        "failed": 0,
+        "errors": 0
+      },
+      "exit_code": 0,
+      "fx59_case": "skipped",
+      "receipt_sha256": "be879f7d0683731a7eac7f3cc2bfd874e5fc80430c011951d7d94aa06c0e8a74"
+    },
+    "native": {
+      "pytest_started_utc": "2026-11-28T08:04:05+00:00",
+      "pytest_finished_utc": "2026-11-28T08:04:46+00:00",
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "postgres_version": "postgres (PostgreSQL) 18.6 (Ubuntu 18.6-1.pgdg24.04+2)",
+      "postgres_software_directory_provided": true,
+      "counts": {
+        "passed": 1,
+        "skipped": 0,
+        "failed": 0,
+        "errors": 0
+      },
+      "exit_code": 0,
+      "fx59_case": "passed",
+      "receipt_sha256": "d78f8fa3f44e003955b68bffa1c59810aeee6794d38258a4a48381cebd058e58"
+    }
+  },
+  "setup_observations": [
+    "One qualification run selected the operating system's split PostgreSQL installation rather than the portable prefix. The missing shared installation files caused a fixture setup error. The corrected full binary/library/share prefix completed the test."
+  ]
+}
