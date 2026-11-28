@@ -1,0 +1,58 @@
+# Offline suite run by the auditor on the reviewed main (2026-11-28)
+# Environment: see make_test_env.sh and run_offline_suite.sh; no database, no network use by the tests.
+
+== run
+label=head commit=eaf6e8149f83a708d09158529ec774f4fbed8b9d python=3.12.3 pytest=9.1.1
+start=2026-11-28T07:01:41Z end=2026-11-28T07:24:14Z exit=1
+tracked files changed by the run: 0
+last line of the pytest output: 44410 passed, 521 skipped, 38 warnings, 1 error in 1338.16s (0:22:18)
+
+== the one error
+tests/test_papersim_capture_marks_native.py::test_register_close_window_through_managed_cli
+failed on setup with "KeyError: 'POLYMARKET_ALPHA_LAB_NATIVE_PG_PREFIX'" (fixture d1_capture_project, line 513).
+The fixture needs the directory of an installed PostgreSQL. The eight other tests that use this fixture carry the
+marker _D1_NATIVE and are skipped in this environment; this test, added by 48b341a4, carries no marker.
+
+== comparison with the run on the previous baseline 9a64415a (junit_compare.py; it counts the error as "failed")
+base: 44615 cases; passed 44102, skipped 513, failed 0
+head: 44932 cases; passed 44410, skipped 521, failed 1
+cases only at head: 322 ([('passed', 313), ('skipped', 8), ('failed', 1)])
+cases only at base: 5 ([('passed', 5)])
+cases in both whose outcome changed: 0
+per test file (cases only at head as +outcome, only at base as -outcome):
+    tests/test_fx49_hermes_media.py: +passed 5
+    tests/test_fx49_local_route_registration.py: +passed 36
+    tests/test_fx49_notification_entry.py: +passed 20
+    tests/test_fx49_weixin_delivery.py: +passed 17, -passed 5
+    tests/test_papersim_capture_marks.py: +passed 29
+    tests/test_papersim_capture_marks_native.py: +failed 1, +skipped 3
+    tests/test_papersim_close_registration.py: +passed 2
+    tests/test_papersim_d1compare_diff.py: +passed 11
+    tests/test_papersim_d1compare_frozenrun.py: +passed 12
+    tests/test_papersim_euro_soccer_end_to_end_native.py: +skipped 1
+    tests/test_papersim_euro_soccer_markets.py: +passed 34
+    tests/test_papersim_euro_soccer_model.py: +passed 17
+    tests/test_papersim_euro_soccer_outcomes.py: +passed 50
+    tests/test_papersim_euro_soccer_report.py: +passed 13
+    tests/test_papersim_euro_soccer_sources.py: +passed 10
+    tests/test_papersim_euro_soccer_store.py: +passed 24, +skipped 2
+    tests/test_papersim_euro_soccer_study.py: +passed 16
+    tests/test_papersim_prepare_inputs.py: +passed 10
+    tests/test_papersim_prepared_scan_native.py: +skipped 2
+    tests/test_papersim_sports_paper_pricing.py: +passed 7
+skipped at head and not skipped at base (file | reason | cases):
+    tests/test_papersim_capture_marks_native.py | explicit Linux native PostgreSQL proof is opt-in | 3
+    tests/test_papersim_euro_soccer_end_to_end_native.py | explicit native papersim proof is opt-in | 1
+    tests/test_papersim_euro_soccer_store.py | explicit native papersim proof is opt-in | 2
+    tests/test_papersim_prepared_scan_native.py | explicit Linux native PostgreSQL proof is opt-in | 2
+all skips at head, grouped by what the reason asks for:
+     450  needs a native PostgreSQL or another opt-in native proof
+      48  needs Windows or PowerShell
+      23  other (server-only fixtures, opt-in host proofs)
+
+The five cases present only at the baseline are parametrised cases of
+tests/test_fx49_weixin_delivery.py::test_protected_paths_are_required_before_any_windows_start;
+the parameter list was replaced when the caller changed (17 new cases in that file). No test function was removed.
+
+== compile step (python -m compileall -q src tests scripts, byte-code cache outside the worktree)
+compileall commit=eaf6e8149f83a708d09158529ec774f4fbed8b9d exit=0 tracked files changed: 0

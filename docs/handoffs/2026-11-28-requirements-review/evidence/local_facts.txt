@@ -1,0 +1,123 @@
+== A. range 9a64415ae8a191f4c0abc5276c661240e1920e8c..eaf6e8149f83a708d09158529ec774f4fbed8b9d
+commits: 60; on the first-parent line: 55; merges on it: 3
+ 167 files changed, 18904 insertions(+), 119 deletions(-)
+  docs/handoffs/2026-11-26-completion-review           40 files changed, 4492 insertions(+)
+  tests                                                22 files changed, 3082 insertions(+), 32 deletions(-)
+  docs/paper-sim/runtime                               25 files changed, 2739 insertions(+), 21 deletions(-)
+  src                                                  17 files changed, 2345 insertions(+), 54 deletions(-)
+  docs/paper-sim/design/fx-49                          21 files changed, 1797 insertions(+)
+  docs/paper-sim/design/fx-44                          14 files changed, 1557 insertions(+)
+  tools/sports_paper_handoff                           7 files changed, 911 insertions(+)
+  docs/paper-sim/design/fx-23                          2 files changed, 901 insertions(+)
+  docs/paper-sim/research/euro-soccer-20261128         4 files changed, 606 insertions(+)
+  docs/paper-sim/design/fx-36                          6 files changed, 168 insertions(+)
+  DELIVERY_PLAN.md                                     1 file changed, 80 insertions(+), 11 deletions(-)
+  AGENTS.md                                            1 file changed, 5 insertions(+)
+  deploy                                               3 files changed, 31 insertions(+)
+files changed under src/ outside src/polymarket_alpha_lab/papersim: 0
+workflow files on main: 0
+
+== B. AGENTS.md
+lines: 84; blob: b4d54098b7c54c06ced385c1e54644ed2f956501; sha256: 76e8db69547dfc52d7c5cc8c114e90d4ede3c676ad6bebdd467e8d26b29dcfe4
+lines added since 9a64415ae8a191f4c0abc5276c661240e1920e8c: 5; removed: 0
+  +## 云端审计
+  +云端审计方只读，不改项目代码。每轮审核的文档发布在 `handoff/` 开头的保留分支上，这些分支不删除、不强推。
+  +审核包里提交给 owner 的决定项默认按审计方的推荐执行；owner 另有答复时以 owner 的答复为准。
+
+== C. registered gate rules
+lines of src/polymarket_alpha_lab/papersim/gates.py changed in the range: 0 (0 = file untouched)
+  GATES: Mapping[str, float] = MappingProxyType(
+      {
+          "variant_spread_max": 0.06,
+          "worst_edge_min": 0.04,
+          "exec_edge_min": 0.05,
+          "liq_min": 5000.0,
+      }
+  )
+checks in gates.evaluate_candidate (registered):
+variant_spread worst_edge exec_edge liq entry_window fill_250 news_concordant
+
+== D. small-stake paper pricing (2026-11-27)
+shared module sha256: af17ad229c88073184ca3ba3abb8e270c0ae0bc148293e142f627bf38c51fc87; lines: 65
+checks in sports_paper_pricing.evaluate_candidate (daily paper book):
+variant_spread worst_edge exec_edge entry_window news_concordant
+the size condition in best_ask():
+  25:        if 0 < price < 1 and size > 0 and math.isfinite(size):
+callers of the module inside main (outside tests and the handoff tool): 0
+runtime files touched by tools/sports_paper_handoff/daily-best-ask.patch: 8
+  basketball_feed.py
+  basketball_focus.py
+  football_feed.py
+  football_focus.py
+  football_forward.py
+  football_shortlist.py
+  sports_focus.py
+  sports_portfolio.py
+  patch lines mentioning near_two_cent_depth: removed=4 added=2
+  patch lines mentioning filled_usd: removed=4 added=2
+  patch lines mentioning depth_filled_usd: removed=1 added=1
+  patch lines mentioning gamma_liquidity: removed=4 added=2
+  patch lines mentioning price_basis: removed=0 added=7
+football_forward.py after the patch still calls the registered evaluation: 1
+simulated account on the runtime branch (bcce1b17f7263ab89859febfcb56188c295ab371):
+  19:OPENING_CASH_FEN = 1_000_000
+  23:BASIS_POINTS = {"low": 50, "medium": 100, "high": 150}
+  404:        stake_fen = min(cash, account["equity_fen"] * BASIS_POINTS[confidence] // 10_000)
+currency conversion anywhere in the runtime scripts or the pricing module: 0 file(s) on the runtime branch, 0 in main
+runtime's own full suite as recorded in docs/handoffs/2026-11-27-sports-paper-pricing.md:
+  | 此前本机完整运行层套件，改动前 | 102 | 22 | 2 | 22 个失败用例与候选轮逐项相同。 |
+  | 此前本机完整运行层套件，部署候选 | 111 | 22 | 2 | 此轮早于最后补入的账本用例。旧投递替身及旧首发扫描字段相关失败仍有记录。 |
+
+== E. European football study (2026-11-28)
+  17:MODEL_VERSION = "euro-soccer-venue-lineups-20261128-v1"
+  euro_soccer_markets.py 481 lines
+  euro_soccer_model.py 176 lines
+  euro_soccer_outcomes.py 163 lines
+  euro_soccer_report.py 156 lines
+  euro_soccer_sources.py 298 lines
+  euro_soccer_store.py 261 lines
+  euro_soccer_study.py 211 lines
+  euro_soccer_team_news.py 150 lines
+timer: OnCalendar=*-*-* *:*:08 UTC
+service: ExecStart=python -B -m polymarket_alpha_lab.papersim.cli euro-soccer scan --repo-root . TimeoutStartSec=4min
+database unit: ExecStart=python -B scripts/project_database.py --root . up
+request guard in euro_soccer_store.py (fixed endpoints only):
+  15:from urllib.request import ProxyHandler, Request, build_opener
+  55:    if split.scheme != "https" or split.fragment or "\\" in url:
+  64:        if (url != pm.CLOB_BASE_URL + "/books" or not isinstance(body, list) or not 1 <= len(body) <= 8
+  71:        if split.path == "/api/data/leagues" and query.keys() == {"id", "season"} and query["id"] in _FOTMOB_LEAGUES:
+  73:        elif split.path == "/api/data/matchDetails" and query.keys() == {"matchId"}:
+  79:    elif endpoint in (pm.GAMMA_MARKETS_BY_CONDITION_URL, pm.GAMMA_EVENTS_URL):
+  94:    opener = build_opener(ProxyHandler({}), pm._NoRedirect())
+amount and scope markers in euro_soccer_study.py: research_only=3 amount_cny_zero=3
+field check: as_of=2026-11-28T06:45:50.975891+00:00 timer=enabled/active code=93448e267e83cd771f8f4b511e86a8f51f59063a amount_cny=0
+field check per league (fixtures previewed / with news scenario / forward windows / closing windows / scored):
+  bel1: 8 / 5 / 0 / 0 / 0
+  nor: 7 / 7 / 0 / 0 / 0
+  por: 6 / 5 / 0 / 0 / 0
+  scop: 6 / 6 / 0 / 0 / 0
+  tur: 5 / 5 / 0 / 0 / 0
+files changed between the deployed study commit and main, outside docs/: DELIVERY_PLAN.md
+
+== F. WeChat delivery (FX-49)
+newest fx-49 record on main: 2026-11-27T03:10:43+00:00 fa965c40
+windows candidate record: production_switched=False verified_natural_deliveries=0 windows_six_completed=0 server_fixed_checkout=None
+status board row in DELIVERY_PLAN.md:
+  等原绑定账户下次正常登录取得普通令牌，再完成正式安装。Windows 现场演练为 0/6，固定入口自然投递为 0 次。生产切换后办理 FX-48、FX-50。
+DELIVERY_PLAN.md lines carrying the blanket sentence: 4729
+DELIVERY_PLAN.md: pricing paragraph at line 5005, section 89 at line 5057, 5060 lines in all; lines from there on that quote or cite the owner: 0
+repository copy of the delivery caller dispatches: 171: return [FIXED_RELAY, nonce]
+
+== G. access restrictions (FX-36)
+branch rules readback: observed=2026-11-26T17:07:59+00:00 main_rules=0 review_branch_rules=0
+login policy: applied=2026-11-26T13:15:59+00:00 password_disabled=True keyboard_interactive_disabled=True
+second restriction: applied=2026-11-26T13:24:59+00:00 start_condition_mandatory=True external=timed_out cold_boot_measured=False
+
+== H. branch cleanup (FX-23) and local full tests
+cleanup record: before=264 after=175 removed=89 pr131=CLOSED retained={'handoff/': 30, 'audit/': 23, 'review/': 80, 'evidence/': 2}
+local full run on 1a74b542, offline: passed=44248 skipped=499 failed=0 errors=0 finished=2026-11-27T00:22:24+00:00
+local full run on 1a74b542, native: passed=44654 skipped=93 failed=0 errors=0 finished=2026-11-27T03:09:26+00:00
+
+== I. commit identities in the range (e-mail domains only)
+  4 anthropic.com
+  116 users.noreply.github.com

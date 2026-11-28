@@ -1,0 +1,5 @@
+pr	state	closed_at	head_sha	head_ref
+#34	open	-	ee0a3c07be2b2a3255dbb2c6365731145d218e16	feature/wp05-research-paper-20260915
+#35	open	-	103e6763112fdc065c56a17682ec0288eaa37499	feature/wp05-paper-replay-20260915
+#41	open	-	3056c1526d85e7f9a9fc3e53f6c6c964cb234010	feature/wp06-handoff-cold-evidence-20260915
+#131	closed	2026-11-26T13:13:51Z	69858354dd3728418095eb5ed5454a3821484299	fix/fx49-release-093063000a70

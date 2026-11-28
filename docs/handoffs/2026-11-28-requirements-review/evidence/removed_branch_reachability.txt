@@ -1,0 +1,14 @@
+removed branches listed: 89
+every commit still reachable from a remaining branch, pull-request head or tag: 78
+with commits reachable from no remaining ref: 11
+  ci/pr-120-merge-a73fb3d3780cba679b126c5f46fc8ac7d5cdced6: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-121-merge-550f399cb843aade53c102c239ea55dd7a0ce951: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-122-merge-a0ee4de05bb3e3c0479ee32a22437875d0ad2171: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-124-merge-86a317b8c99c0f2547ea4cdb2da0a1bb17feaeb1: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-125-merge-35d1812e1b13ed5f2fa7e432749420082dff5ff4: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-126-merge-5888804c47b0fddaae214374cbbe8353f454c64a: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-127-merge-76f6235362d8eac32eb795aa723e039199615b92: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-130-merge-9469e9d151c89b750666ea6527b838dab1869c6f: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-133-merge-15b4f33ac9d612eee4627ae85a7207967a4747bf: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-134-merge-7fbc597725eb08976e81a04917852f7e6068b2ad: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
+  ci/pr-135-merge-5cae11207cdc257821619eda6ff616de54a24745: 1 such commit(s); tip has 2 parents; tip tree equals a first-parent commit of main: yes
