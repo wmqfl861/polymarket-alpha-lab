@@ -13,7 +13,9 @@ Questions asked of the data (all on fixtures that have both a model and a market
      outcome on both; week-block bootstrap of the model coefficient);
   3. the Brier-optimal linear blend weight of the model against the market;
   4. how far shrinking the model towards the league base rate closes the gap;
-  5. what following the model's disagreements would have returned at fair closing prices;
+  5. what following the model's disagreements would have returned, priced twice: from the market
+     probabilities as published, and from the same market after its own recalibration (the
+     published probabilities under-rate favourites, so prices derived from them are not fair);
   6. how many fixtures a comparison of this kind needs before an edge of a given size is visible;
   7. how much of the three-way gap a recalibration fitted on earlier fixtures closes on later ones;
   8. whether using xG beside goals helps the published model.
@@ -141,19 +143,36 @@ def analyse(name: str, rows: list[tuple[float, float, int]], weeks: list) -> Non
         f"Brier {best[1]:.5f} (model unshrunk {b_model:.5f}, market {b_market:.5f}); in-sample"
     )
     print(f"mean absolute model-market difference: {100 * fmean(abs(m - q) for m, q, _ in rows):.2f} points")
-    for threshold in (0.03, 0.05, 0.08, 0.10):
-        returns = []
-        for m, q, y in rows:
-            if m - q > threshold:        # model says the outcome is under-priced: back it at fair odds 1/q
-                returns.append(y / q - 1)
-            elif q - m > threshold:      # model says over-priced: back the complement at 1/(1-q)
-                returns.append((1 - y) / (1 - q) - 1)
-        if returns:
-            mean = fmean(returns)
-            half = 1.96 * pstdev(returns) / sqrt(len(returns))
+    # The published market probabilities are not perfectly calibrated (see the slope above), so prices
+    # derived from them are not fair prices. Everything below is therefore shown twice: against the
+    # market as published, and against the same market after its own logistic recalibration (in-sample).
+    fit, _ = logistic([[logit(q)] for _, q, _ in rows], [r[2] for r in rows])
+    fair = [1 / (1 + exp(-(fit[0] + fit[1] * logit(q)))) for _, q, _ in rows]
+    recalibrated = [(m, p, y) for (m, _, y), p in zip(rows, fair)]
+    w2 = blend_weight(recalibrated)
+    lo, hi = block_bootstrap(recalibrated, weeks, blend_weight)
+    print(
+        f"against the recalibrated market (Brier {brier(recalibrated, lambda m, q: q):.5f}): blend weight on the model "
+        f"{w2:.3f} (week-block 95% interval {lo:.3f} to {hi:.3f})"
+    )
+    for threshold in (0.03, 0.05, 0.10):
+        published, repriced, underdog = [], [], 0
+        for (m, q, y), p in zip(rows, fair):
+            if m - q > threshold:        # model says the outcome is under-priced: back it
+                published.append(y / q - 1)
+                repriced.append(y / p - 1)
+                underdog += q < 0.5
+            elif q - m > threshold:      # model says over-priced: back the complement
+                published.append((1 - y) / (1 - q) - 1)
+                repriced.append((1 - y) / (1 - p) - 1)
+                underdog += q > 0.5
+        if published:
+            def show(values):
+                return f"{100 * fmean(values):+.1f}% (naive 95% +/- {100 * 1.96 * pstdev(values) / sqrt(len(values)):.1f} points)"
             print(
-                f"following disagreements larger than {threshold:.2f} at fair closing prices: "
-                f"{len(returns)} bets, mean return {100 * mean:+.1f}% (naive 95% +/- {100 * half:.1f} points)"
+                f"following disagreements larger than {threshold:.2f}: {len(published)} bets, {underdog} of them on the "
+                f"market's less likely side; mean return at prices from the published market probabilities "
+                f"{show(published)}, at prices from the recalibrated market {show(repriced)}"
             )
     deltas = [(m - y) ** 2 - (q - y) ** 2 for m, q, y in rows]
     sd = pstdev(deltas)

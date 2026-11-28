@@ -8,12 +8,12 @@
   "MANIFEST.sha256"
  ],
  "file_count": 26,
- "total_bytes": 209443,
+ "total_bytes": 218160,
  "files": [
   {
    "path": "docs/handoffs/2026-11-28-validation-review/01-review-report.md",
-   "bytes": 17709,
-   "sha256": "ff40a53ee59c97009dd26a97f461e3d3fcad9255b0ed1630f8e1e7cebf0ff491"
+   "bytes": 18900,
+   "sha256": "22619a3867f815051ba5f0183452d8351d25009b64a09bc82caf30bf1adb35cc"
   },
   {
    "path": "docs/handoffs/2026-11-28-validation-review/02-remediation-and-next-steps.md",
@@ -22,18 +22,18 @@
   },
   {
    "path": "docs/handoffs/2026-11-28-validation-review/03-optimization-plan.md",
-   "bytes": 15683,
-   "sha256": "fbc447cdab6fabd36d0906ff8bdf7bf1ac3bb99d2a67a992e270d4c77bab05fb"
+   "bytes": 16802,
+   "sha256": "10d685ef33a93acf14dcdfa3aadfa61cf4fc2a5265a4e675c3980c086368adb9"
   },
   {
    "path": "docs/handoffs/2026-11-28-validation-review/README.md",
-   "bytes": 3263,
-   "sha256": "012095cbe37631d260b4f71a02da079648183402b584598c076901993d2c1fda"
+   "bytes": 4517,
+   "sha256": "aeeba7d64c57402134d79574888bd02c04f2715fa2e602e66689d2a435678340"
   },
   {
    "path": "docs/handoffs/2026-11-28-validation-review/evidence/README.md",
-   "bytes": 3543,
-   "sha256": "3960c9608515affe48c10e01c40e12612a3f70626fd1aa1bd1829992fdd91832"
+   "bytes": 3756,
+   "sha256": "276ae65e625d62027ffe6c5259dabce8663ca44f78a031e1e55dfcf673a75d46"
   },
   {
    "path": "docs/handoffs/2026-11-28-validation-review/evidence/added_line_sensitive_scan.py",
@@ -67,13 +67,13 @@
   },
   {
    "path": "docs/handoffs/2026-11-28-validation-review/evidence/independent_backtest_analysis.py",
-   "bytes": 11465,
-   "sha256": "82996e4c6983c662334d2076289ecfd10e5e810a0624a94446601aae66591add"
+   "bytes": 12863,
+   "sha256": "f41ced4bc4e1ebd19163fbb52c9b82c076e8b7e623eb015a0e36b4ba625457e2"
   },
   {
    "path": "docs/handoffs/2026-11-28-validation-review/evidence/independent_backtest_analysis_output.txt",
-   "bytes": 13716,
-   "sha256": "d7a3e921a7731467041a3afcd6a9104d3be696662d53aec598d0832656b76577"
+   "bytes": 17258,
+   "sha256": "8567abb1f822024c7fb47750996f3b2c3c311add6b5067fb1097dd2211df65a4"
   },
   {
    "path": "docs/handoffs/2026-11-28-validation-review/evidence/junit_compare.py",

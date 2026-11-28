@@ -8,10 +8,10 @@ outcome on logit(market) and logit(model): market 1.022 (s.e. 0.245), model 0.19
 Brier-optimal blend weight on the model: 0.097 (week-block 95% interval -0.363 to 0.518); in-sample blend Brier 0.24291 against market 0.24297
 shrinking the model towards the base rate: best weight on the model 0.70, Brier 0.24705 (model unshrunk 0.24749, market 0.24297); in-sample
 mean absolute model-market difference: 5.95 points
-following disagreements larger than 0.03 at fair closing prices: 684 bets, mean return -1.3% (naive 95% +/- 8.4 points)
-following disagreements larger than 0.05 at fair closing prices: 499 bets, mean return +1.2% (naive 95% +/- 10.0 points)
-following disagreements larger than 0.08 at fair closing prices: 293 bets, mean return +0.7% (naive 95% +/- 13.1 points)
-following disagreements larger than 0.10 at fair closing prices: 181 bets, mean return +6.3% (naive 95% +/- 17.1 points)
+against the recalibrated market (Brier 0.24285): blend weight on the model 0.127 (week-block 95% interval -0.316 to 0.539)
+following disagreements larger than 0.03: 684 bets, 497 of them on the market's less likely side; mean return at prices from the published market probabilities -1.3% (naive 95% +/- 8.4 points), at prices from the recalibrated market -0.3% (naive 95% +/- 8.5 points)
+following disagreements larger than 0.05: 499 bets, 381 of them on the market's less likely side; mean return at prices from the published market probabilities +1.2% (naive 95% +/- 10.0 points), at prices from the recalibrated market +2.4% (naive 95% +/- 10.1 points)
+following disagreements larger than 0.10: 181 bets, 149 of them on the market's less likely side; mean return at prices from the published market probabilities +6.3% (naive 95% +/- 17.1 points), at prices from the recalibrated market +7.7% (naive 95% +/- 17.4 points)
 per-fixture Brier difference: mean +0.00452, s.d. 0.07297
   fixtures needed for a true difference of 0.002 to give a 95% interval excluding zero about half the time: 5,113
   fixtures needed for a true difference of 0.005 to give a 95% interval excluding zero about half the time: 818
@@ -25,10 +25,10 @@ outcome on logit(market) and logit(model): market 0.772 (s.e. 0.684), model 0.27
 Brier-optimal blend weight on the model: 0.581 (week-block 95% interval -0.462 to 1.438); in-sample blend Brier 0.24708 against market 0.24927
 shrinking the model towards the base rate: best weight on the model 0.55, Brier 0.24669 (model unshrunk 0.24822, market 0.24927); in-sample
 mean absolute model-market difference: 6.34 points
-following disagreements larger than 0.03 at fair closing prices: 158 bets, mean return +8.7% (naive 95% +/- 16.9 points)
-following disagreements larger than 0.05 at fair closing prices: 122 bets, mean return +9.3% (naive 95% +/- 19.2 points)
-following disagreements larger than 0.08 at fair closing prices: 73 bets, mean return +11.2% (naive 95% +/- 25.0 points)
-following disagreements larger than 0.10 at fair closing prices: 47 bets, mean return +20.9% (naive 95% +/- 30.3 points)
+against the recalibrated market (Brier 0.24542): blend weight on the model 0.227 (week-block 95% interval -0.536 to 1.071)
+following disagreements larger than 0.03: 158 bets, 104 of them on the market's less likely side; mean return at prices from the published market probabilities +8.7% (naive 95% +/- 16.9 points), at prices from the recalibrated market -0.9% (naive 95% +/- 15.4 points)
+following disagreements larger than 0.05: 122 bets, 80 of them on the market's less likely side; mean return at prices from the published market probabilities +9.3% (naive 95% +/- 19.2 points), at prices from the recalibrated market -0.5% (naive 95% +/- 17.4 points)
+following disagreements larger than 0.10: 47 bets, 31 of them on the market's less likely side; mean return at prices from the published market probabilities +20.9% (naive 95% +/- 30.3 points), at prices from the recalibrated market +8.7% (naive 95% +/- 27.2 points)
 per-fixture Brier difference: mean -0.00105, s.d. 0.07808
   fixtures needed for a true difference of 0.002 to give a 95% interval excluding zero about half the time: 5,854
   fixtures needed for a true difference of 0.005 to give a 95% interval excluding zero about half the time: 936
@@ -42,10 +42,10 @@ outcome on logit(market) and logit(model): market 0.884 (s.e. 0.398), model 0.68
 Brier-optimal blend weight on the model: 0.252 (week-block 95% interval -0.449 to 0.937); in-sample blend Brier 0.24031 against market 0.24070
 shrinking the model towards the base rate: best weight on the model 0.85, Brier 0.24360 (model unshrunk 0.24371, market 0.24070); in-sample
 mean absolute model-market difference: 6.28 points
-following disagreements larger than 0.03 at fair closing prices: 212 bets, mean return -0.4% (naive 95% +/- 15.5 points)
-following disagreements larger than 0.05 at fair closing prices: 159 bets, mean return +4.0% (naive 95% +/- 18.4 points)
-following disagreements larger than 0.08 at fair closing prices: 93 bets, mean return +12.8% (naive 95% +/- 24.7 points)
-following disagreements larger than 0.10 at fair closing prices: 62 bets, mean return +25.2% (naive 95% +/- 31.0 points)
+against the recalibrated market (Brier 0.23872): blend weight on the model 0.240 (week-block 95% interval -0.341 to 0.837)
+following disagreements larger than 0.03: 212 bets, 163 of them on the market's less likely side; mean return at prices from the published market probabilities -0.4% (naive 95% +/- 15.5 points), at prices from the recalibrated market +3.0% (naive 95% +/- 16.5 points)
+following disagreements larger than 0.05: 159 bets, 133 of them on the market's less likely side; mean return at prices from the published market probabilities +4.0% (naive 95% +/- 18.4 points), at prices from the recalibrated market +8.0% (naive 95% +/- 19.6 points)
+following disagreements larger than 0.10: 62 bets, 54 of them on the market's less likely side; mean return at prices from the published market probabilities +25.2% (naive 95% +/- 31.0 points), at prices from the recalibrated market +30.9% (naive 95% +/- 33.5 points)
 per-fixture Brier difference: mean +0.00301, s.d. 0.07636
   fixtures needed for a true difference of 0.002 to give a 95% interval excluding zero about half the time: 5,600
   fixtures needed for a true difference of 0.005 to give a 95% interval excluding zero about half the time: 896
@@ -59,10 +59,10 @@ outcome on logit(market) and logit(model): market 0.190 (s.e. 0.606), model 1.06
 Brier-optimal blend weight on the model: 0.814 (week-block 95% interval -0.238 to 1.823); in-sample blend Brier 0.24862 against market 0.25173
 shrinking the model towards the base rate: best weight on the model 0.60, Brier 0.24790 (model unshrunk 0.24878, market 0.25173); in-sample
 mean absolute model-market difference: 5.28 points
-following disagreements larger than 0.03 at fair closing prices: 112 bets, mean return +16.3% (naive 95% +/- 21.1 points)
-following disagreements larger than 0.05 at fair closing prices: 78 bets, mean return +28.2% (naive 95% +/- 26.0 points)
-following disagreements larger than 0.08 at fair closing prices: 44 bets, mean return +11.9% (naive 95% +/- 33.9 points)
-following disagreements larger than 0.10 at fair closing prices: 23 bets, mean return +11.3% (naive 95% +/- 49.0 points)
+against the recalibrated market (Brier 0.24897): blend weight on the model 0.517 (week-block 95% interval -0.459 to 1.425)
+following disagreements larger than 0.03: 112 bets, 82 of them on the market's less likely side; mean return at prices from the published market probabilities +16.3% (naive 95% +/- 21.1 points), at prices from the recalibrated market +10.4% (naive 95% +/- 19.4 points)
+following disagreements larger than 0.05: 78 bets, 63 of them on the market's less likely side; mean return at prices from the published market probabilities +28.2% (naive 95% +/- 26.0 points), at prices from the recalibrated market +19.9% (naive 95% +/- 23.5 points)
+following disagreements larger than 0.10: 23 bets, 21 of them on the market's less likely side; mean return at prices from the published market probabilities +11.3% (naive 95% +/- 49.0 points), at prices from the recalibrated market +4.3% (naive 95% +/- 44.6 points)
 per-fixture Brier difference: mean -0.00295, s.d. 0.06796
   fixtures needed for a true difference of 0.002 to give a 95% interval excluding zero about half the time: 4,435
   fixtures needed for a true difference of 0.005 to give a 95% interval excluding zero about half the time: 709
@@ -76,10 +76,10 @@ outcome on logit(market) and logit(model): market 2.368 (s.e. 0.519), model -0.8
 Brier-optimal blend weight on the model: -1.025 (week-block 95% interval -1.709 to -0.293); in-sample blend Brier 0.22932 against market 0.23460
 shrinking the model towards the base rate: best weight on the model 0.35, Brier 0.24802 (model unshrunk 0.24994, market 0.23460); in-sample
 mean absolute model-market difference: 5.75 points
-following disagreements larger than 0.03 at fair closing prices: 202 bets, mean return -19.8% (naive 95% +/- 14.6 points)
-following disagreements larger than 0.05 at fair closing prices: 140 bets, mean return -24.0% (naive 95% +/- 17.5 points)
-following disagreements larger than 0.08 at fair closing prices: 83 bets, mean return -28.0% (naive 95% +/- 22.6 points)
-following disagreements larger than 0.10 at fair closing prices: 49 bets, mean return -34.1% (naive 95% +/- 29.7 points)
+against the recalibrated market (Brier 0.23093): blend weight on the model -0.172 (week-block 95% interval -0.565 to 0.211)
+following disagreements larger than 0.03: 202 bets, 148 of them on the market's less likely side; mean return at prices from the published market probabilities -19.8% (naive 95% +/- 14.6 points), at prices from the recalibrated market -9.9% (naive 95% +/- 17.4 points)
+following disagreements larger than 0.05: 140 bets, 105 of them on the market's less likely side; mean return at prices from the published market probabilities -24.0% (naive 95% +/- 17.5 points), at prices from the recalibrated market -14.0% (naive 95% +/- 21.1 points)
+following disagreements larger than 0.10: 49 bets, 43 of them on the market's less likely side; mean return at prices from the published market probabilities -34.1% (naive 95% +/- 29.7 points), at prices from the recalibrated market -21.6% (naive 95% +/- 37.4 points)
 per-fixture Brier difference: mean +0.01534, s.d. 0.06687
   fixtures needed for a true difference of 0.002 to give a 95% interval excluding zero about half the time: 4,294
   fixtures needed for a true difference of 0.005 to give a 95% interval excluding zero about half the time: 687
@@ -93,10 +93,10 @@ outcome on logit(market) and logit(model): market 1.483 (s.e. 0.169), model -0.5
 Brier-optimal blend weight on the model: -0.343 (week-block 95% interval -0.573 to -0.110); in-sample blend Brier 0.20264 against market 0.20378
 shrinking the model towards the base rate: best weight on the model 1.00, Brier 0.22022 (model unshrunk 0.22022, market 0.20378); in-sample
 mean absolute model-market difference: 8.16 points
-following disagreements larger than 0.03 at fair closing prices: 974 bets, mean return -14.2% (naive 95% +/- 9.5 points)
-following disagreements larger than 0.05 at fair closing prices: 783 bets, mean return -18.4% (naive 95% +/- 10.9 points)
-following disagreements larger than 0.08 at fair closing prices: 559 bets, mean return -19.4% (naive 95% +/- 13.4 points)
-following disagreements larger than 0.10 at fair closing prices: 428 bets, mean return -19.4% (naive 95% +/- 15.7 points)
+against the recalibrated market (Brier 0.20324): blend weight on the model -0.092 (week-block 95% interval -0.283 to 0.096)
+following disagreements larger than 0.03: 974 bets, 846 of them on the market's less likely side; mean return at prices from the published market probabilities -14.2% (naive 95% +/- 9.5 points), at prices from the recalibrated market -4.8% (naive 95% +/- 11.6 points)
+following disagreements larger than 0.05: 783 bets, 714 of them on the market's less likely side; mean return at prices from the published market probabilities -18.4% (naive 95% +/- 10.9 points), at prices from the recalibrated market -8.2% (naive 95% +/- 13.5 points)
+following disagreements larger than 0.10: 428 bets, 412 of them on the market's less likely side; mean return at prices from the published market probabilities -19.4% (naive 95% +/- 15.7 points), at prices from the recalibrated market -7.2% (naive 95% +/- 20.0 points)
 per-fixture Brier difference: mean +0.01644, s.d. 0.08274
   fixtures needed for a true difference of 0.002 to give a 95% interval excluding zero about half the time: 6,575
   fixtures needed for a true difference of 0.005 to give a 95% interval excluding zero about half the time: 1,052
@@ -110,10 +110,10 @@ outcome on logit(market) and logit(model): market 1.990 (s.e. 0.365), model -1.3
 Brier-optimal blend weight on the model: -0.442 (week-block 95% interval -0.944 to 0.076); in-sample blend Brier 0.19034 against market 0.19068
 shrinking the model towards the base rate: best weight on the model 1.00, Brier 0.19396 (model unshrunk 0.19396, market 0.19068); in-sample
 mean absolute model-market difference: 3.12 points
-following disagreements larger than 0.03 at fair closing prices: 482 bets, mean return -14.6% (naive 95% +/- 16.9 points)
-following disagreements larger than 0.05 at fair closing prices: 272 bets, mean return -17.3% (naive 95% +/- 24.6 points)
-following disagreements larger than 0.08 at fair closing prices: 104 bets, mean return -30.2% (naive 95% +/- 40.8 points)
-following disagreements larger than 0.10 at fair closing prices: 29 bets, mean return -25.2% (naive 95% +/- 81.1 points)
+against the recalibrated market (Brier 0.18962): blend weight on the model -0.172 (week-block 95% interval -0.571 to 0.234)
+following disagreements larger than 0.03: 482 bets, 447 of them on the market's less likely side; mean return at prices from the published market probabilities -14.6% (naive 95% +/- 16.9 points), at prices from the recalibrated market -9.0% (naive 95% +/- 19.3 points)
+following disagreements larger than 0.05: 272 bets, 268 of them on the market's less likely side; mean return at prices from the published market probabilities -17.3% (naive 95% +/- 24.6 points), at prices from the recalibrated market -5.3% (naive 95% +/- 29.9 points)
+following disagreements larger than 0.10: 29 bets, 29 of them on the market's less likely side; mean return at prices from the published market probabilities -25.2% (naive 95% +/- 81.1 points), at prices from the recalibrated market -4.1% (naive 95% +/- 106.0 points)
 per-fixture Brier difference: mean +0.00328, s.d. 0.03109
   fixtures needed for a true difference of 0.002 to give a 95% interval excluding zero about half the time: 928
   fixtures needed for a true difference of 0.005 to give a 95% interval excluding zero about half the time: 148
@@ -127,10 +127,10 @@ outcome on logit(market) and logit(model): market 1.617 (s.e. 0.185), model -0.6
 Brier-optimal blend weight on the model: -0.368 (week-block 95% interval -0.626 to -0.126); in-sample blend Brier 0.17294 against market 0.17415
 shrinking the model towards the base rate: best weight on the model 1.00, Brier 0.18960 (model unshrunk 0.18960, market 0.17415); in-sample
 mean absolute model-market difference: 7.38 points
-following disagreements larger than 0.03 at fair closing prices: 917 bets, mean return -16.9% (naive 95% +/- 9.6 points)
-following disagreements larger than 0.05 at fair closing prices: 712 bets, mean return -17.8% (naive 95% +/- 11.1 points)
-following disagreements larger than 0.08 at fair closing prices: 445 bets, mean return -11.1% (naive 95% +/- 15.7 points)
-following disagreements larger than 0.10 at fair closing prices: 324 bets, mean return -10.2% (naive 95% +/- 17.3 points)
+against the recalibrated market (Brier 0.17318): blend weight on the model -0.082 (week-block 95% interval -0.280 to 0.092)
+following disagreements larger than 0.03: 917 bets, 573 of them on the market's less likely side; mean return at prices from the published market probabilities -16.9% (naive 95% +/- 9.6 points), at prices from the recalibrated market -5.1% (naive 95% +/- 12.8 points)
+following disagreements larger than 0.05: 712 bets, 451 of them on the market's less likely side; mean return at prices from the published market probabilities -17.8% (naive 95% +/- 11.1 points), at prices from the recalibrated market -4.8% (naive 95% +/- 15.2 points)
+following disagreements larger than 0.10: 324 bets, 225 of them on the market's less likely side; mean return at prices from the published market probabilities -10.2% (naive 95% +/- 17.3 points), at prices from the recalibrated market +6.5% (naive 95% +/- 24.0 points)
 per-fixture Brier difference: mean +0.01546, s.d. 0.08461
   fixtures needed for a true difference of 0.002 to give a 95% interval excluding zero about half the time: 6,875
   fixtures needed for a true difference of 0.005 to give a 95% interval excluding zero about half the time: 1,100
