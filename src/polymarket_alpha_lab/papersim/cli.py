@@ -2684,6 +2684,11 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    euro_parser = subparsers.add_parser(
+        "euro-soccer", help="collect or summarize prospective European football research",
+    )
+    euro_parser.add_argument("action", choices=("scan", "status"))
+    euro_parser.add_argument("--repo-root", default=".", help="root of the managed research instance")
     subparsers.add_parser(
         "selfcheck",
         help="recompute the frozen regression anchors; exit 0 only if all pass",
@@ -3121,6 +3126,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the papersim CLI; returns a process exit code."""
     parser = _build_parser()
     args = parser.parse_args(argv)
+    if args.command == "euro-soccer":
+        from .euro_soccer_study import command
+
+        return command(args.action, args.repo_root)
     if args.command == "selfcheck":
         return _cmd_selfcheck()
     if args.command == "schema":

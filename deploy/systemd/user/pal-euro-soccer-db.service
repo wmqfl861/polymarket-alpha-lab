@@ -1,0 +1,11 @@
+[Unit]
+Description=Private project PostgreSQL for European football research
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+UMask=0077
+WorkingDirectory=%h/.local/share/polymarket-alpha-lab/euro-soccer
+ExecStart=%h/.local/share/polymarket-alpha-lab/euro-soccer/.venv/bin/python -B scripts/project_database.py --root . up
+ExecStop=%h/.local/share/polymarket-alpha-lab/euro-soccer/.venv/bin/python -B scripts/project_database.py --root . down
+StandardOutput=null

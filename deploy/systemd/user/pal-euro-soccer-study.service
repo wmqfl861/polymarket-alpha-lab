@@ -1,0 +1,11 @@
+[Unit]
+Description=Record European football team, news and market research
+Requires=pal-euro-soccer-db.service
+After=pal-euro-soccer-db.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/.local/share/polymarket-alpha-lab/euro-soccer
+ExecStart=%h/.local/share/polymarket-alpha-lab/euro-soccer/.venv/bin/python -B -m polymarket_alpha_lab.papersim.cli euro-soccer scan --repo-root .
+UMask=0077
+TimeoutStartSec=4min

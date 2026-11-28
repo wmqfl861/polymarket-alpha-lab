@@ -1,0 +1,9 @@
+[Unit]
+Description=Check European football research and pre-kickoff capture windows
+
+[Timer]
+OnCalendar=*-*-* *:*:08 UTC
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target
