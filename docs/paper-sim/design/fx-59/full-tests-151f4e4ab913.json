@@ -1,0 +1,73 @@
+{
+  "tested_main_commit": "151f4e4ab913e729b1bf47face6ceb1df285535d",
+  "collection": "Pytest default full test collection, no file filters or exclusion overrides.",
+  "targeted_case": "tests/test_papersim_capture_marks_native.py::test_register_close_window_through_managed_cli",
+  "profiles": {
+    "offline": {
+      "pytest_started_utc": "2026-11-28T08:20:00+00:00",
+      "pytest_finished_utc": "2026-11-28T09:36:51+00:00",
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "test_command": "python -m pytest -q -ra -p no:cacheprovider --junitxml=<temporary-file>",
+      "postgres_software_directory_provided": false,
+      "psycopg_version": null,
+      "powershell_version": null,
+      "postgres_version": null,
+      "counts": {
+        "passed": 44412,
+        "skipped": 522,
+        "failed": 0,
+        "errors": 0
+      },
+      "collected": 44934,
+      "exit_code": 0,
+      "fx59_case": "skipped",
+      "environment": {
+        "postgres_software_directory_provided": false,
+        "native_suite_opt_in": false,
+        "shared_database": false,
+        "psycopg_provided": false,
+        "tzdata_standin_from_iana": "2026f",
+        "third_party_plugin_autoload": false
+      },
+      "source_receipt_sha256": "f2124e44402bba8613a8fee299f57064d3bab56b442f1a09b9e49ec95cbf836b",
+      "runner_sha256": "87367cc51d252b1802bc7528c2335aecbf7af611f946b7c78c97e909eecad8c2"
+    },
+    "native": {
+      "pytest_started_utc": "2026-11-28T08:20:10+00:00",
+      "pytest_finished_utc": "2026-11-28T12:03:19+00:00",
+      "python_version": "3.12.3",
+      "pytest_version": "9.1.1",
+      "test_command": "python -m pytest -q --tb=no -o cache_dir=/gate/cache/pytest --junitxml=<temporary-file>",
+      "postgres_software_directory_provided": true,
+      "psycopg_version": "3.3.4",
+      "powershell_version": "PowerShell 7.4.22",
+      "postgres_version": "postgres (PostgreSQL) 18.6 (Ubuntu 18.6-1.pgdg24.04+2)",
+      "counts": {
+        "passed": 44841,
+        "skipped": 93,
+        "failed": 0,
+        "errors": 0
+      },
+      "collected": 44934,
+      "exit_code": 0,
+      "fx59_case": "passed",
+      "environment": {
+        "new_empty_cluster": true,
+        "socket_only": false,
+        "unix_socket_verified": true,
+        "private_loopback_tcp_verified": true,
+        "only_loopback_interface": true,
+        "disposable_managed_owner_and_app_driver_verified": true,
+        "private_legacy_archive_loaded": true,
+        "bootstrap_catalog_created": true,
+        "native_project_opt_in": true,
+        "backup_opt_in": true,
+        "distribution_opt_in": true,
+        "psycopg_implementation": "binary"
+      },
+      "source_receipt_sha256": "861b10510bcd3d1dc2df273794639ab7e1fd3b802e5e15629c54cce69489e88c",
+      "runner_sha256": "87367cc51d252b1802bc7528c2335aecbf7af611f946b7c78c97e909eecad8c2"
+    }
+  }
+}
