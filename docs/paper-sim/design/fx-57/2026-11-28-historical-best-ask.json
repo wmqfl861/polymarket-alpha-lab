@@ -1,0 +1,107 @@
+{
+  "as_of_utc": "2026-11-28T08:06:24.895444Z",
+  "deployment_completed_utc": "2026-11-27T11:54:18.642Z",
+  "scope": "The current shared CNY paper account. All formal positions opened between deployment completion and this read-only database snapshot.",
+  "deployment_receipt": {
+    "exit_code": 0,
+    "output": "installed_and_hash_verified 14 files"
+  },
+  "historical_fx": {
+    "registered_at_entry": false,
+    "rate_applied": null
+  },
+  "readback": {
+    "transaction": "read only, repeatable read",
+    "all_account_positions": 9,
+    "earlier_on_deployment_date": 0,
+    "positions_after_deployment": 3,
+    "query_scope": "Compare the issue record and forward captures by fixture revision, market, outcome and original book timestamp. Inspect the position evidence, issue evidence, same-fixture job details, and the source cache for the original ask levels or a reference to them.",
+    "finding": "The deployed quote evaluator consumed the sell levels in memory. The issued signal retained the price and book timestamp. None of the matched position, issue or job records contains the original asks or their top-level size. The cache contains no original asks or corresponding digest. The independent forward and closing captures yield no exact-time records for these positions.",
+    "source_cache": {
+      "rows": 14,
+      "with_asks": 0,
+      "with_best_ask_size": 0,
+      "with_snapshot_reference": 0
+    },
+    "runtime_source": "tools/sports_paper_handoff/daily-best-ask.patch at a56b7d03",
+    "paper_account_mutations": 0
+  },
+  "positions": [
+    {
+      "sport": "football",
+      "league": "ere",
+      "opened_at_utc": "2026-11-27T18:11:11.074020Z",
+      "book_observed_at_utc": "2026-11-27T18:11:01.213000Z",
+      "recorded_best_ask": "0.21",
+      "paper_stake_cny": "159.68",
+      "realized_pnl_cny": "-159.68",
+      "outcome": "loss",
+      "recorded_price_basis": "best_ask",
+      "best_ask_quantity": null,
+      "best_ask_notional_usd": null,
+      "best_ask_value_covers_position": null,
+      "assessment": "unknown",
+      "exact_issue_records": 1,
+      "exact_forward_records": 0,
+      "exact_close_records": 0,
+      "same_fixture_revision_job_records": 4
+    },
+    {
+      "sport": "football",
+      "league": "sea",
+      "opened_at_utc": "2026-11-27T18:59:11.941928Z",
+      "book_observed_at_utc": "2026-11-27T18:58:59.373000Z",
+      "recorded_best_ask": "0.71",
+      "paper_stake_cny": "53.22",
+      "realized_pnl_cny": "-53.22",
+      "outcome": "loss",
+      "recorded_price_basis": "best_ask",
+      "best_ask_quantity": null,
+      "best_ask_notional_usd": null,
+      "best_ask_value_covers_position": null,
+      "assessment": "unknown",
+      "exact_issue_records": 1,
+      "exact_forward_records": 0,
+      "exact_close_records": 0,
+      "same_fixture_revision_job_records": 4
+    },
+    {
+      "sport": "football",
+      "league": "epl",
+      "opened_at_utc": "2026-11-27T19:04:12.250926Z",
+      "book_observed_at_utc": "2026-11-27T19:04:00.611000Z",
+      "recorded_best_ask": "0.54",
+      "paper_stake_cny": "106.45",
+      "realized_pnl_cny": "86.25",
+      "outcome": "win",
+      "recorded_price_basis": "best_ask",
+      "best_ask_quantity": null,
+      "best_ask_notional_usd": null,
+      "best_ask_value_covers_position": null,
+      "assessment": "unknown",
+      "exact_issue_records": 1,
+      "exact_forward_records": 0,
+      "exact_close_records": 0,
+      "same_fixture_revision_job_records": 4
+    }
+  ],
+  "totals": {
+    "football_positions": 3,
+    "basketball_positions": 0,
+    "confirmed_sufficient": {
+      "positions": 0,
+      "stake_cny": "0.00",
+      "realized_pnl_cny": "0.00"
+    },
+    "confirmed_insufficient": {
+      "positions": 0,
+      "stake_cny": "0.00",
+      "realized_pnl_cny": "0.00"
+    },
+    "unknown": {
+      "positions": 3,
+      "stake_cny": "319.35",
+      "realized_pnl_cny": "-126.65"
+    }
+  }
+}
