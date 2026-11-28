@@ -1,0 +1,68 @@
+{
+  "tested_main_commit": "151f4e4ab913e729b1bf47face6ceb1df285535d",
+  "source": "Clean detached checkout from the specified public repository, ordinary local user. See the FX-57 handoff README for the two restore commands and the pytest selections.",
+  "checked_utc": "2026-11-28T08:23:48.423222+00:00",
+  "pricing_runtime_base": "bcce1b17f7263ab89859febfcb56188c295ab371",
+  "deployed_pricing_reference": "a56b7d03f73c405685446c475919f63879ed7aaf",
+  "restores": {
+    "default-nov27": {
+      "verified_files": 9,
+      "patch_sha256": "76a78a257c058b59088331b37fb796a2e5c1d8420e87f210aacf97aba0e9a6a8",
+      "manifest_sha256": "c808ac865204325fccc44715948fce7e44e20595d90b7696cf0f8b0c967e3374"
+    },
+    "explicit-nov27": {
+      "verified_files": 9,
+      "patch_sha256": "76a78a257c058b59088331b37fb796a2e5c1d8420e87f210aacf97aba0e9a6a8",
+      "manifest_sha256": "c808ac865204325fccc44715948fce7e44e20595d90b7696cf0f8b0c967e3374"
+    },
+    "candidate": {
+      "verified_files": 9,
+      "patch_sha256": "9edfd9bcf541c3dfa0ad562bf59a5fa9aa08462ce5186aa787b3c07adb454488",
+      "manifest_sha256": "3ed11e990080cc3965cd5996c2149e430e9a7b90c2bcd39d4625ec1b36aa5ecc"
+    }
+  },
+  "regressions": {
+    "candidate": {
+      "passed": 29,
+      "skipped": 0,
+      "failed": 0,
+      "errors": 0,
+      "pytest_seconds": 23.38,
+      "result_sha256": "034d84d49c89183d82bcd3e4899e4d3dfdfcfe18f27b3902789c52a8112dbdbe"
+    },
+    "default-nov27": {
+      "passed": 14,
+      "skipped": 0,
+      "failed": 0,
+      "errors": 0,
+      "pytest_seconds": 4.52,
+      "result_sha256": "b8454e3d21c0b80099248955101f12ba63f28722c496853a7df325f3a797e181"
+    }
+  },
+  "protected_paths_verified_at_both_git_commits": [
+    "database/migrations.lock.json",
+    "database/papersim",
+    "src/polymarket_alpha_lab/papersim/evaluation.py",
+    "src/polymarket_alpha_lab/papersim/evaluation_f.py",
+    "src/polymarket_alpha_lab/papersim/fees.py",
+    "src/polymarket_alpha_lab/papersim/gates.py",
+    "src/polymarket_alpha_lab/papersim/nba_odr_registration.py",
+    "src/polymarket_alpha_lab/papersim/optimize",
+    "src/polymarket_alpha_lab/papersim/pipeline.py",
+    "src/polymarket_alpha_lab/papersim/soccer_model.py",
+    "supabase/migrations",
+    "tests/fixtures/papersim",
+    "tests/fixtures/papersim/regression_banned_path.json",
+    "tests/fixtures/papersim/regression_gate_arithmetic.json",
+    "tests/fixtures/papersim/regression_r19_crypto.json",
+    "tests/fixtures/papersim/regression_r23_soccer.json"
+  ],
+  "protected_base": "eaf6e8149f83a708d09158529ec774f4fbed8b9d",
+  "unchanged_admission_and_forward_files": {
+    "football_admission.py": "8352b560ba4c7271e6be569a825ff80a9a6c3fd7e643c0a63b7e81534c35e75c",
+    "football_learning.py": "7f0314fe0a574eb422fd84392067840e4368f4dd0676b5af362a388c684c67cc",
+    "football_forward.py": "44fd6e8193b2a03e211684f7a4faf3f4e01294176378924dea59a6a9f08ab562",
+    "basketball_forward.py": "23f3b2a7edda855dbf6d7a055d4c83dfec0c56022309fa06dd3de95b9d22081c"
+  },
+  "independent_receipt_sha256": "86d2196ea5e5084416044ae0bdf3a03d0bfd3e1b4294487dd7097d8fd14148f2"
+}
