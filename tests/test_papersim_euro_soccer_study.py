@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from polymarket_alpha_lab.papersim import euro_soccer_study as study
+from polymarket_alpha_lab.papersim import cli
 from polymarket_alpha_lab.papersim.euro_soccer_sources import Fixture
 
 
@@ -105,6 +106,14 @@ def test_fresh_report_that_play_has_started_precludes_a_pregame_record(monkeypat
     with pytest.raises(study.FixtureChanged):
         study._observe(store, GAME, (GAME,), [], [], "closing", lambda: at)
     assert not store.docs
+
+
+def test_command_masks_connection_details(monkeypatch, capsys):
+    def unavailable(action, root):
+        raise RuntimeError("private connection details")
+    monkeypatch.setattr(study, "_command", unavailable)
+    assert cli.main(["euro-soccer", "status"]) == 1
+    assert capsys.readouterr().err == "euro-soccer failed (RuntimeError)\n"
 
 
 @pytest.mark.parametrize("minutes,slot", [(2881, None), (2880, "preview"), (31, "preview"), (30, "forward"),

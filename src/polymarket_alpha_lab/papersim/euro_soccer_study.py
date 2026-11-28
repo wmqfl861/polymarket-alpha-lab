@@ -205,12 +205,7 @@ def _command(action, repo_root):
 def command(action, repo_root):
     # Native driver exception text can contain the private connection location.
     try:
-        import psycopg
-    except ModuleNotFoundError:
-        print("euro-soccer requires the postgres package extra", file=sys.stderr)
-        return 1
-    try:
         return _command(action, repo_root)
-    except (psycopg.Error, RuntimeError, OSError, ValueError) as exc:
+    except Exception as exc:
         print("euro-soccer failed (" + type(exc).__name__ + ")", file=sys.stderr)
         return 1
