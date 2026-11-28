@@ -1,0 +1,259 @@
+{
+  "study_date": "2026-11-28",
+  "frozen_score_baseline_commit": "a56b7d03f73c405685446c475919f63879ed7aaf",
+  "comparison": "Paired Brier against normalized bookmaker closing probabilities. This historical screen uses the frozen score-only model and has no forward news or executable-price evidence.",
+  "primary_by_league": [
+    {
+      "league": "SC0",
+      "warmup_n": 456,
+      "test_n": 228,
+      "start": "2025-08-02",
+      "end": "2026-05-17",
+      "by_market": {
+        "1x2": {
+          "n": 228,
+          "model_brier": 0.5909463934630363,
+          "market_brier": 0.5758910416100396,
+          "delta": 0.015055351852996925,
+          "week_blocks": 36,
+          "paired_95": [
+            0.0005845216752921942,
+            0.029656385540353086
+          ]
+        },
+        "ou2.5": {
+          "n": 228,
+          "model_brier": 0.2472533609299123,
+          "market_brier": 0.24643929829369232,
+          "delta": 0.0008140626362199421,
+          "week_blocks": 36,
+          "paired_95": [
+            -0.004549966303628393,
+            0.005624579741571752
+          ]
+        }
+      }
+    },
+    {
+      "league": "B1",
+      "warmup_n": 624,
+      "test_n": 311,
+      "start": "2025-07-25",
+      "end": "2026-05-24",
+      "by_market": {
+        "1x2": {
+          "n": 311,
+          "model_brier": 0.6266075456733724,
+          "market_brier": 0.6068502777377381,
+          "delta": 0.019757267935634287,
+          "week_blocks": 38,
+          "paired_95": [
+            0.004906127915055896,
+            0.0348450210396859
+          ]
+        },
+        "ou2.5": {
+          "n": 311,
+          "model_brier": 0.2515911623650731,
+          "market_brier": 0.24774770004649804,
+          "delta": 0.0038434623185750728,
+          "week_blocks": 38,
+          "paired_95": [
+            -0.003214694397262324,
+            0.01052031734412567
+          ]
+        }
+      }
+    },
+    {
+      "league": "P1",
+      "warmup_n": 612,
+      "test_n": 306,
+      "start": "2025-08-08",
+      "end": "2026-05-16",
+      "by_market": {
+        "1x2": {
+          "n": 306,
+          "model_brier": 0.5691876799943356,
+          "market_brier": 0.5335996917454416,
+          "delta": 0.035587988248893906,
+          "week_blocks": 36,
+          "paired_95": [
+            0.020106234917439243,
+            0.0509488840703517
+          ]
+        },
+        "ou2.5": {
+          "n": 306,
+          "model_brier": 0.24196959659299838,
+          "market_brier": 0.24114769437547268,
+          "delta": 0.0008219022175256832,
+          "week_blocks": 36,
+          "paired_95": [
+            -0.004613304425035837,
+            0.006268404086045424
+          ]
+        }
+      }
+    },
+    {
+      "league": "T1",
+      "warmup_n": 722,
+      "test_n": 306,
+      "start": "2025-08-08",
+      "end": "2026-05-17",
+      "by_market": {
+        "1x2": {
+          "n": 306,
+          "model_brier": 0.6059051366040229,
+          "market_brier": 0.5777411670751158,
+          "delta": 0.028163969528907085,
+          "week_blocks": 35,
+          "paired_95": [
+            0.0137653054797975,
+            0.04428633546450741
+          ]
+        },
+        "ou2.5": {
+          "n": 306,
+          "model_brier": 0.2463238322276684,
+          "market_brier": 0.23429623460956267,
+          "delta": 0.012027597618105727,
+          "week_blocks": 35,
+          "paired_95": [
+            0.005991461169618544,
+            0.018445768876853685
+          ]
+        }
+      }
+    },
+    {
+      "league": "NOR",
+      "warmup_n": 484,
+      "test_n": 240,
+      "start": "2025-03-29",
+      "end": "2025-11-30",
+      "by_market": {
+        "1x2": {
+          "n": 240,
+          "model_brier": 0.5795084356868738,
+          "market_brier": 0.5309813270392499,
+          "delta": 0.048527108647623836,
+          "week_blocks": 31,
+          "paired_95": [
+            0.027840042092893244,
+            0.06821421694449092
+          ]
+        },
+        "ou2.5": {
+          "n": 0
+        }
+      }
+    }
+  ],
+  "post_hoc_phase_sensitivity": [
+    {
+      "league": "SC0",
+      "n": 198,
+      "market": "ou2.5",
+      "model_brier": 0.2506445296204283,
+      "market_brier": 0.2505445067636276,
+      "delta": 0.00010002285680073892,
+      "paired_95": [
+        -0.005732272656550665,
+        0.00572080912274186
+      ]
+    },
+    {
+      "league": "B1",
+      "n": 240,
+      "market": "ou2.5",
+      "model_brier": 0.25142032627259286,
+      "market_brier": 0.248590896670779,
+      "delta": 0.0028294296018139017,
+      "paired_95": [
+        -0.005058839709929963,
+        0.010234158726464408
+      ]
+    },
+    {
+      "league": "NOR",
+      "n": 239,
+      "market": "1x2",
+      "model_brier": 0.5781323214425413,
+      "market_brier": 0.5291754313928972,
+      "delta": 0.04895689004964419,
+      "paired_95": [
+        0.02798813537069523,
+        0.06893672023654178
+      ]
+    }
+  ],
+  "public_csv_inputs": [
+    {
+      "file": "2324-B1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2324/B1.csv",
+      "sha256": "379d10bd92cecba6349f043f0661e3548e16d8053b234a7cace7493acfb72144"
+    },
+    {
+      "file": "2324-P1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2324/P1.csv",
+      "sha256": "681e132bee3948b432436e907a935ea8fc4a8ccace86dad67d61be0159035758"
+    },
+    {
+      "file": "2324-SC0.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2324/SC0.csv",
+      "sha256": "ed2dcf1bb0bdb12e911f0b8435038a85448be27d4fa368202c85be5e8036c341"
+    },
+    {
+      "file": "2324-T1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2324/T1.csv",
+      "sha256": "17097f7d31bad40f830dc6f0f85090e9f76876e6812ec14997bc80423a05924b"
+    },
+    {
+      "file": "2425-B1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2425/B1.csv",
+      "sha256": "fcc3ec3a7bdd57ec42df76bb03aa1858ee18be88886a379f42b4c7b2e7f5d0eb"
+    },
+    {
+      "file": "2425-P1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2425/P1.csv",
+      "sha256": "e3cceff81e471c59e72c1f60f81b2e62df21d1a58af167062d4915484da00255"
+    },
+    {
+      "file": "2425-SC0.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2425/SC0.csv",
+      "sha256": "a7e7c7512a04784c8c8d9a82a3bb24a3c67c9a6afa533a661d8fbbbbec293118"
+    },
+    {
+      "file": "2425-T1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2425/T1.csv",
+      "sha256": "fd91680cc815f356c94fdd733078431ca771707305994ec49c5f1270cf9c9f5c"
+    },
+    {
+      "file": "2526-B1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2526/B1.csv",
+      "sha256": "7ba1d75b2f23ab6bf36952fa61b62e80905e2d38fa059ad389106772aebaf481"
+    },
+    {
+      "file": "2526-P1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2526/P1.csv",
+      "sha256": "f1353dc7404bfa0d27daa3ca6c164bb450ec20558ee02fffb7160fae182213dc"
+    },
+    {
+      "file": "2526-SC0.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2526/SC0.csv",
+      "sha256": "be3c45e08f09a327e3fd5289dd0b362b200f430ed5845cb18df1aca7e3ced2ee"
+    },
+    {
+      "file": "2526-T1.csv",
+      "source": "https://www.football-data.co.uk/mmz4281/2526/T1.csv",
+      "sha256": "d35e97d42b53ca870b13683da3998aa2758eeb43280fbe71d5d935bae47cdd23"
+    },
+    {
+      "file": "NOR.csv",
+      "source": "https://www.football-data.co.uk/new/NOR.csv",
+      "sha256": "643eacb3da88b752a297267a09230adbe9b72d17249b5141e01a783426f17e9d"
+    }
+  ]
+}

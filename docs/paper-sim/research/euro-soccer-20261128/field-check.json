@@ -1,0 +1,279 @@
+{
+  "as_of_utc": "2026-11-28T06:45:50.975891+00:00",
+  "model_version": "euro-soccer-venue-lineups-20261128-v1",
+  "first_collection_code": "557ff3f857c26eb0f0a43a00b4f6025454f5eeb0",
+  "runtime_code_readback": "93448e267e83cd771f8f4b511e86a8f51f59063a",
+  "amount_cny": 0,
+  "research_only": true,
+  "timer": {
+    "enabled": "enabled",
+    "active": "active",
+    "schedule": "one check per minute at second eight UTC"
+  },
+  "leagues": {
+    "bel1": {
+      "scheduled_next_48h": 8,
+      "matched_upcoming_previews": 8,
+      "fixtures": 8,
+      "team_baseline_fixtures": 8,
+      "team_news_scenario_fixtures": 5,
+      "both_markets_same_batch_fixtures": 6,
+      "scored_fixtures": 0,
+      "preview_market_coverage": {
+        "match_winner": 8,
+        "total_2_5": 6
+      },
+      "preview_market_gaps": {
+        "total_2_5/batch_book_missing_stale_or_invalid": 2
+      },
+      "baseline_only_reasons": [
+        {
+          "game": "Lommel – Zulte Waregem",
+          "news_mode": "previous",
+          "issues": [],
+          "teams": {
+            "away": "no_current_lineup_or_reported_absence",
+            "home": "no_current_lineup_or_reported_absence"
+          }
+        },
+        {
+          "game": "St.Truiden – Genk",
+          "news_mode": "previous",
+          "issues": [],
+          "teams": {
+            "away": "no_historical_lineup_contrast",
+            "home": "no_current_lineup_or_reported_absence"
+          }
+        },
+        {
+          "game": "Royal Antwerp – Anderlecht",
+          "news_mode": "previous",
+          "issues": [],
+          "teams": {
+            "away": "no_historical_lineup_contrast",
+            "home": "no_current_lineup_or_reported_absence"
+          }
+        }
+      ],
+      "windows": {
+        "preview": 8,
+        "forward": 0,
+        "closing": 0
+      },
+      "earliest_observation": {
+        "home": "Westerlo",
+        "away": "RAAL La Louvière",
+        "kickoff_utc": "2026-11-28T15:00:00+00:00",
+        "received_utc": "2026-11-28T06:38:14.834019+00:00",
+        "sha256": "0ef489b777b936fb39d387d0a0b62a19b5e0a68bfa42b6e44f9afbade69f5ae9",
+        "raw_references_verified": 16,
+        "news_lineup_mode": "previous",
+        "home_win_baseline": 0.4324834908550095,
+        "home_win_context": 0.4308353182567769,
+        "public_quotes": {
+          "match_winner": "observed",
+          "total_2_5": "observed"
+        },
+        "missing_quotes": {},
+        "directions_with_context_vs_ask": 5,
+        "calendar_sha256": "7e4ad972e3a185987d8450d1fd12069cd4010879db495c86d94781dd7a58c3c3",
+        "news_sha256": [
+          "27d139539a3e8ac5100d2d3f0883ef549bc725ad534c9c31df6eda962ebe4fd3"
+        ],
+        "clob_batch_sha256": "6e7057eba4a36c54668e3e8ebf16aceb42f630961e2b35556b3f453b9bd53e30"
+      }
+    },
+    "nor": {
+      "scheduled_next_48h": 7,
+      "matched_upcoming_previews": 7,
+      "fixtures": 7,
+      "team_baseline_fixtures": 7,
+      "team_news_scenario_fixtures": 7,
+      "both_markets_same_batch_fixtures": 4,
+      "scored_fixtures": 0,
+      "preview_market_coverage": {
+        "match_winner": 4,
+        "total_2_5": 6
+      },
+      "preview_market_gaps": {
+        "match_winner/batch_book_missing_stale_or_invalid": 3,
+        "total_2_5/batch_book_missing_stale_or_invalid": 1
+      },
+      "baseline_only_reasons": [],
+      "windows": {
+        "preview": 7,
+        "forward": 0,
+        "closing": 0
+      },
+      "earliest_observation": {
+        "home": "Bodø/Glimt",
+        "away": "KFUM",
+        "kickoff_utc": "2026-11-28T15:00:00+00:00",
+        "received_utc": "2026-11-28T06:38:11.704819+00:00",
+        "sha256": "164e087e3540bdaf0c75c7fc52a799913bd40ee3c36f6c980280496f1e1468d4",
+        "raw_references_verified": 16,
+        "news_lineup_mode": "predicted",
+        "home_win_baseline": 0.7074259398758346,
+        "home_win_context": 0.7117809264318588,
+        "public_quotes": {
+          "match_winner": "observed",
+          "total_2_5": "observed"
+        },
+        "missing_quotes": {},
+        "directions_with_context_vs_ask": 5,
+        "calendar_sha256": "b8be68c91854ba268dc484c8dc47d343b481df0969f60b266b7d337ae62725f5",
+        "news_sha256": [
+          "1c33db9bc22753b8c9d850389bf3f5a7d9db2ed725b8fca69a5228ac9c8b9425"
+        ],
+        "clob_batch_sha256": "6b8f93549eed5b230653b0439151afc0349832a944424d2a2a3b144f66df02d3"
+      }
+    },
+    "por": {
+      "scheduled_next_48h": 6,
+      "matched_upcoming_previews": 6,
+      "fixtures": 6,
+      "team_baseline_fixtures": 6,
+      "team_news_scenario_fixtures": 5,
+      "both_markets_same_batch_fixtures": 3,
+      "scored_fixtures": 0,
+      "preview_market_coverage": {
+        "match_winner": 6,
+        "total_2_5": 3
+      },
+      "preview_market_gaps": {
+        "total_2_5/batch_book_missing_stale_or_invalid": 3
+      },
+      "baseline_only_reasons": [
+        {
+          "game": "FC Porto – Sporting CP",
+          "news_mode": "previous",
+          "issues": [],
+          "teams": {
+            "away": "no_current_lineup_or_reported_absence",
+            "home": "no_historical_lineup_contrast"
+          }
+        }
+      ],
+      "windows": {
+        "preview": 6,
+        "forward": 0,
+        "closing": 0
+      },
+      "earliest_observation": {
+        "home": "Arouca",
+        "away": "Rio Ave",
+        "kickoff_utc": "2026-11-28T15:30:00+00:00",
+        "received_utc": "2026-11-28T06:38:10.570027+00:00",
+        "sha256": "e19e91da34e795b768c63898652545371d359bc448152cea48a6cc151cb6f2f3",
+        "raw_references_verified": 16,
+        "news_lineup_mode": "predicted",
+        "home_win_baseline": 0.44903629200180945,
+        "home_win_context": 0.4467520188028194,
+        "public_quotes": {
+          "match_winner": "observed",
+          "total_2_5": "observed"
+        },
+        "missing_quotes": {},
+        "directions_with_context_vs_ask": 5,
+        "calendar_sha256": "a6f26c6eb333e339e094f028050ea531becc59b36305c7be9c0e0325295ae7c4",
+        "news_sha256": [
+          "94b8e5f5de150813d3b6b2f6a8f88f82c90fd79bf6f071881d66ccf3031ca8e6"
+        ],
+        "clob_batch_sha256": "6f1052c585b23bb3ffd1d897e0e255ef9941c631ab910bbb4b1de9374881040a"
+      }
+    },
+    "scop": {
+      "scheduled_next_48h": 6,
+      "matched_upcoming_previews": 6,
+      "fixtures": 6,
+      "team_baseline_fixtures": 6,
+      "team_news_scenario_fixtures": 6,
+      "both_markets_same_batch_fixtures": 4,
+      "scored_fixtures": 0,
+      "preview_market_coverage": {
+        "match_winner": 4,
+        "total_2_5": 6
+      },
+      "preview_market_gaps": {
+        "match_winner/batch_book_missing_stale_or_invalid": 2
+      },
+      "baseline_only_reasons": [],
+      "windows": {
+        "preview": 6,
+        "forward": 0,
+        "closing": 0
+      },
+      "earliest_observation": {
+        "home": "Aberdeen",
+        "away": "Dundee FC",
+        "kickoff_utc": "2026-11-28T15:00:00+00:00",
+        "received_utc": "2026-11-28T06:38:12.693994+00:00",
+        "sha256": "6c9c65ab5ece6890971222af4a19fee3bfc313ab1689353a3c04ab813ed6c9ef",
+        "raw_references_verified": 16,
+        "news_lineup_mode": "previous",
+        "home_win_baseline": 0.4625541434352801,
+        "home_win_context": 0.4583445085690806,
+        "public_quotes": {
+          "match_winner": "observed",
+          "total_2_5": "observed"
+        },
+        "missing_quotes": {},
+        "directions_with_context_vs_ask": 5,
+        "calendar_sha256": "319960ac0469435e8463bfb6fb3abc6b418b730086a654478542f960b25c9a82",
+        "news_sha256": [
+          "f0e47fb01f5e37472b97a15d5cab47fc3f16c25c604155456731f386ba05b1c3"
+        ],
+        "clob_batch_sha256": "02ba14dba563fda4801b3745e70327f419f4199992924a533427d8517fcdd044"
+      }
+    },
+    "tur": {
+      "scheduled_next_48h": 5,
+      "matched_upcoming_previews": 5,
+      "fixtures": 5,
+      "team_baseline_fixtures": 5,
+      "team_news_scenario_fixtures": 5,
+      "both_markets_same_batch_fixtures": 0,
+      "scored_fixtures": 0,
+      "preview_market_coverage": {
+        "match_winner": 3,
+        "total_2_5": 2
+      },
+      "preview_market_gaps": {
+        "total_2_5/batch_book_missing_stale_or_invalid": 3,
+        "match_winner/batch_book_missing_stale_or_invalid": 2
+      },
+      "baseline_only_reasons": [],
+      "windows": {
+        "preview": 5,
+        "forward": 0,
+        "closing": 0
+      },
+      "earliest_observation": {
+        "home": "Samsunspor",
+        "away": "Gençlerbirliği",
+        "kickoff_utc": "2026-11-28T13:00:00+00:00",
+        "received_utc": "2026-11-28T06:38:10.939491+00:00",
+        "sha256": "32e262d672873b695881024d556d344969c472fe026c2e043d33f9298f361f85",
+        "raw_references_verified": 16,
+        "news_lineup_mode": "previous",
+        "home_win_baseline": 0.4732632647854713,
+        "home_win_context": 0.4753722858137754,
+        "public_quotes": {
+          "match_winner": "observed",
+          "total_2_5": "unavailable"
+        },
+        "missing_quotes": {
+          "total_2_5": [
+            "batch_book_missing_stale_or_invalid"
+          ]
+        },
+        "directions_with_context_vs_ask": 3,
+        "calendar_sha256": "2eae7967746972b4d1dd4eb28db0aed6d5aedda4213b60fad686b200349884af",
+        "news_sha256": [
+          "282370322aa702512800ef9242b60b69b3bccc0c6b22d6290fb1a7e7e2cdafba"
+        ],
+        "clob_batch_sha256": "a15bbeefcca987472cb8b70659af1db769287b0764f8d4d0240a5c48b9a11ec8"
+      }
+    }
+  }
+}
