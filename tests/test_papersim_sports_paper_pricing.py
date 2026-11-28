@@ -57,3 +57,55 @@ def test_invalid_and_empty_asks_do_not_create_a_price_or_signal():
     assert pricing.best_ask(invalid_levels) is None
     assert pricing.evaluate_candidate(FORECAST, invalid_levels, news=NEWS, fee_rate=0.05) is None
     assert pricing.best_ask(iter([*invalid_levels, {"price": ".36001", "size": ".001"}])) == 0.36001
+
+
+def test_snapshot_covers_full_book_and_only_combines_the_selected_price():
+    from datetime import UTC, datetime
+    from hashlib import sha256
+    import json
+
+    now = datetime(2026, 11, 29, tzinfo=UTC)
+    raw = {"asset_id": "901", "market": "synthetic-condition", "timestamp": str(int(now.timestamp()) * 1000),
+           "asks": [{"price": ".70", "size": "75"}, {"price": ".40", "size": ".6"},
+                    {"price": ".4", "size": ".40"}], "bids": [{"price": ".35", "size": "2"}]}
+    def evidence(book):
+        return pricing.book_evidence(book, token_id="901", condition_id="synthetic-condition", observed_at=now)
+
+    proof = evidence(raw)
+    assert float(proof["best_ask_price"]) == .4
+    assert float(proof["best_ask_size"]) == 1
+    canonical = json.dumps(raw, separators=(",", ":"), sort_keys=True, ensure_ascii=False, allow_nan=False)
+    assert proof["book_snapshot_sha256"] == sha256(canonical.encode()).hexdigest()
+    assert proof["book_snapshot_sha256"] != evidence(raw | {"bids": []})["book_snapshot_sha256"]
+    assert proof["book_snapshot_sha256"] != evidence(raw | {"asks": raw["asks"][1:]})["book_snapshot_sha256"]
+    assert evidence(dict(reversed(list(raw.items())))) == proof
+    assert evidence(raw | {"asset_id": "902"}) is None
+    assert evidence(raw | {"market": "another-condition"}) is None
+
+
+def test_displayed_notional_and_fee_inclusive_share_capacity_use_bound_snapshot_only():
+    from datetime import UTC, datetime
+    from decimal import Decimal
+
+    now = datetime(2026, 11, 29, tzinfo=UTC)
+    raw = {"asset_id": "901", "market": "fixture", "asks": [{"price": ".4", "size": "1"}],
+           "timestamp": str(int(now.timestamp()) * 1000), "bids": []}
+    args = dict(price=Decimal(".4"), fee_per_share=Decimal(".012"), stake_fen=15000,
+                token_id="901", condition_id="fixture", observed_at=now)
+    proof = pricing.book_evidence(raw, token_id="901", condition_id="fixture", observed_at=now)
+    covered = pricing.best_ask_coverage(proof, **args)
+    assert covered["status"] == "insufficient" and Decimal(covered["best_ask_notional_usd"]) == Decimal(".4")
+    assert Decimal(covered["required_shares"]) * Decimal(".412") * Decimal("6.654376") == Decimal(150)
+    borderline = pricing.best_ask_coverage(proof | {"best_ask_size": "55"}, **args)
+    assert borderline["status"] == "insufficient" and borderline["fee_inclusive_share_status"] == "sufficient"
+    assert pricing.best_ask_coverage(proof | {"best_ask_size": "57"}, **args)["status"] == "sufficient"
+    assert pricing.best_ask_coverage(proof, **(args | {"token_id": "902"}))["reason"] == "invalid_snapshot_identity"
+    assert pricing.best_ask_coverage(proof, **(args | {"condition_id": "other"}))["reason"] == "invalid_snapshot_identity"
+    assert pricing.best_ask_coverage(proof | {"best_ask_price": ".5"}, **args)["reason"] == "invalid_snapshot"
+    assert pricing.best_ask_coverage(proof | {"currency_rate": None}, **args)["reason"] == "missing_registered_rate"
+    assert pricing.best_ask_coverage({}, **args)["reason"] == "missing_snapshot"
+    earlier = datetime(2026, 11, 27, tzinfo=UTC)
+    earlier_book = raw | {"timestamp": str(int(earlier.timestamp()) * 1000)}
+    earlier_proof = pricing.book_evidence(earlier_book, token_id="901", condition_id="fixture", observed_at=earlier)
+    assert earlier_proof["currency_rate"] is None
+    assert pricing.best_ask_coverage(earlier_proof, **(args | {"observed_at": earlier}))["reason"] == "missing_registered_rate"

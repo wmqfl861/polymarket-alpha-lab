@@ -1,0 +1,628 @@
+diff --git a/docs/paper-sim/runtime/scripts/basketball_feed.py b/docs/paper-sim/runtime/scripts/basketball_feed.py
+index 83209fc436d3cbf517a5b8221f6e17d93cb9e941..1bae316caf815e3db28749b7cde13518f97e9b0e 100644
+--- a/docs/paper-sim/runtime/scripts/basketball_feed.py
++++ b/docs/paper-sim/runtime/scripts/basketball_feed.py
+@@ -20,6 +20,7 @@ from polymarket_alpha_lab.papersim import espn_nba, gates
+ import basketball_bbl as bbl
+ import basketball_models as models
+ import football_feed as common
++import sports_paper_pricing as paper_pricing
+ from football_feed import clean_label, document_digest, number, numeric_id, record, rows, stamp, utc_iso
+
+
+@@ -1231,7 +1232,10 @@ def _parsed_book(market, option, observed):
+             or ask is not None and bid is not None and bid >= ask):
+         return None
+     midpoint = (bid + ask) / 2 if ask is not None and bid is not None else None
+-    return {"asks": asks, "bid": bid, "ask": ask, "midpoint": midpoint, "at": at, "received": received}
++    snapshot = paper_pricing.book_evidence(raw, token_id=option.token_id, condition_id=market.condition_id,
++                                          observed_at=at) if ask is not None else None
++    return {"asks": asks, "bid": bid, "ask": ask, "midpoint": midpoint, "at": at, "received": received,
++            "displayed_book": snapshot}
+
+
+ def _two_side_price(market, parsed):
+@@ -1260,15 +1264,24 @@ def _liquidity(raw):
+     return number(raw.get("liquidity")) if value is None else value
+
+
+-def _candidate(info, market, option, book, model, news, now, cutoff, raw):
++def _candidate(info, market, option, book, model, news, now, cutoff, raw, *, paper=False):
+     if book is None or not book["asks"] or not timedelta(0) <= now - book["at"] <= common.BOOK_AGE:
+         return None
+     fee = common._fee_rate(raw)
+-    liquidity = _liquidity(raw)
+     prediction = models.quote(model, market.kind, market.line, option.side)
+-    if fee is None or liquidity is None or liquidity < 0 or prediction is None:
++    if fee is None or prediction is None:
+         return None
+-    gate = gates.evaluate_candidate(prediction, book["asks"], gamma_liquidity=liquidity, news=news, fee_rate=fee)
++    if paper:
++        if "displayed_book" in book and book["displayed_book"] is None:
++            return None
++        gate = paper_pricing.evaluate_candidate(prediction, book["asks"], news=news, fee_rate=fee)
++        if gate is None:
++            return None
++    else:
++        liquidity = _liquidity(raw)
++        if liquidity is None or liquidity < 0:
++            return None
++        gate = gates.evaluate_candidate(prediction, book["asks"], gamma_liquidity=liquidity, news=news, fee_rate=fee)
+     return gate, fee, prediction, min(cutoff, book["at"] + common.BOOK_AGE)
+
+
+@@ -1278,11 +1291,11 @@ def _market_direct(market_id, clock, deadline):
+     return _get_safe(f"{GAMMA}/markets/{market_id}", deadline, clock)
+
+
+-def _observation(info, market, option, book, model, prediction, implied, raw, reasons):
++def _observation(info, market, option, book, model, prediction, implied, raw, reasons, *, paper=False):
+     payload = market.document() | {"fixture_key": info["id"], "league": info["league"], "kickoff": info["kickoff"],
+                                   "event_id": market.event_id, "event_slug": market.event_slug, "token_id": option.token_id,
+                                   "outcome": option.outcome, "side": option.side, "direction": option.label,
+-                                  "fee_rate": common._fee_rate(raw), "gamma_liquidity": _liquidity(raw),
++                                  "fee_rate": common._fee_rate(raw),
+                                   "market_probability": implied.get(option.token_id), "reasons": reasons}
+     official = record(info.get("basketball_official"))
+     if official:
+@@ -1290,11 +1303,20 @@ def _observation(info, market, option, book, model, prediction, implied, raw, re
+     if prediction:
+         payload.update({"model_probability": prediction["model_median"], "variants": prediction["qs_variants"],
+                         "model_version": model.get("model_version"), "model_digest": model.get("sha256")})
++    if paper:
++        payload["price_basis"] = paper_pricing.PRICE_BASIS
++    else:
++        payload["gamma_liquidity"] = _liquidity(raw)
+     if book is not None:
+-        walk = gates.walk_book(book["asks"], side="ask", notional=gates.DEFAULT_NOTIONAL_USD)
+         payload.update({"best_bid": book["bid"], "best_ask": book["ask"], "book_observed_at": utc_iso(book["at"]),
+-                        "book_received_at": utc_iso(book["received"]), "near_two_cent_depth": walk.depth_near2c,
+-                        "depth_filled_usd": walk.filled_notional, "entry_price": walk.vwap if walk.filled else None})
++                        "book_received_at": utc_iso(book["received"])})
++        if paper:
++            payload["entry_price"] = paper_pricing.best_ask(book["asks"])
++            payload.update(book.get("displayed_book") or {})
++        else:
++            walk = gates.walk_book(book["asks"])
++            payload.update({"near_two_cent_depth": walk.depth_near2c, "depth_filled_usd": walk.filled_notional,
++                            "entry_price": walk.vwap if walk.filled else None})
+     return payload
+
+
+@@ -1357,6 +1379,7 @@ def review(info: dict, now: datetime, stage: str) -> dict:
+         return _watch(info, "advance" if official else "independent_fixture_missing", coverage_gap=official is None, **extra)
+
+     paper_window = {"t90": 90, "t30": 30}.get(stage)
++    paper_review = paper_window is not None
+     opening = kickoff - timedelta(minutes=paper_window) if paper_window else None
+     cutoff = min(opening + timedelta(minutes=10), effective_tip) if opening else effective_tip
+     paper_time = bool(opening and opening <= now < cutoff)
+@@ -1424,17 +1447,18 @@ def review(info: dict, now: datetime, stage: str) -> dict:
+                 reasons.append("two_sided_price_unavailable")
+             if book is None:
+                 reasons.append("book_unavailable")
+-            screened = _candidate(info, market, option, book, market_model, news, current, cutoff, market.raw) if market_model else None
++            screened = (_candidate(info, market, option, book, market_model, news, current, cutoff, market.raw,
++                                   paper=paper_review) if market_model else None)
+             if screened:
+                 reasons.extend(screened[0].decision.failed)
+                 if news and not news.concordant:
+                     reasons.extend(news.blockers)
+             elif book and market_model:
+-                reasons.append("fee_depth_or_liquidity_unverified")
++                reasons.append("fee_or_quote_unverified" if paper_review else "fee_depth_or_liquidity_unverified")
+             if comparison and not directly_verified:
+                 reasons.append("direct_contract_unverified")
+             observation = _observation(working, market, option, book, market_model, prediction, implied,
+-                                       comparison[0] if directly_verified else market.raw, reasons)
++                                       comparison[0] if directly_verified else market.raw, reasons, paper=paper_review)
+             observation["direct_contract_verified"] = directly_verified
+             shadow = models.quote(comparison_model, market.kind, market.line, option.side) if comparison_model else None
+             if shadow is not None and market_model is not comparison_model:
+@@ -1458,13 +1482,13 @@ def review(info: dict, now: datetime, stage: str) -> dict:
+             verified = _contract(working, raw, market.event_id, market.event_slug)
+             if verified is None or verified.terms != market.terms:
+                 continue
+-            gate_result = _candidate(info, market, option, book, market_model, news, clock(), cutoff, raw)
++            gate_result = _candidate(info, market, option, book, market_model, news, clock(), cutoff, raw, paper=True)
+             if not gate_result:
+                 continue
+             gate, fee, prediction, expiry = gate_result
+             if not gate.decision.passed or clock() >= expiry:
+                 continue
+-            signal = _observation(working, market, option, book, market_model, prediction, implied, raw, [])
++            signal = _observation(working, market, option, book, market_model, prediction, implied, raw, [], paper=True)
+             signal.update({"price": gate.entry_price, "valid_until": utc_iso(expiry), "net_edge": gate.exec_edge,
+                            "conservative_probability": min(prediction["qs_variants"]),
+                            "direct_contract_verified": True,
+@@ -1495,7 +1519,7 @@ def review(info: dict, now: datetime, stage: str) -> dict:
+         return _watch(info, reason, coverage_gap=reason in {"independent_provider_unavailable", "independent_fixture_missing", "books_unavailable", "model_history_partial", "model_unavailable", "basketball_availability_unavailable", "basketball_availability_baseline_missing"}, **extra)
+     signals.sort(key=common._paper_signal_rank)
+     best = signals[0]
+-    text = f"{info['home']} 对 {info['away']}｜{best['direction']}，成交均价 {best['price'] * 100:.1f}¢，计费后优势 {best['net_edge']:+.1%}。"
++    text = f"{info['home']} 对 {info['away']}｜{best['direction']}，最优卖价 {best['price'] * 100:.1f}¢，计费后优势 {best['net_edge']:+.1%}。"
+     return {**extra, "status": "paper", "reason_code": "qualified", "text": text, "signal": best,
+             "signals": signals, "valid_until": best["valid_until"]}
+
+diff --git a/docs/paper-sim/runtime/scripts/basketball_focus.py b/docs/paper-sim/runtime/scripts/basketball_focus.py
+index b39963631a5d3dae059cfa1ee88f6630dfcc6084..7a79b1d98b40c4ae536b726b88075208606b53d0 100644
+--- a/docs/paper-sim/runtime/scripts/basketball_focus.py
++++ b/docs/paper-sim/runtime/scripts/basketball_focus.py
+@@ -14,6 +14,7 @@ import basketball_feed as basketball
+ import basketball_models as models
+ import football_feed as feed
+ import football_store as store
++import sports_paper_pricing as paper_pricing
+
+
+ LEAGUES = {"nba": "NBA", "cbb": "NCAA 男篮", "cwbb": "NCAA 女篮"}
+@@ -152,8 +153,8 @@ def _evaluate(row, pair, market, raw_books, now):
+     tip, info = row["kickoff"], row["info"]
+     if not now < tip:
+         return None
+-    fee, liquidity = feed._fee_rate(market.raw), basketball._liquidity(market.raw)
+-    if fee is None or liquidity is None or liquidity < gates.GATES["liq_min"]:
++    fee = feed._fee_rate(market.raw)
++    if fee is None:
+         return None
+     books = {option.token_id: basketball._parsed_book(market, option, raw_books.get(option.token_id, (None, None)))
+              for option in market.options}
+@@ -162,16 +163,16 @@ def _evaluate(row, pair, market, raw_books, now):
+     implied = basketball._two_side_price(market, books)
+     if not implied:
+         return None
+-    walks = {token: gates.walk_book(book["asks"]) for token, book in books.items()}
+-    if any(not walk.filled or walk.depth_near2c < gates.DEFAULT_NOTIONAL_USD for walk in walks.values()):
++    prices = {token: paper_pricing.best_ask(book["asks"]) for token, book in books.items()}
++    if any(price is None or ("displayed_book" in books[token] and books[token]["displayed_book"] is None)
++           for token, price in prices.items()):
+         return None
+     focus = []
+     display = {side: _display_name(info, side) for side in ("home", "away")}
+     official = feed.record(info.get("basketball_official"))
+     for option in market.options:
+         token = option.token_id
+-        walk = walks[token]
+-        price = walk.vwap
++        price = prices[token]
+         if not gates.ENTRY_WINDOW[0] <= price <= gates.ENTRY_WINDOW[1]:
+             continue
+         forecast = _probabilities(row, pair, market, option)
+@@ -197,6 +198,8 @@ def _evaluate(row, pair, market, raw_books, now):
+             team = display[option.side]
+             direction = f"{team} 胜" if team.isascii() else f"{team}胜"
+         focus.append({"sport": "basketball", "league": LEAGUES[info["league"]], "league_code": info["league"],
++                      "best_ask_coverage": {"status": "not_applicable", "reason": "zero_stake_observation"},
++                      **(books[token].get("displayed_book") or {}),
+                       "fixture_key": row["id"], "revision": row["revision"], "kickoff": tip,
+                       "home": info["home"], "away": info["away"], "direction": direction,
+                       "home_display": display["home"], "away_display": display["away"],
+@@ -210,9 +213,9 @@ def _evaluate(row, pair, market, raw_books, now):
+                       "model_version": version, "model_observed_at": model_at, "probability": centres[version],
+                       "conservative_probability": worst,
+                       "model_probabilities": centres, "market_probability": implied[token],
+-                      "price": price, "fee_rate": fee, "fee_per_share": total_cost - price,
++                      "price": price, "price_basis": paper_pricing.PRICE_BASIS, "fee_rate": fee, "fee_per_share": total_cost - price,
+                       "quoted_at": books[token]["at"], "valid_until": min(tip, min(book["at"] for book in books.values()) + BOOK_AGE),
+-                      "depth_near2c_usd": walk.depth_near2c, "edge": net, "worst_edge": worst_edge,
++                      "edge": net, "worst_edge": worst_edge,
+                       "worst_net_edge": worst_edge,
+                       "research_only": True, "amount_cny": 0, "reason": reason,
+                       "url": f"https://polymarket.com/event/{market.event_slug}" + (f"/{market.raw['slug']}" if not winner else "")})
+diff --git a/docs/paper-sim/runtime/scripts/football_feed.py b/docs/paper-sim/runtime/scripts/football_feed.py
+index 1dcaec544554671a93a3f66928bac5ad7a48083b..380e11d860d40e2f581c8b3fc27f2eaf10a98ffe 100644
+--- a/docs/paper-sim/runtime/scripts/football_feed.py
++++ b/docs/paper-sim/runtime/scripts/football_feed.py
+@@ -17,6 +17,7 @@ from urllib.parse import urlencode
+ from urllib.request import ProxyHandler, Request, build_opener
+ from zoneinfo import ZoneInfo
+
++import sports_paper_pricing as paper_pricing
+ from polymarket_alpha_lab.papersim import fees, fotmob, gates, soccer_model
+ from polymarket_alpha_lab.papersim.adapters import polymarket as pm
+ from polymarket_alpha_lab.papersim.pipeline import MODEL_VERSION_SOCCER
+@@ -910,7 +911,9 @@ def _validated_book(contract, option, observed):
+     bid = next((level.price for level in book.bids if level.size > 0), None)
+     if not asks or bid is not None and bid > asks[0][0]:
+         return None
+-    return asks, at
++    evidence = paper_pricing.book_evidence(raw, token_id=option.token_id, condition_id=contract.condition_id,
++                                          observed_at=at)
++    return (asks, at, evidence) if evidence else None
+
+
+ def _contract_order(market):
+@@ -1039,6 +1042,18 @@ def scope_permitted(fixture, kind, line, team_side, model_version):
+     return scope is not None and scope in fixture.get("_paper_scopes", ())
+
+
++def _under_risk(market, selection, projection):
++    model, _, (home, away) = projection
++    check_form = (market.kind, selection.side) in (("total", "over"), ("btts", "yes"))
++    hits = model.get("over_2_5_hits")
++    if check_form and (type(hits) is not int or not 0 <= hits <= 10):
++        return None
++    under_risk, _ = gates.under_risk_check(kind=market.kind, side=selection.side, o25_hits=hits or 0,
++                                          lambda_home=home, lambda_away=away, lambda_total=home + away,
++                                          line=market.line if market.line is not None else 2.5)
++    return under_risk
++
++
+ def _screen(fixture, market, selection, book, projection, news, raw=None):
+     if book is None or not _regulation(market.raw) or not gates.suspension_policy(market.kind).eligible:
+         return None
+@@ -1048,29 +1063,19 @@ def _screen(fixture, market, selection, book, projection, news, raw=None):
+     fee = _fee_rate(raw if raw is not None else market.raw)
+     if fee is None:
+         return None
+-    liquidity = number((raw if raw is not None else market.raw).get("liquidityNum"))
+-    if liquidity is None:
+-        liquidity = number((raw if raw is not None else market.raw).get("liquidity"))
+-    if liquidity is None or liquidity < 0:
+-        return None
+-    model, outputs, (home, away) = getattr(projection, "projection", projection)
+-    check_form = (market.kind, selection.side) in (("total", "over"), ("btts", "yes"))
+-    hits = model.get("over_2_5_hits")
+-    if check_form and (type(hits) is not int or not 0 <= hits <= 10):
++    data = getattr(projection, "projection", projection)
++    under_risk = _under_risk(market, selection, data)
++    if under_risk is None:
+         return None
+-    under_risk, _ = gates.under_risk_check(kind=market.kind, side=selection.side, o25_hits=hits or 0,
+-                                          lambda_home=home, lambda_away=away, lambda_total=home + away,
+-                                          line=market.line if market.line is not None else 2.5)
+     quote = (projection.market_quote(market, selection) if hasattr(projection, "market_quote")
+-             else _model_quote(market, selection, outputs))
++             else _model_quote(market, selection, data[1]))
+     if quote is None:
+         return None
+     try:
+-        result = gates.evaluate_candidate(quote, book[0], gamma_liquidity=liquidity, news=news,
+-                                          fee_rate=fee, under_risk=under_risk)
++        result = paper_pricing.evaluate_candidate(quote, book[0], news=news, fee_rate=fee, under_risk=under_risk)
+     except (ValueError, TypeError, OverflowError):
+         return None
+-    if not all(value for name, value in result.checks.items() if name != "news_concordant"):
++    if result is None or any(reason != "news_concordant" for reason in result.decision.failed):
+         return None
+     return result, quote, fee
+
+@@ -1088,21 +1093,22 @@ def _paper_signal_rank(signal):
+     return (*value, str(signal["market_id"]), signal["model_version"], signal["outcome"])
+
+
+-def _priced_direction(market, option, projection, screened, observed, cutoff):
++def _priced_direction(market, option, projection, screened, book, cutoff):
+     gate, quote, fee = screened
++    observed = book[1]
+     return {
++        **(book[2] if len(book) > 2 else {}),
+         "market_id": market.id, "outcome": option.outcome, "direction": option.label,
+         "model_version": getattr(projection, "model_version", MODEL_VERSION_SOCCER),
+         "model_digest": getattr(projection, "projection", projection)[0]["sha256"],
+         "market_kind": market.kind, "line": market.line, "team_side": market.team_side, "side": option.side,
+         "condition_id": market.condition_id, "token_id": option.token_id,
+-        "price": gate.entry_price, "book_observed_at": utc_iso(observed),
++        "price": gate.entry_price, "price_basis": paper_pricing.PRICE_BASIS, "book_observed_at": utc_iso(observed),
+         "valid_until": utc_iso(min(cutoff, observed + BOOK_AGE)),
+         "model_probability": quote["model_median"], "variants": list(quote["qs_variants"]),
+         "conservative_probability": min(quote["qs_variants"]),
+         "net_edge": gate.exec_edge, "adjusted_edge": gate.exec_edge_haircut, "worst_edge": gate.worst_variant_edge,
+-        "near_two_cent_depth": gate.walk.depth_near2c, "filled_usd": gate.walk.filled_notional, "fee_rate": fee,
+-        "fee_per_share": gates.fee_cost(gate.entry_price, fee), "gamma_liquidity": gate.gamma_liquidity,
++        "fee_rate": fee, "fee_per_share": gates.fee_cost(gate.entry_price, fee),
+         "url": f"https://polymarket.com/event/{market.event_slug}/{market.raw['slug']}",
+     }
+
+@@ -1124,7 +1130,7 @@ def _verified_signals(fixture, candidates, news, kickoff, cutoff, clock, deadlin
+             continue
+         observed = book[1]
+         if current < min(cutoff, observed + BOOK_AGE):
+-            signals.append(_priced_direction(market, option, projection, result, observed, cutoff))
++            signals.append(_priced_direction(market, option, projection, result, book, cutoff))
+     return sorted(signals, key=_paper_signal_rank)
+
+
+@@ -1134,7 +1140,7 @@ _WATCH_REASONS = {
+     "independent_fixture_changed": "独立赛程的队伍或时间未通过核对", "news_baseline_missing": "缺少可比的早期首发证据",
+     "lineups_unconfirmed": "最新首发尚未确认", "news_changed": "首发或伤停较早期预期有变化，影响待核",
+     "markets_unavailable": "暂无经核对的挂牌盘口", "books_unavailable": "实时订单簿暂无有效卖盘",
+-    "thresholds_unmet": "价差、收费、深度或变体一致性未达到模拟门槛",
++    "thresholds_unmet": "报价、费后优势或模型变体一致性未达到模拟门槛",
+     "direct_contract_unverified": "盘口条款、收费或有效期复核未通过",
+     "opening_pending": "复核窗口尚未开启", "late_review": "本轮复核已迟到", "advance": "临场将复核盘口与首发",
+     "safety": "赛前补提醒，按观察处理",
+@@ -1282,7 +1288,7 @@ def review(fixture: dict, now: datetime, stage: str) -> dict:
+                 continue
+             candidates.append((market, option, book, projection))
+             if not news.concordant:
+-                held.append(_priced_direction(market, option, projection, screened, book[1], paper_cutoff))
++                held.append(_priced_direction(market, option, projection, screened, book, paper_cutoff))
+     if not news.concordant:
+         extras["reason_codes"] = list(news.blockers)
+         if reason == "news_changed":
+@@ -1308,7 +1314,7 @@ def review(fixture: dict, now: datetime, stage: str) -> dict:
+         signal["lineup_review"] = lineup_review
+     best = signals[0]
+     direction_count = len({signal["token_id"] for signal in signals})
+-    text = (f"{_match_text(fixture, kickoff)}。纸上模拟｜{best['direction']}，250美元走盘均价 {best['price']*100:.1f}¢，"
++    text = (f"{_match_text(fixture, kickoff)}。纸上模拟｜{best['direction']}，最优卖价 {best['price']*100:.1f}¢，"
+             f"十变体中位 {best['model_probability']:.1%}，计费后优势 {best['net_edge']*100:+.1f} 个百分点。"
+             f"{'官宣首发符合两队近五场轮换记录。' if reason == 'verified_team_history' else '首发核对一致。'}"
+             f"{f'共{direction_count}个方向达标，提示其中优先项。' if direction_count > 1 else ''}")
+diff --git a/docs/paper-sim/runtime/scripts/football_focus.py b/docs/paper-sim/runtime/scripts/football_focus.py
+index 40f7197620413990cdaa01432921de75fe011c40..ced2ad21a3a855d5e9876a7c25dba1d834580c21 100644
+--- a/docs/paper-sim/runtime/scripts/football_focus.py
++++ b/docs/paper-sim/runtime/scripts/football_focus.py
+@@ -16,6 +16,7 @@ import football_forward as forward
+ import football_model as model
+ import football_shortlist as shortlist
+ import football_store as store
++import sports_paper_pricing as paper_pricing
+ from sports_portfolio import RESTART_KEY
+
+
+@@ -107,14 +108,15 @@ def _paired_books(market, books, checked, kickoff):
+     pair = {}
+     for option in market.options:
+         raw, received = books.get(option.token_id, (None, None))
+-        quote = forward._quote(market.condition_id, option.token_id, raw, received,
+-                               kickoff, checked - feed.BOOK_AGE)
+-        if (quote is None or quote["received_at"] > checked or quote["midpoint"] is None
+-                or quote["entry_price"] is None):
++        quote = forward._validated_quote(market.condition_id, option.token_id, raw, received,
++                                         kickoff, checked - feed.BOOK_AGE)
++        if quote is None or quote["received_at"] > checked or quote["midpoint"] is None:
+             return None
+-        evidence = {"token_id": option.token_id, "condition_id": market.condition_id,
+-                    "observed_at": feed.utc_iso(quote["observed_at"]), "asks": quote["asks"], "bid": quote["bid"]}
+-        pair[option.token_id] = quote | {"sha256": feed.document_digest(evidence)}
++        evidence = paper_pricing.book_evidence(raw, token_id=option.token_id, condition_id=market.condition_id,
++                                              observed_at=quote["observed_at"])
++        if evidence is None:
++            return None
++        pair[option.token_id] = quote | {"sha256": evidence["book_snapshot_sha256"], "displayed_book": evidence}
+     if len(pair) != 2:
+         return None
+     eps = feed.gates.GATE_EPSILON
+@@ -130,9 +132,17 @@ def _screen(market, option, book, projection, raw):
+                              else feed._model_quote(market, option, data[1]))
+     if quote is None or len(quote["qs_variants"]) != 10:
+         return None, ("model_variants_unavailable",)
+-    fee, gate, failures = forward._gate(market, option, quote, book, raw, None, data)
+-    blockers = tuple(reason for reason in failures if reason != "news_concordant")
+-    if gate is None or blockers:
++    fee = feed._fee_rate(raw)
++    if fee is None:
++        return None, ("fee_unverified",)
++    under_risk = feed._under_risk(market, option, data)
++    if under_risk is None:
++        return None, ("form_unavailable",)
++    gate = paper_pricing.evaluate_candidate(quote, book["asks"], fee_rate=fee, news=None, under_risk=under_risk)
++    if gate is None:
++        return None, ("quote_unavailable",)
++    blockers = tuple(reason for reason in gate.decision.failed if reason != "news_concordant")
++    if blockers:
+         return None, blockers
+     cost = feed.gates.fee_cost(gate.entry_price, fee)
+     if gate.worst_variant_edge <= cost:
+@@ -194,9 +204,8 @@ def _fixture_lineup(fixture, match, clock):
+
+ def _book_evidence(option, book):
+     return {"token_id": option.token_id, "outcome": option.outcome, "bid": book["bid"], "ask": book["ask"],
+-            "price": book["entry_price"], "filled_usd": book["filled_usd"],
+-            "near_two_cent_depth": book["near_two_cent_depth"], "observed_at": book["observed_at"],
+-            "sha256": book["sha256"], "url": forward._book_url(option.token_id)}
++            "price": book["ask"], "price_basis": paper_pricing.PRICE_BASIS, "observed_at": book["observed_at"],
++            "sha256": book["sha256"], "url": forward._book_url(option.token_id), **book.get("displayed_book", {})}
+
+
+ def _candidate(fixture, market, option, projection, result, pair, context, reason, live_contract, checked):
+@@ -223,6 +232,7 @@ def _candidate(fixture, market, option, projection, result, pair, context, reaso
+              "options": [(item.outcome, item.token_id) for item in market.options], "fee_rate": fee,
+              "settlement": live_contract.get("description"), "kickoff": feed.utc_iso(fixture.kickoff)}
+     return {
++        "best_ask_coverage": {"status": "not_applicable", "reason": "zero_stake_observation"},
+         "sport": "football", "league": feed.LEAGUE_NAMES.get(matched["league"], matched.get("league_name") or matched["league"]),
+         "league_code": matched["league"], "fixture_key": fixture.key, "revision": fixture.row["revision"],
+         "independent_identity": forward._foot_id(matched),
+@@ -231,8 +241,10 @@ def _candidate(fixture, market, option, projection, result, pair, context, reaso
+         "line": market.line, "team_side": market.team_side, "side": option.side, "outcome": option.outcome,
+         "market_id": market.id, "token_id": option.token_id, "condition_id": market.condition_id,
+         "model_version": _version(projection), "probability": quote["model_median"],
++        **pair[option.token_id].get("displayed_book", {}),
+         "conservative_probability": min(quote["qs_variants"]),
+-        "price": gate.entry_price, "fee_rate": fee, "fee_per_share": cost, "price_with_fee": gate.entry_price + cost,
++        "price": gate.entry_price, "price_basis": paper_pricing.PRICE_BASIS, "fee_rate": fee,
++        "fee_per_share": cost, "price_with_fee": gate.entry_price + cost,
+         "edge": gate.exec_edge, "adjusted_edge": gate.exec_edge_haircut, "worst_edge": gate.worst_variant_edge,
+         "worst_net_edge": gate.worst_variant_edge - cost, "variant_spread": gate.variant_spread,
+         "quoted_at": paired_at, "valid_until": valid, "reason": reason, "status": "watch", "stake_fen": 0,
+diff --git a/docs/paper-sim/runtime/scripts/football_forward.py b/docs/paper-sim/runtime/scripts/football_forward.py
+index 5220f8385624db2fed40753214b7be8e70f7d3d5..59be8f384788b78c86794f5380418a5dd7f59c9c 100644
+--- a/docs/paper-sim/runtime/scripts/football_forward.py
++++ b/docs/paper-sim/runtime/scripts/football_forward.py
+@@ -251,7 +251,7 @@ def _books(tokens, clock, deadline):
+     return books
+
+
+-def _quote(condition, token, book, received, kickoff, earliest):
++def _validated_quote(condition, token, book, received, kickoff, earliest):
+     if (not isinstance(book, dict) or received is None or received >= kickoff
+             or book.get("asset_id") != token or book.get("market") != condition):
+         return None
+@@ -269,10 +269,17 @@ def _quote(condition, token, book, received, kickoff, earliest):
+             or bid is not None and ask is not None and bid > ask):
+         return None
+     midpoint = (bid + ask) / 2 if bid is not None and ask is not None and bid < ask else None
+-    walk = feed.gates.walk_book(asks, side="ask", notional=250)
+     return {"observed_at": observed, "received_at": received, "asks": asks,
+-            "bid": bid, "ask": ask, "midpoint": midpoint, "entry_price": walk.vwap if walk.filled else None,
+-            "filled_usd": walk.filled_notional, "near_two_cent_depth": walk.depth_near2c}
++            "bid": bid, "ask": ask, "midpoint": midpoint}
++
++
++def _quote(condition, token, book, received, kickoff, earliest):
++    quote = _validated_quote(condition, token, book, received, kickoff, earliest)
++    if quote is None:
++        return None
++    walk = feed.gates.walk_book(quote["asks"])
++    return quote | {"entry_price": walk.vwap if walk.filled else None, "filled_usd": walk.filled_notional,
++                    "near_two_cent_depth": walk.depth_near2c}
+
+
+ def _contracts(fixture, markets, identity, matchweek, complete):
+@@ -383,14 +390,9 @@ def _gate(market, option, quote, book, live, news, projection):
+         reasons.append("fill_250")
+     if reasons:
+         return fee, None, reasons
+-    data, _, (home, away) = projection
+-    hits = data.get("over_2_5_hits")
+-    if (market.kind, option.side) in (("total", "over"), ("btts", "yes")) and (type(hits) is not int or not 0 <= hits <= 10):
++    risky = feed._under_risk(market, option, projection)
++    if risky is None:
+         return fee, None, ["form_unavailable"]
+-    risky, _ = feed.gates.under_risk_check(
+-        kind=market.kind, side=option.side, o25_hits=hits or 0, lambda_home=home, lambda_away=away,
+-        lambda_total=home + away, line=market.line if market.line is not None else 2.5,
+-    )
+     report = feed.gates.evaluate_candidate(
+         quote, book["asks"], gamma_liquidity=liquidity, news=news, fee_rate=fee, under_risk=risky,
+     )
+diff --git a/docs/paper-sim/runtime/scripts/football_shortlist.py b/docs/paper-sim/runtime/scripts/football_shortlist.py
+index 42bec7345b28d6c2a3851719da0549ba5ec5f136..3fd040fd05a14faa3aa7f3821a8fc5a85e8d8ee2 100644
+--- a/docs/paper-sim/runtime/scripts/football_shortlist.py
++++ b/docs/paper-sim/runtime/scripts/football_shortlist.py
+@@ -767,6 +767,8 @@ def _ranked_report(entry, allocation, rank):
+         "market_id": entry.market_id,
+         "outcome": entry.outcome,
+         "price": entry.price,
++        "price_basis": entry.signal.get("price_basis"),
++        **{key: entry.signal[key] for key in feed.paper_pricing.BOOK_EVIDENCE_FIELDS if key in entry.signal},
+         "decimal_odds_including_fee": float(value.odds),
+         "model_probability": entry.model_probability,
+         "break_even_probability": float(value.break_even_probability),
+diff --git a/docs/paper-sim/runtime/scripts/sports_focus.py b/docs/paper-sim/runtime/scripts/sports_focus.py
+index 50092f74a62772bfa9a155c0bae5e2686f625ccf..356ef512b620c5057416d96e7418296e0e9fde50 100644
+--- a/docs/paper-sim/runtime/scripts/sports_focus.py
++++ b/docs/paper-sim/runtime/scripts/sports_focus.py
+@@ -234,11 +234,12 @@ def publish(db, *, preview=False, correction_key=None, correction_until=None):
+         evidence_fields = ("sport", "league", "fixture_key", "revision", "kickoff", "home", "away", "home_display",
+                            "away_display", "market_kind", "market_label", "market_kind_code", "line",
+                            "direction", "market_id", "token_id", "condition_id", "model_version", "model_digest",
+-                           "probability", "price", "fee_rate", "quoted_at", "edge", "worst_net_edge", "worst_edge",
++                           "probability", "price", "price_basis", "fee_rate", "quoted_at", "edge", "worst_net_edge", "worst_edge",
+                            "conservative_probability", "break_even_probability", "expected_roi", "conservative_roi", "value_tier",
+                            "market_probability", "depth_near2c_usd", "valid_until", "reason", "market_url", "url",
+                            "official_source", "official_id", "contract_digest", "condition_side", "independent_fixture_url",
+-                           "lineup_type", "lineup_pending", "lineup_digest", "lineup_observed_at", "market_terms_sha256")
++                           "lineup_type", "lineup_pending", "lineup_digest", "lineup_observed_at", "market_terms_sha256",
++                           *feed.paper_pricing.BOOK_EVIDENCE_FIELDS, "best_ask_coverage", "stake_fen", "amount_cny")
+         evidence = [{k: item[k] for k in evidence_fields if k in item} for item in entries]
+         evidence = json.loads(json.dumps(evidence, default=str, allow_nan=False))
+         queued = daily.enqueue_focus(db, delivery_key, cutoff.isoformat(), fixtures, summary["body"], evidence=evidence,
+diff --git a/docs/paper-sim/runtime/scripts/sports_portfolio.py b/docs/paper-sim/runtime/scripts/sports_portfolio.py
+index 82b15df05da3c610ea8a17d7639f17c4d18634ef..527ca2aea6a8db63854adbc097c4d515a36f57bf 100644
+--- a/docs/paper-sim/runtime/scripts/sports_portfolio.py
++++ b/docs/paper-sim/runtime/scripts/sports_portfolio.py
+@@ -5,7 +5,7 @@ from __future__ import annotations
+ import argparse
+ import json
+ import os
+-from dataclasses import dataclass, fields
++from dataclasses import dataclass, fields, replace
+ from datetime import datetime
+ from decimal import Context, Decimal, DecimalException, InvalidOperation, ROUND_HALF_UP, localcontext
+ from zoneinfo import ZoneInfo
+@@ -13,6 +13,7 @@ from zoneinfo import ZoneInfo
+ from psycopg.types.json import Jsonb
+
+ import football_store as store
++import sports_paper_pricing as paper_pricing
+
+
+ RESTART_KEY = os.environ.get("PAL_PAPER_ACCOUNT_KEY") or None
+@@ -292,10 +293,15 @@ def _allocation(quote, confidence, stake_fen):
+         context.prec = 50
+         # papersim.fees.fee_per_share uses this formula with floats. CNY bookkeeping uses Decimal.
+         fee_per_unit = _unit_fee(quote.price, quote.fee_rate)
+-        # The qualifying ask VWAP is the price ratio for CNY simulation. The source's USD
+-        # depth check provides the price, without transferring its USD notional into this account.
++        # Estimate simulated units at the signal's recorded price, including its fee.
+         units = Decimal(stake_fen).scaleb(-2) / (quote.price + fee_per_unit)
+         fee_fen = _nearest_fen(units * fee_per_unit)
++        coverage = paper_pricing.best_ask_coverage(
++            quote.settlement_evidence.get("signal"), price=quote.price, fee_per_share=fee_per_unit,
++            stake_fen=stake_fen, token_id=quote.token_id, condition_id=quote.condition_id,
++            observed_at=quote.observed_at,
++        )
++    quote = replace(quote, settlement_evidence=quote.settlement_evidence | {"best_ask_coverage": coverage})
+     return Allocation(quote, confidence, stake_fen, fee_fen, units)
+
+
+@@ -311,10 +317,15 @@ def status(connection, *, restart_key=RESTART_KEY):
+     if not _installed(connection):
+         return empty
+     rows = connection.execute("""
+-        WITH totals AS (
++        WITH positions AS (
++            SELECT *, CASE WHEN settlement_evidence->'best_ask_coverage'->>'status' IN ('sufficient', 'insufficient')
++                           THEN settlement_evidence->'best_ask_coverage'->>'status' ELSE 'unknown' END AS ask_coverage
++            FROM football_notify.sports_portfolio_position WHERE restart_key = %s
++        ), totals AS (
+             SELECT CASE WHEN GROUPING(sport) = 0 THEN 'sport'
+-                        WHEN GROUPING(confidence) = 0 THEN 'confidence' END AS group_name,
+-                   coalesce(sport, confidence) AS group_value,
++                        WHEN GROUPING(confidence) = 0 THEN 'confidence'
++                        WHEN GROUPING(ask_coverage) = 0 THEN 'best_ask_coverage' END AS group_name,
++                   coalesce(sport, confidence, ask_coverage) AS group_value,
+                    count(*) AS entries,
+                    count(*) FILTER (WHERE result IS NULL) AS open_positions,
+                    count(result) AS settled_positions,
+@@ -326,8 +337,7 @@ def status(connection, *, restart_key=RESTART_KEY):
+                    coalesce(sum(stake_fen) FILTER (WHERE result IS NULL), 0) AS at_risk_fen,
+                    coalesce(sum(payout_fen), 0) AS settled_payout_fen,
+                    coalesce(sum(payout_fen - stake_fen), 0) AS realized_pnl_fen
+-            FROM football_notify.sports_portfolio_position WHERE restart_key = %s
+-            GROUP BY GROUPING SETS ((sport), (confidence), ())
++            FROM positions GROUP BY GROUPING SETS ((sport), (confidence), (ask_coverage), ())
+         )
+         SELECT started_at, opening_cash_fen, totals.*
+         FROM football_notify.sports_portfolio_account CROSS JOIN totals WHERE restart_key = %s
+@@ -340,6 +350,7 @@ def status(connection, *, restart_key=RESTART_KEY):
+     groups = {
+         "sport": {sport: dict.fromkeys(metrics, 0) for sport in SPORTS},
+         "confidence": {confidence: dict.fromkeys(metrics, 0) for confidence in BASIS_POINTS},
++        "best_ask_coverage": {state: dict.fromkeys(metrics, 0) for state in ("sufficient", "insufficient", "unknown")},
+     }
+     for row in rows:
+         if row["group_name"] is not None:
+@@ -351,6 +362,7 @@ def status(connection, *, restart_key=RESTART_KEY):
+         "opening_cash_fen": total["opening_cash_fen"], "equity_fen": equity,
+         "available_cash_fen": equity - metrics["at_risk_fen"],
+         "by_sport": groups["sport"], "by_confidence": groups["confidence"],
++        "by_best_ask_coverage": groups["best_ask_coverage"],
+     }
+
+
+@@ -484,6 +496,11 @@ def statement(connection, *, restart_key=RESTART_KEY, limit=50):
+         SELECT sport, fixture_key, kickoff, market_id, outcome, direction,
+                settlement_evidence->'fixture'->>'home' AS home,
+                settlement_evidence->'fixture'->>'away' AS away,
++               settlement_evidence->'signal'->>'best_ask_price' AS best_ask_price,
++               settlement_evidence->'signal'->>'best_ask_size' AS best_ask_size,
++               settlement_evidence->'signal'->>'book_snapshot_sha256' AS book_snapshot_sha256,
++               coalesce(settlement_evidence->'best_ask_coverage',
++                        '{"status":"unknown","reason":"missing_recorded_coverage"}'::jsonb) AS best_ask_coverage,
+                confidence, model_probability, price, stake_fen, fee_fen, opened_at,
+                result, payout_fen, payout_fen - stake_fen AS pnl_fen, resolved_at
+         FROM football_notify.sports_portfolio_position WHERE restart_key = %s
+@@ -561,7 +578,7 @@ def main(argv=None):
+         else:
+             operation = restart if args.command == "restart" else status
+             report = _present_cny(operation(connection, restart_key=args.restart_key))
+-            for key in ("by_sport", "by_confidence"):
++            for key in ("by_sport", "by_confidence", "by_best_ask_coverage"):
+                 if key in report:
+                     report[key] = {name: _present_cny(row) for name, row in report[key].items()}
+     print(json.dumps(report, ensure_ascii=False, indent=2, default=str))
