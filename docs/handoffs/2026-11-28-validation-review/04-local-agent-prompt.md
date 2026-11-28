@@ -1,4 +1,6 @@
-# 04 给本地 agent 的提示词（2026-11-28 第二次审核）
+# 04 给本地 agent 的提示词（2026-11-28 第二次审核，更正版）
+
+这是更正后的提示词，固定到更正后的交付提交 `0da81086eff802f00e0c15015e2b5cd387d3d1bf`。第一版提示词（提交 `54b5591bc0a0c885c6abb5d33165a06dcda87e35`，固定到第一版交付 `51c554a0b5c82746d20653486a700f2f354f18e6`）作废，不要执行。更正了什么，见 `README.md` 的更正记录。
 
 下面"提示词正文"一节可以整段转发给本地 agent。它写下了交付提交号和清单校验值，所以这个文件不在清单的覆盖范围内，放在交付提交之后的下一个提交里。
 
@@ -35,16 +37,18 @@
 | 仓库 | `https://github.com/wmqfl861/polymarket-alpha-lab`（命令里写完整地址，不依赖本地 `origin` 指向哪里） |
 | 交付分支 | `handoff/validation-review-2026-11-28` |
 | 被审核的提交 | `2fc69b0560b073e05718ea335c05388872756e66` |
-| 交付提交 | `51c554a0b5c82746d20653486a700f2f354f18e6` |
-| 交付目录 | `docs/handoffs/2026-11-28-validation-review/`，在交付提交上是 28 个文件，git 树对象 `19919c17b7001d15406b1bd36a2d09b420f158de` |
-| 清单 | 该目录下的 `MANIFEST.sha256`：3757 字节，27 行，SHA-256 `52149e78a06b6cdab689ec6893336133bd40662d66a8885bf4f2e34b05be168d` |
+| 交付提交 | `0da81086eff802f00e0c15015e2b5cd387d3d1bf` |
+| 交付目录 | `docs/handoffs/2026-11-28-validation-review/`，在交付提交上是 29 个文件（其中一个是第一版的提示词文件），git 树对象 `dadfc5671e9ee49b815b8a69e97eceb0f3b27dad` |
+| 清单 | 该目录下的 `MANIFEST.sha256`：3757 字节，27 行，SHA-256 `3a458ab7d36266ac93493c433626995bc3e9b9a1f309ea100b3f8eed0ee4702c` |
+
+交付分支上有四个提交：第一版交付、第一版提示词、更正后的交付、更正后的提示词。审计方在回复我之前发现自己的复算有一处解读错误，在同一个分支上追加了更正，没有改写历史。以更正后的交付为准，下面固定的就是它。
 
 把下面的命令保存成仓库之外的一个脚本文件，在仓库检出的根目录用 `bash` 运行。它只读取，不改动任何东西；任何一步不符都会以非零状态退出，这时停下来把输出报告给我，不要继续，也不要换别的来源代替。校验读的是 git 对象而不是工作区文件，所以不受换行符转换的影响。
 
 ```bash
 set -euo pipefail
 REPO=https://github.com/wmqfl861/polymarket-alpha-lab.git
-DELIVERY=51c554a0b5c82746d20653486a700f2f354f18e6
+DELIVERY=0da81086eff802f00e0c15015e2b5cd387d3d1bf
 BASE=2fc69b0560b073e05718ea335c05388872756e66
 DIR=docs/handoffs/2026-11-28-validation-review
 
@@ -62,14 +66,14 @@ test "$(git diff --name-only "$DELIVERY" FETCH_HEAD)" = "$DIR/04-local-agent-pro
   || { echo "STOP: unexpected changes after the delivery commit"; exit 1; }
 
 # 3. pinned tree, file count and manifest
-test "$(git rev-parse "$DELIVERY:$DIR")" = "19919c17b7001d15406b1bd36a2d09b420f158de" \
+test "$(git rev-parse "$DELIVERY:$DIR")" = "dadfc5671e9ee49b815b8a69e97eceb0f3b27dad" \
   || { echo "STOP: directory tree mismatch"; exit 1; }
-test "$(git ls-tree -r --name-only "$DELIVERY" -- "$DIR" | wc -l)" -eq 28 \
+test "$(git ls-tree -r --name-only "$DELIVERY" -- "$DIR" | wc -l)" -eq 29 \
   || { echo "STOP: file count mismatch"; exit 1; }
 test "$(git cat-file blob "$DELIVERY:$DIR/MANIFEST.sha256" | wc -c)" -eq 3757 \
   || { echo "STOP: manifest size mismatch"; exit 1; }
 test "$(git cat-file blob "$DELIVERY:$DIR/MANIFEST.sha256" | sha256sum | cut -d' ' -f1)" \
-  = "52149e78a06b6cdab689ec6893336133bd40662d66a8885bf4f2e34b05be168d" \
+  = "3a458ab7d36266ac93493c433626995bc3e9b9a1f309ea100b3f8eed0ee4702c" \
   || { echo "STOP: manifest hash mismatch"; exit 1; }
 
 # 4. every file listed in the manifest matches its hash
@@ -80,7 +84,7 @@ done
 echo "handoff package verified: $DELIVERY"
 ```
 
-预期的最后一行输出是 `handoff package verified: 51c554a0b5c82746d20653486a700f2f354f18e6`。
+预期的最后一行输出是 `handoff package verified: 0da81086eff802f00e0c15015e2b5cd387d3d1bf`。
 
 ### 4. 允许与禁止
 
@@ -124,7 +128,7 @@ echo "handoff package verified: $DELIVERY"
 ```bash
 set -euo pipefail
 REPO=https://github.com/wmqfl861/polymarket-alpha-lab.git
-DELIVERY=51c554a0b5c82746d20653486a700f2f354f18e6
+DELIVERY=0da81086eff802f00e0c15015e2b5cd387d3d1bf
 DIR=docs/handoffs/2026-11-28-validation-review
 WORK=integrate/validation-review-2026-11-28
 
