@@ -1,0 +1,100 @@
+{
+  "as_of_utc": "2026-11-28T08:20:41.880513+00:00",
+  "new_source_commit": "09d355389cb5592bae9d2bf23707fd4e05dfb48d",
+  "new_package_tree": "b58d24abb7160596b5250c248359cea54fed6931",
+  "prior_inventory": {
+    "commit": "eaf6e8149f83a708d09158529ec774f4fbed8b9d",
+    "path": "docs/paper-sim/design/fx-40/evidence/retained-snapshot-index-comparison.json",
+    "sha256": "e605b12a240f235f8f441b67600bbcdaf12701edaacd05c1424dfe85106b7c4a",
+    "distinct_retained_source_artifacts": 31
+  },
+  "comparison": {
+    "manifest_members_verified": 20,
+    "manifest_sha256": "401e12a34f59d49351d607a0dcf9e070001dd19eed080941760417f077c6966a",
+    "introduced_paths_examined": 22,
+    "parsed_json_members": 18,
+    "gzip_members_inflated": 7,
+    "distinct_stored_or_uncompressed_member_digests": 29,
+    "prior_digests_matching_member_bytes": [],
+    "distinct_64_hex_digest_literals": 3643,
+    "prior_digests_named_in_package": [],
+    "new_five_source_rows": 1637,
+    "distinct_new_five_source_sha256": 1637,
+    "distinct_new_five_reception_sha256": 1637,
+    "new_five_actual_reception_range_utc": [
+      "2026-11-28T07:15:36.359586+00:00",
+      "2026-11-28T07:20:37.390780+00:00"
+    ],
+    "same_historical_request_and_receipt_bindings_found": 0,
+    "new_independently_held_originals_for_these_cases": 0
+  },
+  "case_comparison": {
+    "r23_soccer": {
+      "frozen_market_ids": {
+        "BRE-FOR_O2.5": "5856164",
+        "HUL-IPS_O2.5": "5856548",
+        "CHE-MUN_O3.5": "5856824",
+        "BOU-LEE_O2.5": "5856401"
+      },
+      "exact_id_hits": 0,
+      "finding": "The 57-round seven-league replay scores the r23 model. Its league reports contain aggregate scores and fold-input digests; no original request, receipt time or buy-side ladder for these four markets was identified."
+    },
+    "r19_crypto_touch": {
+      "r19_barrier_cases": [
+        "ETH-2000",
+        "ETH-2250",
+        "BTC-65k"
+      ],
+      "exact_barrier_label_hits": 0,
+      "historical_market_terms_digests_matched": 0,
+      "finding": "The new sports releases supply no identified original for ETH-2000, ETH-2250 or BTC-65k. The original cutoff-bound candle and venue evidence remains missing."
+    },
+    "r23_r24_gate_position_48": {
+      "frozen_market_id": "5856164",
+      "exact_id_hits": 0,
+      "buy_side_books_tied_to_both_original_decisions": 0,
+      "finding": "The 16 Norwegian matches contain 32 historical direction-specific chart receipts. The November cup file has 105 priced directions spanning 2026-11-26T11:53:04.082000+00:00 to 2026-11-26T11:54:19.067000+00:00. They cover other markets and cannot reconstruct the two dated over-side depth ladders for Brentford–Forest."
+    },
+    "banned_path_hof_lyo": {
+      "required_event": "uel-hof-lyo-2026-10-22",
+      "exact_event_slug_hits": 0,
+      "november_cup_team_matches": [
+        {
+          "home": "Lyon",
+          "away": "Lillestrom",
+          "kickoff": "2026-11-26T20:00Z"
+        },
+        {
+          "home": "TSG Hoffenheim",
+          "away": "SK Sturm Graz",
+          "kickoff": "2026-11-26T20:00Z"
+        }
+      ],
+      "finding": "The November cup match list contains two different opponents. The cross-league score report covers seasons 2024/25 and 2025/26. Neither artifact proves the October 2026 direction requested, guard policy and then-effective bridge state."
+    }
+  },
+  "scope_limit": "Only the fixed November 28 delivery and the already published case identities and hash inventory were compared. Unknown external custody is not counted either way.",
+  "read_only_new_study_and_calendar_scope": {
+    "observed_utc": "2026-11-28T08:19:09.382232+00:00",
+    "scope": "Existing independent five-league research database and this user's active timer list. Only named project targets were checked. Counts do not enumerate another host or an unregistered scheduler.",
+    "checkout": "eaf6e8149f83a708d09158529ec774f4fbed8b9d",
+    "transaction": "repeatable read, read only",
+    "all_command_events": 0,
+    "successful_d1_interval_registrations": 0,
+    "successful_d1_slot_registrations": 0,
+    "registered_d1_interval_snapshots": 0,
+    "registered_d1_slot_snapshots": 0,
+    "european_study_documents": 32,
+    "candidates": 0,
+    "candidate_marks": 0,
+    "project_user_timer_targets": 9,
+    "project_user_timers_invoking_named_d1_entrypoints": 0,
+    "european_timer_dispatches_football_study": true,
+    "formal_activation_identified_here": false,
+    "formal_days_added": 0
+  },
+  "formal_case_families_added": 0,
+  "verified_historical_families_in_existing_register": 0,
+  "required_historical_families": 4,
+  "formal_parallel_days_added": 0
+}
