@@ -1228,6 +1228,7 @@ def test_ordinary_and_registered_close_window_evidence_use_the_same_native_clock
     assert _d1_capture_rows(project, case.candidate_ids) == before
 
 
+@_D1_NATIVE
 def test_register_close_window_through_managed_cli(d1_capture_project, monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
 
