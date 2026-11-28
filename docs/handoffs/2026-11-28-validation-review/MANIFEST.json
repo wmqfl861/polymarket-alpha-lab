@@ -1,0 +1,144 @@
+{
+ "format": "handoff-manifest-v1",
+ "directory": "docs/handoffs/2026-11-28-validation-review",
+ "reviewed_commit": "2fc69b0560b073e05718ea335c05388872756e66",
+ "excluded": [
+  "04-local-agent-prompt.md",
+  "MANIFEST.json",
+  "MANIFEST.sha256"
+ ],
+ "file_count": 26,
+ "total_bytes": 209443,
+ "files": [
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/01-review-report.md",
+   "bytes": 17709,
+   "sha256": "ff40a53ee59c97009dd26a97f461e3d3fcad9255b0ed1630f8e1e7cebf0ff491"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/02-remediation-and-next-steps.md",
+   "bytes": 7015,
+   "sha256": "a356e176b78eea49eb0c5a8b70898ffed9c03d5f615c88194aa15e85d62c4c82"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/03-optimization-plan.md",
+   "bytes": 15683,
+   "sha256": "fbc447cdab6fabd36d0906ff8bdf7bf1ac3bb99d2a67a992e270d4c77bab05fb"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/README.md",
+   "bytes": 3263,
+   "sha256": "012095cbe37631d260b4f71a02da079648183402b584598c076901993d2c1fda"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/README.md",
+   "bytes": 3543,
+   "sha256": "3960c9608515affe48c10e01c40e12612a3f70626fd1aa1bd1829992fdd91832"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/added_line_sensitive_scan.py",
+   "bytes": 6701,
+   "sha256": "b71adb796c92f80feff6d52b6dad89220745305814066a55cf6bb054cbd9b3ab"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/added_line_sensitive_scan_output.txt",
+   "bytes": 60,
+   "sha256": "e11a6449a681db012d63e4fa169de306ae5255a00e8dd996adaf556d9e2bbc55"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/address_occurrence_diff.py",
+   "bytes": 3204,
+   "sha256": "1561d5518cd7f36864fe67356ca8a235b98b2190fdf5630917962e0c0e384f3e"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/address_occurrence_output.txt",
+   "bytes": 128,
+   "sha256": "9b888b05a2eb72d49134301f397924af9db18e154a1a84132eada44251dcf066"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/collect_api.sh",
+   "bytes": 2391,
+   "sha256": "6d5d0f0d50e1c73158df8b30dd013f133768e57f448dc91a5bb9c0237592719e"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/collect_local.sh",
+   "bytes": 8427,
+   "sha256": "addcf1361768349fbda02b9f2a1be4eb7e7997999c6e6e7e217fa6302a045901"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/independent_backtest_analysis.py",
+   "bytes": 11465,
+   "sha256": "82996e4c6983c662334d2076289ecfd10e5e810a0624a94446601aae66591add"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/independent_backtest_analysis_output.txt",
+   "bytes": 13716,
+   "sha256": "d7a3e921a7731467041a3afcd6a9104d3be696662d53aec598d0832656b76577"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/junit_compare.py",
+   "bytes": 3934,
+   "sha256": "929698288dda6472f164649e6be9d7eab111876aa05cc0b2898a38a2406e8a09"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/junit_summary.py",
+   "bytes": 2020,
+   "sha256": "5386673d3e9359d47b5264469265fed1e7cc483c894fa169c9ae102fd5509459"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/local_facts.txt",
+   "bytes": 5328,
+   "sha256": "5977a6d6262785fb697df1db952001919fb21f43324568cade769fe8e1d81570"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/make_test_env.sh",
+   "bytes": 2027,
+   "sha256": "e3c5cdd189a26d475a480ece2af14943ff80d92a344e1311027066b8aa97ec45"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/offline_suite_head.log",
+   "bytes": 90342,
+   "sha256": "54d4b01e47fc103529c550811093c8617a19aea92597a980beb992e4011d7cab"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/offline_suite_results.txt",
+   "bytes": 2289,
+   "sha256": "d62a234a74a8293771ac50d7ee052dcac097eed0be3ecb083bc6539425b17d5d"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/opening_checks.txt",
+   "bytes": 1051,
+   "sha256": "7e90882feef980b484dbd7148241914128805a7524c2fae37d34e0c2727a36ec"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/pr_states.tsv",
+   "bytes": 413,
+   "sha256": "eab5da2e3b1fac88dc4aa23da823f908e2c4ff758e16b79506eb8525aa620fbb"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/published_recomputation_run.txt",
+   "bytes": 846,
+   "sha256": "777ea0c2267ea75a7df0439c3e1d2c08e195ca380192144f015037108de6eaef"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/run_compile_step.sh",
+   "bytes": 654,
+   "sha256": "73b8b49cd1db88d05850b351f5d041cefaa9642c3cfe10f9e2ae01246d288f0c"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/run_offline_suite.sh",
+   "bytes": 1153,
+   "sha256": "0f3ae07a0ddbee0dae9e382217a73046c38b9089d1d6daac2752af2533dac66c"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/test_weakening_scan.py",
+   "bytes": 5775,
+   "sha256": "dfebe6186983895b2849c7d07904756f146bf32f65e2710557a8d621f4e9c32b"
+  },
+  {
+   "path": "docs/handoffs/2026-11-28-validation-review/evidence/test_weakening_scan_output.txt",
+   "bytes": 306,
+   "sha256": "6c10860d9f06be2e52ca6c320bc6b479e79fede8d132adaefd092e2acec86acc"
+  }
+ ]
+}

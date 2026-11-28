@@ -1,0 +1,65 @@
+== A. range eaf6e8149f83a708d09158529ec774f4fbed8b9d..2fc69b0560b073e05718ea335c05388872756e66
+commits: 11; on the first-parent line: 9; merges on it: 1
+ 72 files changed, 12094 insertions(+), 9 deletions(-)
+  docs/handoffs/2026-11-28-requirements-review             29 files changed, 3021 insertions(+)
+  docs/paper-sim/research/sports-historical-20261128       21 files changed, 7235 insertions(+)
+  tools/sports_paper_handoff                               8 files changed, 1015 insertions(+), 6 deletions(-)
+  docs/paper-sim/design                                    8 files changed, 468 insertions(+)
+  src                                                      1 file changed, 123 insertions(+)
+  tests                                                    2 files changed, 53 insertions(+)
+  DELIVERY_PLAN.md                                         1 file changed, 56 insertions(+), 3 deletions(-)
+  AGENTS.md
+  deploy
+source files changed: src/polymarket_alpha_lab/papersim/sports_paper_pricing.py
+previous delivery cf61d445 is an ancestor of main: yes
+AGENTS.md blob: b4d54098b7c54c06ced385c1e54644ed2f956501 (unchanged since the baseline: yes)
+lines of src/polymarket_alpha_lab/papersim/gates.py changed in the range: 0
+
+== B. the owner's recorded reply and the delivery item
+section 90 starts at line 5078; first quoted line after it (line 5084):
+  > 确认 OD-AD 成稿；维持卖一价；确认沿用现有三个欧洲研究单元及独立研究库
+the OD-AC row (line 5092):
+  | OD-AC | 机主将个人通讯划归本机范围。本轮项目没有新的切换验收结论。原审核报告按当时的范围保留。 |
+status board heading: ## 状态板（2026-11-28）; first column of its rows: 工作 / 优化线第一阶段 / M2 / 足篮运行层 / 人民币小额模拟定价 / 欧洲五联赛 / 公开仓库及访问限制 / 模拟账户与 V1 / 11 月 26 日验收 / 11 月 28 日验收 / 线 / **模拟盘主线** / 跨联赛胜负盘 / NBA／国际赛 / V1 六包 / 仓库正本 / Linux 离线 CI / Linux 真实数据库 CI / 审计整改 / 已登记欠项 / Owner 决策
+files outside the audit packages that contain "个人通讯": DELIVERY_PLAN.md docs/handoffs/2026-11-28-requirements-remediation.md
+files outside the audit packages that contain "本机范围": DELIVERY_PLAN.md docs/handoffs/2026-11-28-requirements-remediation.md
+lines in the repository that put those words in a quotation (start with '> '): 0
+fx-49 records added or changed in the range: 0
+scope sentence of the field-change table:
+  以下时间均为 UTC。核对区间从 2026-11-26 14:24 到 2026-11-28 08:06，范围为项目研究、日常模拟定价及其运行环境。
+
+== C. small-stake pricing (FX-57)
+shared module: 188 lines, sha256 108cba3e7e8c0f5b31c8a48eda27df9c37f9d015335514d03a437667aa40af40
+candidate patch touches 8 runtime files; README says: 本候选供离线复验，尚待部署
+ledger readback: as_of=2026-11-28T08:06:24.895444Z positions_after_deployment=3 source_cache_rows=14 with_asks=0 with_best_ask_size=0
+per position (league, recorded best ask, stake in yuan, realised P&L, capacity assessment):
+  ere, 0.21, 159.68, -159.68, unknown
+  sea, 0.71, 53.22, -53.22, unknown
+  epl, 0.54, 106.45, 86.25, unknown
+
+== D. historical validation evidence
+files in docs/paper-sim/research/sports-historical-20261128: 21
+files in main that mention the replay rows or its kind: docs/paper-sim/research/sports-historical-20261128/new-five.json docs/paper-sim/research/sports-historical-20261128/verify.py
+five-league replay: model=euro-soccer-venue-lineups-20261128-v1 code=eaf6e814 inputs=1637 new_admissions=0 contemporaneous_news_rows=0
+per league (normal regular targets / forecasts / three-way paired n and Brier model, market / over-2.5 paired n and Brier model, market):
+  bel1: 240 / 228 / 228 0.63935 0.61485 / 228 0.24822 0.24927
+  nor: 239 / 227 / 227 0.58255 0.53453 / 0
+  por: 306 / 295 / 295 0.58074 0.53838 / 295 0.24371 0.24070
+  scop: 198 / 187 / 187 0.60105 0.57585 / 187 0.24878 0.25173
+  tur: 306 / 288 / 288 0.61774 0.58514 / 288 0.24994 0.23460
+NBA prospective strict pairs: baseline n=40 model=0.20156 market=0.23155
+NBA archived 2024-25 diagnostic rows: n=160 market 0.17978 baseline 0.19742 optimized 0.20119; n=156 market 0.15126 baseline 0.16606 optimized 0.18044; n=36 market 0.23556 baseline 0.24802 optimized 0.24802; n=36 market 0.23533 baseline 0.24802 optimized 0.24802
+NBA total contracts whose wording does not state overtime: 237
+sealed optimizer run: NO_IMPROVEMENT after 4811 trials
+market reference in the registration: 同场、同盘口的去水平均收盘赔率
+
+== E. tests and local full runs
+marker added by FX-59: @_D1_NATIVE
+local full runs recorded in docs/paper-sim/design/fx-59/full-tests-151f4e4ab913.json:
+  /profiles/offline/counts: passed=44412 skipped=522 failed=0 errors=0
+  /profiles/native/counts: passed=44841 skipped=93 failed=0 errors=0
+
+== F. branch rules readback and commit identities
+local readback: {"observed_at": "2026-11-28T07:54:02.359203+00:00", "source": "public GitHub API, no authentication", "main_branch": {"http": 200, "protected": false}, "repository_rulesets": {"http": 200, "count": 0}, "main_effective_rules": {"http": 200, "types": []}, "handoff_review_branch_effective_rules": {"htt
+  4 anthropic.com
+  18 users.noreply.github.com

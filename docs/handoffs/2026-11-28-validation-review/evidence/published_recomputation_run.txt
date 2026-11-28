@@ -1,0 +1,14 @@
+# The three re-computation commands published with the historical validation, run by the auditor
+# in a detached worktree at 2fc69b0560b073e05718ea335c05388872756e66 (Python 3.12.3, isolated mode, no network).
+
+$ (cd docs/paper-sim/research/sports-historical-20261128 && sha256sum -c MANIFEST.sha256)
+20 OK
+
+$ python3 docs/paper-sim/research/sports-historical-20261128/verify.py
+{"archived_football_files": 5, "basketball_original_pairs": {"cbb": 176, "cwbb": 0, "nba_baseline": 40, "nba_candidate": 35}, "five_leagues": {"paired_counts": {"match_winner": 1225, "total_2_5": 998}, "target_fixtures": 1289}, "norway_additional_curve_pairs": 16, "sealed_scorecards": 4}
+exit=0
+
+$ python3 .../november-cup-matchdays/score.py | cmp - .../november-cup-matchdays/results.json
+identical (cmp exit 0)
+
+tracked files changed in the worktree afterwards: 0

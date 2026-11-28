@@ -1,0 +1,16 @@
+# checked at 2026-11-28T12:30Z through the GitHub API and git ls-remote
+visibility=public private=false forks=1 default_branch=main pushed_at=2026-11-28T12:04:30Z
+main protected=false sha=2fc69b0560b073e05718ea335c05388872756e66
+repository rulesets: 0; rules in effect on main: 0
+fork: public (owner name omitted here), last pushed 2026-11-19T03:03:24Z
+server refs: heads=176 tags=4 pull_request_heads=138 handoff_branches=31
+open pull requests: #41 #35 #34
+workflow files on main: 0; workflow runs created on or after 2026-11-26T12:00:00Z: 1
+# checked again at 2026-11-28T12:44Z
+visibility=public private=false forks=1 default_branch=main pushed_at=2026-11-28T12:04:30Z
+main protected=false sha=2fc69b0560b073e05718ea335c05388872756e66
+repository rulesets: 0; rules in effect on main: 0
+fork: public (owner name omitted here), last pushed 2026-11-19T03:03:24Z
+server refs: heads=176 tags=4 pull_request_heads=138 handoff_branches=31
+open pull requests: #41 #35 #34
+workflow files on main: 0; workflow runs created on or after 2026-11-26T12:00:00Z: 1

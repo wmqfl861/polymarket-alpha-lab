@@ -1,0 +1,37 @@
+# Offline suite run by the auditor on the reviewed main (2026-11-28, second review of the day)
+# Environment: see make_test_env.sh and run_offline_suite.sh; no database, no network use by the tests.
+
+== run
+label=head commit=2fc69b0560b073e05718ea335c05388872756e66 python=3.12.3 pytest=9.1.1
+start=2026-11-28T12:17:32Z end=2026-11-28T12:42:57Z exit=0
+tracked files changed by the run: 0
+last line of the pytest output: 44412 passed, 522 skipped, 38 warnings in 1511.69s (0:25:11)
+
+== comparison with the auditor's run on the baseline eaf6e814 earlier the same day
+(junit_compare.py; it counts a set-up error as "failed")
+base: 44932 cases; passed 44410, skipped 521, failed 1
+head: 44934 cases; passed 44412, skipped 522, failed 0
+cases only at head: 2 ([('passed', 2)])
+cases only at base: 0 ([])
+cases in both whose outcome changed: 1
+    tests/test_papersim_capture_marks_native.py::test_register_close_window_through_managed_cli: failed -> skipped
+per test file (cases only at head as +outcome, only at base as -outcome):
+    tests/test_papersim_sports_paper_pricing.py: +passed 2
+skipped at head and not skipped at base (file | reason | cases):
+    tests/test_papersim_capture_marks_native.py | explicit Linux native PostgreSQL proof is opt-in | 1
+all skips at head, grouped by what the reason asks for:
+     451  needs a native PostgreSQL or another opt-in native proof
+      48  needs Windows or PowerShell
+      23  other (server-only fixtures, opt-in host proofs)
+
+The one changed outcome is the test FX-59 was about: it carried no run condition and stopped with a
+set-up error where no PostgreSQL software is installed; b041e7ef gave it the condition its eight
+siblings already had, so it is now skipped here and still runs where PostgreSQL is provided.
+
+== the local team's own offline run (docs/paper-sim/design/fx-59/full-tests-151f4e4ab913.json)
+commit 151f4e4a, no PostgreSQL software directory: 44412 passed, 522 skipped, 0 failed, 0 errors.
+Between 151f4e4a and the commit run here, only DELIVERY_PLAN.md and files under docs/ changed,
+so identical counts are the expected result.
+
+== compile step (python -m compileall -q src tests scripts, byte-code cache outside the worktree)
+compileall commit=2fc69b0560b073e05718ea335c05388872756e66 exit=0 tracked files changed: 0
