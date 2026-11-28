@@ -1,0 +1,251 @@
+{
+  "national_teams": {
+    "fixed_model_walk_forward": {
+      "gates_offline": {
+        "A": "PASS",
+        "B": "PASS",
+        "C": "PASS",
+        "D": "PASS",
+        "E": "INSUFFICIENT-DATA"
+      },
+      "pooled": {
+        "date_range": [
+          "2018-09-06",
+          "2026-10-06"
+        ],
+        "home_draw_away_rates": [
+          0.4408014571948998,
+          0.25045537340619306,
+          0.3087431693989071
+        ],
+        "n": 1098,
+        "one_x_two": {
+          "causal_base_rate": {
+            "brier": 0.6496827344243082,
+            "gain": {
+              "cents_equivalent": 5.119882306195156,
+              "delta_nats": 0.13966673306847455
+            },
+            "log_loss": 1.074188579606606
+          },
+          "model": {
+            "brier": 0.5515225767351493,
+            "clipped": 0,
+            "log_loss": 0.9345218465381314
+          },
+          "uniform": {
+            "brier": 0.6666666666666667,
+            "gain": {
+              "cents_equivalent": 5.9440293374630695,
+              "delta_nats": 0.16409044213000878
+            },
+            "log_loss": 1.0986122886681402
+          }
+        },
+        "over25": {
+          "coin": {
+            "gain": {
+              "cents_equivalent": 0.20115025992344382,
+              "delta_nats": 0.004014934551317739
+            },
+            "log_loss": 0.6931471805599284
+          },
+          "model": {
+            "clipped": 0,
+            "log_loss": 0.6891322460086107,
+            "mean_prob": 0.4620638824960547
+          },
+          "tournament_mean_total": {
+            "gain": {
+              "cents_equivalent": 0.11761964246259637,
+              "delta_nats": 0.002345716122660213
+            },
+            "log_loss": 0.6914779621312709,
+            "mean_prob": 0.45895633169763794
+          }
+        },
+        "over25_rate": 0.4790528233151184
+      },
+      "research_snapshot_sha256": "2d0ed25277fda6315d1de18c8af5464575641076ff3d1cdb7a606cafdf6c26be",
+      "self_check_samples": 12,
+      "snapshot_rebuilt_equal": true,
+      "uefa_nations_league": {
+        "date_range": [
+          "2018-09-06",
+          "2026-10-06"
+        ],
+        "home_draw_away_rates": [
+          0.4225721784776903,
+          0.2532808398950131,
+          0.3241469816272966
+        ],
+        "n": 762,
+        "one_x_two": {
+          "causal_base_rate": {
+            "brier": 0.6576426022505765,
+            "gain": {
+              "cents_equivalent": 4.418501821528142,
+              "delta_nats": 0.12292673501762841
+            },
+            "log_loss": 1.085295662918985
+          },
+          "fixed_nl_probe_rates": {
+            "gain": {
+              "cents_equivalent": 4.477630390542403,
+              "delta_nats": 0.1246786606086061
+            },
+            "log_loss": 1.0870475885099626
+          },
+          "model": {
+            "brier": 0.5694310370607572,
+            "clipped": 0,
+            "log_loss": 0.9623689279013565
+          },
+          "uniform": {
+            "brier": 0.6666666666666667,
+            "gain": {
+              "cents_equivalent": 4.865358051597058,
+              "delta_nats": 0.13624336076677301
+            },
+            "log_loss": 1.0986122886681295
+          }
+        },
+        "over25": {
+          "coin": {
+            "gain": {
+              "cents_equivalent": 0.24538980952442113,
+              "delta_nats": 0.0048957922181103175
+            },
+            "log_loss": 0.6931471805599453
+          },
+          "model": {
+            "clipped": 0,
+            "log_loss": 0.688251388341835,
+            "mean_prob": 0.4305877159075578
+          },
+          "tournament_mean_total": {
+            "gain": {
+              "cents_equivalent": 0.17552977131048975,
+              "delta_nats": 0.003499566630580042
+            },
+            "log_loss": 0.691750954972415,
+            "mean_prob": 0.42772675155039663
+          }
+        },
+        "over25_rate": 0.45931758530183725
+      },
+      "walk_forward": {
+        "corpus_matches": 49940,
+        "eval_scored": 1098,
+        "include_finals": true,
+        "include_friendlies": true,
+        "refusals": {
+          "eval": 0,
+          "requested": 0
+        }
+      }
+    },
+    "matchup_total_replay": {
+      "baseline": {
+        "brier": 0.25425334400828903,
+        "global_fallback_matches": 0,
+        "global_fallback_total": 2.6,
+        "log_loss_clipped": 0,
+        "log_loss_nats": 0.7016897560342182,
+        "version": "intl-prior-tournament-mean-v1"
+      },
+      "fixed_elo_slope_evidence": {
+        "interpretation": "Time-ordered replay. The reference fit overlaps the default example window, so the replay does not establish independent validation of the fixed slope.",
+        "reference_fit": "2018\u20132026 UEFA Nations League",
+        "slope": 0.47
+      },
+      "outcomes_basis": "snapshot scores (no separate regular-time score field)",
+      "paired_matches": 334,
+      "sample_dates": [
+        "2024-03-21",
+        "2026-11-16"
+      ],
+      "shadow": {
+        "brier": 0.25014872784911174,
+        "fallback_counts": {},
+        "log_loss_clipped": 0,
+        "log_loss_nats": 0.6935087865933739,
+        "matchup_coverage": 1.0,
+        "matchup_estimates": 334,
+        "max_recent_matches": 12,
+        "min_recent_matches_per_team": 4,
+        "prior_matches": 8,
+        "recent_days": 730,
+        "version": "intl-elo-goal-residuals-v1"
+      }
+    },
+    "matchup_total_snapshot_sha256": "34574457ee345823fc13f155d6e5946a3bb467c82e1405a6504419d3eaed8576",
+    "pregame_total_market": {
+      "lead_hours": [
+        12.645372670277776,
+        90.38579577055556
+      ],
+      "n_fixtures": 34,
+      "scope": "Historical pregame model and market midpoint. No claim to an executable price.",
+      "scores": {
+        "market": {
+          "brier": 0.22374191176470587,
+          "log_loss": 0.6385273717921874
+        },
+        "model": {
+          "brier": 0.25741791591764707,
+          "log_loss": 0.7079311834439033
+        }
+      },
+      "source": "docs/paper-sim/research/league-admission-20261119/europe-football/shadow-34-verified.json",
+      "source_sha256": "18de8f8e46aed9c4a0cae9cbbb75b602ebe5d21d33c637fc68d03646e678fbbf"
+    }
+  },
+  "optimizer": {
+    "historical_runs": [
+      {
+        "model": "club-soccer-recalib",
+        "outcome": "INSUFFICIENT_DATA",
+        "run_id": 1
+      },
+      {
+        "model": "intl-elo-goal-residuals",
+        "outcome": "NO_IMPROVEMENT",
+        "run_id": 2
+      },
+      {
+        "model": "nba-pace-efficiency",
+        "outcome": "INSUFFICIENT_DATA",
+        "run_id": 3
+      }
+    ],
+    "last_nba_run": {
+      "attempt": 1,
+      "completed_trials": 4811,
+      "holdout_callbacks": 0,
+      "outcome": "NO_IMPROVEMENT",
+      "run_id": 4,
+      "started": "2026-11-25T09:07:09.720491Z",
+      "terminal": "2026-11-25T09:49:41.610054Z"
+    },
+    "optimizer_invocations_in_this_analysis": 0,
+    "verified_scorecards": {
+      "historical-run-1-scorecard.json": {
+        "bytes": 8214,
+        "sha256": "b27ca7855ae147d27c76537289fd904c61f1fdb95be28fb5815cbd5f12a34fb9"
+      },
+      "historical-run-2-scorecard.json": {
+        "bytes": 5031,
+        "sha256": "e47b518723c52ac369562af6a11b85ae24cb4c62fb6262e6ae298784a91e3d65"
+      },
+      "historical-run-3-scorecard.json": {
+        "bytes": 8938,
+        "sha256": "8d7b2a4f498aa99ae20349d6744657c37a785ea30d097e19f44ddc743d57fe10"
+      },
+      "nba-v2-scorecard.json": {
+        "bytes": 10351,
+        "sha256": "f37e5be480ac8a63f70ca871eb90a5886301884a574ea953bfa1375f1de7cd91"
+      }
+    }
+  }
+}

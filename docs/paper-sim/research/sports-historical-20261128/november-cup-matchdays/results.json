@@ -1,0 +1,163 @@
+{
+  "archived_original_model": "Independent November 26 analysis. Half mean named de-vigged book probability, half ClubElo when available. With no ClubElo, half named books and half OddsPortal.",
+  "fixture_level_metrics": {
+    "clubelo": {
+      "log_loss": 1.00280686,
+      "multiclass_brier_sum": 0.61734502,
+      "n": 17,
+      "rps": 0.20562037,
+      "top_pick_correct": 0.58823529
+    },
+    "midpoint": {
+      "log_loss": 0.9350713,
+      "multiclass_brier_sum": 0.56964608,
+      "n": 18,
+      "rps": 0.18785186,
+      "top_pick_correct": 0.66666667
+    },
+    "named_books": {
+      "log_loss": 0.93139266,
+      "multiclass_brier_sum": 0.56459221,
+      "n": 18,
+      "rps": 0.18629626,
+      "top_pick_correct": 0.66666667
+    },
+    "oddsportal": {
+      "log_loss": 0.92492533,
+      "multiclass_brier_sum": 0.56350921,
+      "n": 18,
+      "rps": 0.18557174,
+      "top_pick_correct": 0.66666667
+    },
+    "probability": {
+      "log_loss": 0.94188066,
+      "multiclass_brier_sum": 0.57354483,
+      "n": 18,
+      "rps": 0.19018593,
+      "top_pick_correct": 0.66666667
+    }
+  },
+  "hypothetical_selected_1_unit_each": {
+    "n": 3,
+    "net_units": 4.30691435,
+    "normal_time_settlement_assumption": true,
+    "wins": 2
+  },
+  "input_sha256": "415117abf73ab0577aca773241fb50f88f40b11f07efa4a4e7ccaf062ee3663d",
+  "limits": [
+    "The original UEL model differs from the registered WP-P5 bridge. No archived WP-P5 invocation or commit-bound cross_league_mw_check was found for these 36 fixtures.",
+    "The independent scan preceded kickoff by hours. It does not provide the registered forward decision window, closing marks or an execution receipt.",
+    "The named book probabilities and one OddsPortal fallback are components of the independent estimate. These baselines share data. Midpoints represent a separate exchange reference, not an executable three-way quote.",
+    "The archive used a historical display-liquidity screen when it originally saved the 105 sides. It is not activated in this replay. Three missing contract sides need no imputation for event-level probability scoring.",
+    "Zero confirmed starting elevens in the input snapshots. Qualitative previews on selected fixtures did not change the numeric probabilities.",
+    "The three original highlighted sides are scored from normal-time results with their archived taker fee for illustration. No paper portfolio position, stake, realized profit or promotion is inferred."
+  ],
+  "metric_method": "Home, draw, away. Use affirmative contract probability or complement the negative side if absent. Normalize all three-way vectors to sum to one. Exchange comparator uses quoted bid/ask midpoints. Multiclass Brier is the sum over all three terms. RPS is the mean of the two cumulative squared errors. Smaller is better for these scores and natural-log loss. No synthetic fills.",
+  "official_ledger_writes": 0,
+  "period": "2026-11-24 to 2026-11-26 UTC inclusive",
+  "public_normal_finals": {
+    "ucl": 18,
+    "uel": 18
+  },
+  "runtime_discovered_before_kickoff": {
+    "ucl": 18,
+    "uel": 18
+  },
+  "runtime_fixture_info_with_score": {
+    "ucl": 0,
+    "uel": 0
+  },
+  "runtime_read_only_checked_utc": "2026-11-28T07:34:41.114375+00:00",
+  "runtime_typed_evidence_rows": {
+    "football_forward_chat_watch": {
+      "ucl": 0,
+      "uel": 0
+    },
+    "football_forward_contract": {
+      "ucl": 0,
+      "uel": 0
+    },
+    "football_forward_observation": {
+      "ucl": 0,
+      "uel": 0
+    },
+    "football_forward_recommendation": {
+      "ucl": 0,
+      "uel": 0
+    },
+    "football_forward_result": {
+      "ucl": 0,
+      "uel": 0
+    },
+    "football_forward_work": {
+      "ucl": 0,
+      "uel": 0
+    },
+    "football_prediction_feedback": {
+      "ucl": 0,
+      "uel": 0
+    },
+    "sports_portfolio_position": {
+      "ucl": 0,
+      "uel": 0
+    }
+  },
+  "selected_under_original_refresh_rule": [
+    {
+      "all_in_cost": 0.22858,
+      "archived_ask": 0.22,
+      "away": "Jagiellonia Bialystok",
+      "choice": "No",
+      "contract_won": true,
+      "direction": "home",
+      "final_goals": [
+        1,
+        1
+      ],
+      "home": "Sunderland",
+      "hypothetical_unit_net": 3.37483594,
+      "public_event_id": "401915513"
+    },
+    {
+      "all_in_cost": 0.341055,
+      "archived_ask": 0.33,
+      "away": "Benfica",
+      "choice": "No",
+      "contract_won": true,
+      "direction": "away",
+      "final_goals": [
+        4,
+        0
+      ],
+      "home": "Viktoria Plzen",
+      "hypothetical_unit_net": 1.9320784,
+      "public_event_id": "401915518"
+    },
+    {
+      "all_in_cost": 0.14602,
+      "archived_ask": 0.14,
+      "away": "Ararat-Armenia",
+      "choice": "No",
+      "contract_won": false,
+      "direction": "home",
+      "final_goals": [
+        2,
+        0
+      ],
+      "home": "RB Salzburg",
+      "hypothetical_unit_net": -1.0,
+      "public_event_id": "401915520"
+    }
+  ],
+  "snapshot_capture_utc": [
+    "2026-11-26T11:54:18.607+00:00",
+    "2026-11-26T11:54:19.433+00:00"
+  ],
+  "uel_comparable_probability_boards": 18,
+  "uel_confirmed_starter_lists_supplied": 0,
+  "uel_direct_binary_contract_sides": 105,
+  "uel_fallback_public_ids": [
+    "401915502"
+  ],
+  "uel_fixtures_with_clubelo": 17
+}

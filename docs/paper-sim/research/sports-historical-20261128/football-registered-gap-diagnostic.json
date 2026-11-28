@@ -1,0 +1,94 @@
+{
+  "as_of_utc": "2026-11-28T07:35:36.974403+00:00",
+  "competitions": {
+    "elc": {
+      "complete_rounds": 0,
+      "gate_e": "NOT_ASSESSABLE",
+      "gate_e_evidence": {
+        "min_events": "12",
+        "n_events": "9"
+      },
+      "missing_already_started": [
+        {
+          "distinct_capture_batches": 2,
+          "exact_same_snapshot_result": false,
+          "in_preregistered_gate_e": true,
+          "kickoff_utc": "2026-11-24T19:45:00Z",
+          "other_winner_recommendation_rows": 0,
+          "review_history_rows_checked": 36,
+          "review_stored_complete_board": false,
+          "round": 17,
+          "seconds_between_first_and_last_batch": 60.904223,
+          "valid_affirmative_sides": 3
+        },
+        {
+          "distinct_capture_batches": 3,
+          "exact_same_snapshot_result": false,
+          "in_preregistered_gate_e": true,
+          "kickoff_utc": "2026-11-24T19:45:00Z",
+          "other_winner_recommendation_rows": 0,
+          "review_history_rows_checked": 13,
+          "review_stored_complete_board": false,
+          "round": 17,
+          "seconds_between_first_and_last_batch": 179.722639,
+          "valid_affirmative_sides": 3
+        },
+        {
+          "distinct_capture_batches": 2,
+          "exact_same_snapshot_result": false,
+          "in_preregistered_gate_e": true,
+          "kickoff_utc": "2026-11-25T19:45:00Z",
+          "other_winner_recommendation_rows": 0,
+          "review_history_rows_checked": 33,
+          "review_stored_complete_board": false,
+          "round": 17,
+          "seconds_between_first_and_last_batch": 121.622084,
+          "valid_affirmative_sides": 3
+        },
+        {
+          "distinct_capture_batches": 2,
+          "exact_same_snapshot_result": false,
+          "in_preregistered_gate_e": false,
+          "kickoff_utc": "2026-11-27T20:00:00Z",
+          "other_winner_recommendation_rows": 0,
+          "review_history_rows_checked": 38,
+          "review_stored_complete_board": false,
+          "round": 18,
+          "seconds_between_first_and_last_batch": 59.181465,
+          "valid_affirmative_sides": 3
+        }
+      ],
+      "not_started": 11,
+      "rounds": [
+        17,
+        18
+      ],
+      "scheduled": 24,
+      "scored": 9,
+      "upcoming_by_round": {
+        "18": 11
+      }
+    },
+    "ere": {
+      "complete_rounds": 0,
+      "gate_e": "NOT_ASSESSABLE",
+      "gate_e_evidence": {
+        "min_events": "8",
+        "n_events": "1"
+      },
+      "missing_already_started": [],
+      "not_started": 17,
+      "rounds": [
+        14,
+        15
+      ],
+      "scheduled": 18,
+      "scored": 1,
+      "upcoming_by_round": {
+        "14": 8,
+        "15": 9
+      }
+    }
+  },
+  "storage": "The managed observation table has one primary-key row per fixture revision, market, outcome, model version. Inserts retain the first eligible observation. The gate requires all affirmative selections share a capture time. If the three were first recorded at different times, later passes cannot replace them; a future fixture can qualify when the initial usable board is captured together. Pregame review history includes counts/coverage, not the three-leg evidence. An unrelated later closing quote is outside this observation window."
+}

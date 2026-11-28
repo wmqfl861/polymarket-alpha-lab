@@ -1,0 +1,3345 @@
+{
+  "basketball_cache_as_of": "2026-11-28T07:04:26.184983Z",
+  "basketball_forward": {
+    "active_scope_count": 0,
+    "entry_admission": "research_only",
+    "leagues": {
+      "bkbbl": {
+        "closing_windows": 0,
+        "forward_windows": 0,
+        "paired_quotes": 0,
+        "terminal_results": 0
+      },
+      "bkeurocup": {
+        "closing_windows": 0,
+        "forward_windows": 0,
+        "paired_quotes": 0,
+        "terminal_results": 0
+      },
+      "nba": {
+        "closing_windows": 40,
+        "forward_windows": 40,
+        "paired_quotes": 80,
+        "terminal_results": 80
+      }
+    },
+    "managed_reason": "managed_papersim_database_unavailable",
+    "registered_study": "basketball-forward-20261123-v1"
+  },
+  "europe": {
+    "archived_score_replay": [
+      {
+        "baseline": {
+          "accuracy": 0.65625,
+          "brier": 0.21862256623647702,
+          "log_loss": 0.628388055379207,
+          "margin_mae": 12.031754904016749,
+          "n": 64,
+          "total_mae": 14.051749999999998
+        },
+        "candidate": {
+          "accuracy": 0.625,
+          "brier": 0.21392518893206164,
+          "log_loss": 0.6152763339302867,
+          "margin_mae": 12.062071820609141,
+          "n": 64,
+          "total_mae": 14.11255594463518
+        },
+        "date_range": [
+          "2026-10-06",
+          "2026-11-18"
+        ],
+        "games": 64,
+        "league": "Basketball Champions League",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5416666666666666,
+          "brier": 0.22518714743055032,
+          "log_loss": 0.6413334223529102,
+          "margin_mae": 11.84718164882967,
+          "n": 96,
+          "total_mae": 15.754666666666667
+        },
+        "candidate": {
+          "accuracy": 0.6770833333333334,
+          "brier": 0.20454731501141774,
+          "log_loss": 0.5968337882509175,
+          "margin_mae": 10.934312511525071,
+          "n": 96,
+          "total_mae": 15.527725880448228
+        },
+        "date_range": [
+          "2025-10-07",
+          "2025-12-17"
+        ],
+        "games": 96,
+        "league": "Basketball Champions League",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6796875,
+          "brier": 0.2232877285604693,
+          "log_loss": 0.6386023931842425,
+          "margin_mae": 10.998681104661317,
+          "n": 128,
+          "total_mae": 13.153656250000001
+        },
+        "candidate": {
+          "accuracy": 0.671875,
+          "brier": 0.21624954229469773,
+          "log_loss": 0.623255814684311,
+          "margin_mae": 10.5441227696575,
+          "n": 128,
+          "total_mae": 12.967934866679226
+        },
+        "date_range": [
+          "2026-09-29",
+          "2026-11-18"
+        ],
+        "games": 128,
+        "league": "EuroCup",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6512820512820513,
+          "brier": 0.22190477262366506,
+          "log_loss": 0.6351532895405669,
+          "margin_mae": 12.134620048914528,
+          "n": 195,
+          "total_mae": 15.952758974358975
+        },
+        "candidate": {
+          "accuracy": 0.6820512820512821,
+          "brier": 0.2145549283186591,
+          "log_loss": 0.6184821981405006,
+          "margin_mae": 11.757956086257511,
+          "n": 195,
+          "total_mae": 14.416615244711016
+        },
+        "date_range": [
+          "2025-09-30",
+          "2026-04-28"
+        ],
+        "games": 195,
+        "league": "EuroCup",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6083333333333333,
+          "brier": 0.22502300361313782,
+          "log_loss": 0.639842893973084,
+          "margin_mae": 9.295608610892023,
+          "n": 120,
+          "total_mae": 15.8113
+        },
+        "candidate": {
+          "accuracy": 0.6083333333333333,
+          "brier": 0.22189021594374342,
+          "log_loss": 0.6315509306950506,
+          "margin_mae": 9.20248567768669,
+          "n": 120,
+          "total_mae": 15.165836693288608
+        },
+        "date_range": [
+          "2026-09-24",
+          "2026-11-18"
+        ],
+        "games": 120,
+        "league": "EuroLeague",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6169154228855721,
+          "brier": 0.22188157599814115,
+          "log_loss": 0.6336468973646466,
+          "margin_mae": 9.153724974233825,
+          "n": 402,
+          "total_mae": 14.662616915422884
+        },
+        "candidate": {
+          "accuracy": 0.6293532338308457,
+          "brier": 0.2196604128460701,
+          "log_loss": 0.6277892371385089,
+          "margin_mae": 9.06769388769478,
+          "n": 402,
+          "total_mae": 14.266558546940075
+        },
+        "date_range": [
+          "2025-09-30",
+          "2026-05-24"
+        ],
+        "games": 402,
+        "league": "EuroLeague",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.75,
+          "brier": 0.18756518617711707,
+          "log_loss": 0.562092646457756,
+          "margin_mae": 9.058169144845802,
+          "n": 32,
+          "total_mae": 15.875125
+        },
+        "candidate": {
+          "accuracy": 0.71875,
+          "brier": 0.1827542615881862,
+          "log_loss": 0.5506497921642858,
+          "margin_mae": 9.258837537944911,
+          "n": 32,
+          "total_mae": 15.843846639538253
+        },
+        "date_range": [
+          "2026-09-25",
+          "2026-10-18"
+        ],
+        "games": 32,
+        "league": "France Pro A",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6954887218045113,
+          "brier": 0.20478917303721716,
+          "log_loss": 0.5981786211114717,
+          "margin_mae": 11.400565442159118,
+          "n": 266,
+          "total_mae": 13.439593984962405
+        },
+        "candidate": {
+          "accuracy": 0.706766917293233,
+          "brier": 0.20247199472232152,
+          "log_loss": 0.5927385781938641,
+          "margin_mae": 11.017708626563364,
+          "n": 266,
+          "total_mae": 12.94284453595144
+        },
+        "date_range": [
+          "2025-09-26",
+          "2026-06-23"
+        ],
+        "games": 266,
+        "league": "France Pro A",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.7073170731707317,
+          "brier": 0.23162343274749134,
+          "log_loss": 0.6585395186600194,
+          "margin_mae": 9.327337107476307,
+          "n": 41,
+          "total_mae": 13.430243902439024
+        },
+        "candidate": {
+          "accuracy": 0.7073170731707317,
+          "brier": 0.218070738695307,
+          "log_loss": 0.6304685585017782,
+          "margin_mae": 9.032456293578868,
+          "n": 41,
+          "total_mae": 13.792244181349034
+        },
+        "date_range": [
+          "2026-09-25",
+          "2026-10-17"
+        ],
+        "games": 41,
+        "league": "France Pro B",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6359102244389028,
+          "brier": 0.22194335024153586,
+          "log_loss": 0.6340163078323058,
+          "margin_mae": 9.905797412732237,
+          "n": 401,
+          "total_mae": 12.849576059850374
+        },
+        "candidate": {
+          "accuracy": 0.628428927680798,
+          "brier": 0.222448369477085,
+          "log_loss": 0.6346950632581094,
+          "margin_mae": 9.885405091412224,
+          "n": 401,
+          "total_mae": 12.736290608562756
+        },
+        "date_range": [
+          "2025-09-18",
+          "2026-06-18"
+        ],
+        "games": 401,
+        "league": "France Pro B",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6046511627906976,
+          "brier": 0.23192866891984237,
+          "log_loss": 0.6558608447148838,
+          "margin_mae": 13.761269220138804,
+          "n": 43,
+          "total_mae": 12.754976744186047
+        },
+        "candidate": {
+          "accuracy": 0.6046511627906976,
+          "brier": 0.23362374527739818,
+          "log_loss": 0.6601069461709348,
+          "margin_mae": 13.838073479780762,
+          "n": 43,
+          "total_mae": 12.000172459502698
+        },
+        "date_range": [
+          "2026-09-18",
+          "2026-10-11"
+        ],
+        "games": 43,
+        "league": "Germany BBL",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6390532544378699,
+          "brier": 0.22264281176356054,
+          "log_loss": 0.6351104949134045,
+          "margin_mae": 11.417467287372798,
+          "n": 338,
+          "total_mae": 14.090674556213019
+        },
+        "candidate": {
+          "accuracy": 0.6301775147928994,
+          "brier": 0.22084906543263597,
+          "log_loss": 0.6318892439142207,
+          "margin_mae": 11.196212016091879,
+          "n": 338,
+          "total_mae": 13.505493238624343
+        },
+        "date_range": [
+          "2025-09-26",
+          "2026-06-21"
+        ],
+        "games": 338,
+        "league": "Germany BBL",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6875,
+          "brier": 0.21384787005126432,
+          "log_loss": 0.615590816202113,
+          "margin_mae": 10.395943117703732,
+          "n": 32,
+          "total_mae": 12.546249999999997
+        },
+        "candidate": {
+          "accuracy": 0.6875,
+          "brier": 0.21387861788377946,
+          "log_loss": 0.6110474976373302,
+          "margin_mae": 10.334776003613511,
+          "n": 32,
+          "total_mae": 11.666273191274936
+        },
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "games": 32,
+        "league": "Italy Serie A",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6956521739130435,
+          "brier": 0.21066740147364352,
+          "log_loss": 0.612122331721763,
+          "margin_mae": 8.801091219050667,
+          "n": 253,
+          "total_mae": 13.317169960474308
+        },
+        "candidate": {
+          "accuracy": 0.7154150197628458,
+          "brier": 0.20448305023065047,
+          "log_loss": 0.5994090930922813,
+          "margin_mae": 8.877165116611682,
+          "n": 253,
+          "total_mae": 13.832163759799528
+        },
+        "date_range": [
+          "2025-10-04",
+          "2026-06-18"
+        ],
+        "games": 253,
+        "league": "Italy Serie A",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5833333333333334,
+          "brier": 0.2242698950435993,
+          "log_loss": 0.6412989960066305,
+          "margin_mae": 11.530034676779934,
+          "n": 36,
+          "total_mae": 18.669444444444444
+        },
+        "candidate": {
+          "accuracy": 0.5555555555555556,
+          "brier": 0.22223732157018272,
+          "log_loss": 0.6463291716808679,
+          "margin_mae": 11.013159807589993,
+          "n": 36,
+          "total_mae": 17.78088735065751
+        },
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "games": 36,
+        "league": "Spain ACB",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.20705406738359636,
+          "log_loss": 0.6010181748271919,
+          "margin_mae": 10.211344626770103,
+          "n": 327,
+          "total_mae": 13.788244648318043
+        },
+        "candidate": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.2052718317799044,
+          "log_loss": 0.5997866868939564,
+          "margin_mae": 10.174406911676954,
+          "n": 327,
+          "total_mae": 13.402256113757378
+        },
+        "date_range": [
+          "2025-10-04",
+          "2026-06-24"
+        ],
+        "games": 327,
+        "league": "Spain ACB",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.8727272727272727,
+          "brier": 0.12968683064408257,
+          "log_loss": 0.4277428831159503,
+          "margin_mae": 13.091191721770036,
+          "n": 55,
+          "total_mae": 15.932072727272725
+        },
+        "candidate": {
+          "accuracy": 0.8727272727272727,
+          "brier": 0.10760208830861041,
+          "log_loss": 0.35603388216426507,
+          "margin_mae": 10.518261282518436,
+          "n": 55,
+          "total_mae": 16.03256696196032
+        },
+        "date_range": [
+          "2026-09-25",
+          "2026-11-18"
+        ],
+        "games": 55,
+        "league": "VTB United League",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.8031496062992126,
+          "brier": 0.15588849926658116,
+          "log_loss": 0.48235305408108914,
+          "margin_mae": 11.246703952507882,
+          "n": 254,
+          "total_mae": 13.158125984251967
+        },
+        "candidate": {
+          "accuracy": 0.7913385826771654,
+          "brier": 0.14094382391814395,
+          "log_loss": 0.4374728746864112,
+          "margin_mae": 10.17135686871366,
+          "n": 254,
+          "total_mae": 13.158027816287929
+        },
+        "date_range": [
+          "2025-09-28",
+          "2026-06-12"
+        ],
+        "games": 254,
+        "league": "VTB United League",
+        "split": "holdout"
+      }
+    ],
+    "post_archive_score_only": [
+      {
+        "available_finals_after_archive": 9,
+        "baseline": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.2604302477127509,
+          "log_loss": 0.7174215323728172,
+          "margin_mae": 10.721653803323644,
+          "n": 9,
+          "total_mae": 11.658222222222223
+        },
+        "candidate": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.24268366630389349,
+          "log_loss": 0.6882871160719287,
+          "margin_mae": 8.510534990983587,
+          "n": 9,
+          "total_mae": 11.81568159568203
+        },
+        "date_range": [
+          "2026-11-20",
+          "2026-11-22"
+        ],
+        "games": 9,
+        "history_conflict": false,
+        "league": "Germany BBL",
+        "reconstructed_without_at_time_feed_snapshot": true
+      },
+      {
+        "available_finals_after_archive": 0,
+        "baseline": {
+          "accuracy": null,
+          "brier": null,
+          "log_loss": null,
+          "n": 0
+        },
+        "candidate": {
+          "accuracy": null,
+          "brier": null,
+          "log_loss": null,
+          "n": 0
+        },
+        "date_range": null,
+        "games": 0,
+        "history_conflict": false,
+        "league": "EuroCup",
+        "reconstructed_without_at_time_feed_snapshot": true
+      },
+      {
+        "available_finals_after_archive": 5,
+        "baseline": {
+          "accuracy": 1.0,
+          "brier": 0.11977294933374431,
+          "log_loss": 0.41912161112885127,
+          "margin_mae": 3.963685443653236,
+          "n": 5,
+          "total_mae": 15.671199999999999
+        },
+        "candidate": {
+          "accuracy": 1.0,
+          "brier": 0.048504840055513816,
+          "log_loss": 0.24546536053941875,
+          "margin_mae": 5.132188629419562,
+          "n": 5,
+          "total_mae": 14.403868820405183
+        },
+        "date_range": [
+          "2026-11-21",
+          "2026-11-22"
+        ],
+        "games": 5,
+        "history_conflict": false,
+        "league": "VTB United League",
+        "reconstructed_without_at_time_feed_snapshot": true
+      },
+      {
+        "available_finals_after_archive": 20,
+        "baseline": {
+          "accuracy": 0.45,
+          "brier": 0.26338789960313036,
+          "log_loss": 0.7191277079276108,
+          "margin_mae": 11.086614269106397,
+          "n": 20,
+          "total_mae": 13.725200000000001
+        },
+        "candidate": {
+          "accuracy": 0.45,
+          "brier": 0.2754981168831646,
+          "log_loss": 0.745936995575415,
+          "margin_mae": 11.300621513110292,
+          "n": 20,
+          "total_mae": 12.79040019467245
+        },
+        "date_range": [
+          "2026-11-19",
+          "2026-11-25"
+        ],
+        "games": 20,
+        "history_conflict": false,
+        "league": "EuroLeague",
+        "reconstructed_without_at_time_feed_snapshot": true
+      }
+    ],
+    "sportsbook_proxies": [
+      {
+        "baseline": {
+          "accuracy": 0.65625,
+          "brier": 0.21862256623647702,
+          "log_loss": 0.628388055379207,
+          "n": 64
+        },
+        "candidate": {
+          "accuracy": 0.625,
+          "brier": 0.21392518893206164,
+          "log_loss": 0.6152763339302867,
+          "n": 64
+        },
+        "date_range": [
+          "2026-10-06",
+          "2026-11-18"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 64,
+        "league": "Basketball Champions League",
+        "market": {
+          "accuracy": 0.6953125,
+          "brier": 0.20297291972116602,
+          "log_loss": 0.5873535945313431,
+          "n": 64
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.7391304347826086,
+          "brier": 0.21941814946392146,
+          "log_loss": 0.6321154356386665,
+          "n": 46
+        },
+        "candidate": {
+          "accuracy": 0.6521739130434783,
+          "brier": 0.2338287132098603,
+          "log_loss": 0.6612381538797528,
+          "n": 46
+        },
+        "date_range": [
+          "2026-09-29",
+          "2026-10-15"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 46,
+        "league": "EuroCup",
+        "market": {
+          "accuracy": 0.717391304347826,
+          "brier": 0.1888720174902016,
+          "log_loss": 0.5586170279528836,
+          "n": 46
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6512820512820513,
+          "brier": 0.22190477262366506,
+          "log_loss": 0.6351532895405669,
+          "n": 195
+        },
+        "candidate": {
+          "accuracy": 0.6820512820512821,
+          "brier": 0.2145549283186591,
+          "log_loss": 0.6184821981405006,
+          "n": 195
+        },
+        "date_range": [
+          "2025-09-30",
+          "2026-04-28"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 195,
+        "league": "EuroCup",
+        "market": {
+          "accuracy": 0.7333333333333333,
+          "brier": 0.19827582603074928,
+          "log_loss": 0.5828487312575734,
+          "n": 195
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5833333333333334,
+          "brier": 0.23085722810712145,
+          "log_loss": 0.6525590439756452,
+          "n": 60
+        },
+        "candidate": {
+          "accuracy": 0.5666666666666667,
+          "brier": 0.23282018480554403,
+          "log_loss": 0.6563268669572456,
+          "n": 60
+        },
+        "date_range": [
+          "2026-09-24",
+          "2026-10-16"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 60,
+        "league": "EuroLeague",
+        "market": {
+          "accuracy": 0.5833333333333334,
+          "brier": 0.2306345127104734,
+          "log_loss": 0.6506698202008762,
+          "n": 60
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6181318681318682,
+          "brier": 0.22146762069680284,
+          "log_loss": 0.6327891328872246,
+          "n": 364
+        },
+        "candidate": {
+          "accuracy": 0.6318681318681318,
+          "brier": 0.21963412032980234,
+          "log_loss": 0.6278070140041939,
+          "n": 364
+        },
+        "date_range": [
+          "2025-09-30",
+          "2026-05-24"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 364,
+        "league": "EuroLeague",
+        "market": {
+          "accuracy": 0.6277472527472527,
+          "brier": 0.21678769031507025,
+          "log_loss": 0.6205883039161605,
+          "n": 364
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.75,
+          "brier": 0.18756518617711707,
+          "log_loss": 0.562092646457756,
+          "n": 32
+        },
+        "candidate": {
+          "accuracy": 0.71875,
+          "brier": 0.1827542615881862,
+          "log_loss": 0.5506497921642858,
+          "n": 32
+        },
+        "date_range": [
+          "2026-09-25",
+          "2026-10-18"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 32,
+        "league": "France Pro A",
+        "market": {
+          "accuracy": 0.78125,
+          "brier": 0.16342714701191566,
+          "log_loss": 0.5096713346342082,
+          "n": 32
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6896551724137931,
+          "brier": 0.20788733319862263,
+          "log_loss": 0.6053809133534719,
+          "n": 261
+        },
+        "candidate": {
+          "accuracy": 0.7011494252873564,
+          "brier": 0.20602980631391093,
+          "log_loss": 0.6016103734511059,
+          "n": 261
+        },
+        "date_range": [
+          "2025-09-26",
+          "2026-06-23"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 261,
+        "league": "France Pro A",
+        "market": {
+          "accuracy": 0.7126436781609196,
+          "brier": 0.19049615730824287,
+          "log_loss": 0.5630984538039178,
+          "n": 261
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6923076923076923,
+          "brier": 0.23695723958024642,
+          "log_loss": 0.6696502940106855,
+          "n": 39
+        },
+        "candidate": {
+          "accuracy": 0.6923076923076923,
+          "brier": 0.22402628639699493,
+          "log_loss": 0.6430840725201483,
+          "n": 39
+        },
+        "date_range": [
+          "2026-09-25",
+          "2026-10-16"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 39,
+        "league": "France Pro B",
+        "market": {
+          "accuracy": 0.6410256410256411,
+          "brier": 0.23492705805847974,
+          "log_loss": 0.6616794719525372,
+          "n": 39
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6375,
+          "brier": 0.22167549009075413,
+          "log_loss": 0.6334700450255331,
+          "n": 400
+        },
+        "candidate": {
+          "accuracy": 0.63,
+          "brier": 0.22194197594919576,
+          "log_loss": 0.6336434599943902,
+          "n": 400
+        },
+        "date_range": [
+          "2025-09-18",
+          "2026-06-18"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 400,
+        "league": "France Pro B",
+        "market": {
+          "accuracy": 0.62625,
+          "brier": 0.2153905590798513,
+          "log_loss": 0.6188249462419136,
+          "n": 400
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6046511627906976,
+          "brier": 0.23192866891984237,
+          "log_loss": 0.6558608447148838,
+          "n": 43
+        },
+        "candidate": {
+          "accuracy": 0.6046511627906976,
+          "brier": 0.23362374527739818,
+          "log_loss": 0.6601069461709348,
+          "n": 43
+        },
+        "date_range": [
+          "2026-09-18",
+          "2026-10-11"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 43,
+        "league": "Germany BBL",
+        "market": {
+          "accuracy": 0.5813953488372093,
+          "brier": 0.22048486852754426,
+          "log_loss": 0.6212532917937486,
+          "n": 43
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6390532544378699,
+          "brier": 0.22264281176356054,
+          "log_loss": 0.6351104949134045,
+          "n": 338
+        },
+        "candidate": {
+          "accuracy": 0.6301775147928994,
+          "brier": 0.22084906543263597,
+          "log_loss": 0.6318892439142207,
+          "n": 338
+        },
+        "date_range": [
+          "2025-09-26",
+          "2026-06-21"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 338,
+        "league": "Germany BBL",
+        "market": {
+          "accuracy": 0.621301775147929,
+          "brier": 0.21582958152255213,
+          "log_loss": 0.6165659901327024,
+          "n": 338
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6875,
+          "brier": 0.21384787005126432,
+          "log_loss": 0.615590816202113,
+          "n": 32
+        },
+        "candidate": {
+          "accuracy": 0.6875,
+          "brier": 0.21387861788377946,
+          "log_loss": 0.6110474976373302,
+          "n": 32
+        },
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 32,
+        "league": "Italy Serie A",
+        "market": {
+          "accuracy": 0.640625,
+          "brier": 0.20268373267231876,
+          "log_loss": 0.5876604372290564,
+          "n": 32
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6956521739130435,
+          "brier": 0.21066740147364352,
+          "log_loss": 0.612122331721763,
+          "n": 253
+        },
+        "candidate": {
+          "accuracy": 0.7154150197628458,
+          "brier": 0.20448305023065047,
+          "log_loss": 0.5994090930922813,
+          "n": 253
+        },
+        "date_range": [
+          "2025-10-04",
+          "2026-06-18"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 253,
+        "league": "Italy Serie A",
+        "market": {
+          "accuracy": 0.7075098814229249,
+          "brier": 0.19616993380136982,
+          "log_loss": 0.5788736561208622,
+          "n": 253
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5833333333333334,
+          "brier": 0.2242698950435993,
+          "log_loss": 0.6412989960066305,
+          "n": 36
+        },
+        "candidate": {
+          "accuracy": 0.5555555555555556,
+          "brier": 0.22223732157018272,
+          "log_loss": 0.6463291716808679,
+          "n": 36
+        },
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 36,
+        "league": "Spain ACB",
+        "market": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.21385462581856995,
+          "log_loss": 0.6151106847906646,
+          "n": 36
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6656441717791411,
+          "brier": 0.20734660481913147,
+          "log_loss": 0.6016140596746374,
+          "n": 326
+        },
+        "candidate": {
+          "accuracy": 0.6656441717791411,
+          "brier": 0.20555832148453676,
+          "log_loss": 0.6003774894415166,
+          "n": 326
+        },
+        "date_range": [
+          "2025-10-04",
+          "2026-06-24"
+        ],
+        "file": "sportsbook_closing_moneyline_comparison.csv",
+        "games": 326,
+        "league": "Spain ACB",
+        "market": {
+          "accuracy": 0.7024539877300614,
+          "brier": 0.1982787228995126,
+          "log_loss": 0.5803804702809476,
+          "n": 326
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.8,
+          "brier": 0.19775992710704088,
+          "log_loss": 0.5863422328474335,
+          "n": 5
+        },
+        "candidate": {
+          "accuracy": 0.8,
+          "brier": 0.18489085453215984,
+          "log_loss": 0.5603055639385827,
+          "n": 5
+        },
+        "date_range": [
+          "2026-09-25",
+          "2026-10-16"
+        ],
+        "file": "sportsbook_france_pro_b_timed_totals.csv",
+        "games": 5,
+        "league": "France Pro B",
+        "market": {
+          "accuracy": 0.7,
+          "brier": 0.22998077906004027,
+          "log_loss": 0.652968661831246,
+          "n": 5
+        },
+        "market_kind": "total",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.43478260869565216,
+          "brier": 0.27263864668327725,
+          "log_loss": 0.739430158476233,
+          "n": 23
+        },
+        "candidate": {
+          "accuracy": 0.4782608695652174,
+          "brier": 0.27033611983414196,
+          "log_loss": 0.7347643963253042,
+          "n": 23
+        },
+        "date_range": [
+          "2025-09-26",
+          "2026-04-30"
+        ],
+        "file": "sportsbook_france_pro_b_timed_totals.csv",
+        "games": 23,
+        "league": "France Pro B",
+        "market": {
+          "accuracy": 0.5,
+          "brier": 0.24698581176440135,
+          "log_loss": 0.6871022949344353,
+          "n": 23
+        },
+        "market_kind": "total",
+        "split": "holdout"
+      }
+    ],
+    "strict_archived_prices": [
+      {
+        "baseline": {
+          "accuracy": 0.6721311475409836,
+          "brier": 0.2134510209649936,
+          "log_loss": 0.6177556241202639,
+          "n": 61
+        },
+        "candidate": {
+          "accuracy": 0.6557377049180327,
+          "brier": 0.20401559931982136,
+          "log_loss": 0.5941223205415506,
+          "n": 61
+        },
+        "contracts": 61,
+        "date_range": [
+          "2026-10-06",
+          "2026-11-18"
+        ],
+        "league": "Basketball Champions League",
+        "market": {
+          "accuracy": 0.7377049180327869,
+          "brier": 0.19413208606557378,
+          "log_loss": 0.5619436988094882,
+          "n": 61
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6796875,
+          "brier": 0.2232877285604693,
+          "log_loss": 0.6386023931842425,
+          "n": 128
+        },
+        "candidate": {
+          "accuracy": 0.671875,
+          "brier": 0.21624954229469773,
+          "log_loss": 0.623255814684311,
+          "n": 128
+        },
+        "contracts": 128,
+        "date_range": [
+          "2026-09-29",
+          "2026-11-18"
+        ],
+        "league": "EuroCup",
+        "market": {
+          "accuracy": 0.7421875,
+          "brier": 0.18125804083593228,
+          "log_loss": 0.5455349957361396,
+          "n": 128
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5039370078740157,
+          "brier": 0.2774540901030272,
+          "log_loss": 0.7614300782022871,
+          "n": 127
+        },
+        "candidate": {
+          "accuracy": 0.5433070866141733,
+          "brier": 0.26411794706982517,
+          "log_loss": 0.727716483456616,
+          "n": 127
+        },
+        "contracts": 127,
+        "date_range": [
+          "2026-09-29",
+          "2026-11-18"
+        ],
+        "league": "EuroCup",
+        "market": {
+          "accuracy": 0.6220472440944882,
+          "brier": 0.23856535433070866,
+          "log_loss": 0.6699277626660803,
+          "n": 127
+        },
+        "market_kind": "spread",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5196850393700787,
+          "brier": 0.25842627454171163,
+          "log_loss": 0.711041296061473,
+          "n": 127
+        },
+        "candidate": {
+          "accuracy": 0.5275590551181102,
+          "brier": 0.254458286911545,
+          "log_loss": 0.70242577352918,
+          "n": 127
+        },
+        "contracts": 127,
+        "date_range": [
+          "2026-09-29",
+          "2026-11-18"
+        ],
+        "league": "EuroCup",
+        "market": {
+          "accuracy": 0.515748031496063,
+          "brier": 0.25319527559055116,
+          "log_loss": 0.7005249314547796,
+          "n": 127
+        },
+        "market_kind": "total",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.44871794871794873,
+          "brier": 0.2622134256999279,
+          "log_loss": 0.7179839963808742,
+          "n": 78
+        },
+        "candidate": {
+          "accuracy": 0.5,
+          "brier": 0.26457294035094747,
+          "log_loss": 0.7236202075762057,
+          "n": 78
+        },
+        "contracts": 78,
+        "date_range": [
+          "2026-10-13",
+          "2026-11-18"
+        ],
+        "league": "EuroLeague",
+        "market": {
+          "accuracy": 0.5448717948717948,
+          "brier": 0.2511564102564102,
+          "log_loss": 0.6954633547572624,
+          "n": 78
+        },
+        "market_kind": "spread",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.46153846153846156,
+          "brier": 0.2728212496055612,
+          "log_loss": 0.7414560814004486,
+          "n": 78
+        },
+        "candidate": {
+          "accuracy": 0.5256410256410257,
+          "brier": 0.2500476188929926,
+          "log_loss": 0.6939502632229958,
+          "n": 78
+        },
+        "contracts": 78,
+        "date_range": [
+          "2026-10-13",
+          "2026-11-18"
+        ],
+        "league": "EuroLeague",
+        "market": {
+          "accuracy": 0.5897435897435898,
+          "brier": 0.2354442307692308,
+          "log_loss": 0.6628552012188356,
+          "n": 78
+        },
+        "market_kind": "total",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.75,
+          "brier": 0.18756518617711707,
+          "log_loss": 0.562092646457756,
+          "n": 32
+        },
+        "candidate": {
+          "accuracy": 0.71875,
+          "brier": 0.1827542615881862,
+          "log_loss": 0.5506497921642858,
+          "n": 32
+        },
+        "contracts": 32,
+        "date_range": [
+          "2026-09-25",
+          "2026-10-18"
+        ],
+        "league": "France Pro A",
+        "market": {
+          "accuracy": 0.78125,
+          "brier": 0.15896171875,
+          "log_loss": 0.4969118826774442,
+          "n": 32
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5,
+          "brier": 0.2657578469532504,
+          "log_loss": 0.7321237110441119,
+          "n": 32
+        },
+        "candidate": {
+          "accuracy": 0.5625,
+          "brier": 0.25925443690375316,
+          "log_loss": 0.7174892064926048,
+          "n": 32
+        },
+        "contracts": 32,
+        "date_range": [
+          "2026-09-25",
+          "2026-10-18"
+        ],
+        "league": "France Pro A",
+        "market": {
+          "accuracy": 0.46875,
+          "brier": 0.26395546875,
+          "log_loss": 0.7225675982542504,
+          "n": 32
+        },
+        "market_kind": "spread",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.53125,
+          "brier": 0.26270042511333835,
+          "log_loss": 0.7233098971326921,
+          "n": 32
+        },
+        "candidate": {
+          "accuracy": 0.53125,
+          "brier": 0.2622943119246437,
+          "log_loss": 0.7226583657275669,
+          "n": 32
+        },
+        "contracts": 32,
+        "date_range": [
+          "2026-09-25",
+          "2026-10-18"
+        ],
+        "league": "France Pro A",
+        "market": {
+          "accuracy": 0.484375,
+          "brier": 0.2405578125,
+          "log_loss": 0.6719297300060264,
+          "n": 32
+        },
+        "market_kind": "total",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6821192052980133,
+          "brier": 0.20801821166793086,
+          "log_loss": 0.6053507599847984,
+          "n": 151
+        },
+        "candidate": {
+          "accuracy": 0.695364238410596,
+          "brier": 0.20638263093637094,
+          "log_loss": 0.6027537438481312,
+          "n": 151
+        },
+        "contracts": 151,
+        "date_range": [
+          "2026-01-10",
+          "2026-06-23"
+        ],
+        "league": "France Pro A",
+        "market": {
+          "accuracy": 0.7119205298013245,
+          "brier": 0.1889737665562914,
+          "log_loss": 0.5547682839109455,
+          "n": 151
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5555555555555556,
+          "brier": 0.2210668045579338,
+          "log_loss": 0.6314442511004743,
+          "n": 9
+        },
+        "candidate": {
+          "accuracy": 0.5555555555555556,
+          "brier": 0.2553486506068499,
+          "log_loss": 0.7035571395247053,
+          "n": 9
+        },
+        "contracts": 9,
+        "date_range": [
+          "2026-06-06",
+          "2026-06-23"
+        ],
+        "league": "France Pro A",
+        "market": {
+          "accuracy": 0.7777777777777778,
+          "brier": 0.2116888888888889,
+          "log_loss": 0.6137124278293696,
+          "n": 9
+        },
+        "market_kind": "spread",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.3333333333333333,
+          "brier": 0.324132113984619,
+          "log_loss": 0.8544670412698167,
+          "n": 9
+        },
+        "candidate": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.2161133640568611,
+          "log_loss": 0.6220022397197215,
+          "n": 9
+        },
+        "contracts": 9,
+        "date_range": [
+          "2026-06-06",
+          "2026-06-23"
+        ],
+        "league": "France Pro A",
+        "market": {
+          "accuracy": 0.7777777777777778,
+          "brier": 0.22927777777777777,
+          "log_loss": 0.6511698077832024,
+          "n": 9
+        },
+        "market_kind": "total",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5945945945945946,
+          "brier": 0.23410907144185372,
+          "log_loss": 0.6593469926991652,
+          "n": 37
+        },
+        "candidate": {
+          "accuracy": 0.5945945945945946,
+          "brier": 0.23688728061796474,
+          "log_loss": 0.6646534853254323,
+          "n": 37
+        },
+        "contracts": 37,
+        "date_range": [
+          "2026-09-18",
+          "2026-10-11"
+        ],
+        "league": "Germany BBL",
+        "market": {
+          "accuracy": 0.5945945945945946,
+          "brier": 0.23011891891891892,
+          "log_loss": 0.6426796657292365,
+          "n": 37
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5151515151515151,
+          "brier": 0.26425857704946415,
+          "log_loss": 0.726003836002521,
+          "n": 33
+        },
+        "candidate": {
+          "accuracy": 0.48484848484848486,
+          "brier": 0.2567903428175544,
+          "log_loss": 0.7106674457198527,
+          "n": 33
+        },
+        "contracts": 33,
+        "date_range": [
+          "2026-09-18",
+          "2026-10-11"
+        ],
+        "league": "Germany BBL",
+        "market": {
+          "accuracy": 0.5,
+          "brier": 0.24823712121212121,
+          "log_loss": 0.6884440193400914,
+          "n": 33
+        },
+        "market_kind": "spread",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6363636363636364,
+          "brier": 0.22711946246307485,
+          "log_loss": 0.6454657462746218,
+          "n": 33
+        },
+        "candidate": {
+          "accuracy": 0.7272727272727273,
+          "brier": 0.22025959936880743,
+          "log_loss": 0.6344850407272472,
+          "n": 33
+        },
+        "contracts": 33,
+        "date_range": [
+          "2026-09-18",
+          "2026-10-11"
+        ],
+        "league": "Germany BBL",
+        "market": {
+          "accuracy": 0.5909090909090909,
+          "brier": 0.2553007575757576,
+          "log_loss": 0.7079564390747126,
+          "n": 33
+        },
+        "market_kind": "total",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.7010309278350515,
+          "brier": 0.20081130483059656,
+          "log_loss": 0.5881694826167502,
+          "n": 97
+        },
+        "candidate": {
+          "accuracy": 0.6701030927835051,
+          "brier": 0.19452631084080252,
+          "log_loss": 0.5706598231909933,
+          "n": 97
+        },
+        "contracts": 97,
+        "date_range": [
+          "2026-04-01",
+          "2026-06-21"
+        ],
+        "league": "Germany BBL",
+        "market": {
+          "accuracy": 0.6494845360824743,
+          "brier": 0.19590404639175257,
+          "log_loss": 0.5695045949897515,
+          "n": 97
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.75,
+          "brier": 0.1939168508698064,
+          "log_loss": 0.5770807887781259,
+          "n": 8
+        },
+        "candidate": {
+          "accuracy": 0.875,
+          "brier": 0.1731240756064158,
+          "log_loss": 0.5343104756601764,
+          "n": 8
+        },
+        "contracts": 8,
+        "date_range": [
+          "2026-06-04",
+          "2026-06-21"
+        ],
+        "league": "Germany BBL",
+        "market": {
+          "accuracy": 0.75,
+          "brier": 0.18826874999999998,
+          "log_loss": 0.5656733140282678,
+          "n": 8
+        },
+        "market_kind": "spread",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.75,
+          "brier": 0.18729265124999514,
+          "log_loss": 0.5647111640570955,
+          "n": 8
+        },
+        "candidate": {
+          "accuracy": 1.0,
+          "brier": 0.18148808692886473,
+          "log_loss": 0.5535582735695486,
+          "n": 8
+        },
+        "contracts": 8,
+        "date_range": [
+          "2026-06-04",
+          "2026-06-21"
+        ],
+        "league": "Germany BBL",
+        "market": {
+          "accuracy": 0.875,
+          "brier": 0.191090625,
+          "log_loss": 0.5695267056455028,
+          "n": 8
+        },
+        "market_kind": "total",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.7142857142857143,
+          "brier": 0.21184477328405493,
+          "log_loss": 0.6110816473280198,
+          "n": 28
+        },
+        "candidate": {
+          "accuracy": 0.7142857142857143,
+          "brier": 0.21193252943540833,
+          "log_loss": 0.6061490583710694,
+          "n": 28
+        },
+        "contracts": 28,
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "league": "Italy Serie A",
+        "market": {
+          "accuracy": 0.6071428571428571,
+          "brier": 0.19781339285714286,
+          "log_loss": 0.5728523562077018,
+          "n": 28
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6428571428571429,
+          "brier": 0.21012818059764848,
+          "log_loss": 0.6027627121496286,
+          "n": 28
+        },
+        "candidate": {
+          "accuracy": 0.75,
+          "brier": 0.2006443571513032,
+          "log_loss": 0.5833849008186204,
+          "n": 28
+        },
+        "contracts": 28,
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "league": "Italy Serie A",
+        "market": {
+          "accuracy": 0.6428571428571429,
+          "brier": 0.24072589285714283,
+          "log_loss": 0.6790624402770361,
+          "n": 28
+        },
+        "market_kind": "spread",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.75,
+          "brier": 0.22400506487461633,
+          "log_loss": 0.6385514521951057,
+          "n": 28
+        },
+        "candidate": {
+          "accuracy": 0.6428571428571429,
+          "brier": 0.21859417770756223,
+          "log_loss": 0.6281855849887473,
+          "n": 28
+        },
+        "contracts": 28,
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "league": "Italy Serie A",
+        "market": {
+          "accuracy": 0.6964285714285714,
+          "brier": 0.22381339285714286,
+          "log_loss": 0.6399518757178421,
+          "n": 28
+        },
+        "market_kind": "total",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.7142857142857143,
+          "brier": 0.21201059232144076,
+          "log_loss": 0.6167663888813284,
+          "n": 91
+        },
+        "candidate": {
+          "accuracy": 0.7032967032967034,
+          "brier": 0.2077255060552236,
+          "log_loss": 0.6099153329229741,
+          "n": 91
+        },
+        "contracts": 91,
+        "date_range": [
+          "2026-01-10",
+          "2026-06-18"
+        ],
+        "league": "Italy Serie A",
+        "market": {
+          "accuracy": 0.7197802197802198,
+          "brier": 0.20024670329670327,
+          "log_loss": 0.5889069157954551,
+          "n": 91
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.375,
+          "brier": 0.2507254136499546,
+          "log_loss": 0.6932030311753603,
+          "n": 8
+        },
+        "candidate": {
+          "accuracy": 0.5,
+          "brier": 0.2458682687479632,
+          "log_loss": 0.6808445802313722,
+          "n": 8
+        },
+        "contracts": 8,
+        "date_range": [
+          "2026-06-03",
+          "2026-06-18"
+        ],
+        "league": "Italy Serie A",
+        "market": {
+          "accuracy": 0.625,
+          "brier": 0.21783125,
+          "log_loss": 0.6224203413295072,
+          "n": 8
+        },
+        "market_kind": "spread",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.8571428571428571,
+          "brier": 0.2105733864389999,
+          "log_loss": 0.6136312186093527,
+          "n": 7
+        },
+        "candidate": {
+          "accuracy": 0.7142857142857143,
+          "brier": 0.2263275030906682,
+          "log_loss": 0.6457202474065763,
+          "n": 7
+        },
+        "contracts": 7,
+        "date_range": [
+          "2026-06-04",
+          "2026-06-18"
+        ],
+        "league": "Italy Serie A",
+        "market": {
+          "accuracy": 0.7142857142857143,
+          "brier": 0.22722857142857142,
+          "log_loss": 0.6472436338533087,
+          "n": 7
+        },
+        "market_kind": "total",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5714285714285714,
+          "brier": 0.23662161170522783,
+          "log_loss": 0.6682855682271814,
+          "n": 28
+        },
+        "candidate": {
+          "accuracy": 0.5357142857142857,
+          "brier": 0.23944000852994857,
+          "log_loss": 0.6908688978658083,
+          "n": 28
+        },
+        "contracts": 28,
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "league": "Spain ACB",
+        "market": {
+          "accuracy": 0.6428571428571429,
+          "brier": 0.22646428571428573,
+          "log_loss": 0.6499182742574092,
+          "n": 28
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.3181818181818182,
+          "brier": 0.2679618781760388,
+          "log_loss": 0.724577604422797,
+          "n": 22
+        },
+        "candidate": {
+          "accuracy": 0.45454545454545453,
+          "brier": 0.2371067072775877,
+          "log_loss": 0.661027738002546,
+          "n": 22
+        },
+        "contracts": 22,
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "league": "Spain ACB",
+        "market": {
+          "accuracy": 0.7272727272727273,
+          "brier": 0.23236477272727274,
+          "log_loss": 0.6557570896088694,
+          "n": 22
+        },
+        "market_kind": "spread",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.45454545454545453,
+          "brier": 0.25851650416891636,
+          "log_loss": 0.7104832690237142,
+          "n": 22
+        },
+        "candidate": {
+          "accuracy": 0.5909090909090909,
+          "brier": 0.21906002025275556,
+          "log_loss": 0.6297640853145011,
+          "n": 22
+        },
+        "contracts": 22,
+        "date_range": [
+          "2026-09-26",
+          "2026-10-18"
+        ],
+        "league": "Spain ACB",
+        "market": {
+          "accuracy": 0.6363636363636364,
+          "brier": 0.23330568181818181,
+          "log_loss": 0.6586371253371828,
+          "n": 22
+        },
+        "market_kind": "total",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.6180555555555556,
+          "brier": 0.21697226085390897,
+          "log_loss": 0.6231228453459071,
+          "n": 144
+        },
+        "candidate": {
+          "accuracy": 0.6180555555555556,
+          "brier": 0.218583748049299,
+          "log_loss": 0.6328949190227472,
+          "n": 144
+        },
+        "contracts": 144,
+        "date_range": [
+          "2026-01-10",
+          "2026-06-24"
+        ],
+        "league": "Spain ACB",
+        "market": {
+          "accuracy": 0.6493055555555556,
+          "brier": 0.21673539756944446,
+          "log_loss": 0.6200076136870837,
+          "n": 144
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.35714285714285715,
+          "brier": 0.307701913018319,
+          "log_loss": 0.8185068239640503,
+          "n": 14
+        },
+        "candidate": {
+          "accuracy": 0.2857142857142857,
+          "brier": 0.3069479618244732,
+          "log_loss": 0.8156520584740701,
+          "n": 14
+        },
+        "contracts": 14,
+        "date_range": [
+          "2026-06-03",
+          "2026-06-24"
+        ],
+        "league": "Spain ACB",
+        "market": {
+          "accuracy": 0.35714285714285715,
+          "brier": 0.28125,
+          "log_loss": 0.7564519633053151,
+          "n": 14
+        },
+        "market_kind": "spread",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.5,
+          "brier": 0.2419001954811427,
+          "log_loss": 0.6749325585178914,
+          "n": 14
+        },
+        "candidate": {
+          "accuracy": 0.7142857142857143,
+          "brier": 0.23041568843803864,
+          "log_loss": 0.6533776159873579,
+          "n": 14
+        },
+        "contracts": 14,
+        "date_range": [
+          "2026-06-03",
+          "2026-06-24"
+        ],
+        "league": "Spain ACB",
+        "market": {
+          "accuracy": 0.5714285714285714,
+          "brier": 0.26894107142857143,
+          "log_loss": 0.7400806174757414,
+          "n": 14
+        },
+        "market_kind": "total",
+        "split": "holdout"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.918918918918919,
+          "brier": 0.10773027697737501,
+          "log_loss": 0.37837781710159485,
+          "n": 37
+        },
+        "candidate": {
+          "accuracy": 0.9459459459459459,
+          "brier": 0.08260149646785582,
+          "log_loss": 0.2947230394963907,
+          "n": 37
+        },
+        "contracts": 37,
+        "date_range": [
+          "2026-09-30",
+          "2026-11-18"
+        ],
+        "league": "VTB United League",
+        "market": {
+          "accuracy": 0.918918918918919,
+          "brier": 0.0732520945945946,
+          "log_loss": 0.28147015244463897,
+          "n": 37
+        },
+        "market_kind": "moneyline",
+        "split": "current"
+      },
+      {
+        "baseline": {
+          "accuracy": 0.8367346938775511,
+          "brier": 0.14387435393026465,
+          "log_loss": 0.4502175673247853,
+          "n": 49
+        },
+        "candidate": {
+          "accuracy": 0.7755102040816326,
+          "brier": 0.1391785844841121,
+          "log_loss": 0.4286198246828241,
+          "n": 49
+        },
+        "contracts": 49,
+        "date_range": [
+          "2026-04-01",
+          "2026-06-12"
+        ],
+        "league": "VTB United League",
+        "market": {
+          "accuracy": 0.826530612244898,
+          "brier": 0.13068610714285714,
+          "log_loss": 0.40997671389822593,
+          "n": 49
+        },
+        "market_kind": "moneyline",
+        "split": "holdout"
+      }
+    ],
+    "verified_archive": {
+      "archive_members": 71,
+      "excluded_italy_clock_conflicts_may_10": 7,
+      "excluded_zaragoza_granada_clock_conflicts": 1,
+      "game_rows": 3083,
+      "market_rows": 2374,
+      "strict_contracts": 1600,
+      "strict_independent_matches": 961
+    }
+  },
+  "format": "historical-basketball-v1",
+  "nba": {
+    "additional_raw_contract_check": {
+      "raw_NBA_markets": {
+        "moneyline": 22
+      },
+      "raw_NBA_totals_observed_before_kickoff": 0,
+      "retrieved_at": "2026-11-23T02:49:36.298527Z"
+    },
+    "archived_exploratory_spec_same_heldout_rows": [
+      {
+        "archived_optimized": {
+          "accuracy": 0.70625,
+          "brier": 0.20118686918219225,
+          "log_loss": 0.5879879233408843,
+          "n": 160
+        },
+        "baseline": {
+          "accuracy": 0.71875,
+          "brier": 0.1974214342345257,
+          "log_loss": 0.578117653403605,
+          "n": 160
+        },
+        "date_range_et": [
+          "2025-02-20",
+          "2025-04-13"
+        ],
+        "market": {
+          "accuracy": 0.75,
+          "brier": 0.17977609375,
+          "log_loss": 0.5402290885478002,
+          "n": 160
+        },
+        "market_kind": "ml",
+        "season": "2024-25",
+        "source_class": "PM-NBA-final-score-diagnostic"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.7043269230769231,
+          "brier": 0.19797578948694988,
+          "log_loss": 0.5811586843439817,
+          "n": 416
+        },
+        "baseline": {
+          "accuracy": 0.7043269230769231,
+          "brier": 0.19479645295773843,
+          "log_loss": 0.5722674455338684,
+          "n": 416
+        },
+        "date_range_et": [
+          "2025-02-19",
+          "2025-04-13"
+        ],
+        "market_kind": "ml",
+        "season": "2024-25",
+        "source_class": "all_game_ml"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.45222929936305734,
+          "brier": 0.2810080540670788,
+          "log_loss": 0.7605860734911258,
+          "n": 157
+        },
+        "baseline": {
+          "accuracy": 0.5222929936305732,
+          "brier": 0.26188918597102456,
+          "log_loss": 0.7190509636123869,
+          "n": 157
+        },
+        "date_range_et": [
+          "2026-02-19",
+          "2026-04-12"
+        ],
+        "market": {
+          "accuracy": 0.5859872611464968,
+          "brier": 0.24631624203821656,
+          "log_loss": 0.6867661035606396,
+          "n": 157
+        },
+        "market_kind": "spread",
+        "season": "2025-26",
+        "source_class": "PM-NBA-final-score-diagnostic"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.5448717948717948,
+          "brier": 0.246729566687661,
+          "log_loss": 0.6864978132570834,
+          "n": 156
+        },
+        "baseline": {
+          "accuracy": 0.5512820512820513,
+          "brier": 0.24831269540232603,
+          "log_loss": 0.6897205467164199,
+          "n": 156
+        },
+        "date_range_et": [
+          "2026-02-19",
+          "2026-04-12"
+        ],
+        "market": {
+          "accuracy": 0.5705128205128205,
+          "brier": 0.24242536057692307,
+          "log_loss": 0.6782467903197479,
+          "n": 156
+        },
+        "market_kind": "total",
+        "season": "2025-26",
+        "source_class": "PM-NBA-final-score-diagnostic"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.7884615384615384,
+          "brier": 0.18044232216399028,
+          "log_loss": 0.5465381680539146,
+          "n": 156
+        },
+        "baseline": {
+          "accuracy": 0.7692307692307693,
+          "brier": 0.1660621641552861,
+          "log_loss": 0.5098441987456279,
+          "n": 156
+        },
+        "date_range_et": [
+          "2026-02-19",
+          "2026-04-12"
+        ],
+        "market": {
+          "accuracy": 0.7884615384615384,
+          "brier": 0.1512571939102564,
+          "log_loss": 0.4673309488663854,
+          "n": 156
+        },
+        "market_kind": "ml",
+        "season": "2025-26",
+        "source_class": "PM-explicit-full-game-OT"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.7664233576642335,
+          "brier": 0.1855886472223345,
+          "log_loss": 0.5566033934968239,
+          "n": 411
+        },
+        "baseline": {
+          "accuracy": 0.7493917274939172,
+          "brier": 0.17342842188957117,
+          "log_loss": 0.5243390535125857,
+          "n": 411
+        },
+        "date_range_et": [
+          "2026-02-19",
+          "2026-04-12"
+        ],
+        "market_kind": "ml",
+        "season": "2025-26",
+        "source_class": "all_game_ml"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.248022101750296,
+          "log_loss": 0.746004556777712,
+          "n": 36
+        },
+        "baseline": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.248022101750296,
+          "log_loss": 0.746004556777712,
+          "n": 36
+        },
+        "date_range_et": [
+          "2026-11-13",
+          "2026-11-17"
+        ],
+        "market": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.23556271818998045,
+          "log_loss": 0.667460394111373,
+          "n": 36
+        },
+        "market_kind": "ml",
+        "season": "2026-27",
+        "source_class": "DK-postfinal-close-proxy"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.4444444444444444,
+          "brier": 0.30575358250475526,
+          "log_loss": 0.8220149330265024,
+          "n": 36
+        },
+        "baseline": {
+          "accuracy": 0.4444444444444444,
+          "brier": 0.30575358250475526,
+          "log_loss": 0.8220149330265024,
+          "n": 36
+        },
+        "date_range_et": [
+          "2026-11-13",
+          "2026-11-17"
+        ],
+        "market": {
+          "accuracy": 0.4583333333333333,
+          "brier": 0.2516553828684955,
+          "log_loss": 0.696459418511021,
+          "n": 36
+        },
+        "market_kind": "spread",
+        "season": "2026-27",
+        "source_class": "DK-postfinal-close-proxy"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.5277777777777778,
+          "brier": 0.2478984183092637,
+          "log_loss": 0.6910219503681739,
+          "n": 36
+        },
+        "baseline": {
+          "accuracy": 0.4166666666666667,
+          "brier": 0.28142466741315114,
+          "log_loss": 0.7643586868204805,
+          "n": 36
+        },
+        "date_range_et": [
+          "2026-11-13",
+          "2026-11-17"
+        ],
+        "market": {
+          "accuracy": 0.4305555555555556,
+          "brier": 0.2512687418159232,
+          "log_loss": 0.6956850492763418,
+          "n": 36
+        },
+        "market_kind": "total",
+        "season": "2026-27",
+        "source_class": "DK-postfinal-close-proxy"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.4444444444444444,
+          "brier": 0.30575358250475526,
+          "log_loss": 0.8220149330265024,
+          "n": 36
+        },
+        "baseline": {
+          "accuracy": 0.4444444444444444,
+          "brier": 0.30575358250475526,
+          "log_loss": 0.8220149330265024,
+          "n": 36
+        },
+        "date_range_et": [
+          "2026-11-13",
+          "2026-11-17"
+        ],
+        "market": {
+          "accuracy": 0.5277777777777778,
+          "brier": 0.25100277777777774,
+          "log_loss": 0.6951552713178628,
+          "n": 36
+        },
+        "market_kind": "spread",
+        "season": "2026-27",
+        "source_class": "PM-NBA-final-score-diagnostic"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.5454545454545454,
+          "brier": 0.24499972023822458,
+          "log_loss": 0.6853686390565448,
+          "n": 33
+        },
+        "baseline": {
+          "accuracy": 0.42424242424242425,
+          "brier": 0.28359471315640294,
+          "log_loss": 0.7695027517301088,
+          "n": 33
+        },
+        "date_range_et": [
+          "2026-11-13",
+          "2026-11-17"
+        ],
+        "market": {
+          "accuracy": 0.2727272727272727,
+          "brier": 0.2533765151515151,
+          "log_loss": 0.6998983043897761,
+          "n": 33
+        },
+        "market_kind": "total",
+        "season": "2026-27",
+        "source_class": "PM-NBA-final-score-diagnostic"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.248022101750296,
+          "log_loss": 0.746004556777712,
+          "n": 36
+        },
+        "baseline": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.248022101750296,
+          "log_loss": 0.746004556777712,
+          "n": 36
+        },
+        "date_range_et": [
+          "2026-11-13",
+          "2026-11-17"
+        ],
+        "market": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.235325,
+          "log_loss": 0.6674825315793584,
+          "n": 36
+        },
+        "market_kind": "ml",
+        "season": "2026-27",
+        "source_class": "PM-explicit-full-game-OT"
+      },
+      {
+        "archived_optimized": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.248022101750296,
+          "log_loss": 0.746004556777712,
+          "n": 36
+        },
+        "baseline": {
+          "accuracy": 0.6666666666666666,
+          "brier": 0.248022101750296,
+          "log_loss": 0.746004556777712,
+          "n": 36
+        },
+        "date_range_et": [
+          "2026-11-13",
+          "2026-11-17"
+        ],
+        "market_kind": "ml",
+        "season": "2026-27",
+        "source_class": "all_game_ml"
+      }
+    ],
+    "archived_total_wording": {
+      "2025-26": {
+        "descriptions_mention_overtime_or_OT": 0,
+        "normalized_scopes": {
+          "NBA-final-score-OT-not-explicit": 156
+        },
+        "retrieved_at": "2026-11-19T02:10:59.547408+00:00",
+        "total_descriptions": 156
+      },
+      "2026-27": {
+        "descriptions_mention_overtime_or_OT": 0,
+        "normalized_scopes": {
+          "NBA-final-score-OT-not-explicit": 81
+        },
+        "retrieved_at": "2026-11-19T02:25:02.687881+00:00",
+        "total_descriptions": 81
+      }
+    },
+    "historical_fixed_models": [
+      {
+        "as_of": "2026-04-13T12:30:00Z",
+        "baseline": {
+          "B": {
+            "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+            "mean_abs_margin_error_pts": 11.508098945606212,
+            "mean_abs_total_error_pts": 15.211343496531105,
+            "n": 1102,
+            "passed": true,
+            "pearson_exp_margin_vs_actual": {
+              "p": 1.2902603655075156e-65,
+              "r": 0.47465715242666934
+            },
+            "pearson_exp_total_vs_actual": {
+              "p": 1.5663319596123654e-27,
+              "r": 0.3166810542186048
+            },
+            "spearman_exp_margin_vs_actual_rho": 0.4848497594362226,
+            "spearman_exp_total_vs_actual": {
+              "p": 1.6408288189073815e-26,
+              "rho": 0.3107959898520903
+            }
+          },
+          "D": {
+            "coin_flip": {
+              "brier": 0.25,
+              "clipped": 0,
+              "log_loss": 0.6931471805599283
+            },
+            "home_always": {
+              "brier": 0.4519056261343013,
+              "clipped": 1102,
+              "log_loss": 12.486623895164975
+            },
+            "home_win_rate": 0.5480943738656987,
+            "model": {
+              "brier": 0.20144699950941478,
+              "clipped": 0,
+              "log_loss": 0.5903462169745416
+            },
+            "model_beats_coin_brier": true,
+            "model_beats_coin_log_loss": true,
+            "model_beats_home_brier": true,
+            "model_beats_home_log_loss": true,
+            "n": 1102
+          },
+          "completed_games": 1230,
+          "eligible_games": 1102,
+          "exchange_comparisons": {
+            "ml/explicit-full-game-including-OT": {
+              "mad": 0.08455365105668919,
+              "market_brier": 0.1512571939102564,
+              "market_log_loss": 0.46733094886638527,
+              "model_brier": 0.1660621641552861,
+              "model_log_loss": 0.509844198745628,
+              "n": 156
+            },
+            "total/NBA-final-score-OT-not-explicit": {
+              "mad": 0.07248738126515661,
+              "market_brier": 0.24242536057692307,
+              "market_log_loss": 0.678246790319748,
+              "model_brier": 0.24831269540232603,
+              "model_log_loss": 0.68972054671642,
+              "n": 156
+            }
+          },
+          "first_scored_date_et": "2025-11-07",
+          "last_completed_date_et": "2026-04-12",
+          "last_scored_date_et": "2026-04-12",
+          "model_version": "wp-nba-v1",
+          "required_games": 90,
+          "retest_ready": true
+        },
+        "candidate": {
+          "A": {
+            "paired_games": 1230,
+            "passed": true,
+            "teams": 30
+          },
+          "B": {
+            "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+            "mean_abs_margin_error_pts": 11.372614990291007,
+            "mean_abs_total_error_pts": 14.922490462152242,
+            "n": 1102,
+            "passed": true,
+            "pearson_exp_margin_vs_actual": {
+              "p": 3.141753398201858e-68,
+              "r": 0.48272722069836294
+            },
+            "pearson_exp_total_vs_actual": {
+              "p": 3.097563937288946e-33,
+              "r": 0.34725633700914854
+            },
+            "spearman_exp_margin_vs_actual_rho": 0.48294527274711624,
+            "spearman_exp_total_vs_actual": {
+              "p": 4.210085999433111e-31,
+              "rho": 0.33624862536197847
+            }
+          },
+          "C": {
+            "passed": true,
+            "spearman_net_rating_vs_win_pct": {
+              "p": 3.031552375056664e-17,
+              "rho": 0.9253903287871933
+            },
+            "teams": 30
+          },
+          "D": {
+            "coin_flip": {
+              "brier": 0.25,
+              "clipped": 0,
+              "log_loss": 0.6931471805599283
+            },
+            "home_always": {
+              "brier": 0.4519056261343013,
+              "clipped": 1102,
+              "log_loss": 12.486623895164975
+            },
+            "home_win_rate": 0.5480943738656987,
+            "model": {
+              "brier": 0.2024680595238273,
+              "clipped": 0,
+              "log_loss": 0.5912099742298168
+            },
+            "model_beats_coin_brier": true,
+            "model_beats_coin_log_loss": true,
+            "model_beats_home_brier": true,
+            "model_beats_home_log_loss": true,
+            "n": 1102,
+            "passed": true
+          },
+          "E": {
+            "draftkings_close_proxy": {
+              "favorite_flips": 0,
+              "mad": null,
+              "market_brier": null,
+              "market_log_loss": null,
+              "model_brier": null,
+              "model_log_loss": null,
+              "n": 0
+            },
+            "mad_max": 0.06,
+            "passed": false,
+            "polymarket_at_bar": false,
+            "polymarket_strict": {
+              "favorite_flips": 14,
+              "mad": 0.0744826724285828,
+              "market_brier": 0.1512571939102564,
+              "market_log_loss": 0.46733094886638527,
+              "model_brier": 0.16265118402015333,
+              "model_log_loss": 0.5003266951479725,
+              "n": 156
+            }
+          },
+          "completed_games": 1230,
+          "eligible_games": 1102,
+          "first_scored_date_et": "2025-11-07",
+          "fitted_season": "2024-25",
+          "last_completed_date_et": "2026-04-12",
+          "last_scored_date_et": "2026-04-12",
+          "model_status": "research_only",
+          "model_version": "wp-nba-ratings-20261122-v1",
+          "parameters": {
+            "efficiency_gain": 0.04,
+            "home_margin": 1.4,
+            "margin_sigma": 11.5,
+            "pace_gain": 0.055,
+            "rest_margin": 3.1,
+            "season_retention": 0.55,
+            "total_sigma": 18.9
+          },
+          "polymarket_final_score_diagnostics": {
+            "total": {
+              "market_brier": 0.24242536057692307,
+              "market_log_loss": 0.678246790319748,
+              "model_brier": 0.24121422117363847,
+              "model_log_loss": 0.6747790440710247,
+              "n": 156,
+              "official_overtime_games": 0,
+              "official_overtime_known": 0
+            }
+          },
+          "required_games": 90,
+          "retest_ready": true,
+          "same_line_totals": {
+            "coin_log_loss": 0.6931471805599453,
+            "draftkings_close_proxy": {
+              "market_brier": null,
+              "market_log_loss": null,
+              "model_brier": null,
+              "model_log_loss": null,
+              "n": 0
+            },
+            "draftkings_close_proxy_model_log_loss": null,
+            "draftkings_close_proxy_n": 0,
+            "model_beats_coin": false,
+            "polymarket_strict": {
+              "market_brier": null,
+              "market_log_loss": null,
+              "model_brier": null,
+              "model_log_loss": null,
+              "n": 0
+            },
+            "polymarket_strict_market_log_loss": null,
+            "polymarket_strict_model_log_loss": null,
+            "polymarket_strict_n": 0
+          }
+        },
+        "season": "2025-26"
+      },
+      {
+        "as_of": "2026-11-18T16:00:00Z",
+        "baseline": {
+          "B": {
+            "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+            "mean_abs_margin_error_pts": 13.818215517819214,
+            "mean_abs_total_error_pts": 15.131698150544725,
+            "n": 86,
+            "passed": false,
+            "pearson_exp_margin_vs_actual": {
+              "p": 0.0005718473658355347,
+              "r": 0.36105364789330935
+            },
+            "pearson_exp_total_vs_actual": {
+              "p": 0.05867860416747882,
+              "r": 0.20459114929819955
+            },
+            "spearman_exp_margin_vs_actual_rho": 0.3544453576289403,
+            "spearman_exp_total_vs_actual": {
+              "p": 0.031729203378280245,
+              "rho": 0.23147961716800783
+            }
+          },
+          "D": {
+            "coin_flip": {
+              "brier": 0.25,
+              "clipped": 0,
+              "log_loss": 0.6931471805599457
+            },
+            "home_always": {
+              "brier": 0.5,
+              "clipped": 86,
+              "log_loss": 13.815521618947178
+            },
+            "home_win_rate": 0.5,
+            "model": {
+              "brier": 0.2053526214424649,
+              "clipped": 0,
+              "log_loss": 0.6143603021105862
+            },
+            "model_beats_coin_brier": true,
+            "model_beats_coin_log_loss": true,
+            "model_beats_home_brier": true,
+            "model_beats_home_log_loss": true,
+            "n": 86
+          },
+          "completed_games": 210,
+          "eligible_games": 86,
+          "exchange_comparisons": {
+            "ml/explicit-full-game-including-OT": {
+              "mad": 0.1073048144964117,
+              "market_brier": 0.18379941860465118,
+              "market_log_loss": 0.5492415718700091,
+              "model_brier": 0.2053526214424649,
+              "model_log_loss": 0.6143603021105862,
+              "n": 86
+            },
+            "total/NBA-final-score-OT-not-explicit": {
+              "mad": 0.10977503176566786,
+              "market_brier": 0.25210648148148146,
+              "market_log_loss": 0.6973619901978257,
+              "model_brier": 0.29184519099188966,
+              "model_log_loss": 0.7864466861892708,
+              "n": 81
+            }
+          },
+          "first_scored_date_et": "2026-11-04",
+          "last_completed_date_et": "2026-11-17",
+          "last_scored_date_et": "2026-11-17",
+          "model_version": "wp-nba-v1",
+          "required_games": 90,
+          "retest_ready": false
+        },
+        "candidate": {
+          "A": {
+            "paired_games": 210,
+            "passed": true,
+            "teams": 30
+          },
+          "B": {
+            "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+            "mean_abs_margin_error_pts": 12.383014659381113,
+            "mean_abs_total_error_pts": 13.729077233598456,
+            "n": 86,
+            "passed": true,
+            "pearson_exp_margin_vs_actual": {
+              "p": 1.1253289504332136e-05,
+              "r": 0.4478742089742011
+            },
+            "pearson_exp_total_vs_actual": {
+              "p": 0.002834276106219584,
+              "r": 0.31642036612274554
+            },
+            "spearman_exp_margin_vs_actual_rho": 0.4217740236023427,
+            "spearman_exp_total_vs_actual": {
+              "p": 0.0032838411952205017,
+              "rho": 0.3119364091261465
+            }
+          },
+          "C": {
+            "passed": true,
+            "spearman_net_rating_vs_win_pct": {
+              "p": 5.461603852632413e-13,
+              "rho": 0.8827738568521364
+            },
+            "teams": 30
+          },
+          "D": {
+            "coin_flip": {
+              "brier": 0.25,
+              "clipped": 0,
+              "log_loss": 0.6931471805599457
+            },
+            "home_always": {
+              "brier": 0.5,
+              "clipped": 86,
+              "log_loss": 13.815521618947178
+            },
+            "home_win_rate": 0.5,
+            "model": {
+              "brier": 0.19116493028521955,
+              "clipped": 0,
+              "log_loss": 0.5696335979615078
+            },
+            "model_beats_coin_brier": true,
+            "model_beats_coin_log_loss": true,
+            "model_beats_home_brier": true,
+            "model_beats_home_log_loss": true,
+            "n": 86,
+            "passed": true
+          },
+          "E": {
+            "draftkings_close_proxy": {
+              "favorite_flips": 7,
+              "mad": 0.06529142505765333,
+              "market_brier": 0.18609812199646314,
+              "market_log_loss": 0.5550451296589075,
+              "model_brier": 0.19116493028521955,
+              "model_log_loss": 0.5696335979615078,
+              "n": 86
+            },
+            "mad_max": 0.06,
+            "passed": false,
+            "polymarket_at_bar": false,
+            "polymarket_strict": {
+              "favorite_flips": 7,
+              "mad": 0.06625501481201979,
+              "market_brier": 0.18379941860465118,
+              "market_log_loss": 0.5492415718700091,
+              "model_brier": 0.19116493028521955,
+              "model_log_loss": 0.5696335979615078,
+              "n": 86
+            }
+          },
+          "completed_games": 210,
+          "eligible_games": 86,
+          "first_scored_date_et": "2026-11-04",
+          "fitted_season": "2024-25",
+          "last_completed_date_et": "2026-11-17",
+          "last_scored_date_et": "2026-11-17",
+          "model_status": "research_only",
+          "model_version": "wp-nba-ratings-20261122-v1",
+          "parameters": {
+            "efficiency_gain": 0.04,
+            "home_margin": 1.4,
+            "margin_sigma": 11.5,
+            "pace_gain": 0.055,
+            "rest_margin": 3.1,
+            "season_retention": 0.55,
+            "total_sigma": 18.9
+          },
+          "polymarket_final_score_diagnostics": {
+            "total": {
+              "market_brier": 0.25210648148148146,
+              "market_log_loss": 0.6973619901978257,
+              "model_brier": 0.25629213667756723,
+              "model_log_loss": 0.7068920475306109,
+              "n": 81,
+              "official_overtime_games": 0,
+              "official_overtime_known": 0
+            }
+          },
+          "required_games": 90,
+          "retest_ready": false,
+          "same_line_totals": {
+            "coin_log_loss": 0.6931471805599453,
+            "draftkings_close_proxy": {
+              "market_brier": 0.24950747117304994,
+              "market_log_loss": 0.6921620558715627,
+              "model_brier": 0.25520756409669965,
+              "model_log_loss": 0.7047090955558137,
+              "n": 86
+            },
+            "draftkings_close_proxy_model_log_loss": 0.7047090955558137,
+            "draftkings_close_proxy_n": 86,
+            "model_beats_coin": false,
+            "polymarket_strict": {
+              "market_brier": null,
+              "market_log_loss": null,
+              "model_brier": null,
+              "model_log_loss": null,
+              "n": 0
+            },
+            "polymarket_strict_market_log_loss": null,
+            "polymarket_strict_model_log_loss": null,
+            "polymarket_strict_n": 0
+          }
+        },
+        "season": "2026-27"
+      }
+    ],
+    "observed_pregame_direct_and_priced_scopes": [
+      {
+        "kickoff_range": [
+          "2026-11-22T20:30:00Z",
+          "2026-11-28T02:30:00Z"
+        ],
+        "market": "match_winner",
+        "settlement_scope": "full_game_including_overtime",
+        "unique_fixture_kickoffs": 40,
+        "window": "closing"
+      },
+      {
+        "kickoff_range": [
+          "2026-11-22T20:30:00Z",
+          "2026-11-28T02:30:00Z"
+        ],
+        "market": "match_winner",
+        "settlement_scope": "full_game_including_overtime",
+        "unique_fixture_kickoffs": 40,
+        "window": "forward"
+      }
+    ],
+    "paper_eligibility_snapshot": {
+      "approved_families": [],
+      "approved_families_by_model": {}
+    },
+    "pregame_scope_audit": {
+      "archived_contract_fields": [
+        "condition_id",
+        "contract_digest",
+        "line",
+        "market_id",
+        "market_kind",
+        "settlement_scope",
+        "team_side"
+      ],
+      "read_at": "2026-11-28T07:27:59.623763Z",
+      "registered_at": "2026-11-22T16:33:44.508644Z",
+      "scope_by_window": [
+        {
+          "direct": 40,
+          "fixtures": 40,
+          "kind": "match_winner",
+          "phase": "closing",
+          "scope": "full_game_including_overtime",
+          "timely_and_direct": 40,
+          "timely_two_sided_probability": 40
+        },
+        {
+          "direct": 0,
+          "fixtures": 40,
+          "kind": "total",
+          "phase": "closing",
+          "scope": "overtime_unverified",
+          "timely_and_direct": 0,
+          "timely_two_sided_probability": 40
+        },
+        {
+          "direct": 40,
+          "fixtures": 40,
+          "kind": "match_winner",
+          "phase": "forward",
+          "scope": "full_game_including_overtime",
+          "timely_and_direct": 40,
+          "timely_two_sided_probability": 40
+        },
+        {
+          "direct": 0,
+          "fixtures": 40,
+          "kind": "total",
+          "phase": "forward",
+          "scope": "overtime_unverified",
+          "timely_and_direct": 0,
+          "timely_two_sided_probability": 40
+        }
+      ]
+    },
+    "prospective_strict_T30_home_side": {
+      "baseline": {
+        "kickoff_range": [
+          "2026-11-22T20:30:00Z",
+          "2026-11-28T02:30:00Z"
+        ],
+        "mad": 0.07922704273476978,
+        "market": {
+          "accuracy": 0.525,
+          "brier": 0.23155,
+          "log_loss": 0.6519343593012372,
+          "n": 40
+        },
+        "model": {
+          "accuracy": 0.65,
+          "brier": 0.20156121898708915,
+          "log_loss": 0.5798395409613114,
+          "n": 40
+        }
+      },
+      "candidate": {
+        "kickoff_range": [
+          "2026-11-23T01:00:00Z",
+          "2026-11-28T02:30:00Z"
+        ],
+        "mad": 0.05662590322535247,
+        "market": {
+          "accuracy": 0.5142857142857142,
+          "brier": 0.23365357142857143,
+          "log_loss": 0.6565202661198299,
+          "n": 35
+        },
+        "model": {
+          "accuracy": 0.6,
+          "brier": 0.2292615434386401,
+          "log_loss": 0.6424034742320672,
+          "n": 35
+        }
+      }
+    },
+    "rolling_fixed_models": {
+      "as_of": "2026-11-28T07:04:26.184983Z",
+      "baseline": {
+        "A": {
+          "paired_games": 281,
+          "passed": true,
+          "teams": 30
+        },
+        "B": {
+          "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+          "mean_abs_margin_error_pts": 11.868007075740145,
+          "mean_abs_total_error_pts": 16.05098309826946,
+          "n": 157,
+          "passed": false,
+          "pearson_exp_margin_vs_actual": {
+            "p": 1.9799698365140435e-07,
+            "r": 0.3961932996476284
+          },
+          "pearson_exp_total_vs_actual": {
+            "p": 0.006264415588200189,
+            "r": 0.2167854790335613
+          },
+          "spearman_exp_margin_vs_actual_rho": 0.42670617707557135,
+          "spearman_exp_total_vs_actual": {
+            "p": 0.007126152031575228,
+            "rho": 0.21350239296502727
+          }
+        },
+        "C": {
+          "bar": "Spearman rho(EWMA net rating, win%) >= 0.5 over 30 teams",
+          "passed": true,
+          "spearman_ewma_net_vs_actual_net": 0.9866518353726362,
+          "spearman_ewma_net_vs_win_pct": {
+            "p": 2.814806912071327e-17,
+            "rho": 0.9256294029974242
+          },
+          "spearman_ewma_ortg_vs_actual_net": 0.7437152391546162,
+          "spearman_ewma_ortg_vs_win_pct": {
+            "p": 7.7346225728118e-09,
+            "rho": 0.8044982037598494
+          },
+          "teams": 30
+        },
+        "D": {
+          "coin_flip": {
+            "brier": 0.25,
+            "clipped": 0,
+            "log_loss": 0.6931471805599464
+          },
+          "home_always": {
+            "brier": 0.4968152866242038,
+            "clipped": 157,
+            "log_loss": 13.727524665960251
+          },
+          "home_win_rate": 0.5031847133757962,
+          "model": {
+            "brier": 0.2097874977793031,
+            "clipped": 0,
+            "log_loss": 0.6173732111837168
+          },
+          "model_beats_coin_brier": true,
+          "model_beats_coin_log_loss": true,
+          "model_beats_home_brier": true,
+          "model_beats_home_log_loss": true,
+          "n": 157,
+          "passed": true
+        },
+        "E": {
+          "draftkings_close_proxy": {
+            "favorite_flips": 21,
+            "mad": 0.10032709629831246,
+            "market_brier": 0.20277229039137057,
+            "market_log_loss": 0.5907105901865216,
+            "model_brier": 0.2097874977793031,
+            "model_log_loss": 0.6173732111837168,
+            "n": 157
+          },
+          "mad_max": 0.06,
+          "passed": false,
+          "polymarket_at_bar": false,
+          "polymarket_strict": {
+            "favorite_flips": 21,
+            "mad": 0.09984230336250391,
+            "market_brier": 0.20431833333333332,
+            "market_log_loss": 0.593570390642108,
+            "model_brier": 0.21235362617733697,
+            "model_log_loss": 0.6236787726234119,
+            "n": 150
+          }
+        },
+        "completed_games": 281,
+        "eligible_games": 157,
+        "first_scored_date_et": "2026-11-04",
+        "last_completed_date_et": "2026-11-27",
+        "last_scored_date_et": "2026-11-27",
+        "model_version": "wp-nba-v1",
+        "polymarket_final_score_diagnostics": {
+          "spread": {
+            "market_brier": 0.24912145270270267,
+            "market_log_loss": 0.6913874940766191,
+            "model_brier": 0.27906340443374333,
+            "model_log_loss": 0.7600639162286906,
+            "n": 148,
+            "official_overtime_games": 2,
+            "official_overtime_known": 33
+          },
+          "total": {
+            "market_brier": 0.2525695255474452,
+            "market_log_loss": 0.6982883758241266,
+            "model_brier": 0.29246969549274404,
+            "model_log_loss": 0.7850806838643121,
+            "n": 137,
+            "official_overtime_games": 2,
+            "official_overtime_known": 27
+          }
+        },
+        "required_games": 90,
+        "retest_ready": true,
+        "same_line_totals": {
+          "coin_log_loss": 0.6931471805599453,
+          "draftkings_close_proxy": {
+            "market_brier": 0.25024538480562036,
+            "market_log_loss": 0.6936380322091981,
+            "model_brier": 0.2887547981036839,
+            "model_log_loss": 0.7766799985774743,
+            "n": 157
+          },
+          "draftkings_close_proxy_model_log_loss": 0.7766799985774743,
+          "draftkings_close_proxy_n": 157,
+          "model_beats_coin": false,
+          "polymarket_strict": {
+            "market_brier": null,
+            "market_log_loss": null,
+            "model_brier": null,
+            "model_log_loss": null,
+            "n": 0
+          },
+          "polymarket_strict_market_log_loss": null,
+          "polymarket_strict_model_log_loss": null,
+          "polymarket_strict_n": 0
+        }
+      },
+      "candidate": {
+        "A": {
+          "paired_games": 281,
+          "passed": true,
+          "teams": 30
+        },
+        "B": {
+          "bar": "Pearson r(exp_total, actual) >= 0.25 with p < 0.05 and n >= 20",
+          "mean_abs_margin_error_pts": 11.02106215383175,
+          "mean_abs_total_error_pts": 15.162205854564577,
+          "n": 157,
+          "passed": true,
+          "pearson_exp_margin_vs_actual": {
+            "p": 4.75068533328134e-09,
+            "r": 0.4397041305485141
+          },
+          "pearson_exp_total_vs_actual": {
+            "p": 0.00019737882802477508,
+            "r": 0.2912717417275843
+          },
+          "spearman_exp_margin_vs_actual_rho": 0.4506780856578222,
+          "spearman_exp_total_vs_actual": {
+            "p": 0.0010520242036882667,
+            "rho": 0.25803886092896566
+          }
+        },
+        "C": {
+          "passed": true,
+          "spearman_net_rating_vs_win_pct": {
+            "p": 6.58227919556647e-11,
+            "rho": 0.8501450711195973
+          },
+          "teams": 30
+        },
+        "D": {
+          "coin_flip": {
+            "brier": 0.25,
+            "clipped": 0,
+            "log_loss": 0.6931471805599464
+          },
+          "home_always": {
+            "brier": 0.4968152866242038,
+            "clipped": 157,
+            "log_loss": 13.727524665960251
+          },
+          "home_win_rate": 0.5031847133757962,
+          "model": {
+            "brier": 0.21064953221374202,
+            "clipped": 0,
+            "log_loss": 0.6116435026890439
+          },
+          "model_beats_coin_brier": true,
+          "model_beats_coin_log_loss": true,
+          "model_beats_home_brier": true,
+          "model_beats_home_log_loss": true,
+          "n": 157,
+          "passed": true
+        },
+        "E": {
+          "draftkings_close_proxy": {
+            "favorite_flips": 16,
+            "mad": 0.06204252996891262,
+            "market_brier": 0.20277229039137057,
+            "market_log_loss": 0.5907105901865212,
+            "model_brier": 0.21064953221374202,
+            "model_log_loss": 0.6116435026890439,
+            "n": 157
+          },
+          "mad_max": 0.06,
+          "passed": false,
+          "polymarket_at_bar": false,
+          "polymarket_strict": {
+            "favorite_flips": 16,
+            "mad": 0.06330262401608254,
+            "market_brier": 0.20431833333333332,
+            "market_log_loss": 0.5935703906421078,
+            "model_brier": 0.2122345654174192,
+            "model_log_loss": 0.6157251076736527,
+            "n": 150
+          }
+        },
+        "completed_games": 281,
+        "eligible_games": 157,
+        "first_scored_date_et": "2026-11-04",
+        "fitted_season": "2024-25",
+        "last_completed_date_et": "2026-11-27",
+        "last_scored_date_et": "2026-11-27",
+        "model_status": "research_only",
+        "model_version": "wp-nba-ratings-20261122-v1",
+        "parameters": {
+          "efficiency_gain": 0.04,
+          "home_margin": 1.4,
+          "margin_sigma": 11.5,
+          "pace_gain": 0.055,
+          "rest_margin": 3.1,
+          "season_retention": 0.55,
+          "total_sigma": 18.9
+        },
+        "polymarket_final_score_diagnostics": {
+          "total": {
+            "market_brier": 0.2525695255474452,
+            "market_log_loss": 0.6982883758241265,
+            "model_brier": 0.2705299190380325,
+            "model_log_loss": 0.7355671463653609,
+            "n": 137,
+            "official_overtime_games": 2,
+            "official_overtime_known": 27
+          }
+        },
+        "required_games": 90,
+        "retest_ready": true,
+        "same_line_totals": {
+          "coin_log_loss": 0.6931471805599453,
+          "draftkings_close_proxy": {
+            "market_brier": 0.25024538480562036,
+            "market_log_loss": 0.6936380322091982,
+            "model_brier": 0.2674172074777234,
+            "model_log_loss": 0.7291869463461103,
+            "n": 157
+          },
+          "draftkings_close_proxy_model_log_loss": 0.7291869463461103,
+          "draftkings_close_proxy_n": 157,
+          "model_beats_coin": false,
+          "polymarket_strict": {
+            "market_brier": null,
+            "market_log_loss": null,
+            "model_brier": null,
+            "model_log_loss": null,
+            "n": 0
+          },
+          "polymarket_strict_market_log_loss": null,
+          "polymarket_strict_model_log_loss": null,
+          "polymarket_strict_n": 0
+        }
+      },
+      "season": "2026-27"
+    },
+    "rolling_price_archive_scopes": [
+      {
+        "capture_set": "nba_strict_pm",
+        "games": 64,
+        "market": "ml",
+        "scope": "full_game_including_overtime"
+      },
+      {
+        "capture_set": "nba_diagnostic_pm",
+        "games": 63,
+        "market": "spread",
+        "scope": "overtime_unverified"
+      },
+      {
+        "capture_set": "nba_diagnostic_pm",
+        "games": 56,
+        "market": "total",
+        "scope": "overtime_unverified"
+      }
+    ],
+    "sealed_optimizer_not_rerun": {
+      "attempt": 1,
+      "holdout_callbacks": 0,
+      "outcome": "NO_IMPROVEMENT",
+      "run": 4,
+      "started_at": "2026-11-25T09:07:09.720491Z",
+      "trials": 4811
+    }
+  },
+  "ncaa": {
+    "cbb": {
+      "current_range": [
+        "2026-11-01T14:30:00Z",
+        "2026-11-21T04:00:00Z"
+      ],
+      "frozen_score_only": {
+        "2025-26": {
+          "all_verified": 6300,
+          "model": {
+            "accuracy": 0.7045688766746823,
+            "brier": 0.19515719690548874,
+            "games": 5822,
+            "log_loss": 0.5745658932294276
+          },
+          "venue_only": {
+            "accuracy": 0.6320851940913775,
+            "brier": 0.23093867292684322,
+            "games": 5822,
+            "log_loss": 0.6546072687226129
+          }
+        },
+        "2026-27_through_seed": {
+          "all_verified": 1127,
+          "model": {
+            "accuracy": 0.7770562770562771,
+            "brier": 0.17149710346385055,
+            "games": 924,
+            "log_loss": 0.5225915017013508
+          },
+          "venue_only": {
+            "accuracy": 0.7667748917748918,
+            "brier": 0.18344022838467627,
+            "games": 924,
+            "log_loss": 0.5552138473769864
+          }
+        },
+        "home_rate_warm_season": 0.6797114517583408
+      },
+      "heldout_range": [
+        "2025-11-03T13:00:00Z",
+        "2026-04-07T00:50:00Z"
+      ],
+      "prospective": {
+        "all_settled": {
+          "accuracy": 0.6149732620320856,
+          "brier": 0.21657944219193861,
+          "log_loss": 0.6176810647276625,
+          "n": 187
+        },
+        "final_kickoff_range": [
+          "2026-11-23T04:59:00Z",
+          "2026-11-28T04:30:00Z"
+        ],
+        "forecast_revisions": 326,
+        "priced_fixtures": 209,
+        "strict_kickoff_range": [
+          "2026-11-23T04:59:00Z",
+          "2026-11-28T02:00:00Z"
+        ],
+        "strict_market": {
+          "accuracy": 0.7045454545454546,
+          "brier": 0.18053296875,
+          "log_loss": 0.5227039902005692,
+          "n": 176
+        },
+        "strict_model": {
+          "accuracy": 0.6022727272727273,
+          "brier": 0.21840919380634383,
+          "log_loss": 0.6221723044818506,
+          "n": 176
+        }
+      },
+      "version": "ncaa-elo-margin-v1-20261123"
+    },
+    "cwbb": {
+      "current_range": [
+        "2026-11-01T17:00:00Z",
+        "2026-11-21T04:00:00Z"
+      ],
+      "frozen_score_only": {
+        "2025-26": {
+          "all_verified": 6029,
+          "model": {
+            "accuracy": 0.7373468300479489,
+            "brier": 0.1762613424484551,
+            "games": 5631,
+            "log_loss": 0.529698587341675
+          },
+          "venue_only": {
+            "accuracy": 0.5896821168531344,
+            "brier": 0.24209367786929348,
+            "games": 5631,
+            "log_loss": 0.6773469087183153
+          }
+        },
+        "2026-27_through_seed": {
+          "all_verified": 1096,
+          "model": {
+            "accuracy": 0.7738636363636363,
+            "brier": 0.16105399567216905,
+            "games": 880,
+            "log_loss": 0.49651955762294014
+          },
+          "venue_only": {
+            "accuracy": 0.7261363636363637,
+            "brier": 0.2068008080680771,
+            "games": 880,
+            "log_loss": 0.6050332919418809
+          }
+        },
+        "home_rate_warm_season": 0.6336825766395033
+      },
+      "heldout_range": [
+        "2025-11-03T16:00:00Z",
+        "2026-04-05T19:30:00Z"
+      ],
+      "prospective": {
+        "all_settled": {
+          "accuracy": 0.6685714285714286,
+          "brier": 0.19802575003732842,
+          "log_loss": 0.5816392047103275,
+          "n": 175
+        },
+        "final_kickoff_range": [
+          "2026-11-23T00:30:00Z",
+          "2026-11-28T01:00:00Z"
+        ],
+        "forecast_revisions": 290,
+        "priced_fixtures": 0,
+        "strict_kickoff_range": null,
+        "strict_market": {
+          "accuracy": null,
+          "brier": null,
+          "log_loss": null,
+          "n": 0
+        },
+        "strict_model": {
+          "accuracy": null,
+          "brier": null,
+          "log_loss": null,
+          "n": 0
+        }
+      },
+      "version": "ncaa-elo-margin-v1-20261123"
+    }
+  },
+  "snapshot_read_at": "2026-11-28T07:24:41.788880Z"
+}

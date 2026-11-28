@@ -1,0 +1,290 @@
+{
+  "as_of": "2026-11-28T07:34:05.826436+00:00",
+  "checks": "All registered pooled counts and mean scores on the three exact lines agree within 1e-12; the five bookmaker source hashes and independent fixture source hashes match.",
+  "independent_tail_pooled": {
+    "1.5": {
+      "production10": {
+        "matches": 1212,
+        "mean": {
+          "calibrated": {
+            "brier": 0.18223562953121278,
+            "log_loss": 0.5494979366833678
+          },
+          "production10": {
+            "brier": 0.18207804021595134,
+            "log_loss": 0.5491617594173143
+          }
+        }
+      }
+    },
+    "2.5": {
+      "bookmaker_close": {
+        "matches": 1146,
+        "mean": {
+          "bookmaker_close": {
+            "brier": 0.24535763037804748,
+            "log_loss": 0.6838039866198301
+          },
+          "calibrated": {
+            "brier": 0.2476461809162815,
+            "log_loss": 0.6884054601767188
+          }
+        }
+      },
+      "production10": {
+        "matches": 1212,
+        "mean": {
+          "calibrated": {
+            "brier": 0.24738842431076713,
+            "log_loss": 0.6878864315803453
+          },
+          "production10": {
+            "brier": 0.2474792055975344,
+            "log_loss": 0.6880486231093906
+          }
+        }
+      }
+    },
+    "3.5": {
+      "production10": {
+        "matches": 1212,
+        "mean": {
+          "calibrated": {
+            "brier": 0.19571222230267174,
+            "log_loss": 0.5793766289886064
+          },
+          "production10": {
+            "brier": 0.19592575143696747,
+            "log_loss": 0.5795870115910293
+          }
+        }
+      }
+    }
+  },
+  "independent_tail_sample": {
+    "first_kickoff": "2025-10-03T18:45:00Z",
+    "last_kickoff": "2026-05-24T19:45:00Z",
+    "matches": 1212,
+    "matchweeks": 124
+  },
+  "league_tail_version": "domestic-totals-league-tail-v1-ba1b1a98c82abbbd",
+  "logit_holdout": {
+    "first_kickoff": "2026-10-09T18:00:00Z",
+    "last_kickoff": "2026-11-22T16:30:00Z",
+    "matches": 399,
+    "matchweeks": 40
+  },
+  "logit_pooled": {
+    "1.5": {
+      "production10": {
+        "matches": 399,
+        "mean": {
+          "calibrated": {
+            "brier": 0.16327052539207793,
+            "log_loss": 0.5074855524788499
+          },
+          "production10": {
+            "brier": 0.1622057631584934,
+            "log_loss": 0.5035209030038893
+          }
+        }
+      },
+      "wp_p4": {
+        "matches": 323,
+        "mean": {
+          "calibrated": {
+            "brier": 0.1483352058836081,
+            "log_loss": 0.4716460973738629
+          },
+          "wp_p4": {
+            "brier": 0.15055675825303916,
+            "log_loss": 0.4763781946305324
+          }
+        }
+      }
+    },
+    "2.5": {
+      "polymarket_t60": {
+        "matches": 207,
+        "mean": {
+          "calibrated": {
+            "brier": 0.2429584221308941,
+            "log_loss": 0.6779286907222146
+          },
+          "polymarket_t60": {
+            "brier": 0.23424951690821255,
+            "log_loss": 0.6601698282332841
+          }
+        }
+      },
+      "production10": {
+        "matches": 399,
+        "mean": {
+          "calibrated": {
+            "brier": 0.24311882225989437,
+            "log_loss": 0.6789305206646131
+          },
+          "production10": {
+            "brier": 0.2399369951594796,
+            "log_loss": 0.6721257237375827
+          }
+        }
+      },
+      "wp_p4": {
+        "matches": 323,
+        "mean": {
+          "calibrated": {
+            "brier": 0.24004443773601788,
+            "log_loss": 0.6727137052331212
+          },
+          "wp_p4": {
+            "brier": 0.23566875721313096,
+            "log_loss": 0.6630486868000154
+          }
+        }
+      }
+    },
+    "3.5": {
+      "production10": {
+        "matches": 399,
+        "mean": {
+          "calibrated": {
+            "brier": 0.23169374855731217,
+            "log_loss": 0.6561205960645876
+          },
+          "production10": {
+            "brier": 0.22827679867544887,
+            "log_loss": 0.6492757403130391
+          }
+        }
+      },
+      "wp_p4": {
+        "matches": 323,
+        "mean": {
+          "calibrated": {
+            "brier": 0.23419749734228731,
+            "log_loss": 0.6608524626957383
+          },
+          "wp_p4": {
+            "brier": 0.22973215000705163,
+            "log_loss": 0.6519448594426533
+          }
+        }
+      }
+    }
+  },
+  "logit_status": "retrospective_weaker_than_production",
+  "logit_training": {
+    "first_kickoff": "2026-08-22T14:30:00Z",
+    "last_kickoff": "2026-09-20T19:00:00Z",
+    "matches": 250,
+    "matchweeks": 25
+  },
+  "logit_version": "domestic-totals-logit-v1-4a5ade2665bc9f01",
+  "method": "Frozen parameters, forecast-before-result round replay. Bookmaker closing over/under 2.5 compares probabilities only.",
+  "recent_exploratory_tail_pooled": {
+    "1.5": {
+      "production10": {
+        "matches": 399,
+        "mean": {
+          "calibrated": {
+            "brier": 0.16207463546711015,
+            "log_loss": 0.5035585001982493
+          },
+          "production10": {
+            "brier": 0.1622057631584934,
+            "log_loss": 0.5035209030038893
+          }
+        }
+      },
+      "wp_p4": {
+        "matches": 323,
+        "mean": {
+          "calibrated": {
+            "brier": 0.14824123482280502,
+            "log_loss": 0.4714760404612216
+          },
+          "wp_p4": {
+            "brier": 0.15055675825303916,
+            "log_loss": 0.4763781946305324
+          }
+        }
+      }
+    },
+    "2.5": {
+      "polymarket_t60": {
+        "matches": 207,
+        "mean": {
+          "calibrated": {
+            "brier": 0.2388304324010663,
+            "log_loss": 0.6697140427810115
+          },
+          "polymarket_t60": {
+            "brier": 0.23424951690821255,
+            "log_loss": 0.6601698282332841
+          }
+        }
+      },
+      "production10": {
+        "matches": 399,
+        "mean": {
+          "calibrated": {
+            "brier": 0.23961655919838132,
+            "log_loss": 0.6716205958915242
+          },
+          "production10": {
+            "brier": 0.2399369951594796,
+            "log_loss": 0.6721257237375827
+          }
+        }
+      },
+      "wp_p4": {
+        "matches": 323,
+        "mean": {
+          "calibrated": {
+            "brier": 0.23697711661431353,
+            "log_loss": 0.6662495067713192
+          },
+          "wp_p4": {
+            "brier": 0.23566875721313096,
+            "log_loss": 0.6630486868000154
+          }
+        }
+      }
+    },
+    "3.5": {
+      "production10": {
+        "matches": 399,
+        "mean": {
+          "calibrated": {
+            "brier": 0.2264009313855335,
+            "log_loss": 0.6451836857829557
+          },
+          "production10": {
+            "brier": 0.22827679867544887,
+            "log_loss": 0.6492757403130391
+          }
+        }
+      },
+      "wp_p4": {
+        "matches": 323,
+        "mean": {
+          "calibrated": {
+            "brier": 0.23131853234543873,
+            "log_loss": 0.6548543588973162
+          },
+          "wp_p4": {
+            "brier": 0.22973215000705163,
+            "log_loss": 0.6519448594426533
+          }
+        }
+      }
+    }
+  },
+  "recent_exploratory_tail_sample": {
+    "first_kickoff": "2026-10-09T18:00:00Z",
+    "last_kickoff": "2026-11-22T16:30:00Z",
+    "matches": 399,
+    "matchweeks": 40
+  }
+}

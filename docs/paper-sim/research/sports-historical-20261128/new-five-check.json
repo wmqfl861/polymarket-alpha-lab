@@ -1,0 +1,10 @@
+{
+  "target_rows": 1289,
+  "independently_verified_predictions": 1225,
+  "independent_sums_and_counts": {
+    "match_winner": 1225,
+    "total_2_5": 998
+  },
+  "all_eligible_historical_fixture_sets_exact": true,
+  "registered_rows_sha256": "703e8de552f096f822c4e11ac541e578839a4b348eb468ea4950bf898e54797c"
+}

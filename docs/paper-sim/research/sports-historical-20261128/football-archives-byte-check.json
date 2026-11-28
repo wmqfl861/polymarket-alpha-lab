@@ -1,0 +1,287 @@
+{
+  "at_utc": "2026-11-28T07:34:59.397779+00:00",
+  "python": "3.12.3",
+  "replays": {
+    "five_archived_20261119": {
+      "all_fixtures": 1150,
+      "exit_code": 0,
+      "market_paired_1x2": 1149,
+      "outputs": [
+        {
+          "bytes": 4100049,
+          "file": "docs/paper-sim/research/league-admission-20261119/new-soccer/holdout_predictions.csv",
+          "sha256": "2e6669619a236b544347836801ffe683770eb831c4fecdf4cc6d443c990ec053"
+        },
+        {
+          "bytes": 21393,
+          "file": "docs/paper-sim/research/league-admission-20261119/new-soccer/metrics.csv",
+          "sha256": "af0e91d11445d3914e97be6af16b7f3d62797411b0d0ea35b37647a325286e75"
+        },
+        {
+          "bytes": 51560,
+          "file": "docs/paper-sim/research/league-admission-20261119/new-soccer/metrics.json",
+          "sha256": "2497bd95386514f07f9b3590c1ffc5a2d27f842a8d6dbe146b0e5ce14ab1d175"
+        },
+        {
+          "bytes": 23963,
+          "file": "docs/paper-sim/research/league-admission-20261119/new-soccer/outcome_metrics.csv",
+          "sha256": "68226e4407e629c828dbd6e41fb99162dbebd982e990734d22ad0e927c73d840"
+        }
+      ]
+    },
+    "seven_domestic_20261119": {
+      "exit_code": 0,
+      "fixture_count_by_market": {
+        "1X2": 369,
+        "O2.5": 370
+      },
+      "outputs": [
+        {
+          "bytes": 16100,
+          "file": "docs/paper-sim/research/league-admission-20261119/europe-football/summary.json",
+          "sha256": "cbed42762971f55bcdbd4a44a4c022808b83540006632c59a726247423573388"
+        }
+      ],
+      "per_league": {
+        "Bundesliga": {
+          "1X2": {
+            "blocks": 6,
+            "logloss": {
+              "market": 1.0032064058620218,
+              "production10": 1.0087241010674461,
+              "recalibrated": 1.0131304891863502
+            },
+            "n": 48,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.03746071194103239,
+                0.07006378838790762
+              ],
+              "delta": 0.009924083324328347
+            }
+          },
+          "O2.5": {
+            "blocks": 6,
+            "logloss": {
+              "market": 0.6062750542131008,
+              "production10": 0.637627014505363,
+              "recalibrated": 0.6294896095571607
+            },
+            "n": 48,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.007480629267840056,
+                0.05522147915135873
+              ],
+              "delta": 0.023214555344059834
+            }
+          }
+        },
+        "Championship": {
+          "1X2": {
+            "blocks": 6,
+            "logloss": {
+              "market": 0.9778249260008179,
+              "production10": 1.015509534794291,
+              "recalibrated": 1.0191575343072892
+            },
+            "n": 52,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.03229519381925562,
+                0.10246887271401556
+              ],
+              "delta": 0.04133260830647135
+            }
+          },
+          "O2.5": {
+            "blocks": 6,
+            "logloss": {
+              "market": 0.6554572345209124,
+              "production10": 0.6590733770933047,
+              "recalibrated": 0.6657973527646176
+            },
+            "n": 52,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.026188057927915013,
+                0.03983579560021132
+              ],
+              "delta": 0.010340118243705147
+            }
+          }
+        },
+        "EPL": {
+          "1X2": {
+            "blocks": 7,
+            "logloss": {
+              "market": 1.015690796774636,
+              "production10": 1.0497353758729357,
+              "recalibrated": 1.0464106259243737
+            },
+            "n": 59,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.02566043687686115,
+                0.09899891214359897
+              ],
+              "delta": 0.030719829149737657
+            }
+          },
+          "O2.5": {
+            "blocks": 7,
+            "logloss": {
+              "market": 0.7112826390030715,
+              "production10": 0.7284412151563036,
+              "recalibrated": 0.6871981395038105
+            },
+            "n": 59,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.05544272511660471,
+                0.010259729042875797
+              ],
+              "delta": -0.02408449949926099
+            }
+          }
+        },
+        "Eredivisie": {
+          "1X2": {
+            "blocks": 6,
+            "logloss": {
+              "market": 1.0412064171793558,
+              "production10": 1.0738870228071122,
+              "recalibrated": 1.0454552857066934
+            },
+            "n": 47,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.06225272006905091,
+                0.07918568668513327
+              ],
+              "delta": 0.004248868527337683
+            }
+          },
+          "O2.5": {
+            "blocks": 6,
+            "logloss": {
+              "market": 0.6529388501942672,
+              "production10": 0.6485857761465141,
+              "recalibrated": 0.6419955316623969
+            },
+            "n": 48,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.05672922956013759,
+                0.035904108902331845
+              ],
+              "delta": -0.01094331853187036
+            }
+          }
+        },
+        "La_liga": {
+          "1X2": {
+            "blocks": 3,
+            "logloss": {
+              "market": 0.9277715097117966,
+              "production10": 0.9705589033106233,
+              "recalibrated": 0.9984339131269963
+            },
+            "n": 27,
+            "recalib_vs_market": {
+              "ci95": [
+                0.012543959405180086,
+                0.13091039784702066
+              ],
+              "delta": 0.07066240341519972
+            }
+          },
+          "O2.5": {
+            "blocks": 3,
+            "logloss": {
+              "market": 0.554555680636437,
+              "production10": 0.5792772604963481,
+              "recalibrated": 0.6118587308987143
+            },
+            "n": 27,
+            "recalib_vs_market": {
+              "ci95": [
+                0.036447865899403666,
+                0.07620144940125935
+              ],
+              "delta": 0.05730305026227731
+            }
+          }
+        },
+        "Ligue_1": {
+          "1X2": {
+            "blocks": 8,
+            "logloss": {
+              "market": 0.9171514977289209,
+              "production10": 0.9560460725051674,
+              "recalibrated": 0.9679063101940322
+            },
+            "n": 65,
+            "recalib_vs_market": {
+              "ci95": [
+                0.016930568324707927,
+                0.08279116354574997
+              ],
+              "delta": 0.05075481246511123
+            }
+          },
+          "O2.5": {
+            "blocks": 8,
+            "logloss": {
+              "market": 0.664966410667012,
+              "production10": 0.6758316490183819,
+              "recalibrated": 0.6700438044061535
+            },
+            "n": 65,
+            "recalib_vs_market": {
+              "ci95": [
+                -0.05114307052714298,
+                0.054610930956259726
+              ],
+              "delta": 0.005077393739141544
+            }
+          }
+        },
+        "Serie_A": {
+          "1X2": {
+            "blocks": 8,
+            "logloss": {
+              "market": 0.9371783269620702,
+              "production10": 0.9628731620531965,
+              "recalibrated": 0.9750510936216483
+            },
+            "n": 71,
+            "recalib_vs_market": {
+              "ci95": [
+                0.0011185477739860386,
+                0.07567668138053965
+              ],
+              "delta": 0.03787276665957813
+            }
+          },
+          "O2.5": {
+            "blocks": 8,
+            "logloss": {
+              "market": 0.6746632078040933,
+              "production10": 0.6550214473225425,
+              "recalibrated": 0.705977365556468
+            },
+            "n": 71,
+            "recalib_vs_market": {
+              "ci95": [
+                0.0035598900588550905,
+                0.056487622484108616
+              ],
+              "delta": 0.03131415775237461
+            }
+          }
+        }
+      }
+    }
+  }
+}

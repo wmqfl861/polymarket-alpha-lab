@@ -1,0 +1,1423 @@
+{
+  "calendar_manifest_receipt_sha256": "ed586e4f28ca2b4818b3a14f237bf3adad2dc3d02ffd6fda2019dbeb6307687c",
+  "contracts": [
+    {
+      "chart_normalized_p_over": 0.535,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "3998e5b33ab54a9a6b32402122a5666ec5bee668769239f040b9e23210abd840",
+          "chart_price": 0.535,
+          "curve_timestamp_range_utc": [
+            "2025-11-08T16:00:11Z",
+            "2025-11-09T15:59:05Z"
+          ],
+          "endTs": 1762703999,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-09T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:23.646611+00:00",
+          "returned_points": 1440,
+          "selected_t": 1762702145,
+          "selected_utc": "2025-11-09T15:29:05Z",
+          "startTs": 1762617600,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "187483979c66cfd925364d898a6cbd7cf24212bb6d41c6db68a4b92548d36305",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "ce0d9766e43be77d3d5dcc263fa0524533bce7dd2589273488925a6b26845709",
+          "chart_price": 0.465,
+          "curve_timestamp_range_utc": [
+            "2025-11-08T16:00:13Z",
+            "2025-11-09T15:59:05Z"
+          ],
+          "endTs": 1762703999,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-09T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:23.455850+00:00",
+          "returned_points": 1440,
+          "selected_t": 1762702145,
+          "selected_utc": "2025-11-09T15:29:05Z",
+          "startTs": 1762617600,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "989cf38e3e5155746fc5a85b9e04ec231eb422f7720f6fe2c3fd5705d50dffc8",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695567",
+      "forecast_anchor_utc": "2025-11-09T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "0",
+        "1"
+      ],
+      "kickoff_utc": "2025-11-09T16:00:00Z",
+      "listed_utc": "2025-11-03T22:21:21Z",
+      "market_end_utc": "2025-11-09 20:25:35+00",
+      "market_public_slug": "nor-bra-kfu-2025-11-09-total-2pt5",
+      "model_p_over": 0.49939460198910574,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        1,
+        1
+      ],
+      "score_over_2_5": 0,
+      "terms_sha256": "2d10d5ee4ee9bada753f36f32214d8f1145971a590f5a55b9861580b1e692892"
+    },
+    {
+      "chart_normalized_p_over": 0.545,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "430cc58ec90a09ff587d8298c2fa56af1e30ff868f55bbbe3c5836337252b0ee",
+          "chart_price": 0.545,
+          "curve_timestamp_range_utc": [
+            "2025-11-08T16:00:22Z",
+            "2025-11-09T15:59:06Z"
+          ],
+          "endTs": 1762703999,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-09T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:23.617389+00:00",
+          "returned_points": 1440,
+          "selected_t": 1762702146,
+          "selected_utc": "2025-11-09T15:29:06Z",
+          "startTs": 1762617600,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "e5ddd363efbd2f8055141e8cef006f511e1e6f6be823ca4afd6d3f0b6ce76d59",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "d92631a934fd6937eb28ab9777ad3dd11907f8d984394effaf29292e91baec20",
+          "chart_price": 0.455,
+          "curve_timestamp_range_utc": [
+            "2025-11-08T16:00:26Z",
+            "2025-11-09T15:59:07Z"
+          ],
+          "endTs": 1762703999,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-09T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:23.485508+00:00",
+          "returned_points": 1440,
+          "selected_t": 1762702147,
+          "selected_utc": "2025-11-09T15:29:07Z",
+          "startTs": 1762617600,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "9bf5954ceabc44568bb865fa672349a8917338ab2fdf06e2de5dcc806bea2bdb",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695571",
+      "forecast_anchor_utc": "2025-11-09T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "0",
+        "1"
+      ],
+      "kickoff_utc": "2025-11-09T16:00:00Z",
+      "listed_utc": "2025-11-03T22:21:23Z",
+      "market_end_utc": "2025-11-09 20:02:49+00",
+      "market_public_slug": "nor-san-tro-2025-11-09-total-2pt5",
+      "model_p_over": 0.5544076823803002,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        1,
+        0
+      ],
+      "score_over_2_5": 0,
+      "terms_sha256": "25329051ac6901b5495ff37d07df19253747ef139325299dadf98ef8b97396d1"
+    },
+    {
+      "chart_normalized_p_over": 0.645,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "888bf409666b3cca5c266dec9ac9727576746e47caf93551955611ec53da75e5",
+          "chart_price": 0.645,
+          "curve_timestamp_range_utc": [
+            "2025-11-20T18:00:23Z",
+            "2025-11-21T17:59:09Z"
+          ],
+          "endTs": 1763747999,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-21T17:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:24.520598+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763746149,
+          "selected_utc": "2025-11-21T17:29:09Z",
+          "startTs": 1763661600,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "e8a0a9492a309ce0172211f055c788d666f6323e6aca150213bfdac50e6a3a8e",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "65fe5e37c6ca4267e64f51f35ce2758c44e980164ad9aad1257b7053e300b88e",
+          "chart_price": 0.355,
+          "curve_timestamp_range_utc": [
+            "2025-11-20T18:00:05Z",
+            "2025-11-21T17:59:05Z"
+          ],
+          "endTs": 1763747999,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-21T17:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:24.503672+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763746145,
+          "selected_utc": "2025-11-21T17:29:05Z",
+          "startTs": 1763661600,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "7406aac7c12ef1d6c6b798d1ffa1b815f0abc39beebe045ad50a69c674d41322",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695577",
+      "forecast_anchor_utc": "2025-11-21T17:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-21T18:00:00Z",
+      "listed_utc": "2025-11-12T17:08:31Z",
+      "market_end_utc": "2025-11-21 22:03:05+00",
+      "market_public_slug": "nor-kfu-bog-2025-11-21-total-2pt5",
+      "model_p_over": 0.5537767660759851,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        1,
+        2
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "0b4bfc7fbb4136943d65918e23e0b018b10dae0655b497cf6e780b6811c2e031"
+    },
+    {
+      "chart_normalized_p_over": 0.615,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "8e8eb0c33717e74c2e43dbca9c42320c667c44fe11bb4af9db19c582c102e7f9",
+          "chart_price": 0.615,
+          "curve_timestamp_range_utc": [
+            "2025-11-21T13:00:19Z",
+            "2025-11-22T12:59:05Z"
+          ],
+          "endTs": 1763816399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-22T12:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:24.199883+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763814545,
+          "selected_utc": "2025-11-22T12:29:05Z",
+          "startTs": 1763730000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "203a50b41e825ee5a6bd5cac2dbb24074167d89be856e7f4111c071429110619",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "7d3848d6d19080b0cfd3088a1f6ce5c05fba07155d1d105311b45a2aa0af0185",
+          "chart_price": 0.385,
+          "curve_timestamp_range_utc": [
+            "2025-11-21T13:00:27Z",
+            "2025-11-22T12:59:07Z"
+          ],
+          "endTs": 1763816399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-22T12:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:24.269365+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763814548,
+          "selected_utc": "2025-11-22T12:29:08Z",
+          "startTs": 1763730000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "4a682de9aacdbe24e34e589e6696694bdbd6dfea90f797c3d61c6bc48575f984",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695580",
+      "forecast_anchor_utc": "2025-11-22T12:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "0",
+        "1"
+      ],
+      "kickoff_utc": "2025-11-22T13:00:00Z",
+      "listed_utc": "2025-11-12T17:08:41Z",
+      "market_end_utc": "2025-11-22 17:26:43+00",
+      "market_public_slug": "nor-tro-rbk-2025-11-22-total-2pt5",
+      "model_p_over": 0.588733280115021,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        1,
+        0
+      ],
+      "score_over_2_5": 0,
+      "terms_sha256": "ea0909820c64c0664cbd1ca4032225a9cd8d5a60fd7f5a7ec44c0dd9fe197b7f"
+    },
+    {
+      "chart_normalized_p_over": 0.585,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "0fa26daa4556993c5b22facc751fe5c2fd6311983795a69be0d1b9126e5bd404",
+          "chart_price": 0.585,
+          "curve_timestamp_range_utc": [
+            "2025-11-21T17:00:41Z",
+            "2025-11-22T16:59:09Z"
+          ],
+          "endTs": 1763830799,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-22T16:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:24.155284+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763828949,
+          "selected_utc": "2025-11-22T16:29:09Z",
+          "startTs": 1763744400,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "88fb80fb1b317509b36a3552b22b4291b81c3664ec4b6a5aeac054da884e0dcb",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "ac43003f3f5419aff403be1324a710ddd1ef12d2292692f6b7d8fa02adce5a9e",
+          "chart_price": 0.415,
+          "curve_timestamp_range_utc": [
+            "2025-11-21T17:00:13Z",
+            "2025-11-22T16:59:05Z"
+          ],
+          "endTs": 1763830799,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-22T16:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:24.023160+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763828946,
+          "selected_utc": "2025-11-22T16:29:06Z",
+          "startTs": 1763744400,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "a2ca49cf3c99ffe9ca3e3f435a052f3aa6f94aff5f6879c827be72619af20eb8",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695578",
+      "forecast_anchor_utc": "2025-11-22T16:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-22T17:00:00Z",
+      "listed_utc": "2025-11-12T17:08:35Z",
+      "market_end_utc": "2025-11-22 20:53:25+00",
+      "market_public_slug": "nor-mol-bra-2025-11-22-total-2pt5",
+      "model_p_over": 0.6651549543523584,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        4,
+        0
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "9874c3eaeb1656adc5dddca2c683948f5b86a7e15720888ca5712e688c163516"
+    },
+    {
+      "chart_normalized_p_over": 0.575,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "f7a637b2c6ba720d3441bca0f56f90119b545392bcc89c56f088dc0cd1da8d2f",
+          "chart_price": 0.575,
+          "curve_timestamp_range_utc": [
+            "2025-11-22T13:30:11Z",
+            "2025-11-23T13:29:07Z"
+          ],
+          "endTs": 1763904599,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-23T13:00:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:23.897927+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763902747,
+          "selected_utc": "2025-11-23T12:59:07Z",
+          "startTs": 1763818200,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "15abc677d74cd60b11a5f3a4436b5cc17d3379c705b83af473ce5d0635e0b5f5",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "1633b539ef657f9f74b2b4e1cc86f611060f2619a8c486c9a94c32a5f55da0a9",
+          "chart_price": 0.425,
+          "curve_timestamp_range_utc": [
+            "2025-11-22T13:30:12Z",
+            "2025-11-23T13:29:07Z"
+          ],
+          "endTs": 1763904599,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-23T13:00:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:23.857942+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763902747,
+          "selected_utc": "2025-11-23T12:59:07Z",
+          "startTs": 1763818200,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "3ca3c58a4f5336dc3aad709d5cf1b37e10fef7e527ed45f157863574c91dbf32",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695574",
+      "forecast_anchor_utc": "2025-11-23T13:00:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-23T13:30:00Z",
+      "listed_utc": "2025-11-12T17:08:25Z",
+      "market_end_utc": "2025-11-23 17:45:21+00",
+      "market_public_slug": "nor-bry-sar-2025-11-23-total-2pt5",
+      "model_p_over": 0.6095654783739064,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        0,
+        3
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "d7573c852458c75fc804782223e3faffed6546a56b4f063077d9bceebfd45e8c"
+    },
+    {
+      "chart_normalized_p_over": 0.655,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "5fcc4b50d890333e2f8e3bb36467211e6be40834e4467c7202e8c64a90833e0d",
+          "chart_price": 0.655,
+          "curve_timestamp_range_utc": [
+            "2025-11-22T13:30:09Z",
+            "2025-11-23T13:29:06Z"
+          ],
+          "endTs": 1763904599,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-23T13:00:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:23.996787+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763902746,
+          "selected_utc": "2025-11-23T12:59:06Z",
+          "startTs": 1763818200,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "304f2803f62bdc52448c60acda8fbe0c9109e1230c52388f65a55ab985e92c91",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "cc6e8519ddca0273899a2cb414b064143a7459162d1b507ba772245f8a2524eb",
+          "chart_price": 0.345,
+          "curve_timestamp_range_utc": [
+            "2025-11-22T13:30:08Z",
+            "2025-11-23T13:29:06Z"
+          ],
+          "endTs": 1763904599,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-23T13:00:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:23.985757+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763902745,
+          "selected_utc": "2025-11-23T12:59:05Z",
+          "startTs": 1763818200,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "77e059474ab3b84420a5730b79704fc6f593d465fa5656053c2ace0444d77fdb",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695576",
+      "forecast_anchor_utc": "2025-11-23T13:00:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-23T13:30:00Z",
+      "listed_utc": "2025-11-12T17:08:27Z",
+      "market_end_utc": "2025-11-23 17:33:17+00",
+      "market_public_slug": "nor-ham-fkh-2025-11-23-total-2pt5",
+      "model_p_over": 0.5719043962582145,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        5,
+        0
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "6add887701e756ae89416241b04e90db86321849fa32c4489b15c067e8e98288"
+    },
+    {
+      "chart_normalized_p_over": 0.63,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "b64cd3606d09308e3ed3cb6b7196a088b9db2414ab5075375f895b7b8b2be268",
+          "chart_price": 0.63,
+          "curve_timestamp_range_utc": [
+            "2025-11-22T18:15:07Z",
+            "2025-11-23T18:14:06Z"
+          ],
+          "endTs": 1763921699,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-23T17:45:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:23.667488+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763919846,
+          "selected_utc": "2025-11-23T17:44:06Z",
+          "startTs": 1763835300,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "f863f9761bda51eda5d5c9ad8e57132fda2e4172e66f5165707f48e377fbf062",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "2b7fbad7e42dbedf3ea8f9239e7c08bc2f185247e4b95aa25d44500a2bf5c9db",
+          "chart_price": 0.37,
+          "curve_timestamp_range_utc": [
+            "2025-11-22T18:15:09Z",
+            "2025-11-23T18:14:08Z"
+          ],
+          "endTs": 1763921699,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-23T17:45:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:23.499741+00:00",
+          "returned_points": 1440,
+          "selected_t": 1763919848,
+          "selected_utc": "2025-11-23T17:44:08Z",
+          "startTs": 1763835300,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "4a2c0d4ce893f6eb3ee87a814901bd08679f17b733ad8c5f9a3561a128f90f03",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695575",
+      "forecast_anchor_utc": "2025-11-23T17:45:00Z",
+      "gamma_resolved_outcome_prices": [
+        "0",
+        "1"
+      ],
+      "kickoff_utc": "2025-11-23T18:15:00Z",
+      "listed_utc": "2025-11-12T17:00:57Z",
+      "market_end_utc": "2025-11-24 09:56:09+00",
+      "market_public_slug": "nor-ffk-vik-2025-11-23-total-2pt5",
+      "model_p_over": 0.5709124677047401,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        0,
+        1
+      ],
+      "score_over_2_5": 0,
+      "terms_sha256": "b62d5a94d24f6dfd29ed34a723232ac0e118e4089c38ba28ab9a8c9a5cd0e7a3"
+    },
+    {
+      "chart_normalized_p_over": 0.81,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "3185cc74fdb30e2ab40104a7eb7582d7b89a6748a1cf88213b7bc07298acdef2",
+          "chart_price": 0.81,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:24Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:24.904687+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516547,
+          "selected_utc": "2025-11-30T15:29:07Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "c7d29fdca42794a4019373fb973ef0f2a75aefa2ee89c226f9e88d9a7db8a4aa",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "a12f5829f71c32bcfefa05a80e3231d214e7f2fa0833d6dbf3585cb2bbdc6bf7",
+          "chart_price": 0.19,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:06Z",
+            "2025-11-30T15:59:05Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:25.045881+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516545,
+          "selected_utc": "2025-11-30T15:29:05Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "6dc686491423e56d0941119ff230e8c98ebd9758b325d190a4c8caa2eba24343",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695582",
+      "forecast_anchor_utc": "2025-11-30T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-30T16:00:00Z",
+      "listed_utc": "2025-11-23T17:08:31Z",
+      "market_end_utc": "2025-11-30 20:30:10+00",
+      "market_public_slug": "nor-bog-ffk-2025-11-30-total-2pt5",
+      "model_p_over": 0.6086777343918583,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        5,
+        0
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "98a133efa97f2b849c306583920034b826d4e636faefce346ee87da6b27858db"
+    },
+    {
+      "chart_normalized_p_over": 0.73,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "b3167939ff181de429af07b6cf4347cfe1b1679576a70ec9895d78fc6fb8d892",
+          "chart_price": 0.73,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:09Z",
+            "2025-11-30T15:59:06Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:24.755307+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516545,
+          "selected_utc": "2025-11-30T15:29:05Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "0bfdadb6d9b6d07334d149ff664cbace7885c2282af3a20c47b17ef41d614d46",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "28203cb2f63508340ad641e78f7cda7920df68573c5da3e8b63f23f55fbdd0bf",
+          "chart_price": 0.27,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:13Z",
+            "2025-11-30T15:59:06Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:24.965798+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516546,
+          "selected_utc": "2025-11-30T15:29:06Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "6e2332493ddc08bc347daa1f37400e60c4454745960322a9f16392bda7928c78",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695583",
+      "forecast_anchor_utc": "2025-11-30T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-30T16:00:00Z",
+      "listed_utc": "2025-11-23T17:08:29Z",
+      "market_end_utc": "2025-11-30 19:57:48+00",
+      "market_public_slug": "nor-bra-ham-2025-11-30-total-2pt5",
+      "model_p_over": 0.5260536744675958,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        3,
+        1
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "297cb0fa55b14d4af9af3876437d01a4c9f6a991c1bac4ac88f47108ea1da877"
+    },
+    {
+      "chart_normalized_p_over": 0.61,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "f5f739a896b80c3073f95d4a7b5435e8b40a53ccb423c5d4538d2eb3180ec901",
+          "chart_price": 0.61,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:18Z",
+            "2025-11-30T15:59:07Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:24.585098+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516546,
+          "selected_utc": "2025-11-30T15:29:06Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "dc51c9dba1457c97399bb68d7b28c4fc4caf9973ef54c423748dba43f7466c24",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "56546c75359dcebda5118ff106b62f21bc89f58770a4cca99bfbe83b255ef280",
+          "chart_price": 0.39,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:33Z",
+            "2025-11-30T15:59:09Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:24.691157+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516548,
+          "selected_utc": "2025-11-30T15:29:08Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "e210fed44149b2c88b5a13813ecbe1e6e76c21e553e4ad23adcfd4d05794a28d",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695584",
+      "forecast_anchor_utc": "2025-11-30T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-30T16:00:00Z",
+      "listed_utc": "2025-11-23T17:02:55Z",
+      "market_end_utc": "2025-11-30 20:29:16+00",
+      "market_public_slug": "nor-fkh-bry-2025-11-30-total-2pt5",
+      "model_p_over": 0.5040071943179915,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        1,
+        4
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "fabd355ce8882a616707a9916cf611744bd12b1479ecd5584730d46d47e8b566"
+    },
+    {
+      "chart_normalized_p_over": 0.6,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "cee92b8937c0113623b85e19062b06a777b17d52e2076967a337c4cecaf50e85",
+          "chart_price": 0.6,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:24Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:25.035074+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516547,
+          "selected_utc": "2025-11-30T15:29:07Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "9a8b4ecbfe933d744c8b2c19c7ed5d90eacdc41fd2db77d680a55aa93913998d",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "9c3d595b285a4801b4df16f5f57343515d25bc76f23f84cdbd44b8dae9d12fad",
+          "chart_price": 0.4,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:13Z",
+            "2025-11-30T15:59:06Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:25.045652+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516546,
+          "selected_utc": "2025-11-30T15:29:06Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "5e94f879f392e9784a8150a0c552c06662ec322449cba4283a1b70ef843d56e2",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695585",
+      "forecast_anchor_utc": "2025-11-30T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-30T16:00:00Z",
+      "listed_utc": "2025-11-23T17:08:35Z",
+      "market_end_utc": "2025-11-30 19:56:50+00",
+      "market_public_slug": "nor-kbk-tro-2025-11-30-total-2pt5",
+      "model_p_over": 0.52435852928542,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        1,
+        3
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "184241ea90592f3ac29fc626bc9d1684fda90b4220251ab3cb72a73ac28911a6"
+    },
+    {
+      "chart_normalized_p_over": 0.77,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "7adb7e3757b15a21552d1a5b30882cd3b39482b32d9a8504cff8293f85c0421a",
+          "chart_price": 0.77,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:26Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:25.392390+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516547,
+          "selected_utc": "2025-11-30T15:29:07Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "5e667c0c1fdb8fe46af28def9afc74bd1267a29efac45c746fc1fe66db605d31",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "ebe9972cb9b74f5895d1a37ae10240e456e262ef4196075f97c84fee1031fafe",
+          "chart_price": 0.23,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:24Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:25.550311+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516547,
+          "selected_utc": "2025-11-30T15:29:07Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "e09cfc29aca1eae6fd29a0ac25ef656e85ac8cb039dd23e6f72ecaedc65ab1cf",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695586",
+      "forecast_anchor_utc": "2025-11-30T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-30T16:00:00Z",
+      "listed_utc": "2025-11-23T17:08:45Z",
+      "market_end_utc": "2025-11-30 20:01:56+00",
+      "market_public_slug": "nor-rbk-str-2025-11-30-total-2pt5",
+      "model_p_over": 0.5339899331017784,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        6,
+        0
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "c8cc4ed646b9711059da21cfb555ecd7a4f0382e524be9e90f6f713d7a6e4839"
+    },
+    {
+      "chart_normalized_p_over": 0.57,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "22f5841fb5171146096a4a49abd0d3bd9be2c9204db3ff982bad6bcab382c3c3",
+          "chart_price": 0.57,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:24Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:24.421749+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516547,
+          "selected_utc": "2025-11-30T15:29:07Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "2277e6ac966bf84d1eb67ca32fe236fe1d9fcae9c36da79005b67dbca05b1ed8",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "361f7aaf9fa4ebc956899e79fa1958b1f1c0ad8496d736882bd6b983dd50a600",
+          "chart_price": 0.43,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:27Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:24.459021+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516548,
+          "selected_utc": "2025-11-30T15:29:08Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "850e8c5d021b85fa2daa914a4f5f17372ab6f5208a4c9111b2e6fd265a5955f8",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695587",
+      "forecast_anchor_utc": "2025-11-30T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "0",
+        "1"
+      ],
+      "kickoff_utc": "2025-11-30T16:00:00Z",
+      "listed_utc": "2025-11-23T17:02:49Z",
+      "market_end_utc": "2025-11-30 19:58:52+00",
+      "market_public_slug": "nor-san-kfu-2025-11-30-total-2pt5",
+      "model_p_over": 0.507725808981915,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        2,
+        0
+      ],
+      "score_over_2_5": 0,
+      "terms_sha256": "767639fe17dd54c3d802cf8e26f6d7d5d01f93bc1b254daebbf2b31557b5e530"
+    },
+    {
+      "chart_normalized_p_over": 0.72,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "342bf3960f2e247e5cd3ac84a3e48a8ae684a7d6e1544fd02ede1d8f55e95628",
+          "chart_price": 0.72,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:30Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:25.064407+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516548,
+          "selected_utc": "2025-11-30T15:29:08Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "ac2c14d9d6513dde3cfd3bd7e903678b399347a8921aaa42e681c5e4a23a6e43",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "eb92eda1284526a15019d1671a679131d7b0aa736fd91e3b84e619607bb83d83",
+          "chart_price": 0.28,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:34Z",
+            "2025-11-30T15:59:09Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:25.282141+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516548,
+          "selected_utc": "2025-11-30T15:29:08Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "88ce7e030321ecb8e76735e1ca9deee4db6247c57f6b8fbbb7d33dd8e4eb9a04",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695588",
+      "forecast_anchor_utc": "2025-11-30T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "0",
+        "1"
+      ],
+      "kickoff_utc": "2025-11-30T16:00:00Z",
+      "listed_utc": "2025-11-23T17:08:45Z",
+      "market_end_utc": "2025-11-30 20:03:00+00",
+      "market_public_slug": "nor-sar-mol-2025-11-30-total-2pt5",
+      "model_p_over": 0.5680815885206089,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        1,
+        0
+      ],
+      "score_over_2_5": 0,
+      "terms_sha256": "b77fab12201ab83e9edfb5c26a662a1816d9a51644670fcc27eb5ed63a5346eb"
+    },
+    {
+      "chart_normalized_p_over": 0.765,
+      "curve_receipts": {
+        "Over": {
+          "body_sha256": "dd64983ab7dbd174ca4855b2f3ceb294ea6aeba1e3bccaf0ed33c7c3a273c8e7",
+          "chart_price": 0.765,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:23Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Over",
+          "received_utc": "2026-11-28T07:36:25.532798+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516547,
+          "selected_utc": "2025-11-30T15:29:07Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "6f7caebabf8454567ef2081e8dbcc116798a2147706285d799d285c0ad841adb",
+          "valid_anchor_window_points": 10
+        },
+        "Under": {
+          "body_sha256": "5b15c2292128728bc693e132cabcc394b7bbbc5f3887159dee51b9dc50a8c855",
+          "chart_price": 0.235,
+          "curve_timestamp_range_utc": [
+            "2025-11-29T16:00:27Z",
+            "2025-11-30T15:59:08Z"
+          ],
+          "endTs": 1764518399,
+          "fidelity_minutes": 1,
+          "http": 200,
+          "latest_admissible_utc": "2025-11-30T15:30:00Z",
+          "outcome": "Under",
+          "received_utc": "2026-11-28T07:36:25.408930+00:00",
+          "returned_points": 1440,
+          "selected_t": 1764516548,
+          "selected_utc": "2025-11-30T15:29:08Z",
+          "startTs": 1764432000,
+          "strictly_between_zero_and_one_within_request": 1440,
+          "token_sha256": "aceb29fe7c66da29bdfb0bccef9a25cad0bb19fd0175d8c8614e1f2faaef2768",
+          "valid_anchor_window_points": 10
+        }
+      },
+      "eligibility": "matched_published_contract",
+      "fixture_id": "4695589",
+      "forecast_anchor_utc": "2025-11-30T15:30:00Z",
+      "gamma_resolved_outcome_prices": [
+        "1",
+        "0"
+      ],
+      "kickoff_utc": "2025-11-30T16:00:00Z",
+      "listed_utc": "2025-11-23T17:08:47Z",
+      "market_end_utc": "2025-11-30 19:53:50+00",
+      "market_public_slug": "nor-vik-vif-2025-11-30-total-2pt5",
+      "model_p_over": 0.64350899689715,
+      "pair_status": "price_curve_benchmark_only",
+      "score": [
+        5,
+        1
+      ],
+      "score_over_2_5": 1,
+      "terms_sha256": "e2d99ab0002e7c75ab8bc131eb20db9529191d4743bc3f024ce30acada3ea516"
+    }
+  ],
+  "coverage": {
+    "2025_event_rows_exact_club_and_minute": 74,
+    "2025_gamma_fixture_ids_scored_by_model": 49,
+    "2025_series_events": 74,
+    "2025_tag_events": 74,
+    "all_2025_closed_contracts": 238,
+    "all_2025_closed_totals": 40,
+    "all_seasons_closed_tag_events": 1140,
+    "curves_with_any_valid_pre_match_point": 32,
+    "curves_with_valid_anchor_observation": 32,
+    "first_last_2025_event_start": [
+      "2025-10-18T12:00:00Z",
+      "2025-11-30T16:00:00Z"
+    ],
+    "in_2025_by_start_or_slug": 74,
+    "indexed_2_5_lines": 16,
+    "indexed_lines": {
+      "1.5": 8,
+      "2.5": 16,
+      "3.5": 16
+    },
+    "matched_both_curves": 16,
+    "model_game_with_verified_regular_time_contract": 16,
+    "normal_targets": 239,
+    "ok_responses": 32,
+    "paired_games_out_of_full_cohort": "16/227",
+    "same_event_ids": true,
+    "targets_with_fixed_total_forecast": 227,
+    "token_history_requests": 32,
+    "unique_calendar_games_represented_by_2025_events": 50
+  },
+  "finished_utc": "2026-11-28T07:36:25.556865+00:00",
+  "fotmob_calendar_uncompressed_sha256": "59f9419624102a0cdb5653a2b14ef64ef123901825c70c0e7e384da75b8baed4",
+  "historical_news_rows": 0,
+  "identity_map": {
+    "Bryne FK": "Bryne",
+    "FK Bodø/Glimt": "Bodø/Glimt",
+    "FK Haugesund": "FK Haugesund",
+    "Fredrikstad FK": "Fredrikstad",
+    "Hamarkameratene": "Hamarkameratene",
+    "KFUM-Kameratene Oslo": "KFUM",
+    "Kristiansund BK": "Kristiansund",
+    "Molde FK": "Molde",
+    "Rosenborg BK": "Rosenborg",
+    "SK Brann": "Brann",
+    "Sandefjord Fotball": "Sandefjord",
+    "Sarpsborg 08 FF": "Sarpsborg 08",
+    "Strømsgodset IF": "Strømsgodset",
+    "Tromsø IL": "Tromsø",
+    "Viking FK": "Viking",
+    "Vålerenga Fotball": "Vålerenga"
+  },
+  "input_rows_uncompressed_sha256": "703e8de552f096f822c4e11ac541e578839a4b348eb468ea4950bf898e54797c",
+  "kind": "2025_norway_regular_time_2_5_historical_public_market_check",
+  "league_index": {
+    "series_id": "10362",
+    "sport": "nor",
+    "tag_id": "102651",
+    "tag_slug": "norway-eliteserien"
+  },
+  "limitations": [
+    "Only the 2025 league-tag and series public archives were searched for the target season. Missing or untagged markets outside those indices cannot be established absent. The separate 2026 recent-market survey contributes zero rows.",
+    "Prices-history is a historical chart observed later, not time-stamped executable bid/ask, fee, depth or a contemporaneous order receipt. All scores are descriptive on a partial late-season subset.",
+    "The event list includes separate More Markets pages for the same match. The fixture column is deduplicated on exact kickoff and oriented teams. Prior-season games are outside the model target."
+  ],
+  "market_curve_endpoint": "https://clob.polymarket.com/prices-history",
+  "model_retrained": false,
+  "model_version": "euro-soccer-venue-lineups-20261128-v1",
+  "money_or_forward_credit": 0,
+  "price_query": "?market={clobTokenIds[index of matching outcomes]}&startTs={kickoff_epoch−86400}&endTs={kickoff_epoch−1}&fidelity=1",
+  "public_listing_refetch": {
+    "http": 200,
+    "response_sha256": "a7118fe72abd8de9c6d728654f23c77733c00a388ca12714410882c7b0e06251",
+    "url": "https://gamma-api.polymarket.com/markets?ascending=true&closed=true&end_date_max=2025-12-31T23%3A59%3A59Z&end_date_min=2025-01-01T00%3A00%3A00Z&limit=100&order=id&sports_market_types=totals&tag_id=102651&offset=0"
+  },
+  "retrieval_method": "Frozen T−30 min. For each labelled side use the latest unique public chart observation within [T−40,T−30], maximum timing difference between sides 5 min. Both prices must lie strictly in (0,1). Same oriented clubs, exact kickoff UTC, 90 minutes plus stoppage, two-way payout must agree with regular-time score. Retrieval is bounded to the 24 h before scheduled kickoff; data beyond anchor never enters the benchmark.",
+  "score_on_exact_same_matches": {
+    "model": {
+      "brier": 0.22818796384044213,
+      "log_loss": 0.6483384429535595,
+      "n": 16
+    },
+    "normalized_two_curve_probability": {
+      "brier": 0.20805,
+      "log_loss": 0.6018642065041283,
+      "n": 16
+    }
+  },
+  "source_queries": {
+    "closed_events_tag_all_seasons": {
+      "endpoint": "https://gamma-api.polymarket.com/events",
+      "error": null,
+      "finished": true,
+      "pages": [
+        {
+          "body_sha256": "b33ab0aa7ee47eaeaf3c38f641e18c7b3e0bfbecb289f56b1eda606f719fbed5",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 0,
+          "read_at_utc": "2026-11-28T07:33:53.466048+00:00"
+        },
+        {
+          "body_sha256": "ed6035ba238a7c3cd9a3f32f45ed14a0a5744ae681b5e7315458226be9c3f546",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 100,
+          "read_at_utc": "2026-11-28T07:33:54.624522+00:00"
+        },
+        {
+          "body_sha256": "ade925cc1d711cbdee1351a2d3dbb7b3c48968f9903ffa439e5821498331c7a4",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 200,
+          "read_at_utc": "2026-11-28T07:33:55.903541+00:00"
+        },
+        {
+          "body_sha256": "42fe04a6db776cd08b3ab9f688ccf9816a7b658225ee331912060a2de192fc0d",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 300,
+          "read_at_utc": "2026-11-28T07:33:57.300248+00:00"
+        },
+        {
+          "body_sha256": "d09e3655e7c0a5bfd0b2cebb9a1bbbb3272543961ef96bbe7aa8d1409e0a02cd",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 400,
+          "read_at_utc": "2026-11-28T07:33:58.704782+00:00"
+        },
+        {
+          "body_sha256": "931df7901aa89126f1f44637ba8e6e3dd927cd49bfd6458cbeeabb31e4bd58d7",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 500,
+          "read_at_utc": "2026-11-28T07:34:00.160078+00:00"
+        },
+        {
+          "body_sha256": "7b687996a365f9aa3454d0c7613592bcaf79bde20195019afdaa1815d8a45030",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 600,
+          "read_at_utc": "2026-11-28T07:34:02.159540+00:00"
+        },
+        {
+          "body_sha256": "4662be2fafa119455b1ee5f0618897d6d864911d9cc6220c3df1e1376cbbaef1",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 700,
+          "read_at_utc": "2026-11-28T07:34:03.820705+00:00"
+        },
+        {
+          "body_sha256": "2398ea2308d19a372b677c8e73854e65c45d124e750ef6285b8c4eba3314166d",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 800,
+          "read_at_utc": "2026-11-28T07:34:05.760303+00:00"
+        },
+        {
+          "body_sha256": "fe8dc3b09ac1e2462ecd6ade204831a0bad3372849eba1949560c3fcf880dc76",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 900,
+          "read_at_utc": "2026-11-28T07:34:07.947239+00:00"
+        },
+        {
+          "body_sha256": "36df0e969898dd3a0cf895af95d844ae7e4c792dee5e8dd21b4c68fc4d365185",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 1000,
+          "read_at_utc": "2026-11-28T07:34:10.542141+00:00"
+        },
+        {
+          "body_sha256": "5fcde9a32465aa02369812f601905ebf6d61c804d9062a883a7384a1b81d0983",
+          "count": 40,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 1100,
+          "read_at_utc": "2026-11-28T07:34:12.254864+00:00"
+        }
+      ],
+      "params": {
+        "ascending": "true",
+        "closed": "true",
+        "limit": 100,
+        "order": "id",
+        "tag_id": "102651"
+      }
+    },
+    "closed_markets_tag_2025": {
+      "endpoint": "https://gamma-api.polymarket.com/markets",
+      "error": null,
+      "finished": true,
+      "pages": [
+        {
+          "body_sha256": "323264536a571cb0d6087a1a135715d2616a119ee388c0b188fa4c390a0b6863",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 0,
+          "read_at_utc": "2026-11-28T07:33:53.175783+00:00"
+        },
+        {
+          "body_sha256": "7f090d23ec33a93d6f1b337e4a3cdb92c34468c86a7aa7f181e21d143fac71a8",
+          "count": 100,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 100,
+          "read_at_utc": "2026-11-28T07:33:53.966204+00:00"
+        },
+        {
+          "body_sha256": "a93dc2477e23030b007ae0be6a6db17de88f5b3617f81512f6e34d42374f6a93",
+          "count": 38,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 200,
+          "read_at_utc": "2026-11-28T07:33:54.661529+00:00"
+        }
+      ],
+      "params": {
+        "ascending": "true",
+        "closed": "true",
+        "end_date_max": "2025-12-31T23:59:59Z",
+        "end_date_min": "2025-01-01T00:00:00Z",
+        "limit": 100,
+        "order": "id",
+        "tag_id": "102651"
+      }
+    },
+    "closed_total_markets_tag_2025": {
+      "endpoint": "https://gamma-api.polymarket.com/markets",
+      "error": null,
+      "finished": true,
+      "pages": [
+        {
+          "body_sha256": "6147cfda30e8771e4c84486913775a6ad5f1497a8eb4bddec29ef68742ceab9f",
+          "count": 40,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 0,
+          "read_at_utc": "2026-11-28T07:33:53.139900+00:00"
+        }
+      ],
+      "params": {
+        "ascending": "true",
+        "closed": "true",
+        "end_date_max": "2025-12-31T23:59:59Z",
+        "end_date_min": "2025-01-01T00:00:00Z",
+        "limit": 100,
+        "order": "id",
+        "sports_market_types": "totals",
+        "tag_id": "102651"
+      }
+    },
+    "events_2025_series": {
+      "endpoint": "https://gamma-api.polymarket.com/events",
+      "error": null,
+      "finished": true,
+      "pages": [
+        {
+          "body_sha256": "42eac5c83fb616c46e8a575d7084d70a75c8725f93687b1f016e5ed0f834fe7c",
+          "count": 74,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 0,
+          "read_at_utc": "2026-11-28T07:33:53.318438+00:00"
+        }
+      ],
+      "params": {
+        "ascending": "true",
+        "end_date_max": "2025-12-31T23:59:59Z",
+        "end_date_min": "2025-01-01T00:00:00Z",
+        "limit": 100,
+        "order": "id",
+        "series_id": "10362"
+      }
+    },
+    "events_2025_tag": {
+      "endpoint": "https://gamma-api.polymarket.com/events",
+      "error": null,
+      "finished": true,
+      "pages": [
+        {
+          "body_sha256": "42eac5c83fb616c46e8a575d7084d70a75c8725f93687b1f016e5ed0f834fe7c",
+          "count": 74,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 0,
+          "read_at_utc": "2026-11-28T07:33:53.385804+00:00"
+        }
+      ],
+      "params": {
+        "ascending": "true",
+        "end_date_max": "2025-12-31T23:59:59Z",
+        "end_date_min": "2025-01-01T00:00:00Z",
+        "limit": 100,
+        "order": "id",
+        "tag_id": "102651"
+      }
+    },
+    "late_closed_totals_tag": {
+      "endpoint": "https://gamma-api.polymarket.com/markets",
+      "error": null,
+      "finished": true,
+      "pages": [
+        {
+          "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "count": 0,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 0,
+          "read_at_utc": "2026-11-28T07:33:53.998468+00:00"
+        }
+      ],
+      "params": {
+        "ascending": "true",
+        "closed": "true",
+        "end_date_max": "2026-03-01T00:00:00Z",
+        "end_date_min": "2026-01-01T00:00:00Z",
+        "limit": 100,
+        "order": "id",
+        "sports_market_types": "totals",
+        "tag_id": "102651"
+      }
+    },
+    "open_total_markets_tag_2025": {
+      "endpoint": "https://gamma-api.polymarket.com/markets",
+      "error": null,
+      "finished": true,
+      "pages": [
+        {
+          "body_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "count": 0,
+          "duplicate_ids": 0,
+          "http": 200,
+          "offset": 0,
+          "read_at_utc": "2026-11-28T07:33:53.788652+00:00"
+        }
+      ],
+      "params": {
+        "ascending": "true",
+        "closed": "false",
+        "end_date_max": "2025-12-31T23:59:59Z",
+        "end_date_min": "2025-01-01T00:00:00Z",
+        "limit": 100,
+        "order": "id",
+        "sports_market_types": "totals",
+        "tag_id": "102651"
+      }
+    }
+  },
+  "started_price_checks_utc": "2026-11-28T07:36:21.501111+00:00"
+}

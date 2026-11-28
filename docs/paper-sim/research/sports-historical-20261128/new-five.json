@@ -1,0 +1,651 @@
+{
+  "actual_forward_readback": {
+    "at_utc": "2026-11-28T07:22:19.670410+00:00",
+    "leagues": {
+      "bel1": {
+        "both_markets": 6,
+        "context": 5,
+        "outcomes": 0,
+        "slots": {
+          "closing": 0,
+          "forward": 0,
+          "preview": 8
+        },
+        "unique": 8
+      },
+      "nor": {
+        "both_markets": 4,
+        "context": 7,
+        "outcomes": 0,
+        "slots": {
+          "closing": 0,
+          "forward": 0,
+          "preview": 7
+        },
+        "unique": 7
+      },
+      "por": {
+        "both_markets": 3,
+        "context": 5,
+        "outcomes": 0,
+        "slots": {
+          "closing": 0,
+          "forward": 0,
+          "preview": 6
+        },
+        "unique": 6
+      },
+      "scop": {
+        "both_markets": 4,
+        "context": 6,
+        "outcomes": 0,
+        "slots": {
+          "closing": 0,
+          "forward": 0,
+          "preview": 6
+        },
+        "unique": 6
+      },
+      "tur": {
+        "both_markets": 0,
+        "context": 5,
+        "outcomes": 0,
+        "slots": {
+          "closing": 0,
+          "forward": 0,
+          "preview": 5
+        },
+        "unique": 5
+      }
+    }
+  },
+  "definitely_contemporaneous_historical_news_rows": 0,
+  "historical_rows_sha256": "703e8de552f096f822c4e11ac541e578839a4b348eb468ea4950bf898e54797c",
+  "input_manifest_sha256": "3dc12f645d47d7be436f4cf17f1c3f71cdee5f4ee70973e78bc405aef4aed94d",
+  "kind": "event_time_retro_reconstruction",
+  "leagues": {
+    "bel1": {
+      "book_clock_delta_minutes_if_assuming_london": {
+        "-15": 3,
+        "0": 237
+      },
+      "both_teams_five_xg_in_model": 221,
+      "both_teams_some_xg_in_model": 228,
+      "detail_rejections": {},
+      "details_bound_to_scores": 306,
+      "details_with_both_xg": 306,
+      "details_with_both_xis": 306,
+      "first_target": "2025-07-25T18:45:00+00:00",
+      "forecasts": 228,
+      "historical_details_selected": 306,
+      "last_target": "2026-03-22T17:30:00+00:00",
+      "league": "bel1",
+      "metrics": {
+        "match_winner": {
+          "all_model_brier": 0.6393528768003094,
+          "all_model_log_loss": 1.0628257404467831,
+          "all_model_n": 228,
+          "paired": {
+            "delta_brier": 0.02450158405603542,
+            "delta_log_loss": 0.0368299822745386,
+            "iso_weeks": 30,
+            "market_brier": 0.614851292744274,
+            "market_log_loss": 1.0259957581722445,
+            "model_brier": 0.6393528768003094,
+            "model_log_loss": 1.0628257404467831,
+            "week_paired_brier_delta_ci95": [
+              0.0025674583362776107,
+              0.044707420795980043
+            ]
+          },
+          "paired_n": 228
+        },
+        "total_2_5": {
+          "all_model_brier": 0.24822292481652505,
+          "all_model_log_loss": 0.689117439729504,
+          "all_model_n": 228,
+          "paired": {
+            "delta_brier": -0.0010500552711062427,
+            "delta_log_loss": -0.0025459971759244082,
+            "iso_weeks": 30,
+            "market_brier": 0.2492729800876313,
+            "market_log_loss": 0.6916634369054284,
+            "model_brier": 0.24822292481652505,
+            "model_log_loss": 0.689117439729504,
+            "week_paired_brier_delta_ci95": [
+              -0.013079530019825205,
+              0.010894137842369957
+            ]
+          },
+          "paired_n": 228
+        }
+      },
+      "missing_forecasts": {
+        "insufficient_same_venue_team_history": 12
+      },
+      "normal_regular_targets": 240,
+      "paired_exact_kickoff_minute_sensitivity": {
+        "match_winner": {
+          "all_model_brier": 0.6385879996332839,
+          "all_model_log_loss": 1.0618615969263052,
+          "all_model_n": 225,
+          "paired": {
+            "delta_brier": 0.02440129819647563,
+            "delta_log_loss": 0.03666588619510702,
+            "iso_weeks": 30,
+            "market_brier": 0.6141867014368083,
+            "market_log_loss": 1.0251957107311982,
+            "model_brier": 0.6385879996332839,
+            "model_log_loss": 1.0618615969263052,
+            "week_paired_brier_delta_ci95": [
+              0.0020483247186142465,
+              0.044707420795980043
+            ]
+          },
+          "paired_n": 225
+        },
+        "total_2_5": {
+          "all_model_brier": 0.24836004881800078,
+          "all_model_log_loss": 0.6893881141220399,
+          "all_model_n": 225,
+          "paired": {
+            "delta_brier": -0.0013942439906822202,
+            "delta_log_loss": -0.003239556761612805,
+            "iso_weeks": 30,
+            "market_brier": 0.249754292808683,
+            "market_log_loss": 0.6926276708836527,
+            "model_brier": 0.24836004881800078,
+            "model_log_loss": 0.6893881141220399,
+            "week_paired_brier_delta_ci95": [
+              -0.013630103651780013,
+              0.010745424388691282
+            ]
+          },
+          "paired_n": 225
+        }
+      },
+      "rows_matched": {
+        "matched": 240
+      },
+      "season": "2025/2026",
+      "strictly_historical_news_eligible_n": 0,
+      "warmup_regular": 239,
+      "within_model_xg_ablation": {
+        "match_winner": {
+          "normal_model_brier": 0.6393528768003094,
+          "paired_n": 228,
+          "same_model_goals_only_brier": 0.6415188095337964,
+          "with_xg_minus_goals_only": -0.002165932733486975
+        },
+        "total_2_5": {
+          "normal_model_brier": 0.24822292481652505,
+          "paired_n": 228,
+          "same_model_goals_only_brier": 0.24808755333375362,
+          "with_xg_minus_goals_only": 0.00013537148277142919
+        }
+      }
+    },
+    "nor": {
+      "book_clock_delta_minutes_if_assuming_london": {
+        "0": 238,
+        "2": 1
+      },
+      "both_teams_five_xg_in_model": 219,
+      "both_teams_some_xg_in_model": 227,
+      "detail_rejections": {},
+      "details_bound_to_scores": 307,
+      "details_with_both_xg": 307,
+      "details_with_both_xis": 307,
+      "first_target": "2025-03-29T15:00:00+00:00",
+      "forecasts": 227,
+      "historical_details_selected": 307,
+      "last_target": "2025-11-30T16:00:00+00:00",
+      "league": "nor",
+      "metrics": {
+        "match_winner": {
+          "all_model_brier": 0.5825507749725017,
+          "all_model_log_loss": 0.9798644895488323,
+          "all_model_n": 227,
+          "paired": {
+            "delta_brier": 0.04802437343968946,
+            "delta_log_loss": 0.06784656721464699,
+            "iso_weeks": 31,
+            "market_brier": 0.5345264015328123,
+            "market_log_loss": 0.9120179223341853,
+            "model_brier": 0.5825507749725017,
+            "model_log_loss": 0.9798644895488323,
+            "week_paired_brier_delta_ci95": [
+              0.020361513574916893,
+              0.07545609318367164
+            ]
+          },
+          "paired_n": 227
+        },
+        "total_2_5": {
+          "all_model_brier": 0.23835217029245467,
+          "all_model_log_loss": 0.6697463675125063,
+          "all_model_n": 227,
+          "paired": null,
+          "paired_n": 0
+        }
+      },
+      "missing_forecasts": {
+        "insufficient_same_venue_team_history": 12
+      },
+      "normal_regular_targets": 239,
+      "paired_exact_kickoff_minute_sensitivity": {
+        "match_winner": {
+          "all_model_brier": 0.5814937636337929,
+          "all_model_log_loss": 0.978300227948526,
+          "all_model_n": 226,
+          "paired": {
+            "delta_brier": 0.048045682673897305,
+            "delta_log_loss": 0.06786897029619698,
+            "iso_weeks": 31,
+            "market_brier": 0.5334480809598956,
+            "market_log_loss": 0.910431257652329,
+            "model_brier": 0.5814937636337929,
+            "model_log_loss": 0.978300227948526,
+            "week_paired_brier_delta_ci95": [
+              0.020197336647553785,
+              0.0757293779860017
+            ]
+          },
+          "paired_n": 226
+        },
+        "total_2_5": {
+          "all_model_brier": 0.23859703757534828,
+          "all_model_log_loss": 0.6702396464912929,
+          "all_model_n": 226,
+          "paired": null,
+          "paired_n": 0
+        }
+      },
+      "rows_matched": {
+        "matched": 239
+      },
+      "season": "2025",
+      "strictly_historical_news_eligible_n": 0,
+      "warmup_regular": 240,
+      "within_model_xg_ablation": {
+        "match_winner": {
+          "normal_model_brier": 0.5825507749725017,
+          "paired_n": 227,
+          "same_model_goals_only_brier": 0.5838003398181241,
+          "with_xg_minus_goals_only": -0.0012495648456223307
+        },
+        "total_2_5": {
+          "normal_model_brier": 0.23835217029245467,
+          "paired_n": 227,
+          "same_model_goals_only_brier": 0.24055059717901914,
+          "with_xg_minus_goals_only": -0.002198426886564464
+        }
+      }
+    },
+    "por": {
+      "book_clock_delta_minutes_if_assuming_london": {
+        "-5": 1,
+        "0": 305
+      },
+      "both_teams_five_xg_in_model": 287,
+      "both_teams_some_xg_in_model": 295,
+      "detail_rejections": {},
+      "details_bound_to_scores": 378,
+      "details_with_both_xg": 378,
+      "details_with_both_xis": 378,
+      "first_target": "2025-08-08T19:15:00+00:00",
+      "forecasts": 295,
+      "historical_details_selected": 378,
+      "last_target": "2026-05-16T19:30:00+00:00",
+      "league": "por",
+      "metrics": {
+        "match_winner": {
+          "all_model_brier": 0.5807427629505169,
+          "all_model_log_loss": 0.9754395988793049,
+          "all_model_n": 295,
+          "paired": {
+            "delta_brier": 0.04236472564418259,
+            "delta_log_loss": 0.06503693937472521,
+            "iso_weeks": 36,
+            "market_brier": 0.5383780373063343,
+            "market_log_loss": 0.9104026595045797,
+            "model_brier": 0.5807427629505169,
+            "model_log_loss": 0.9754395988793049,
+            "week_paired_brier_delta_ci95": [
+              0.024203214553475055,
+              0.06123926836801049
+            ]
+          },
+          "paired_n": 295
+        },
+        "total_2_5": {
+          "all_model_brier": 0.243705252841809,
+          "all_model_log_loss": 0.6805387766539331,
+          "all_model_n": 295,
+          "paired": {
+            "delta_brier": 0.0030073076406688937,
+            "delta_log_loss": 0.006436006246194781,
+            "iso_weeks": 36,
+            "market_brier": 0.2406979452011401,
+            "market_log_loss": 0.6741027704077384,
+            "model_brier": 0.243705252841809,
+            "model_log_loss": 0.6805387766539331,
+            "week_paired_brier_delta_ci95": [
+              -0.005766898292884088,
+              0.011573717443790455
+            ]
+          },
+          "paired_n": 295
+        }
+      },
+      "missing_forecasts": {
+        "insufficient_same_venue_team_history": 11
+      },
+      "normal_regular_targets": 306,
+      "paired_exact_kickoff_minute_sensitivity": {
+        "match_winner": {
+          "all_model_brier": 0.5814955864092038,
+          "all_model_log_loss": 0.9764773100494546,
+          "all_model_n": 294,
+          "paired": {
+            "delta_brier": 0.04203202055307753,
+            "delta_log_loss": 0.06459895368538471,
+            "iso_weeks": 36,
+            "market_brier": 0.5394635658561263,
+            "market_log_loss": 0.9118783563640699,
+            "model_brier": 0.5814955864092038,
+            "model_log_loss": 0.9764773100494546,
+            "week_paired_brier_delta_ci95": [
+              0.02394523070962952,
+              0.06081478848155698
+            ]
+          },
+          "paired_n": 294
+        },
+        "total_2_5": {
+          "all_model_brier": 0.24362040893234851,
+          "all_model_log_loss": 0.6803689672253859,
+          "all_model_n": 294,
+          "paired": {
+            "delta_brier": 0.0029864944002798988,
+            "delta_log_loss": 0.0063957635017390935,
+            "iso_weeks": 36,
+            "market_brier": 0.24063391453206862,
+            "market_log_loss": 0.6739732037236468,
+            "model_brier": 0.24362040893234851,
+            "model_log_loss": 0.6803689672253859,
+            "week_paired_brier_delta_ci95": [
+              -0.005766898292884088,
+              0.01158236520749628
+            ]
+          },
+          "paired_n": 294
+        }
+      },
+      "rows_matched": {
+        "matched": 306
+      },
+      "season": "2025/2026",
+      "strictly_historical_news_eligible_n": 0,
+      "warmup_regular": 306,
+      "within_model_xg_ablation": {
+        "match_winner": {
+          "normal_model_brier": 0.5807427629505169,
+          "paired_n": 295,
+          "same_model_goals_only_brier": 0.5804427759793952,
+          "with_xg_minus_goals_only": 0.0002999869711216574
+        },
+        "total_2_5": {
+          "normal_model_brier": 0.243705252841809,
+          "paired_n": 295,
+          "same_model_goals_only_brier": 0.2449227895364894,
+          "with_xg_minus_goals_only": -0.0012175366946804156
+        }
+      }
+    },
+    "scop": {
+      "book_clock_delta_minutes_if_assuming_london": {
+        "0": 198
+      },
+      "both_teams_five_xg_in_model": 179,
+      "both_teams_some_xg_in_model": 187,
+      "detail_rejections": {},
+      "details_bound_to_scores": 247,
+      "details_with_both_xg": 247,
+      "details_with_both_xis": 247,
+      "first_target": "2025-08-02T14:00:00+00:00",
+      "forecasts": 187,
+      "historical_details_selected": 247,
+      "last_target": "2026-04-12T11:00:00+00:00",
+      "league": "scop",
+      "metrics": {
+        "match_winner": {
+          "all_model_brier": 0.601051728377951,
+          "all_model_log_loss": 1.006774758911009,
+          "all_model_n": 187,
+          "paired": {
+            "delta_brier": 0.02520562165893958,
+            "delta_log_loss": 0.03931219642469996,
+            "iso_weeks": 32,
+            "market_brier": 0.5758461067190114,
+            "market_log_loss": 0.967462562486309,
+            "model_brier": 0.601051728377951,
+            "model_log_loss": 1.006774758911009,
+            "week_paired_brier_delta_ci95": [
+              0.006248914437244417,
+              0.04473792949396861
+            ]
+          },
+          "paired_n": 187
+        },
+        "total_2_5": {
+          "all_model_brier": 0.24878063618667745,
+          "all_model_log_loss": 0.6907931247687349,
+          "all_model_n": 187,
+          "paired": {
+            "delta_brier": -0.0029526516323618024,
+            "delta_log_loss": -0.0062132390767338785,
+            "iso_weeks": 32,
+            "market_brier": 0.25173328781903925,
+            "market_log_loss": 0.6970063638454688,
+            "model_brier": 0.24878063618667745,
+            "model_log_loss": 0.6907931247687349,
+            "week_paired_brier_delta_ci95": [
+              -0.012513494379704601,
+              0.006667694693124233
+            ]
+          },
+          "paired_n": 187
+        }
+      },
+      "missing_forecasts": {
+        "insufficient_same_venue_team_history": 11
+      },
+      "normal_regular_targets": 198,
+      "paired_exact_kickoff_minute_sensitivity": {
+        "match_winner": {
+          "all_model_brier": 0.601051728377951,
+          "all_model_log_loss": 1.006774758911009,
+          "all_model_n": 187,
+          "paired": {
+            "delta_brier": 0.02520562165893958,
+            "delta_log_loss": 0.03931219642469996,
+            "iso_weeks": 32,
+            "market_brier": 0.5758461067190114,
+            "market_log_loss": 0.967462562486309,
+            "model_brier": 0.601051728377951,
+            "model_log_loss": 1.006774758911009,
+            "week_paired_brier_delta_ci95": [
+              0.006248914437244417,
+              0.04473792949396861
+            ]
+          },
+          "paired_n": 187
+        },
+        "total_2_5": {
+          "all_model_brier": 0.24878063618667745,
+          "all_model_log_loss": 0.6907931247687349,
+          "all_model_n": 187,
+          "paired": {
+            "delta_brier": -0.0029526516323618024,
+            "delta_log_loss": -0.0062132390767338785,
+            "iso_weeks": 32,
+            "market_brier": 0.25173328781903925,
+            "market_log_loss": 0.6970063638454688,
+            "model_brier": 0.24878063618667745,
+            "model_log_loss": 0.6907931247687349,
+            "week_paired_brier_delta_ci95": [
+              -0.012513494379704601,
+              0.006667694693124233
+            ]
+          },
+          "paired_n": 187
+        }
+      },
+      "rows_matched": {
+        "matched": 198
+      },
+      "season": "2025/2026",
+      "strictly_historical_news_eligible_n": 0,
+      "warmup_regular": 198,
+      "within_model_xg_ablation": {
+        "match_winner": {
+          "normal_model_brier": 0.601051728377951,
+          "paired_n": 187,
+          "same_model_goals_only_brier": 0.6026968104397784,
+          "with_xg_minus_goals_only": -0.001645082061827452
+        },
+        "total_2_5": {
+          "normal_model_brier": 0.24878063618667745,
+          "paired_n": 187,
+          "same_model_goals_only_brier": 0.250774200064055,
+          "with_xg_minus_goals_only": -0.0019935638773775355
+        }
+      }
+    },
+    "tur": {
+      "book_clock_delta_minutes_if_assuming_london": {
+        "0": 306
+      },
+      "both_teams_five_xg_in_model": 276,
+      "both_teams_some_xg_in_model": 288,
+      "detail_rejections": {},
+      "details_bound_to_scores": 384,
+      "details_with_both_xg": 384,
+      "details_with_both_xis": 384,
+      "first_target": "2025-08-08T18:30:00+00:00",
+      "forecasts": 288,
+      "historical_details_selected": 384,
+      "last_target": "2026-05-17T17:00:00+00:00",
+      "league": "tur",
+      "metrics": {
+        "match_winner": {
+          "all_model_brier": 0.6177442824911392,
+          "all_model_log_loss": 1.02770110960504,
+          "all_model_n": 288,
+          "paired": {
+            "delta_brier": 0.032603462564235186,
+            "delta_log_loss": 0.04983152200959251,
+            "iso_weeks": 35,
+            "market_brier": 0.585140819926904,
+            "market_log_loss": 0.9778695875954474,
+            "model_brier": 0.6177442824911392,
+            "model_log_loss": 1.02770110960504,
+            "week_paired_brier_delta_ci95": [
+              0.016637357475583543,
+              0.04768136262745165
+            ]
+          },
+          "paired_n": 288
+        },
+        "total_2_5": {
+          "all_model_brier": 0.2499399463222814,
+          "all_model_log_loss": 0.6932446047162278,
+          "all_model_n": 288,
+          "paired": {
+            "delta_brier": 0.015336961896302875,
+            "delta_log_loss": 0.031707464989805034,
+            "iso_weeks": 35,
+            "market_brier": 0.23460298442597852,
+            "market_log_loss": 0.6615371397264228,
+            "model_brier": 0.2499399463222814,
+            "model_log_loss": 0.6932446047162278,
+            "week_paired_brier_delta_ci95": [
+              0.007847624153274639,
+              0.023690344690813294
+            ]
+          },
+          "paired_n": 288
+        }
+      },
+      "missing_forecasts": {
+        "insufficient_same_venue_team_history": 18
+      },
+      "normal_regular_targets": 306,
+      "paired_exact_kickoff_minute_sensitivity": {
+        "match_winner": {
+          "all_model_brier": 0.6177442824911392,
+          "all_model_log_loss": 1.02770110960504,
+          "all_model_n": 288,
+          "paired": {
+            "delta_brier": 0.032603462564235186,
+            "delta_log_loss": 0.04983152200959251,
+            "iso_weeks": 35,
+            "market_brier": 0.585140819926904,
+            "market_log_loss": 0.9778695875954474,
+            "model_brier": 0.6177442824911392,
+            "model_log_loss": 1.02770110960504,
+            "week_paired_brier_delta_ci95": [
+              0.016637357475583543,
+              0.04768136262745165
+            ]
+          },
+          "paired_n": 288
+        },
+        "total_2_5": {
+          "all_model_brier": 0.2499399463222814,
+          "all_model_log_loss": 0.6932446047162278,
+          "all_model_n": 288,
+          "paired": {
+            "delta_brier": 0.015336961896302875,
+            "delta_log_loss": 0.031707464989805034,
+            "iso_weeks": 35,
+            "market_brier": 0.23460298442597852,
+            "market_log_loss": 0.6615371397264228,
+            "model_brier": 0.2499399463222814,
+            "model_log_loss": 0.6932446047162278,
+            "week_paired_brier_delta_ci95": [
+              0.007847624153274639,
+              0.023690344690813294
+            ]
+          },
+          "paired_n": 288
+        }
+      },
+      "rows_matched": {
+        "matched": 306
+      },
+      "season": "2025/2026",
+      "strictly_historical_news_eligible_n": 0,
+      "warmup_regular": 341,
+      "within_model_xg_ablation": {
+        "match_winner": {
+          "normal_model_brier": 0.6177442824911392,
+          "paired_n": 288,
+          "same_model_goals_only_brier": 0.6175027628209749,
+          "with_xg_minus_goals_only": 0.00024151967016428078
+        },
+        "total_2_5": {
+          "normal_model_brier": 0.2499399463222814,
+          "paired_n": 288,
+          "same_model_goals_only_brier": 0.24963980059916002,
+          "with_xg_minus_goals_only": 0.00030014572312137
+        }
+      }
+    }
+  },
+  "model_version": "euro-soccer-venue-lineups-20261128-v1",
+  "new_admission_eligible_count": 0,
+  "registered_input_count": 1637,
+  "repository_commit": "eaf6e8149f83a708d09158529ec774f4fbed8b9d"
+}

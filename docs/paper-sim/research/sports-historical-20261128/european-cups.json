@@ -1,0 +1,229 @@
+{
+  "archived_report_sha256": "a4b7b1722c64687922c72b9b2fb49b484176d015009a0d65375cd981568dc657",
+  "away_haircut": 0.06,
+  "by_season": {
+    "2024-25": {
+      "archive_metrics": {
+        "T1": {
+          "mean_diff": -0.001379,
+          "mean_rps_bridged": 0.194294,
+          "mean_rps_unbridged": 0.195673,
+          "n": 60,
+          "p_sign_exact": 0.366294,
+          "p_t_normal": 0.813379,
+          "pass": true,
+          "sign_losses": 26,
+          "sign_wins": 34,
+          "t_stat": -0.2361
+        },
+        "T2": {
+          "away_wins": 41,
+          "cal_err": 0.000473,
+          "freq_away_win": 0.525641,
+          "mean_pA": 0.525169,
+          "n": 78,
+          "pass": true,
+          "sum_pA": 40.9631
+        },
+        "T3": {
+          "abs_diff": 0.010626,
+          "cal_bridged": -0.004043,
+          "cal_unbridged": 0.006583,
+          "pass_onesided_band": true,
+          "pass_preregistered_band": true
+        },
+        "eval_all_rps_bridged": 0.19374,
+        "label": "2024-25 frozen haircut_006",
+        "n_eval": 196
+      },
+      "by_competition": {
+        "UCL": {
+          "cross_league": 125,
+          "fixtures": 125,
+          "over25_brier": 0.229821976,
+          "rps": 0.191008968
+        },
+        "UEL": {
+          "cross_league": 71,
+          "fixtures": 71,
+          "over25_brier": 0.2743431126760563,
+          "rps": 0.19911760563380282
+        }
+      },
+      "by_competition_unbridged": {
+        "UCL": {
+          "cross_league": 125,
+          "fixtures": 125,
+          "over25_brier": 0.232133672,
+          "rps": 0.196409096
+        },
+        "UEL": {
+          "cross_league": 71,
+          "fixtures": 71,
+          "over25_brier": 0.27548169014084506,
+          "rps": 0.219710338028169
+        }
+      }
+    },
+    "2025-26": {
+      "archive_metrics": {
+        "T1": {
+          "mean_diff": -0.016702,
+          "mean_rps_bridged": 0.231715,
+          "mean_rps_unbridged": 0.248417,
+          "n": 64,
+          "p_sign_exact": 0.032766,
+          "p_t_normal": 0.009757,
+          "pass": true,
+          "sign_losses": 23,
+          "sign_wins": 41,
+          "t_stat": -2.5843
+        },
+        "T2": {
+          "away_wins": 34,
+          "cal_err": 0.038275,
+          "freq_away_win": 0.485714,
+          "mean_pA": 0.523989,
+          "n": 70,
+          "pass": true,
+          "sum_pA": 36.6792
+        },
+        "T3": {
+          "abs_diff": 0.014044,
+          "cal_bridged": -0.067926,
+          "cal_unbridged": -0.053882,
+          "pass_onesided_band": true,
+          "pass_preregistered_band": true
+        },
+        "eval_all_rps_bridged": 0.204296,
+        "label": "2025-26 frozen haircut_006",
+        "n_eval": 200
+      },
+      "by_competition": {
+        "UCL": {
+          "cross_league": 125,
+          "fixtures": 125,
+          "over25_brier": 0.232463856,
+          "rps": 0.208362176
+        },
+        "UEL": {
+          "cross_league": 75,
+          "fixtures": 75,
+          "over25_brier": 0.24580804,
+          "rps": 0.20132589333333334
+        }
+      },
+      "by_competition_unbridged": {
+        "UCL": {
+          "cross_league": 125,
+          "fixtures": 125,
+          "over25_brier": 0.228948168,
+          "rps": 0.210581552
+        },
+        "UEL": {
+          "cross_league": 75,
+          "fixtures": 75,
+          "over25_brier": 0.24699956,
+          "rps": 0.23311865333333334
+        }
+      }
+    }
+  },
+  "cache_config_hash": "f7395bf7dd250748531b74459a571b3479694a3a6520f67cd419591cb6ef8712",
+  "executable_fills": null,
+  "fit_day_rule": "strictly earlier UTC day",
+  "fixtures_by_competition": {
+    "UCL": 250,
+    "UEL": 146
+  },
+  "frozen_archive_reproduced": true,
+  "harness_sha256": "e94a782dbdb9d2b765180b41145486b4d26c956cd0954fd6d99274476979011c",
+  "limits": [
+    "At least one Big Five club. No post-January knockout rounds in the frozen corpus.",
+    "Full archive statistic uses season-specific preseason tables with its own bridge variant.",
+    "Separate 2025/26 diagnostic uses shipped rounded strength table, clamp and haircut on cross-league fixtures. Haircut choice postdates the fixtures.",
+    "Independent executable quotes, fees and contemporary team news are not supplied by this archive."
+  ],
+  "market_price_comparison": null,
+  "pooled_archived_metrics": {
+    "T1": {
+      "mean_diff": -0.009288,
+      "mean_rps_bridged": 0.213608,
+      "mean_rps_unbridged": 0.222895,
+      "n": 124,
+      "p_sign_exact": 0.02437,
+      "p_t_normal": 0.03515,
+      "pass": true,
+      "sign_losses": 49,
+      "sign_wins": 75,
+      "t_stat": -2.1066
+    },
+    "T2": {
+      "away_wins": 75,
+      "cal_err": 0.017854,
+      "freq_away_win": 0.506757,
+      "mean_pA": 0.524611,
+      "n": 148,
+      "pass": true,
+      "sum_pA": 77.6424
+    },
+    "T3": {
+      "abs_diff": 0.012353,
+      "cal_bridged": -0.036307,
+      "cal_unbridged": -0.023955,
+      "pass_onesided_band": true,
+      "pass_preregistered_band": true
+    },
+    "eval_all_rps_bridged": 0.199071,
+    "label": "pooled frozen haircut_006",
+    "n_eval": 396
+  },
+  "production_2025_26_parameters_cross_league": {
+    "by_competition": {
+      "UCL": {
+        "cross_league": 125,
+        "fixtures": 125,
+        "over25_brier": 0.23246384,
+        "rps": 0.208362216
+      },
+      "UEL": {
+        "cross_league": 75,
+        "fixtures": 75,
+        "over25_brier": 0.24580802666666665,
+        "rps": 0.20132588
+      }
+    },
+    "eligible_cross_league_fixtures": 200,
+    "same_fixture_unbridged": {
+      "UCL": {
+        "cross_league": 125,
+        "fixtures": 125,
+        "over25_brier": 0.228948168,
+        "rps": 0.210581552
+      },
+      "UEL": {
+        "cross_league": 75,
+        "fixtures": 75,
+        "over25_brier": 0.24699956,
+        "rps": 0.23311865333333334
+      }
+    }
+  },
+  "research_only": true,
+  "season_total": 396,
+  "source_digests": {
+    "backtest_euro.py": "436fec4c7e99edfd0c917299f85e06164cbed158fb1a31415eb0ccc4d699862b",
+    "backtest_euro_strict.py": "1a4e2f273a084609bebcedc4c243f4bdf27dd88f037b14593db0b2c2e0d09209",
+    "big5_2023.json": "6aae8380972017ea46d47e8e1989de5f8d23568c903be034caf08e94e53330e8",
+    "big5_2024.json": "802600b3283fdf547558594def5aa44b78fa6aadd06cc4c0cd6a60902db142fd",
+    "fit_league_strength.py": "1e5a3b55e985d3ec97d1174ab1a6811a4d5b5f5f7ac6576d6c0c13c912cb19a8",
+    "strict_backtest_report.json": "a6b98f924562003f1e84ee9c36a26893c743d6dc8cb079e082ed63b5cb615348",
+    "ucl_uel_results_3seasons.json": "336a2563f5ad622a1d8dfa3a0b8ee0ddfd84adb517327c3e9c51a7be6bf05af2",
+    "xg_understat_25.json": "315e30e56670e4ba3af1864a5e854a8131c7789fd706938200758aec0572c76f"
+  },
+  "source_map": {
+    "2023": "fotmob",
+    "2024": "fotmob",
+    "2025": "understat"
+  }
+}
